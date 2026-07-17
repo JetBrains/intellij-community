@@ -1,8 +1,8 @@
 // "Assign to property" "false"
 // ACTION: Converts the assignment statement to an expression
 // ERROR: Val cannot be reassigned
-// K2_ERROR: 'val' cannot be reassigned.
-// K2_AFTER_ERROR: 'val' cannot be reassigned.
+// K2_AFTER_ERROR: VAL_REASSIGNMENT
+// K2_ERROR: VAL_REASSIGNMENT
 class Test {
     var bar = 1
 

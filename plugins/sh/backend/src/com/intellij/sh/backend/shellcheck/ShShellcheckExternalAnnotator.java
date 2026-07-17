@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
-import com.intellij.platform.eel.provider.utils.EelPathTransfer.FileTransferAttributesStrategy;
+import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -96,8 +96,8 @@ public class ShShellcheckExternalAnnotator
     final var eelDescriptor = getEelDescriptor(fileInfo.project);
 
     try {
-      FileTransferAttributesStrategy forceExecutePermission =
-        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
+      EelFileTransferAttributesStrategy forceExecutePermission =
+        EelFileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withExePath(asEelPath(

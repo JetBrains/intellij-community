@@ -4,5 +4,5 @@
 import androidx.compose.runtime.Composable
 
 class Impl : @Composable () -> Unit {
-    <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: fun invoke(): Unit fun invoke(): R'")!>override fun invoke()<!> {}
+    <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>override fun invoke()<!> {}
 }

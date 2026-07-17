@@ -174,8 +174,11 @@ f:git4idea.history.GitHistoryTraverserProviderKt
 - sf:getTraverser(com.intellij.openapi.project.Project):git4idea.history.GitHistoryTraverser
 a:git4idea.ignore.GitRepositoryIgnoredFilesHolder
 - a:containsFile(com.intellij.openapi.vcs.FilePath):Z
+f:git4idea.index.GitIndexUtil
+- s:isNullHash(java.lang.String):Z
 f:git4idea.log.GitLogProvider
 - <init>(com.intellij.openapi.project.Project):V
+- isFullHash(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 f:git4idea.log.GitRefManager
 - sf:getRefType(java.lang.String):com.intellij.vcs.log.VcsRefType
 c:git4idea.merge.GitConflictResolver
@@ -221,13 +224,31 @@ f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 f:git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 - <init>(git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel):V
 git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel$Error
+e:git4idea.repo.GitObjectFormat
+- java.lang.Enum
+- sf:Companion:git4idea.repo.GitObjectFormat$Companion
+- sf:SHA1:git4idea.repo.GitObjectFormat
+- sf:SHA256:git4idea.repo.GitObjectFormat
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getHexSize():I
+- f:getValue():java.lang.String
+- sf:parse(java.lang.String):git4idea.repo.GitObjectFormat
+- sf:parseOrNull(java.lang.String):git4idea.repo.GitObjectFormat
+- s:valueOf(java.lang.String):git4idea.repo.GitObjectFormat
+- s:values():git4idea.repo.GitObjectFormat[]
+f:git4idea.repo.GitObjectFormat$Companion
+- f:parse(java.lang.String):git4idea.repo.GitObjectFormat
+- f:parseOrNull(java.lang.String):git4idea.repo.GitObjectFormat
 f:git4idea.repo.GitRefUtil
 - s:addRefsHeadsPrefixIfNeeded(java.lang.String):java.lang.String
 - s:getCurrentReference(git4idea.repo.GitRepository):git4idea.GitReference
 git4idea.repo.GitRepository
 - a:getBranchTrackInfo(java.lang.String):git4idea.repo.GitBranchTrackInfo
+- getFullHashLength():I
 git4idea.repo.GitRepositoryChangeListener
 - a:repositoryChanged(git4idea.repo.GitRepository):V
+f:git4idea.repo.GitRepositoryImpl
+- getFullHashLength():I
 f:git4idea.repo.GitRepositoryManager
 - s:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitRepositoryManager
 f:git4idea.repo.GitSubmoduleKt

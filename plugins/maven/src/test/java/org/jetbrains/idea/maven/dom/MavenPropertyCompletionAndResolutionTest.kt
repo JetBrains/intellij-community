@@ -1396,6 +1396,28 @@ class MavenPropertyCompletionAndResolutionTest(mavenVersion: String, modelVersio
     maven.assertResolved(m1, rootDirectory!!)
   }
 
+  @Test
+  fun testPropertyCompletionInsideDependencyVersionRef() = runBlocking {
+    // Regression test for IDEA-391236: property completion inside ${} in <version> broken
+    maven.updateProjectPom($$"""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <slf4j.version>2.0.18</slf4j.version>
+                       </properties>
+                       <dependencies>
+                         <dependency>
+                           <groupId>org.slf4j</groupId>
+                           <artifactId>slf4j-api</artifactId>
+                           <version>${<caret>}</version>
+                         </dependency>
+                       </dependencies>
+                       """.trimIndent())
+
+    maven.assertCompletionVariantsInclude(maven.projectPom, "slf4j.version")
+  }
+
   private suspend fun readWithProfiles(vararg profiles: String) {
     maven.projectsManager.explicitProfiles = MavenExplicitProfiles(listOf(*profiles))
     maven.updateAllProjects()

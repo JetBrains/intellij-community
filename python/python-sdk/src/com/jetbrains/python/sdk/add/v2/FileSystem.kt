@@ -8,10 +8,13 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.ToolCommandSpec
+import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -86,6 +89,9 @@ interface FileSystem<P : PathHolder> {
     additionalSearchPaths: List<P> = listOf(),
     filter: (P) -> Boolean = { true },
   ): P?
+
+  @PyInternalExecApi
+  suspend fun probeTools(toolSpecs: List<ToolCommandSpec>): PyResult<Map<String, ToolProbeResult<P>>>
 
   /** Resolves [pathComponents] under the value of environment variable [prefixEnvVar]. Null if the variable is unset or unreadable. */
   suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): P?

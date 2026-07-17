@@ -1,5 +1,5 @@
 // "Remove forbidden opt-in annotation targets" "true"
-// K2_ERROR: Opt-in requirement marker annotation cannot be used on the following code elements: type usage.
+// K2_ERROR: OPT_IN_MARKER_WITH_WRONG_TARGET
 
 @Target(Annotati<caret>onTarget.TYPE, AnnotationTarget.TYPEALIAS, AnnotationTarget.FUNCTION)
 @RequiresOptIn

@@ -14,6 +14,7 @@
     <module name="intellij.libraries.junit5.vintage"/>
     <module name="intellij.libraries.kotlinTest"/>
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.mcpserver.testFramework"/>
     <module name="intellij.mcpserver.tests"/>
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.common"/>

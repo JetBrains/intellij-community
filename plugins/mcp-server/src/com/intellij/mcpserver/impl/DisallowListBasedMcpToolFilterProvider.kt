@@ -12,22 +12,21 @@ import kotlinx.coroutines.flow.map
 internal class DisallowListBasedMcpToolFilterProvider : McpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
     val settings = McpToolDisallowListSettings.getInstance()
-    val toolStates = settings.toolStates
 
-    context.updateState(enabled = true) { tool ->
-      toolStates[tool.descriptor.name]?.enabled == true
+    context.updateState(enabled = true) {
+      settings.toolStateFor(it).enabled
     }
 
-    context.updateState(enabled = false) { tool ->
-      toolStates[tool.descriptor.name]?.enabled == false
+    context.updateState(enabled = false) {
+      !settings.toolStateFor(it).enabled
     }
 
-    context.updateState(routerOnly = true) { tool ->
-      toolStates[tool.descriptor.name]?.routerOnly == true
+    context.updateState(routerOnly = true) {
+      settings.toolStateFor(it).routerOnly
     }
 
-    context.updateState(routerOnly = false) { tool ->
-      toolStates[tool.descriptor.name]?.routerOnly == false
+    context.updateState(routerOnly = false) {
+      !settings.toolStateFor(it).routerOnly
     }
   }
 

@@ -166,6 +166,30 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
     deepStrictEqual(calls, [{filePaths: ['src/Main.kt'], timeout: undefined}])
   })
 
+  it('matches native items whose filePath uses a different separator than the request', async () => {
+    await withProxy({
+      tools: [nativeLintTool],
+      onToolCall({name}) {
+        strictEqual(name, 'lint_files')
+        // IDE returns a backslash-separated path (as on Windows) while the client requested forward slashes.
+        return nativeLintResponse([{
+          filePath: 'src\\Main.kt',
+          problems: [{severity: 'ERROR', description: 'boom', lineText: 'error line', line: 5, column: 1}]
+        }])
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {files: ['src/Main.kt']}
+      })
+
+      const parsed = JSON.parse(response.result.content[0].text)
+      strictEqual(parsed.items.length, 1)
+      strictEqual(parsed.items[0].problems[0].severity, 'ERROR')
+    })
+  })
+
   it('rejects legacy file_paths client arguments before calling upstream', async () => {
     let calls = 0
 

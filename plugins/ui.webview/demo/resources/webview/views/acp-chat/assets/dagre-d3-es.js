@@ -1,5 +1,4 @@
 import { $ as isFunction, A as _getTag_default, B as baseUnary, C as hasPath, D as toString, E as castPath, F as overArg, G as getSymbols, H as isBuffer, I as isPrototype, J as isArray, K as stubArray, L as arrayLikeKeys, M as keys, N as isArrayLike, P as baseKeys, Q as getNative, R as isTypedArray, S as hasIn, T as toKey, U as isArguments, V as isIndex, W as isObjectLike, X as Uint8Array, Y as arrayPush, Z as Stack, _ as baseForOwn, a as castFunction, at as arrayMap, b as baseProperty, c as baseUniq, d as min, et as isObject, f as baseLt, g as baseMap, h as map, i as forEach, it as eq, j as getAllKeys, k as isSymbol, l as baseFindIndex, m as filter, n as reduce, nt as Symbol, o as arrayEach, p as baseExtremum, q as baseGetAllKeys, r as isEmpty, rt as root, s as flatten, tt as baseGetTag, u as baseFlatten, v as baseFor, w as baseGet, x as identity, y as baseIteratee, z as nodeUtil } from "./chevrotain-allstar.js";
-//#region node_modules/lodash-es/_defineProperty.js
 var defineProperty = function() {
 	try {
 		var func = getNative(Object, "defineProperty");
@@ -7,8 +6,6 @@ var defineProperty = function() {
 		return func;
 	} catch (e) {}
 }();
-//#endregion
-//#region node_modules/lodash-es/_baseAssignValue.js
 /**
 * The base implementation of `assignValue` and `assignMergeValue` without
 * value checks.
@@ -27,8 +24,6 @@ function baseAssignValue(object, key, value) {
 	});
 	else object[key] = value;
 }
-//#endregion
-//#region node_modules/lodash-es/_assignMergeValue.js
 /**
 * This function is like `assignValue` except that it doesn't assign
 * `undefined` values.
@@ -41,8 +36,6 @@ function baseAssignValue(object, key, value) {
 function assignMergeValue(object, key, value) {
 	if (value !== void 0 && !eq(object[key], value) || value === void 0 && !(key in object)) baseAssignValue(object, key, value);
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneBuffer.js
 /** Detect free variable `exports`. */
 var freeExports = typeof exports == "object" && exports && !exports.nodeType && exports;
 /** Detect free variable `module`. */
@@ -63,8 +56,6 @@ function cloneBuffer(buffer, isDeep) {
 	buffer.copy(result);
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneArrayBuffer.js
 /**
 * Creates a clone of `arrayBuffer`.
 *
@@ -77,8 +68,6 @@ function cloneArrayBuffer(arrayBuffer) {
 	new Uint8Array(result).set(new Uint8Array(arrayBuffer));
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneTypedArray.js
 /**
 * Creates a clone of `typedArray`.
 *
@@ -91,8 +80,6 @@ function cloneTypedArray(typedArray, isDeep) {
 	var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
 	return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
 }
-//#endregion
-//#region node_modules/lodash-es/_copyArray.js
 /**
 * Copies the values of `source` to `array`.
 *
@@ -107,8 +94,6 @@ function copyArray(source, array) {
 	while (++index < length) array[index] = source[index];
 	return array;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseCreate.js
 /** Built-in value references. */
 var objectCreate = Object.create;
 /**
@@ -130,12 +115,8 @@ var baseCreate = function() {
 		return result;
 	};
 }();
-//#endregion
-//#region node_modules/lodash-es/_getPrototype.js
 /** Built-in value references. */
 var getPrototype = overArg(Object.getPrototypeOf, Object);
-//#endregion
-//#region node_modules/lodash-es/_initCloneObject.js
 /**
 * Initializes an object clone.
 *
@@ -146,8 +127,6 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 function initCloneObject(object) {
 	return typeof object.constructor == "function" && !isPrototype(object) ? baseCreate(getPrototype(object)) : {};
 }
-//#endregion
-//#region node_modules/lodash-es/isArrayLikeObject.js
 /**
 * This method is like `_.isArrayLike` except that it also checks if `value`
 * is an object.
@@ -176,8 +155,6 @@ function initCloneObject(object) {
 function isArrayLikeObject(value) {
 	return isObjectLike(value) && isArrayLike(value);
 }
-//#endregion
-//#region node_modules/lodash-es/isPlainObject.js
 /** `Object#toString` result references. */
 var objectTag$1 = "[object Object]";
 /** Used for built-in method references. */
@@ -223,8 +200,6 @@ function isPlainObject(value) {
 	var Ctor = hasOwnProperty$5.call(proto, "constructor") && proto.constructor;
 	return typeof Ctor == "function" && Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString;
 }
-//#endregion
-//#region node_modules/lodash-es/_safeGet.js
 /**
 * Gets the value at `key`, unless `key` is "__proto__" or "constructor".
 *
@@ -238,8 +213,6 @@ function safeGet(object, key) {
 	if (key == "__proto__") return;
 	return object[key];
 }
-//#endregion
-//#region node_modules/lodash-es/_assignValue.js
 /** Used to check objects for own properties. */
 var hasOwnProperty$4 = Object.prototype.hasOwnProperty;
 /**
@@ -256,8 +229,6 @@ function assignValue(object, key, value) {
 	var objValue = object[key];
 	if (!(hasOwnProperty$4.call(object, key) && eq(objValue, value)) || value === void 0 && !(key in object)) baseAssignValue(object, key, value);
 }
-//#endregion
-//#region node_modules/lodash-es/_copyObject.js
 /**
 * Copies properties of `source` to `object`.
 *
@@ -281,8 +252,6 @@ function copyObject(source, props, object, customizer) {
 	}
 	return object;
 }
-//#endregion
-//#region node_modules/lodash-es/_nativeKeysIn.js
 /**
 * This function is like
 * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -297,8 +266,6 @@ function nativeKeysIn(object) {
 	if (object != null) for (var key in Object(object)) result.push(key);
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseKeysIn.js
 /** Used to check objects for own properties. */
 var hasOwnProperty$3 = Object.prototype.hasOwnProperty;
 /**
@@ -314,8 +281,6 @@ function baseKeysIn(object) {
 	for (var key in object) if (!(key == "constructor" && (isProto || !hasOwnProperty$3.call(object, key)))) result.push(key);
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/keysIn.js
 /**
 * Creates an array of the own and inherited enumerable property names of `object`.
 *
@@ -342,8 +307,6 @@ function baseKeysIn(object) {
 function keysIn(object) {
 	return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
 }
-//#endregion
-//#region node_modules/lodash-es/toPlainObject.js
 /**
 * Converts `value` to a plain object flattening inherited enumerable string
 * keyed properties of `value` to own properties of the plain object.
@@ -371,8 +334,6 @@ function keysIn(object) {
 function toPlainObject(value) {
 	return copyObject(value, keysIn(value));
 }
-//#endregion
-//#region node_modules/lodash-es/_baseMergeDeep.js
 /**
 * A specialized version of `baseMerge` for arrays and objects which performs
 * deep merges and tracks traversed objects enabling objects with circular
@@ -421,8 +382,6 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 	}
 	assignMergeValue(object, key, newValue);
 }
-//#endregion
-//#region node_modules/lodash-es/_baseMerge.js
 /**
 * The base implementation of `_.merge` without support for multiple sources.
 *
@@ -446,8 +405,6 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 		}
 	}, keysIn);
 }
-//#endregion
-//#region node_modules/lodash-es/_apply.js
 /**
 * A faster alternative to `Function#apply`, this function invokes `func`
 * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -467,8 +424,6 @@ function apply(func, thisArg, args) {
 	}
 	return func.apply(thisArg, args);
 }
-//#endregion
-//#region node_modules/lodash-es/_overRest.js
 var nativeMax$2 = Math.max;
 /**
 * A specialized version of `baseRest` which transforms the rest array.
@@ -491,8 +446,6 @@ function overRest(func, start, transform) {
 		return apply(func, this, otherArgs);
 	};
 }
-//#endregion
-//#region node_modules/lodash-es/constant.js
 /**
 * Creates a function that returns `value`.
 *
@@ -517,8 +470,6 @@ function constant(value) {
 		return value;
 	};
 }
-//#endregion
-//#region node_modules/lodash-es/_baseSetToString.js
 /**
 * The base implementation of `setToString` without support for hot loop shorting.
 *
@@ -535,8 +486,6 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 		"writable": true
 	});
 };
-//#endregion
-//#region node_modules/lodash-es/_shortOut.js
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800, HOT_SPAN = 16;
 var nativeNow = Date.now;
@@ -560,8 +509,6 @@ function shortOut(func) {
 		return func.apply(void 0, arguments);
 	};
 }
-//#endregion
-//#region node_modules/lodash-es/_setToString.js
 /**
 * Sets the `toString` method of `func` to return `string`.
 *
@@ -571,8 +518,6 @@ function shortOut(func) {
 * @returns {Function} Returns `func`.
 */
 var setToString = shortOut(baseSetToString);
-//#endregion
-//#region node_modules/lodash-es/_baseRest.js
 /**
 * The base implementation of `_.rest` which doesn't validate or coerce arguments.
 *
@@ -584,8 +529,6 @@ var setToString = shortOut(baseSetToString);
 function baseRest(func, start) {
 	return setToString(overRest(func, start, identity), func + "");
 }
-//#endregion
-//#region node_modules/lodash-es/_isIterateeCall.js
 /**
 * Checks if the given arguments are from an iteratee call.
 *
@@ -602,8 +545,6 @@ function isIterateeCall(value, index, object) {
 	if (type == "number" ? isArrayLike(object) && isIndex(index, object.length) : type == "string" && index in object) return eq(object[index], value);
 	return false;
 }
-//#endregion
-//#region node_modules/lodash-es/_createAssigner.js
 /**
 * Creates a function like `_.assign`.
 *
@@ -627,8 +568,6 @@ function createAssigner(assigner) {
 		return object;
 	});
 }
-//#endregion
-//#region node_modules/lodash-es/merge.js
 /**
 * This method is like `_.assign` except that it recursively merges own and
 * inherited enumerable string keyed properties of source objects into the
@@ -663,8 +602,6 @@ function createAssigner(assigner) {
 var merge = createAssigner(function(object, source, srcIndex) {
 	baseMerge(object, source, srcIndex);
 });
-//#endregion
-//#region node_modules/lodash-es/_baseAssign.js
 /**
 * The base implementation of `_.assign` without support for multiple sources
 * or `customizer` functions.
@@ -677,8 +614,6 @@ var merge = createAssigner(function(object, source, srcIndex) {
 function baseAssign(object, source) {
 	return object && copyObject(source, keys(source), object);
 }
-//#endregion
-//#region node_modules/lodash-es/_baseAssignIn.js
 /**
 * The base implementation of `_.assignIn` without support for multiple sources
 * or `customizer` functions.
@@ -691,8 +626,6 @@ function baseAssign(object, source) {
 function baseAssignIn(object, source) {
 	return object && copyObject(source, keysIn(source), object);
 }
-//#endregion
-//#region node_modules/lodash-es/_copySymbols.js
 /**
 * Copies own symbols of `source` to `object`.
 *
@@ -704,8 +637,6 @@ function baseAssignIn(object, source) {
 function copySymbols(source, object) {
 	return copyObject(source, getSymbols(source), object);
 }
-//#endregion
-//#region node_modules/lodash-es/_getSymbolsIn.js
 /**
 * Creates an array of the own and inherited enumerable symbols of `object`.
 *
@@ -721,8 +652,6 @@ var getSymbolsIn = !Object.getOwnPropertySymbols ? stubArray : function(object) 
 	}
 	return result;
 };
-//#endregion
-//#region node_modules/lodash-es/_copySymbolsIn.js
 /**
 * Copies own and inherited symbols of `source` to `object`.
 *
@@ -734,8 +663,6 @@ var getSymbolsIn = !Object.getOwnPropertySymbols ? stubArray : function(object) 
 function copySymbolsIn(source, object) {
 	return copyObject(source, getSymbolsIn(source), object);
 }
-//#endregion
-//#region node_modules/lodash-es/_getAllKeysIn.js
 /**
 * Creates an array of own and inherited enumerable property names and
 * symbols of `object`.
@@ -747,8 +674,6 @@ function copySymbolsIn(source, object) {
 function getAllKeysIn(object) {
 	return baseGetAllKeys(object, keysIn, getSymbolsIn);
 }
-//#endregion
-//#region node_modules/lodash-es/_initCloneArray.js
 /** Used to check objects for own properties. */
 var hasOwnProperty$2 = Object.prototype.hasOwnProperty;
 /**
@@ -766,8 +691,6 @@ function initCloneArray(array) {
 	}
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneDataView.js
 /**
 * Creates a clone of `dataView`.
 *
@@ -780,8 +703,6 @@ function cloneDataView(dataView, isDeep) {
 	var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
 	return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneRegExp.js
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 /**
@@ -796,8 +717,6 @@ function cloneRegExp(regexp) {
 	result.lastIndex = regexp.lastIndex;
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_cloneSymbol.js
 /** Used to convert symbols to primitives and strings. */
 var symbolProto = Symbol ? Symbol.prototype : void 0, symbolValueOf = symbolProto ? symbolProto.valueOf : void 0;
 /**
@@ -810,8 +729,6 @@ var symbolProto = Symbol ? Symbol.prototype : void 0, symbolValueOf = symbolProt
 function cloneSymbol(symbol) {
 	return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
 }
-//#endregion
-//#region node_modules/lodash-es/_initCloneByTag.js
 /** `Object#toString` result references. */
 var boolTag$1 = "[object Boolean]", dateTag$1 = "[object Date]", mapTag$3 = "[object Map]", numberTag$1 = "[object Number]", regexpTag$1 = "[object RegExp]", setTag$3 = "[object Set]", stringTag$2 = "[object String]", symbolTag$1 = "[object Symbol]";
 var arrayBufferTag$1 = "[object ArrayBuffer]", dataViewTag$1 = "[object DataView]", float32Tag$1 = "[object Float32Array]", float64Tag$1 = "[object Float64Array]", int8Tag$1 = "[object Int8Array]", int16Tag$1 = "[object Int16Array]", int32Tag$1 = "[object Int32Array]", uint8Tag$1 = "[object Uint8Array]", uint8ClampedTag$1 = "[object Uint8ClampedArray]", uint16Tag$1 = "[object Uint16Array]", uint32Tag$1 = "[object Uint32Array]";
@@ -851,8 +768,6 @@ function initCloneByTag(object, tag, isDeep) {
 		case symbolTag$1: return cloneSymbol(object);
 	}
 }
-//#endregion
-//#region node_modules/lodash-es/_baseIsMap.js
 /** `Object#toString` result references. */
 var mapTag$2 = "[object Map]";
 /**
@@ -865,8 +780,6 @@ var mapTag$2 = "[object Map]";
 function baseIsMap(value) {
 	return isObjectLike(value) && _getTag_default(value) == mapTag$2;
 }
-//#endregion
-//#region node_modules/lodash-es/isMap.js
 var nodeIsMap = nodeUtil && nodeUtil.isMap;
 /**
 * Checks if `value` is classified as a `Map` object.
@@ -886,8 +799,6 @@ var nodeIsMap = nodeUtil && nodeUtil.isMap;
 * // => false
 */
 var isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap;
-//#endregion
-//#region node_modules/lodash-es/_baseIsSet.js
 /** `Object#toString` result references. */
 var setTag$2 = "[object Set]";
 /**
@@ -900,8 +811,6 @@ var setTag$2 = "[object Set]";
 function baseIsSet(value) {
 	return isObjectLike(value) && _getTag_default(value) == setTag$2;
 }
-//#endregion
-//#region node_modules/lodash-es/isSet.js
 var nodeIsSet = nodeUtil && nodeUtil.isSet;
 /**
 * Checks if `value` is classified as a `Set` object.
@@ -921,8 +830,6 @@ var nodeIsSet = nodeUtil && nodeUtil.isSet;
 * // => false
 */
 var isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet;
-//#endregion
-//#region node_modules/lodash-es/_baseClone.js
 /** Used to compose bitmasks for cloning. */
 var CLONE_DEEP_FLAG$1 = 1, CLONE_FLAT_FLAG = 2, CLONE_SYMBOLS_FLAG$2 = 4;
 /** `Object#toString` result references. */
@@ -988,8 +895,6 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 	});
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/clone.js
 /** Used to compose bitmasks for cloning. */
 var CLONE_SYMBOLS_FLAG$1 = 4;
 /**
@@ -1021,8 +926,6 @@ var CLONE_SYMBOLS_FLAG$1 = 4;
 function clone(value) {
 	return baseClone(value, CLONE_SYMBOLS_FLAG$1);
 }
-//#endregion
-//#region node_modules/lodash-es/_trimmedEndIndex.js
 /** Used to match a single whitespace character. */
 var reWhitespace = /\s/;
 /**
@@ -1038,8 +941,6 @@ function trimmedEndIndex(string) {
 	while (index-- && reWhitespace.test(string.charAt(index)));
 	return index;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseTrim.js
 /** Used to match leading whitespace. */
 var reTrimStart = /^\s+/;
 /**
@@ -1052,8 +953,6 @@ var reTrimStart = /^\s+/;
 function baseTrim(string) {
 	return string ? string.slice(0, trimmedEndIndex(string) + 1).replace(reTrimStart, "") : string;
 }
-//#endregion
-//#region node_modules/lodash-es/toNumber.js
 /** Used as references for various `Number` constants. */
 var NAN = NaN;
 /** Used to detect bad signed hexadecimal string values. */
@@ -1099,8 +998,6 @@ function toNumber(value) {
 	var isBinary = reIsBinary.test(value);
 	return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
 }
-//#endregion
-//#region node_modules/lodash-es/toFinite.js
 /** Used as references for various `Number` constants. */
 var INFINITY = Infinity, MAX_INTEGER = 17976931348623157e292;
 /**
@@ -1132,8 +1029,6 @@ function toFinite(value) {
 	if (value === INFINITY || value === -INFINITY) return (value < 0 ? -1 : 1) * MAX_INTEGER;
 	return value === value ? value : 0;
 }
-//#endregion
-//#region node_modules/lodash-es/toInteger.js
 /**
 * Converts `value` to an integer.
 *
@@ -1164,8 +1059,6 @@ function toInteger(value) {
 	var result = toFinite(value), remainder = result % 1;
 	return result === result ? remainder ? result - remainder : result : 0;
 }
-//#endregion
-//#region node_modules/lodash-es/_flatRest.js
 /**
 * A specialized version of `baseRest` which flattens the rest array.
 *
@@ -1176,8 +1069,6 @@ function toInteger(value) {
 function flatRest(func) {
 	return setToString(overRest(func, void 0, flatten), func + "");
 }
-//#endregion
-//#region node_modules/lodash-es/_hasUnicode.js
 /** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
 var reHasUnicode = RegExp("[\\u200d\\ud800-\\udfff\\u0300-\\u036f\\ufe20-\\ufe2f\\u20d0-\\u20ff\\ufe0e\\ufe0f]");
 /**
@@ -1190,8 +1081,6 @@ var reHasUnicode = RegExp("[\\u200d\\ud800-\\udfff\\u0300-\\u036f\\ufe20-\\ufe2f
 function hasUnicode(string) {
 	return reHasUnicode.test(string);
 }
-//#endregion
-//#region node_modules/lodash-es/cloneDeep.js
 /** Used to compose bitmasks for cloning. */
 var CLONE_DEEP_FLAG = 1, CLONE_SYMBOLS_FLAG = 4;
 /**
@@ -1215,8 +1104,6 @@ var CLONE_DEEP_FLAG = 1, CLONE_SYMBOLS_FLAG = 4;
 function cloneDeep(value) {
 	return baseClone(value, CLONE_DEEP_FLAG | CLONE_SYMBOLS_FLAG);
 }
-//#endregion
-//#region node_modules/lodash-es/now.js
 /**
 * Gets the timestamp of the number of milliseconds that have elapsed since
 * the Unix epoch (1 January 1970 00:00:00 UTC).
@@ -1236,8 +1123,6 @@ function cloneDeep(value) {
 var now = function() {
 	return root.Date.now();
 };
-//#endregion
-//#region node_modules/lodash-es/defaults.js
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 /** Used to check objects for own properties. */
@@ -1282,8 +1167,6 @@ var defaults = baseRest(function(object, sources) {
 	}
 	return object;
 });
-//#endregion
-//#region node_modules/lodash-es/last.js
 /**
 * Gets the last element of `array`.
 *
@@ -1302,8 +1185,6 @@ function last(array) {
 	var length = array == null ? 0 : array.length;
 	return length ? array[length - 1] : void 0;
 }
-//#endregion
-//#region node_modules/lodash-es/_createFind.js
 /**
 * Creates a `_.find` or `_.findLast` function.
 *
@@ -1325,8 +1206,6 @@ function createFind(findIndexFunc) {
 		return index > -1 ? iterable[iteratee ? collection[index] : index] : void 0;
 	};
 }
-//#endregion
-//#region node_modules/lodash-es/findIndex.js
 var nativeMax$1 = Math.max;
 /**
 * This method is like `_.find` except that it returns the index of the first
@@ -1370,8 +1249,6 @@ function findIndex(array, predicate, fromIndex) {
 	if (index < 0) index = nativeMax$1(length + index, 0);
 	return baseFindIndex(array, baseIteratee(predicate, 3), index);
 }
-//#endregion
-//#region node_modules/lodash-es/find.js
 /**
 * Iterates over elements of `collection`, returning the first element
 * `predicate` returns truthy for. The predicate is invoked with three
@@ -1409,8 +1286,6 @@ function findIndex(array, predicate, fromIndex) {
 * // => object for 'barney'
 */
 var find = createFind(findIndex);
-//#endregion
-//#region node_modules/lodash-es/forIn.js
 /**
 * Iterates over own and inherited enumerable string keyed properties of an
 * object and invokes `iteratee` for each property. The iteratee is invoked
@@ -1442,8 +1317,6 @@ var find = createFind(findIndex);
 function forIn(object, iteratee) {
 	return object == null ? object : baseFor(object, castFunction(iteratee), keysIn);
 }
-//#endregion
-//#region node_modules/lodash-es/forOwn.js
 /**
 * Iterates over own enumerable string keyed properties of an object and
 * invokes `iteratee` for each property. The iteratee is invoked with three
@@ -1475,8 +1348,6 @@ function forIn(object, iteratee) {
 function forOwn(object, iteratee) {
 	return object && baseForOwn(object, castFunction(iteratee));
 }
-//#endregion
-//#region node_modules/lodash-es/_baseGt.js
 /**
 * The base implementation of `_.gt` which doesn't coerce arguments.
 *
@@ -1489,8 +1360,6 @@ function forOwn(object, iteratee) {
 function baseGt(value, other) {
 	return value > other;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseHas.js
 /** Used to check objects for own properties. */
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 /**
@@ -1504,8 +1373,6 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 function baseHas(object, key) {
 	return object != null && hasOwnProperty.call(object, key);
 }
-//#endregion
-//#region node_modules/lodash-es/has.js
 /**
 * Checks if `path` is a direct property of `object`.
 *
@@ -1536,8 +1403,6 @@ function baseHas(object, key) {
 function has(object, path) {
 	return object != null && hasPath(object, path, baseHas);
 }
-//#endregion
-//#region node_modules/lodash-es/isString.js
 /** `Object#toString` result references. */
 var stringTag = "[object String]";
 /**
@@ -1560,8 +1425,6 @@ var stringTag = "[object String]";
 function isString(value) {
 	return typeof value == "string" || !isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseValues.js
 /**
 * The base implementation of `_.values` and `_.valuesIn` which creates an
 * array of `object` property values corresponding to the property names
@@ -1577,8 +1440,6 @@ function baseValues(object, props) {
 		return object[key];
 	});
 }
-//#endregion
-//#region node_modules/lodash-es/values.js
 /**
 * Creates an array of the own enumerable string keyed property values of `object`.
 *
@@ -1608,8 +1469,6 @@ function baseValues(object, props) {
 function values(object) {
 	return object == null ? [] : baseValues(object, keys(object));
 }
-//#endregion
-//#region node_modules/lodash-es/isUndefined.js
 /**
 * Checks if `value` is `undefined`.
 *
@@ -1630,8 +1489,6 @@ function values(object) {
 function isUndefined(value) {
 	return value === void 0;
 }
-//#endregion
-//#region node_modules/lodash-es/mapValues.js
 /**
 * Creates an object with the same keys as `object` and values generated
 * by running each own enumerable string keyed property of `object` thru
@@ -1668,8 +1525,6 @@ function mapValues(object, iteratee) {
 	});
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/max.js
 /**
 * Computes the maximum value of `array`. If `array` is empty or falsey,
 * `undefined` is returned.
@@ -1691,8 +1546,6 @@ function mapValues(object, iteratee) {
 function max(array) {
 	return array && array.length ? baseExtremum(array, identity, baseGt) : void 0;
 }
-//#endregion
-//#region node_modules/lodash-es/minBy.js
 /**
 * This method is like `_.min` except that it accepts `iteratee` which is
 * invoked for each element in `array` to generate the criterion by which
@@ -1719,8 +1572,6 @@ function max(array) {
 function minBy(array, iteratee) {
 	return array && array.length ? baseExtremum(array, baseIteratee(iteratee, 2), baseLt) : void 0;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseSet.js
 /**
 * The base implementation of `_.set`.
 *
@@ -1748,8 +1599,6 @@ function baseSet(object, path, value, customizer) {
 	}
 	return object;
 }
-//#endregion
-//#region node_modules/lodash-es/_basePickBy.js
 /**
 * The base implementation of  `_.pickBy` without support for iteratee shorthands.
 *
@@ -1767,8 +1616,6 @@ function basePickBy(object, paths, predicate) {
 	}
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseSortBy.js
 /**
 * The base implementation of `_.sortBy` which uses `comparer` to define the
 * sort order of `array` and replaces criteria objects with their corresponding
@@ -1785,8 +1632,6 @@ function baseSortBy(array, comparer) {
 	while (length--) array[length] = array[length].value;
 	return array;
 }
-//#endregion
-//#region node_modules/lodash-es/_compareAscending.js
 /**
 * Compares values to sort them in ascending order.
 *
@@ -1804,8 +1649,6 @@ function compareAscending(value, other) {
 	}
 	return 0;
 }
-//#endregion
-//#region node_modules/lodash-es/_compareMultiple.js
 /**
 * Used by `_.orderBy` to compare multiple properties of a value to another
 * and stable sort them.
@@ -1831,8 +1674,6 @@ function compareMultiple(object, other, orders) {
 	}
 	return object.index - other.index;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseOrderBy.js
 /**
 * The base implementation of `_.orderBy` without param guards.
 *
@@ -1864,8 +1705,6 @@ function baseOrderBy(collection, iteratees, orders) {
 		return compareMultiple(object, other, orders);
 	});
 }
-//#endregion
-//#region node_modules/lodash-es/_asciiSize.js
 /**
 * Gets the size of an ASCII `string`.
 *
@@ -1874,8 +1713,6 @@ function baseOrderBy(collection, iteratees, orders) {
 * @returns {number} Returns the string size.
 */
 var asciiSize = baseProperty("length");
-//#endregion
-//#region node_modules/lodash-es/_unicodeSize.js
 /** Used to compose unicode character classes. */
 var rsAstralRange = "\\ud800-\\udfff", rsComboRange = "\\u0300-\\u036f\\ufe20-\\ufe2f\\u20d0-\\u20ff", rsVarRange = "\\ufe0e\\ufe0f";
 /** Used to compose unicode capture groups. */
@@ -1906,8 +1743,6 @@ function unicodeSize(string) {
 	while (reUnicode.test(string)) ++result;
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_stringSize.js
 /**
 * Gets the number of symbols in `string`.
 *
@@ -1918,8 +1753,6 @@ function unicodeSize(string) {
 function stringSize(string) {
 	return hasUnicode(string) ? unicodeSize(string) : asciiSize(string);
 }
-//#endregion
-//#region node_modules/lodash-es/_basePick.js
 /**
 * The base implementation of `_.pick` without support for individual
 * property identifiers.
@@ -1934,8 +1767,6 @@ function basePick(object, paths) {
 		return hasIn(object, path);
 	});
 }
-//#endregion
-//#region node_modules/lodash-es/pick.js
 /**
 * Creates an object composed of the picked `object` properties.
 *
@@ -1956,8 +1787,6 @@ function basePick(object, paths) {
 var pick = flatRest(function(object, paths) {
 	return object == null ? {} : basePick(object, paths);
 });
-//#endregion
-//#region node_modules/lodash-es/_baseRange.js
 var nativeCeil = Math.ceil, nativeMax = Math.max;
 /**
 * The base implementation of `_.range` and `_.rangeRight` which doesn't
@@ -1978,8 +1807,6 @@ function baseRange(start, end, step, fromRight) {
 	}
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/_createRange.js
 /**
 * Creates a `_.range` or `_.rangeRight` function.
 *
@@ -1999,8 +1826,6 @@ function createRange(fromRight) {
 		return baseRange(start, end, step, fromRight);
 	};
 }
-//#endregion
-//#region node_modules/lodash-es/range.js
 /**
 * Creates an array of numbers (positive and/or negative) progressing from
 * `start` up to, but not including, `end`. A step of `-1` is used if a negative
@@ -2043,8 +1868,6 @@ function createRange(fromRight) {
 * // => []
 */
 var range = createRange();
-//#endregion
-//#region node_modules/lodash-es/size.js
 /** `Object#toString` result references. */
 var mapTag = "[object Map]", setTag = "[object Set]";
 /**
@@ -2075,8 +1898,6 @@ function size(collection) {
 	if (tag == mapTag || tag == setTag) return collection.size;
 	return baseKeys(collection).length;
 }
-//#endregion
-//#region node_modules/lodash-es/sortBy.js
 /**
 * Creates an array of elements, sorted in ascending order by the results of
 * running each element in a collection thru each iteratee. This method
@@ -2113,8 +1934,6 @@ var sortBy = baseRest(function(collection, iteratees) {
 	else if (length > 2 && isIterateeCall(iteratees[0], iteratees[1], iteratees[2])) iteratees = [iteratees[0]];
 	return baseOrderBy(collection, baseFlatten(iteratees, 1), []);
 });
-//#endregion
-//#region node_modules/lodash-es/union.js
 /**
 * Creates an array of unique values, in order, from all given arrays using
 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -2134,8 +1953,6 @@ var sortBy = baseRest(function(collection, iteratees) {
 var union = baseRest(function(arrays) {
 	return baseUniq(baseFlatten(arrays, 1, isArrayLikeObject, true));
 });
-//#endregion
-//#region node_modules/lodash-es/uniqueId.js
 /** Used to generate unique IDs. */
 var idCounter = 0;
 /**
@@ -2159,8 +1976,6 @@ function uniqueId(prefix) {
 	var id = ++idCounter;
 	return toString(prefix) + id;
 }
-//#endregion
-//#region node_modules/lodash-es/_baseZipObject.js
 /**
 * This base implementation of `_.zipObject` which assigns values using `assignFunc`.
 *
@@ -2178,8 +1993,6 @@ function baseZipObject(props, values, assignFunc) {
 	}
 	return result;
 }
-//#endregion
-//#region node_modules/lodash-es/zipObject.js
 /**
 * This method is like `_.fromPairs` except that it accepts two arrays,
 * one of property identifiers and one of corresponding values.
@@ -2199,8 +2012,6 @@ function baseZipObject(props, values, assignFunc) {
 function zipObject(props, values) {
 	return baseZipObject(props || [], values || [], assignValue);
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/graph.js
 var DEFAULT_EDGE_NAME = "\0";
 var GRAPH_NODE = "\0";
 var EDGE_KEY_DELIM = "";
@@ -3179,8 +2990,6 @@ function edgeArgsToObj(isDirected, v_, w_, name) {
 function edgeObjToId(isDirected, edgeObj) {
 	return edgeArgsToId(isDirected, edgeObj.v, edgeObj.w, edgeObj.name);
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/data/list.js
 var List = class {
 	constructor() {
 		var sentinel = {};
@@ -3223,8 +3032,6 @@ function unlink(entry) {
 function filterOutLinks(k, v) {
 	if (k !== "_next" && k !== "_prev") return v;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/greedy-fas.js
 var DEFAULT_WEIGHT_FN = constant(1);
 function greedyFAS(g, weightFn) {
 	if (g.nodeCount() <= 1) return [];
@@ -3310,8 +3117,6 @@ function assignBucket(buckets, zeroIdx, entry) {
 	else if (!entry["in"]) buckets[buckets.length - 1].enqueue(entry);
 	else buckets[entry.out - entry["in"] + zeroIdx].enqueue(entry);
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/acyclic.js
 function run$2(g) {
 	forEach(g.graph().acyclicer === "greedy" ? greedyFAS(g, weightFn(g)) : dfsFAS(g), function(e) {
 		var label = g.edge(e);
@@ -3355,8 +3160,6 @@ function undo$2(g) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/util.js
 function addDummyNode(g, type, attrs, name) {
 	var v;
 	do
@@ -3495,8 +3298,6 @@ function time(name, fn) {
 function notime(name, fn) {
 	return fn();
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/add-border-segments.js
 function addBorderSegments(g) {
 	function dfs(v) {
 		var children = g.children(v);
@@ -3526,8 +3327,6 @@ function addBorderNode(g, prop, prefix, sg, sgNode, rank) {
 	g.setParent(curr, sg);
 	if (prev) g.setEdge(prev, curr, { weight: 1 });
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/coordinate-system.js
 function adjust(g) {
 	var rankDir = g.graph().rankdir.toLowerCase();
 	if (rankDir === "lr" || rankDir === "rl") swapWidthHeight(g);
@@ -3581,8 +3380,6 @@ function swapXYOne(attrs) {
 	attrs.x = attrs.y;
 	attrs.y = x;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/normalize.js
 /**
 * TypeScript type imports:
 *
@@ -3666,8 +3463,6 @@ function undo(g) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/rank/util.js
 function longestPath(g) {
 	var visited = {};
 	function dfs(v) {
@@ -3685,8 +3480,6 @@ function longestPath(g) {
 function slack(g, e) {
 	return g.node(e.w).rank - g.node(e.v).rank - g.edge(e).minlen;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/rank/feasible-tree.js
 function feasibleTree(g) {
 	var t = new Graph({ directed: false });
 	var start = g.nodes()[0];
@@ -3724,8 +3517,6 @@ function shiftRanks(t, g, delta) {
 		g.node(v).rank += delta;
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/alg/topsort.js
 topsort.CycleException = CycleException;
 /**
 * An implementation of [topological sorting](https://en.wikipedia.org/wiki/Topological_sorting).
@@ -3776,8 +3567,6 @@ function topsort(g) {
 */
 function CycleException() {}
 CycleException.prototype = /* @__PURE__ */ new Error();
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/alg/dfs.js
 /**
 * A helper that preforms a pre- or post-order traversal on the input graph
 * and returns the nodes in the order they were visited. If the graph is
@@ -3822,8 +3611,6 @@ function doDfs(g, v, postorder, visited, navigation, acc) {
 		if (postorder) acc.push(v);
 	}
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/alg/postorder.js
 /**
 * This function performs a [postorder traversal][] of the graph `g` starting
 * at the nodes `vs`. For each node visited, `v`,  the function `callback(v)`
@@ -3851,8 +3638,6 @@ function doDfs(g, v, postorder, visited, navigation, acc) {
 function postorder$1(g, vs) {
 	return dfs$1(g, vs, "post");
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/alg/preorder.js
 /**
 * This function performs a [preorder traversal][] of the graph `g` starting
 * at the nodes `vs`. For each node visited, `v`,  the function `callback(v)`
@@ -3883,8 +3668,6 @@ function postorder$1(g, vs) {
 function preorder(g, vs) {
 	return dfs$1(g, vs, "pre");
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/rank/network-simplex.js
 networkSimplex.initLowLimValues = initLowLimValues;
 networkSimplex.initCutValues = initCutValues;
 networkSimplex.calcCutValue = calcCutValue;
@@ -4009,8 +3792,6 @@ function isTreeEdge(tree, u, v) {
 function isDescendant(tree, vLabel, rootLabel) {
 	return rootLabel.low <= vLabel.lim && vLabel.lim <= rootLabel.lim;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/rank/index.js
 function rank(g) {
 	switch (g.graph().ranker) {
 		case "network-simplex":
@@ -4033,8 +3814,6 @@ function tightTreeRanker(g) {
 function networkSimplexRanker(g) {
 	networkSimplex(g);
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/nesting-graph.js
 function run(g) {
 	var root = addDummyNode(g, "root", {}, "_root");
 	var depths = treeDepths(g);
@@ -4116,8 +3895,6 @@ function cleanup(g) {
 		if (g.edge(e).nestingEdge) g.removeEdge(e);
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/add-subgraph-constraints.js
 function addSubgraphConstraints(g, cg, vs) {
 	var prev = {}, rootPrev;
 	forEach(vs, function(v) {
@@ -4139,8 +3916,6 @@ function addSubgraphConstraints(g, cg, vs) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/build-layer-graph.js
 function buildLayerGraph(g, rank, relationship) {
 	var root = createRootNode(g), result = new Graph({ compound: true }).setGraph({ root }).setDefaultNodeLabel(function(v) {
 		return g.node(v);
@@ -4167,8 +3942,6 @@ function createRootNode(g) {
 	while (g.hasNode(v = uniqueId("_root")));
 	return v;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/cross-count.js
 function crossCount(g, layering) {
 	var cc = 0;
 	for (var i = 1; i < layering.length; ++i) cc += twoLayerCrossCount(g, layering[i - 1], layering[i]);
@@ -4207,8 +3980,6 @@ function twoLayerCrossCount(g, northLayer, southLayer) {
 	}));
 	return cc;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/init-order.js
 function initOrder(g) {
 	var visited = {};
 	var simpleNodes = filter(g.nodes(), function(v) {
@@ -4230,8 +4001,6 @@ function initOrder(g) {
 	}), dfs);
 	return layers;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/barycenter.js
 function barycenter(g, movable) {
 	return map(movable, function(v) {
 		var inV = g.inEdges(v);
@@ -4255,8 +4024,6 @@ function barycenter(g, movable) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/resolve-conflicts.js
 function resolveConflicts(entries, cg) {
 	var mappedEntries = {};
 	forEach(entries, function(entry, i) {
@@ -4332,8 +4099,6 @@ function mergeEntries(target, source) {
 	target.i = Math.min(source.i, target.i);
 	source.merged = true;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/sort.js
 function sort(entries, biasRight) {
 	var parts = partition(entries, function(entry) {
 		return Object.prototype.hasOwnProperty.call(entry, "barycenter");
@@ -4373,8 +4138,6 @@ function compareWithBias(bias) {
 		return !bias ? entryV.i - entryW.i : entryW.i - entryV.i;
 	};
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/sort-subgraph.js
 function sortSubgraph(g, v, cg, biasRight) {
 	var movable = g.children(v);
 	var node = g.node(v);
@@ -4430,8 +4193,6 @@ function mergeBarycenters(target, other) {
 		target.weight = other.weight;
 	}
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/order/index.js
 function order(g) {
 	var maxRank$1 = maxRank(g), downLayerGraphs = buildLayerGraphs(g, range(1, maxRank$1 + 1), "inEdges"), upLayerGraphs = buildLayerGraphs(g, range(maxRank$1 - 1, -1, -1), "outEdges");
 	var layering = initOrder(g);
@@ -4472,8 +4233,6 @@ function assignOrder(g, layering) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/parent-dummy-chains.js
 function parentDummyChains(g) {
 	var postorderNums = postorder(g);
 	forEach(g.graph().dummyChains, function(v) {
@@ -4534,8 +4293,6 @@ function postorder(g) {
 	forEach(g.children(), dfs);
 	return result;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/position/bk.js
 function findType1Conflicts(g, layering) {
 	/** @type {{[nodeId: string | number]: {[nodeId: string | number]: true}}} */
 	var conflicts = {};
@@ -4811,8 +4568,6 @@ function sep(nodeSep, edgeSep, reverseSep) {
 function width(g, v) {
 	return g.node(v).width;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/position/index.js
 function position(g) {
 	g = asNonCompoundGraph(g);
 	positionY(g);
@@ -4834,8 +4589,6 @@ function positionY(g) {
 		prevY += maxHeight + rankSep;
 	});
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/dagre/layout.js
 function layout(g, opts) {
 	var time$1 = opts && opts.debugTiming ? time : notime;
 	time$1("layout", () => {
@@ -5182,8 +4935,6 @@ function canonicalize(attrs) {
 	});
 	return newAttrs;
 }
-//#endregion
-//#region node_modules/dagre-d3-es/src/graphlib/json.js
 /**
 * @template [GraphLabel=any] - Label of the graph.
 * @template [NodeLabel=any] - Label of a node.
@@ -5283,5 +5034,4 @@ function writeEdges(g) {
 		return edge;
 	});
 }
-//#endregion
 export { merge as a, clone as i, layout as n, Graph as r, write as t };

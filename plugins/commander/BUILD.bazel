@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.commander.tests`
 
 ### auto-generated section `build intellij.commander` start
-
 jvm_library(
     name = "commander",
     srcs = glob(
@@ -104,7 +103,6 @@ exports_files(
 ### auto-generated section `iml intellij.commander` end
 
 ### auto-generated section `build intellij.commander.tests` start
-
 jvm_library(
     name = "commander-tests",
     srcs = glob(

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.actionSystem.AnAction
 
+@Deprecated("Use com.intellij.platform.searchEverywhere.SeExtendedInfo instead")
 open class ExtendedInfo {
   var leftText: (Any) -> String?
   var rightAction: (Any) -> AnAction?

@@ -226,7 +226,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    val editorTag = dataContext.editorTag
+    val editorTag = if (logger.isDebugEnabled) dataContext.editorTag else ""
     if (component is JComponent) {
       component.installPopupMenu()
       component.accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.toolbarAccessibleName }

@@ -56,7 +56,6 @@ data class JdkInstallRequestInfo(
     get() = item.resolveJavaHome(installDir)
 }
 
-@Internal
 internal class JdkDownload : SdkDownload {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false

@@ -1,4 +1,3 @@
-//#region node_modules/@agentclientprotocol/sdk/dist/schema/index.js
 var AGENT_METHODS = {
 	initialize: "initialize",
 	authenticate: "authenticate",
@@ -46,8 +45,6 @@ var CLIENT_METHODS = {
 	elicitation_complete: "elicitation/complete"
 };
 var PROTOCOL_METHODS = { cancel_request: "$/cancel_request" };
-//#endregion
-//#region node_modules/zod/v4/core/core.js
 var _a$1;
 /** A special constant with type `never` */
 var NEVER = /*@__PURE__*/ Object.freeze({ status: "aborted" });
@@ -107,8 +104,6 @@ function config(newConfig) {
 	if (newConfig) Object.assign(globalConfig, newConfig);
 	return globalConfig;
 }
-//#endregion
-//#region node_modules/zod/v4/core/util.js
 function getEnumValues(entries) {
 	const numericValues = Object.values(entries).filter((v) => typeof v === "number");
 	return Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -419,8 +414,6 @@ function issue(...args) {
 	};
 	return { ...iss };
 }
-//#endregion
-//#region node_modules/zod/v4/core/errors.js
 var initializer$1 = (inst, def) => {
 	inst.name = "$ZodError";
 	Object.defineProperty(inst, "_zod", {
@@ -479,8 +472,6 @@ function formatError(error, mapper = (issue) => issue.message) {
 	processError(error);
 	return fieldErrors;
 }
-//#endregion
-//#region node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
 	const ctx = _ctx ? {
 		..._ctx,
@@ -593,8 +584,6 @@ var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
 var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
 	return _safeParseAsync(_Err)(schema, value, _ctx);
 };
-//#endregion
-//#region node_modules/zod/v4/core/regexes.js
 /**
 * @deprecated CUID v1 is deprecated by its authors due to information leakage
 * (timestamps embedded in the id). Use {@link cuid2} instead.
@@ -657,8 +646,6 @@ var number$1 = /^-?\d+(?:\.\d+)?$/;
 var boolean$1 = /^(?:true|false)$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
-//#endregion
-//#region node_modules/zod/v4/core/checks.js
 var $ZodCheck = /*@__PURE__*/ $constructor("$ZodCheck", (inst, def) => {
 	var _a;
 	inst._zod ?? (inst._zod = {});
@@ -1015,8 +1002,6 @@ var $ZodCheckOverwrite = /*@__PURE__*/ $constructor("$ZodCheckOverwrite", (inst,
 		payload.value = def.tx(payload.value);
 	};
 });
-//#endregion
-//#region node_modules/zod/v4/core/doc.js
 var Doc = class {
 	constructor(args = []) {
 		this.content = [];
@@ -1046,15 +1031,11 @@ var Doc = class {
 		return new F(...args, lines.join("\n"));
 	}
 };
-//#endregion
-//#region node_modules/zod/v4/core/versions.js
 var version = {
 	major: 4,
 	minor: 4,
 	patch: 3
 };
-//#endregion
-//#region node_modules/zod/v4/core/schemas.js
 var $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
 	var _a;
 	inst ?? (inst = {});
@@ -2283,8 +2264,6 @@ function handleRefineResult(result, payload, input, inst) {
 		payload.issues.push(issue(_iss));
 	}
 }
-//#endregion
-//#region node_modules/zod/v4/core/registries.js
 var _a;
 var $ZodRegistry = class {
 	constructor() {
@@ -2330,8 +2309,6 @@ function registry() {
 }
 (_a = globalThis).__zod_globalRegistry ?? (_a.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-//#endregion
-//#region node_modules/zod/v4/core/api.js
 // @__NO_SIDE_EFFECTS__
 function _string(Class, params) {
 	return new Class({
@@ -2835,8 +2812,6 @@ function _check(fn, params) {
 	ch._zod.check = fn;
 	return ch;
 }
-//#endregion
-//#region node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
 	let target = params?.target ?? "draft-2020-12";
 	if (target === "draft-4") target = "draft-04";
@@ -3128,8 +3103,6 @@ var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) =
 	extractDefs(ctx, schema);
 	return finalize(ctx, schema);
 };
-//#endregion
-//#region node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
 	guid: "uuid",
 	url: "uri",
@@ -3390,8 +3363,6 @@ var optionalProcessor = (schema, ctx, _json, params) => {
 	const seen = ctx.seen.get(schema);
 	seen.ref = def.innerType;
 };
-//#endregion
-//#region node_modules/zod/v4/classic/iso.js
 var ZodISODateTime = /*@__PURE__*/ $constructor("ZodISODateTime", (inst, def) => {
 	$ZodISODateTime.init(inst, def);
 	ZodStringFormat.init(inst, def);
@@ -3420,8 +3391,6 @@ var ZodISODuration = /*@__PURE__*/ $constructor("ZodISODuration", (inst, def) =>
 function duration(params) {
 	return /* @__PURE__ */ _isoDuration(ZodISODuration, params);
 }
-//#endregion
-//#region node_modules/zod/v4/classic/errors.js
 var initializer = (inst, issues) => {
 	$ZodError.init(inst, issues);
 	inst.name = "ZodError";
@@ -3442,8 +3411,6 @@ var initializer = (inst, issues) => {
 	});
 };
 var ZodRealError = /*@__PURE__*/ $constructor("ZodError", initializer, { Parent: Error });
-//#endregion
-//#region node_modules/zod/v4/classic/parse.js
 var parse = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -3456,8 +3423,6 @@ var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
 var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
-//#endregion
-//#region node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap();
 function _installLazyMethods(inst, group, methods) {
 	const proto = Object.getPrototypeOf(inst);
@@ -4252,8 +4217,6 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
 	return /* @__PURE__ */ _superRefine(fn, params);
 }
-//#endregion
-//#region node_modules/@agentclientprotocol/sdk/dist/schema-deserialize.js
 var skippedItem = Symbol("skippedItem");
 function defaultOnError(schema, fallback) {
 	return schema.catch(fallback);
@@ -4272,8 +4235,6 @@ function requiredDefaultOnError(schema, fallback) {
 function vecSkipError(itemSchema) {
 	return array(itemSchema.catch(skippedItem)).transform((items) => items.filter((item) => item !== skippedItem));
 }
-//#endregion
-//#region node_modules/@agentclientprotocol/sdk/dist/schema/zod.gen.js
 /**
 * JSON RPC Request Id
 *
@@ -6774,8 +6735,6 @@ object({
 	requestId: zRequestId,
 	_meta: record(string(), unknown()).nullish()
 });
-//#endregion
-//#region node_modules/@agentclientprotocol/sdk/dist/stream.js
 /**
 * Creates an ACP Stream from a pair of newline-delimited JSON streams.
 *
@@ -6855,8 +6814,6 @@ function ndJsonStream(output, input) {
 		} })
 	};
 }
-//#endregion
-//#region node_modules/@agentclientprotocol/sdk/dist/jsonrpc.js
 var CANCEL_REQUEST_METHOD = "$/cancel_request";
 function isRecord(value) {
 	return typeof value === "object" && value !== null;
@@ -7510,8 +7467,6 @@ var RequestError = class RequestError extends Error {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@agentclientprotocol/sdk/dist/acp.js
 function emptyObjectResponse(response) {
 	return response ?? {};
 }
@@ -8684,5 +8639,4 @@ var ClientSideConnection = class {
 		return this.connection.closed;
 	}
 };
-//#endregion
 export { ndJsonStream as n, ClientSideConnection as t };

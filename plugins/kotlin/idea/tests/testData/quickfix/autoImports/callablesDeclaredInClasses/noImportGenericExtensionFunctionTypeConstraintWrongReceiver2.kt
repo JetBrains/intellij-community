@@ -4,8 +4,8 @@
 // ACTION: Create member function 'A.bar'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: bar
-// K2_ERROR: Unresolved reference 'bar'.
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 open class A

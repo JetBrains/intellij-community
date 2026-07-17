@@ -6,10 +6,10 @@
 // ACTION: Introduce import alias
 // ERROR: Type of 'x' is not a subtype of the overridden property 'public abstract val x: (String) -> [Error type: Unresolved type for Ay] defined in A'
 // ERROR: Unresolved reference: Ay
-// K2_ERROR: Type of 'val x: (Int) -> Int' is not a subtype of overridden property 'val x: (String) -> ??? (Unresolved qualified name: Ay)' defined in 'A'.
-// K2_ERROR: Unresolved reference 'Ay'.
-// K2_AFTER_ERROR: Type of 'val x: (Int) -> Int' is not a subtype of overridden property 'val x: (String) -> ??? (Unresolved qualified name: Ay)' defined in 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'Ay'.
+// K2_AFTER_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
+// K2_ERROR: UNRESOLVED_REFERENCE
 interface A {
     val x: (String) -> Ay
 }

@@ -217,7 +217,7 @@ private class PluginSetConstraintsResolver(
       }
       else if (tryAddDependency(target)) {
         if (target is ContentModuleDescriptor && dependencyRef is DependencyRef.ContentModule) {
-          val visibilityViolation = PluginSetBuilder.checkVisibilityAndReturnErrorMessage(
+          val visibilityViolation = ModuleVisibility.checkVisibilityAndReturnErrorMessage(
             candidate as? ContentModuleDescriptor ?: candidate.getMainDescriptor(),
             target
           )
@@ -353,7 +353,7 @@ private class PluginSetConstraintsResolver(
     // preserves all keys for 'unknown descriptor' check
     val exclusions = candidates.mapValuesTo(HashMap(candidates.size)) { (it.value as? Excluded)?.reason }
     val resolvedPluginSet = ResolvedPluginSetImpl(
-      originalPluginSet = pluginSet,
+      candidateSet = pluginSet,
       initContext = initContext,
       sortedResolvedDescriptors = LinkedHashSet(sortedCandidates),
       runtimeModuleGroupGraph = runtimeModuleGroupGraph,
@@ -573,7 +573,7 @@ private class PluginSetConstraintsResolver(
 
   private class ResolvedPluginSetImpl(
     /** May contain unresolved plugins */
-    override val originalPluginSet: UnambiguousPluginSet,
+    override val candidateSet: UnambiguousPluginSet,
     override val initContext: PluginInitializationContext,
     override val sortedResolvedDescriptors: Set<IdeaPluginDescriptorImpl>,
     override val runtimeModuleGroupGraph: RuntimeModuleGroupGraph,

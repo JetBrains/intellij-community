@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.ui` start
+jps_test(
+    name = "ui-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ui-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.ui.tests`
+
+### auto-generated section `build intellij.platform.jewel.ui` start
 create_kotlinc_options(
     name = "custom_ui",
     opt_in = [
@@ -113,7 +121,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.ui` end
 
 ### auto-generated section `build intellij.platform.jewel.ui.tests` start
-
 create_kotlinc_options(
     name = "custom_ui-tests",
     opt_in = [
@@ -206,11 +213,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.ui.tests` end
-
-### auto-generated section `test intellij.platform.jewel.ui.tests` start
-
-jps_test(
-    name = "ui-tests_test",
-    runtime_deps = [":ui-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.ui.tests` end

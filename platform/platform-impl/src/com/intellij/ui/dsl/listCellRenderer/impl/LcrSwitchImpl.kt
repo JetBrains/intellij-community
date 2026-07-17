@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JList
 
-@ApiStatus.Internal
 internal class LcrSwitchImpl(initParams: LcrSwitchInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val isOn: Boolean) :
   LcrCellBaseImpl<LcrSwitchInitParams>(initParams, baselineAlign, beforeGap) {
 

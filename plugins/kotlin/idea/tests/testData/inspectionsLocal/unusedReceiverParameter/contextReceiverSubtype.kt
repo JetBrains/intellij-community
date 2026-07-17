@@ -1,6 +1,5 @@
 // PROBLEM: none
-// COMPILER_ARGUMENTS: -Xcontext-receivers
-// K2_ERROR: Experimental context receivers are superseded by context parameters.<br>Remove the '-Xcontext-receivers' compiler argument and migrate to the new syntax.<br><br>See the context parameters proposal for more details: https://kotl.in/context-parameters
+// K2_ERROR: CONTEXT_PARAMETER_WITHOUT_NAME
 
 interface A
 class B : A

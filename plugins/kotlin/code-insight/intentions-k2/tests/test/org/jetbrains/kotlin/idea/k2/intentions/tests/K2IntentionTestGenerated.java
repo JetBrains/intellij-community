@@ -6345,6 +6345,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/branchingIfStatements.kt");
         }
 
+        @TestMetadata("elvisOperator.kt")
+        public void testElvisOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/elvisOperator.kt");
+        }
+
         @TestMetadata("endOfLineCommentBug.kt")
         public void testEndOfLineCommentBug() throws Exception {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/endOfLineCommentBug.kt");
@@ -7254,6 +7259,71 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("caretAfter.kt")
             public void testCaretAfter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/caretAfter.kt");
+            }
+
+            @TestMetadata("companion2Private.kt")
+            public void testCompanion2Private() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2Private.kt");
+            }
+
+            @TestMetadata("companion2PrivateInDataClass.kt")
+            public void testCompanion2PrivateInDataClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2PrivateInDataClass.kt");
+            }
+
+            @TestMetadata("companion2PrivateInEnum.kt")
+            public void testCompanion2PrivateInEnum() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2PrivateInEnum.kt");
+            }
+
+            @TestMetadata("companion2PrivateInFinal.kt")
+            public void testCompanion2PrivateInFinal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2PrivateInFinal.kt");
+            }
+
+            @TestMetadata("companion2PrivateInInternal.kt")
+            public void testCompanion2PrivateInInternal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2PrivateInInternal.kt");
+            }
+
+            @TestMetadata("companion2PrivateInSealed.kt")
+            public void testCompanion2PrivateInSealed() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2PrivateInSealed.kt");
+            }
+
+            @TestMetadata("companion2Public.kt")
+            public void testCompanion2Public() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companion2Public.kt");
+            }
+
+            @TestMetadata("companionPrivate.kt")
+            public void testCompanionPrivate() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPrivate.kt");
+            }
+
+            @TestMetadata("companionPublic.kt")
+            public void testCompanionPublic() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPublic.kt");
+            }
+
+            @TestMetadata("companionPublicForDataClass.kt")
+            public void testCompanionPublicForDataClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPublicForDataClass.kt");
+            }
+
+            @TestMetadata("companionPublicForFinal.kt")
+            public void testCompanionPublicForFinal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPublicForFinal.kt");
+            }
+
+            @TestMetadata("companionPublicForInternal.kt")
+            public void testCompanionPublicForInternal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPublicForInternal.kt");
+            }
+
+            @TestMetadata("companionPublicForSealed.kt")
+            public void testCompanionPublicForSealed() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/companionPublicForSealed.kt");
             }
 
             @TestMetadata("constructorParameter.kt")
@@ -15632,6 +15702,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("enumPrimaryConstructor.kt")
+        public void testEnumPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("enumSecondaryConstructor.kt")
+        public void testEnumSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumSecondaryConstructor.kt");
+        }
+
         @TestMetadata("javaUsage.kt")
         public void testJavaUsage() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/javaUsage.kt");
@@ -15645,6 +15725,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/nested.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/primaryConstructor.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/secondaryConstructor.kt");
         }
 
         @TestMetadata("simple.kt")

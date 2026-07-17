@@ -113,7 +113,7 @@ private fun MutableEditor.toTransient(syncEditor: suspend (TransientEditor) -> U
 
 private class PerCaretOrchestrator {
   companion object {
-    val logger = KLoggers.logger(PerCaretOrchestrator::class)
+    val logger by lazy { KLoggers.logger(PerCaretOrchestrator::class) }
   }
 
   val continuations: MutableMap<TransientEditor, Continuation<Unit>> = HashMap()

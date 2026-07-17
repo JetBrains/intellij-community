@@ -2,12 +2,14 @@
 package com.intellij.build.output;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@NonExtendable
 public interface BuildOutputInstantReader {
   @NotNull
   Object getParentEventId();

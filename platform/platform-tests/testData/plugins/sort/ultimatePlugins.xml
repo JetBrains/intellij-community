@@ -684,7 +684,6 @@
     <depends optional="true">-org-jetbrains-plugins-sass-</depends>
     <depends optional="true">-org-jetbrains-plugins-haml-</depends>
     <depends optional="true">-org-jetbrains-plugins-slim-</depends>
-    <depends optional="true">-com-intellij-lang-puppet-</depends>
     <depends optional="true">-org-jetbrains-plugins-remote-run-</depends>
     <depends optional="true">-gherkin-</depends>
     <depends optional="true">-Docker-</depends>
@@ -698,12 +697,6 @@
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true">-com-intellij-plugins-watcher-</depends>
     <depends optional="true">-com-intellij-copyright-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.puppet/META-INF/plugin.xml">
-    <id>-com-intellij-lang-puppet-</id>
-    <name>Puppet</name>
-    <depends>com.intellij.modules.lang</depends>
-    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.slim/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-slim-</id>
@@ -959,12 +952,6 @@
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends optional="true">-JavaScript-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.ruby.chef/META-INF/plugin.xml">
-    <id>-org-jetbrains-plugins-ruby-chef-</id>
-    <name>Chef</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.ruby</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.decompiler/META-INF/plugin.xml">
     <id>-org-jetbrains-java-decompiler-</id>

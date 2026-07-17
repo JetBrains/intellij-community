@@ -1,5 +1,4 @@
 import { n as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/react/cjs/react.production.min.js
 /**
 * @license React
 * react.production.min.js
@@ -322,13 +321,9 @@ var require_react_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.version = "18.3.1";
 }));
-//#endregion
-//#region node_modules/react/index.js
 var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_production_min();
 }));
-//#endregion
-//#region node_modules/scheduler/cjs/scheduler.production.min.js
 /**
 * @license React
 * scheduler.production.min.js
@@ -568,13 +563,9 @@ var require_scheduler_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 		};
 	};
 }));
-//#endregion
-//#region node_modules/scheduler/index.js
 var require_scheduler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_scheduler_production_min();
 }));
-//#endregion
-//#region node_modules/react-dom/cjs/react-dom.production.min.js
 /**
 * @license React
 * react-dom.production.min.js
@@ -7248,8 +7239,6 @@ var require_react_dom_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 	};
 	exports.version = "18.3.1-next-f1338f8080-20240426";
 }));
-//#endregion
-//#region node_modules/react-dom/index.js
 var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function checkDCE() {
 		if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -7262,8 +7251,6 @@ var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	checkDCE();
 	module.exports = require_react_dom_production_min();
 }));
-//#endregion
-//#region node_modules/react/cjs/react-jsx-runtime.production.min.js
 /**
 * @license React
 * react-jsx-runtime.production.min.js
@@ -7299,13 +7286,9 @@ var require_react_jsx_runtime_production_min = /* @__PURE__ */ __commonJSMin(((e
 	exports.jsx = q;
 	exports.jsxs = q;
 }));
-//#endregion
-//#region node_modules/react/jsx-runtime.js
 var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_jsx_runtime_production_min();
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/formatErrorMessage.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 /**
 * Creates a formatErrorMessage function with a custom URL and prefix.
@@ -7331,24 +7314,18 @@ function createFormatErrorMessage(baseUrl, prefix) {
 *   ...
 */
 var formatErrorMessage = createFormatErrorMessage("https://base-ui.com/production-error", "Base UI");
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/positioner/MenuPositionerContext.mjs
 var MenuPositionerContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuPositionerContext(optional) {
 	const context = import_react.useContext(MenuPositionerContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(33));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/root/MenuRootContext.mjs
 var MenuRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuRootContext(optional) {
 	const context = import_react.useContext(MenuRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(36));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useRefWithInit.mjs
 var UNINITIALIZED = {};
 /**
 * A React.useRef() that is initialized with a function. Note that it accepts an optional
@@ -7362,8 +7339,6 @@ function useRefWithInit(init, initArg) {
 	if (ref.current === UNINITIALIZED) ref.current = init(initArg);
 	return ref;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useMergedRefs.mjs
 /**
 * Merges refs into a single memoized callback ref or `null`.
 * This makes sure multiple refs are updated together and have the same value.
@@ -7453,14 +7428,10 @@ function update(forkRef, refs) {
 		}
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/reactVersion.mjs
 var majorVersion = parseInt("18.3.1", 10);
 function isReactVersionAtLeast(reactVersionToCheck) {
 	return majorVersion >= reactVersionToCheck;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/getReactElementRef.mjs
 /**
 * Extracts the `ref` from a React element, handling different React versions.
 */
@@ -7470,8 +7441,6 @@ function getReactElementRef(element) {
 	const propsWithRef = reactElement.props;
 	return (isReactVersionAtLeast(19) ? propsWithRef?.ref : reactElement.ref) ?? null;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/mergeObjects.mjs
 function mergeObjects(a, b) {
 	if (a && !b) return a;
 	if (!a && b) return b;
@@ -7480,13 +7449,9 @@ function mergeObjects(a, b) {
 		...b
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/empty.mjs
 function NOOP() {}
 var EMPTY_ARRAY = Object.freeze([]);
 var EMPTY_OBJECT = Object.freeze({});
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/getStateAttributesProps.mjs
 function getStateAttributesProps(state, customMapping) {
 	const props = {};
 	for (const key in state) {
@@ -7501,8 +7466,6 @@ function getStateAttributesProps(state, customMapping) {
 	}
 	return props;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/resolveClassName.mjs
 /**
 * If the provided className is a string, it will be returned as is.
 * Otherwise, the function will call the className function with the state as the first argument.
@@ -7513,8 +7476,6 @@ function getStateAttributesProps(state, customMapping) {
 function resolveClassName(className, state) {
 	return typeof className === "function" ? className(state) : className;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/resolveStyle.mjs
 /**
 * If the provided style is an object, it will be returned as is.
 * Otherwise, the function will call the style function with the state as the first argument.
@@ -7525,8 +7486,6 @@ function resolveClassName(className, state) {
 function resolveStyle(style, state) {
 	return typeof style === "function" ? style(state) : style;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/merge-props/mergeProps.mjs
 var EMPTY_PROPS = {};
 /**
 * Merges multiple sets of React props. It follows the Object.assign pattern where the rightmost object's fields overwrite
@@ -7676,8 +7635,6 @@ function mergeClassNames(ourClassName, theirClassName) {
 function isSyntheticEvent(event) {
 	return event != null && typeof event === "object" && "nativeEvent" in event;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useRenderElement.mjs
 /**
 * Renders a Base UI element.
 *
@@ -7746,8 +7703,6 @@ function renderTag(Tag, props) {
 	});
 	return /*#__PURE__*/ import_react.createElement(Tag, props);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/stateAttributesMapping.mjs
 var TransitionStatusDataAttributes = /*#__PURE__*/ function(TransitionStatusDataAttributes) {
 	/**
 	* Present when the component is animating in.
@@ -7766,8 +7721,6 @@ var transitionStatusMapping = { transitionStatus(value) {
 	if (value === "ending") return ENDING_HOOK;
 	return null;
 } };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/popupStateMapping.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var CommonPopupDataAttributes = function(CommonPopupDataAttributes) {
@@ -7840,16 +7793,12 @@ var popupStateMapping = {
 		return null;
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/context-menu/root/ContextMenuRootContext.mjs
 var ContextMenuRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useContextMenuRootContext(optional = true) {
 	const context = import_react.useContext(ContextMenuRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(25));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/reason-parts.mjs
 var none = "none";
 var triggerPress = "trigger-press";
 var triggerHover = "trigger-hover";
@@ -7865,8 +7814,6 @@ var siblingOpen = "sibling-open";
 var disabled = "disabled";
 var imperativeAction = "imperative-action";
 var windowResize = "window-resize";
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useControlled.mjs
 function useControlled({ controlled, default: defaultProp, name, state = "value" }) {
 	const { current: isControlled } = import_react.useRef(controlled !== void 0);
 	const [valueState, setValue] = import_react.useState(defaultProp);
@@ -7874,16 +7821,12 @@ function useControlled({ controlled, default: defaultProp, name, state = "value"
 		if (!isControlled) setValue(newValue);
 	}, [])];
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/checkbox-item/MenuCheckboxItemContext.mjs
 var MenuCheckboxItemContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuCheckboxItemContext() {
 	const context = import_react.useContext(MenuCheckboxItemContext);
 	if (context === void 0) throw new Error(formatErrorMessage(30));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@floating-ui/utils/dist/floating-ui.utils.dom.mjs
 function hasWindow() {
 	return typeof window !== "undefined";
 }
@@ -7995,8 +7938,6 @@ function getOverflowAncestors(node, list, traverseIframes) {
 function getFrameElement(win) {
 	return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/safeReact.mjs
 /**
 * A clone of the React namespace for reading APIs that may be missing in older
 * supported React versions. Bundlers can rewrite direct `React.someNewApi`
@@ -8006,8 +7947,6 @@ function getFrameElement(win) {
 * @see https://github.com/mui/material-ui/issues/41190#issuecomment-2040873379
 */
 var SafeReact = { ...import_react };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useStableCallback.mjs
 var useInsertionEffect = SafeReact.useInsertionEffect;
 var useSafeInsertionEffect = useInsertionEffect && useInsertionEffect !== SafeReact.useLayoutEffect ? useInsertionEffect : (fn) => fn();
 /**
@@ -8038,20 +7977,14 @@ function createStableCallback() {
 	return stable;
 }
 function assertNotCalled() {}
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useIsoLayoutEffect.mjs
 var noop = () => {};
 var useIsoLayoutEffect = typeof document !== "undefined" ? import_react.useLayoutEffect : noop;
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/root/CompositeRootContext.mjs
 var CompositeRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useCompositeRootContext(optional = false) {
 	const context = import_react.useContext(CompositeRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(16));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/useFocusableWhenDisabled.mjs
 function useFocusableWhenDisabled(parameters) {
 	const { focusableWhenDisabled, disabled, composite = false, tabIndex: tabIndexProp = 0, isNativeButton } = parameters;
 	const isFocusableComposite = composite && focusableWhenDisabled !== false;
@@ -8077,8 +8010,6 @@ function useFocusableWhenDisabled(parameters) {
 		tabIndexProp
 	]) };
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/use-button/useButton.mjs
 function useButton(parameters = {}) {
 	const { disabled = false, focusableWhenDisabled, tabIndex = 0, native: isNativeButton = true, composite: compositeProp } = parameters;
 	const elementRef = import_react.useRef(null);
@@ -8183,8 +8114,6 @@ function isButtonElement(elem) {
 function isValidLinkElement(elem) {
 	return Boolean(elem?.tagName === "A" && elem?.href);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/platform/shared.mjs
 /**
 * Reads `navigator.userAgent` / `navigator.platform` (legacy but universally
 * supported) into a normalized shape. In development, prefers the modern
@@ -8210,8 +8139,6 @@ function readRawData() {
 var { userAgent, platform: platform$1, maxTouchPoints } = readRawData();
 var lowerUserAgent = userAgent.toLowerCase();
 var lowerPlatform = platform$1.toLowerCase();
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/platform/os.mjs
 /** iPhone, iPad (including iPadOS 13+ reporting as macOS), iPod. */
 var ios = /^i(os$|p)/.test(lowerPlatform) || lowerPlatform === "macintel" && maxTouchPoints > 1;
 /** Android phones, tablets, and embedded Android browsers. */
@@ -8223,25 +8150,17 @@ lowerPlatform.startsWith("win");
 !android && /^(linux|chrome os)/.test(lowerPlatform);
 /** Any Apple OS (`mac || ios`). */
 var apple = mac || ios;
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/platform/engine.mjs
 /** WebKit: Safari, all iOS browsers, GNOME Web. Excludes Blink. */
 var webkit = typeof CSS !== "undefined" && !!CSS.supports?.("-webkit-backdrop-filter:none");
 !webkit && lowerUserAgent.includes("firefox");
 !webkit && lowerUserAgent.includes("chrom");
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/platform/screen-reader.mjs
 /**
 * The user *may* be using VoiceOver — actual activation is not detectable.
 * True on any Apple platform (macOS, iOS, iPadOS).
 */
 var voiceOver = apple;
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/platform/env.mjs
 /** Running in jsdom or HappyDOM (used by unit tests). */
 var jsdom = /jsdom|happydom/.test(lowerUserAgent);
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/item/useMenuItemCommonProps.mjs
 /**
 * Returns common props shared by all menu item types.
 * This hook extracts the shared logic for id, role, tabIndex, onKeyDown,
@@ -8299,8 +8218,6 @@ function useMenuItemCommonProps(params) {
 		itemMetadata
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/item/useMenuItem.mjs
 var REGULAR_ITEM = { type: "regular-item" };
 function useMenuItem(params) {
 	const { closeOnClick, disabled: disabledProp = false, highlighted, id, store, typingRef = store.context.typingRef, nativeButton, itemMetadata, nodeId } = params;
@@ -8339,8 +8256,6 @@ function useMenuItem(params) {
 		itemRef: mergedRef
 	}), [getItemProps, mergedRef]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/list/CompositeListContext.mjs
 var CompositeListContext = /*#__PURE__*/ import_react.createContext({
 	register: () => {},
 	unregister: () => {},
@@ -8353,8 +8268,6 @@ var CompositeListContext = /*#__PURE__*/ import_react.createContext({
 function useCompositeListContext() {
 	return import_react.useContext(CompositeListContext);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/list/useCompositeListItem.mjs
 var IndexGuessBehavior = /*#__PURE__*/ function(IndexGuessBehavior) {
 	IndexGuessBehavior[IndexGuessBehavior["None"] = 0] = "None";
 	IndexGuessBehavior[IndexGuessBehavior["GuessFromOrder"] = 1] = "GuessFromOrder";
@@ -8423,8 +8336,6 @@ function useCompositeListItem(params = {}) {
 		index
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useId.mjs
 var globalId = 0;
 function useGlobalId(idOverride, prefix = "mui") {
 	const [defaultId, setDefaultId] = import_react.useState(idOverride);
@@ -8451,8 +8362,6 @@ function useId(idOverride, prefix) {
 	}
 	return useGlobalId(idOverride, prefix);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useBaseUiId.mjs
 /**
 * Wraps `useId` and prefixes generated `id`s with `base-ui-`
 * @param {string | undefined} idOverride overrides the generated id when provided
@@ -8461,8 +8370,6 @@ function useId(idOverride, prefix) {
 function useBaseUiId(idOverride) {
 	return useId(idOverride, "base-ui");
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/checkbox-item/MenuCheckboxItemDataAttributes.mjs
 var MenuCheckboxItemDataAttributes = /*#__PURE__*/ function(MenuCheckboxItemDataAttributes) {
 	/**
 	* Present when the menu checkbox item is checked.
@@ -8482,8 +8389,6 @@ var MenuCheckboxItemDataAttributes = /*#__PURE__*/ function(MenuCheckboxItemData
 	MenuCheckboxItemDataAttributes["highlighted"] = "data-highlighted";
 	return MenuCheckboxItemDataAttributes;
 }({});
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/utils/stateAttributesMapping.mjs
 var itemMapping = {
 	checked(value) {
 		if (value) return { [MenuCheckboxItemDataAttributes.checked]: "" };
@@ -8491,8 +8396,6 @@ var itemMapping = {
 	},
 	...transitionStatusMapping
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/createBaseUIEventDetails.mjs
 /**
 * Maps a change `reason` string to the corresponding native event type.
 */
@@ -8529,8 +8432,6 @@ function createChangeEventDetails(reason, event, trigger, customProperties) {
 		...custom
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/checkbox-item/MenuCheckboxItem.mjs
 /**
 * A menu item that toggles a setting on or off.
 * Renders a `<div>` element.
@@ -8600,8 +8501,6 @@ var MenuCheckboxItem = /*#__PURE__*/ import_react.forwardRef(function MenuCheckb
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useOnMount.mjs
 var EMPTY$2 = [];
 /**
 * A React.useEffect equivalent that runs once, when the component is mounted.
@@ -8609,8 +8508,6 @@ var EMPTY$2 = [];
 function useOnMount(fn) {
 	import_react.useEffect(fn, EMPTY$2);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useAnimationFrame.mjs
 /** Unlike `setTimeout`, rAF doesn't guarantee a positive integer return value, so we can't have
 * a monomorphic `uint` type with `0` meaning empty.
 * See warning note at:
@@ -8690,8 +8587,6 @@ function useAnimationFrame() {
 	useOnMount(timeout.disposeEffect);
 	return timeout;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useTransitionStatus.mjs
 /**
 * Provides a status string for CSS animations.
 * @param open - a boolean that determines if the element is open.
@@ -8751,8 +8646,6 @@ function useTransitionStatus(open, enableIdleState = false, deferEndingState = f
 		transitionStatus
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/resolveRef.mjs
 /**
 * If the provided argument is a ref object, returns its `current` value.
 * Otherwise, returns the argument itself.
@@ -8761,8 +8654,6 @@ function resolveRef(maybeRef) {
 	if (maybeRef == null) return maybeRef;
 	return "current" in maybeRef ? maybeRef.current : maybeRef;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useAnimationsFinished.mjs
 /**
 * Executes a function once all animations have finished on the provided element.
 * @param elementOrRef - The element to watch for animations.
@@ -8819,8 +8710,6 @@ function useAnimationsFinished(elementOrRef, waitForStartingStyleRemoved = false
 		frame.request(exec);
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useOpenChangeComplete.mjs
 /**
 * Calls the provided function when the CSS open/close animation or transition completes.
 */
@@ -8842,8 +8731,6 @@ function useOpenChangeComplete(parameters) {
 		runOnceAnimationsFinish
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/checkbox-item-indicator/MenuCheckboxItemIndicator.mjs
 /**
 * Indicates whether the checkbox item is ticked.
 * Renders a `<span>` element.
@@ -8878,16 +8765,12 @@ var MenuCheckboxItemIndicator = /*#__PURE__*/ import_react.forwardRef(function M
 		enabled: keepMounted || item.checked
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/group/MenuGroupContext.mjs
 var MenuGroupContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuGroupRootContext() {
 	const context = import_react.useContext(MenuGroupContext);
 	if (context === void 0) throw new Error(formatErrorMessage(31));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/group/MenuGroup.mjs
 /**
 * Groups related menu items with the corresponding label.
 * Renders a `<div>` element.
@@ -8910,8 +8793,6 @@ var MenuGroup = /*#__PURE__*/ import_react.forwardRef(function MenuGroup(compone
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/group-label/MenuGroupLabel.mjs
 /**
 * An accessible label that is automatically associated with its parent group.
 * Renders a `<div>` element.
@@ -8937,8 +8818,6 @@ var MenuGroupLabel = /*#__PURE__*/ import_react.forwardRef(function MenuGroupLab
 		}
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/item/MenuItem.mjs
 /**
 * An individual interactive item in the menu.
 * Renders a `<div>` element.
@@ -8980,8 +8859,6 @@ var MenuItem = /*#__PURE__*/ import_react.forwardRef(function MenuItem(component
 		]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useTimeout.mjs
 var EMPTY = 0;
 var Timeout = class Timeout {
 	static create() {
@@ -9019,8 +8896,6 @@ function useTimeout() {
 	useOnMount(timeout.disposeEffect);
 	return timeout;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/event.mjs
 function stopEvent(event) {
 	event.preventDefault();
 	event.stopPropagation();
@@ -9046,16 +8921,12 @@ function isClickLikeEvent(event) {
 	const type = event.type;
 	return type === "click" || type === "mousedown" || type === "keydown" || type === "keyup";
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/constants.mjs
 var FOCUSABLE_ATTRIBUTE = "data-base-ui-focusable";
 var TYPEABLE_SELECTOR = "input:not([type='hidden']):not([disabled]),[contenteditable]:not([contenteditable='false']),textarea:not([disabled])";
 var ARROW_LEFT$1 = "ArrowLeft";
 var ARROW_RIGHT$1 = "ArrowRight";
 var ARROW_UP$1 = "ArrowUp";
 var ARROW_DOWN$1 = "ArrowDown";
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/shadowDom.mjs
 function activeElement(doc) {
 	let element = doc.activeElement;
 	while (element?.shadowRoot?.activeElement != null) element = element.shadowRoot.activeElement;
@@ -9078,8 +8949,6 @@ function getTarget(event) {
 	if ("composedPath" in event) return event.composedPath()[0];
 	return event.target;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/element.mjs
 function isTargetInsideEnabledTrigger(target, triggerElements) {
 	if (!isElement(target)) return false;
 	const targetElement = target;
@@ -9118,8 +8987,6 @@ function getFloatingFocusElement(floatingElement) {
 	if (!floatingElement) return null;
 	return floatingElement.hasAttribute("data-base-ui-focusable") ? floatingElement : floatingElement.querySelector(`[data-base-ui-focusable]`) || floatingElement;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useHoverShared.mjs
 function resolveValue(value, pointerType) {
 	if (pointerType != null && !isMouseLikePointerType(pointerType)) return 0;
 	if (typeof value === "function") return value();
@@ -9140,8 +9007,6 @@ function isClickLikeOpenEvent(openEventType, interactedInside) {
 function isHoverOpenEvent(openEventType) {
 	return openEventType?.includes("mouse") && openEventType !== "mousedown";
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingDelayGroup.mjs
 var FloatingDelayGroupContext = /*#__PURE__*/ import_react.createContext({
 	hasProvider: false,
 	timeoutMs: 0,
@@ -9317,8 +9182,6 @@ function useDelayGroup(context, options = { open: false }) {
 		isInstantPhase
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/addEventListener.mjs
 /**
 * Adds an event listener and returns a cleanup function to remove it.
 */
@@ -9328,8 +9191,6 @@ function addEventListener(target, type, listener, options) {
 		target.removeEventListener(type, listener, options);
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/mergeCleanups.mjs
 /**
 * Combines multiple cleanup functions into a single cleanup function.
 */
@@ -9341,8 +9202,6 @@ function mergeCleanups(...cleanups) {
 		}
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useValueAsRef.mjs
 /**
 * Untracks the provided value by turning it into a ref to remove its reactivity.
 *
@@ -9364,13 +9223,9 @@ function createLatestRef(value) {
 	};
 	return latest;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/owner.mjs
 function ownerDocument(node) {
 	return node?.ownerDocument || document;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/visuallyHidden.mjs
 var visuallyHiddenBase = {
 	clipPath: "inset(50%)",
 	overflow: "hidden",
@@ -9391,8 +9246,6 @@ var visuallyHiddenInput = {
 	...visuallyHiddenBase,
 	position: "absolute"
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/FocusGuard.mjs
 /**
 * @internal
 */
@@ -9414,8 +9267,6 @@ var FocusGuard = /*#__PURE__*/ import_react.forwardRef(function FocusGuard(props
 		"data-base-ui-focus-guard": ""
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
 /**
 * Custom positioning reference element.
 * @see https://floating-ui.com/docs/virtual-elements
@@ -9543,8 +9394,6 @@ function rectToClientRect(rect) {
 		y
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/composite.mjs
 function isIndexOutOfListBounds(list, index) {
 	return index < 0 || index >= list.length;
 }
@@ -9580,8 +9429,6 @@ function isElementVisible(element, styles = element ? getComputedStyle$1(element
 	if (typeof element.checkVisibility === "function") return element.checkVisibility();
 	return styles.display !== "none" && styles.display !== "contents";
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/tabbable.mjs
 var CANDIDATE_SELECTOR = "a[href],button,input,select,textarea,summary,details,iframe,object,embed,[tabindex],[contenteditable]:not([contenteditable=\"false\"]),audio[controls],video[controls]";
 function getParentElement(element) {
 	const assignedSlot = element.assignedSlot;
@@ -9725,8 +9572,6 @@ function enableFocusInside(container) {
 		else element.removeAttribute("tabindex");
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/nodes.mjs
 function getNodeChildren(nodes, id, onlyOpenChildren = true) {
 	return nodes.filter((node) => node.parentId === id).flatMap((child) => [...!onlyOpenChildren || child.context?.open ? [child] : [], ...getNodeChildren(nodes, child.id, onlyOpenChildren)]);
 }
@@ -9740,13 +9585,9 @@ function getNodeAncestors(nodes, id) {
 	}
 	return allAncestors;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/createAttribute.mjs
 function createAttribute(name) {
 	return `data-base-ui-${name}`;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/enqueueFocus.mjs
 var rafId = 0;
 function enqueueFocus(el, options = {}) {
 	const { preventScroll = false, sync = false, shouldFocus } = options;
@@ -9768,8 +9609,6 @@ function enqueueFocus(el, options = {}) {
 		}
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/markOthers.mjs
 var counters = {
 	inert: /* @__PURE__ */ new WeakMap(),
 	"aria-hidden": /* @__PURE__ */ new WeakMap()
@@ -9881,8 +9720,6 @@ function markOthers(avoidElements, options = {}) {
 	const body = ownerDocument(avoidElements[0]).body;
 	return applyAttributeToOthers(avoidElements, body, ariaHidden, inert, { mark });
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/constants.mjs
 var DISABLED_TRANSITIONS_STYLE = { style: { transition: "none" } };
 var CLICK_TRIGGER_IDENTIFIER = "data-base-ui-click-trigger";
 var BASE_UI_SWIPE_IGNORE_ATTRIBUTE = "data-base-ui-swipe-ignore";
@@ -9911,8 +9748,6 @@ var ownerVisuallyHidden = {
 	top: 0,
 	left: 0
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingPortal.mjs
 var PortalContext = /*#__PURE__*/ import_react.createContext(null);
 var usePortalContext = () => import_react.useContext(PortalContext);
 var attr = createAttribute("portal");
@@ -10051,8 +9886,6 @@ var FloatingPortal = /*#__PURE__*/ import_react.forwardRef(function FloatingPort
 		]
 	})] });
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/createEventEmitter.mjs
 function createEventEmitter() {
 	const map = /* @__PURE__ */ new Map();
 	return {
@@ -10068,8 +9901,6 @@ function createEventEmitter() {
 		}
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingTreeStore.mjs
 /**
 * Stores and manages floating elements in a tree structure.
 * This is a backing store for the `FloatingTree` component.
@@ -10085,8 +9916,6 @@ var FloatingTreeStore = class {
 		if (index !== -1) this.nodesRef.current.splice(index, 1);
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingTree.mjs
 var FloatingNodeContext = /*#__PURE__*/ import_react.createContext(null);
 var FloatingTreeContext = /*#__PURE__*/ import_react.createContext(null);
 var useFloatingParentNodeId = () => import_react.useContext(FloatingNodeContext)?.id || null;
@@ -10157,8 +9986,6 @@ function FloatingTree(props) {
 		children
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingFocusManager.mjs
 function getEventType(event, lastInteractionType) {
 	const win = getWindow(getTarget(event));
 	if (event instanceof win.KeyboardEvent) return "keyboard";
@@ -10592,8 +10419,6 @@ function FloatingFocusManager(props) {
 		})
 	] });
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useClick.mjs
 /**
 * Opens or closes the floating element when clicking the reference element.
 * @see https://floating-ui.com/docs/useClick
@@ -10670,8 +10495,6 @@ function useClick(context, props = {}) {
 	]);
 	return import_react.useMemo(() => enabled ? { reference } : EMPTY_OBJECT, [enabled, reference]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useClientPoint.mjs
 function createVirtualElement(domElement, data) {
 	let offsetX = null;
 	let offsetY = null;
@@ -10816,8 +10639,6 @@ function useClientPoint(context, props = {}) {
 		trigger: reference
 	} : {}, [enabled, reference]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useDismiss.mjs
 function alwaysFalse() {
 	return false;
 }
@@ -11141,8 +10962,6 @@ function useDismiss(context, props = {}) {
 		floating
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@floating-ui/core/dist/floating-ui.core.mjs
 function computeCoordsFromPlacement(_ref, placement, rtl) {
 	let { reference, floating } = _ref;
 	const sideAxis = getSideAxis(placement);
@@ -11659,8 +11478,6 @@ var size$2 = function(options) {
 		}
 	};
 };
-//#endregion
-//#region ../../webview-src/node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs
 function getCssDimensions$1(element) {
 	const css = getComputedStyle$1(element);
 	let width = parseFloat(css.width) || 0;
@@ -12182,8 +11999,6 @@ var computePosition = (reference, floating, options) => {
 		platform: platformWithCache
 	});
 };
-//#endregion
-//#region ../../webview-src/node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs
 var index = typeof document !== "undefined" ? import_react.useLayoutEffect : function noop() {};
 function deepEqual(a, b) {
 	if (a === b) return true;
@@ -12452,8 +12267,6 @@ var hide$1 = (options, deps) => {
 		options: [options, deps]
 	};
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useOnFirstRender.mjs
 function useOnFirstRender(fn) {
 	const ref = import_react.useRef(true);
 	if (ref.current) {
@@ -12461,8 +12274,6 @@ function useOnFirstRender(fn) {
 		fn();
 	}
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/store/createSelector.mjs
 /**
 * The NoOptionalParams type is a utility type that checks if a function has optional or default parameters.
 * If the function has optional or default parameters, it returns a string literal type with an error message.
@@ -12515,8 +12326,6 @@ var createSelector = (a, b, c, d, e, f, ...other) => {
 	else throw new Error("Missing arguments");
 	return selector;
 };
-//#endregion
-//#region ../../webview-src/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js
 /**
 * @license React
 * use-sync-external-store-shim.production.js
@@ -12571,13 +12380,9 @@ var require_use_sync_external_store_shim_production = /* @__PURE__ */ __commonJS
 	var shim = "undefined" === typeof window || "undefined" === typeof window.document || "undefined" === typeof window.document.createElement ? useSyncExternalStore$1 : useSyncExternalStore$2;
 	exports.useSyncExternalStore = void 0 !== React.useSyncExternalStore ? React.useSyncExternalStore : shim;
 }));
-//#endregion
-//#region ../../webview-src/node_modules/use-sync-external-store/shim/index.js
 var require_shim = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_use_sync_external_store_shim_production();
 }));
-//#endregion
-//#region ../../webview-src/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim/with-selector.production.js
 /**
 * @license React
 * use-sync-external-store-shim/with-selector.production.js
@@ -12642,13 +12447,9 @@ var require_with_selector_production = /* @__PURE__ */ __commonJSMin(((exports) 
 		return value;
 	};
 }));
-//#endregion
-//#region ../../webview-src/node_modules/use-sync-external-store/shim/with-selector.js
 var require_with_selector = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_with_selector_production();
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/fastHooks.mjs
 var import_shim = require_shim();
 var import_with_selector = require_with_selector();
 var hooks = [];
@@ -12683,8 +12484,6 @@ function fastComponentRef(fn) {
 function createInstance() {
 	return { didInitialize: false };
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/store/useStore.mjs
 var useStoreImplementation = isReactVersionAtLeast(19) ? useStoreFast : useStoreLegacy;
 function useStore(store, selector, a1, a2, a3) {
 	return useStoreImplementation(store, selector, a1, a2, a3);
@@ -12772,8 +12571,6 @@ function useStoreFast(store, selector, a1, a2, a3) {
 function useStoreLegacy(store, selector, a1, a2, a3) {
 	return (0, import_with_selector.useSyncExternalStoreWithSelector)(store.subscribe, store.getSnapshot, store.getSnapshot, (state) => selector(state, a1, a2, a3));
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/store/Store.mjs
 /**
 * A data store implementation that allows subscribing to state changes and updating the state.
 * It uses an observer pattern to notify subscribers when the state changes.
@@ -12862,8 +12659,6 @@ var Store = class {
 		return useStore(this, selector, a1, a2, a3);
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/store/ReactStore.mjs
 /**
 * A Store that supports controlled state keys, non-reactive values and provides utility methods for React.
 */
@@ -13018,8 +12813,6 @@ var ReactStore = class extends Store {
 		});
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/components/FloatingRootStore.mjs
 var selectors$4 = {
 	open: createSelector((state) => state.open),
 	transitionStatus: createSelector((state) => state.transitionStatus),
@@ -13079,8 +12872,6 @@ var FloatingRootStore = class extends ReactStore {
 		this.context.onOpenChange?.(newOpen, eventDetails);
 	};
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useSyncedFloatingRootContext.mjs
 /**
 * Keeps a FloatingRootStore in sync with the provided PopupStore.
 * Uses the provided FloatingRootStore when one exists, otherwise creates one once and updates it on every render.
@@ -13127,8 +12918,6 @@ function useSyncedFloatingRootContext(options) {
 	store.context.nested = nested;
 	return store;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/popups/popupStoreUtils.mjs
 var FOCUSABLE_POPUP_PROPS = {
 	tabIndex: -1,
 	[FOCUSABLE_ATTRIBUTE]: ""
@@ -13422,8 +13211,6 @@ function usePopupRootSync(store, open) {
 		if (store.state.openMethod !== null) store.set("openMethod", null);
 	}, [store]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/popups/popupTriggerMap.mjs
 /**
 * Data structure to keep track of popup trigger elements by their IDs.
 * Uses both a set of Elements and a map of IDs to Elements for efficient lookups.
@@ -13493,8 +13280,6 @@ var PopupTriggerMap = class {
 		return this.idMap.size;
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/utils/getEmptyRootContext.mjs
 function getEmptyRootContext() {
 	return new FloatingRootStore({
 		open: false,
@@ -13508,8 +13293,6 @@ function getEmptyRootContext() {
 		onOpenChange: void 0
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/popups/store.mjs
 /**
 * State common to all popup stores.
 */
@@ -13591,8 +13374,6 @@ var popupStoreSelectors = {
 	popupElement: createSelector((state) => state.popupElement),
 	positionerElement: createSelector((state) => state.positionerElement)
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useFloatingRootContext.mjs
 function useFloatingRootContext(options) {
 	const { open = false, onOpenChange, elements = {} } = options;
 	const floatingId = useId();
@@ -13630,8 +13411,6 @@ function useFloatingRootContext(options) {
 	store.context.nested = nested;
 	return store;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useFloating.mjs
 /**
 * Provides data to position a floating element and context to add interactions.
 * @see https://floating-ui.com/docs/useFloating
@@ -13749,8 +13528,6 @@ function useFloating(options = {}) {
 		store
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useFocus.mjs
 var isMacSafari = mac && webkit;
 /**
 * Opens the floating element while the reference element has focus, like CSS
@@ -13860,8 +13637,6 @@ function useFocus(context, props = {}) {
 		trigger: reference
 	} : {}, [enabled, reference]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useHoverInteractionSharedState.mjs
 var HoverInteraction = class HoverInteraction {
 	constructor() {
 		this.pointerType = void 0;
@@ -13924,8 +13699,6 @@ function useHoverInteractionSharedState(store) {
 	useOnMount(data.hoverInteractionState.disposeEffect);
 	return data.hoverInteractionState;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useHoverFloatingInteraction.mjs
 /**
 * Provides hover interactions that should be attached to the floating element.
 */
@@ -14069,8 +13842,6 @@ function useHoverFloatingInteraction(context, parameters = {}) {
 		childClosedTimeout
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useHoverReferenceInteraction.mjs
 var EMPTY_REF = { current: null };
 /**
 * Provides hover interactions that should be attached to reference or trigger
@@ -14296,8 +14067,6 @@ function useHoverReferenceInteraction(context, props = {}) {
 		checkShouldOpen
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useListNavigation.mjs
 var ESCAPE = "Escape";
 function doSwitch(orientation, vertical, horizontal) {
 	switch (orientation) {
@@ -14726,8 +14495,6 @@ function useListNavigation(context, props) {
 		item
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/hooks/useTypeahead.mjs
 /**
 * Provides a matching callback that can be used to focus an item as the user
 * types, often used in tandem with `useListNavigation()`.
@@ -14832,8 +14599,6 @@ function useTypeahead(context, props) {
 		floating: sharedProps
 	} : {}, [enabled, sharedProps]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/safePolygon.mjs
 var CURSOR_SPEED_THRESHOLD = .1;
 var CURSOR_SPEED_THRESHOLD_SQUARED = CURSOR_SPEED_THRESHOLD * CURSOR_SPEED_THRESHOLD;
 var POLYGON_BUFFER = .5;
@@ -15012,16 +14777,12 @@ function safePolygon(options = {}) {
 	};
 	return fn;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/toolbar/root/ToolbarRootContext.mjs
 var ToolbarRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useToolbarRootContext(optional) {
 	const context = import_react.useContext(ToolbarRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(69));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/composite.mjs
 var ARROW_UP = "ArrowUp";
 var ARROW_DOWN = "ArrowDown";
 var ARROW_LEFT = "ArrowLeft";
@@ -15035,13 +14796,9 @@ var COMPOSITE_KEYS = new Set([
 	HOME,
 	"End"
 ]);
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/getDisabledMountTransitionStyles.mjs
 function getDisabledMountTransitionStyles(transitionStatus) {
 	return transitionStatus === "starting" ? DISABLED_TRANSITIONS_STYLE : EMPTY_OBJECT;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/popup/MenuPopup.mjs
 var stateAttributesMapping$6 = {
 	...popupStateMapping,
 	...transitionStatusMapping
@@ -15139,16 +14896,12 @@ var MenuPopup = /*#__PURE__*/ import_react.forwardRef(function MenuPopup(compone
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/portal/MenuPortalContext.mjs
 var MenuPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuPortalContext() {
 	const value = import_react.useContext(MenuPortalContext);
 	if (value === void 0) throw new Error(formatErrorMessage(32));
 	return value;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/portal/MenuPortal.mjs
 /**
 * A portal element that moves the popup to a different part of the DOM.
 * By default, the portal element is appended to `<body>`.
@@ -15168,14 +14921,10 @@ var MenuPortal = /*#__PURE__*/ import_react.forwardRef(function MenuPortal(props
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/inertValue.mjs
 function inertValue(value) {
 	if (isReactVersionAtLeast(19)) return value;
 	return value ? "true" : void 0;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/direction-context/DirectionContext.mjs
 /**
 * @internal
 */
@@ -15183,8 +14932,6 @@ var DirectionContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useDirection() {
 	return import_react.useContext(DirectionContext)?.direction ?? "ltr";
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/floating-ui-react/middleware/arrow.mjs
 /**
 * Fork of the original `arrow` middleware from Floating UI that allows
 * configuring the offset parent.
@@ -15244,8 +14991,6 @@ var arrow = (options, deps) => ({
 	...baseArrow(options),
 	options: [options, deps]
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/hideMiddleware.mjs
 var nativeHideFn = hide$1().fn;
 var hide = {
 	name: "hide",
@@ -15255,8 +15000,6 @@ var hide = {
 		return { data: { referenceHidden: (await nativeHideFn(state)).data?.referenceHidden || anchorHidden } };
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/adaptiveOriginMiddleware.mjs
 var DEFAULT_SIDES = {
 	sideX: "left",
 	sideY: "top"
@@ -15305,8 +15048,6 @@ var adaptiveOrigin = {
 		};
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/useAnchorPositioning.mjs
 function getLogicalSide(sideParam, renderedSide, isRtl) {
 	const isLogicalSideParam = sideParam === "inline-start" || sideParam === "inline-end";
 	return {
@@ -15624,8 +15365,6 @@ function useAnchorPositioning(params) {
 function isRef(param) {
 	return param != null && "current" in param;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/list/CompositeList.mjs
 /**
 * Provides context for a list of items in a composite component.
 * @internal
@@ -15745,8 +15484,6 @@ function sortByDocumentPosition(a, b) {
 	if (position & Node.DOCUMENT_POSITION_PRECEDING || position & Node.DOCUMENT_POSITION_CONTAINS) return 1;
 	return 0;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/InternalBackdrop.mjs
 /**
 * @internal
 */
@@ -15771,8 +15508,6 @@ var InternalBackdrop = /*#__PURE__*/ import_react.forwardRef(function InternalBa
 		}
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/usePositioner.mjs
 /**
 * Renders the shared outer Positioner element used by popup components.
 * Applies the common role, hidden state, transition styles, state attributes, and optional inert styling.
@@ -15795,8 +15530,6 @@ function usePositioner(componentProps, state, { styles, transitionStatus, props,
 		stateAttributesMapping: popupStateMapping
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useScrollLock.mjs
 var originalHtmlStyles = {};
 var originalBodyStyles = {};
 var originalHtmlScrollBehavior = "";
@@ -15973,8 +15706,6 @@ function useScrollLock(enabled = true, referenceElement = null) {
 		return SCROLL_LOCKER.acquire(referenceElement);
 	}, [enabled, referenceElement]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/useAnchoredPopupScrollLock.mjs
 var VIEWPORT_WIDTH_TOLERANCE_PX = 20;
 /**
 * Manages scroll lock for anchored popups. For non-touch opens, scroll lock is applied when
@@ -15998,8 +15729,6 @@ function useAnchoredPopupScrollLock(enabled, touchOpen, positionerElement, refer
 	]);
 	useScrollLock(enabled && (!touchOpen || touchOpenShouldLockScroll), referenceElement);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/positioner/MenuPositioner.mjs
 /**
 * Positions the menu popup against the trigger.
 * Renders a `<div>` element.
@@ -16201,16 +15930,12 @@ var MenuPositioner = /*#__PURE__*/ import_react.forwardRef(function MenuPosition
 		})]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/radio-group/MenuRadioGroupContext.mjs
 var MenuRadioGroupContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuRadioGroupContext() {
 	const context = import_react.useContext(MenuRadioGroupContext);
 	if (context === void 0) throw new Error(formatErrorMessage(34));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/radio-group/MenuRadioGroup.mjs
 /**
 * Groups related radio items.
 * Renders a `<div>` element.
@@ -16257,16 +15982,12 @@ var MenuRadioGroup = /*#__PURE__*/ import_react.memo(/*#__PURE__*/ import_react.
 		})
 	});
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/radio-item/MenuRadioItemContext.mjs
 var MenuRadioItemContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuRadioItemContext() {
 	const context = import_react.useContext(MenuRadioItemContext);
 	if (context === void 0) throw new Error(formatErrorMessage(35));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/radio-item/MenuRadioItem.mjs
 /**
 * A menu item that works like a radio button in a given group.
 * Renders a `<div>` element.
@@ -16330,8 +16051,6 @@ var MenuRadioItem = /*#__PURE__*/ import_react.forwardRef(function MenuRadioItem
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/radio-item-indicator/MenuRadioItemIndicator.mjs
 /**
 * Indicates whether the radio item is selected.
 * Renders a `<span>` element.
@@ -16366,16 +16085,12 @@ var MenuRadioItemIndicator = /*#__PURE__*/ import_react.forwardRef(function Menu
 		enabled: keepMounted || item.checked
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menubar/MenubarContext.mjs
 var MenubarContext = /*#__PURE__*/ import_react.createContext(null);
 function useMenubarContext(optional) {
 	const context = import_react.useContext(MenubarContext);
 	if (context === null && !optional) throw new Error(formatErrorMessage(5));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/useEnhancedClickHandler.mjs
 /**
 * Provides a cross-browser way to determine the type of the pointer used to click.
 * Safari and Firefox do not provide the PointerEvent to the click handler (they use MouseEvent) yet.
@@ -16403,8 +16118,6 @@ function useEnhancedClickHandler(handler) {
 		onPointerDown: handlePointerDown
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/useValueChanged.mjs
 function useValueChanged(value, onChange) {
 	const valueRef = import_react.useRef(value);
 	const onChangeCallback = useStableCallback(onChange);
@@ -16416,8 +16129,6 @@ function useValueChanged(value, onChange) {
 		valueRef.current = value;
 	}, [value]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/useOpenInteractionType.mjs
 function useOpenMethodTriggerProps(open, setOpenMethod) {
 	const { onClick, onPointerDown } = useEnhancedClickHandler(useStableCallback((_, interactionType) => {
 		if (!(typeof open === "function" ? open() : open)) setOpenMethod(interactionType || (ios ? "touch" : ""));
@@ -16443,8 +16154,6 @@ function useOpenInteractionType(open) {
 		triggerProps
 	}), [openMethod, triggerProps]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/store/MenuStore.mjs
 var selectors$3 = {
 	...popupStoreSelectors,
 	disabled: createSelector((state) => state.parent.type === "menubar" ? state.parent.context.disabled || state.disabled : state.disabled),
@@ -16555,14 +16264,10 @@ function createInitialState$2() {
 		hasViewport: false
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/submenu-root/MenuSubmenuRootContext.mjs
 var MenuSubmenuRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useMenuSubmenuRootContext() {
 	return import_react.useContext(MenuSubmenuRootContext);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/root/MenuRoot.mjs
 /**
 * Groups all parts of the menu.
 * Doesn't render its own HTML element.
@@ -16852,8 +16557,6 @@ var MenuRoot = fastComponent(function MenuRoot(props) {
 	});
 	return content;
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/getPseudoElementBounds.mjs
 function getPseudoElementBounds(element) {
 	const elementRect = element.getBoundingClientRect();
 	const win = getWindow(element);
@@ -16876,8 +16579,6 @@ function getPseudoElementBounds(element) {
 		bottom: elementRect.bottom + heightDiff / 2
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/item/useCompositeItem.mjs
 function useCompositeItem(params = {}) {
 	const { highlightItemOnHover, highlightedIndex, onHighlightedIndexChange } = useCompositeRootContext();
 	const { ref, index } = useCompositeListItem(params);
@@ -16901,8 +16602,6 @@ function useCompositeItem(params = {}) {
 		index
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/composite/item/CompositeItem.mjs
 /**
 * @internal
 */
@@ -16920,15 +16619,11 @@ function CompositeItem(componentProps) {
 		stateAttributesMapping
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/utils/findRootOwnerId.mjs
 function findRootOwnerId(node) {
 	if (isHTMLElement(node) && node.hasAttribute("data-rootownerid")) return node.getAttribute("data-rootownerid") ?? void 0;
 	if (isLastTraversableNode(node)) return;
 	return findRootOwnerId(getParentNode(node));
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/popups/useTriggerFocusGuards.mjs
 /**
 * Minimal store interface required by the focus guard hook.
 * Both PopoverStore and MenuStore satisfy this interface.
@@ -16970,8 +16665,6 @@ function useTriggerFocusGuards(store, triggerElementRef) {
 		handleFocusTargetFocus
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/useMixedToggleClickHandler.mjs
 /**
 * Returns `click` and `mousedown` handlers that fix the behavior of triggers of popups that are toggled by different events.
 * For example, a button that opens a popup on mousedown and closes it on click.
@@ -17004,8 +16697,6 @@ function useMixedToggleClickHandler(params) {
 		open
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/trigger/MenuTrigger.mjs
 var BOUNDARY_OFFSET$1 = 2;
 /**
 * A button that opens the menu.
@@ -17211,8 +16902,6 @@ function useMenuParent() {
 		menubarContext
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/usePreviousValue.mjs
 /**
 * Returns a previous value of its argument.
 * @param value Current value.
@@ -17229,8 +16918,6 @@ function usePreviousValue(value) {
 	});
 	return state.previous;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/getCssDimensions.mjs
 function getCssDimensions(element) {
 	const css = getComputedStyle$1(element);
 	let width = parseFloat(css.width) || 0;
@@ -17247,8 +16934,6 @@ function getCssDimensions(element) {
 		height
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/usePopupAutoResize.mjs
 /**
 * Allows the element to automatically resize based on its content while supporting animations.
 */
@@ -17377,8 +17062,6 @@ function setPositionerCssSize(positionerElement, size) {
 	positionerElement.style.setProperty("--positioner-width", width);
 	positionerElement.style.setProperty("--positioner-height", height);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/usePopupViewport.mjs
 /**
 * Builds morphing viewport containers for popups that animate between trigger-based content.
 * Handles previous-content snapshots, auto-resize, and state attributes for transitions.
@@ -17574,8 +17257,6 @@ function usePopupContentKey(activeTriggerId, payload) {
 	}, [activeTriggerId, payload]);
 	return `${activeTriggerId ?? "current"}-${contentKey}`;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/viewport/MenuViewportCssVars.mjs
 var MenuViewportCssVars = /*#__PURE__*/ function(MenuViewportCssVars) {
 	/**
 	* The width of the parent popup.
@@ -17591,8 +17272,6 @@ var MenuViewportCssVars = /*#__PURE__*/ function(MenuViewportCssVars) {
 	MenuViewportCssVars["popupHeight"] = "--popup-height";
 	return MenuViewportCssVars;
 }({});
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/menu/viewport/MenuViewport.mjs
 var stateAttributesMapping$5 = { activationDirection: (value) => value ? { "data-activation-direction": value } : null };
 /**
 * A viewport for displaying content transitions.
@@ -17624,8 +17303,6 @@ var MenuViewport = /*#__PURE__*/ import_react.forwardRef(function MenuViewport(c
 		stateAttributesMapping: stateAttributesMapping$5
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/separator/Separator.mjs
 /**
 * A separator element accessible to screen readers.
 * Renders a `<div>` element.
@@ -17643,21 +17320,15 @@ var Separator = /*#__PURE__*/ import_react.forwardRef(function SeparatorComponen
 		}, elementProps]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/utils/isElementDisabled.mjs
 function isElementDisabled(element) {
 	return element == null || element.hasAttribute("disabled") || element.getAttribute("aria-disabled") === "true";
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/root/PopoverRootContext.mjs
 var PopoverRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function usePopoverRootContext(optional) {
 	const context = import_react.useContext(PopoverRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(47));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/store/PopoverStore.mjs
 function createInitialState$1() {
 	return {
 		...createInitialPopupStoreState(),
@@ -17750,8 +17421,6 @@ var PopoverStore = class PopoverStore extends ReactStore {
 		return this.context.stickIfOpenTimeout.disposeEffect();
 	};
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/root/PopoverRoot.mjs
 function PopoverRootComponent({ props }) {
 	const { children, open: openProp, defaultOpen = false, onOpenChange, onOpenChangeComplete, modal = false, handle, triggerId: triggerIdProp, defaultTriggerId: defaultTriggerIdProp = null } = props;
 	const store = PopoverStore.useStore(handle?.store, {
@@ -17824,8 +17493,6 @@ function PopoverInteractions({ store, modal }) {
 	});
 	return null;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/trigger/PopoverTrigger.mjs
 /**
 * A button that opens the popover.
 * Renders a `<button>` element.
@@ -17922,16 +17589,12 @@ var PopoverTrigger = /*#__PURE__*/ import_react.forwardRef(function PopoverTrigg
 	] });
 	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)(import_react.Fragment, { children: element }, thisTriggerId);
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/portal/PopoverPortalContext.mjs
 var PopoverPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
 function usePopoverPortalContext() {
 	const value = import_react.useContext(PopoverPortalContext);
 	if (value === void 0) throw new Error(formatErrorMessage(45));
 	return value;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/portal/PopoverPortal.mjs
 /**
 * A portal element that moves the popup to a different part of the DOM.
 * By default, the portal element is appended to `<body>`.
@@ -17951,16 +17614,12 @@ var PopoverPortal = /*#__PURE__*/ import_react.forwardRef(function PopoverPortal
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/positioner/PopoverPositionerContext.mjs
 var PopoverPositionerContext = /*#__PURE__*/ import_react.createContext(void 0);
 function usePopoverPositionerContext() {
 	const context = import_react.useContext(PopoverPositionerContext);
 	if (!context) throw new Error(formatErrorMessage(46));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/positioner/PopoverPositioner.mjs
 /**
 * Positions the popover against the trigger.
 * Renders a `<div>` element.
@@ -18054,8 +17713,6 @@ var PopoverPositioner = /*#__PURE__*/ import_react.forwardRef(function PopoverPo
 		})]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/closePart.mjs
 var ClosePartContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useClosePartCount() {
 	const [closePartCount, setClosePartCount] = import_react.useState(0);
@@ -18083,8 +17740,6 @@ function useClosePartRegistration() {
 		return context?.register();
 	}, [context]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/popup/PopoverPopup.mjs
 var stateAttributesMapping$4 = {
 	...popupStateMapping,
 	...transitionStatusMapping
@@ -18182,8 +17837,6 @@ var PopoverPopup = /*#__PURE__*/ import_react.forwardRef(function PopoverPopup(c
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/title/PopoverTitle.mjs
 /**
 * A heading that labels the popover.
 * Renders an `<h2>` element.
@@ -18200,8 +17853,6 @@ var PopoverTitle = /*#__PURE__*/ import_react.forwardRef(function PopoverTitle(c
 		props: [{ id }, elementProps]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/description/PopoverDescription.mjs
 /**
 * A paragraph with additional information about the popover.
 * Renders a `<p>` element.
@@ -18218,8 +17869,6 @@ var PopoverDescription = /*#__PURE__*/ import_react.forwardRef(function PopoverD
 		props: [{ id }, elementProps]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/popover/close/PopoverClose.mjs
 /**
 * A button that closes the popover.
 * Renders a `<button>` element.
@@ -18246,8 +17895,6 @@ var PopoverClose = /*#__PURE__*/ import_react.forwardRef(function PopoverClose(c
 		]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/root/SelectRootContext.mjs
 var SelectRootContext = /*#__PURE__*/ import_react.createContext(null);
 var SelectFloatingContext = /*#__PURE__*/ import_react.createContext(null);
 function useSelectRootContext() {
@@ -18260,8 +17907,6 @@ function useSelectFloatingContext() {
 	if (context === null) throw new Error(formatErrorMessage(61));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/field/control/FieldControlDataAttributes.mjs
 var FieldControlDataAttributes = /*#__PURE__*/ function(FieldControlDataAttributes) {
 	/**
 	* Present when the field is disabled.
@@ -18293,8 +17938,6 @@ var FieldControlDataAttributes = /*#__PURE__*/ function(FieldControlDataAttribut
 	FieldControlDataAttributes["focused"] = "data-focused";
 	return FieldControlDataAttributes;
 }({});
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/field-constants/constants.mjs
 var DEFAULT_VALIDITY_STATE = {
 	badInput: false,
 	customError: false,
@@ -18324,8 +17967,6 @@ var fieldValidityMapping = { valid(value) {
 	if (value) return { [FieldControlDataAttributes.valid]: "" };
 	return { [FieldControlDataAttributes.invalid]: "" };
 } };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/field-root-context/FieldRootContext.mjs
 var DEFAULT_FIELD_ROOT_CONTEXT = {
 	invalid: void 0,
 	name: void 0,
@@ -18367,8 +18008,6 @@ function useFieldRootContext(optional = true) {
 	if (context.setValidityData === NOOP && !optional) throw new Error(formatErrorMessage(28));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/field-register-control/useRegisterFieldControl.mjs
 function useRegisterFieldControl(controlRef, id, value, getFormValueOverride, enabled = true, name) {
 	const { registerFieldControl } = useFieldRootContext();
 	const sourceRef = import_react.useRef(null);
@@ -18396,8 +18035,6 @@ function useRegisterFieldControl(controlRef, id, value, getFormValueOverride, en
 		value
 	]);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/labelable-provider/LabelableContext.mjs
 /**
 * A context for providing [labelable elements](https://html.spec.whatwg.org/multipage/forms.html#category-label)\
 * with an accessible name (label) and description.
@@ -18414,8 +18051,6 @@ var LabelableContext = /*#__PURE__*/ import_react.createContext({
 function useLabelableContext() {
 	return import_react.useContext(LabelableContext);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/labelable-provider/useLabelableId.mjs
 function useLabelableId(params = {}) {
 	const { id, implicit = false, controlRef } = params;
 	const { controlId, registerControlId } = useLabelableContext();
@@ -18465,8 +18100,6 @@ function useLabelableId(params = {}) {
 	}, [unregisterControlId]);
 	return controlId ?? defaultId;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/itemEquality.mjs
 var defaultItemEquality = (itemValue, selectedValue) => Object.is(itemValue, selectedValue);
 function compareItemEquality(itemValue, selectedValue, comparer) {
 	if (itemValue == null || selectedValue == null) return Object.is(itemValue, selectedValue);
@@ -18489,8 +18122,6 @@ function findItemIndex(itemValues, selectedValue, comparer) {
 function removeItem(selectedValues, itemValue, comparer) {
 	return selectedValues.filter((selectedValue) => !compareItemEquality(itemValue, selectedValue, comparer));
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/serializeValue.mjs
 function serializeValue(value) {
 	if (value == null) return "";
 	if (typeof value === "string") return value;
@@ -18500,8 +18131,6 @@ function serializeValue(value) {
 		return String(value);
 	}
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/resolveValueLabel.mjs
 function isGroupedItems(items) {
 	return items != null && items.length > 0 && typeof items[0] === "object" && items[0] != null && "items" in items[0];
 }
@@ -18560,8 +18189,6 @@ function resolveMultipleLabels(values, items, itemToStringLabel) {
 		return acc;
 	}, []);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/store.mjs
 var selectors$1 = {
 	id: createSelector((state) => state.id),
 	labelId: createSelector((state) => state.labelId),
@@ -18608,8 +18235,6 @@ var selectors$1 = {
 	scrollDownArrowVisible: createSelector((state) => state.scrollDownArrowVisible),
 	hasScrollArrows: createSelector((state) => state.hasScrollArrows)
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/form-context/FormContext.mjs
 var FormContext = /*#__PURE__*/ import_react.createContext({
 	formRef: { current: { fields: /* @__PURE__ */ new Map() } },
 	errors: {},
@@ -18620,13 +18245,9 @@ var FormContext = /*#__PURE__*/ import_react.createContext({
 function useFormContext() {
 	return import_react.useContext(FormContext);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/areArraysEqual.mjs
 function areArraysEqual(array1, array2, itemComparer = (a, b) => a === b) {
 	return array1.length === array2.length && array1.every((value, index) => itemComparer(value, array2[index]));
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/clamp.mjs
 function clamp(val, min = Number.MIN_SAFE_INTEGER, max = Number.MAX_SAFE_INTEGER) {
 	return Math.max(min, Math.min(val, max));
 }
@@ -18645,8 +18266,6 @@ function normalizeScrollOffset(value, max) {
 	if (withinEndTolerance) return max;
 	return clamped;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/root/SelectRoot.mjs
 /**
 * Groups all parts of the select.
 * Doesn't render its own HTML element.
@@ -19039,13 +18658,9 @@ function SelectRoot(props) {
 		})
 	});
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/resolveAriaLabelledBy.mjs
 function resolveAriaLabelledBy(fieldLabelId, localLabelId) {
 	return fieldLabelId ?? localLabelId;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/trigger/SelectTrigger.mjs
 var BOUNDARY_OFFSET = 2;
 var SELECTED_DELAY = 400;
 var stateAttributesMapping$3 = {
@@ -19176,8 +18791,6 @@ var SelectTrigger = /*#__PURE__*/ import_react.forwardRef(function SelectTrigger
 		props
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/value/SelectValue.mjs
 var stateAttributesMapping$2 = { value: () => null };
 /**
 * A text label of the currently selected item.
@@ -19211,8 +18824,6 @@ var SelectValue = /*#__PURE__*/ import_react.forwardRef(function SelectValue(com
 		stateAttributesMapping: stateAttributesMapping$2
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/icon/SelectIcon.mjs
 /**
 * An icon that indicates that the trigger button opens a select popup.
 * Renders a `<span>` element.
@@ -19232,11 +18843,7 @@ var SelectIcon = /*#__PURE__*/ import_react.forwardRef(function SelectIcon(compo
 		stateAttributesMapping: triggerOpenStateMapping
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/portal/SelectPortalContext.mjs
 var SelectPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/portal/SelectPortal.mjs
 /**
 * A portal element that moves the popup to a different part of the DOM.
 * By default, the portal element is appended to `<body>`.
@@ -19257,16 +18864,12 @@ var SelectPortal = /*#__PURE__*/ import_react.forwardRef(function SelectPortal(p
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/positioner/SelectPositionerContext.mjs
 var SelectPositionerContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useSelectPositionerContext() {
 	const context = import_react.useContext(SelectPositionerContext);
 	if (!context) throw new Error(formatErrorMessage(59));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/popup/utils.mjs
 function clearStyles(element, originalStyles) {
 	if (element) Object.assign(element.style, originalStyles);
 }
@@ -19276,8 +18879,6 @@ var LIST_FUNCTIONAL_STYLES = {
 	overflowX: "hidden",
 	overflowY: "auto"
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/positioner/SelectPositioner.mjs
 var FIXED = { position: "fixed" };
 /**
 * Positions the select popup.
@@ -19415,8 +19016,6 @@ var SelectPositioner = /*#__PURE__*/ import_react.forwardRef(function SelectPosi
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/styles.mjs
 var DISABLE_SCROLLBAR_CLASS_NAME = "base-ui-disable-scrollbar";
 var styleDisableScrollbar = {
 	className: DISABLE_SCROLLBAR_CLASS_NAME,
@@ -19429,8 +19028,6 @@ var styleDisableScrollbar = {
 		});
 	}
 };
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/internals/csp-context/CSPContext.mjs
 /**
 * @internal
 */
@@ -19442,8 +19039,6 @@ var DEFAULT_CSP_CONTEXT_VALUE = { disableStyleElements: false };
 function useCSPContext() {
 	return import_react.useContext(CSPContext) ?? DEFAULT_CSP_CONTEXT_VALUE;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/popup/SelectPopup.mjs
 var stateAttributesMapping$1 = {
 	...popupStateMapping,
 	...transitionStatusMapping
@@ -19779,8 +19374,6 @@ function unsetTransformStyles(popupElement) {
 		}
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/list/SelectList.mjs
 /**
 * A container for the select items.
 * Renders a `<div>` element.
@@ -19811,16 +19404,12 @@ var SelectList = /*#__PURE__*/ import_react.forwardRef(function SelectList(compo
 		props: [defaultProps, elementProps]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/item/SelectItemContext.mjs
 var SelectItemContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useSelectItemContext() {
 	const context = import_react.useContext(SelectItemContext);
 	if (!context) throw new Error(formatErrorMessage(57));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/item/SelectItem.mjs
 /**
 * An individual option in the select popup.
 * Renders a `<div>` element.
@@ -19983,8 +19572,6 @@ var SelectItem = /*#__PURE__*/ import_react.memo(/*#__PURE__*/ import_react.forw
 		children: element
 	});
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/item-indicator/SelectItemIndicator.mjs
 /**
 * Indicates whether the select item is selected.
 * Renders a `<span>` element.
@@ -20026,8 +19613,6 @@ var Inner = /*#__PURE__*/ import_react.memo(/*#__PURE__*/ import_react.forwardRe
 	});
 	return element;
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/item-text/SelectItemText.mjs
 /**
 * A text label of the select item.
 * Renders a `<div>` element.
@@ -20057,8 +19642,6 @@ var SelectItemText = /*#__PURE__*/ import_react.memo(/*#__PURE__*/ import_react.
 		props: elementProps
 	});
 }));
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/scroll-arrow/SelectScrollArrow.mjs
 /**
 * @internal
 */
@@ -20163,8 +19746,6 @@ function getTargetScrollTop(items, isUp, scrollTop, clientHeight, scrollArrowHei
 	const targetItem = items[targetIndex];
 	return targetIndex > lastVisibleIndex && targetItem ? normalizeScrollOffset(targetItem.offsetTop + targetItem.offsetHeight - clientHeight + scrollArrowHeight, maxScrollTop) : maxScrollTop;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/scroll-down-arrow/SelectScrollDownArrow.mjs
 /**
 * An element that scrolls the select popup down when hovered. Does not render when using touch input.
 * Renders a `<div>` element.
@@ -20178,8 +19759,6 @@ var SelectScrollDownArrow = /*#__PURE__*/ import_react.forwardRef(function Selec
 		direction: "down"
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/scroll-up-arrow/SelectScrollUpArrow.mjs
 /**
 * An element that scrolls the select popup up when hovered. Does not render when using touch input.
 * Renders a `<div>` element.
@@ -20193,16 +19772,12 @@ var SelectScrollUpArrow = /*#__PURE__*/ import_react.forwardRef(function SelectS
 		direction: "up"
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/group/SelectGroupContext.mjs
 var SelectGroupContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useSelectGroupContext() {
 	const context = import_react.useContext(SelectGroupContext);
 	if (context === void 0) throw new Error(formatErrorMessage(56));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/group/SelectGroup.mjs
 /**
 * Groups related select items with the corresponding label.
 * Renders a `<div>` element.
@@ -20228,8 +19803,6 @@ var SelectGroup = /*#__PURE__*/ import_react.forwardRef(function SelectGroup(com
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/select/group-label/SelectGroupLabel.mjs
 /**
 * An accessible label that is automatically associated with its parent group.
 * Renders a `<div>` element.
@@ -20248,16 +19821,12 @@ var SelectGroupLabel = /*#__PURE__*/ import_react.forwardRef(function SelectGrou
 		props: [{ id }, elementProps]
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/root/TooltipRootContext.mjs
 var TooltipRootContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useTooltipRootContext(optional) {
 	const context = import_react.useContext(TooltipRootContext);
 	if (context === void 0 && !optional) throw new Error(formatErrorMessage(72));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/store/TooltipStore.mjs
 var selectors = {
 	...popupStoreSelectors,
 	disabled: createSelector((state) => state.disabled),
@@ -20309,8 +19878,6 @@ function createInitialState() {
 		hasViewport: false
 	};
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/root/TooltipRoot.mjs
 /**
 * Groups all parts of the tooltip.
 * Doesn't render its own HTML element.
@@ -20411,14 +19978,10 @@ function TooltipInteractions({ store, disabled, trackCursorAxis }) {
 	});
 	return null;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/provider/TooltipProviderContext.mjs
 var TooltipProviderContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useTooltipProviderContext() {
 	return import_react.useContext(TooltipProviderContext);
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/trigger/TooltipTriggerDataAttributes.mjs
 var TooltipTriggerDataAttributes = function(TooltipTriggerDataAttributes) {
 	/**
 	* Present when the corresponding tooltip is open.
@@ -20430,8 +19993,6 @@ var TooltipTriggerDataAttributes = function(TooltipTriggerDataAttributes) {
 	TooltipTriggerDataAttributes["triggerDisabled"] = "data-trigger-disabled";
 	return TooltipTriggerDataAttributes;
 }({});
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/trigger/TooltipTrigger.mjs
 var TOOLTIP_TRIGGER_IDENTIFIER = "data-base-ui-tooltip-trigger";
 function getTargetElement(event) {
 	if ("composedPath" in event) {
@@ -20604,16 +20165,12 @@ var TooltipTrigger = fastComponentRef(function TooltipTrigger(componentProps, fo
 		stateAttributesMapping: triggerOpenStateMapping
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/portal/TooltipPortalContext.mjs
 var TooltipPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useTooltipPortalContext() {
 	const value = import_react.useContext(TooltipPortalContext);
 	if (value === void 0) throw new Error(formatErrorMessage(70));
 	return value;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/utils/FloatingPortalLite.mjs
 /**
 * `FloatingPortal` includes tabbable logic handling for focus management.
 * For components that don't need tabbable logic, use `FloatingPortalLite`.
@@ -20630,8 +20187,6 @@ var FloatingPortalLite = /*#__PURE__*/ import_react.forwardRef(function Floating
 	if (!portalSubtree && !portalNode) return null;
 	return /*#__PURE__*/ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [portalSubtree, portalNode && /*#__PURE__*/ import_react_dom.createPortal(children, portalNode)] });
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/portal/TooltipPortal.mjs
 /**
 * A portal element that moves the popup to a different part of the DOM.
 * By default, the portal element is appended to `<body>`.
@@ -20650,16 +20205,12 @@ var TooltipPortal = /*#__PURE__*/ import_react.forwardRef(function TooltipPortal
 		})
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/positioner/TooltipPositionerContext.mjs
 var TooltipPositionerContext = /*#__PURE__*/ import_react.createContext(void 0);
 function useTooltipPositionerContext() {
 	const context = import_react.useContext(TooltipPositionerContext);
 	if (context === void 0) throw new Error(formatErrorMessage(71));
 	return context;
 }
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/positioner/TooltipPositioner.mjs
 /**
 * Positions the tooltip against the trigger.
 * Renders a `<div>` element.
@@ -20721,8 +20272,6 @@ var TooltipPositioner = /*#__PURE__*/ import_react.forwardRef(function TooltipPo
 		children: element
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/popup/TooltipPopup.mjs
 var stateAttributesMapping = {
 	...popupStateMapping,
 	...transitionStatusMapping
@@ -20777,8 +20326,6 @@ var TooltipPopup = /*#__PURE__*/ import_react.forwardRef(function TooltipPopup(c
 		stateAttributesMapping
 	});
 });
-//#endregion
-//#region ../../webview-src/node_modules/@base-ui/react/tooltip/provider/TooltipProvider.mjs
 /**
 * Provides a shared delay for multiple tooltips. The grouping logic ensures that
 * once a tooltip becomes visible, the adjacent tooltips will be shown instantly.
@@ -20804,5 +20351,4 @@ var TooltipProvider = function TooltipProvider(props) {
 		})
 	});
 };
-//#endregion
 export { Separator as A, MenuItem as B, PopoverDescription as C, PopoverPortal as D, PopoverPositioner as E, MenuRadioItem as F, require_jsx_runtime as G, MenuGroup as H, MenuRadioGroup as I, require_react_dom as K, MenuPositioner as L, MenuTrigger as M, MenuRoot as N, PopoverTrigger as O, MenuRadioItemIndicator as P, MenuPortal as R, PopoverClose as S, PopoverPopup as T, MenuCheckboxItemIndicator as U, MenuGroupLabel as V, MenuCheckboxItem as W, SelectPortal as _, TooltipTrigger as a, SelectTrigger as b, SelectGroup as c, SelectItemText as d, SelectItemIndicator as f, SelectPositioner as g, SelectPopup as h, TooltipPortal as i, MenuViewport as j, PopoverRoot as k, SelectScrollUpArrow as l, SelectList as m, TooltipPopup as n, TooltipRoot as o, SelectItem as p, require_react as q, TooltipPositioner as r, SelectGroupLabel as s, TooltipProvider as t, SelectScrollDownArrow as u, SelectIcon as v, PopoverTitle as w, SelectRoot as x, SelectValue as y, MenuPopup as z };

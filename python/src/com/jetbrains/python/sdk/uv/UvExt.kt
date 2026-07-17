@@ -24,7 +24,6 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -39,18 +38,6 @@ import kotlinx.coroutines.async
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-
-internal val Sdk.isUv: Boolean
-  get() = PythonSdkUtil.isPythonSdk(this) && uvFlavorData != null
-
-internal val Sdk.uvFlavorData: UvSdkFlavorData?
-  get() {
-    return when (val data = pySdkAdditionalData) {
-      is UvSdkAdditionalData -> data.flavorData
-      is PyTargetAwareAdditionalData -> data.flavorAndData.data as? UvSdkFlavorData
-      else -> null
-    }
-  }
 
 internal val Sdk.uvUsePackageManagement: Boolean
   get() = PythonSdkUtil.isPythonSdk(this) && uvFlavorData?.usePip == true

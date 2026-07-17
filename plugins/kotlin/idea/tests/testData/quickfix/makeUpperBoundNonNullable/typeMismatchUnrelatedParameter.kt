@@ -5,8 +5,8 @@
 // ACTION: Create function 'foo'
 // ERROR: Type mismatch: inferred type is Foo<A, B> but Foo<A & Any, B> was expected
 // LANGUAGE_VERSION: 1.7
-// K2_ERROR: Argument type mismatch: actual type is 'Foo<A (of class Bar<A, B>), B (of class Bar<A, B>)>', but 'Foo<A (of class Bar<A, B>) & Any, B (of class Bar<A, B>)>' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Foo<A (of class Bar<A, B>), B (of class Bar<A, B>)>', but 'Foo<A (of class Bar<A, B>) & Any, B (of class Bar<A, B>)>' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 class Foo<T, U>
 

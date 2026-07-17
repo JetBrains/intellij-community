@@ -103,7 +103,7 @@ public final class InspectionEngine {
    */
   @Deprecated(forRemoval = true)
   // returns map (toolName -> problem descriptors)
-  public static @NotNull Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull @Unmodifiable Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                         @NotNull PsiFile psiFile,
                                                                         @NotNull InspectionManager iManager,
                                                                         boolean isOnTheFly,
@@ -113,7 +113,7 @@ public final class InspectionEngine {
     return map.entrySet().stream().map(e->Pair.create(e.getKey().getShortName(), e.getValue())).collect(Collectors.toMap(p->p.getFirst(), p->p.getSecond()));
   }
 
-  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                             @NotNull PsiFile psiFile,
                                                                                             @NotNull TextRange restrictRange,
                                                                                             @NotNull TextRange priorityRange,
@@ -128,7 +128,7 @@ public final class InspectionEngine {
 
   @ApiStatus.Internal
   // returns map (tool -> problem descriptors)
-  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile psiFile,
                                                                                    @NotNull TextRange restrictRange,
                                                                                    @NotNull TextRange priorityRange,
@@ -231,7 +231,7 @@ public final class InspectionEngine {
   }
 
   // returns map tool -> list of descriptors found
-  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                   @NotNull PsiFile psiFile,
                                                                                                   @NotNull TextRange restrictRange,
                                                                                                   boolean ignoreSuppressedElements,
@@ -246,7 +246,7 @@ public final class InspectionEngine {
 
   @ApiStatus.Internal
   // returns map tool -> list of descriptors found
-  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                   @NotNull PsiFile psiFile,
                                                                                                   @NotNull TextRange restrictRange,
                                                                                                   boolean ignoreSuppressedElements,
@@ -301,7 +301,7 @@ public final class InspectionEngine {
     return false;
   }
 
-  private static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+  private static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                    @NotNull PsiFile psiFile,
                                                                                                    @NotNull TextRange restrictRange,
                                                                                                    boolean isOnTheFly,
@@ -406,11 +406,9 @@ public final class InspectionEngine {
     return resultDescriptors;
   }
 
-  private static @Nullable LocalInspectionToolWrapper getRedirectedToolWrapper(
-    LocalInspectionToolWrapper tool,
-    ProblemDescriptor descriptor,
-    List<? extends LocalInspectionToolWrapper> tools
-  ) {
+  private static @Nullable LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper tool,
+                                                                               ProblemDescriptor descriptor,
+                                                                               List<? extends LocalInspectionToolWrapper> tools) {
     if (descriptor instanceof ProblemDescriptorWithReporterName name) {
       String reportingToolName = name.getReportingToolShortName();
       List<? extends LocalInspectionToolWrapper> toolWrappers = tool instanceof DynamicGroupTool groupTool ? groupTool.getChildren() : tools;
@@ -536,7 +534,7 @@ public final class InspectionEngine {
     });
   }
 
-  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
+  public static @NotNull @Unmodifiable Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(inside, processedLanguages, dialectIds);
@@ -545,7 +543,7 @@ public final class InspectionEngine {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
+  public static @NotNull @Unmodifiable Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);

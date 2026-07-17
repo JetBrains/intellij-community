@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` start
+jps_test(
+    name = "jewel-markdown-extensions-gfmAlerts-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":jewel-markdown-extensions-gfmAlerts-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.markdown.extensions.gfmAlerts.tests`
+
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` start
 create_kotlinc_options(
     name = "custom_gfm-alerts",
     opt_in = [
@@ -83,7 +91,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmAlerts` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-extensions-gfmAlerts-tests",
     opt_in = [
@@ -156,11 +163,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmAlerts.tests` end
-
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.gfmAlerts.tests` start
-
-jps_test(
-    name = "jewel-markdown-extensions-gfmAlerts-tests_test",
-    runtime_deps = [":jewel-markdown-extensions-gfmAlerts-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.gfmAlerts.tests` end

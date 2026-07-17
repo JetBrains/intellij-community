@@ -395,4 +395,73 @@
     <offset>19</offset>
     <length>5</length>
   </problem>
+  <problem>
+    <file>getterBodyInsideClass.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>getterBodyInsideClass</package>
+    <entry_point TYPE="method" FQNAME="getterBodyInsideClass.Main java.util.List&lt;getterBodyInsideClass.Main&gt; getX()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>22</offset>
+    <length>6</length>
+  </problem>
+
+  <problem>
+    <file>setterBody.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <package>setterBody</package>
+    <entry_point TYPE="field" FQNAME="temp:///src/setterBody.kt x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>28</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
+    <file>setterBody.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>setterBody</package>
+    <entry_point TYPE="field" FQNAME="temp:///src/setterBody.kt x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>22</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
+    <file>setterBodyInsideClass.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <package>setterBodyInsideClass</package>
+    <entry_point TYPE="field" FQNAME="setterBodyInsideClass.Main x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>30</offset>
+    <length>6</length>
+  </problem>
+
+  <problem>
+    <file>setterBodyInsideClass.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <package>setterBodyInsideClass</package>
+    <entry_point TYPE="field" FQNAME="setterBodyInsideClass.Main x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>26</offset>
+    <length>6</length>
+  </problem>
 </problems>

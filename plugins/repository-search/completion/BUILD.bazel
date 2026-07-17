@@ -2,8 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.repository.search.completion` start
+jps_test(
+    name = "repository-search-completion-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":repository-search-completion-tests_test_lib"],
+)
+### skip generation section `test intellij.repository.search.completion.tests`
 
+### auto-generated section `build intellij.repository.search.completion` start
 jvm_library(
     name = "completion",
     srcs = glob(
@@ -74,7 +81,6 @@ exports_files(
 ### auto-generated section `iml intellij.repository.search.completion` end
 
 ### auto-generated section `build intellij.repository.search.completion.tests` start
-
 create_kotlinc_options(
     name = "custom_repository-search-completion-tests",
     opt_in = ["kotlinx.coroutines.ExperimentalCoroutinesApi"],
@@ -158,11 +164,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.repository.search.completion.tests` end
-
-### auto-generated section `test intellij.repository.search.completion.tests` start
-
-jps_test(
-    name = "repository-search-completion-tests_test",
-    runtime_deps = [":repository-search-completion-tests_test_lib"],
-)
-### auto-generated section `test intellij.repository.search.completion.tests` end

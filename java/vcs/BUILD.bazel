@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.vcs` start
-
 jvm_library(
     name = "vcs",
     srcs = glob(
@@ -24,6 +23,7 @@ jvm_library(
         "//java/execution/impl",
         "//java/compiler/impl",
         "//java/openapi:java",
+        "//java/java-backend:backend",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-impl:impl",
         "//java/java-indexing-api:indexing",
@@ -79,6 +79,7 @@ jvm_library(
         "//java/execution/impl:impl_test_lib",
         "//java/compiler/impl:impl_test_lib",
         "//java/openapi:java_test_lib",
+        "//java/java-backend:backend_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//java/java-impl:impl_test_lib",
         "//java/java-indexing-api:indexing_test_lib",

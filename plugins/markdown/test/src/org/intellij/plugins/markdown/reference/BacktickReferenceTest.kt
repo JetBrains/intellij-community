@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.reference
 
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
@@ -121,6 +123,61 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
     myFixture.renameElement(javaClass, "NewJavaClass")
     myFixture.checkResult("There is an `NewJavaClass` backtick")
+  }
+
+  @Test
+  fun `test renaming file referenced from code span without backtick preserves delimiter`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "renamed.md")
+    myFixture.checkResult("See `renamed.md`")
+    assertCodeSpanContentAndFileReference(target, "renamed.md", markerLength = 1)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with internal backtick`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = myFixture.addFileToProject("file.md", "")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "fi`le.md")
+    myFixture.checkResult("See ``fi`le.md``")
+    assertCodeSpanContentAndFileReference(target, "fi`le.md", markerLength = 2)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with adjacent backticks`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "fi``le.md")
+    myFixture.checkResult("See ```fi``le.md```")
+    assertCodeSpanContentAndFileReference(target, "fi``le.md", markerLength = 3)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with non-adjacent backticks`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "fi`le`name.md")
+    myFixture.checkResult("See ``fi`le`name.md``")
+    assertCodeSpanContentAndFileReference(target, "fi`le`name.md", markerLength = 2)
+  }
+
+  @Test
+  fun `test moving file referenced from code span with internal backtick`() {
+    val document = createFile("document.md", "See ``old/`file.md``")
+    val target = myFixture.addFileToProject("old/`file.md", "")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    val targetDirectory = runWriteActionAndWait {
+      myFixture.file.containingDirectory.createSubdirectory("new")
+    }
+
+    val handler = MoveFilesOrDirectoriesHandler()
+    handler.doMove(project, arrayOf<PsiElement>(target), targetDirectory, null)
+    myFixture.checkResult("See ``new/`file.md``")
+    assertCodeSpanContentAndFileReference(target, "new/`file.md", markerLength = 2)
   }
 
   @Test
@@ -410,6 +467,22 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     assertFileReference(reference)
     assertTrue(reference.isReferenceTo(target))
     assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+  }
+
+  private fun assertCodeSpanContentAndFileReference(
+    target: PsiFileSystemItem,
+    expectedContent: String,
+    markerLength: Int,
+  ) {
+    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+    assertEquals(expectedContent, codeSpan.getContentRange()!!.substring(codeSpan.text))
+    assertEquals(markerLength, codeSpan.firstChild.textLength)
+    assertEquals(markerLength, codeSpan.lastChild.textLength)
+    val fileReference = codeSpan.references.filterIsInstance<FileReference>().lastOrNull()
+    assertNotNull(fileReference)
+    val resolved = fileReference!!.resolve()
+    assertNotNull(resolved)
+    assertEquals(target.virtualFile.path, resolved!!.virtualFile.path)
   }
 
   private fun assertResolvesToPsiMethod(fileName: String, text: String) {

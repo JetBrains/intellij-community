@@ -2,10 +2,13 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -20,10 +23,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String DOC_URL = "https://docs.oracle.com/en/java/javase/14/docs/api/";
   private static final ProjectDescriptor DESCRIPTOR = new ProjectDescriptor(LanguageLevel.JDK_14) {
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk17();
+       Sdk sdk = IdeaTestUtil.getMockJdk21();
+       SdkModificator modificator = sdk.getSdkModificator();
+       modificator.addRoot(DOC_URL, new JavadocOrderRootType());
+       ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
+
+       return sdk;
     }
 
     @Override
@@ -44,7 +53,7 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testVarargs() {
-    doTest("""
+    doTestMethod("""
              class Test {
                void <caret>foo(Class<?>... cl) { }
              }""",
@@ -54,7 +63,7 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testTypeParams() {
-    doTest("""
+    doTestMethod("""
              class Test {
                <T> void <caret>sort(T[] a, Comparator<? super T> c) { }
              }
@@ -64,7 +73,7 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testConstructor() {
-    doTest("""
+    doTestMethod("""
              class Test {
                Test<caret>() { }
              }""",
@@ -72,25 +81,44 @@ public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase
   }
   
   public void testImplicitClass() {
-    doTest("""
+    doTestMethod("""
              void <caret>main() {}
              """, "main()", "main--");
   }
   
   public void testImplicitClassWithPackage() {
-    doTest("""
+    doTestMethod("""
              package foo.bar;
              
              void <caret>main() {}
              """);
   }
 
-  protected void doTest(String text, String... expected) {
+  /// See IDEA-366031
+  public void testDocumentationPath() {
+    doTestElement("""
+      void function() {
+        Str<caret>ing toto = null;
+      }
+      """,
+       "https://docs.oracle.com/en/java/javase/14/docs/api/java.base/java/lang/String.html", 
+      "https://docs.oracle.com/en/java/javase/14/docs/api/java/lang/String.html");
+  }
+
+  protected void doTestElement(String text, String... expected) {
+    myFixture.configureByText("Test.java", text);
+    doTest(myFixture.getElementAtCaret(), expected);
+  }
+
+  protected void doTestMethod(String text, String... expected) {
     myFixture.configureByText("Test.java", text);
     PsiElement elementAtCaret = myFixture.getElementAtCaret();
-    PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
-    assertNotNull(member);
-    List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(member);
+    doTest(PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false), expected);
+  }
+
+  private static void doTest(PsiElement element, String... expected) {
+    assertNotNull(element);
+    List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(element);
     if (expected.length == 0) {
       assertNull(urls);
     } else {

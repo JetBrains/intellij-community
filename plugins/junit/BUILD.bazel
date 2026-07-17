@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit` start
-
 jvm_library(
     name = "junit",
     srcs = glob(
@@ -61,6 +60,7 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//plugins/properties/properties-psi-impl:backend-psi",
+        "//json/backend",
         "//platform/core-ui",
         "//platform/core-impl",
         "//platform/execution",
@@ -128,6 +128,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+        "//json/backend:backend_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/execution:execution_test_lib",

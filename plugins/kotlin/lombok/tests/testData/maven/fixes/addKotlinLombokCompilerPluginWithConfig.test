@@ -124,7 +124,7 @@ fun main() {
                   <plugin>lombok</plugin>
               </compilerPlugins>
               <pluginOptions>
-                  <option>lombok:config=lombok.config</option>
+                  <option>lombok:config=${project.basedir}/lombok.config</option>
               </pluginOptions>
           </configuration>
       </plugin>

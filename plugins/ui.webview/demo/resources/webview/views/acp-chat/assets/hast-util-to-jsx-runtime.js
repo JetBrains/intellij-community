@@ -4,7 +4,6 @@ import { n as stringify } from "./comma-separated-tokens.js";
 import { t as name } from "./estree-util-is-identifier-name.js";
 import { a as stringify$1, c as find, l as hastToReact, o as html, s as svg } from "./hast-util-from-dom.js";
 import { c as pointStart } from "./hast-util-raw.js";
-//#region node_modules/hast-util-whitespace/lib/index.js
 /**
 * @typedef {import('hast').Nodes} Nodes
 */
@@ -30,8 +29,6 @@ function whitespace(thing) {
 function empty(value) {
 	return value.replace(re, "") === "";
 }
-//#endregion
-//#region node_modules/inline-style-parser/cjs/index.js
 var require_cjs$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var COMMENT_REGEX = /\/\*[^*]*\*+([^/*][^*]*\*+)*\//g;
 	var NEWLINE_REGEX = /\n/g;
@@ -231,8 +228,6 @@ var require_cjs$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 	module.exports = index;
 }));
-//#endregion
-//#region node_modules/style-to-object/cjs/index.js
 var require_cjs$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __importDefault = exports && exports.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -271,8 +266,6 @@ var require_cjs$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 		return styleObject;
 	}
 }));
-//#endregion
-//#region node_modules/style-to-js/cjs/utilities.js
 var require_utilities = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.camelCase = void 0;
@@ -312,8 +305,6 @@ var require_utilities = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.camelCase = camelCase;
 }));
-//#endregion
-//#region node_modules/style-to-js/cjs/index.js
 var require_cjs = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var style_to_object_1 = (exports && exports.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -333,8 +324,6 @@ var require_cjs = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	StyleToJS.default = StyleToJS;
 	module.exports = StyleToJS;
 }));
-//#endregion
-//#region node_modules/unist-util-stringify-position/lib/index.js
 /**
 * @typedef {import('unist').Node} Node
 * @typedef {import('unist').Point} Point
@@ -397,8 +386,6 @@ function position(pos) {
 function index(value) {
 	return value && typeof value === "number" ? value : 1;
 }
-//#endregion
-//#region node_modules/vfile-message/lib/index.js
 /**
 * @import {Node, Point, Position} from 'unist'
 */
@@ -642,8 +629,6 @@ VFileMessage.prototype.fatal = void 0;
 VFileMessage.prototype.place = void 0;
 VFileMessage.prototype.ruleId = void 0;
 VFileMessage.prototype.source = void 0;
-//#endregion
-//#region node_modules/hast-util-to-jsx-runtime/lib/index.js
 /**
 * @import {Identifier, Literal, MemberExpression} from 'estree'
 * @import {Jsx, JsxDev, Options, Props} from 'hast-util-to-jsx-runtime'
@@ -1188,5 +1173,4 @@ function transformStyleToCssCasing(from) {
 function toDash($0) {
 	return "-" + $0.toLowerCase();
 }
-//#endregion
 export { VFileMessage as n, stringifyPosition as r, toJsxRuntime as t };

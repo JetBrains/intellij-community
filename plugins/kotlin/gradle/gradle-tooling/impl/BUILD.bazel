@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.kotlin.gradle.tooling.impl.tests`
 
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` start
-
 jvm_provided_library(
     name = "platform_extensions_provided",
     lib = "//platform/extensions",
@@ -93,7 +92,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` end
 
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` start
-
 jvm_library(
     name = "kotlin-gradle-tooling-impl-tests",
     srcs = glob(

@@ -2,7 +2,14 @@
 
 #![cfg(target_os = "windows")]
 
-use std::{cell::RefCell, ffi::c_void, panic::AssertUnwindSafe, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    collections::{HashMap, VecDeque},
+    ffi::c_void,
+    panic::AssertUnwindSafe,
+    rc::Rc,
+    time::Instant,
+};
 
 use jni::{
     objects::{GlobalRef, JByteArray, JClass, JObject, JString, JValue},
@@ -18,7 +25,8 @@ use windows::{
         System::{Com::*, LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
         UI::{
             Input::KeyboardAndMouse::{
-                GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_LWIN, VK_MENU, VK_RWIN, VK_SHIFT,
+                GetKeyState, SetFocus, VIRTUAL_KEY, VK_CONTROL, VK_LSHIFT, VK_LWIN, VK_MENU,
+                VK_RSHIFT, VK_RWIN, VK_SHIFT,
             },
             Shell::SHCreateMemStream,
             WindowsAndMessaging::*,
@@ -34,14 +42,34 @@ const MODIFIER_SHIFT: jint = 1;
 const MODIFIER_CONTROL: jint = 1 << 1;
 const MODIFIER_ALT: jint = 1 << 2;
 const MODIFIER_META: jint = 1 << 3;
-const NATIVE_ABI_VERSION: &str = "wvi-dedicated-thread-v5";
+const NATIVE_ABI_VERSION: &str = "wvi-custom-scheme-assets-v10";
 const WM_USER_INVOKE: u32 = WM_USER + 1;
-const WEBVIEW_ASSET_URL_FILTER: &str = "https://ij-webview-assets.local/*";
+const WM_USER_SHIFT_FALLBACK: u32 = WM_USER + 2;
+const WEBVIEW_ASSET_CUSTOM_SCHEME: &str = "ij-webview-asset";
+const WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER: &str = "ij-webview-asset://assets/*";
+const WEBVIEW_ASSET_HTTPS_FILTER: &str = "https://ij-webview-assets.local/*";
 const DIAGNOSTIC_TRACE: jint = 0;
 const DIAGNOSTIC_DEBUG: jint = 1;
 const DIAGNOSTIC_INFO: jint = 2;
 const DIAGNOSTIC_WARN: jint = 3;
 const DIAGNOSTIC_ERROR: jint = 4;
+
+thread_local! {
+    static KEYBOARD_INTEROP_WINDOWS: RefCell<Vec<HWND>> = RefCell::new(Vec::new());
+    static KEYBOARD_INTEROP_HOOK: RefCell<Option<HHOOK>> = const { RefCell::new(None) };
+    static SHIFT_FALLBACK_EVENTS: RefCell<VecDeque<PendingShiftEvent>> = RefCell::new(VecDeque::new());
+    static SHIFT_FALLBACK_ACTIVE_WINDOWS: RefCell<HashMap<jint, HWND>> = RefCell::new(HashMap::new());
+    static NEXT_SHIFT_FALLBACK_EVENT_ID: Cell<usize> = const { Cell::new(1) };
+}
+
+struct PendingShiftEvent {
+    id: usize,
+    hwnd: HWND,
+    key_event_kind: jint,
+    virtual_key: jint,
+    modifiers: jint,
+    key_event_lparam: jint,
+}
 
 struct NativeAssetResponse {
     status_code: i32,
@@ -121,6 +149,35 @@ impl JavaCallbacks {
                 "onEvaluationError",
                 "(JLjava/lang/String;)V",
                 &[JValue::Long(eval_id), JValue::Object(&message)],
+            )?;
+            Ok(())
+        });
+    }
+
+    fn on_dev_tools_protocol_method_result(
+        &self,
+        call_id: jlong,
+        result: Option<String>,
+        error: Option<String>,
+    ) {
+        self.with_env(|env, object| {
+            let result = match result {
+                Some(result) => JObject::from(env.new_string(result)?),
+                None => JObject::null(),
+            };
+            let error = match error {
+                Some(error) => JObject::from(env.new_string(error)?),
+                None => JObject::null(),
+            };
+            env.call_method(
+                object,
+                "onDevToolsProtocolMethodResult",
+                "(JLjava/lang/String;Ljava/lang/String;)V",
+                &[
+                    JValue::Long(call_id),
+                    JValue::Object(&result),
+                    JValue::Object(&error),
+                ],
             )?;
             Ok(())
         });
@@ -254,6 +311,7 @@ impl JavaCallbacks {
 struct SharedEnvironmentState {
     key: EnvironmentKey,
     generation: u64,
+    started_at: Instant,
     environment: Option<ICoreWebView2Environment>,
     creating: bool,
     waiters: Vec<NativeHandle>,
@@ -312,6 +370,7 @@ impl SharedWebView2EnvironmentManager {
         self.state = Some(SharedEnvironmentState {
             key: key.clone(),
             generation,
+            started_at: Instant::now(),
             environment: None,
             creating: true,
             waiters: vec![native],
@@ -421,11 +480,27 @@ impl SharedWebView2EnvironmentManager {
             .as_ref()
             .is_some_and(|state| state.generation == generation)
     }
+
+    fn environment_started_at(&self, generation: u64) -> Option<Instant> {
+        self.state.as_ref().and_then(|state| {
+            if state.generation == generation {
+                Some(state.started_at)
+            } else {
+                None
+            }
+        })
+    }
 }
 
 thread_local! {
     static SHARED_ENVIRONMENT_MANAGER: RefCell<SharedWebView2EnvironmentManager> =
         RefCell::new(SharedWebView2EnvironmentManager::default());
+}
+
+#[derive(Clone, Copy)]
+struct NavigationTiming {
+    requested_at: Option<Instant>,
+    started_at: Instant,
 }
 
 struct NativeWebView {
@@ -435,11 +510,16 @@ struct NativeWebView {
     controller: Option<ICoreWebView2Controller>,
     webview: Option<ICoreWebView2>,
     controller_completed_handler: Option<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>,
+    controller_create_started_at: Option<Instant>,
+    last_navigation_requested_at: Option<Instant>,
+    navigation_timings: HashMap<u64, NavigationTiming>,
+    unidentified_navigation_timing: Option<NavigationTiming>,
     add_script_handlers: Vec<(
         u64,
         ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,
     )>,
     execute_script_handlers: Vec<(u64, ICoreWebView2ExecuteScriptCompletedHandler)>,
+    dev_tools_handlers: Vec<(u64, ICoreWebView2CallDevToolsProtocolMethodCompletedHandler)>,
     next_script_handler_id: u64,
     document_start_scripts: Vec<String>,
     web_message_token: EventRegistrationToken,
@@ -479,17 +559,16 @@ impl NativeWebView {
         {
             unsafe {
                 let _ = webview.remove_WebResourceRequested(token);
-                let _ = webview.RemoveWebResourceRequestedFilter(
-                    &HSTRING::from(WEBVIEW_ASSET_URL_FILTER),
-                    COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-                );
             }
+            remove_web_resource_requested_filter(webview, WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER);
+            remove_web_resource_requested_filter(webview, WEBVIEW_ASSET_HTTPS_FILTER);
         }
         self.webview = None;
         self.controller = None;
         self.controller_completed_handler = None;
         self.add_script_handlers.clear();
         self.execute_script_handlers.clear();
+        self.dev_tools_handlers.clear();
         if !self.hwnd.0.is_null() {
             unsafe {
                 let _ = DestroyWindow(self.hwnd);
@@ -683,17 +762,58 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         return;
     };
     run_with_handle(&mut env, handle, |native| {
-        let webview = native
-            .borrow()
-            .webview
-            .clone()
-            .ok_or_else(|| "WebView2 is not ready".to_string())?;
-        unsafe {
-            webview
-                .Navigate(&HSTRING::from(url))
-                .map_err(format_windows_error)?;
-        }
+        let webview = {
+            let mut view = native.borrow_mut();
+            view.last_navigation_requested_at = Some(Instant::now());
+            view.navigation_timings.clear();
+            view.unidentified_navigation_timing = None;
+            view.webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?
+        };
+        measure_perf(
+            &native,
+            "perf.webview2.navigation.loadUrl.call",
+            vec![("urlChars", url.len().to_string())],
+            || unsafe {
+                webview
+                    .Navigate(&HSTRING::from(url.as_str()))
+                    .map_err(format_windows_error)
+            },
+        )?;
         Ok(())
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Bridge_setVirtualHostNameToFolderMappingNative(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    handle: jlong,
+    host_name: JString<'_>,
+    folder_path: JString<'_>,
+) {
+    let host_name = match jstring_to_string(&mut env, host_name) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    let folder_path = match jstring_to_string(&mut env, folder_path) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    run_with_handle(&mut env, handle, |native| {
+        let view = native.borrow();
+        let webview = view
+            .webview
+            .as_ref()
+            .ok_or_else(|| "WebView2 is not ready".to_string())?;
+        set_virtual_host_name_to_folder_mapping(webview, &host_name, &folder_path)
     });
 }
 
@@ -709,16 +829,25 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         return;
     };
     run_with_handle(&mut env, handle, |native| {
-        let webview = native
-            .borrow()
-            .webview
-            .clone()
-            .ok_or_else(|| "WebView2 is not ready".to_string())?;
-        unsafe {
-            webview
-                .NavigateToString(&HSTRING::from(html))
-                .map_err(format_windows_error)?;
-        }
+        let webview = {
+            let mut view = native.borrow_mut();
+            view.last_navigation_requested_at = Some(Instant::now());
+            view.navigation_timings.clear();
+            view.unidentified_navigation_timing = None;
+            view.webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?
+        };
+        measure_perf(
+            &native,
+            "perf.webview2.navigation.loadHtml.call",
+            vec![("htmlChars", html.len().to_string())],
+            || unsafe {
+                webview
+                    .NavigateToString(&HSTRING::from(html.as_str()))
+                    .map_err(format_windows_error)
+            },
+        )?;
         Ok(())
     });
 }
@@ -763,6 +892,76 @@ pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Brid
         let result = unsafe { webview.ExecuteScript(&HSTRING::from(script), &handler) };
         if let Err(error) = result {
             remove_execute_script_handler(&native, handler_id);
+            return Err(format_windows_error(error));
+        }
+        Ok(())
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_intellij_ui_webview_impl_windows_WinWebView2Bridge_callDevToolsProtocolMethodNative(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    handle: jlong,
+    call_id: jlong,
+    method_name: JString<'_>,
+    params_json: JString<'_>,
+) {
+    let method_name = match jstring_to_string(&mut env, method_name) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    let params_json = match jstring_to_string(&mut env, params_json) {
+        Ok(value) => value,
+        Err(message) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", message);
+            return;
+        }
+    };
+    run_with_handle(&mut env, handle, |native| {
+        let (webview, handler, handler_id) = {
+            let mut view = native.borrow_mut();
+            let webview = view
+                .webview
+                .clone()
+                .ok_or_else(|| "WebView2 is not ready".to_string())?;
+            let callbacks = view.callbacks.clone();
+            let handler_id = view.next_script_handler_id;
+            view.next_script_handler_id += 1;
+            let native_for_callback = native.clone();
+            let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
+                move |error_code, result| {
+                    remove_dev_tools_handler(&native_for_callback, handler_id);
+                    match error_code {
+                        Ok(()) => callbacks.on_dev_tools_protocol_method_result(
+                            call_id,
+                            Some(result),
+                            None,
+                        ),
+                        Err(error) => callbacks.on_dev_tools_protocol_method_result(
+                            call_id,
+                            None,
+                            Some(format_windows_error(error)),
+                        ),
+                    }
+                    Ok(())
+                },
+            ));
+            view.dev_tools_handlers.push((handler_id, handler.clone()));
+            (webview, handler, handler_id)
+        };
+        let result = unsafe {
+            webview.CallDevToolsProtocolMethod(
+                &HSTRING::from(method_name.as_str()),
+                &HSTRING::from(params_json.as_str()),
+                &handler,
+            )
+        };
+        if let Err(error) = result {
+            remove_dev_tools_handler(&native, handler_id);
             return Err(format_windows_error(error));
         }
         Ok(())
@@ -1003,8 +1202,13 @@ fn create_native(
         controller: None,
         webview: None,
         controller_completed_handler: None,
+        controller_create_started_at: None,
+        last_navigation_requested_at: None,
+        navigation_timings: HashMap::new(),
+        unidentified_navigation_timing: None,
         add_script_handlers: Vec::new(),
         execute_script_handlers: Vec::new(),
+        dev_tools_handlers: Vec::new(),
         next_script_handler_id: 0,
         document_start_scripts,
         web_message_token: EventRegistrationToken::default(),
@@ -1056,7 +1260,9 @@ fn start_shared_environment_creation(
     generation: u64,
     handler: ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,
 ) -> BridgeResult<()> {
-    let options = ICoreWebView2EnvironmentOptions::from(CoreWebView2EnvironmentOptions::default());
+    let options = CoreWebView2EnvironmentOptions::default();
+    configure_asset_custom_scheme(&options);
+    let options = ICoreWebView2EnvironmentOptions::from(options);
     unsafe {
         if let Err(error) =
             options.SetAdditionalBrowserArguments(w!("--disable-features=ElasticOverscroll"))
@@ -1084,6 +1290,21 @@ fn start_shared_environment_creation(
     Ok(())
 }
 
+fn configure_asset_custom_scheme(options: &CoreWebView2EnvironmentOptions) {
+    let registration =
+        CoreWebView2CustomSchemeRegistration::new(WEBVIEW_ASSET_CUSTOM_SCHEME.to_string());
+    unsafe {
+        // Keep the fixed authority (`ij-webview-asset://assets/...`): WebView2 ES modules need
+        // a non-opaque custom-scheme origin, and per-view routing is done by WebResourceRequested.
+        registration.set_has_authority_component(true);
+        registration.set_treat_as_secure(true);
+    }
+    let registration: ICoreWebView2CustomSchemeRegistration = registration.into();
+    unsafe {
+        options.set_scheme_registrations(vec![Some(registration)]);
+    }
+}
+
 fn create_shared_environment_completed_handler(
     generation: u64,
 ) -> ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler {
@@ -1102,6 +1323,7 @@ fn create_shared_environment_completed_handler(
                 return Ok(());
             };
 
+            let environment_started_at = shared_environment_started_at(generation);
             let waiters = SHARED_ENVIRONMENT_MANAGER.with(|manager| {
                 manager
                     .borrow_mut()
@@ -1113,6 +1335,14 @@ fn create_shared_environment_completed_handler(
                 .cloned();
             if let Some(native) = &diagnostic_target {
                 log_environment_metadata(&environment, native);
+                if let Some(started_at) = environment_started_at {
+                    emit_perf_diagnostic(
+                        native,
+                        "perf.webview2.environment.create",
+                        started_at,
+                        vec![("generation", generation.to_string())],
+                    );
+                }
             }
             if let Err(message) = attach_environment_diagnostics(&environment, generation) {
                 if let Some(native) = &diagnostic_target {
@@ -1170,9 +1400,12 @@ fn begin_create_controller(
     let native_for_callback = native.clone();
     let handler = CreateCoreWebView2ControllerCompletedHandler::create(Box::new(
         move |error_code, controller| {
-            if let Ok(mut view) = native_for_callback.try_borrow_mut() {
+            let controller_started_at = if let Ok(mut view) = native_for_callback.try_borrow_mut() {
                 view.controller_completed_handler = None;
-            }
+                view.controller_create_started_at.take()
+            } else {
+                None
+            };
             if is_native_destroyed(&native_for_callback)
                 || !is_shared_environment_current(generation)
             {
@@ -1191,6 +1424,14 @@ fn begin_create_controller(
                 return Ok(());
             };
 
+            if let Some(started_at) = controller_started_at {
+                emit_perf_diagnostic(
+                    &native_for_callback,
+                    "perf.webview2.controller.create",
+                    started_at,
+                    vec![("generation", generation.to_string())],
+                );
+            }
             match finish_create(
                 native_for_callback.clone(),
                 environment_for_callback.clone(),
@@ -1203,10 +1444,17 @@ fn begin_create_controller(
             Ok(())
         },
     ));
-    native.borrow_mut().controller_completed_handler = Some(handler.clone());
+    {
+        let mut view = native.borrow_mut();
+        view.controller_completed_handler = Some(handler.clone());
+        view.controller_create_started_at = Some(Instant::now());
+    }
     unsafe {
         if let Err(error) = environment.CreateCoreWebView2Controller(hwnd, &handler) {
             unregister_shared_environment_view(native_handle(&native));
+            if let Ok(mut view) = native.try_borrow_mut() {
+                view.controller_create_started_at = None;
+            }
             return Err(format_windows_error(error));
         }
     }
@@ -1219,23 +1467,80 @@ fn finish_create(
     controller: ICoreWebView2Controller,
     generation: u64,
 ) -> BridgeResult<()> {
-    let webview = unsafe { controller.CoreWebView2().map_err(format_windows_error)? };
-    configure_webview_application_settings(&webview)?;
-    install_document_start_scripts(&webview, native.clone())?;
-    let token = attach_ipc_handler(&webview, native.clone())?;
-    let web_resource_token =
-        attach_web_resource_requested_handler(&environment, &webview, native.clone())?;
-    let accelerator_token = attach_accelerator_key_handler(&controller, native.clone())?;
-    let got_focus_token = attach_got_focus_handler(&controller, native.clone())?;
-    if let Err(message) = attach_webview_diagnostics(&webview, native.clone()) {
-        emit_diagnostic(
-            &native,
-            DIAGNOSTIC_WARN,
-            "diagnostics.attach-webview-failed",
-            message,
-            String::new(),
-        );
-    }
+    let finish_started_at = Instant::now();
+    let webview = measure_perf(
+        &native,
+        "perf.webview2.finish.core-webview2",
+        vec![("generation", generation.to_string())],
+        || unsafe { controller.CoreWebView2().map_err(format_windows_error) },
+    )?;
+
+    measure_perf(
+        &native,
+        "perf.webview2.finish.settings",
+        vec![("generation", generation.to_string())],
+        || configure_webview_application_settings(&webview),
+    )?;
+
+    let script_count = native
+        .try_borrow()
+        .map(|view| view.document_start_scripts.len())
+        .unwrap_or_default();
+    measure_perf(
+        &native,
+        "perf.webview2.finish.document-start-scripts",
+        vec![
+            ("generation", generation.to_string()),
+            ("scriptCount", script_count.to_string()),
+        ],
+        || install_document_start_scripts(&webview, native.clone()),
+    )?;
+
+    let token = measure_perf(
+        &native,
+        "perf.webview2.finish.ipc-handler",
+        vec![("generation", generation.to_string())],
+        || attach_ipc_handler(&webview, native.clone()),
+    )?;
+
+    let web_resource_token = measure_perf(
+        &native,
+        "perf.webview2.finish.resource-handler",
+        vec![("generation", generation.to_string())],
+        || attach_web_resource_requested_handler(&environment, &webview, native.clone()),
+    )?;
+
+    let accelerator_token = measure_perf(
+        &native,
+        "perf.webview2.finish.accelerator-handler",
+        vec![("generation", generation.to_string())],
+        || attach_accelerator_key_handler(&controller, native.clone()),
+    )?;
+
+    let got_focus_token = measure_perf(
+        &native,
+        "perf.webview2.finish.focus-handler",
+        vec![("generation", generation.to_string())],
+        || attach_got_focus_handler(&controller, native.clone()),
+    )?;
+
+    measure_perf(
+        &native,
+        "perf.webview2.finish.diagnostics",
+        vec![("generation", generation.to_string())],
+        || {
+            if let Err(message) = attach_webview_diagnostics(&webview, native.clone()) {
+                emit_diagnostic(
+                    &native,
+                    DIAGNOSTIC_WARN,
+                    "diagnostics.attach-webview-failed",
+                    message,
+                    String::new(),
+                );
+            }
+            Ok(())
+        },
+    )?;
 
     let (callbacks, handle, hwnd, controller, visible, x, y, width, height, scale) = {
         let mut view = native.borrow_mut();
@@ -1274,6 +1579,15 @@ fn finish_create(
     }
 
     callbacks.on_created(handle);
+    emit_perf_diagnostic(
+        &native,
+        "perf.webview2.finish.total",
+        finish_started_at,
+        vec![
+            ("generation", generation.to_string()),
+            ("handle", handle.to_string()),
+        ],
+    );
     Ok(())
 }
 
@@ -1344,6 +1658,118 @@ fn emit_diagnostic(native: &NativeHandle, level: jint, event: &str, message: Str
         Err(_) => return,
     };
     callbacks.on_native_diagnostic(level, event, message, data);
+}
+
+fn emit_perf_diagnostic(
+    native: &NativeHandle,
+    event: &str,
+    started_at: Instant,
+    mut data: Vec<(&str, String)>,
+) {
+    let elapsed = started_at.elapsed();
+    data.push(("elapsedMs", elapsed.as_millis().to_string()));
+    emit_diagnostic(
+        native,
+        DIAGNOSTIC_TRACE,
+        event,
+        "WebView2 perf timing".to_string(),
+        diagnostic_data(data),
+    );
+}
+
+fn measure_perf<T>(
+    native: &NativeHandle,
+    event: &str,
+    data: Vec<(&str, String)>,
+    action: impl FnOnce() -> BridgeResult<T>,
+) -> BridgeResult<T> {
+    let started_at = Instant::now();
+    let result = action();
+    if result.is_ok() {
+        emit_perf_diagnostic(native, event, started_at, data);
+    }
+    result
+}
+
+fn record_navigation_start(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    let now = Instant::now();
+    if let Ok(mut view) = native.try_borrow_mut() {
+        let timing = NavigationTiming {
+            requested_at: view.last_navigation_requested_at,
+            started_at: now,
+        };
+        if let Some(requested_at) = timing.requested_at {
+            append_elapsed_ms(data, "sinceLoadCallMs", requested_at);
+        }
+        if let Some(navigation_id) = navigation_id {
+            view.navigation_timings.insert(navigation_id, timing);
+        } else {
+            view.unidentified_navigation_timing = Some(timing);
+        }
+    }
+}
+
+fn append_navigation_progress_timings(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    if let Ok(view) = native.try_borrow() {
+        if let Some(timing) = current_navigation_timing(&view, navigation_id) {
+            append_navigation_timing(data, timing);
+        }
+    }
+}
+
+fn complete_navigation_timings(
+    native: &NativeHandle,
+    navigation_id: Option<u64>,
+    data: &mut Vec<(&str, String)>,
+) {
+    if let Ok(mut view) = native.try_borrow_mut() {
+        let timing = if let Some(navigation_id) = navigation_id {
+            view.navigation_timings.remove(&navigation_id)
+        } else if view.navigation_timings.len() == 1 {
+            let navigation_id = *view.navigation_timings.keys().next().unwrap();
+            view.navigation_timings.remove(&navigation_id)
+        } else {
+            view.unidentified_navigation_timing.take()
+        };
+        if let Some(timing) = timing {
+            append_navigation_timing(data, timing);
+        }
+        if view.navigation_timings.is_empty() && view.unidentified_navigation_timing.is_none() {
+            view.last_navigation_requested_at = None;
+        }
+    }
+}
+
+fn current_navigation_timing(
+    view: &NativeWebView,
+    navigation_id: Option<u64>,
+) -> Option<NavigationTiming> {
+    if let Some(navigation_id) = navigation_id {
+        return view.navigation_timings.get(&navigation_id).copied();
+    }
+    if view.navigation_timings.len() == 1 {
+        return view.navigation_timings.values().next().copied();
+    }
+    view.unidentified_navigation_timing
+}
+
+fn append_navigation_timing(data: &mut Vec<(&str, String)>, timing: NavigationTiming) {
+    if let Some(requested_at) = timing.requested_at {
+        append_elapsed_ms(data, "sinceLoadCallMs", requested_at);
+    }
+    append_elapsed_ms(data, "sinceNavigationStartMs", timing.started_at);
+}
+
+fn append_elapsed_ms(data: &mut Vec<(&str, String)>, name: &'static str, started_at: Instant) {
+    data.push((name, started_at.elapsed().as_millis().to_string()));
 }
 
 fn log_environment_metadata(environment: &ICoreWebView2Environment, native: &NativeHandle) {
@@ -1462,9 +1888,11 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
             if let Some(uri) = unsafe { get_pwstr(|value| args.Uri(value)) } {
                 data.push(("uri", uri));
             }
-            if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+            let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+            if let Some(navigation_id) = navigation_id {
                 data.push(("navigationId", navigation_id.to_string()));
             }
+            record_navigation_start(&native_for_start, navigation_id, &mut data);
             emit_diagnostic(
                 &native_for_start,
                 DIAGNOSTIC_DEBUG,
@@ -1500,12 +1928,14 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
     let content_handler = ContentLoadingEventHandler::create(Box::new(move |_, args| {
         if let Some(args) = args {
             let mut data = Vec::new();
-            if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+            let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+            if let Some(navigation_id) = navigation_id {
                 data.push(("navigationId", navigation_id.to_string()));
             }
             if let Some(is_error_page) = unsafe { get_bool(|value| args.IsErrorPage(value)) } {
                 data.push(("isErrorPage", is_error_page.to_string()));
             }
+            append_navigation_progress_timings(&native_for_content, navigation_id, &mut data);
             emit_diagnostic(
                 &native_for_content,
                 DIAGNOSTIC_DEBUG,
@@ -1528,9 +1958,11 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
         let handler = DOMContentLoadedEventHandler::create(Box::new(move |_, args| {
             if let Some(args) = args {
                 let mut data = Vec::new();
-                if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+                let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+                if let Some(navigation_id) = navigation_id {
                     data.push(("navigationId", navigation_id.to_string()));
                 }
+                append_navigation_progress_timings(&native_for_dom, navigation_id, &mut data);
                 emit_diagnostic(
                     &native_for_dom,
                     DIAGNOSTIC_DEBUG,
@@ -1556,6 +1988,7 @@ fn attach_navigation_handlers(webview: &ICoreWebView2, native: NativeHandle) -> 
             if let Some(is_new_document) = unsafe { get_bool(|value| args.IsNewDocument(value)) } {
                 data.push(("isNewDocument", is_new_document.to_string()));
             }
+            append_navigation_progress_timings(&native_for_source, None, &mut data);
             emit_diagnostic(
                 &native_for_source,
                 DIAGNOSTIC_DEBUG,
@@ -1749,7 +2182,8 @@ fn handle_navigation_completed(
     let mut data = Vec::new();
     let is_success = unsafe { get_bool(|value| args.IsSuccess(value)) }.unwrap_or(false);
     data.push(("isSuccess", is_success.to_string()));
-    if let Some(navigation_id) = unsafe { get_u64(|value| args.NavigationId(value)) } {
+    let navigation_id = unsafe { get_u64(|value| args.NavigationId(value)) };
+    if let Some(navigation_id) = navigation_id {
         data.push(("navigationId", navigation_id.to_string()));
     }
     if let Some(web_error_status) =
@@ -1763,6 +2197,7 @@ fn handle_navigation_completed(
             data.push(("httpStatusCode", http_status_code.to_string()));
         }
     }
+    complete_navigation_timings(native, navigation_id, &mut data);
     emit_diagnostic(
         native,
         if is_success {
@@ -1957,6 +2392,10 @@ fn shared_environment_active_views(generation: u64) -> Vec<NativeHandle> {
     SHARED_ENVIRONMENT_MANAGER.with(|manager| manager.borrow_mut().active_views(generation))
 }
 
+fn shared_environment_started_at(generation: u64) -> Option<Instant> {
+    SHARED_ENVIRONMENT_MANAGER.with(|manager| manager.borrow().environment_started_at(generation))
+}
+
 fn invalidate_shared_environment(generation: u64) -> Vec<NativeHandle> {
     SHARED_ENVIRONMENT_MANAGER
         .with(|manager| manager.borrow_mut().invalidate_environment(generation))
@@ -2024,17 +2463,32 @@ fn attach_web_resource_requested_handler(
     }));
     let mut token = EventRegistrationToken::default();
     unsafe {
-        webview
-            .AddWebResourceRequestedFilter(
-                &HSTRING::from(WEBVIEW_ASSET_URL_FILTER),
-                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-            )
-            .map_err(format_windows_error)?;
+        add_web_resource_requested_filter(webview, WEBVIEW_ASSET_CUSTOM_SCHEME_FILTER)?;
+        add_web_resource_requested_filter(webview, WEBVIEW_ASSET_HTTPS_FILTER)?;
         webview
             .add_WebResourceRequested(&handler, &mut token)
             .map_err(format_windows_error)?;
     }
     Ok(token)
+}
+
+fn add_web_resource_requested_filter(webview: &ICoreWebView2, filter: &str) -> BridgeResult<()> {
+    unsafe {
+        webview.AddWebResourceRequestedFilter(
+            &HSTRING::from(filter),
+            COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
+        )
+    }
+    .map_err(format_windows_error)
+}
+
+fn remove_web_resource_requested_filter(webview: &ICoreWebView2, filter: &str) {
+    unsafe {
+        let _ = webview.RemoveWebResourceRequestedFilter(
+            &HSTRING::from(filter),
+            COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
+        );
+    }
 }
 
 fn handle_web_resource_requested(
@@ -2061,6 +2515,25 @@ fn handle_web_resource_requested(
         args.SetResponse(&response).map_err(format_windows_error)?;
     }
     Ok(())
+}
+
+fn set_virtual_host_name_to_folder_mapping(
+    webview: &ICoreWebView2,
+    host_name: &str,
+    folder_path: &str,
+) -> BridgeResult<()> {
+    let webview3 = webview
+        .cast::<ICoreWebView2_3>()
+        .map_err(format_windows_error)?;
+    unsafe {
+        webview3
+            .SetVirtualHostNameToFolderMapping(
+                &HSTRING::from(host_name),
+                &HSTRING::from(folder_path),
+                COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS,
+            )
+            .map_err(format_windows_error)
+    }
 }
 
 fn create_web_resource_response(
@@ -2140,6 +2613,13 @@ fn attach_accelerator_key_handler(
                             )
                         })
                         .unwrap_or(false);
+                    let handled = handled
+                        || forward_system_key_to_awt_root_window_if_unhandled(
+                            &native,
+                            key_event_kind.0,
+                            virtual_key,
+                            key_event_lparam,
+                        );
                     if handled {
                         args.SetHandled(true)?;
                     }
@@ -2192,6 +2672,12 @@ fn remove_execute_script_handler(native: &NativeHandle, handler_id: u64) {
     if let Ok(mut view) = native.try_borrow_mut() {
         view.execute_script_handlers
             .retain(|(id, _)| *id != handler_id);
+    }
+}
+
+fn remove_dev_tools_handler(native: &NativeHandle, handler_id: u64) {
+    if let Ok(mut view) = native.try_borrow_mut() {
+        view.dev_tools_handlers.retain(|(id, _)| *id != handler_id);
     }
 }
 
@@ -2262,9 +2748,16 @@ fn create_container_hwnd(parent: HWND, callbacks: Rc<JavaCallbacks>) -> BridgeRe
                 let _ = SetFocus(Some(child));
             }
         }
+        if msg == WM_USER_SHIFT_FALLBACK {
+            unsafe {
+                dispatch_pending_shift_event(hwnd, wparam.0);
+            }
+            return LRESULT(0);
+        }
         let result = DefWindowProcW(hwnd, msg, wparam, lparam);
         if msg == WM_NCDESTROY {
             unsafe {
+                unregister_keyboard_interop_window(hwnd);
                 clear_container_callbacks(hwnd);
             }
         }
@@ -2310,6 +2803,7 @@ fn create_container_hwnd(parent: HWND, callbacks: Rc<JavaCallbacks>) -> BridgeRe
 
     unsafe {
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, Rc::into_raw(callbacks) as isize);
+        register_keyboard_interop_window(hwnd);
     }
     Ok(hwnd)
 }
@@ -2422,6 +2916,274 @@ fn current_modifier_flags() -> jint {
 
 unsafe fn is_key_down(virtual_key: VIRTUAL_KEY) -> bool {
     (GetKeyState(virtual_key.0 as i32) as u16 & 0x8000) != 0
+}
+
+fn modifier_flags_for_shift_event(key_event_kind: jint) -> jint {
+    let mut flags = current_modifier_flags();
+    if key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0
+        || key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0
+    {
+        flags |= MODIFIER_SHIFT;
+    } else {
+        flags &= !MODIFIER_SHIFT;
+    }
+    flags
+}
+
+fn is_shift_key(virtual_key: jint) -> bool {
+    virtual_key == VK_SHIFT.0 as jint
+        || virtual_key == VK_LSHIFT.0 as jint
+        || virtual_key == VK_RSHIFT.0 as jint
+}
+
+fn forward_system_key_to_awt_root_window_if_unhandled(
+    native: &NativeHandle,
+    key_event_kind: jint,
+    virtual_key: u32,
+    key_event_lparam: i32,
+) -> bool {
+    let Some(message) = system_key_message_from_event_kind(key_event_kind) else {
+        return false;
+    };
+    let Ok(view) = native.try_borrow() else {
+        return false;
+    };
+    unsafe {
+        forward_system_key_to_awt_root_window(
+            view.hwnd,
+            message,
+            WPARAM(virtual_key as usize),
+            LPARAM(key_event_lparam as isize),
+        )
+    }
+}
+
+unsafe fn forward_system_key_to_awt_root_window(
+    hwnd: HWND,
+    message: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> bool {
+    // Kotlin gets the first chance to claim SYSTEM_KEY_* as an IDE shortcut. Unclaimed system keys
+    // are posted here with their original native MSG payload so AWT/JBR can run Windows-level
+    // handling such as Alt+F4 close through the peer/DefWindowProc path.
+    let root = GetAncestor(hwnd, GA_ROOT);
+    if !is_system_key_message(message) {
+        return false;
+    }
+    !root.0.is_null() && PostMessageW(Some(root), message, wparam, lparam).is_ok()
+}
+
+fn is_system_key_message(message: u32) -> bool {
+    matches!(message, WM_SYSKEYDOWN | WM_SYSKEYUP)
+}
+
+fn system_key_message_from_event_kind(key_event_kind: jint) -> Option<u32> {
+    match key_event_kind {
+        kind if kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0 => Some(WM_SYSKEYDOWN),
+        kind if kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_UP.0 => Some(WM_SYSKEYUP),
+        _ => None,
+    }
+}
+
+unsafe fn register_keyboard_interop_window(hwnd: HWND) {
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        let mut windows = windows.borrow_mut();
+        if !windows.contains(&hwnd) {
+            windows.push(hwnd);
+        }
+    });
+    KEYBOARD_INTEROP_HOOK.with(|hook| {
+        let mut hook = hook.borrow_mut();
+        if hook.is_none() {
+            if let Ok(installed_hook) =
+                SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_interop_proc), None, 0)
+            {
+                *hook = Some(installed_hook);
+            }
+        }
+    });
+}
+
+unsafe fn unregister_keyboard_interop_window(hwnd: HWND) {
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        let mut windows = windows.borrow_mut();
+        windows.retain(|registered_hwnd| *registered_hwnd != hwnd);
+        if windows.is_empty() {
+            KEYBOARD_INTEROP_HOOK.with(|hook| {
+                if let Some(installed_hook) = hook.borrow_mut().take() {
+                    let _ = UnhookWindowsHookEx(installed_hook);
+                }
+            });
+        }
+    });
+    SHIFT_FALLBACK_EVENTS.with(|events| {
+        events.borrow_mut().retain(|event| event.hwnd != hwnd);
+    });
+    SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| {
+        windows
+            .borrow_mut()
+            .retain(|_, active_hwnd| *active_hwnd != hwnd);
+    });
+}
+
+unsafe extern "system" fn keyboard_interop_proc(
+    code: i32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    if code >= 0 {
+        let keyboard_event = *(lparam.0 as *const KBDLLHOOKSTRUCT);
+        handle_keyboard_interop_event(wparam.0 as u32, keyboard_event);
+    }
+    CallNextHookEx(None, code, wparam, lparam)
+}
+
+unsafe fn handle_keyboard_interop_event(message: u32, keyboard_event: KBDLLHOOKSTRUCT) {
+    if !is_key_down_or_up_message(message) {
+        return;
+    }
+
+    schedule_shift_fallback_if_needed(message, keyboard_event);
+}
+
+unsafe fn schedule_shift_fallback_if_needed(message: u32, keyboard_event: KBDLLHOOKSTRUCT) {
+    let virtual_key = keyboard_event.vkCode as jint;
+    if !is_shift_key(virtual_key) {
+        return;
+    }
+
+    let key_event_kind = key_event_kind_from_message(message);
+    // WebView2 AcceleratorKeyPressed does not report bare Shift transitions, but the IDE gesture
+    // handler needs them for double-Shift. Pair key-up with the key-down HWND because the second
+    // Shift press can open an IDE popup and move focus before the physical key-up arrives.
+    let Some(hwnd) = shift_fallback_target_window(virtual_key, key_event_kind) else {
+        return;
+    };
+
+    let id = NEXT_SHIFT_FALLBACK_EVENT_ID.with(|next_id| {
+        let id = next_id.get();
+        next_id.set(id.wrapping_add(1).max(1));
+        id
+    });
+    let event = PendingShiftEvent {
+        id,
+        hwnd,
+        key_event_kind,
+        virtual_key,
+        modifiers: modifier_flags_for_shift_event(key_event_kind),
+        key_event_lparam: key_event_lparam_from_low_level_keyboard_event(&keyboard_event),
+    };
+    SHIFT_FALLBACK_EVENTS.with(|events| {
+        events.borrow_mut().push_back(event);
+    });
+    let _ = PostMessageW(Some(hwnd), WM_USER_SHIFT_FALLBACK, WPARAM(id), LPARAM(0));
+}
+
+unsafe fn shift_fallback_target_window(virtual_key: jint, key_event_kind: jint) -> Option<HWND> {
+    let active_key = shift_fallback_active_key(virtual_key);
+    if is_key_down_event_kind(key_event_kind) {
+        let hwnd = focused_keyboard_interop_window()?;
+        SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| {
+            windows.borrow_mut().insert(active_key, hwnd);
+        });
+        return Some(hwnd);
+    }
+
+    let stored_hwnd =
+        SHIFT_FALLBACK_ACTIVE_WINDOWS.with(|windows| windows.borrow_mut().remove(&active_key));
+    stored_hwnd.or_else(|| focused_keyboard_interop_window())
+}
+
+fn shift_fallback_active_key(_virtual_key: jint) -> jint {
+    VK_SHIFT.0 as jint
+}
+
+unsafe fn focused_keyboard_interop_window() -> Option<HWND> {
+    let foreground = GetForegroundWindow();
+    if foreground.0.is_null() {
+        return None;
+    }
+    let foreground_thread_id = GetWindowThreadProcessId(foreground, None);
+    let mut gui_thread_info = GUITHREADINFO {
+        cbSize: std::mem::size_of::<GUITHREADINFO>() as u32,
+        ..Default::default()
+    };
+    if GetGUIThreadInfo(foreground_thread_id, &mut gui_thread_info).is_err() {
+        return None;
+    }
+
+    let focus = gui_thread_info.hwndFocus;
+    if focus.0.is_null() {
+        return None;
+    }
+    KEYBOARD_INTEROP_WINDOWS.with(|windows| {
+        windows
+            .borrow()
+            .iter()
+            .copied()
+            .find(|hwnd| *hwnd == focus || IsChild(*hwnd, focus).as_bool())
+    })
+}
+
+fn is_key_down_or_up_message(message: u32) -> bool {
+    matches!(message, WM_KEYDOWN | WM_KEYUP | WM_SYSKEYDOWN | WM_SYSKEYUP)
+}
+
+fn is_key_down_event_kind(key_event_kind: jint) -> bool {
+    key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0
+        || key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0
+}
+
+fn key_event_kind_from_message(message: u32) -> jint {
+    match message {
+        WM_SYSKEYDOWN => COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0,
+        WM_SYSKEYUP => COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_UP.0,
+        WM_KEYUP => COREWEBVIEW2_KEY_EVENT_KIND_KEY_UP.0,
+        _ => COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0,
+    }
+}
+
+fn key_event_lparam_from_low_level_keyboard_event(event: &KBDLLHOOKSTRUCT) -> jint {
+    let mut lparam = 1 | ((event.scanCode as i32) << 16);
+    if event.flags.contains(LLKHF_EXTENDED) {
+        lparam |= 1 << 24;
+    }
+    if event.flags.contains(LLKHF_ALTDOWN) {
+        lparam |= 1 << 29;
+    }
+    if event.flags.contains(LLKHF_UP) {
+        lparam |= 1 << 30;
+        lparam |= i32::MIN;
+    }
+    lparam
+}
+
+unsafe fn dispatch_pending_shift_event(hwnd: HWND, id: usize) {
+    let event = SHIFT_FALLBACK_EVENTS.with(|events| {
+        let mut events = events.borrow_mut();
+        events
+            .iter()
+            .position(|event| event.id == id)
+            .and_then(|index| events.remove(index))
+    });
+    let Some(event) = event else {
+        return;
+    };
+    if event.hwnd != hwnd {
+        return;
+    }
+
+    let callbacks_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *const JavaCallbacks;
+    if callbacks_ptr.is_null() {
+        return;
+    }
+    (*callbacks_ptr).on_accelerator_key_pressed(
+        event.key_event_kind,
+        event.virtual_key,
+        event.modifiers,
+        event.key_event_lparam,
+    );
 }
 
 fn jstring_to_string(env: &mut JNIEnv<'_>, value: JString<'_>) -> BridgeResult<String> {

@@ -10,6 +10,7 @@ import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Insets
@@ -22,7 +23,8 @@ import javax.swing.UIManager
 /**
  * @author Konstantin Bulenkov
  */
-internal open class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
+@ApiStatus.Internal
+open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton) : IdeaActionButtonLook() {
   companion object {
     fun getIconPadding(isLeft: Boolean): Insets {
       return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(

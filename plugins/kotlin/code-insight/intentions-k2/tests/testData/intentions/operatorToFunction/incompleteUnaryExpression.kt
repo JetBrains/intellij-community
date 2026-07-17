@@ -1,4 +1,4 @@
 // IS_APPLICABLE: false
-// K2_ERROR: Unresolved reference 'unaryPlus' for operator '+'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 val x = <caret>+

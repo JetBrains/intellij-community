@@ -1,36 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.Failure;
-import com.intellij.build.issue.BuildIssue;
-import com.intellij.build.issue.BuildIssueQuickFix;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.awt.Component;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 
@@ -40,101 +23,6 @@ import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 @ApiStatus.Internal
 public final class BuildConsoleUtils {
   private static final Logger LOG = Logger.getInstance(BuildConsoleUtils.class);
-  private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
-  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
-  private static final String A_CLOSING = "</a>";
-  private static final Set<@NlsSafe String> NEW_LINES = Set.of("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
-
-  public static void printDetails(@NotNull ConsoleView consoleView, @Nullable Failure failure, @Nullable String details) {
-    String text = failure == null ? details : ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-    if (text == null && failure != null && failure.getError() != null) {
-      text = failure.getError().getMessage();
-    }
-    if (text == null) return;
-    Notification notification = failure == null ? null : failure.getNotification();
-    print(consoleView, notification, text, ConsoleViewContentType.ERROR_OUTPUT);
-  }
-
-  public static void print(@NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue) {
-    print(consoleView, group, buildIssue, ConsoleViewContentType.ERROR_OUTPUT);
-  }
-
-  @ApiStatus.Internal
-  public static void print(
-    @NotNull BuildTextConsoleView consoleView,
-    @NotNull String group,
-    @NotNull BuildIssue buildIssue,
-    @NotNull ConsoleViewContentType outputType
-  ) {
-    Project project = consoleView.getProject();
-    Map<String, NotificationListener> listenerMap = new LinkedHashMap<>();
-    for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
-      listenerMap.put(quickFix.getId(), (notification, event) -> {
-        BuildView buildView = findBuildView(consoleView);
-        Component component = buildView == null ? consoleView : buildView;
-        DataContext dataContext = DataManager.getInstance().getDataContext(component);
-        quickFix.runQuickFix(project, dataContext);
-      });
-    }
-    NotificationListener listener = new NotificationListener.Adapter() {
-      @Override
-      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
-        final NotificationListener notificationListener = listenerMap.get(event.getDescription());
-        if (notificationListener != null) {
-          notificationListener.hyperlinkUpdate(notification, event);
-        }
-      }
-    };
-
-    Notification notification = new Notification(group, buildIssue.getTitle(), buildIssue.getDescription(), NotificationType.WARNING)
-      .setListener(listener);
-    print(consoleView, notification, buildIssue.getDescription(), outputType);
-  }
-
-  private static void print(
-    @NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text, @NotNull ConsoleViewContentType outputType
-  ) {
-    String content = StringUtil.convertLineSeparators(text);
-    while (true) {
-      Matcher tagMatcher = TAG_PATTERN.matcher(content);
-      if (!tagMatcher.find()) {
-        consoleView.print(content, outputType);
-        break;
-      }
-      String tagStart = tagMatcher.group();
-      consoleView.print(content.substring(0, tagMatcher.start()), outputType);
-      Matcher aMatcher = A_PATTERN.matcher(tagStart);
-      if (aMatcher.matches()) {
-        final String href = aMatcher.group(2);
-        int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
-        if (linkEnd > 0) {
-          String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
-          consoleView.printHyperlink(linkText, new HyperlinkInfo() {
-            @Override
-            public void navigate(@NotNull Project project) {
-              if (notification != null && notification.getListener() != null) {
-                notification.getListener().hyperlinkUpdate(
-                  notification, IJSwingUtilities.createHyperlinkEvent(href, consoleView.getComponent()));
-              }
-            }
-          });
-          content = content.substring(linkEnd + A_CLOSING.length());
-          continue;
-        }
-      }
-      if (NEW_LINES.contains(tagStart)) {
-        consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-      }
-      else {
-        consoleView.print(content.substring(tagMatcher.start(), tagMatcher.end()), outputType);
-      }
-      content = content.substring(tagMatcher.end());
-    }
-
-    consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-  }
 
   @ApiStatus.Internal
   public static @NotNull String getMessageTitle(@NotNull String message) {
@@ -148,6 +36,14 @@ public final class BuildConsoleUtils {
       message = message.substring(0, sepIndex);
     }
     return StringUtil.trimEnd(message.trim(), '.');
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull DataContext getDataContext(@NotNull ConsoleView consoleView) {
+    var consoleComponent = consoleView.getComponent();
+    var buildView = findBuildView(consoleComponent);
+    var component = ObjectUtils.notNull(buildView, consoleComponent);
+    return DataManager.getInstance().getDataContext(component);
   }
 
   @ApiStatus.Experimental
@@ -176,7 +72,6 @@ public final class BuildConsoleUtils {
     }
     return dataContext;
   }
-
 
   private static @Nullable BuildView findBuildView(@NotNull Component component) {
     Component parent = component;

@@ -30,6 +30,7 @@ import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.projectRoot
 import com.intellij.maven.testFramework.fixtures.projectsTree
 import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.setupJdkForModule
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
@@ -46,7 +47,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.executeGoal
 import org.jetbrains.idea.maven.fixtures.hasMavenInstallation
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
-import org.jetbrains.idea.maven.fixtures.setupJdkForModule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

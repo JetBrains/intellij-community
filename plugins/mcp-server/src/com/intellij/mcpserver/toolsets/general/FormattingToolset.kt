@@ -28,6 +28,10 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 class FormattingToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.formatting")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription("""
         |Reformats the specified files in the JetBrains IDE.

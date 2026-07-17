@@ -1,5 +1,5 @@
 // "Add 'override' modifier" "true"
-// K2_ERROR: 'foo' hides member of supertype 'A' and needs an 'override' modifier.
+// K2_ERROR: VIRTUAL_MEMBER_HIDDEN
 open class A() {
     open fun foo() {}
 }

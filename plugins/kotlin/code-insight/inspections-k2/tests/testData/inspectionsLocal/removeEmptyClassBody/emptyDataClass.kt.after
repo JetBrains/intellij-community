@@ -1,1 +1,1 @@
-data class Foo(val bar: Int)
+data class Foo(val bar: Int) 

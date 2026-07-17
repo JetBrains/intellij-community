@@ -45,8 +45,7 @@ internal class TablePostFormatProcessor: PostFormatProcessor {
   }
 
   private fun shouldReformat(settings: CodeStyleSettings): Boolean {
-    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
-    return custom.FORMAT_TABLES
+    return settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES
   }
 
   private fun processTable(table: MarkdownTable, document: Document) {

@@ -1,17 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
@@ -41,9 +42,9 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
@@ -277,10 +278,7 @@ public class IntroduceParameterObjectDialog
     buttonGroup.add(createNewClassButton);
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
-    if (containingClass == null ||
-        containingClass.getQualifiedName() == null ||
-        containingClass.getContainingClass() != null ||
-        containingClass.isInterface()) {
+    if (containingClass == null || containingClass.getQualifiedName() == null || containingClass.getContainingClass() != null) {
       myCreateInnerClassRadioButton.setEnabled(false);
     }
     init();
@@ -542,22 +540,36 @@ public class IntroduceParameterObjectDialog
   }
 
   private void enableGenerateAccessors() {
-    boolean existingNotALibraryClass = false;
     if (useExistingClassButton.isSelected()) {
-      final PsiClass selectedClass =
-        JavaPsiFacade.getInstance(myProject).findClass(existingClassField.getText(), GlobalSearchScope.projectScope(myProject));
-      if (selectedClass != null) {
-        final PsiFile containingFile = selectedClass.getContainingFile();
-        if (containingFile != null) {
-          final VirtualFile virtualFile = containingFile.getVirtualFile();
-          if (virtualFile != null) {
-            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex()
-              .isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES);
+      String text = existingClassField.getText();
+      ReadAction.nonBlocking(() -> JavaPsiFacade.getInstance(myProject).findClass(text, GlobalSearchScope.allScope(myProject)))
+        .coalesceBy(this)
+        .expireWith(getDisposable())
+        .finishOnUiThread(ModalityState.current(), c -> {
+          if (c != null) {
+            boolean isRecord = c.isRecord();
+            final PsiFile containingFile = c.getContainingFile();
+            boolean existingIsLibraryClass = containingFile instanceof PsiCompiledElement;
+            if (existingIsLibraryClass) {
+              myGenerateAccessorsCheckBox.setSelected(false);
+              myEscalateVisibilityCheckBox.setSelected(false);
+            }
+            else if (isRecord) {
+              myGenerateAccessorsCheckBox.setSelected(false);
+            }
+            myGenerateAccessorsCheckBox.setEnabled(!existingIsLibraryClass && !isRecord);
+            myEscalateVisibilityCheckBox.setEnabled(!existingIsLibraryClass);
           }
-        }
-      }
+          else {
+            myGenerateAccessorsCheckBox.setEnabled(false);
+            myEscalateVisibilityCheckBox.setEnabled(false);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
-    myGenerateAccessorsCheckBox.setEnabled(existingNotALibraryClass);
-    myEscalateVisibilityCheckBox.setEnabled(existingNotALibraryClass);
+    else {
+      myGenerateAccessorsCheckBox.setEnabled(false);
+      myEscalateVisibilityCheckBox.setEnabled(false);
+    }
   }
 }

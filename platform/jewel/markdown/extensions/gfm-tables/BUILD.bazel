@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` start
+jps_test(
+    name = "jewel-markdown-extensions-gfmTables-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":jewel-markdown-extensions-gfmTables-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.markdown.extensions.gfmTables.tests`
+
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` start
 create_kotlinc_options(
     name = "custom_gfm-tables",
     opt_in = [
@@ -84,7 +92,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables` end
 
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-markdown-extensions-gfmTables-tests",
     opt_in = [
@@ -159,11 +166,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables.tests` end
-
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.gfmTables.tests` start
-
-jps_test(
-    name = "jewel-markdown-extensions-gfmTables-tests_test",
-    runtime_deps = [":jewel-markdown-extensions-gfmTables-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.markdown.extensions.gfmTables.tests` end

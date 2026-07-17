@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.impl.shared` start
-
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -109,7 +108,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl.shared` end
 
 ### auto-generated section `build intellij.platform.vcs.impl.shared.tests` start
-
 jvm_library(
     name = "vcs-impl-shared-tests",
     srcs = glob(
@@ -218,7 +216,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl.shared.tests` end
 
 ### auto-generated section `test intellij.platform.vcs.impl.shared.tests` start
-
 jps_test(
     name = "vcs-impl-shared-tests_test",
     runtime_deps = [":vcs-impl-shared-tests_test_lib"],

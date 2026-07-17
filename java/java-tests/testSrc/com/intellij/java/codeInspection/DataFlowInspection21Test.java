@@ -216,6 +216,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testJSpecifyIntersectionBound() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
     doTest();
   }
   

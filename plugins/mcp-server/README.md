@@ -184,6 +184,10 @@ From [`AnalysisToolset.kt:60-71`](src/com/intellij/mcpserver/toolsets/general/An
 Treat the description as your only channel to the LLM. It must state what the tool does, its side effects, coordinate conventions (1-based
 vs 0-based, inclusive vs exclusive), and every meaningful default — see [§13](#13-naming--description-style).
 
+`@McpDescription` is the **agent-facing** channel (`@NlsSafe`, deliberately not localized — it is prose tuned for a model). The separate,
+localizable **UI-facing** name and description shown in Settings are supplied through `McpToolset.displayName()` / `displayDescription()` —
+see [§13.5](#135-ui-facing-names--descriptions-i18n).
+
 ### 3.3 `@McpToolHints` — capability hints
 
 ```kotlin
@@ -782,6 +786,72 @@ limit: Int = Constants.MAX_LINES_COUNT_VALUE,
 
 This works whenever the referenced value is itself a `const val` (Kotlin compile-time constant) — primitives and `String` literals. Use it everywhere it compiles: defaults for `limit` / `timeout` / `max_depth`, size bounds mentioned in descriptions, mode enumerations backed by `const val`, etc. If the referenced value is not `const` (e.g., a `val` computed at runtime), fall back to writing the number by hand and accept the drift risk — there is no runtime-string-interpolation path for `@McpDescription` arguments because annotations only accept compile-time constants.
 
+### 13.5 UI-facing names & descriptions (i18n)
+
+There are **two audiences** for a tool's text, and they use **two different channels**:
+
+| Channel                                            | Audience             | Nullability | i18n                    | Where it shows                                                        |
+|----------------------------------------------------|----------------------|-------------|-------------------------|-----------------------------------------------------------------------|
+| `@McpDescription` / `@McpTool(title=…)`            | the **LLM / agent**  | `@NlsSafe`  | **not** localized       | sent on the wire to MCP clients                                       |
+| `McpToolset.displayName()` / `displayDescription()`| a **human**          | `@Nls`      | localized (bundle)      | Settings \| Tools \| MCP Server \| Exposed Tools, and other UI surfaces |
+
+`@McpDescription` is prose engineered for a model and must stay stable English; localizing it
+would change what the LLM sees. The UI, on the other hand, wants a short, human-friendly,
+translatable label. That is what the two optional `McpToolset` overrides provide:
+
+```kotlin
+interface McpToolset {
+  // Group (toolset) name shown in the UI. Falls back to a name derived from the class name.
+  fun displayName(): @Nls String? = null
+
+  // Per-tool UI description shown INSTEAD of the agent-facing @McpDescription.
+  // `toolName` is the resolved wire name. Falls back to @McpDescription when null.
+  fun displayDescription(toolName: String): @Nls String? = null
+}
+```
+
+See [`McpToolset.kt`](src/com/intellij/mcpserver/McpToolset.kt). The overrides feed UI-only
+extension properties — never sent to the LLM:
+
+- [`McpToolCategory.presentableName`](src/com/intellij/mcpserver/McpToolCategory.kt) = `displayName()` or a name derived from the class name (`FooToolset` → "Foo").
+- [`McpToolDescriptor.presentableDescription`](src/com/intellij/mcpserver/McpToolDescriptor.kt) = `displayDescription(toolName)` or the agent-facing `description`.
+
+These are what [`ShowMcpToolsAction`](src/com/intellij/mcpserver/actions/ShowMcpToolsAction.kt)
+and [`McpToolFilterConfigurable`](src/com/intellij/mcpserver/settings/McpToolFilterConfigurable.kt)
+render (tree labels, the per-tool description pane, the search index, group headers), and what
+[`McpToolsMarkdownExporter`](src/com/intellij/mcpserver/McpToolsMarkdownExporter.kt) exports.
+
+#### Wiring it to a message bundle
+
+Route every UI string through a `DynamicBundle` so it is translatable. In-tree toolsets use
+[`McpServerBundle`](src/com/intellij/mcpserver/McpServerBundle.kt); downstream plugins declare
+their own (e.g. `DevKitMcpBundle`, `CLionMcpBundle`). The idiomatic wiring:
+
+```kotlin
+class MyToolset : McpToolset {
+  override fun displayName(): String = MyBundle.message("toolset.display.name.mytoolset")
+  
+  override fun displayDescription(toolName: String): String = MyBundle.message("tool.description.$toolName")
+  // or
+  override fun displayDescription(toolName: String): String? = MyBundle.messageOrNull("tool.description.$toolName")
+  /* … @McpTool methods … */
+}
+```
+
+```properties
+# messages/MyBundle.properties
+toolset.display.name.mytoolset=My Toolset
+# suppress inspection "UnusedProperty"
+tool.description.my_tool=Human-friendly description of my_tool
+```
+
+Key-naming rules:
+
+- `toolset.display.name.<toolset>` → `displayName()`.
+- `tool.description.<wire_tool_name>` → per-tool `displayDescription(toolName)`. The suffix **must
+  match the wire tool name** — the function name, or `@McpTool(name=…)` when overridden — because
+  the provider resolves it dynamically via `message("tool.description.$toolName")`.
+
 ---
 
 ## 14. Testing your tool
@@ -926,6 +996,9 @@ From [`AnalysisToolset.kt:139`](src/com/intellij/mcpserver/toolsets/general/Anal
 5. For data-class inputs/outputs: `@Serializable`, `@EncodeDefault(Mode.NEVER)` on defaulted fields, `@property:McpDescription` on each
    field, `@file:OptIn(ExperimentalSerializationApi::class)`.
 6. Get the project with `currentCoroutineContext().project`. Announce work with `reportToolActivity(McpServerBundle.message(...))`.
+   - If your toolset overrides `displayName()` / `displayDescription(toolName)`, add the matching `toolset.display.name.*` /
+     `tool.description.<tool_name>` keys to your message bundle — with the `tool.description.$toolName` idiom, a missing key throws at
+     runtime. See [§13.5](#135-ui-facing-names--descriptions-i18n).
 7. Wrap PSI/VFS reads in `readAction { }`, user-visible edits in `writeCommandAction(project) { … }`, blocking IO in
    `withContext(Dispatchers.IO) { … }`.
 8. For long operations: accept `timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE`, wrap the body in
@@ -951,6 +1024,8 @@ Blocks on filesystem / network IO    → withContext(Dispatchers.IO) { }
 - Forgetting `@EncodeDefault(Mode.NEVER)` on defaulted result fields (bloats wire payload, breaks optional-ness in the schema).
 - Relying on Kotlin defaults to reach the LLM — defaults are not serialized into the schema, say them in `@McpDescription`.
 - Declaring a `projectPath` parameter yourself — the framework injects it.
+- Overriding `displayDescription(toolName)` with `message("tool.description.$toolName")` but forgetting to add the bundle key for a newly
+  added tool — throws a runtime `'tool.description.<tool_name>' is not found` error (see [§13.5](#135-ui-facing-names--descriptions-i18n)).
 
 ---
 

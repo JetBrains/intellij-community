@@ -4,7 +4,7 @@ import threading
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from concurrent import futures
 from types import ModuleType, TracebackType
-from typing import Any, Generic, NoReturn, Protocol, TypeAlias, TypeVar, type_check_only
+from typing import Any, Generic, NoReturn, Protocol, TypeAlias, TypeVar, runtime_checkable, type_check_only
 from typing_extensions import Self
 
 from . import aio as aio
@@ -483,7 +483,8 @@ class RpcMethodHandler(abc.ABC, Generic[_TRequest, _TResponse]):
 
     stream_stream: Callable[[Iterator[_TRequest], ServicerContext], Iterator[_TResponse]] | None
 
-class HandlerCallDetails(abc.ABC):
+@runtime_checkable
+class HandlerCallDetails(Protocol):
     method: str
     invocation_metadata: _Metadata
 

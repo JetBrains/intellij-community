@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
   public @NotNull Result beforeCharTyped(final char c, final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, final @NotNull FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
+      if (!Elf.getElf().isPsiInteractionAllowed()) {
+        // commitDocument is not supported yet for lock-free typing
+        return Result.CONTINUE;
+      }
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       FileViewProvider provider = editedFile.getViewProvider();

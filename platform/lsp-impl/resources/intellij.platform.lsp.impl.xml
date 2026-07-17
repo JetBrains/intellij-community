@@ -30,6 +30,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="100" description="LSP server connect timeout" key="lsp.server.connect.timeout"/>
+    <registryKey defaultValue="5" description="Maximum log files count per LSP server" key="lsp.server.logging.maxLogFiles"/>
     <notificationGroup id="LSP window/showMessage"
                        displayType="BALLOON"
                        bundle="messages.LspBundle"

@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.vcs.core` start
+jps_test(
+    name = "vcs-core-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":vcs-core-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.vcs.core.tests`
+
+### auto-generated section `build intellij.platform.vcs.core` start
 jvm_library(
     name = "vcs-core",
     srcs = glob(
@@ -75,7 +83,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.core` end
 
 ### auto-generated section `build intellij.platform.vcs.core.tests` start
-
 jvm_library(
     name = "vcs-core-tests",
     srcs = glob(
@@ -141,11 +148,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.vcs.core.tests` end
-
-### auto-generated section `test intellij.platform.vcs.core.tests` start
-
-jps_test(
-    name = "vcs-core-tests_test",
-    runtime_deps = [":vcs-core-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.vcs.core.tests` end

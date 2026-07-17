@@ -53,6 +53,27 @@ Use `community/tests.cmd` for tests that belong to community-only modules:
 ./community/tests.cmd --module <module> --test <pattern>
 ```
 
+### API checks via Bazel
+
+In an Ultimate checkout, run `ApiCheckTest` directly through its Bazel test target. For a focused check, pass one or more comma-separated module names:
+
+```bash
+bazel test //tests/ideaProjectStructure:projectStructureTests_test \
+  --test_filter=com.intellij.ideaProjectStructure.api.ApiCheckTest \
+  --test_arg=--jvm_flag=-Dapi.dump.test.modules.to.check=<module>[,<module>...] \
+  --test_output=summary \
+  --test_summary=detailed
+```
+
+Omit `--test_arg` to check all modules. Do not use `bazel run` for this target: it streams noisy test output and does not provide Bazel's test summary.
+
+On failure, keep agent context small by extracting the failing dynamic-test names and messages from Bazel's JUnit report instead of printing the full `test.log`:
+
+```bash
+xmllint --xpath '//testcase[failure or error]/@name | //testcase[failure or error]/*[self::failure or self::error]/@message' \
+  out/bazel-testlogs/tests/ideaProjectStructure/projectStructureTests_test/test.xml
+```
+
 ### Product layout and packaging changes
 
 When changing `ProductProperties`, `productImplementationModules`, product content descriptors, plugin/module-set packaging, or generated product layout XML, also run:

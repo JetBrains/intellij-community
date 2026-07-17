@@ -21,16 +21,13 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object DemorgansLawUtils {
     data class Context(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
-    @OptIn(UnsafeCastFunction::class)
     fun prepareContext(operands: List<KtExpression>): Context {
         val pointers = operands.asReversed().map { operand ->
-            operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction()
+            (operand as? KtQualifiedExpression)?.invertSelectorFunction()
                 ?: operand.negate(reformat = false) { analyze(it) { it.isBoolean } }
         }.map { it.createSmartPointer() }
         return Context(pointers)
@@ -40,6 +37,7 @@ object DemorgansLawUtils {
         val operatorText = when (expression.operationToken) {
             KtTokens.ANDAND -> KtTokens.OROR.value
             KtTokens.OROR -> KtTokens.ANDAND.value
+            KtTokens.ELVIS -> return
             else -> throw IllegalArgumentException()
         }
         val newExpression = KtPsiFactory(expression.project).buildExpression {

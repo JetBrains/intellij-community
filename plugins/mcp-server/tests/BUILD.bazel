@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -60,6 +59,8 @@ jvm_library(
         "//libraries/ktor/client:client_test_lib",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
+        "//plugins/mcp-server/mcpserver.testFramework",
+        "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests/plugin",
         "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//plugins/mcp-server/mcpserver.vcs",
@@ -84,6 +85,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/vcs-api:vcs",
+        "//platform/vcs-api:vcs_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
@@ -119,7 +122,6 @@ exports_files(
 ### auto-generated section `iml intellij.mcpserver.tests` end
 
 ### auto-generated section `test intellij.mcpserver.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

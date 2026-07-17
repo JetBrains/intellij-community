@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import org.jdom.Element
@@ -9,6 +10,7 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
+@PyInternalExecApi
 class UvSdkAdditionalData : PythonSdkAdditionalData {
   val flavorData: UvSdkFlavorData
 

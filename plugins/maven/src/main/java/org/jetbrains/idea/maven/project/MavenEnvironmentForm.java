@@ -335,9 +335,11 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       .withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"));
     mavenHomeComponent.getComponent().addBrowseFolderListener(project, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     settingsFileComponent.getComponent().addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withTitle(MavenProjectBundle.message("maven.select.maven.settings.file")));
+      .withTitle(MavenProjectBundle.message("maven.select.maven.settings.file"))
+      .withEnvironmentRestricted(true));
     localRepositoryComponent.getComponent().addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(MavenProjectBundle.message("maven.select.local.repository")));
+      .withTitle(MavenProjectBundle.message("maven.select.local.repository"))
+      .withEnvironmentRestricted(true));
   }
 
   @Override

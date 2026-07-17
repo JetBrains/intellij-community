@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
@@ -183,19 +184,7 @@ public final class CircularBytesBufferOverMMappedFileLocked
   }
 
   @Override
-  public void read(@NotNull DataReader reader) throws IOException {
-    readImpl(entryData -> {
-      reader.read(entryData);
-      return false;
-    });
-  }
-
-  @Override
-  public int readConsuming(@NotNull ConsumingDataReader reader) throws IOException {
-    return readImpl(reader);
-  }
-
-  private int readImpl(@NotNull ConsumingDataReader reader) throws IOException {
+  public int readMaybeConsuming(@NotNull OptionallyConsumingDataReader reader) throws IOException {
     synchronized (lock) {
       ByteBuffer pageBuffer = pageBuffer();
       int consumedRecords = 0;
@@ -211,14 +200,18 @@ public final class CircularBytesBufferOverMMappedFileLocked
         int recordLength = RecordLayout.recordLength(header, offset, bytesLeft, storage.storagePath());
 
         if (RecordLayout.isDataHeader(header) && !RecordLayout.isConsumed(header)) {
-          int payloadLength = RecordLayout.payloadLength(header);
-          ByteBuffer payloadData = pageBuffer
-            .slice(recordOffset + RecordLayout.PAYLOAD_OFFSET, payloadLength)
-            .order(pageBuffer.order());
-          boolean successfullyConsumed = reader.read(payloadData);
-          if (successfullyConsumed) {
-            RecordLayout.markConsumed(pageBuffer, recordOffset, header);
-            consumedRecords++;
+          ByteBuffer payloadData = payloadData(pageBuffer, recordOffset, header);
+          ReadDecision decision = Objects.requireNonNull(reader.decide(payloadData), "reader.decide() must not return null");
+          if (decision.shouldStop()) {
+            break;
+          }
+          else if (decision.shouldProcess()) {
+            resetPayloadData(payloadData, pageBuffer);
+            decision.process(payloadData);
+            if (decision.shouldConsumeAfterProcess()) {
+              RecordLayout.markConsumed(pageBuffer, recordOffset, header);
+              consumedRecords++;
+            }
           }
         }
 
@@ -229,6 +222,27 @@ public final class CircularBytesBufferOverMMappedFileLocked
       advanceTailOverConsumedRecords(pageBuffer);
       return consumedRecords;
     }
+  }
+
+  /**
+   * Creates a fresh immutable payload view after the record state is known to be current.
+   */
+  private static @NotNull ByteBuffer payloadData(@NotNull ByteBuffer pageBuffer,
+                                                 int recordOffset,
+                                                 int header) throws CorruptedException {
+    int payloadLength = RecordLayout.payloadLength(header);
+    ByteBuffer payloadData = pageBuffer
+      .slice(recordOffset + RecordLayout.PAYLOAD_OFFSET, payloadLength)
+      .order(pageBuffer.order());
+    return payloadData.asReadOnlyBuffer().order(payloadData.order());
+  }
+
+  /**
+   * Restores the classifier view before passing the same immutable payload view to the processing phase.
+   */
+  private static void resetPayloadData(@NotNull ByteBuffer payloadData, @NotNull ByteBuffer pageBuffer) {
+    payloadData.clear();
+    payloadData.order(pageBuffer.order());
   }
 
   @Override

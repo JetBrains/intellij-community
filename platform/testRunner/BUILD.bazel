@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.testRunner` start
+jps_test(
+    name = "testRunner-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":testRunner-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.testRunner.tests`
+
+### auto-generated section `build intellij.platform.testRunner` start
 jvm_library(
     name = "testRunner",
     srcs = glob(
@@ -104,7 +112,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testRunner` end
 
 ### auto-generated section `build intellij.platform.testRunner.tests` start
-
 jvm_library(
     name = "testRunner-tests",
     srcs = glob(
@@ -205,11 +212,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.testRunner.tests` end
-
-### auto-generated section `test intellij.platform.testRunner.tests` start
-
-jps_test(
-    name = "testRunner-tests_test",
-    runtime_deps = [":testRunner-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.testRunner.tests` end

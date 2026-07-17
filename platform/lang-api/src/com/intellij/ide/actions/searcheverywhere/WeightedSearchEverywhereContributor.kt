@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 
+@Deprecated("The old Search Everywhere API is being sunset. " +
+            "Implement com.intellij.platform.searchEverywhere.SeItemsProvider instead.")
 interface WeightedSearchEverywhereContributor<I : Any> : SearchEverywhereContributor<I> {
 
   @ApiStatus.Internal

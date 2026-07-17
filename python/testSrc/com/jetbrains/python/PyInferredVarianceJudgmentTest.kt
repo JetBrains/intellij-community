@@ -921,4 +921,14 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
         def f(self, t: tuple[*Ts]) -> tuple[*Ts]: ...
     """.trimIndent())
 
+  @TestFor(issues = ["PY-88800"])
+  @Test
+  fun `Contravariant arguments in nested functions`() = test("""
+    class B[T]:
+    #       └ INFERRED_VARIANCE BIVARIANT
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance inference
+                ...
+    """.trimIndent())
+
 }

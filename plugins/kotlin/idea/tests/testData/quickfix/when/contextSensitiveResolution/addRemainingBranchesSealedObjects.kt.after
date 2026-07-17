@@ -1,6 +1,6 @@
 // "Add remaining branches" "true"
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'Another', 'null' branches or an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 
 package test
 

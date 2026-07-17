@@ -2,6 +2,7 @@
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -43,6 +44,11 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.Timer
 
 private val LOG = logger<ActionsRecorder>()
+
+/**
+ * Fallback id reported by Rider/CLion Nova's `RiderBackendCompositeAction`
+ */
+private const val FALLBACK_BACKEND_ACTION_ID = "RiderFallbackBackendAction"
 
 internal class ActionsRecorder(private val project: Project,
                                private val document: Document?,
@@ -184,7 +190,8 @@ internal class ActionsRecorder(private val project: Project,
 
   fun futureAction(actionId: String): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
-    registerActionListener { caughtActionId, _ -> if (actionId == caughtActionId) future.complete(true) }
+    registerActionListener {
+      caughtActionId, _ -> if (actionId == caughtActionId || caughtActionId == FALLBACK_BACKEND_ACTION_ID) future.complete(true) }
     return future
   }
 
@@ -316,7 +323,7 @@ internal class ActionsRecorder(private val project: Project,
   }
 
   private fun getActionId(action: AnAction): String {
-    val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
+    val actionId = ActionManager.getInstance().getId(action) ?: (action as? ActionIdProvider)?.id ?: action.javaClass.name
     if (DataLoader.liveMode) {
       println(actionId)
     }

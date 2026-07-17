@@ -1,3 +1,0 @@
-- name: lib/modules/intellij.platform.problemView.buildView.jar
-  contentModules:
-  - name: intellij.platform.problemView.buildView

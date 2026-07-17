@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.structuralSearch` start
-
 jvm_library(
     name = "structuralSearch",
     srcs = glob(
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.structuralSearch` end
 
 ### auto-generated section `build intellij.java.structuralSearch.tests` start
-
 jvm_library(
     name = "structuralSearch-tests",
     srcs = glob(
@@ -196,7 +194,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.structuralSearch.tests` end
 
 ### auto-generated section `test intellij.java.structuralSearch.tests` start
-
 jps_test(
     name = "structuralSearch-tests_test",
     runtime_deps = [":structuralSearch-tests_test_lib"],

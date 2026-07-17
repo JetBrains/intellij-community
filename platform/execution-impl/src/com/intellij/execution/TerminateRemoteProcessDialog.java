@@ -18,14 +18,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public final class TerminateRemoteProcessDialog {
-  public static @Nullable ProcessCloseConfirmation show(
+  public static @NotNull ProcessCloseConfirmationResult show(
     Project project,
     @NotNull String sessionName,
     @NotNull ProcessHandler processHandler
@@ -38,7 +37,7 @@ public final class TerminateRemoteProcessDialog {
    * {@code sessionNames} and {@code processHandlers} correspond to each other by index and are expected to be of the same size.
    */
   @ApiStatus.Experimental
-  public static @Nullable ProcessCloseConfirmation show(
+  public static @NotNull ProcessCloseConfirmationResult show(
     Project project,
     @NotNull List<@NotNull String> sessionNames,
     @NotNull List<@NotNull ProcessHandler> processHandlers
@@ -51,16 +50,16 @@ public final class TerminateRemoteProcessDialog {
     }
 
     if (ContainerUtil.all(processHandlers, TerminateRemoteProcessDialog::isSilentlyDestroyOnClose)) {
-      return ProcessCloseConfirmation.TERMINATE;
+      return ProcessCloseConfirmationResult.TERMINATE;
     }
 
     boolean canDisconnect = ContainerUtil.all(processHandlers, TerminateRemoteProcessDialog::canDisconnect);
-    ProcessCloseConfirmation confirmation = GeneralSettings.getInstance().getProcessCloseConfirmation();
-    if (confirmation != ProcessCloseConfirmation.ASK) {
-      if (confirmation == ProcessCloseConfirmation.DISCONNECT && !canDisconnect) {
-        confirmation = ProcessCloseConfirmation.TERMINATE;
+    ProcessCloseConfirmation settingState = GeneralSettings.getInstance().getProcessCloseConfirmation();
+    if (settingState != ProcessCloseConfirmation.ASK) {
+      if (settingState == ProcessCloseConfirmation.TERMINATE || settingState == ProcessCloseConfirmation.DISCONNECT && !canDisconnect) {
+        return ProcessCloseConfirmationResult.TERMINATE;
       }
-      return confirmation;
+      return ProcessCloseConfirmationResult.DISCONNECT;
     }
 
     List<String> options = new ArrayList<>(3);
@@ -73,9 +72,12 @@ public final class TerminateRemoteProcessDialog {
       @Override
       public void rememberChoice(boolean isSelected, int exitCode) {
         if (isSelected) {
-          ProcessCloseConfirmation confirmation = getConfirmation(exitCode, canDisconnect);
-          if (confirmation != null) {
-            GeneralSettings.getInstance().setProcessCloseConfirmation(confirmation);
+          ProcessCloseConfirmationResult result = getConfirmationResult(exitCode, canDisconnect);
+          if (result != ProcessCloseConfirmationResult.LEAVE_RUNNING) {
+            ProcessCloseConfirmation settingState = result == ProcessCloseConfirmationResult.DISCONNECT
+                                                    ? ProcessCloseConfirmation.DISCONNECT
+                                                    : ProcessCloseConfirmation.TERMINATE;
+            GeneralSettings.getInstance().setProcessCloseConfirmation(settingState);
           }
         }
       }
@@ -111,10 +113,10 @@ public final class TerminateRemoteProcessDialog {
       processHandler.removeProcessListener(listener);
     }
     if (runningProcesses.isEmpty()) {
-      return ProcessCloseConfirmation.DISCONNECT;
+      return ProcessCloseConfirmationResult.DISCONNECT;
     }
 
-    return getConfirmation(exitCode, canDisconnect);
+    return getConfirmationResult(exitCode, canDisconnect);
   }
 
   private static boolean isSilentlyDestroyOnClose(@NotNull ProcessHandler processHandler) {
@@ -142,9 +144,15 @@ public final class TerminateRemoteProcessDialog {
     return ExecutionBundle.message("terminate.processes.confirmation.text", String.join(", ", namesInQuotes));
   }
 
-  private static ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {
-    if (button == 0) return ProcessCloseConfirmation.TERMINATE;
-    if (button == 1 && withDisconnect) return ProcessCloseConfirmation.DISCONNECT;
-    return null;
+  private static ProcessCloseConfirmationResult getConfirmationResult(int button, boolean withDisconnect) {
+    if (button == 0) return ProcessCloseConfirmationResult.TERMINATE;
+    if (button == 1 && withDisconnect) return ProcessCloseConfirmationResult.DISCONNECT;
+    return ProcessCloseConfirmationResult.LEAVE_RUNNING;
+  }
+
+  public enum ProcessCloseConfirmationResult {
+    TERMINATE,
+    DISCONNECT,
+    LEAVE_RUNNING,
   }
 }

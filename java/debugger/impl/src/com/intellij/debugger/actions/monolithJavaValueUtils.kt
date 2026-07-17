@@ -6,9 +6,8 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.SplitDebuggerMode
-import com.intellij.xdebugger.frame.XValue
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.xdebugger.frame.XValue
 import kotlinx.coroutines.runBlocking
 
 internal fun findJavaValue(xValue: XValue, sessionProxy: XDebugSessionProxy): JavaValue? {

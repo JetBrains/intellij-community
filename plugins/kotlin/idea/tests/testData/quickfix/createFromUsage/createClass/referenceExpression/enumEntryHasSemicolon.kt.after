@@ -1,5 +1,5 @@
 // "Create enum constant 'D'" "true"
-// K2_ERROR: Unresolved reference 'D'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 enum class Test {
     A,
     B,

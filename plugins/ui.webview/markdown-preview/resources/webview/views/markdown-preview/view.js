@@ -1,50 +1,13 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./assets/mermaid.js","./assets/rolldown-runtime.js","./assets/braintree-sanitize-url.js","./assets/iconify-utils.js","./assets/cytoscape-cose-bilkent.js","./assets/cose-base.js","./assets/cytoscape-fcose.js","./assets/cytoscape.js","./assets/d3-array.js","./assets/d3-axis.js","./assets/d3.js","./assets/d3-format.js","./assets/d3-hierarchy.js","./assets/d3-interpolate.js","./assets/d3-color.js","./assets/d3-sankey.js","./assets/d3-path.js","./assets/d3-scale-chromatic.js","./assets/d3-scale.js","./assets/d3-shape.js","./assets/dagre-d3-es.js","./assets/dayjs.js","./assets/dompurify.js","./assets/es-toolkit.js","./assets/khroma.js","./assets/marked.js"])))=>i.map(i=>d[i]);
 import { n as require_react, t as require_jsx_runtime } from "./assets/react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { t as Markdown } from "./assets/react-markdown.js";
-import { t as rehypeHighlight } from "./assets/rehype-highlight.js";
 import { t as rehypeRaw } from "./assets/rehype-raw.js";
 import { n as defaultSchema } from "./assets/hast-util-sanitize.js";
 import { t as rehypeSanitize } from "./assets/rehype-sanitize.js";
 import { t as rehypeSlug } from "./assets/rehype-slug.js";
 import { t as remarkFrontmatter } from "./assets/remark-frontmatter.js";
 import { t as remarkGfm } from "./assets/remark-gfm.js";
-import { h as select_default, n as identity, t as zoom_default } from "./assets/d3.js";
-import { f as __vitePreload } from "./assets/mermaid.js";
-import { t as renderMathInElement } from "./assets/katex.js";
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
-//#region \0vite/modulepreload-polyfill.js
-(function polyfill() {
-	const relList = document.createElement("link").relList;
-	if (relList && relList.supports && relList.supports("modulepreload")) return;
-	for (const link of document.querySelectorAll("link[rel=\"modulepreload\"]")) processPreload(link);
-	new MutationObserver((mutations) => {
-		for (const mutation of mutations) {
-			if (mutation.type !== "childList") continue;
-			for (const node of mutation.addedNodes) if (node.tagName === "LINK" && node.rel === "modulepreload") processPreload(node);
-		}
-	}).observe(document, {
-		childList: true,
-		subtree: true
-	});
-	function getFetchOpts(link) {
-		const fetchOpts = {};
-		if (link.integrity) fetchOpts.integrity = link.integrity;
-		if (link.referrerPolicy) fetchOpts.referrerPolicy = link.referrerPolicy;
-		if (link.crossOrigin === "use-credentials") fetchOpts.credentials = "include";
-		else if (link.crossOrigin === "anonymous") fetchOpts.credentials = "omit";
-		else fetchOpts.credentials = "same-origin";
-		return fetchOpts;
-	}
-	function processPreload(link) {
-		if (link.ep) return;
-		link.ep = true;
-		const fetchOpts = getFetchOpts(link);
-		fetch(link.href, fetchOpts);
-	}
-})();
-//#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_client = require_client();
 function apiId() {
 	return function createApiId(namespace) {
@@ -81,8 +44,6 @@ function createLazyWebViewTheme() {
 	});
 }
 var webViewTheme = createLazyWebViewTheme();
-//#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
 var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
 	validateIconSetId(id);
 	return new DefinedIconSet(id);
@@ -110,8 +71,6 @@ function validateIconResourcePath(resourcePath) {
 function encodeIconResourcePath(resourcePath) {
 	return resourcePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
-//#endregion
-//#region ../../webview-src/packages/api/src/focus.ts
 var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
 function addWebViewFocusLeaveListener(listener) {
 	window.addEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, listener);
@@ -119,8 +78,6 @@ function addWebViewFocusLeaveListener(listener) {
 }
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -143,8 +100,34 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
-//#endregion
-//#region views/markdown-preview/src/FloatingMarkdownControls.tsx
+function getPerfLogger(scope) {
+	return {
+		event(metric, details) {
+			console.trace(formatWebViewLogMessage("event", scope, metric, details));
+		},
+		perf(metric, durationMs, details) {
+			console.trace(formatWebViewPerfMessage(scope, metric, durationMs, details));
+		},
+		perfSince(metric, startedAtMs, details) {
+			this.perf(metric, performance.now() - startedAtMs, details);
+		}
+	};
+}
+function formatWebViewPerfMessage(scope, metric, durationMs, details) {
+	return withDetails(`perf: ${scope}.${metric} = ${Math.round(durationMs)}ms`, details);
+}
+function formatWebViewLogMessage(kind, scope, metric, details) {
+	return withDetails(`${kind}: ${scope}.${metric}`, details);
+}
+function withDetails(message, details) {
+	const formattedDetails = formatWebViewLogDetails(details);
+	return formattedDetails.length === 0 ? message : `${message} - ${formattedDetails}`;
+}
+function formatWebViewLogDetails(details) {
+	if (details === void 0) return "";
+	if (typeof details === "string") return details;
+	return Object.entries(details).filter(([, value]) => value !== null && value !== void 0).map(([key, value]) => `${key}=${value}`).join(", ");
+}
 var import_react = require_react();
 var import_jsx_runtime = require_jsx_runtime();
 var headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
@@ -421,382 +404,16 @@ function closestFontSize(fontSize, options) {
 function classNames$1(...names) {
 	return names.filter(Boolean).join(" ") || void 0;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownReactUtils.ts
-function codeToString(node) {
-	if (typeof node === "string" || typeof node === "number") return String(node);
-	if (Array.isArray(node)) return node.map(codeToString).join("");
-	return "";
+function markdownDiagnosticDetails(markdown, contentVersion, extra = "") {
+	const details = `contentVersion=${contentVersion}, markdownChars=${markdown.length}, markdownLines=${markdownLineCount(markdown)}`;
+	return extra.length === 0 ? details : `${details}, ${extra}`;
 }
-function classNames(...names) {
-	return names.filter(Boolean).join(" ") || void 0;
+function markdownLineCount(markdown) {
+	if (markdown.length === 0) return 0;
+	let lines = 1;
+	for (let index = 0; index < markdown.length; index++) if (markdown.charCodeAt(index) === 10) lines++;
+	return lines;
 }
-//#endregion
-//#region views/markdown-preview/src/MarkdownZoomControls.tsx
-var MARKDOWN_ZOOM_SCALE_EXTENT = [.25, 4];
-var MARKDOWN_ZOOM_BUTTON_FACTOR = 1.2;
-function MarkdownZoomToolbar({ targetLabel, className, buttonClassName, onZoomOut, onResetZoom, onZoomIn }) {
-	const normalizedTargetLabel = targetLabel.toLowerCase();
-	const accessibleTargetLabel = `${normalizedTargetLabel.charAt(0).toUpperCase()}${normalizedTargetLabel.slice(1)}`;
-	const buttonClass = classNames("markdownZoomToolbarButton", buttonClassName);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: classNames("markdownZoomToolbar", className),
-		"aria-label": `${accessibleTargetLabel} zoom controls`,
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				className: buttonClass,
-				"aria-label": `Zoom out ${normalizedTargetLabel}`,
-				title: "Zoom out",
-				onClick: onZoomOut,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: AllIcons.src("graph/zoomOut.svg"),
-					alt: "",
-					draggable: false
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				className: buttonClass,
-				"aria-label": `Reset ${normalizedTargetLabel} zoom`,
-				title: "Reset zoom",
-				onClick: onResetZoom,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: AllIcons.src("general/reset.svg"),
-					alt: "",
-					draggable: false
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				className: buttonClass,
-				"aria-label": `Zoom in ${normalizedTargetLabel}`,
-				title: "Zoom in",
-				onClick: onZoomIn,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: AllIcons.src("graph/zoomIn.svg"),
-					alt: "",
-					draggable: false
-				})
-			})
-		]
-	});
-}
-function shouldHandleZoomEvent(event) {
-	return event.type !== "wheel" || event.ctrlKey;
-}
-//#endregion
-//#region views/markdown-preview/src/MarkdownImageBlock.tsx
-function MarkdownImageBlock({ src, alt, title, className, style, ...props }) {
-	const viewportRef = (0, import_react.useRef)(null);
-	const imageRef = (0, import_react.useRef)(null);
-	const zoomBehaviorRef = (0, import_react.useRef)(null);
-	const [aspectRatio, setAspectRatio] = (0, import_react.useState)();
-	(0, import_react.useEffect)(() => {
-		const viewport = viewportRef.current;
-		const image = imageRef.current;
-		if (!viewport || !image) return;
-		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(MARKDOWN_ZOOM_SCALE_EXTENT).on("zoom", (event) => {
-			image.style.transform = `translate(${event.transform.x}px, ${event.transform.y}px) scale(${event.transform.k})`;
-		});
-		zoomBehaviorRef.current = zoomBehavior;
-		const viewportSelection = select_default(viewport);
-		viewportSelection.call(zoomBehavior);
-		viewportSelection.call(zoomBehavior.transform, identity);
-		return () => {
-			viewportSelection.on(".zoom", null);
-			image.style.removeProperty("transform");
-			zoomBehaviorRef.current = null;
-		};
-	}, [src]);
-	(0, import_react.useEffect)(() => {
-		updateAspectRatio();
-	}, [src]);
-	function zoomBy(factor) {
-		const viewport = viewportRef.current;
-		const zoomBehavior = zoomBehaviorRef.current;
-		if (!viewport || !zoomBehavior) return;
-		select_default(viewport).call(zoomBehavior.scaleBy, factor);
-	}
-	function resetZoom() {
-		const viewport = viewportRef.current;
-		const zoomBehavior = zoomBehaviorRef.current;
-		if (!viewport || !zoomBehavior) return;
-		select_default(viewport).call(zoomBehavior.transform, identity);
-	}
-	function updateAspectRatio() {
-		const image = imageRef.current;
-		const width = image?.naturalWidth ?? 0;
-		const height = image?.naturalHeight ?? 0;
-		setAspectRatio(width > 0 && height > 0 ? width / height : void 0);
-	}
-	const blockStyle = aspectRatio === void 0 ? style : {
-		...style,
-		"--markdown-image-aspect-ratio": String(aspectRatio)
-	};
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		...props,
-		className: classNames("markdownImageBlock", "isInteractive", className),
-		style: blockStyle,
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "markdownImageViewport",
-			ref: viewportRef,
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-				className: "markdownImage",
-				ref: imageRef,
-				src,
-				alt: alt ?? "",
-				title,
-				draggable: false,
-				onLoad: updateAspectRatio
-			})
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownZoomToolbar, {
-			targetLabel: "image",
-			className: "markdownImageToolbar",
-			buttonClassName: "markdownImageToolbarButton",
-			onZoomOut: () => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR),
-			onResetZoom: resetZoom,
-			onZoomIn: () => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)
-		})]
-	});
-}
-//#endregion
-//#region views/markdown-preview/src/MermaidBlock.tsx
-var mermaidBlockId = 0;
-var mermaidRenderId = 0;
-var mermaidModule;
-var PRESERVED_SVG_TAGS = new Set([
-	"defs",
-	"style",
-	"title",
-	"desc",
-	"metadata",
-	"marker"
-]);
-function MermaidBlock({ chart, theme }) {
-	const hostId = (0, import_react.useRef)(`markdown-preview-mermaid-${++mermaidBlockId}`);
-	const [state, setState] = (0, import_react.useState)({ kind: "rendering" });
-	(0, import_react.useEffect)(() => {
-		let cancelled = false;
-		const renderId = `${hostId.current}-${++mermaidRenderId}`;
-		setState({ kind: "rendering" });
-		loadMermaid().then((mermaid) => {
-			configureMermaid(mermaid, theme);
-			return mermaid.render(renderId, chart);
-		}).then(({ svg }) => {
-			if (!cancelled) setState({
-				kind: "rendered",
-				svg
-			});
-		}).catch((error) => {
-			if (!cancelled) setState({
-				kind: "error",
-				message: error instanceof Error ? error.message : "Failed to render Mermaid diagram"
-			});
-		});
-		return () => {
-			cancelled = true;
-		};
-	}, [chart, theme]);
-	if (state.kind === "rendered") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RenderedMermaidDiagram, { svg: state.svg });
-	if (state.kind === "error") return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "mermaidBlock hasError",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mermaidError",
-			children: state.message
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: chart }) })]
-	});
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "mermaidBlock isRendering",
-		children: "Rendering diagram..."
-	});
-}
-function RenderedMermaidDiagram({ svg }) {
-	const hostRef = (0, import_react.useRef)(null);
-	const svgRef = (0, import_react.useRef)(null);
-	const zoomBehaviorRef = (0, import_react.useRef)(null);
-	(0, import_react.useEffect)(() => {
-		const host = hostRef.current;
-		if (!host) return;
-		host.innerHTML = svg;
-		const svgElement = host.querySelector("svg");
-		if (!svgElement) return () => {
-			host.innerHTML = "";
-		};
-		prepareSvg(svgElement, "mermaidSvg");
-		const panZoomGroup = wrapSvgContent(svgElement, "mermaidPanZoom");
-		fitSvgViewBoxToContent(svgElement, panZoomGroup);
-		svgRef.current = svgElement;
-		const zoomBehavior = zoom_default().filter(shouldHandleZoomEvent).scaleExtent(MARKDOWN_ZOOM_SCALE_EXTENT).on("zoom", (event) => {
-			panZoomGroup.setAttribute("transform", event.transform.toString());
-		});
-		zoomBehaviorRef.current = zoomBehavior;
-		const svgSelection = select_default(svgElement);
-		svgSelection.call(zoomBehavior);
-		svgSelection.call(zoomBehavior.transform, identity);
-		return () => {
-			svgSelection.on(".zoom", null);
-			host.innerHTML = "";
-			svgRef.current = null;
-			zoomBehaviorRef.current = null;
-		};
-	}, [svg]);
-	function zoomBy(factor) {
-		const svgElement = svgRef.current;
-		const zoomBehavior = zoomBehaviorRef.current;
-		if (!svgElement || !zoomBehavior) return;
-		select_default(svgElement).call(zoomBehavior.scaleBy, factor);
-	}
-	function resetZoom() {
-		const svgElement = svgRef.current;
-		const zoomBehavior = zoomBehaviorRef.current;
-		if (!svgElement || !zoomBehavior) return;
-		select_default(svgElement).call(zoomBehavior.transform, identity);
-	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "mermaidBlock isInteractive",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mermaidViewport",
-			ref: hostRef
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownZoomToolbar, {
-			targetLabel: "diagram",
-			className: "mermaidToolbar",
-			buttonClassName: "mermaidToolbarButton",
-			onZoomOut: () => zoomBy(1 / MARKDOWN_ZOOM_BUTTON_FACTOR),
-			onResetZoom: resetZoom,
-			onZoomIn: () => zoomBy(MARKDOWN_ZOOM_BUTTON_FACTOR)
-		})]
-	});
-}
-function prepareSvg(svgElement, className) {
-	svgElement.classList.add(className);
-	svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
-	if (!svgElement.hasAttribute("viewBox")) {
-		const width = svgDimension(svgElement.getAttribute("width"));
-		const height = svgDimension(svgElement.getAttribute("height"));
-		if (width && height) svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`);
-	}
-	svgElement.removeAttribute("width");
-	svgElement.removeAttribute("height");
-	svgElement.style.removeProperty("width");
-	svgElement.style.removeProperty("height");
-	svgElement.style.removeProperty("max-width");
-}
-function wrapSvgContent(svgElement, className) {
-	for (const child of Array.from(svgElement.children)) if (child.tagName.toLowerCase() === "g" && child.classList.contains(className)) return child;
-	const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-	group.setAttribute("class", className);
-	for (const child of Array.from(svgElement.childNodes)) {
-		if (child.nodeType !== Node.ELEMENT_NODE) continue;
-		const element = child;
-		if (PRESERVED_SVG_TAGS.has(element.tagName.toLowerCase())) continue;
-		group.appendChild(element);
-	}
-	svgElement.appendChild(group);
-	return group;
-}
-function fitSvgViewBoxToContent(svgElement, contentElement) {
-	try {
-		const box = contentElement.getBBox();
-		if (box.width <= 0 || box.height <= 0) return;
-		const padding = 24;
-		svgElement.setAttribute("viewBox", `${box.x - padding} ${box.y - padding} ${box.width + padding * 2} ${box.height + padding * 2}`);
-	} catch {}
-}
-function svgDimension(value) {
-	if (!value) return void 0;
-	const dimension = Number.parseFloat(value);
-	return Number.isFinite(dimension) && dimension > 0 ? dimension : void 0;
-}
-function loadMermaid() {
-	mermaidModule ||= __vitePreload(() => import("./assets/mermaid.js").then((n) => n.t).then((module) => module.default), __vite__mapDeps([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]), import.meta.url);
-	return mermaidModule;
-}
-function configureMermaid(mermaid, theme) {
-	const isLight = theme === "light";
-	const panel = cssVariable("--ij-bg-panel", isLight ? "#F7F8F9" : "#212326");
-	const panelAlt = cssVariable("--ij-bg-panel-alt", isLight ? "#FFFFFF" : "#26282C");
-	const hover = cssVariable("--ij-bg-hover", isLight ? "#00000012" : "#FFFFFF17");
-	const border = cssVariable("--ij-border-strong", isLight ? "#D1D3D9" : "#40434A");
-	const textPrimary = cssVariable("--ij-text-primary", isLight ? "#000000" : "#D1D3D9");
-	const textSecondary = cssVariable("--ij-text-secondary", "#73767C");
-	const accent = cssVariable("--ij-accent", "#3871E1");
-	const font = cssVariable("--ij-font", "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica Neue, sans-serif");
-	mermaid.initialize({
-		startOnLoad: false,
-		theme: "base",
-		securityLevel: "strict",
-		suppressErrorRendering: true,
-		themeVariables: {
-			fontFamily: font,
-			fontSize: "13px",
-			primaryColor: panel,
-			primaryBorderColor: border,
-			primaryTextColor: textPrimary,
-			secondaryColor: hover,
-			secondaryBorderColor: border,
-			secondaryTextColor: textPrimary,
-			tertiaryColor: panelAlt,
-			tertiaryBorderColor: border,
-			tertiaryTextColor: textPrimary,
-			mainBkg: panel,
-			clusterBkg: panelAlt,
-			clusterBorder: border,
-			lineColor: textSecondary,
-			textColor: textPrimary,
-			titleColor: textPrimary,
-			nodeBorder: border,
-			edgeLabelBackground: panel,
-			signalColor: textPrimary,
-			actorBorder: border,
-			actorBkg: panel,
-			actorTextColor: textPrimary,
-			noteBkgColor: panelAlt,
-			noteBorderColor: border,
-			noteTextColor: textPrimary,
-			activationBkgColor: hover,
-			activationBorderColor: accent
-		},
-		themeCSS: `
-      .node rect,
-      .node circle,
-      .node ellipse,
-      .node polygon,
-      .node path {
-        rx: 4px;
-        ry: 4px;
-      }
-      .label,
-      .edgeLabel,
-      .cluster-label,
-      .messageText {
-        color: ${textPrimary};
-        fill: ${textPrimary};
-        font-family: ${font};
-      }
-      .edgeLabel,
-      .edgeLabel p,
-      .edgeLabel span {
-        background: ${panel};
-        color: ${textPrimary};
-      }
-      .flowchart-link,
-      .messageLine0,
-      .messageLine1 {
-        stroke: ${textSecondary};
-      }
-      .marker {
-        fill: ${textSecondary};
-        stroke: ${textSecondary};
-      }
-    `
-	});
-}
-function cssVariable(name, fallback) {
-	return (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback).replace(/^#([0-9a-fA-F]{6})[0-9a-fA-F]{2}$/, "#$1");
-}
-//#endregion
-//#region views/markdown-preview/src/markdownHastUtils.ts
 function codeNodeFromPreNode(node) {
 	return node?.children?.find((child) => child.tagName === "code");
 }
@@ -811,66 +428,6 @@ function hastText(node) {
 	if (typeof node.value === "string") return node.value;
 	return node.children?.map(hastText).join("") ?? "";
 }
-//#endregion
-//#region views/markdown-preview/src/markdownLatex.ts
-var latexDelimiters = [
-	{
-		left: "$$",
-		right: "$$",
-		display: true
-	},
-	{
-		left: "\\[",
-		right: "\\]",
-		display: true
-	},
-	{
-		left: "\\(",
-		right: "\\)",
-		display: false
-	},
-	{
-		left: "$",
-		right: "$",
-		display: false
-	},
-	{
-		left: "\\begin{equation}",
-		right: "\\end{equation}",
-		display: true
-	},
-	{
-		left: "\\begin{align}",
-		right: "\\end{align}",
-		display: true
-	},
-	{
-		left: "\\begin{alignat}",
-		right: "\\end{alignat}",
-		display: true
-	},
-	{
-		left: "\\begin{gather}",
-		right: "\\end{gather}",
-		display: true
-	},
-	{
-		left: "\\begin{CD}",
-		right: "\\end{CD}",
-		display: true
-	}
-];
-function renderMarkdownLatex() {
-	const contentElement = document.getElementById("content");
-	if (!contentElement) return;
-	renderMathInElement(contentElement, {
-		delimiters: latexDelimiters,
-		ignoredClasses: ["katex"],
-		throwOnError: false
-	});
-}
-//#endregion
-//#region views/markdown-preview/src/markdownPathLinks.tsx
 function collectPathLinkCandidates(markdown) {
 	const codeSegments = markdownCodeSegments(markdown);
 	const candidates = [];
@@ -1084,8 +641,14 @@ var PATH_TRIM_END = new Set([
 	";"
 ]);
 var URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
-//#endregion
-//#region views/markdown-preview/src/markdownResources.ts
+function codeToString(node) {
+	if (typeof node === "string" || typeof node === "number") return String(node);
+	if (Array.isArray(node)) return node.map(codeToString).join("");
+	return "";
+}
+function classNames(...names) {
+	return names.filter(Boolean).join(" ") || void 0;
+}
 var markdownResourcePrefix = "./__markdown-preview-resource/";
 function markdownResourceSrc(src) {
 	if (!src || !isLocalMarkdownResource(src)) return src;
@@ -1103,8 +666,6 @@ function base64UrlEncode(value) {
 	for (const byte of bytes) binary += String.fromCharCode(byte);
 	return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-//#endregion
-//#region views/markdown-preview/src/markdownRemarkPlugins.ts
 function remarkFrontmatterBlocks() {
 	return (tree) => transformFrontmatterNodes(tree);
 }
@@ -1231,13 +792,9 @@ function addSourcePositionAttributes(node) {
 	}
 	node.children?.forEach(addSourcePositionAttributes);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/define.ts
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/styles.ts
 var hostStyles = i`
   :host {
     box-sizing: border-box;
@@ -1679,8 +1236,6 @@ i`
     opacity: 1;
   }
 `;
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/icon/icon.ts
 var JbIcon = class extends i$1 {
 	static properties = {
 		label: {
@@ -1747,11 +1302,7 @@ var JbIcon = class extends i$1 {
 function defineJbIcon(registry) {
 	defineControl("jb-icon", JbIcon, registry);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/define/icon.ts
 defineJbIcon();
-//#endregion
-//#region views/markdown-preview/src/markdownSourcePositions.ts
 var sourcePositionPattern = /^(\d+):(\d+)-(\d+):(\d+)$/;
 var sourceDecorationClassNames = [
 	"is-source-selected",
@@ -1934,8 +1485,6 @@ function findElementForLine(elements, targetLine) {
 function lineSpan(element) {
 	return element.endLine - element.startLine;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownRunCommands.tsx
 var runLineIcon = { src: () => AllIcons.src("expui/gutter/run.svg") };
 var runBlockIcon = { src: () => AllIcons.src("expui/gutter/rerun.svg") };
 function codeFenceCommandCandidates(sourcePosition, codeNode) {
@@ -2098,8 +1647,6 @@ function isMermaidLanguage(language) {
 function runCommandIcon(variant) {
 	return variant === "block" ? runBlockIcon : runLineIcon;
 }
-//#endregion
-//#region views/markdown-preview/src/markdownSanitizeSchema.ts
 var defaultAttributes = defaultSchema.attributes || {};
 var markdownSanitizeSchema = {
 	...defaultSchema,
@@ -2158,31 +1705,29 @@ function unique(values) {
 function mergeProtocols(attributeName, additions) {
 	return unique([...defaultSchema.protocols?.[attributeName] || [], ...additions]);
 }
-//#endregion
-//#region views/markdown-preview/src/MarkdownPreviewApp.tsx
 var emptyPathSet = /* @__PURE__ */ new Set();
+var markdownLogger$1 = getPerfLogger("markdown");
+var LazyMarkdownImageBlock = (0, import_react.lazy)(() => import("./assets/MarkdownImageBlock.js").then((module) => ({ default: module.MarkdownImageBlock })));
+var LazyMermaidBlock = (0, import_react.lazy)(() => import("./assets/MermaidBlock.js").then((module) => ({ default: module.MermaidBlock })));
 var remarkPlugins = [
 	remarkGfm,
 	[remarkFrontmatter, ["yaml", "toml"]],
 	remarkFrontmatterBlocks,
 	remarkSourcePositionAttributes
 ];
-var rehypePlugins = [
+var baseRehypePlugins = [
 	rehypeRaw,
 	rehypeSlug,
-	[rehypeSanitize, markdownSanitizeSchema],
-	[rehypeHighlight, {
-		detect: true,
-		plainText: [
-			"mermaid",
-			"text",
-			"txt"
-		]
-	}]
+	[rehypeSanitize, markdownSanitizeSchema]
 ];
 function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, selection, settings, theme, onOpenLink, onResolveRunCommands, onRunCommand, onResolvePathLinks, onNavigatePathLink, onSetFontSize }) {
 	const commandCandidates = [];
-	const pathLinkCandidates = (0, import_react.useMemo)(() => collectPathLinkCandidates(markdown), [markdown]);
+	const pathLinkCandidates = (0, import_react.useMemo)(() => {
+		const startedAtMs = performance.now();
+		const candidates = collectPathLinkCandidates(markdown);
+		markdownLogger$1.perfSince("pathLinks.collect", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}`));
+		return candidates;
+	}, [contentVersion, markdown]);
 	const [resolvedCommands, setResolvedCommands] = (0, import_react.useState)({
 		contentVersion: -1,
 		commands: []
@@ -2196,6 +1741,19 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 	const commands = commandsReady ? resolvedCommands.commands : [];
 	const resolvedRawPaths = pathLinksReady ? resolvedPathLinks.rawPaths : emptyPathSet;
 	const commandLookup = createCommandLookup(commands);
+	const [rehypeHighlightState, setRehypeHighlightState] = (0, import_react.useState)();
+	const rehypeHighlightPlugin = rehypeHighlightState?.contentVersion === contentVersion ? rehypeHighlightState.plugin : void 0;
+	const rehypePlugins = (0, import_react.useMemo)(() => {
+		if (!rehypeHighlightPlugin) return baseRehypePlugins;
+		return [...baseRehypePlugins, [rehypeHighlightPlugin, {
+			detect: true,
+			plainText: [
+				"mermaid",
+				"text",
+				"txt"
+			]
+		}]];
+	}, [rehypeHighlightPlugin]);
 	const components = {
 		a({ href, children, ...props }) {
 			function handleClick(event) {
@@ -2224,13 +1782,27 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 		},
 		p({ node, className, children, ...props }) {
 			const image = standaloneImageFromParagraphNode(node);
-			if (image) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownImageBlock, {
-				...props,
-				className,
-				src: markdownResourceSrc(image.src) ?? image.src,
-				alt: image.alt,
-				title: image.title
-			});
+			if (image) {
+				const imageSrc = markdownResourceSrc(image.src) ?? image.src;
+				return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Suspense, {
+					fallback: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						...props,
+						className,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: imageSrc,
+							alt: image.alt ?? "",
+							title: image.title
+						})
+					}),
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LazyMarkdownImageBlock, {
+						...props,
+						className,
+						src: imageSrc,
+						alt: image.alt,
+						title: image.title
+					})
+				});
+			}
 			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				...props,
 				className,
@@ -2257,11 +1829,12 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			const sourcePosition = sourcePositionFromPreNode(node);
 			const codeNode = codeNodeFromPreNode(node);
 			const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false;
-			if (sourcePosition && codeNode && !isMermaidFence) commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode));
+			const codeFenceCandidates = sourcePosition && codeNode && !isMermaidFence ? codeFenceCommandCandidates(sourcePosition, codeNode) : [];
+			commandCandidates.push(...codeFenceCandidates);
 			if (isMermaidFence) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 			const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : void 0;
 			const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : [];
-			if (!blockCommand && lineCommands.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+			if (!(codeFenceCandidates.length > 0 || blockCommand || lineCommands.length > 0)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
 				className,
 				...props,
 				children
@@ -2283,9 +1856,15 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 		},
 		code({ node, className, children, ...props }) {
 			const code = codeToString(children).replace(/\n$/, "");
-			if (className?.split(/\s+/).includes("language-mermaid")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MermaidBlock, {
-				chart: code,
-				theme
+			if (className?.split(/\s+/).includes("language-mermaid")) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Suspense, {
+				fallback: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mermaidBlock isRendering",
+					children: "Rendering diagram..."
+				}),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LazyMermaidBlock, {
+					chart: code,
+					theme
+				})
 			});
 			const sourcePosition = sourcePositionFromHastNode(node);
 			if (sourcePosition && !hasLanguageClass(className)) commandCandidates.push(inlineCommandCandidate(sourcePosition, code));
@@ -2321,24 +1900,29 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 			contentVersion: -1,
 			rawPaths: emptyPathSet
 		});
-		onResolvePathLinks({
-			contentVersion,
-			candidates: pathLinkCandidates
-		}).then((response) => {
-			if (cancelled) return;
-			const resolvedIds = new Set(response.resolvedIds);
-			setResolvedPathLinks({
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			onResolvePathLinks({
 				contentVersion,
-				rawPaths: new Set(pathLinkCandidates.filter((candidate) => resolvedIds.has(candidate.id)).map((candidate) => candidate.rawPath))
-			});
-		}).catch(() => {
-			if (!cancelled) setResolvedPathLinks({
-				contentVersion,
-				rawPaths: emptyPathSet
+				candidates: pathLinkCandidates
+			}).then((response) => {
+				if (cancelled) return;
+				const resolvedIds = new Set(response.resolvedIds);
+				markdownLogger$1.perfSince("pathLinks.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`));
+				setResolvedPathLinks({
+					contentVersion,
+					rawPaths: new Set(pathLinkCandidates.filter((candidate) => resolvedIds.has(candidate.id)).map((candidate) => candidate.rawPath))
+				});
+			}).catch(() => {
+				if (!cancelled) setResolvedPathLinks({
+					contentVersion,
+					rawPaths: emptyPathSet
+				});
 			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
 	}, [
 		contentVersion,
@@ -2347,23 +1931,78 @@ function MarkdownPreviewApp({ markdown, scrollLine, contentVersion, changes, sel
 	]);
 	(0, import_react.useEffect)(() => {
 		let cancelled = false;
-		onResolveRunCommands({
-			contentVersion,
-			candidates: uniqueCommandCandidates(commandCandidates)
-		}).then((response) => {
-			if (!cancelled) setResolvedCommands({
+		setResolvedCommands({
+			contentVersion: -1,
+			commands: []
+		});
+		const candidates = uniqueCommandCandidates(commandCandidates);
+		if (candidates.length === 0) {
+			setResolvedCommands({
 				contentVersion,
-				commands: response.commands
+				commands: []
+			});
+			return;
+		}
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			onResolveRunCommands({
+				contentVersion,
+				candidates
+			}).then((response) => {
+				if (cancelled) return;
+				setResolvedCommands({
+					contentVersion,
+					commands: response.commands
+				});
+				markdownLogger$1.perfSince("runCommands.resolve", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`));
 			});
 		});
 		return () => {
 			cancelled = true;
+			cancelIdle();
 		};
 	}, [contentVersion, onResolveRunCommands]);
 	(0, import_react.useEffect)(() => {
-		if (commandsReady && pathLinksReady) renderMarkdownLatex();
+		if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightState?.contentVersion === contentVersion) return;
+		let cancelled = false;
+		const cancelIdle = executeWhenIdle(() => {
+			import("./assets/rehype-highlight.js").then((n) => n.t).then((module) => {
+				if (!cancelled) setRehypeHighlightState({
+					contentVersion,
+					plugin: module.default
+				});
+			});
+		});
+		return () => {
+			cancelled = true;
+			cancelIdle();
+		};
+	}, [
+		contentVersion,
+		markdown,
+		rehypeHighlightState
+	]);
+	(0, import_react.useEffect)(() => {
+		if (!commandsReady || !pathLinksReady || !markdownMayContainLatex(markdown)) return;
+		let cancelled = false;
+		const cancelIdle = executeWhenIdle(() => {
+			const startedAtMs = performance.now();
+			(async () => {
+				const { renderMarkdownLatex } = await import("./assets/markdownLatex.js");
+				return { renderMarkdownLatex };
+			})().then(({ renderMarkdownLatex }) => {
+				if (cancelled) return;
+				renderMarkdownLatex();
+				markdownLogger$1.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion));
+			});
+		});
+		return () => {
+			cancelled = true;
+			cancelIdle();
+		};
 	}, [
 		commandsReady,
+		contentVersion,
 		markdown,
 		pathLinksReady,
 		theme
@@ -2451,10 +2090,77 @@ function isWhitespaceTextNode(node) {
 function stringProperty(value) {
 	return typeof value === "string" ? value : void 0;
 }
-//#endregion
-//#region views/markdown-preview/src/main.tsx
+function markdownMayNeedSyntaxHighlighting(markdown) {
+	return /(^|\n)(```|~~~| {4}|\t|<pre\b|<code\b)/.test(markdown);
+}
+function markdownMayContainLatex(markdown) {
+	return /\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\\begin\{[A-Za-z*]+}/.test(markdown) || markdownMayContainDollarLatex(markdown);
+}
+function markdownMayContainDollarLatex(markdown) {
+	for (let index = 0; index < markdown.length; index++) {
+		if (markdown[index] !== "$" || isEscaped(markdown, index)) continue;
+		const displayMath = markdown[index + 1] === "$";
+		const delimiter = displayMath ? "$$" : "$";
+		const contentStart = index + delimiter.length;
+		if (!displayMath && (contentStart >= markdown.length || /\s|\d/.test(markdown[contentStart]))) {
+			index = contentStart - 1;
+			continue;
+		}
+		const contentEnd = unescapedIndexOf(markdown, delimiter, contentStart);
+		if (contentEnd < 0) {
+			index = contentStart - 1;
+			continue;
+		}
+		if (!displayMath && (contentEnd === contentStart || /\s/.test(markdown[contentEnd - 1]))) {
+			index = contentEnd + delimiter.length - 1;
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+function unescapedIndexOf(text, search, startIndex) {
+	let index = text.indexOf(search, startIndex);
+	while (index >= 0 && isEscaped(text, index)) index = text.indexOf(search, index + search.length);
+	return index;
+}
+function isEscaped(text, index) {
+	let backslashCount = 0;
+	for (let offset = index - 1; offset >= 0 && text[offset] === "\\"; offset--) backslashCount++;
+	return backslashCount % 2 === 1;
+}
+function executeWhenIdle(callback) {
+	let cancelled = false;
+	let animationFrameHandle;
+	let idleCallbackHandle;
+	let timeoutHandle;
+	function run() {
+		if (!cancelled) callback();
+	}
+	animationFrameHandle = requestAnimationFrame(() => {
+		animationFrameHandle = void 0;
+		if (cancelled) return;
+		const idleWindow = window;
+		if (idleWindow.requestIdleCallback) idleCallbackHandle = idleWindow.requestIdleCallback(() => {
+			idleCallbackHandle = void 0;
+			run();
+		}, { timeout: 1e3 });
+		else timeoutHandle = window.setTimeout(() => {
+			timeoutHandle = void 0;
+			run();
+		}, 0);
+	});
+	return () => {
+		cancelled = true;
+		if (animationFrameHandle !== void 0) cancelAnimationFrame(animationFrameHandle);
+		const idleWindow = window;
+		if (idleCallbackHandle !== void 0) idleWindow.cancelIdleCallback?.(idleCallbackHandle);
+		if (timeoutHandle !== void 0) clearTimeout(timeoutHandle);
+	};
+}
 var markdownPreviewPageApiId = apiId()("markdown.preview");
 var markdownPreviewHostApi = webView.callable(apiId()("markdown.preview"));
+var markdownLogger = getPerfLogger("markdown");
 var root = (0, import_client.createRoot)(requiredElement("content"));
 var markdown = "";
 var scrollLine = 0;
@@ -2465,13 +2171,16 @@ var theme = webViewTheme.current;
 var previewSettings = defaultPreviewSettings();
 webView.implement(markdownPreviewPageApiId, {
 	contentChanged(params) {
+		const startedAtMs = performance.now();
+		const details = markdownDiagnosticDetails(params.markdown, params.contentVersion, `scrollLine=${params.scrollLine}, changes=${params.changes?.length ?? 0}`);
+		markdownLogger.event("contentChanged.received", details);
 		markdown = params.markdown;
 		scrollLine = params.scrollLine;
 		contentVersion = params.contentVersion;
 		previewSettings = normalizePreviewSettings(params.settings);
 		applyPreviewSettings(previewSettings);
 		changes = params.changes ?? [];
-		renderPreview();
+		renderPreview("contentChanged", startedAtMs, details);
 	},
 	scrollToLine(params) {
 		scrollLine = params.line;
@@ -2483,13 +2192,13 @@ webView.implement(markdownPreviewPageApiId, {
 	}
 });
 applyTheme(theme);
-renderPreview();
+renderPreview("initial");
 webViewTheme.onChanged((nextTheme) => {
 	theme = nextTheme;
 	applyTheme(nextTheme);
 });
 markdownPreviewHostApi.pageReady();
-function renderPreview() {
+function renderPreview(reason = "render", startedAtMs = performance.now(), details = markdownDiagnosticDetails(markdown, contentVersion)) {
 	root.render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarkdownPreviewApp, {
 		markdown,
 		scrollLine,
@@ -2505,6 +2214,9 @@ function renderPreview() {
 		onNavigatePathLink: navigateMarkdownPathLink,
 		onSetFontSize: setMarkdownFontSize
 	}));
+	requestAnimationFrame(() => {
+		markdownLogger.perfSince("render.afterFrame", startedAtMs, `reason=${reason}, ${details}`);
+	});
 }
 function openMarkdownLink(href) {
 	markdownPreviewHostApi.openLink({ href });
@@ -2568,4 +2280,4 @@ function requiredElement(id) {
 	if (!element) throw new Error(`Missing element #${id}`);
 	return element;
 }
-//#endregion
+export { AllIcons as n, classNames as t };

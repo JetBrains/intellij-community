@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.SdkFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.isProjectSdk
 
 /**
@@ -29,7 +30,7 @@ class ExternalAnnotationsSdkRootFileIndexContributor : WorkspaceFileIndexContrib
     if (!storage.isProjectSdk(entity) && !storage.hasReferrers(entity.symbolicId)) return
     for (root in entity.roots) {
       if (root.type.name == AnnotationOrderRootType.SDK_ROOT_NAME) {
-        registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, null)
+        registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, SdkAnnotationsFileSetData(entity.symbolicId))
       }
     }
   }
@@ -37,3 +38,5 @@ class ExternalAnnotationsSdkRootFileIndexContributor : WorkspaceFileIndexContrib
   override val dependenciesOnOtherEntities: List<DependencyDescription<SdkEntity>>
     get() = listOf(DependencyDescription.OnReference(SdkId::class.java))
 }
+
+private data class SdkAnnotationsFileSetData(override val sdkId: SdkId) : SdkFileSetData

@@ -3,7 +3,7 @@ fun Any.receiver2() {
     val oldA = this
     val b = oldA is String
     if (!b) return
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         println(this)
     }
 }
@@ -28,7 +28,7 @@ fun qualifierDoesNotAddSmartCastNullity(x: String?) {
 fun branchDisappears(x: String?) {
     val b = x != null
     if (b) return
-    if (<warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">x == null</warning>) {
+    if (<warning descr="[SENSELESS_COMPARISON]">x == null</warning>) {
         println(123)
     } else {
         println(x.trim())
@@ -38,10 +38,10 @@ fun branchDisappears(x: String?) {
 fun nullity(x: Any?) {
     val b = x == null
     if (!b) {
-        if (<warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">x != null</warning>) {
+        if (<warning descr="[SENSELESS_COMPARISON]">x != null</warning>) {
             simple(x) // smartcast necessary
         }
-        if (<warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">x != null</warning>) {
+        if (<warning descr="[SENSELESS_COMPARISON]">x != null</warning>) {
             println(x) // smartcast unnecessary
         }
     }
@@ -51,7 +51,7 @@ fun simple(x: Any) {
     val b = x is String
     if (b) {
         // Do not report: necessary for smart cast
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">x is String</warning>) {
+        if (<warning descr="[USELESS_IS_CHECK]">x is String</warning>) {
             println(x.trim())
         }
     }
@@ -62,7 +62,7 @@ fun unsafeVariance(list: List<String>, value: String?) {
     if (b) {
         // TODO: We suppress warning here, as Kotlin reports that list.contains(value) has a smartcast
         //       but it's possible to call it without null-check (related to @UnsafeVariance?)
-        if (<warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">value != null</warning> && list.contains(value)) {}
+        if (<warning descr="[SENSELESS_COMPARISON]">value != null</warning> && list.contains(value)) {}
         if (list.contains(value)) {}
     }
 }
@@ -71,7 +71,7 @@ fun tooWeakVariableType(a: B) {
     val b = a is C
     if (b) {
         // Difference from K1: no warning, as K2 reports smartcast here, even though it's unnecessary to call a.b()
-        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">a is C</warning>) {
+        if (<warning descr="[USELESS_IS_CHECK]">a is C</warning>) {
             a.b()
         }
         a.b()
@@ -113,14 +113,14 @@ fun testWhen(x: String?) {
     val b = x == null
     if (b) {
         when {
-            <warning descr="[SENSELESS_COMPARISON] Condition is always 'false'.">x != null</warning> -> {
+            <warning descr="[SENSELESS_COMPARISON]">x != null</warning> -> {
                 println(x.trim())
             }
         }
         return
     }
     when {
-        <warning descr="[SENSELESS_COMPARISON] Condition is always 'true'.">x != null</warning> -> {
+        <warning descr="[SENSELESS_COMPARISON]">x != null</warning> -> {
             println(x.trim())
         }
     }
@@ -129,7 +129,7 @@ fun testWhen(x: String?) {
 fun negatedTypeTest(x: Any) {
     val b = x is String
     if (!b) return
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">x !is String</warning>) return
+    if (<warning descr="[USELESS_IS_CHECK]">x !is String</warning>) return
     x.trim()
 }
 
@@ -137,19 +137,19 @@ fun Any.receiver() {
     val oldA = this
     val b = oldA is String
     if (!b) return
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         trim()
     }
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         hashCode()
     }
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         this.hashCode()
     }
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         this.trim()
     }
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">this is String</warning>) {
+    if (<warning descr="[USELESS_IS_CHECK]">this is String</warning>) {
         println(this)
     }
 }

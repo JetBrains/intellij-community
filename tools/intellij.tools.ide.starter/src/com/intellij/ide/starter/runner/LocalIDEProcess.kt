@@ -171,13 +171,7 @@ class LocalIDEProcess : IDEProcess {
         }
         finally {
           computeWithSpan("runIde post-processing and artifacts publishing") {
-            kotlin.runCatching {
-              publishArtifacts()
-            }.onFailure {
-              logError("Fail to execute publishArtifacts run for $contextName", it)
-            }.onSuccess {
-              logOutput("Successfully finished publishArtifacts run for $contextName")
-            }
+            publishArtifacts()
           }
         }
       }

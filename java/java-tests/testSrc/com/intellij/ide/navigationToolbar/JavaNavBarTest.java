@@ -3,7 +3,12 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
@@ -39,6 +44,35 @@ public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
   public void testImplicitClass() {
     myFixture.configureByFile("implicitClass.java");
     assertNavBarModel("src", "implicitClass.java", "test");
+  }
+
+  /**
+   * Regression test for IDEA-379478: computing the presentable (popup) text of a method for the
+   * navbar must not resolve references. Formatting the signature builds the parameter types, and a
+   * regression that eagerly computes type nullability there would resolve the parameters' type-use
+   * annotations - which fails with {@code IndexNotReadyException} in dumb mode.
+   * <p>
+   * The annotation lives in a separate file, so resolving it requires indexes; if the presentable
+   * text is computed without resolve (as it must be), the result is identical in dumb and smart mode.
+   */
+  public void testMethodPresentableTextDoesNotResolve() {
+    myFixture.addClass("package anno; import java.lang.annotation.*; " +
+                       "@Target(ElementType.TYPE_USE) public @interface Marker {}");
+    PsiFile file = myFixture.configureByText("Foo.java", """
+      import anno.Marker;
+      class Foo {
+        void bar(String @Marker ... args) {}
+      }""");
+    PsiMethod method = ((PsiJavaFile)file).getClasses()[0].getMethods()[0];
+    JavaNavBarExtension extension = new JavaNavBarExtension();
+
+    // Compute in dumb mode first, so that a smart-mode call does not cache the parameter type
+    // (which would hide a regression that resolves during its construction).
+    String dumbText = DumbModeTestUtils.computeInDumbModeSynchronously(
+      getProject(), () -> ReadAction.compute(() -> extension.getPresentableText(method, true)));
+    String smartText = ReadAction.compute(() -> extension.getPresentableText(method, true));
+
+    assertEquals("Navbar presentable text must be computed without resolve", smartText, dumbText);
   }
 
   public void assertNavBarModel(String... expectedItems) {

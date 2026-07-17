@@ -178,7 +178,7 @@ object PluginAutoUpdater {
       // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
-      val plugin = pluginSet.originalPluginSet.resolvePluginId(id)
+      val plugin = pluginSet.candidateSet.resolvePluginId(id)
       if (plugin == null || plugin !== updateDesc) {
         val nonLoadReason = excludedDescriptors[updateDesc]
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +

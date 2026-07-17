@@ -80,7 +80,24 @@ fun reportErrorWithAttachments(
         }
     }
 
-    LOG.error(message, RuntimeExceptionWithAttachments(reason, *attachments.toTypedArray()))
+    val reportedReason = reason.copyWithoutTargetException()
+    LOG.error(message, RuntimeExceptionWithAttachments(reportedReason, *attachments.toTypedArray()))
 
     e2?.let { throw it }
+}
+
+private fun Throwable.copyWithoutTargetException(): Throwable = when (this) {
+    is EvaluateException -> if (exceptionFromTargetVM == null) this else EvaluateException(message).also { copyInto(it) }
+    is InvocationException -> if (exception() == null) this else InvocationException(null).also { copyInto(it) }
+    else -> this
+}
+
+private fun Throwable.copyInto(copy: Throwable) {
+    copy.stackTrace = stackTrace
+    if (cause != null) {
+        copy.initCause(cause?.copyWithoutTargetException())
+    }
+    for (s in suppressed) {
+        copy.addSuppressed(s.copyWithoutTargetException())
+    }
 }

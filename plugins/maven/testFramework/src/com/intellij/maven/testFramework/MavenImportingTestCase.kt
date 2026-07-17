@@ -94,6 +94,23 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.absolutePathString
 
+/**
+ * @deprecated Use JUnit 5 with [com.intellij.maven.testFramework.fixtures.mavenImportingFixture] instead.
+ *
+ * Example:
+ * ```kotlin
+ * @TestApplication
+ * class MyTest {
+ *   private val maven by mavenImportingFixture()
+ *   @Test
+ *   fun myTest() = runBlocking {
+ *     maven.importProjectAsync("<groupId>test</groupId><artifactId>project</artifactId><version>1</version>")
+ *     maven.assertModules("project")
+ *   }
+ * }
+ * ```
+ */
+@Deprecated("Use JUnit 5 with mavenImportingFixture() from com.intellij.maven.testFramework.fixtures instead")
 abstract class MavenImportingTestCase : MavenTestCase() {
 
   private var myProjectsManager: MavenProjectsManager? = null

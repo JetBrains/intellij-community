@@ -13,7 +13,6 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.extractors.BaseExtractorConfig;
-import com.intellij.database.extractors.BaseExtractorsHelper.Script;
 import com.intellij.database.extractors.BaseObjectFormatter;
 import com.intellij.database.extractors.DataExtractor;
 import com.intellij.database.extractors.DataExtractorFactories;
@@ -21,10 +20,10 @@ import com.intellij.database.extractors.DataExtractorFactory;
 import com.intellij.database.extractors.DataExtractorProperties;
 import com.intellij.database.extractors.ExtractionConfig;
 import com.intellij.database.extractors.ExtractorConfig;
+import com.intellij.database.extractors.ExtractorConfigOption;
 import com.intellij.database.extractors.ExtractorsHelper;
 import com.intellij.database.extractors.FormatExtractorFactory;
 import com.intellij.database.extractors.GridExtractorsUtilCore;
-import com.intellij.database.extractors.XlsxExtractorFactory;
 import com.intellij.database.run.actions.DumpSource;
 import com.intellij.database.run.actions.DumpSource.DataGridSource;
 import com.intellij.database.run.ui.DataAccessType;
@@ -124,9 +123,6 @@ public class DumpDataForm {
   private static final int MAX_ROWS_FOR_PREVIEW = 10;
   private static final int MAX_SOURCE_HEIGHT = 100;
   private static final Logger LOG = Logger.getInstance(DumpDataForm.class);
-  private static final Set<String> EXTRACTORS_NO_TRANSPOSE = Set.of("SQL-Insert-Statements.sql.groovy",
-                                                                    "JSON-Groovy.json.groovy",
-                                                                    "Python-DataFrame.py.groovy");
   private final Project myProject;
   private final DumpSource<?> mySource;
   private final @NotNull Supplier<? extends Window> myWindowSupplier;
@@ -405,15 +401,17 @@ public class DumpDataForm {
   private void updateCheckboxes() {
     DataExtractorFactory factory = getFactory();
     if (factory == null) return;
-    myTranspose.setVisible(supportsTranspose(factory));
-    myAddTableDefinition.setVisible(supportsAddTableDefinition(factory));
-    boolean supportsComputedOrGenerated = supportsAddComputedOrGeneratedColumns(factory);
+    Set<ExtractorConfigOption> options = factory.getApplicableOptions();
+    myTranspose.setVisible(options.contains(ExtractorConfigOption.TRANSPOSE));
+    myAddTableDefinition.setVisible(options.contains(ExtractorConfigOption.ADD_TABLE_DEFINITION));
+    boolean supportsComputedOrGenerated = options.contains(ExtractorConfigOption.ADD_COMPUTED_COLUMNS)
+                                          || options.contains(ExtractorConfigOption.ADD_GENERATED_COLUMNS);
     myAddColumnsLabel.setVisible(supportsComputedOrGenerated);
-    myAddComputed.setVisible(supportsComputedOrGenerated);
-    myAddGenerated.setVisible(supportsComputedOrGenerated);
-    myAddColumnHeader.setVisible(factory instanceof FormatExtractorFactory);
-    myAddRowHeader.setVisible(factory instanceof FormatExtractorFactory);
-    myAddQuery.setVisible(mySupportsAddQuery && factory instanceof XlsxExtractorFactory);
+    myAddComputed.setVisible(options.contains(ExtractorConfigOption.ADD_COMPUTED_COLUMNS));
+    myAddGenerated.setVisible(options.contains(ExtractorConfigOption.ADD_GENERATED_COLUMNS));
+    myAddColumnHeader.setVisible(options.contains(ExtractorConfigOption.ADD_COLUMN_HEADER));
+    myAddRowHeader.setVisible(options.contains(ExtractorConfigOption.ADD_ROW_HEADER));
+    myAddQuery.setVisible(mySupportsAddQuery && options.contains(ExtractorConfigOption.ADD_QUERY));
     if (factory instanceof FormatExtractorFactory) {
       CsvFormat format = ((FormatExtractorFactory)factory).getFormat();
       myAddColumnHeader.setSelected(format.headerRecord != null);
@@ -423,18 +421,6 @@ public class DumpDataForm {
 
   public @Nullable DataExtractorFactory getFactory() {
     return ObjectUtils.tryCast(myExtractorCombobox.getComponent().getSelectedItem(), DataExtractorFactory.class);
-  }
-
-  protected boolean supportsAddComputedOrGeneratedColumns(DataExtractorFactory factory) {
-    return false;
-  }
-
-  protected boolean supportsTranspose(DataExtractorFactory factory) {
-    return !(factory instanceof Script && EXTRACTORS_NO_TRANSPOSE.contains(factory.getName()));
-  }
-
-  protected boolean supportsAddTableDefinition(DataExtractorFactory factory) {
-    return false;
   }
 
   private void settingsChanged() {

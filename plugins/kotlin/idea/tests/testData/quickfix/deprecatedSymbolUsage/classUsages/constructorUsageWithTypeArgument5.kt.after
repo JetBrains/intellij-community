@@ -6,7 +6,7 @@ class Foo<T> @Deprecated("", ReplaceWith("Factory()")) constructor()
 fun <T> Factory(): Foo<T> = TODO()
 
 fun baz() {
-    val foo = <caret>Factory<Int>()
+    val foo = <caret>Factory()
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 // IGNORE_K2

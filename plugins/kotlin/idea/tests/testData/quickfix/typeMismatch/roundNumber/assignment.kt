@@ -1,7 +1,7 @@
 // "Round using roundToInt()" "true"
 // PRIORITY: LOW
 // WITH_STDLIB
-// K2_ERROR: Initializer type mismatch: expected 'Int', actual 'Float'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun test(f: Float) {
     val x: Int = f<caret>
 }

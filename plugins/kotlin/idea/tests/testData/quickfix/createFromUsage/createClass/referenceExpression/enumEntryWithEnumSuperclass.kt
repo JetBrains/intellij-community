@@ -1,5 +1,5 @@
 // "Create enum constant 'A'" "true"
-// K2_ERROR: Unresolved reference 'A'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 fun foo(): E = E.<caret>A

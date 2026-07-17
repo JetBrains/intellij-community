@@ -129,9 +129,11 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
     }
   }
 
-  private fun extractFromPipfile(file: VirtualFile): PyResult<List<PythonPackage>> {
-    val pipfile = file.toPsi(project) as TomlFile
-    return PyResult.success(PipEnvParser.getPipFileDependenciesMap(pipfile).keys.toList().map { it.toPythonPackage() })
+  private suspend fun extractFromPipfile(file: VirtualFile): PyResult<List<PythonPackage>> {
+    return readAction {
+      val pipfile = file.toPsi(project) as TomlFile
+      PyResult.success(PipEnvParser.getPipFileDependenciesMap(pipfile).keys.toList().map { it.toPythonPackage() })
+    }
   }
 
   private suspend fun extractFromRequirementsTxt(file: VirtualFile): PyResult<List<PythonPackage>> {

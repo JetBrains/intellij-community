@@ -2,19 +2,19 @@ package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.psi.tree.IElementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubBasedPsiElementBase
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
-import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Please use {@link MarkdownHeader} instead.", ReplaceWith("MarkdownHeader"))
 abstract class MarkdownHeaderImpl: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*>>, PsiExternalReferenceHost {
   constructor(node: ASTNode) : super(node)
-  constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType) : super(stub, type)
+  constructor(stub: MarkdownHeaderStubElement, type: IElementType) : super(stub, type)
 
   protected fun calculateHeaderLevel(): Int {
     val type = node.elementType

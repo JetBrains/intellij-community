@@ -2,8 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.tools.ide.metrics.collector` start
+jps_test(
+    name = "ide-metrics-collector-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-metrics-collector-tests_test_lib"],
+)
+### skip generation section `test intellij.tools.ide.metrics.collector.tests`
 
+### auto-generated section `build intellij.tools.ide.metrics.collector` start
 create_kotlinc_options(
     name = "custom_ide-metrics-collector",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -94,7 +101,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.metrics.collector` end
 
 ### auto-generated section `build intellij.tools.ide.metrics.collector.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-metrics-collector-tests",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -182,11 +188,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.ide.metrics.collector.tests` end
-
-### auto-generated section `test intellij.tools.ide.metrics.collector.tests` start
-
-jps_test(
-    name = "ide-metrics-collector-tests_test",
-    runtime_deps = [":ide-metrics-collector-tests_test_lib"],
-)
-### auto-generated section `test intellij.tools.ide.metrics.collector.tests` end

@@ -1,8 +1,8 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
 // ERROR: Operator call corresponds to a dot-qualified call 'arg?.let { 24.hashCode().foo(it) }.plus(1)' which is not allowed on a nullable receiver 'arg?.let { 24.hashCode().foo(it) }'.
-// K2_ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
-// K2_AFTER_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
+// K2_AFTER_ERROR: UNSAFE_OPERATOR_CALL
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun Int.foo(x: Int) = this + x
 

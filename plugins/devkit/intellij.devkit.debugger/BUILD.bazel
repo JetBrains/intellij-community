@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.devkit.debugger.tests`
 
 ### auto-generated section `build intellij.devkit.debugger` start
-
 jvm_library(
     name = "debugger",
     srcs = glob(
@@ -91,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.debugger` end
 
 ### auto-generated section `build intellij.devkit.debugger.tests` start
-
 jvm_library(
     name = "debugger-tests",
     srcs = glob(

@@ -13,7 +13,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PR
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinal
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isReadOnly
 import com.jetbrains.python.psi.PyAnnotation
-import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -31,7 +30,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
-import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyTypeDeclarationStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference
@@ -69,7 +67,7 @@ object PyExpectedVarianceJudgment {
       is PyExpressionStatement, // parent of synthetic expressions created by PyElementGenerator#createExpressionFromText()
         -> BIVARIANT
       is PyAssignmentStatement,
-        -> fromAssignmentStatement(element, parent, context)
+        -> fromAssignmentStatement(element, context)
       is PyFunction,
         -> fromFunction(element, parent)
       is PyTypeDeclarationStatement,
@@ -119,24 +117,14 @@ object PyExpectedVarianceJudgment {
     }
     val targetExpr = element.target as? PyTargetExpression ?: return null
     if (attributeDoesNotAffectVarianceInference(targetExpr)) return null
-    if (isEffectivelyReadOnly(targetExpr, parentClass, context)) return COVARIANT
+    if (isEffectivelyReadOnly(targetExpr, context)) return COVARIANT
     return INVARIANT
   }
 
-  private fun fromAssignmentStatement(element: PyAssignmentStatement, parent: PsiElement, context: TypeEvalContext): Variance? {
+  private fun fromAssignmentStatement(element: PyAssignmentStatement, context: TypeEvalContext): Variance? {
     val targetExpr = element.targets.singleOrNull() as? PyTargetExpression ?: return null
-    return fromAnnotatedAssignment(targetExpr, parent, context)
-  }
-
-  private fun fromAnnotatedAssignment(targetExpr: PyTargetExpression, parent: PsiElement, context: TypeEvalContext): Variance? {
     if (attributeDoesNotAffectVarianceInference(targetExpr)) return null
-    val parentOwner = PyUtil.getFragmentContextAwareParent(parent)
-    val parentClass = when (parentOwner) {
-                        is PyClass -> parentOwner
-                        is PyFunction if parentOwner.name == PyNames.INIT && PyUtil.isInstanceAttribute(targetExpr) -> parentOwner.containingClass
-                        else -> null
-                      } ?: return null
-    if (isEffectivelyReadOnly(targetExpr, parentClass, context)) return COVARIANT
+    if (isEffectivelyReadOnly(targetExpr, context)) return COVARIANT
     return INVARIANT
   }
 
@@ -187,13 +175,15 @@ object PyExpectedVarianceJudgment {
     return null
   }
 
-  private fun isEffectivelyReadOnly(element: PsiElement, parentClass: PyClass, context: TypeEvalContext): Boolean {
-    if (element is PyTypeCommentOwner && element is PyAnnotationOwner) {
-      if (isFinal(element, context) || isReadOnly(element, context)) {
-        return true
-      }
+  /** Return true iff the given element is effectively read-only due to being final, read-only, or frozen. */
+  @JvmStatic
+  fun isEffectivelyReadOnly(targetExpr: PyTargetExpression, context: TypeEvalContext): Boolean {
+    if (isFinal(targetExpr, context) || isReadOnly(targetExpr, context)) {
+      return true
     }
-    val isFrozen = parseStdOrDataclassTransformDataclassParameters(parentClass, context)?.frozen ?: false
+
+    val containingClass = targetExpr.containingClass ?: return false
+    val isFrozen = parseStdOrDataclassTransformDataclassParameters(containingClass, context)?.frozen ?: false
     return isFrozen
   }
 

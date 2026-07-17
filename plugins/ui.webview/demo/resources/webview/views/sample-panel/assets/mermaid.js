@@ -23,7 +23,6 @@ import { t as cytoscape } from "./cytoscape.js";
 import { t as require_cytoscape_fcose } from "./cytoscape-fcose.js";
 import { t as require_cytoscape_cose_bilkent } from "./cytoscape-cose-bilkent.js";
 import { a as left, i as justify, n as Sankey, o as right, r as center, t as sankeyLinkHorizontal_default } from "./d3-sankey.js";
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-AGHRB4JF.mjs
 var import_dayjs_min = /* @__PURE__ */ __toESM(require_dayjs_min(), 1);
 var __defProp$1 = Object.defineProperty;
 var __name$1 = (target, value) => __defProp$1(target, "name", {
@@ -73,8 +72,6 @@ var setLogLevel = /* @__PURE__ */ __name$1(function(level = "fatal") {
 var format = /* @__PURE__ */ __name$1((level) => {
 	return `%c${(0, import_dayjs_min.default)().format("ss.SSS")} : ${level} : `;
 }, "format");
-//#endregion
-//#region \0vite/preload-helper.js
 var scriptRel = "modulepreload";
 var assetsURL = function(dep, importerUrl) {
 	return new URL(dep, importerUrl).href;
@@ -130,8 +127,6 @@ var __vitePreload = function preload(baseModule, deps, importerUrl) {
 		return baseModule().catch(handlePreloadError);
 	});
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-ICPOFSXX.mjs
 var frontMatterRegex = /^-{3}\s*[\n\r](.*?)[\n\r]-{3}\s*[\n\r]+/s;
 var directiveRegex = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?/gi;
 var anyCommentRegex = /\s*%%.*\n/gm;
@@ -5488,16 +5483,12 @@ var DiagramNotFoundError = class extends Error {
 		super(`Diagram ${name} not found.`);
 	}
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-426QAEUC.mjs
 var selectSvgElement = /* @__PURE__ */ __name$1((id) => {
 	const { securityLevel } = getConfig2$3();
 	let root = select_default("body");
 	if (securityLevel === "sandbox") root = select_default((select_default(`#i${id}`).node()?.contentDocument ?? document).body);
 	return root.select(`#${id}`);
 }, "selectSvgElement");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-XPW4576I.mjs
 function isNothing(subject) {
 	return typeof subject === "undefined" || subject === null;
 }
@@ -7622,8 +7613,6 @@ dumper.dump;
 js-yaml/dist/js-yaml.mjs:
 (*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT *)
 */
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-BSJP7CBP.mjs
 var computeLabelTransform = /* @__PURE__ */ __name$1((bbox, useHtmlLabels) => {
 	if (useHtmlLabels) return "translate(" + -bbox.width / 2 + ", " + -bbox.height / 2 + ")";
 	const x = bbox.x ?? 0;
@@ -7733,8 +7722,6 @@ var getLineFunctionsWithOffset = /* @__PURE__ */ __name$1((edge) => {
 		}, "y")
 	};
 }, "getLineFunctionsWithOffset");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-5PVQY5BW.mjs
 var import_dist = require_dist();
 var d3CurveTypes = {
 	curveBasis: basis_default,
@@ -8189,8 +8176,6 @@ function isLabelCoordinateInPath(point, dAttr) {
 	return sanitizedD.includes(roundedX.toString()) || sanitizedD.includes(roundedY.toString());
 }
 __name$1(isLabelCoordinateInPath, "isLabelCoordinateInPath");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-ZZ45TVLE.mjs
 var getSubGraphTitleMargins = /* @__PURE__ */ __name$1(({ flowchart }) => {
 	const subGraphTitleTopMargin = flowchart?.subGraphTitleMargin?.top ?? 0;
 	const subGraphTitleBottomMargin = flowchart?.subGraphTitleMargin?.bottom ?? 0;
@@ -8227,8 +8212,6 @@ async function configureLabelImages(container, labelText) {
 	})));
 }
 __name$1(configureLabelImages, "configureLabelImages");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-X2U36JSP.mjs
 var solidStateFill = /* @__PURE__ */ __name$1((color) => {
 	const { handDrawnSeed } = getConfig2$3();
 	return {
@@ -8312,8 +8295,6 @@ var getStrokeDashArray = /* @__PURE__ */ __name$1((strokeDasharrayStyle) => {
 	}
 	return [isNaN(dashArray[0]) ? 0 : dashArray[0], isNaN(dashArray[1]) ? 0 : dashArray[1]];
 }, "getStrokeDashArray");
-//#endregion
-//#region node_modules/ts-dedent/esm/index.js
 function dedent(templ) {
 	var values = [];
 	for (var _i = 1; _i < arguments.length; _i++) values[_i - 1] = arguments[_i];
@@ -8346,8 +8327,6 @@ function dedent(templ) {
 	});
 	return string;
 }
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-U2HBQHQK.mjs
 var unknownIcon = {
 	body: "<g><rect width=\"80\" height=\"80\" style=\"fill: #087ebf; stroke-width: 0px;\"/><text transform=\"translate(21.16 64.67)\" style=\"fill: #fff; font-family: ArialMT, Arial; font-size: 67.75px;\"><tspan x=\"0\" y=\"0\">?</tspan></text></g>",
 	height: 80,
@@ -8715,8 +8694,6 @@ var createText = /* @__PURE__ */ __name$1(async (el, text = "", { style = "", is
 		return svgLabel;
 	}
 }, "createText");
-//#endregion
-//#region node_modules/roughjs/bundled/rough.esm.js
 function t(t, e, s) {
 	if (t && t.length) {
 		const [n, o] = e, a = Math.PI / 180 * s, h = Math.cos(a), r = Math.sin(a);
@@ -10106,8 +10083,6 @@ var at = {
 	generator: (t) => new et(t),
 	newSeed: () => et.newSeed()
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-5FUZZQ4R.mjs
 var labelHelper$1 = /* @__PURE__ */ __name$1(async (parent, node, _classes) => {
 	let cssClasses;
 	const useHtmlLabels = node.useHtmlLabels || evaluate(getConfig2$3()?.htmlLabels);
@@ -15601,8 +15576,6 @@ var positionNode$1 = /* @__PURE__ */ __name$1((node) => {
 	else el.attr("transform", "translate(" + node.x + ", " + node.y + ")");
 	return diff;
 }, "positionNode");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-ENJZ2VHE.mjs
 var addEdgeMarkers$1 = /* @__PURE__ */ __name$1((svgPath, edge, url, id, diagramType, useMargin = false, strokeColor) => {
 	if (edge.arrowTypeStart) addEdgeMarker$1(svgPath, "start", edge.arrowTypeStart, url, id, diagramType, useMargin, strokeColor);
 	if (edge.arrowTypeEnd) addEdgeMarker$1(svgPath, "end", edge.arrowTypeEnd, url, id, diagramType, useMargin, strokeColor);
@@ -16462,8 +16435,6 @@ var markers$1 = {
 	}, "requirement_contains_neo")
 };
 var markers_default$1 = insertMarkers$2;
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-336JU56O.mjs
 var internalHelpers = {
 	common: common_default,
 	getConfig,
@@ -16518,8 +16489,6 @@ var getRegisteredLayoutAlgorithm = /* @__PURE__ */ __name$1((algorithm = "", { f
 	}
 	throw new Error(`Both layout algorithms ${algorithm} and ${fallback} are not registered.`);
 }, "getRegisteredLayoutAlgorithm");
-//#endregion
-//#region node_modules/stylis/src/Enum.js
 var COMMENT = "comm";
 var RULESET = "rule";
 var DECLARATION = "decl";
@@ -16527,8 +16496,6 @@ var IMPORT = "@import";
 var NAMESPACE = "@namespace";
 var KEYFRAMES = "@keyframes";
 var LAYER = "@layer";
-//#endregion
-//#region node_modules/stylis/src/Utility.js
 /**
 * @param {number}
 * @return {number}
@@ -16594,8 +16561,6 @@ function sizeof(value) {
 function append(value, array) {
 	return array.push(value), value;
 }
-//#endregion
-//#region node_modules/stylis/src/Tokenizer.js
 var line = 1;
 var column = 1;
 var length = 0;
@@ -16777,8 +16742,6 @@ function identifier(index) {
 	while (!token(peek())) next();
 	return slice(index, position);
 }
-//#endregion
-//#region node_modules/stylis/src/Parser.js
 /**
 * @param {string} value
 * @return {object[]}
@@ -16951,8 +16914,6 @@ function comment(value, root, parent, siblings) {
 function declaration(value, root, parent, length, siblings) {
 	return node(value, root, parent, DECLARATION, substr(value, 0, length), substr(value, length + 1, -1), length, siblings);
 }
-//#endregion
-//#region node_modules/stylis/src/Serializer.js
 /**
 * @param {object[]} children
 * @param {function} callback
@@ -16982,8 +16943,6 @@ function stringify(element, index, children, callback) {
 	}
 	return strlen(children = serialize(element.children, callback)) ? element.return = element.value + "{" + children + "}" : "";
 }
-//#endregion
-//#region node_modules/mermaid/dist/mermaid.core.mjs
 var id = "c4";
 var c4Detector_default = {
 	id,
@@ -18122,8 +18081,6 @@ var mermaid_default = mermaid;
 /*!
 * Wait for document loaded before starting the execution
 */
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-K5T4RW27.mjs
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", {
 	value,
@@ -19410,8 +19367,6 @@ var AbstractMermaidTokenBuilder = class extends DefaultTokenBuilder {
 		__name(this, "CommonTokenBuilder");
 	}
 });
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-7N4EOEYR.mjs
 var ArchitectureTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "ArchitectureTokenBuilder");
@@ -19451,8 +19406,6 @@ function createArchitectureServices(context = EmptyFileSystem) {
 	};
 }
 __name(createArchitectureServices, "createArchitectureServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-67CJDMHE.mjs
 var GitGraphTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "GitGraphTokenBuilder");
@@ -19475,8 +19428,6 @@ function createGitGraphServices(context = EmptyFileSystem) {
 	};
 }
 __name(createGitGraphServices, "createGitGraphServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-KGLVRYIC.mjs
 var InfoTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "InfoTokenBuilder");
@@ -19499,8 +19450,6 @@ function createInfoServices(context = EmptyFileSystem) {
 	};
 }
 __name(createInfoServices, "createInfoServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-FOC6F5B3.mjs
 var PacketTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "PacketTokenBuilder");
@@ -19523,8 +19472,6 @@ function createPacketServices(context = EmptyFileSystem) {
 	};
 }
 __name(createPacketServices, "createPacketServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-AA7GKIK3.mjs
 var PieTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "PieTokenBuilder");
@@ -19556,8 +19503,6 @@ function createPieServices(context = EmptyFileSystem) {
 	};
 }
 __name(createPieServices, "createPieServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-2KRD3SAO.mjs
 var RadarTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "RadarTokenBuilder");
@@ -19580,8 +19525,6 @@ function createRadarServices(context = EmptyFileSystem) {
 	};
 }
 __name(createRadarServices, "createRadarServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-ORNJ4GCN.mjs
 var TreeViewValueConverter = class extends AbstractMermaidValueConverter {
 	static {
 		__name(this, "TreeViewValueConverter");
@@ -19613,8 +19556,6 @@ function createTreeViewServices(context = EmptyFileSystem) {
 	};
 }
 __name(createTreeViewServices, "createTreeViewServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-LIHQZDEY.mjs
 var TreemapTokenBuilder = class extends AbstractMermaidTokenBuilder {
 	static {
 		__name(this, "TreemapTokenBuilder");
@@ -19695,8 +19636,6 @@ function createTreemapServices(context = EmptyFileSystem) {
 	};
 }
 __name(createTreemapServices, "createTreemapServices");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-CIAEETIT.mjs
 var WardleyValueConverter = class extends AbstractMermaidValueConverter {
 	static {
 		__name(this, "WardleyValueConverter");
@@ -19719,16 +19658,12 @@ function createWardleyServices(context = EmptyFileSystem) {
 	};
 }
 __name(createWardleyServices, "createWardleyServices");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-4BX2VUAB.mjs
 function populateCommonDb(ast, db) {
 	if (ast.accDescr) db.setAccDescription?.(ast.accDescr);
 	if (ast.accTitle) db.setAccTitle?.(ast.accTitle);
 	if (ast.title) db.setDiagramTitle?.(ast.title);
 }
 __name$1(populateCommonDb, "populateCommonDb");
-//#endregion
-//#region node_modules/@mermaid-js/parser/dist/mermaid-parser.core.mjs
 var parsers = {};
 var initializers = {
 	info: /* @__PURE__ */ __name(async () => {
@@ -19819,8 +19754,6 @@ var MermaidParseError = class extends Error {
 		__name(this, "MermaidParseError");
 	}
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/architectureDiagram-Q4EWVU46.mjs
 var architectureDiagram_Q4EWVU46_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$28 });
 var import_cytoscape_fcose = /* @__PURE__ */ __toESM(require_cytoscape_fcose(), 1);
 var ArchitectureDirectionName = {
@@ -20728,8 +20661,6 @@ var diagram$28 = {
 	}, "draw") },
 	styles: architectureStyles_default
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-FMBD7UC4.mjs
 var getIconStyles = /* @__PURE__ */ __name$1(() => `
   /* Font Awesome icon styling - consolidated */
   .label-icon {
@@ -20745,8 +20676,6 @@ var getIconStyles = /* @__PURE__ */ __name$1(() => `
     stroke-width: revert;
   }
 `, "getIconStyles");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/blockDiagram-DXYQGD6D.mjs
 var blockDiagram_DXYQGD6D_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$27 });
 var parser$25 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -24883,8 +24812,6 @@ var diagram$27 = {
 	},
 	styles: styles_default$7
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-YZCP3GAM.mjs
 var drawRect$1 = /* @__PURE__ */ __name$1((element, rectData) => {
 	const rectElement = element.append("rect");
 	rectElement.attr("x", rectData.x);
@@ -24970,8 +24897,6 @@ var createTooltip = /* @__PURE__ */ __name$1(() => {
 	if (tooltipElem.empty()) tooltipElem = select_default("body").append("div").attr("class", "mermaidTooltip").style("opacity", 0).style("position", "absolute").style("text-align", "center").style("max-width", "200px").style("padding", "2px").style("font-size", "12px").style("background", "#ffffde").style("border", "1px solid #333").style("border-radius", "2px").style("pointer-events", "none").style("z-index", "100");
 	return tooltipElem;
 }, "createTooltip");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/c4Diagram-AHTNJAMY.mjs
 var c4Diagram_AHTNJAMY_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$26 });
 var parser$24 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -28646,15 +28571,11 @@ var diagram$26 = {
 		c4Db_default.setWrap(wrap);
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-55IACEB6.mjs
 var getDiagramElement = /* @__PURE__ */ __name$1((id, securityLevel) => {
 	let sandboxElement;
 	if (securityLevel === "sandbox") sandboxElement = select_default("#i" + id);
 	return (securityLevel === "sandbox" ? select_default(sandboxElement.nodes()[0].contentDocument.body) : select_default("body")).select(`[id="${id}"]`);
 }, "getDiagramElement");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-EDXVE4YY.mjs
 var setupViewPortForSVG = /* @__PURE__ */ __name$1((svg, padding, cssDiagram, useMaxWidth) => {
 	svg.attr("class", cssDiagram);
 	const { width, height, x, y } = calculateDimensionsWithPadding(svg, padding);
@@ -28680,8 +28601,6 @@ var calculateDimensionsWithPadding = /* @__PURE__ */ __name$1((svg, padding) => 
 var createViewBox = /* @__PURE__ */ __name$1((x, y, width, height, padding) => {
 	return `${x - padding} ${y - padding} ${width} ${height}`;
 }, "createViewBox");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-4TB4RGXK.mjs
 var parser$23 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
 		for (o2 = o2 || {}, l = k.length; l--; o2[k[l]] = v);
@@ -32348,8 +32267,6 @@ var classRenderer_v3_unified_default = {
 		return dir;
 	}, "getDir")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-6PBFFD2Q.mjs
 var classDiagram_6PBFFD2Q_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$25 });
 var diagram$25 = {
 	parser: classDiagram_default,
@@ -32363,8 +32280,6 @@ var diagram$25 = {
 		cnf.class.arrowMarkerAbsolute = cnf.arrowMarkerAbsolute;
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/classDiagram-v2-HSJHXN6E.mjs
 var classDiagram_v2_HSJHXN6E_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$24 });
 var diagram$24 = {
 	parser: classDiagram_default,
@@ -32378,8 +32293,6 @@ var diagram$24 = {
 		cnf.class.arrowMarkerAbsolute = cnf.arrowMarkerAbsolute;
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/cose-bilkent-S5V4N54A.mjs
 var cose_bilkent_S5V4N54A_exports = /* @__PURE__ */ __exportAll({ render: () => render2 });
 var import_cytoscape_cose_bilkent = /* @__PURE__ */ __toESM(require_cytoscape_cose_bilkent(), 1);
 cytoscape.use(import_cytoscape_cose_bilkent.default);
@@ -32636,8 +32549,6 @@ var render2 = /* @__PURE__ */ __name$1(async (data4Layout, svg, { insertCluster,
 	}));
 	log2.debug("Cose-bilkent rendering completed");
 }, "render");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/dagre-KV5264BT.mjs
 var dagre_KV5264BT_exports = /* @__PURE__ */ __exportAll({ render: () => render });
 var clusterDb = /* @__PURE__ */ new Map();
 var descendants = /* @__PURE__ */ new Map();
@@ -33086,8 +32997,6 @@ var render = /* @__PURE__ */ __name$1(async (data4Layout, svg) => {
 	const siteConfig = getConfig2$3();
 	await recursiveRender(element, graph, data4Layout.type, data4Layout.diagramId, void 0, siteConfig);
 }, "render");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-QZHKN3VN.mjs
 var ImperativeState = class {
 	/**
 	* @param init - Function that creates the default state.
@@ -33103,8 +33012,6 @@ var ImperativeState = class {
 		this.records = this.init();
 	}
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-5BDNPKRD.mjs
 var diagram_5BDNPKRD_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$23 });
 var state$1 = new ImperativeState(() => ({
 	cnt: 1,
@@ -33237,8 +33144,6 @@ var diagram$23 = {
     `;
 	}, "styles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-G4DWMVQ6.mjs
 var diagram_G4DWMVQ6_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$22 });
 var TreeMapDB = class {
 	constructor() {
@@ -33653,8 +33558,6 @@ var diagram$22 = {
   `;
 	}, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-MMDJMWI5.mjs
 var diagram_MMDJMWI5_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$21 });
 var defaultOptions = {
 	showLegend: true,
@@ -33925,8 +33828,6 @@ var diagram$21 = {
 	`;
 	}, "styles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/diagram-TYMM5635.mjs
 var diagram_TYMM5635_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$20 });
 var DEFAULT_PACKET_CONFIG = defaultConfig_default.packet;
 var PacketDB = class {
@@ -34102,8 +34003,6 @@ var diagram$20 = {
 	`;
 	}, "styles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/erDiagram-SMLLAGMA.mjs
 var erDiagram_SMLLAGMA_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$19 });
 var parser$18 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -36057,8 +35956,6 @@ var diagram$19 = {
 `;
 	}, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/flowDiagram-DWJPFMVM.mjs
 var flowDiagram_DWJPFMVM_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$18 });
 var MERMAID_DOM_ID_PREFIX = "flowchart-";
 var FlowDB = class {
@@ -40788,8 +40685,6 @@ var diagram$18 = {
 		setConfig2({ flowchart: { arrowMarkerAbsolute: cnf.arrowMarkerAbsolute } });
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/ganttDiagram-T4ZO3ILL.mjs
 var ganttDiagram_T4ZO3ILL_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$17 });
 var import_isoWeek = /* @__PURE__ */ __toESM(require_isoWeek(), 1);
 var import_customParseFormat = /* @__PURE__ */ __toESM(require_customParseFormat(), 1);
@@ -42988,8 +42883,6 @@ var diagram$17 = {
   }
 `, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/gitGraphDiagram-UUTBAWPF.mjs
 var gitGraphDiagram_UUTBAWPF_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$16 });
 var commitType = {
 	NORMAL: 0,
@@ -44131,8 +44024,6 @@ var diagram$16 = {
 `;
 	}, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/infoDiagram-42DDH7IO.mjs
 var infoDiagram_42DDH7IO_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$15 });
 var parser$14 = { parse: /* @__PURE__ */ __name$1(async (input) => {
 	const ast = await parse("info", input);
@@ -44149,8 +44040,6 @@ var diagram$15 = {
 		svg.append("g").append("text").attr("x", 100).attr("y", 40).attr("class", "version").attr("font-size", 32).style("text-anchor", "middle").text(`v${version}`);
 	}, "draw") }
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/ishikawaDiagram-UXIWVN3A.mjs
 var ishikawaDiagram_UXIWVN3A_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$14 });
 var parser$13 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -45114,8 +45003,6 @@ var diagram$14 = {
 }
 `, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/journeyDiagram-VCZTEJTY.mjs
 var journeyDiagram_VCZTEJTY_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$13 });
 var parser$12 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -46332,8 +46219,6 @@ var diagram$13 = {
 		journeyDb_default.clear();
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/kanban-definition-6JOO6SKY.mjs
 var kanban_definition_6JOO6SKY_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$12 });
 var parser$11 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -47561,15 +47446,11 @@ var diagram$12 = {
     ${getIconStyles()}
 `, "getStyles")
 };
-//#endregion
-//#region node_modules/uuid/dist/esm-browser/stringify.js
 var byteToHex = [];
 for (let i = 0; i < 256; ++i) byteToHex.push((i + 256).toString(16).slice(1));
 function unsafeStringify(arr, offset = 0) {
 	return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
 }
-//#endregion
-//#region node_modules/uuid/dist/esm-browser/rng.js
 var getRandomValues;
 var rnds8 = new Uint8Array(16);
 function rng() {
@@ -47580,8 +47461,6 @@ function rng() {
 	return getRandomValues(rnds8);
 }
 var native_default = { randomUUID: typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto) };
-//#endregion
-//#region node_modules/uuid/dist/esm-browser/v4.js
 function v4(options, buf, offset) {
 	if (native_default.randomUUID && !buf && !options) return native_default.randomUUID();
 	options = options || {};
@@ -47597,8 +47476,6 @@ function v4(options, buf, offset) {
 	}
 	return unsafeStringify(rnds);
 }
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/mindmap-definition-QFDTVHPH.mjs
 var mindmap_definition_QFDTVHPH_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$11 });
 var parser$10 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -48857,8 +48734,6 @@ var diagram$11 = {
 `;
 	}, "getStyles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/pieDiagram-DEJITSTG.mjs
 var pieDiagram_DEJITSTG_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$10 });
 var DEFAULT_PIE_CONFIG = defaultConfig_default.pie;
 var DEFAULT_PIE_DB = {
@@ -49022,8 +48897,6 @@ var diagram$10 = {
 	}, "draw") },
 	styles: pieStyles_default
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/quadrantDiagram-34T5L4WZ.mjs
 var quadrantDiagram_34T5L4WZ_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$9 });
 var parser$8 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -51225,8 +51098,6 @@ var diagram$9 = {
 	}, "draw") },
 	styles: /* @__PURE__ */ __name$1(() => "", "styles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/requirementDiagram-MS252O5E.mjs
 var requirementDiagram_MS252O5E_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$8 });
 var parser$7 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -53676,8 +53547,6 @@ var diagram$8 = {
 	renderer: requirementRenderer_exports,
 	styles: styles_default$4
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/sankeyDiagram-XADWPNL6.mjs
 var sankeyDiagram_XADWPNL6_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$7 });
 var parser$6 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -54383,8 +54252,6 @@ var diagram$7 = {
 	db: sankeyDB_default,
 	renderer: sankeyRenderer_default
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/sequenceDiagram-FGHM5R23.mjs
 var sequenceDiagram_FGHM5R23_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$6 });
 var parser$5 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -59816,8 +59683,6 @@ var diagram$6 = {
 		}
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/chunk-OYMX7WX6.mjs
 var parser$4 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
 		for (o2 = o2 || {}, l = k.length; l--; o2[k[l]] = v);
@@ -62356,8 +62221,6 @@ g.stateGroup line {
   filter: ${options.dropShadow ? options.dropShadow.replace("url(#drop-shadow)", `url(${options.svgId}-drop-shadow)`) : "none"}
 }
 `, "getStyles");
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-FHFEXIEX.mjs
 var stateDiagram_FHFEXIEX_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$5 });
 var drawStartState = /* @__PURE__ */ __name$1((g) => g.append("circle").attr("class", "start-state").attr("r", getConfig2$3().state.sizeUnit).attr("cx", getConfig2$3().state.padding + getConfig2$3().state.sizeUnit).attr("cy", getConfig2$3().state.padding + getConfig2$3().state.sizeUnit), "drawStartState");
 var drawDivider = /* @__PURE__ */ __name$1((g) => g.append("line").style("stroke", "grey").style("stroke-dasharray", "3").attr("x1", getConfig2$3().state.textHeight).attr("class", "divider").attr("x2", getConfig2$3().state.textHeight * 2).attr("y1", 0).attr("y2", 0), "drawDivider");
@@ -62702,8 +62565,6 @@ var diagram$5 = {
 		cnf.state.arrowMarkerAbsolute = cnf.arrowMarkerAbsolute;
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/stateDiagram-v2-QKLJ7IA2.mjs
 var stateDiagram_v2_QKLJ7IA2_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$4 });
 var diagram$4 = {
 	parser: stateDiagram_default,
@@ -62717,8 +62578,6 @@ var diagram$4 = {
 		cnf.state.arrowMarkerAbsolute = cnf.arrowMarkerAbsolute;
 	}, "init")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/timeline-definition-GMOUNBTQ.mjs
 var timeline_definition_GMOUNBTQ_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$3 });
 var parser$3 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -64216,8 +64075,6 @@ var diagram$3 = {
 `;
 	}, "getStyles")
 };
-//#endregion
-//#region node_modules/@upsetjs/venn.js/build/venn.esm.js
 var SMALL$1 = 1e-10;
 /**
 * Returns the intersection area of a bunch of circles (where each circle
@@ -65769,8 +65626,6 @@ function layout(data, options = {}) {
 		};
 	});
 }
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/vennDiagram-DHZGUBPP.mjs
 var vennDiagram_DHZGUBPP_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$2 });
 var parser$2 = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -66979,8 +66834,6 @@ var diagram$2 = {
 	renderer: { draw },
 	styles: styles_default
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/wardleyDiagram-NUSXRM2D.mjs
 var wardleyDiagram_NUSXRM2D_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram$1 });
 var toPercent = /* @__PURE__ */ __name$1((value, context) => {
 	const normalized = value <= 1 ? value * 100 : value;
@@ -67778,8 +67631,6 @@ var diagram$1 = {
 	}, "draw") },
 	styles: /* @__PURE__ */ __name$1(() => "", "styles")
 };
-//#endregion
-//#region node_modules/mermaid/dist/chunks/mermaid.core/xychartDiagram-5P7HB3ND.mjs
 var xychartDiagram_5P7HB3ND_exports = /* @__PURE__ */ __exportAll({ diagram: () => diagram });
 var parser = (function() {
 	var o = /* @__PURE__ */ __name$1(function(k, v, o2, l) {
@@ -70192,5 +70043,4 @@ var diagram = {
 		}
 	}, "draw") }
 };
-//#endregion
 export { createPieServices as a, createGitGraphServices as c, createRadarServices as i, createArchitectureServices as l, createTreemapServices as n, createPacketServices as o, createTreeViewServices as r, createInfoServices as s, createWardleyServices as t, mermaid_default as u };

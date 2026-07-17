@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.UIComponentFileEditor;
 import com.intellij.ide.plugins.UIComponentVirtualFile;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,15 +39,6 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    // todo remove after ActionSearchDuplicatesTest fix
-    e.getPresentation().setEnabledAndVisible(
-      !ActionPlaces.isMacSystemMenuAction(e)
-      && !ActionPlaces.ACTION_SEARCH.equals(e.getPlace())
-    );
   }
 
   private static void showPluginsInEditor(@NotNull Project project) {

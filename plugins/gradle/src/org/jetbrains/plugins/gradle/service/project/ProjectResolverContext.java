@@ -18,6 +18,12 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext;
 import java.util.Collection;
 
 /**
+ * Context passed to Gradle project resolvers for one Gradle sync scope.
+ * <p>
+ * {@link #getProject()} returns the IDE project that owns the sync. A single IDE project may have several linked Gradle projects, and
+ * each linked Gradle project is synced with a separate context. {@link #getProjectPath()} identifies the current Gradle sync scope,
+ * usually by the linked Gradle project path. For Gradle older than 8.0, buildSrc can use a more granular sync scope.
+ *
  * @author Vladislav.Soroka
  */
 @ApiStatus.NonExtendable

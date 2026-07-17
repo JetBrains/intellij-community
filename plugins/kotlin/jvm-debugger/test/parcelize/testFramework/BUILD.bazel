@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### skip generation section `test intellij.kotlin.jvm.debugger.test.parcelize.testFramework`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize.testFramework` start
-
 jvm_library(
     name = "testFramework",
     srcs = glob(

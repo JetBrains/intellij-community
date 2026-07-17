@@ -267,7 +267,6 @@
   {"apiName": "com.intellij.lexer.Lexer", "extensionPointNames": [], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.LanguageInjector", "extensionPointNames": ["com.intellij.languageInjector"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.lang.injection.MultiHostInjector", "extensionPointNames": ["com.intellij.multiHostInjector"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
-  {"apiName": "com.intellij.psi.ElementDescriptionProvider", "extensionPointNames": ["com.intellij.elementDescriptionProvider"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.ElementManipulator", "extensionPointNames": ["com.intellij.lang.elementManipulator"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.openapi.editor.bidi.BidiRegionsSeparator", "extensionPointNames": ["com.intellij.bidiRegionsSeparator"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.openapi.editor.actions.WordBoundaryFilter", "extensionPointNames": ["com.intellij.wordBoundaryFilter"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},

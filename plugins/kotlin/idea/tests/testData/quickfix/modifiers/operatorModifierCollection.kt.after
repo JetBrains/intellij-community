@@ -1,5 +1,5 @@
 // "Add 'operator' modifier" "true"
-// K2_ERROR: 'operator' modifier is required on 'fun contains(x: Any): Boolean' defined in 'A'.
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
 class A {
     operator fun contains(x: Any): Boolean = false
 }

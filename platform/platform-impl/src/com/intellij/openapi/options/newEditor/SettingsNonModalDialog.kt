@@ -9,10 +9,8 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.EventHandler
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -50,6 +48,7 @@ import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.EventQueue
 import java.awt.GridBagLayout
+import java.awt.Window
 import java.awt.event.ActionEvent
 import java.awt.event.WindowEvent
 import javax.swing.AbstractAction
@@ -145,6 +144,22 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       }
       return create(project, groups, configurable, filter).also { ourInstance = it }
     }
+
+    /**
+     * Returns `true` if [window] is the Settings window itself or is owned (directly or
+     * transitively) by the Settings window. Used by [SettingsPasteAction] to enable the
+     * `Settings.Paste` action in sub-dialogs opened from within Settings.
+     */
+    @JvmStatic
+    fun isSettingsWindow(window: Window?): Boolean {
+      val settingsWindow = ourInstance?.takeIf { !it.isDisposed }?.activeWindow ?: return false
+      var w = window
+      while (w != null) {
+        if (w === settingsWindow) return true
+        w = w.owner
+      }
+      return false
+    }
   }
 
   private val editor: SettingsEditor
@@ -211,17 +226,11 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { shortcut ->
       SearchTextField.FindAction().registerCustomShortcutSet(shortcut, rootPane, frameDisposable)
     }
-    ActionManager.getInstance().getAction("\$Paste")?.shortcutSet?.let { shortcuts ->
-      val pasteAction = SettingsPasteAction()
-      ActionUtil.mergeFrom(pasteAction, "Settings.Paste")
-      pasteAction.registerCustomShortcutSet(shortcuts, rootPane, frameDisposable)
-    }
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
     sink.uiDataSnapshot(editor)
-    sink[IS_SETTINGS_CONTEXT] = true
   }
 
   override fun dispose() {
@@ -286,6 +295,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
         return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message", project.name))
       }
     }, frameDisposable)
+
   }
 
   // ── Unsaved-changes resolution ────────────────────────────────────────────────

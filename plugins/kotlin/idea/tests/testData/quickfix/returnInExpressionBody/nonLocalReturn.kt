@@ -1,6 +1,6 @@
 // "Specify 'Unit' return type for enclosing function 'a'" "true"
-// K2_ERROR: Return type 'Nothing' needs to be specified explicitly.
-// K2_ERROR: Return type mismatch: expected 'Nothing', actual 'Unit'.
+// K2_ERROR: IMPLICIT_NOTHING_RETURN_TYPE
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun a() = run { r<caret>eturn }
 

@@ -60,6 +60,9 @@ object CommunityRepositoryModules {
       spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
       spec.withResource("lib/libwebp/win", "lib/libwebp/win")
     },
+    pluginAuto("intellij.platform.ui.webview") { spec ->
+      spec.withResource("lib/webview-native/win", "lib/webview-native/win")
+    },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
@@ -247,6 +250,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
       spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")
     },
+    pluginAuto(listOf("intellij.tipsOfTheDay.plugin")),
     *allJcefPlugins()
   )
 

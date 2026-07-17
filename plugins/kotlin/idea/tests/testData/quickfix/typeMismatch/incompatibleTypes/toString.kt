@@ -1,6 +1,6 @@
 // "Add 'toString()' call" "true"
 // PRIORITY: LOW
-// K2_ERROR: Incompatible types 'String' and 'Int'.
+// K2_ERROR: INCOMPATIBLE_TYPES
 fun test(s: String, i: Int) {
     when (s) {
         <caret>i -> {}

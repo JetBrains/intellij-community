@@ -1,8 +1,9 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.kotlin.jvm.debugger.eval4j` start
+### skip generation section `test intellij.kotlin.jvm.debugger.eval4j.tests`
 
+### auto-generated section `build intellij.kotlin.jvm.debugger.eval4j` start
 jvm_library(
     name = "eval4j",
     srcs = glob(
@@ -60,7 +61,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.eval4j` end
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.eval4j.tests` start
-
 jvm_library(
     name = "kotlin-jvm-debugger-eval4j-tests",
     srcs = glob(
@@ -119,14 +119,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.eval4j.tests` end
-
-### auto-generated section `test intellij.kotlin.jvm.debugger.eval4j.tests` start
-
-jps_test(
-    name = "kotlin-jvm-debugger-eval4j-tests_test",
-    runtime_deps = [
-        ":kotlin-jvm-debugger-eval4j-tests_test_lib",
-        "//:main_test_lib",
-    ],
-)
-### auto-generated section `test intellij.kotlin.jvm.debugger.eval4j.tests` end

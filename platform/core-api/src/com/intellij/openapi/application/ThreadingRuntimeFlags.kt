@@ -60,6 +60,14 @@ val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.pr
 val assertTreeElementVersioningCompatibility: Boolean = System.getProperty("ide.assert.tree.element.versioning.compatibility", "true").toBoolean()
 
 /**
+ * - `true` means that calls to `freezePsiVersion` will enable interaction with a consistent snapshot of PSI without a read lock
+ * - `false` means that calls to `freezePsiVersion` will be routed to `runReadActionBlocking`
+ */
+@get:ApiStatus.Internal
+val allowUsingFrozenPsi: Boolean = System.getProperty("ide.allow.using.frozen.psi", "true").toBoolean()
+
+
+/**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
  */
 @get:ApiStatus.Internal

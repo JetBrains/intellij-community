@@ -389,13 +389,6 @@ f:com.intellij.build.BuildContentDescriptor
 - isActivateToolWindowWhenFailed():Z
 - isNavigateToError():com.intellij.util.ThreeState
 f:com.intellij.build.BuildTextConsoleView
-- <init>(com.intellij.openapi.project.Project,Z,java.util.List):V
-- append(com.intellij.build.events.Failure):Z
-- append(java.lang.String,Z):V
-- appendEventResult(com.intellij.build.events.EventResult):Z
-- coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
-- onEvent(com.intellij.build.events.OutputBuildEvent):V
-- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
 f:com.intellij.build.BuildTreeConsoleView
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole):V
 - addFilter(java.util.function.Predicate):V
@@ -4103,7 +4096,6 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - filterControlSymbols(java.lang.String):java.lang.String
 - getActions(java.lang.Runnable):java.util.List
 - getAdvertisement():java.lang.String
-- getAutocompleteItems(java.lang.String,I):java.util.List
 - getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer
@@ -6423,15 +6415,6 @@ a:com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
-- canDeleteElement(com.intellij.openapi.actionSystem.DataContext):Z
-- deleteElement(com.intellij.openapi.actionSystem.DataContext):V
-- s:detachModules(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[]):V
-- p:doDetachModules(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[],java.util.List):V
-- getActionTitle():java.lang.String
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- p:getConfirmationText(java.lang.String,I):java.lang.String
-- s:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
-- s:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
 c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - addSdk(com.intellij.openapi.projectRoots.SdkType,java.lang.String,com.intellij.util.Consumer):V
 - apply(com.intellij.openapi.ui.MasterDetailsComponent):V

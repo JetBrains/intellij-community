@@ -6,12 +6,13 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [TypedDict][https://docs.python.org/3/library/typing.html#typing.TypedDict]:
+ * Type and type-checker tests for [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict):
  * definition forms, subscription, required/optional/`ReadOnly` keys, `total=`, the alternative call
  * syntax, `NotRequired`/`Required`, `extra_items`, `Unpack[...]` kwargs, and related inspections.
  */
@@ -234,6 +235,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       
       def movie_keys(movie: Movie) -> None:
           expr = movie["year"]
+      #   └ TYPE int
+      """,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-90620"])
+    fun `extra_items non-literal str key`() = test(
+      TestOptions(languageLevel = LanguageLevel.PYTHON313),
+      """
+      from typing_extensions import TypedDict
+
+      class Foo(TypedDict, extra_items=int):
+          pass
+
+      def bar(foo: Foo, key: str) -> None:
+          expr = foo[key]
       #   └ TYPE int
       """,
     )
@@ -519,6 +536,39 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to optional TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Address(TypedDict):
+          street: str
+
+      a: Address | None = {"street": "Pine"}
+      b: Address | None = {"color": "red"}
+      #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[Literal["color"], Literal["red"]]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to one of several TypedDicts`() = test("""
+      from typing import TypedDict
+
+      class A(TypedDict):
+          a: str
+
+      class B(TypedDict):
+          b: int
+
+      class C(TypedDict):
+          c: int
+
+      first: A | B | C = {"a": "x"}
+      last:  A | B | C = {"c": 1}
+      none:  A | B | C = {"z": 1}
+      #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[Literal["z"], Literal[1]]' instead
+      """)
+
+    @Test
     @TestFor(issues = ["PY-38873"])
     fun `value access through list field`() = test("""
       from typing import TypedDict, List, LiteralString
@@ -699,6 +749,65 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
       combined_error: dict[str, int] = required_readonly_dict  # Error: 'id' is both required and read-only
       #                                ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `closed and extra_items cannot be combined`() = test("""
+      from typing_extensions import TypedDict
+
+      class ClosedTrueWithExtra(TypedDict, closed=True, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      class ClosedFalseWithExtra(TypedDict, closed=False, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      Functional = TypedDict('Functional', {'name': str}, closed=True, extra_items=int)  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `functional extra_items value must be a type`() = test(
+      // PyTypeCheckerInspection separately flags the `type`-typed parameter; here we only assert the dedicated check.
+      TestOptions(disableInspections = setOf(PyTypeCheckerInspection::class.java)),
+      """
+      from typing_extensions import TypedDict
+
+      Movie = TypedDict('Movie', {'name': str}, extra_items=2)
+      #                                                     └ WEAK-WARNING Value must be a type
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `closed TypedDict reports unknown key on subscription`() = test(
+      // `enablePyAnyType = false`: the closed-subscription value type is still `null` rather than `Unknown`;
+      // hardening that path is part of the `PyAnyType` migration (PY-88453).
+      TestOptions(enablePyAnyType = false),
+      """
+      from typing_extensions import TypedDict
+
+      class Movie(TypedDict, closed=True):
+          name: str
+
+      def f(m: Movie) -> None:
+          present = m['name']
+          missing = m['year']  # WARNING TypedDict "Movie" has no key 'year'
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90618"])
+    fun `assigning to a read-only extra item is reported`() = test(
+      // `enablePyAnyType = false`: writing an extra key feeds a `null` expected type into the value check;
+      // making that path yield the extra-items type instead is part of the `PyAnyType` migration (PY-88453).
+      TestOptions(enablePyAnyType = false),
+      """
+      from typing_extensions import TypedDict, ReadOnly
+
+      class Foo(TypedDict, extra_items=ReadOnly[int]):
+          pass
+
+      def f(foo: Foo) -> None:
+          foo["bar"] = 43  # WARNING TypedDict key "bar" is ReadOnly
       """)
   }
 

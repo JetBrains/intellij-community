@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.maven.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -156,6 +155,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.maven.tests` end
@@ -170,7 +173,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.maven.tests` end
 
 ### auto-generated section `test intellij.kotlin.maven.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

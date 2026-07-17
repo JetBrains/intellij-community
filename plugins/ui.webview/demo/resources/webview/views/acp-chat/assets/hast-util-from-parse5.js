@@ -1,6 +1,5 @@
 import "./devlop.js";
 import { c as find, i as s, n as webNamespaces, o as html, r as h, s as svg } from "./hast-util-from-dom.js";
-//#region node_modules/vfile-location/lib/index.js
 /**
 * @import {VFile, Value} from 'vfile'
 * @import {Location} from 'vfile-location'
@@ -77,8 +76,6 @@ function next(value, from) {
 	if (cr === -1 || cr + 1 === lf) return lf;
 	return cr < lf ? cr : lf;
 }
-//#endregion
-//#region node_modules/hast-util-from-parse5/lib/index.js
 /**
 * @import {ElementData, Element, Nodes, RootContent, Root} from 'hast'
 * @import {DefaultTreeAdapterMap, Token} from 'parse5'
@@ -336,5 +333,4 @@ function position(loc) {
 function point(point) {
 	return point.line && point.column ? point : void 0;
 }
-//#endregion
 export { fromParse5 as t };

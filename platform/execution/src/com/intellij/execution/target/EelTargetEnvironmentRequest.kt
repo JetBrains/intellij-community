@@ -35,6 +35,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.copy
@@ -284,11 +285,11 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
       EelPathTransfer.walkingTransfer(from,
-                                   to,
-                                   removeSource = false,
-                                   EelPathTransfer.FileTransferAttributesStrategy.Copy,
-                                   absoluteSymlinkHandler = null,
-                                   filter = filter)
+                                      to,
+                                      removeSource = false,
+                                      EelFileTransferAttributesStrategy.Copy,
+                                      absoluteSymlinkHandler = null,
+                                      filter = filter)
     }
 
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
@@ -302,11 +303,11 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
       EelPathTransfer.walkingTransfer(from,
-                                   to,
-                                   removeSource = false,
-                                   EelPathTransfer.FileTransferAttributesStrategy.Copy,
-                                   absoluteSymlinkHandler = null,
-                                   filter = null)
+                                      to,
+                                      removeSource = false,
+                                      EelFileTransferAttributesStrategy.Copy,
+                                      absoluteSymlinkHandler = null,
+                                      filter = null)
     }
 
     override fun resolveTargetPath(relativePath: String): String {

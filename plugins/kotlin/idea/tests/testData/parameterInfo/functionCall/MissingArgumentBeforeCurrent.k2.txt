@@ -1,0 +1,1 @@
+Text: (x: Int, <highlight>z: Boolean</highlight>, y: String), Disabled: true, Strikeout: false, Green: true

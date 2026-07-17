@@ -21,7 +21,7 @@ try:
 
 [x * 2 for x in <error descr="Python version 3.4 does not support this syntax in list comprehensions">vec1, vec2</error>]
 
-<error descr="Python version 3.4 does not have module __builtin__">import __builtin__</error>
+<error descr="Python version 3.4 does not have module '__builtin__'">import __builtin__</error>
 
 <error descr="No exception to reraise">raise</error>
 

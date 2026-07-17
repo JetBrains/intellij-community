@@ -53,8 +53,7 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
     }
 
     return getRangeOfThisType(chars, offset).getLength() != 1 ||
-           ((offset <= 0 || Character.isWhitespace(chars.charAt(offset - 1)))
-            && (offset + 1 >= chars.length() || Character.isWhitespace(chars.charAt(offset + 1))));
+           (!isWordPart(chars, offset - 1) && !isWordPart(chars, offset + 1));
   }
 
   @Override
@@ -83,6 +82,10 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
       r++;
     }
     return TextRange.create(l, r + 1);
+  }
+
+  private static boolean isWordPart(@NotNull CharSequence chars, int offset) {
+    return offset >= 0 && offset < chars.length() && Character.isUnicodeIdentifierPart(chars.charAt(offset));
   }
 
   private static int locateNextPosition(@NotNull CharSequence haystack, char needle, int from, int dx) {

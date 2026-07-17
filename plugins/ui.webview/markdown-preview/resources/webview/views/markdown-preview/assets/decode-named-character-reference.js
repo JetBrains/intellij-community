@@ -1,4 +1,3 @@
-//#region node_modules/decode-named-character-reference/index.dom.js
 var element = document.createElement("i");
 /**
 * @param {string} value
@@ -11,5 +10,4 @@ function decodeNamedCharacterReference(value) {
 	if (character.charCodeAt(character.length - 1) === 59 && value !== "semi") return false;
 	return character === characterReference ? false : character;
 }
-//#endregion
 export { decodeNamedCharacterReference as t };

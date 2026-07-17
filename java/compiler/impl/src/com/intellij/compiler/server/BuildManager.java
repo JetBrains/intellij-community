@@ -102,6 +102,8 @@ import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.eel.provider.utils.EelProjectUtils;
+import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils;
 import com.intellij.platform.workspace.storage.InternalEnvironmentName;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.Alarm;
@@ -601,7 +603,7 @@ public final class BuildManager implements Disposable {
   }
 
   private static @NotNull Function<String, String> getPathMapperForProject(@NotNull Project project) {
-    if (!EelPathUtils.isProjectLocal(project)) {
+    if (!EelProjectUtils.isProjectLocal(project)) {
       return e -> asEelPath(Path.of(e)).toString();
     }
     else {
@@ -885,7 +887,7 @@ public final class BuildManager implements Disposable {
 
     Function<String, String> pathMapperBack;
 
-    if (!EelPathUtils.isProjectLocal(project)) {
+    if (!EelProjectUtils.isProjectLocal(project)) {
       pathMapperBack = e -> asNioPath(EelPath.parse(e, eelDescriptor)).toString();
     }
     else {
@@ -925,7 +927,7 @@ public final class BuildManager implements Disposable {
       }
       else {
         var optionsPath = PathManager.getOptionsDir().toString();
-        if (!EelPathUtils.isProjectLocal(project)) {
+        if (!EelProjectUtils.isProjectLocal(project)) {
           optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), project)).toString();
         }
         else {
@@ -1253,7 +1255,7 @@ public final class BuildManager implements Disposable {
   private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdkOrErrorIfRemote(
     @NotNull Project project, int requiredFeatureVersion, @Nullable Pair<@NotNull Sdk, @NotNull JavaSdkVersion> highestRejected
   ) {
-    if (!EelPathUtils.isProjectLocal(project)) {
+    if (!EelProjectUtils.isProjectLocal(project)) {
       var environmentName = EelProviderUtil.getEelDescriptor(project).getName();
       var rejectedSdk = highestRejected == null ? null : highestRejected.first;
       LOG.info("Failed to find compatible JDK for the build process. Required JDK " + requiredFeatureVersion + "+" +
@@ -1420,7 +1422,7 @@ public final class BuildManager implements Disposable {
     var buildProcessConnectPort = listenSocketAddress.getPort();
 
     BuildCommandLineBuilder cmdLine;
-    var localProject = EelPathUtils.isProjectLocal(project);
+    var localProject = EelProjectUtils.isProjectLocal(project);
     if (!localProject) {
       var eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
@@ -1671,7 +1673,7 @@ public final class BuildManager implements Disposable {
     }
 
     // TODO: Copy logs back as soon as eel provides API for that
-    var logPath = localProject ? getBuildLogDirectory().toAbsolutePath() : EelPathUtils.getSystemFolder(project).resolve("logs");
+    var logPath = localProject ? getBuildLogDirectory().toAbsolutePath() : EelSystemFolderUtils.getSystemFolder(project).resolve("logs");
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', logPath);
     if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
@@ -1699,7 +1701,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
 
-    var projectSystemRoot = EelPathUtils.getSystemFolder(project);
+    var projectSystemRoot = EelSystemFolderUtils.getSystemFolder(project);
     var projectTempDir = projectSystemRoot.resolve(TEMP_DIR_NAME);
     Files.createDirectories(projectTempDir);
     cmdLine.addPathParameter("-Djava.io.tmpdir=", projectSystemRoot);
@@ -1907,8 +1909,8 @@ public final class BuildManager implements Disposable {
   }
 
   public @NotNull Path getBuildSystemDirectory(Project project) {
-    if (!EelPathUtils.isProjectLocal(project)) {
-      return EelPathUtils.getSystemFolder(project).resolve(SYSTEM_ROOT);
+    if (!EelProjectUtils.isProjectLocal(project)) {
+      return EelSystemFolderUtils.getSystemFolder(project).resolve(SYSTEM_ROOT);
     }
 
     return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
@@ -1928,7 +1930,7 @@ public final class BuildManager implements Disposable {
   public @NotNull java.io.File getProjectSystemDirectory(@NotNull Project project) {
     var projectPath = getProjectPath(project);
     Function<String, Integer> hashFunction;
-    if (!EelPathUtils.isProjectLocal(project)) {
+    if (!EelProjectUtils.isProjectLocal(project)) {
       var descriptor = EelProviderUtil.getEelDescriptor(project);
       hashFunction = s -> {
         try {

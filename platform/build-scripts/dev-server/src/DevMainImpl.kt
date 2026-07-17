@@ -147,7 +147,11 @@ private fun getCommandSystemProperties(runDir: Path, command: CustomCommandLaunc
     .map { it.removePrefix("-D") }
     .associateBy(
       { it.substringBefore('=') },
-      { it.substringAfter('=', "").replace($$"$IDE_HOME", runDir.pathString) })
+      { it.substringAfter('=', "")
+        .replace($$"$IDE_HOME", runDir.pathString)
+        .replace($$"$APP_PACKAGE/Contents", runDir.pathString)
+        .apply { check('$' !in this) { "Unsubstituted macro in JVM argument: $it" } }
+      })
   return VmProperties(result)
 }
 

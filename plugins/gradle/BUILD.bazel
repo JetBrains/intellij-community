@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 ### auto-generated section `build intellij.gradle` start
-
 resourcegroup(
     name = "gradle_resources",
     srcs = glob(
@@ -219,7 +218,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle` end
 
 ### auto-generated section `build intellij.gradle.common` start
-
 jvm_library(
     name = "gradle-common",
     srcs = glob(
@@ -264,7 +262,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.common` end
 
 ### auto-generated section `build intellij.gradle.tests` start
-
 jvm_library(
     name = "gradle-tests",
     srcs = glob(
@@ -475,7 +472,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.tests` end
 
 ### auto-generated section `test intellij.gradle.tests` start
-
 jps_test(
     name = "gradle-tests_test",
     runtime_deps = [":gradle-tests_test_lib"],
@@ -483,7 +479,6 @@ jps_test(
 ### auto-generated section `test intellij.gradle.tests` end
 
 ### auto-generated section `build intellij.gradle.tests.main` start
-
 jvm_library(
     name = "gradle-tests-main",
     srcs = glob(

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.pyrefly` start
-
 jvm_library(
     name = "pyrefly",
     srcs = glob(

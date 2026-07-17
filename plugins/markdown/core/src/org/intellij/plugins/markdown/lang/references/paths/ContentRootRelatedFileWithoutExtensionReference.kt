@@ -4,8 +4,10 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import org.jetbrains.annotations.ApiStatus
 
-internal class ContentRootRelatedFileWithoutExtensionReference(
+@ApiStatus.Internal
+class ContentRootRelatedFileWithoutExtensionReference(
   element: PsiElement,
   fileReference: FileReference,
   soft: Boolean

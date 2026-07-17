@@ -1,8 +1,24 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-### auto-generated section `build intellij.java.guiForms.designer` start
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
+jps_test(
+    name = "java-guiForms-designer-tests_test",
+    timeout = "long",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-guiForms-designer-tests_test_lib"],
+)
+
+### skip generation section `test intellij.java.guiForms.designer.tests`
+
+### auto-generated section `build intellij.java.guiForms.designer` start
 jvm_library(
     name = "java-guiForms-designer",
     srcs = glob(
@@ -190,7 +206,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.guiForms.designer` end
 
 ### auto-generated section `build intellij.java.guiForms.designer.tests` start
-
 resourcegroup(
     name = "java-guiForms-designer-tests_test_resources",
     srcs = glob(
@@ -392,11 +407,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.guiForms.designer.tests` end
-
-### auto-generated section `test intellij.java.guiForms.designer.tests` start
-
-jps_test(
-    name = "java-guiForms-designer-tests_test",
-    runtime_deps = [":java-guiForms-designer-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.guiForms.designer.tests` end

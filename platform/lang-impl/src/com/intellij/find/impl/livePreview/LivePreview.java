@@ -195,13 +195,17 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     dumpState();
   }
 
-  private void updateCursorHighlighting() {
+  @ApiStatus.Internal
+  public void clearCursorHighlight() {
     hideBalloon();
-
     if (myCursorHighlighter != null) {
       removeHighlighter(myCursorHighlighter);
       myCursorHighlighter = null;
     }
+  }
+
+  private void updateCursorHighlighting() {
+    clearCursorHighlight();
 
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();

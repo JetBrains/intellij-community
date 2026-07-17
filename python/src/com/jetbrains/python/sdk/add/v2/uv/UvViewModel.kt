@@ -11,10 +11,11 @@ import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.UV_TOOL_COMMAND_SPEC
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 
-class UvViewModel<P : PathHolder>(
+internal class UvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
   projectPathFlows: ProjectPathFlows,
@@ -27,6 +28,7 @@ class UvViewModel<P : PathHolder>(
     toolVersionPrefix = "uv",
     backProperty = uvExecutable,
     propertyGraph = propertyGraph,
+    toolCommandSpec = UV_TOOL_COMMAND_SPEC,
     defaultPathSupplier = {
       getUvExecutable(fileSystem, null)
     }

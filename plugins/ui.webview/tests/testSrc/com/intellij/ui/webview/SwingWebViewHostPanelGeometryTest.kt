@@ -11,6 +11,7 @@ import com.intellij.ui.webview.impl.WebViewFocusEntrySink
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -318,6 +319,54 @@ class SwingWebViewHostPanelGeometryTest {
 
       assertEquals(1, peer.clearFocusForSwingTransferCount)
       assertEquals(1, peer.clearFocusCount)
+    }
+    finally {
+      scope.cancel()
+    }
+  }
+
+  @Test
+  fun swingHostFocusRequest_skipsForcedFallbackForMouseActivation() {
+    val engine = FakeNativeEngine()
+    val peer = RecordingNativePeer()
+    @Suppress("RAW_SCOPE_CREATION") // Test scope has no parent in this pure Swing geometry test.
+    val scope = CoroutineScope(SupervisorJob())
+    try {
+      val host = SwingWebViewHostPanel(
+        scope = scope,
+        engine = engine,
+        nativeHostPeer = peer,
+      ).apply {
+        // Force requestFocusInWindow() to fail so the test covers the fallback branch without
+        // involving the platform focus manager or a native window.
+        isFocusable = false
+      }
+
+      assertFalse(host.requestSwingFocusForWebViewActivation(allowForcedFocusFallback = false))
+    }
+    finally {
+      scope.cancel()
+    }
+  }
+
+  @Test
+  fun swingHostFocusRequest_keepsForcedFallbackForNativeFocusRequests() {
+    val engine = FakeNativeEngine()
+    val peer = RecordingNativePeer()
+    @Suppress("RAW_SCOPE_CREATION") // Test scope has no parent in this pure Swing geometry test.
+    val scope = CoroutineScope(SupervisorJob())
+    try {
+      val host = SwingWebViewHostPanel(
+        scope = scope,
+        engine = engine,
+        nativeHostPeer = peer,
+      ).apply {
+        // Force requestFocusInWindow() to fail so the test covers the fallback branch without
+        // involving the platform focus manager or a native window.
+        isFocusable = false
+      }
+
+      assertTrue(host.requestSwingFocusForWebViewActivation(allowForcedFocusFallback = true))
     }
     finally {
       scope.cancel()

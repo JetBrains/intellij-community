@@ -1,5 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'B<D>?', but 'A<C>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 interface A<out T>
 class B<out T>: A<T>

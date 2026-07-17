@@ -114,7 +114,6 @@ import com.intellij.util.progress.CancellationUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import kotlin.concurrent.LocksKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
@@ -789,6 +788,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void withLock(@NotNull Runnable code) {
+    // The lock is reentrant, but because we lock it in a cancellable manner,
+    // we don't want to throw an exception if we're already in the middle of some code under the lock.
+    // Because the code, e.g. in doEnsurePanesLoaded, is not designed to be canceled in the middle,
+    // it should be all-or-nothing: once the lock is successfully acquired, the code should proceed to completion.
+    // This whole cancellable lock thing only exists to protect against deadlocks like this:
+    // EDT: WIRA -> PV lock -> attempt to start a WA
+    // BGT: RA (e.g., action update calling getSelectInTargets) -> attempt to grab PV lock
+    // In this case the first attempt to grab the PV lock in the BGT will be cancelled, and the protection works.
+    // But if we're already inside, then there's no deadlock, and the BGT code will be allowed to complete.
+    if (lock.isHeldByCurrentThread()) {
+      code.run();
+      return;
+    }
+
     if (EDT.isCurrentThreadEdt()) { // UI code is assumed to be non-cancellable
       lock.lock();
     }
@@ -1257,7 +1270,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           }
         }
         catch (Throwable e) {
-          LOG.warn("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state");
+          // Yes, we log EVERYTHING here, including CEs, because this particular thing isn't supposed to be cancellable.
+          LOG.error("An exception occurred when trying to add the pane " + pane.getId() + ", it may not appear or may have inconsistent state", e);
         }
       }
     }

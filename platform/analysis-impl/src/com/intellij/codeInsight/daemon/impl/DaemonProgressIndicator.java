@@ -13,7 +13,9 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -133,6 +135,12 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     super.start();
   }
 
+  @ApiStatus.Internal
+  public @Nullable Span newSpan(@NonNls @NotNull String name, @Nullable Span parentSpan) {
+    Span actualParent = parentSpan == null ? mySpan : parentSpan;
+    Context context = actualParent == null ? Context.current() : Context.current().with(actualParent);
+    return myTraceManager.spanBuilder(name).setParent(context).startSpan();
+  }
 
   /**
    * @deprecated Please use the more structured {@link #runInDebugMode} instead

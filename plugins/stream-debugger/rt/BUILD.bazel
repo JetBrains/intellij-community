@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.debugger.streams.java.rt` start
-
 jvm_library(
     name = "rt",
     srcs = glob(

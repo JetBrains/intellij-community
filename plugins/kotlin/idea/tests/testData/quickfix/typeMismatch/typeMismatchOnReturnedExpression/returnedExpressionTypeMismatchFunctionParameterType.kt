@@ -1,4 +1,5 @@
 // "Change parameter 'f' type of function 'foo' to '() -> String'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun foo(f: () -> Int) {
     foo {
         ""<caret>

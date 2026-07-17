@@ -4,8 +4,8 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
 // ERROR: Operator call corresponds to a dot-qualified call 'map[3].plusAssign(5)' which is not allowed on a nullable receiver 'map[3]'.
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
-// K2_AFTER_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
+// K2_AFTER_ERROR: UNSAFE_OPERATOR_CALL
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 fun test(map: MutableMap<Int, Int>) {
     map[3] +=<caret> 5
 }

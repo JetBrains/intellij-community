@@ -63,13 +63,23 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
-  public boolean isEventSystemEnabled() {
-    return isEventSystemEnabledImpl();
+  public final boolean isEventSystemEnabled() {
+    return supportsSendingPsiEvents();
   }
 
   @Override
-  public boolean isPhysical() {
-    return super.isPhysical() && isPhysicalImpl();
+  public boolean supportsSendingPsiEvents() {
+    return supportsSendingPsiEventsImpl();
+  }
+
+  @Override
+  public final boolean isPhysical() {
+    return correspondsToRealFile();
+  }
+
+  @Override
+  public boolean correspondsToRealFile() {
+    return super.correspondsToRealFile() && correspondsToRealFileImpl();
   }
 
   @Override
@@ -100,7 +110,12 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
 
   @Override
   public @NonNls String toString() {
-    return "Multi root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
+    return "Multi root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (this.correspondsToRealFile() ? "" : " nonphysical");
+  }
+
+  @Override
+  protected boolean cacheContentInVersionedEnvironment() {
+    return false;
   }
 
   @Override

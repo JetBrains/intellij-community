@@ -114,6 +114,15 @@ a:com.intellij.execution.RunManagerEx
 - a:getBeforeRunTasks(com.intellij.execution.configurations.RunConfiguration):java.util.List
 - getConfigurationIcon(com.intellij.execution.RunnerAndConfigurationSettings):javax.swing.Icon
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.execution.RunManagerEx
+f:com.intellij.execution.TerminateRemoteProcessDialog
+- s:show(com.intellij.openapi.project.Project,java.lang.String,com.intellij.execution.process.ProcessHandler):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+e:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- java.lang.Enum
+- sf:DISCONNECT:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- sf:LEAVE_RUNNING:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- sf:TERMINATE:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- s:valueOf(java.lang.String):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- s:values():com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult[]
 f:com.intellij.execution.TestStateStorage
 - com.intellij.openapi.Disposable
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.TestStateStorage

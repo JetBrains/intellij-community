@@ -107,34 +107,6 @@ class KotlinCustomImportScriptDefinitionCompletionTest : KotlinLightCodeInsightF
         }
     }
 
-    fun `test autopopup triggers on typing`() {
-        registerCustomImportScriptDefinition()
-
-        myFixture.tempDirFixture.createFile(
-            "helper.kts",
-            "fun helperFromCustom() {}"
-        )
-        val mainFile = myFixture.tempDirFixture.createFile(
-            "activate.imports.kts",
-            """
-            @file:CustomImport("helper.kts")
-
-            hel<caret>
-            """.trimIndent(),
-        )
-
-        runInEdtAndWait { myFixture.configureFromExistingVirtualFile(mainFile) }
-        runBlocking { KotlinScriptService.getInstance(project).load(mainFile) }
-
-        runInEdtAndWait {
-            myFixture.type('p')
-            myFixture.completeBasic()
-            val lookupElements = myFixture.lookupElementStrings
-            assertNotNull("Lookup should be active", lookupElements)
-            assertContainsElements(lookupElements!!, "helperFromCustom")
-        }
-    }
-
     @Suppress("DEPRECATION") // ScriptDefinitionsSource is the registration path used by the script test fixtures (KT-82551).
     private fun registerCustomImportScriptDefinition() {
         val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(

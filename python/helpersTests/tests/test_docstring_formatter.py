@@ -209,3 +209,6 @@ class DocstringFormatterTest(HelpersTestCase):
 
     def test_rest_codeblock_python(self):
         self._test()
+
+    def test_rest_codeblock_markdown(self):
+        self._test()

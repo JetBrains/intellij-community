@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.grid.impl` start
-
 create_kotlinc_options(
     name = "custom_impl",
     opt_in = [

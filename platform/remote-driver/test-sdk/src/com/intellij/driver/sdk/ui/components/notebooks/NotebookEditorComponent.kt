@@ -117,6 +117,13 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='JupyterCellActionsToolbar']").list()
   val newCellActions: List<UiComponent>
     get() = x("//div[@class='JupyterAddNewCellToolbar']").xx("//div[@class='ActionButtonWithText']", JButtonUiComponent::class.java).list()
+  val newCodeCellButton: UiComponent
+    get() = x("//div[@class='JupyterAddNewCellToolbar']//div[@class='ActionButtonWithText' and @visible_text='Code']",JButtonUiComponent::class.java)
+  val newMarkdownCellButton: UiComponent
+    get() = x("//div[@class='JupyterAddNewCellToolbar']//div[@class='ActionButtonWithText' and @visible_text='Markdown']",JButtonUiComponent::class.java)
+  val newSqlCellButton: UiComponent
+    get() = x("//div[@class='JupyterAddNewCellToolbar']//div[@class='ActionButtonWithText' and @visible_text='SQL']",JButtonUiComponent::class.java)
+
   val foldingBars: List<UiComponent>
     get() = xx("//div[@class='EditorCellFoldingBarComponent']").list()
 

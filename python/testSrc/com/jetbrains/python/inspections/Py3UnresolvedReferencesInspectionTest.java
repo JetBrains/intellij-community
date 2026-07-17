@@ -576,7 +576,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                        def do_smth(self):
                            print("Something more from", self)
                            super().do_smth()
-                           super().<warning descr="Cannot find reference 'non_existing' in 'A | ABC'">non_existing</warning>()
+                           super().<warning descr="Cannot find reference 'non_existing' in 'UnsafeUnion[A, ABC]'">non_existing</warning>()
                    """);
   }
 

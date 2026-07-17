@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -17,6 +18,7 @@ public final class CachedFileContent {
 
   private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
+  private CharSequence myText;
   private long myCachedTimeStamp = -1;
   private Boolean myCachedWritable;
 
@@ -57,6 +59,26 @@ public final class CachedFileContent {
         LOG.info("Failed to load content for file " + myVirtualFile, e);
       }
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
+  }
+
+  public CharSequence getText() throws IOException {
+    if (myText == null) {
+      myText = LoadTextUtil.getTextByBinaryPresentation(getBytes(), myVirtualFile, false, false);
+    }
+    return myText;
+  }
+
+  @NotNull
+  public CharSequence getTextOrEmpty() {
+    try {
+      return getText();
+    }
+    catch (IOException e) {
+      if (IndexDebugProperties.DEBUG) {
+        LOG.info("Failed to decode text for file " + myVirtualFile, e);
+      }
+      return "";
     }
   }
 

@@ -111,6 +111,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -301,7 +302,16 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     smallIconLabel.setBackground(JBColor.lazy { editor.colorsScheme.getDefaultBackground() })
     smallIconLabel.isVisible = false
 
-    val statusPanel = NonOpaquePanel()
+
+    // Placeholder to prevent the top of scroll bar from jumping while an analysis is running
+    val statusPanel = object : NonOpaquePanel() {
+      override fun getPreferredSize(): Dimension =
+        super.getPreferredSize().apply {
+          if (trafficLightVisible) {
+            height = height.coerceAtLeast(statusIconSize)
+          }
+        }
+    }
     statusPanel.isVisible = !editor.isOneLineMode
     statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
     statusPanel.add(toolbar)
@@ -579,6 +589,27 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   fun getCurrentStatus(): AnalyzerStatus {
     return analyzerStatus
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun scheduleShowTrafficLightPopup(anchor: RelativeRectangle) {
+    ThreadingAssertions.assertEventDispatchThread()
+    trafficLightPopup.scheduleShow(anchor, analyzerStatus)
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun scheduleHideTrafficLightPopup() {
+    ThreadingAssertions.assertEventDispatchThread()
+    trafficLightPopup.scheduleHide()
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun hideTrafficLightPopup() {
+    ThreadingAssertions.assertEventDispatchThread()
+    trafficLightPopup.hidePopup()
   }
 
   fun changeStatus(newStatus: AnalyzerStatus) {

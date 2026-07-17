@@ -4,7 +4,7 @@ package com.jetbrains.python.packaging
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Presents normalized version of python package or requirement as described in [PEP-440][https://www.python.org/dev/peps/pep-0440/#normalization].
+ * Presents normalized version of python package or requirement as described in [PEP-440](https://www.python.org/dev/peps/pep-0440/#normalization).
  *
  * Instances of this class MUST be obtained from [PyPackageVersionNormalizer.normalize].
  */

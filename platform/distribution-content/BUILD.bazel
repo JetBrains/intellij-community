@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.distributionContent.testFramework` start
-
 create_kotlinc_options(
     name = "custom_distributionContent-testFramework",
     opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],

@@ -2415,6 +2415,7 @@ com.intellij.psi.FileViewProvider
 - a:beforeContentsSynchronized():V
 - a:clone():com.intellij.psi.FileViewProvider
 - a:contentsSynchronized():V
+- correspondsToRealFile():Z
 - a:createCopy(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.FileViewProvider
 - a:findElementAt(I):com.intellij.psi.PsiElement
 - a:findElementAt(I,com.intellij.lang.Language):com.intellij.psi.PsiElement
@@ -2437,6 +2438,7 @@ com.intellij.psi.FileViewProvider
 - a:isPhysical():Z
 - a:rootChanged(com.intellij.psi.PsiFile):V
 - a:supportsIncrementalReparse(com.intellij.lang.Language):Z
+- supportsSendingPsiEvents():Z
 com.intellij.psi.FileViewProviderFactory
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.lang.Language,com.intellij.psi.PsiManager,Z):com.intellij.psi.FileViewProvider
 com.intellij.psi.HintedReferenceHost

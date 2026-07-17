@@ -22,7 +22,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, TypeVar
+from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, TypeVar, cast
 from typing_extensions import Self
 
 if sys.version_info >= (3, 11):
@@ -906,9 +906,9 @@ async def suggest_typeshed_obsolete(obsolete: Obsolete, session: aiohttp.ClientS
     async with _repo_lock:
         branch_name = f"{BRANCH_PREFIX}/{normalize(obsolete.distribution)}"
         subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        obs_string = tomlkit.string(obsolete.obsolete_since_version)
-        obs_string.comment(f"Released on {obsolete.obsolete_since_date.date().isoformat()}")
-        update_metadata(obsolete.distribution, obsolete_since=obs_string)
+        obsolete_t = cast(dict[str, object], tomlkit.inline_table())
+        obsolete_t.update({"version": obsolete.obsolete_since_version, "date": obsolete.obsolete_since_date.date().isoformat()})
+        update_metadata(obsolete.distribution, obsolete_since=obsolete_t)
         body = "\n".join(f"{k}: {v}" for k, v in obsolete.links.items())
         subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
         if action_level <= ActionLevel.local:

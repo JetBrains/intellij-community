@@ -11,7 +11,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
@@ -29,7 +28,6 @@ import com.intellij.vcs.log.VcsLogRootStoredRefs
 import com.intellij.vcs.log.VcsLogStructureFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.CommitIdByStringCondition
 import com.intellij.vcs.log.data.TopCommitsCache
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogGraphData
@@ -48,13 +46,12 @@ import com.intellij.vcs.log.history.FileHistory
 import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
-import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.statistics.filtersToStringPresentation
 import com.intellij.vcs.log.statistics.vcsToStringPresentation
 import com.intellij.vcs.log.util.GraphOptionsUtil.kindName
 import com.intellij.vcs.log.util.IntCollectionUtil
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
+import com.intellij.vcs.log.util.iterateCommitsWithPrefix
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.keysToSet
 import com.intellij.vcs.log.visible.filters.matchesAll
@@ -325,24 +322,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   @Throws(VcsException::class)
   private fun applyHashFilter(
     dataPack: VcsLogGraphData,
-                              hashFilter: VcsLogHashFilter,
-                              graphOptions: PermanentGraph.Options,
-                              commitCount: CommitCountStage): FilterByHashResult? {
+    hashFilter: VcsLogHashFilter,
+    graphOptions: PermanentGraph.Options,
+    commitCount: CommitCountStage,
+  ): FilterByHashResult? {
     val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashFilter.hashes) {
-      if (partOfHash.length == FULL_HASH_LENGTH) {
-        val hash = HashImpl.build(partOfHash)
-        for (root in dataPack.logProviders.keys) {
-          if (storage.containsCommit(CommitId(hash, root))) {
-            hashFilterResult.add(storage.getCommitIndex(hash, root))
-          }
-        }
-      }
-      else {
-        val commitId = storage.findCommitId(CommitIdByStringCondition(partOfHash))
-        if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
+      storage.iterateCommitsWithPrefix(partOfHash, dataPack.logProviders) { commitId ->
+        hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
+        true
       }
     }
+
     val filterMessages = Registry.`is`("vcs.log.filter.messages.by.hash")
     if (!filterMessages || commitCount.isInitial) {
       if (hashFilterResult.isEmpty()) return null

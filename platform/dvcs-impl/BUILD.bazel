@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
+jps_test(
+    name = "vcs-dvcs-impl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":vcs-dvcs-impl-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.vcs.dvcs.impl.tests`
+
+### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
 jvm_library(
     name = "vcs-dvcs-impl",
     srcs = glob(
@@ -130,7 +138,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.dvcs.impl` end
 
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.tests` start
-
 jvm_library(
     name = "vcs-dvcs-impl-tests",
     srcs = glob(
@@ -255,11 +262,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.vcs.dvcs.impl.tests` end
-
-### auto-generated section `test intellij.platform.vcs.dvcs.impl.tests` start
-
-jps_test(
-    name = "vcs-dvcs-impl-tests_test",
-    runtime_deps = [":vcs-dvcs-impl-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.vcs.dvcs.impl.tests` end

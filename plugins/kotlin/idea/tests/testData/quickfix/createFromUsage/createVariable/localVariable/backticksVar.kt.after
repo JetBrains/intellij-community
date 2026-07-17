@@ -1,5 +1,5 @@
 // "Create local variable '`my-var`'" "true"
-// K2_ERROR: Unresolved reference 'my-var'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun test() {
     val `my-var` = null

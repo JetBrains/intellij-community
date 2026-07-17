@@ -62,8 +62,7 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
                     .replace(javaHome, JAVA_HOME_PLACEHOLDER, ignoreCase = false)
                     .replace(projectPath, PROJECT_IML_PLACEHOLDER, ignoreCase = false)
                     .replace(userHome, USER_HOME_PLACEHOLDER, ignoreCase = false)
-//                    .replaceTransformHash()
-//                    .replaceAccessorsHash()
+                    .replaceGradleCacheHashes()
 
             val testDataFilePath = dataFile()?.toPath() ?: return@test
             KotlinTestUtils.assertEqualsToFile(
@@ -78,22 +77,21 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
         }
     }
 
-    private fun String.replaceTransformHash(): String {
-        val transformsIndex = indexOf("/transforms/")
-        val transformedIndex = indexOf("/transformed/")
+    private fun String.replaceGradleCacheHashes(): String {
+        var accessorHashIndex = 0
+        val accessorHashPlaceholders = mutableMapOf<String, String>()
+        var transformHashIndex = 0
+        val transformHashPlaceholders = mutableMapOf<String, String>()
 
-        return if (transformsIndex != -1 && transformedIndex != -1 && transformsIndex < transformedIndex) {
-            removeRange(transformsIndex, transformedIndex)
-        } else this
-    }
-
-    private fun String.replaceAccessorsHash(): String {
-        val transformsIndex = indexOf("/accessors/")
-        val transformedIndex = indexOf("/classes/")
-
-        return if (transformsIndex != -1 && transformedIndex != -1 && transformsIndex < transformedIndex) {
-            removeRange(transformsIndex, transformedIndex)
-        } else this
+        return replace(KOTLIN_DSL_ACCESSORS_HASH_REGEX) {
+            val hash = it.groupValues[1]
+            val placeholder = accessorHashPlaceholders.getOrPut(hash) { "ACCESSORS_HASH_${++accessorHashIndex}" }
+            it.value.replace(hash, placeholder)
+        }.replace(GRADLE_TRANSFORM_HASH_REGEX) {
+            val hash = it.groupValues[1]
+            val placeholder = transformHashPlaceholders.getOrPut(hash) { "TRANSFORM_HASH_${++transformHashIndex}" }
+            it.value.replace(hash, placeholder)
+        }
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -160,6 +158,8 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
     private val JAVA_HOME_PLACEHOLDER = "JAVA_HOME"
     private val USER_HOME_PLACEHOLDER = "USER_HOME"
     private val PROJECT_IML_PLACEHOLDER = "PROJECT_PLACEHOLDER"
+    private val KOTLIN_DSL_ACCESSORS_HASH_REGEX = Regex("""/kotlin-dsl/accessors/([0-9a-f]+(?:-PS)?)/classes""")
+    private val GRADLE_TRANSFORM_HASH_REGEX = Regex("""/transforms/([0-9a-f]+)/transformed/""")
 
     private fun getJavaHomePath(project: Project): Path = ProjectRootManager.getInstance(
         project

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.gradle.native.tooling` start
-
 create_kotlinc_options(
     name = "custom_tooling",
     jvm_target = "8",
@@ -69,7 +68,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.native.tooling` end
 
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
-
 jvm_library(
     name = "gradle-native-tooling-tests",
     srcs = glob(
@@ -121,7 +119,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.native.tooling.tests` end
 
 ### auto-generated section `test intellij.gradle.native.tooling.tests` start
-
 jps_test(
     name = "gradle-native-tooling-tests_test",
     runtime_deps = [":gradle-native-tooling-tests_test_lib"],

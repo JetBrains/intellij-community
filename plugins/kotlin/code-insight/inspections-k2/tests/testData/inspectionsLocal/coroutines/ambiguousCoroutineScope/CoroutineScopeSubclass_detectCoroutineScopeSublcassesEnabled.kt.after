@@ -9,6 +9,6 @@ fun CoroutineScope.doStuff() {}
 
 abstract class MyCoroutineScopeBase : CoroutineScope {
     suspend fun foo() {
-        this@MyCoroutineScopeBase.doStuff()
+        this@MyCoroutineScopeBase.doStuff() 
     }
 }

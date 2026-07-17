@@ -1,5 +1,5 @@
 // "Make 'A' 'open'" "true"
-// K2_ERROR: This type is final, so it cannot be extended.
+// K2_ERROR: FINAL_SUPERTYPE
 final class A {}
 class B : A<caret>() {}
 

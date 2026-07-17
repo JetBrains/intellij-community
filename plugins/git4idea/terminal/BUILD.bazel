@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.git.terminal` start
-
 jvm_library(
     name = "terminal",
     srcs = glob(
@@ -82,7 +81,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.git.terminal` end
 
 ### auto-generated section `build intellij.vcs.git.terminal.tests` start
-
 jvm_library(
     name = "vcs-git-terminal-tests",
     srcs = glob(
@@ -163,7 +161,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.git.terminal.tests` end
 
 ### auto-generated section `test intellij.vcs.git.terminal.tests` start
-
 jps_test(
     name = "vcs-git-terminal-tests_test",
     runtime_deps = [":vcs-git-terminal-tests_test_lib"],

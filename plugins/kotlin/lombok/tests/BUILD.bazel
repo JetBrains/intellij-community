@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.lombok.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -85,6 +84,12 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.lombok.tests` end
@@ -99,7 +104,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.lombok.tests` end
 
 ### auto-generated section `test intellij.kotlin.lombok.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

@@ -7,7 +7,7 @@ This is the shared spec format for plugin-local specs in this repository. Specs 
 - An H1 title matching the frontmatter `name`.
 - A metadata block with `Status` and `Date` (ISO-8601).
 - A concise summary of the behavior and requirements being specified.
-- `[@test]` links placed adjacent to the requirements they verify.
+- `[@test]` links placed adjacent to the requirements they verify. These links are the canonical test inventory; do not duplicate standard test-runner commands in the spec.
 
 ## Template
 
@@ -49,7 +49,7 @@ Provide a concise description of the feature, scope, and intent.
 - Failure modes and user-facing recovery actions.
 
 ## Testing / Local Run
-- List non-standard commands or environment setup.
+- List only non-standard commands or environment setup. For ordinary tests, use adjacent `[@test]` links and rely on the owning module or plugin instructions to derive the focused local test run.
 
 ## Open Questions / Risks
 - Decisions pending or known risks.
@@ -60,6 +60,7 @@ Provide a concise description of the feature, scope, and intent.
 - Keep specs small; split by feature or subsystem to stay within context limits.
 - Include concrete examples for data shapes, UI states, or error copy when needed.
 - Keep `targets` and `[@test]` paths accurate and up to date.
+- Do not list standard test-runner invocations for every `[@test]` link. Agents should run the linked test classes with the runner required by the owning module or plugin instructions.
 - Treat the spec as the source of truth during review and implementation.
 
 ## References

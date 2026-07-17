@@ -1,5 +1,5 @@
 // "Add intArrayOf wrapper" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'IntArray' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 annotation class ArrAnn(val value: IntArray)
 

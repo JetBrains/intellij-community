@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` start
-
 jvm_library(
     name = "protocol-reader-runtime",
     srcs = glob(

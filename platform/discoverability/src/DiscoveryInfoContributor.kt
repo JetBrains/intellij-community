@@ -22,5 +22,5 @@ interface DiscoveryInfoContributor {
       ExtensionPointName("com.intellij.platform.discoveryInfoContributor")
   }
 
-  fun contribute(generator: JsonGenerator)
+  suspend fun contribute(generator: JsonGenerator)
 }

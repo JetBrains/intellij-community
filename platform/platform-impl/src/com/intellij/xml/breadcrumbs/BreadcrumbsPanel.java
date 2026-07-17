@@ -131,7 +131,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
     int delayMillis = ApplicationManager.getApplication().isHeadlessEnvironment() ? 0 : 200;
 
-    myQueue = DebouncedUpdates.<Unit>forComponent(breadcrumbs, "Breadcrumbs.Queue", delayMillis)
+    myQueue = DebouncedUpdates.<Unit>forComponent(editor.getComponent(), "Breadcrumbs.Queue", delayMillis)
       .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
       .restartTimerOnAdd(true)
       .runLatest(ignored -> updateCrumbsAsync())

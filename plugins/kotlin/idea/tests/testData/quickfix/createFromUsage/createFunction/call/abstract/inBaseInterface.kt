@@ -1,7 +1,7 @@
 // "Create abstract function 'bar'" "true"
 // ERROR: Class 'Foo' is not abstract and does not implement abstract member public abstract fun bar(): Unit defined in I
-// K2_ERROR: Unresolved reference 'bar'.
-// K2_AFTER_ERROR: Class 'Foo' is not abstract and does not implement abstract member:<br>fun bar(): Unit
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 interface I
 

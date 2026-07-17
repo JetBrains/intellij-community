@@ -1,7 +1,7 @@
 // "Add else branch" "false"
 // KT-63795
-// K2_ERROR: Local class cannot extend a sealed class.
-// K2_AFTER_ERROR: Local class cannot extend a sealed class.
+// K2_AFTER_ERROR: SEALED_SUPERTYPE_IN_LOCAL_CLASS
+// K2_ERROR: SEALED_SUPERTYPE_IN_LOCAL_CLASS
 
 sealed class SealedClass
 

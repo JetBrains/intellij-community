@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
@@ -46,7 +47,12 @@ class KotlinScriptExternalLibrariesNodesProvider : ExternalLibrariesWorkspaceMod
     override fun getWorkspaceClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
     override fun createNode(entity: KotlinScriptEntity, project: Project, settings: ViewSettings?): AbstractTreeNode<*>? {
-        val dependencies = entity.dependencies.flatMap { it.classes }.mapNotNull { it.virtualFile }.toList()
+        val storage = project.workspaceModel.currentSnapshot
+        val dependencies = entity.dependencies
+            .mapNotNull { storage.resolve(it) }
+            .flatMap { it.classes }
+            .mapNotNull { it.virtualFile }
+            .toList()
 
         val scriptFile = entity.virtualFileUrl.virtualFile ?: return null
         val scriptFileName = scriptFile.relativeLocation(project)

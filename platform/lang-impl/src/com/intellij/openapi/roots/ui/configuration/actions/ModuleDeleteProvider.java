@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -25,16 +26,14 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,39 +48,50 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
   @Override
-  public boolean canDeleteElement(@NotNull DataContext dataContext) {
+  public final boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     List<UnloadedModuleDescription> unloadedModules = ProjectView.UNLOADED_MODULES_CONTEXT_KEY.getData(dataContext);
-    return modules != null && !containsPrimaryModule(modules) || unloadedModules != null && !unloadedModules.isEmpty();
+    return modules != null && modulesCanBeDeleted(modules) || unloadedModules != null && !unloadedModules.isEmpty();
   }
 
-  private static boolean containsPrimaryModule(Module[] modules) {
-    if (!ProjectAttachProcessor.canAttachToProject()) {
-      return !PlatformUtils.isIntelliJ();
+  /**
+   * Is it allowed to delete these modules?
+   * <p>
+   * Modules whose {@code .iml} lives outside {@code .idea} are always deletable.
+   * Deletion is only blocked when the whole set of loaded project modules is selected and at least one of them
+   * is stored in {@code .idea}: this stops a user from deleting all modules of a directory-based project at once.
+   */
+  private static boolean modulesCanBeDeleted(Module @NotNull [] modulesToDelete) {
+    if (modulesToDelete.length == 0) {
+      return false; // No need to delete 0 modules
     }
+    // All modules belong to the same project
+    var project = modulesToDelete[0].getProject();
+    var allProjectModules = ProjectUtil.getModules(project);
 
-    for (Module module : modules) {
-      String moduleFile = module.getModuleFilePath();
-      Project project = module.getProject();
-      if (!ProjectKt.isDirectoryBased(project)) {
-        continue;
-      }
-
-      Path ideaDir = ProjectKt.getStateStore(project).getDirectoryStorePath();
-      if (ideaDir != null && PathUtilRt.getParentPath(moduleFile).equals(FileUtil.toSystemIndependentName(ideaDir.toString()))) {
-        return true;
+    var allModulesWillBeDeleted = modulesToDelete.length == allProjectModules.length;
+    if (allModulesWillBeDeleted) {
+      // All modules can only be deleted if they are NOT in .idea dir
+      @Nullable
+      var projectIdeaDir = ProjectKt.getStateStore(project).getDirectoryStorePath();
+      if (projectIdeaDir != null) {
+        for (Module module : modulesToDelete) {
+          if (module.getModuleNioFile().startsWith(projectIdeaDir)) {
+            return false; // At least one module is in .idea, can't delete
+          }
+        }
       }
     }
-    return false;
+    return true; //Either not all modules are selected, or all of them are outside .idea dir -> deletable
   }
 
   @Override
-  public void deleteElement(@NotNull DataContext dataContext) {
+  public final void deleteElement(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
 
@@ -91,11 +101,13 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
     Set<String> moduleNamesToDelete = getModuleNamesToDelete(modules, unloadedModules);
     String names = StringUtil.join(moduleNamesToDelete, name -> "'" + name + "'", ", ");
     String dialogTitle = StringUtil.trimEnd(getActionTitle(), "...");
-    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleNamesToDelete.size()), dialogTitle, CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleNamesToDelete.size()), dialogTitle,
+                                          CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(),
+                                          Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
-        detachModules(project, modules, unloadedModules);
+        doDetachModules(project, modules, unloadedModules);
       };
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
@@ -147,17 +159,14 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
     }
   }
 
-  private void detachModules(@NotNull Project project,
-                             Module @Nullable [] modules,
-                             @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
-    doDetachModules(project, modules, unloadedModules);
-  }
 
+  @VisibleForTesting
+  @ApiStatus.Internal
   public static void detachModules(@NotNull Project project, Module @Nullable [] modules) {
-    getInstance().detachModules(project, modules, null);
+    getInstance().doDetachModules(project, modules, null);
   }
 
-  protected @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
+  private static @NlsContexts.DialogMessage String getConfirmationText(@NotNull String names, int numberOfModules) {
     if (ProjectAttachProcessor.canAttachToProject()) {
       return ProjectBundle.message("project.remove.confirmation.prompt", names, numberOfModules);
     }
@@ -165,7 +174,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
   }
 
   @Override
-  public String getActionTitle() {
+  public final String getActionTitle() {
     return ProjectAttachProcessor.canAttachToProject() ? ProjectBundle.message("action.text.remove.from.project.view")
                                                        : ProjectBundle.message("action.text.remove.module");
   }

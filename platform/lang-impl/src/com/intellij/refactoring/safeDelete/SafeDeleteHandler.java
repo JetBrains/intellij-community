@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import static com.intellij.ide.util.DeleteUtil.generateSafeDeleteWarningMessageWithModalProgress;
 import static com.intellij.refactoring.safeDelete.impl.SafeDeleteKt.safeDelete;
 
 public final class SafeDeleteHandler implements RefactoringActionHandler {
@@ -135,7 +137,8 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
         processor.run();
       };
 
-      SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
+      var message = generateSafeDeleteWarningMessageWithModalProgress(project, false, elementsToDelete);
+      SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, message, callback);
       dialog.show();
     }
   }

@@ -6785,6 +6785,7 @@ a:com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.event.PopupMenuListener):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
+- s:installPopupMenu(javax.swing.JComponent,javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
 - s:installRowSelectionTablePopup(javax.swing.JTable,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installSelectionListPopup(javax.swing.JList,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installUnknownPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionManager):java.awt.event.MouseListener
@@ -8704,22 +8705,6 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - f:getTop():java.lang.Boolean
 - hashCode():I
 f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
-f:com.intellij.ui.dsl.gridLayout.Gaps
-- <init>():V
-- <init>(I,I,I,I):V
-- b:<init>(I,I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:component3():I
-- f:component4():I
-- f:copy(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.Gaps,I,I,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Gaps
-- equals(java.lang.Object):Z
-- f:getBottom():I
-- f:getLeft():I
-- f:getRight():I
-- f:getTop():I
-- hashCode():I
 com.intellij.ui.dsl.gridLayout.Grid
 - a:getColumnsGaps():java.util.List
 - a:getResizableColumns():java.util.Set
@@ -9387,6 +9372,7 @@ pc:com.intellij.ui.table.JBTable$AccessibleJBTable
 - getAccessibleAt(I,I):javax.accessibility.Accessible
 - getAccessibleAt(java.awt.Point):javax.accessibility.Accessible
 - getAccessibleChild(I):javax.accessibility.Accessible
+- valueChanged(javax.swing.event.ListSelectionEvent):V
 pc:com.intellij.ui.table.JBTable$AccessibleJBTable$AccessibleJBTableCell
 - javax.swing.JTable$AccessibleJTable$AccessibleJTableCell
 - <init>(com.intellij.ui.table.JBTable$AccessibleJBTable,javax.swing.JTable,I,I,I):V

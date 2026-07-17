@@ -26,12 +26,10 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.util.ui.accessibility.ScreenReader
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 
-@ApiStatus.Internal
 internal class SegmentedButtonImpl<T>(
   private val dialogPanelConfig: DialogPanelConfig,
   parent: RowImpl,

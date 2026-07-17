@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelProjectUtils
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableConsumer
@@ -886,7 +887,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     fun createCommitMessageFile(project: Project, root: VirtualFile, message: @NonNls String): File {
       // filter comment lines
       val file = if (GitEelExecutableDetectionHelper.canUseEel()) {
-        EelPathUtils.createTemporaryFile(project, GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT, true)
+        EelProjectUtils.createTemporaryFile(project, GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT, true)
       }
       else {
         FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT).also {

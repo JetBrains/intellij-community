@@ -13,11 +13,9 @@ import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class SettingsFileEditor(
   private val settingsFile: SettingsVirtualFile,
   component: JComponent,

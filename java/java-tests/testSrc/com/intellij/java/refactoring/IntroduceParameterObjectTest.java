@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -84,6 +83,10 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
   }
 
   public void testUsedInnerClass() {
+    doTest(false, true);
+  }
+
+  public void testMultipleFieldsInnerClass() {
     doTest(false, true);
   }
 
@@ -252,6 +255,13 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTestExistingClass("Param", "", true);
   }
 
+  public void testExistingRecord() {
+    doTestExistingClass("FullName", "", false);
+  }
+
+  public void testExistingClassDelegatingConstructor() {
+    doTestExistingClass("Person", "", true);
+  }
 
   public void testExistentBean() {
     doTestExistingClass("Param", "", false);

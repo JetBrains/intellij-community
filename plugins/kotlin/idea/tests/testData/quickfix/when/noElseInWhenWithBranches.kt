@@ -1,5 +1,5 @@
 // "Add else branch" "true"
-// K2_ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 fun test() {
     val a = 12
     val x = wh<caret>en (a) {

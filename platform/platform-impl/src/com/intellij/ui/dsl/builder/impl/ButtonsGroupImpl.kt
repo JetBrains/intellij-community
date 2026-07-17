@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 import javax.swing.JRadioButton
 
-@ApiStatus.Internal
 internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
   private val radioButtons = mutableMapOf<CellImpl<out JRadioButton>, Any?>()

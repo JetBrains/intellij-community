@@ -3,8 +3,8 @@
 // ACTION: Add function body
 // ACTION: Convert member to extension
 // ACTION: Make 'foo' 'abstract'
-// K2_ERROR: Function 'foo' without a body must be abstract.
-// K2_AFTER_ERROR: Function 'foo' without a body must be abstract.
+// K2_AFTER_ERROR: NON_ABSTRACT_FUNCTION_WITH_NO_BODY
+// K2_ERROR: NON_ABSTRACT_FUNCTION_WITH_NO_BODY
 
 package a
 

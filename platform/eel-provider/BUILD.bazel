@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.eel.provider` start
-
 jvm_library(
     name = "eel-provider",
     srcs = glob(
@@ -30,9 +29,8 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/base",
         "//libraries/hash4j",
-        "//platform/core-nio-fs",
-        "//platform/external-process-auth-helper/rt",
         "//platform/ide-core",
+        "//platform/core-nio-fs",
     ],
 )
 
@@ -63,9 +61,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/base:base_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
-        "//platform/external-process-auth-helper/rt:rt_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.provider` end

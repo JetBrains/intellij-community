@@ -1,6 +1,6 @@
 // "Add non-null asserted (a!!) call" "true"
 // WITH_STDLIB
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'List<String>?'. Use '?.'-qualified call instead.
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 fun foo(a: List<String>?) {
     "x" <caret>in a

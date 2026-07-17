@@ -1,5 +1,5 @@
 // "Change type arguments to <*>" "true"
-// K2_ERROR: Cannot check for instance of erased type 'List<String>?'.
+// K2_ERROR: CANNOT_CHECK_FOR_ERASED
 fun isStringList(list : Any) = list is List<<caret>String>?
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

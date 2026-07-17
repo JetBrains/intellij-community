@@ -5,6 +5,6 @@ class Test {
 
   void bar(String s){}
 
-    static record Param(String s) {
+    record Param(String s) {
     }
 }

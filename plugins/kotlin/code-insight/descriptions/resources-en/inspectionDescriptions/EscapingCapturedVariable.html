@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports mutable local variables (<code>var</code>) captured by an escaping lambda, that is, a lambda that may run after the enclosing function has finished, such as a lambda passed to <code>lazy</code>, <code>launch</code>, or similar.
+<p>
+    Lambdas capture local variables by reference, so if the variable is reassigned before the lambda runs, the lambda observes the new value, not the value from the moment of capture. Because the capture and the reassignment are usually far apart in the code, this leads to bugs that are hard to find.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  var seed = 3
+  val deferred = lazy { seed * 2 } // 'seed' is captured here
+  seed = 4
+  println(deferred.value) // prints 8, not 6
+</code></pre>
+<p>To make the timing explicit, create a new <code>val</code> with a snapshot</p>
+<pre><code>
+  var seed = 3
+  val snapshot = seed
+  val deferred = lazy { snapshot * 2 }
+  seed = 4
+  println(deferred.value) // prints 6
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

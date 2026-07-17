@@ -1,8 +1,26 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
-### auto-generated section `build intellij.platform.images.build` start
+jps_test(
+    name = "images-build-tests_test_smoke",
+    timeout = "moderate",
+    env = {
+        "JB_TEST_JUNIT5_FILTERS": "include-classname=org.jetbrains.intellij.build.images.CommunityIconClassesTest;include-classname=org.jetbrains.intellij.build.images.CommunityImageResourcesSanityTest",
+    },
+    tags = ["ultimate-smoke"],
+    runtime_deps = [":images-build-tests_test_lib"],
+)
 
+jps_test(
+    name = "images-build-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":images-build-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.images.build.tests`
+
+### auto-generated section `build intellij.platform.images.build` start
 jvm_provided_library(
     name = "platform_util_xmlDom_provided",
     lib = "//platform/util/xmlDom",
@@ -106,7 +124,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.images.build` end
 
 ### auto-generated section `build intellij.platform.images.build.tests` start
-
 jvm_library(
     name = "images-build-tests",
     srcs = glob(
@@ -203,11 +220,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.images.build.tests` end
-
-### auto-generated section `test intellij.platform.images.build.tests` start
-
-jps_test(
-    name = "images-build-tests_test",
-    runtime_deps = [":images-build-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.images.build.tests` end

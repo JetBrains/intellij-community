@@ -1,8 +1,23 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.devkit.java.tests` start
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
+jps_test(
+    name = "java-tests_test",
+    timeout = "long",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-tests_test_lib"],
+)
+### skip generation section `test intellij.devkit.java.tests`
+
+### auto-generated section `build intellij.devkit.java.tests` start
 jvm_library(
     name = "java-tests",
     srcs = glob(
@@ -130,6 +145,8 @@ jvm_library(
         "//java/compiler:compiler-tests_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
+        "//plugins/junit",
+        "//plugins/junit:junit_test_lib",
         "//xml/dom-tests",
         "//xml/dom-tests:dom-tests_test_lib",
         "//plugins/properties:properties-backend",
@@ -187,11 +204,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit.java.tests` end
-
-### auto-generated section `test intellij.devkit.java.tests` start
-
-jps_test(
-    name = "java-tests_test",
-    runtime_deps = [":java-tests_test_lib"],
-)
-### auto-generated section `test intellij.devkit.java.tests` end

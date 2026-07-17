@@ -11,11 +11,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -28,6 +30,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -79,6 +82,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
     if (myTableModel != null) {
       installPluginFromDisk(file, project, myTableModel, myPluginEnabler, myParentComponent, callbackData -> {
         onPluginInstalledFromDisk(callbackData, project);
+      }, (pluginId, updateSourceId) -> {
+        onPluginWithUpdateSourceInstalledFromDisk(pluginId, updateSourceId);
       });
       return;
     }
@@ -101,6 +106,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
     try {
       installPluginFromDisk(chosenFile.toNioPath(), project, tableModel, myPluginEnabler, myParentComponent, callbackData -> {
         onPluginInstalledFromDisk(callbackData, project);
+      }, (pluginId, updateSourceId) -> {
+        onPluginWithUpdateSourceInstalledFromDisk(pluginId, updateSourceId);
       });
     }
     finally {
@@ -113,8 +120,9 @@ public class InstallFromDiskAction extends DumbAwareAction {
                                            @NotNull InstalledPluginsTableModel tableModel,
                                            @NotNull PluginEnabler pluginEnabler,
                                            @Nullable JComponent parentComponent,
-                                           @NotNull Consumer<? super PluginInstallCallbackData> callback) {
-    doInstall(fileToSelect, project, tableModel, pluginEnabler, parentComponent, callback);
+                                           @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                           @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
+    doInstall(fileToSelect, project, tableModel, pluginEnabler, parentComponent, callback, pluginUpdateSourceCallback);
   }
 
   private static void doInstall(@Nullable VirtualFile fileToSelect,
@@ -122,7 +130,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
                                 @NotNull InstalledPluginsTableModel tableModel,
                                 @NotNull PluginEnabler pluginEnabler,
                                 @Nullable JComponent parentComponent,
-                                @NotNull Consumer<? super PluginInstallCallbackData> callback) {
+                                @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
     if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       var message = IdeBundle.message("action.InstallFromDiskAction.not.allowed.description");
       Messages.showErrorDialog(project, message, IdeBundle.message("action.InstallFromDiskAction.text"));
@@ -131,7 +140,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
 
     var chosenFile = chooseFile(fileToSelect, project, parentComponent);
     if (chosenFile != null) {
-      installPluginFromDisk(chosenFile.toNioPath(), project, tableModel, pluginEnabler, parentComponent, callback);
+      installPluginFromDisk(chosenFile.toNioPath(), project, tableModel, pluginEnabler, parentComponent,
+                            callback, pluginUpdateSourceCallback);
     }
   }
 
@@ -142,17 +152,21 @@ public class InstallFromDiskAction extends DumbAwareAction {
 
   @RequiresEdt
   private static void installPluginFromDisk(Path file,
-                                           @Nullable Project project,
-                                           @NotNull InstalledPluginsTableModel tableModel,
-                                           @NotNull PluginEnabler pluginEnabler,
-                                           @Nullable JComponent parentComponent,
-                                           @NotNull Consumer<? super PluginInstallCallbackData> callback) {
-    PluginInstaller.installFromDisk(tableModel, pluginEnabler, file, project, parentComponent, callback);
+                                            @Nullable Project project,
+                                            @NotNull InstalledPluginsTableModel tableModel,
+                                            @NotNull PluginEnabler pluginEnabler,
+                                            @Nullable JComponent parentComponent,
+                                            @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                            @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
+    PluginInstaller.installFromDisk(tableModel, pluginEnabler, file, project, parentComponent, callback, pluginUpdateSourceCallback);
   }
 
   @RequiresEdt
   protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, @Nullable Project project) {
     PluginInstaller.installPluginFromCallbackData(callbackData);
+  }
+
+  protected void onPluginWithUpdateSourceInstalledFromDisk(@NotNull PluginId pluginId, @NotNull PluginUpdateSourceId updateSourceId) {
   }
 
   @RequiresEdt

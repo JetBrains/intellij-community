@@ -1,6 +1,7 @@
+package com.jetbrains.python.sdk
+
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.junit.Assert
 import org.junit.Test

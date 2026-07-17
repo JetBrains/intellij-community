@@ -7,6 +7,7 @@
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.eel.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.util.coroutines"/>

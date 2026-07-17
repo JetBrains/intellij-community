@@ -51,6 +51,7 @@ com.intellij.build.eventBuilders.StartBuildEventBuilder
 - a:createDefaultResult():com.intellij.build.events.EventResult
 - a:createFailureResult():com.intellij.build.events.FailureResult
 *:com.intellij.build.events.DuplicateMessageAware
+- com.intellij.build.events.MessageEvent
 *:com.intellij.build.events.PresentableBuildEvent
 - com.intellij.build.events.BuildEvent
 - s:builder(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder

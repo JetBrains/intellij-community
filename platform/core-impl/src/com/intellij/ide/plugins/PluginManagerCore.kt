@@ -655,15 +655,15 @@ object PluginManagerCore {
     val cycleErrors = ArrayList<PluginLoadingError>()
     val mostRecentExcludedPlugins = input.discoveryResult.pluginLists.asSequence()
       .flatMap { it.plugins }
-      .filter { resolvedPluginSet.originalPluginSet.resolvePluginId(it.pluginId) == null }
+      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId) == null }
       .groupBy { it.pluginId }
       .mapValues {
         if (it.value.size == 1) it.value.first()
         else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
       }
-    val allPlugins = resolvedPluginSet.originalPluginSet.plugins + mostRecentExcludedPlugins.values
+    val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
     val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
-    for (plugin in resolvedPluginSet.originalPluginSet.plugins) {
+    for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         descriptor.isMarkedForLoading = resolvedPluginSet.isResolved(descriptor)
         if (!descriptor.isMarkedForLoading) {
@@ -695,8 +695,8 @@ object PluginManagerCore {
       compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
     })
     val enabledPluginAndV1ModuleMap = HashMap<PluginId, PluginModuleDescriptor>()
-    for (pluginId in resolvedPluginSet.originalPluginSet.sequenceAllPluginIds()) {
-      val module = resolvedPluginSet.originalPluginSet.resolvePluginId(pluginId)!!
+    for (pluginId in resolvedPluginSet.candidateSet.sequenceAllPluginIds()) {
+      val module = resolvedPluginSet.candidateSet.resolvePluginId(pluginId)!!
       if (resolvedPluginSet.isResolved(module)) {
         enabledPluginAndV1ModuleMap[pluginId] = module
       }
@@ -709,11 +709,10 @@ object PluginManagerCore {
         }
       ),
       allPlugins = allPlugins.toSet(),
-      enabledPlugins = resolvedPluginSet.originalPluginSet.plugins.filter { resolvedPluginSet.isResolved(it) },
+      enabledPlugins = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) },
       enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
       enabledPluginAndV1ModuleMap = enabledPluginAndV1ModuleMap,
       enabledModules = resolvedModules.keys.toList(),
-      topologicalComparator = topologicalComparator,
       resolvedPluginSet = resolvedPluginSet,
       input = input,
     )
@@ -725,10 +724,40 @@ object PluginManagerCore {
     descriptor: IdeaPluginDescriptorImpl,
     cycleErrors: ArrayList<PluginLoadingError>,
   ) {
+    fun createCyclePluginLoadingError(component: Collection<PluginModuleDescriptor>, getDependencies: (PluginModuleDescriptor) -> Iterator<PluginModuleDescriptor>): PluginLoadingError {
+      val pluginString =
+        component.joinToString(separator = ", ") { "'${it.name} (${it.pluginId.idString}${if (it.contentModuleName != null) ":" + it.contentModuleName else ""})'" }
+      val detailedMessage = StringBuilder()
+      val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleName} (${it.name})" }
+      detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
+      component
+        .asSequence()
+        .map { Pair(it, pluginToString(it)) }
+        .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
+        .forEach {
+          detailedMessage.append("  ").append(it.second).append(" depends on:\n")
+          getDependencies(it.first).asSequence()
+            .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
+            .map(pluginToString)
+            .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
+            .forEach { dep: String? ->
+              detailedMessage.append("    ").append(dep).append("\n")
+            }
+        }
+      logger.info(detailedMessage.toString())
+      return PluginLoadingError(
+        reason = null,
+        messageSupplier = Supplier {
+          CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
+        },
+        error = null,
+      )
+    }
+
     val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)
     when (exclusionReason) {
       is PartOfDependencyCycle -> {
-        val error = PluginSetBuilder.createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.filterIsInstance<PluginModuleDescriptor>()) {
+        val error = createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.filterIsInstance<PluginModuleDescriptor>()) {
           emptySequence<Nothing>().iterator() // lost diagnostics on cycle chain – doesn't matter since the cycle is logged properly by logExclusionTree
         }
         if (cycleErrors.none { it.htmlMessage.toString() == error.htmlMessage.toString() }) { // slow path anyway
@@ -738,7 +767,7 @@ object PluginManagerCore {
       is PartOfRuntimeModuleGroupDependencyCycle -> {
         val cycle = exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.asSequence()
           .flatMap { it.sortedDescriptors }.distinct().filterIsInstance<PluginModuleDescriptor>().toList()
-        val error = PluginSetBuilder.createCyclePluginLoadingError(cycle) { emptySequence<Nothing>().iterator() }
+        val error = createCyclePluginLoadingError(cycle) { emptySequence<Nothing>().iterator() }
         if (cycleErrors.none { it.htmlMessage.toString() == error.htmlMessage.toString() }) { // slow path anyway
           cycleErrors.add(error)
         }
@@ -832,7 +861,7 @@ object PluginManagerCore {
     essentialPlugins: Set<PluginId>,
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   ) {
-    val corePlugin = resolvedPluginSet.originalPluginSet.resolvePluginId(CORE_ID)
+    val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)
     if (corePlugin != null) {
       @Suppress("DEPRECATION")
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
@@ -842,7 +871,7 @@ object PluginManagerCore {
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
     for (id in essentialPlugins) {
-      val descriptor = resolvedPluginSet.originalPluginSet.resolvePluginId(id)
+      val descriptor = resolvedPluginSet.candidateSet.resolvePluginId(id)
       if (descriptor == null || resolvedPluginSet.isExcluded(descriptor)) {
         if (missing == null) {
           missing = ArrayList()

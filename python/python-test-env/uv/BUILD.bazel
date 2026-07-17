@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.test.env.uv` start
-
 jvm_library(
     name = "uv",
     srcs = glob(
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.test.env.uv` end
 
 ### auto-generated section `test intellij.python.test.env.uv` start
-
 jps_test(
     name = "uv_test",
     runtime_deps = [":uv_test_lib"],

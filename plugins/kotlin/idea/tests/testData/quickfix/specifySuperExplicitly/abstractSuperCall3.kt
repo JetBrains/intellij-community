@@ -4,8 +4,8 @@
 // ACTION: Introduce local variable
 // ACTION: Specify supertype
 // ERROR: Many supertypes available, please specify the one you mean in angle brackets, e.g. 'super<Foo>'
-// K2_ERROR: Multiple supertypes available. Specify the intended supertype in angle brackets, e.g. 'super<Foo>'.
-// K2_AFTER_ERROR: Multiple supertypes available. Specify the intended supertype in angle brackets, e.g. 'super<Foo>'.
+// K2_AFTER_ERROR: AMBIGUOUS_SUPER
+// K2_ERROR: AMBIGUOUS_SUPER
 
 interface I {
     fun foo(): String

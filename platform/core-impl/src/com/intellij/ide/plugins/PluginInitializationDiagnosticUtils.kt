@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
   fun logExclusionTree(logger: Logger, resolvedPluginSet: ResolvedPluginSet, incompletePlugins: Map<PluginId, PluginMainDescriptor>) {
-    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
+    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.candidateSet.plugins + incompletePlugins.values) }
     val exclusionChildren = LinkedHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>()
     val roots = LinkedHashSet<IdeaPluginDescriptorImpl>()
-    for (plugin in resolvedPluginSet.originalPluginSet.plugins) {
+    for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         if (resolvedPluginSet.isResolved(descriptor)) continue
         val chain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).take(2).toList()
@@ -105,7 +105,7 @@ object PluginInitializationDiagnosticUtils {
       return null
     }
     // TODO decrease code duplication
-    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
+    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.candidateSet.plugins + incompletePlugins.values) }
     val chain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).toList().reversed()
     val msgBuilder = StringBuilder().apply {
       if (chain.firstOrNull()?.let { resolvedPluginSet.getExclusionReason(it) } is DependencyIsNotResolved) {

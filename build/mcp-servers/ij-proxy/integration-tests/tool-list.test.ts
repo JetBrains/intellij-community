@@ -137,6 +137,23 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('hides upstream skill_search tool', async () => {
+    await withProxy({
+      tools: [
+        buildUpstreamTool('skill_search', {
+          mode: {type: 'string'},
+          q: {type: 'string'},
+          project_path: {type: 'string'}
+        }, ['mode', 'q', 'project_path'])
+      ]
+    }, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+
+      ok(!names.includes('skill_search'))
+    })
+  })
+
   it('exposes read-only annotations for proxy shims', async () => {
     await withProxy({}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')

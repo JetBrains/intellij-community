@@ -1,10 +1,10 @@
 // "Make 'IterablePipeline' 'abstract'" "true"
 // ERROR: One type argument expected for interface Pipeline<TPipeline>
-// K2_ERROR: 'pipe' overrides nothing. Potential signatures for overriding:<br>fun pipe(block: ??? (Wrong number of type arguments)): Unit
-// K2_ERROR: Class 'IterablePipeline' is not abstract and does not implement abstract members:<br>fun pipe(block: ??? (Wrong number of type arguments)): Unit<br>fun completelyAbstract(): Unit
-// K2_ERROR: One type argument expected for 'interface Pipeline<TPipeline> : Any'.
-// K2_AFTER_ERROR: 'pipe' overrides nothing. Potential signatures for overriding:<br>fun pipe(block: ??? (Wrong number of type arguments)): Unit
-// K2_AFTER_ERROR: One type argument expected for 'interface Pipeline<TPipeline> : Any'.
+// K2_AFTER_ERROR: NOTHING_TO_OVERRIDE
+// K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
+// K2_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
 
 // Actually this test is about getting rid of assertion happenning while creating quick fixes
 // See KT-10409

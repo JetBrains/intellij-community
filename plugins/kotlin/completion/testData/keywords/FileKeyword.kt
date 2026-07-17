@@ -11,4 +11,5 @@
 // EXIST: { itemText: "property:" }
 // EXIST: { itemText: "receiver:" }
 // EXIST: { itemText: "delegate:" }
+// EXIST: { itemText: "all:" }
 // NOTHING_ELSE

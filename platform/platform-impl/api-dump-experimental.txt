@@ -107,25 +107,6 @@ f:com.intellij.ide.plugins.PluginNode
 - f:getPROJECT_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.StartupActionScriptManager
 - *s:addActionCommandsToBeginning(java.util.List):V
-*:com.intellij.ide.trustedProjects.TrustedProjectsListener
-- *sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
-- sf:TOPIC:com.intellij.util.messages.Topic
-- onProjectTrusted(com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject):V
-- onProjectTrusted(com.intellij.openapi.project.Project):V
-- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
-- onProjectUntrusted(com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject):V
-- onProjectUntrusted(com.intellij.openapi.project.Project):V
-- *s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
-- *s:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- *s:onceWhenProjectTrusted(java.util.function.Consumer):V
-- *s:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
-*f:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
-- f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,java.util.function.Consumer):V
-- f:onceWhenProjectTrusted(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- f:onceWhenProjectTrusted(java.util.function.Consumer):V
-- f:onceWhenProjectTrusted(kotlin.jvm.functions.Function1):V
-- bs:onceWhenProjectTrusted$default(com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion,com.intellij.openapi.Disposable,java.util.function.Consumer,I,java.lang.Object):V
-- bs:onceWhenProjectTrusted$default(com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 *f:com.intellij.ide.ui.PopupLocationTracker
 - <init>():V
 - s:canRectangleBeUsed(java.awt.Component,java.awt.Rectangle,com.intellij.ide.ui.ScreenAreaConsumer):Z
@@ -324,6 +305,18 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - setCaretPosition(I):V
 - setText(java.lang.String):V
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
+f:com.intellij.openapi.fileChooser.universal.FileBrowser
+- *sf:builder(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.Disposable):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+*f:com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- f:build():com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- f:contributors(java.util.Collection):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- f:forProject(com.intellij.openapi.project.Project):V
+- f:onDefaultAction(java.lang.Runnable):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- f:popupActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+- f:root(java.nio.file.Path):Z
+- f:toolbarActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.fileChooser.universal.FileBrowser$Builder
+*:com.intellij.openapi.fileChooser.universal.FileBrowserPanel
+- a:getSelectedFiles():java.util.List
 a:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider
 - com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - *p:createSplitEditorAsync(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.TextEditor,com.intellij.openapi.fileEditor.FileEditor,kotlin.coroutines.Continuation):java.lang.Object

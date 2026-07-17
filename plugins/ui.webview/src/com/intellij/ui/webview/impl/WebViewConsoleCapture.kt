@@ -218,6 +218,7 @@ internal class WebViewConsoleCapture(consoleLogCategory: String = CONSOLE_LOG_CA
 }
 
 internal const val CONSOLE_LOG_CATEGORY: String = "#com.intellij.ui.webview.console"
+internal const val WEBVIEW_CONSOLE_NOTIFICATION_METHOD: String = "$/webview/console"
 
 @Serializable
 internal data class WebViewConsolePayload(
@@ -227,7 +228,7 @@ internal data class WebViewConsolePayload(
 )
 
 private object ConsoleNotification : WebViewNotification<WebViewConsolePayload> {
-  const val METHOD: String = "$/webview/console"
+  const val METHOD: String = WEBVIEW_CONSOLE_NOTIFICATION_METHOD
   override val method: String = METHOD
   override val paramsSerializer: KSerializer<WebViewConsolePayload> = WebViewConsolePayload.serializer()
 }

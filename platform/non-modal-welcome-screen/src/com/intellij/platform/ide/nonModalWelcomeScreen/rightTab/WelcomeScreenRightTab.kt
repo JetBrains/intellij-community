@@ -97,7 +97,6 @@ import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
-import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
@@ -487,8 +486,8 @@ class WelcomeScreenRightTab(
       ) { item, isSelected, isActive ->
         SimpleListItem(
           text = item,
-          isSelected = isSelected,
-          isActive = isActive,
+          selected = isSelected,
+          active = isActive,
           iconContentDescription = item,
         )
       }
@@ -698,11 +697,8 @@ class WelcomeScreenRightTab(
   private val fontColor
     get() = retrieveColorOrUnspecified("*.foreground")
 
-  @get:Composable
   private val secondaryFontColor
-    get() = color(dark = JewelTheme.colorPalette.grayOrNull(10),
-                  light = JewelTheme.colorPalette.grayOrNull(1),
-                  fallback = Color(0xFFB4B8BF))
+    get() = retrieveColorOrUnspecified("Component.infoForeground")
 
   private val panelBackgroundColor
     get() = retrieveColorOrUnspecified("EditorTabs.background")

@@ -1,5 +1,5 @@
 // "Remove 'const' modifier" "true"
-// K2_ERROR: Const 'val' has type 'Foo'. Only primitive types and 'String' are allowed.
+// K2_ERROR: TYPE_CANT_BE_USED_FOR_CONST_VAL
 
 class Foo
 

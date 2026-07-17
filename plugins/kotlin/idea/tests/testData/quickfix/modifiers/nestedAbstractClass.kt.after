@@ -1,5 +1,5 @@
 // "Add 'inner' modifier" "true"
-// K2_ERROR: 'Class' is prohibited here.
+// K2_ERROR: NESTED_CLASS_NOT_ALLOWED
 class A() {
     inner class B() {
         abstract inner class C

@@ -5,6 +5,8 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class FormatExtractorFactory implements DataExtractorFactory {
   private final CsvFormat myFormat;
 
@@ -39,5 +41,13 @@ public class FormatExtractorFactory implements DataExtractorFactory {
 
   public @NotNull CsvFormat getFormat() {
     return myFormat;
+  }
+
+  @Override
+  public @NotNull Set<ExtractorConfigOption> getApplicableOptions() {
+    Set<ExtractorConfigOption> options = DataExtractorFactory.super.getApplicableOptions();
+    options.add(ExtractorConfigOption.ADD_COLUMN_HEADER);
+    options.add(ExtractorConfigOption.ADD_ROW_HEADER);
+    return options;
   }
 }

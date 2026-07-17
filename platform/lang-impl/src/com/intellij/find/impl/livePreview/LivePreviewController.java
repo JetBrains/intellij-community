@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -275,6 +276,17 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
 
     var presentation = new EditorLivePreviewPresentation(getEditor().getColorsScheme());
     setLivePreview(new LivePreview(mySearchResults, presentation));
+  }
+
+  /**
+   * Removes only the cursor highlight (the frame around the current match), keeping match highlights intact.
+   * No-op if the live preview is not currently active.
+   */
+  @ApiStatus.Internal
+  public void clearCursorHighlight() {
+    if (myLivePreview != null) {
+      myLivePreview.clearCursorHighlight();
+    }
   }
 
   public void off() {

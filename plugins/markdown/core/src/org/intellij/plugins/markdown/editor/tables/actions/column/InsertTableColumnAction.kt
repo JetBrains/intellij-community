@@ -31,7 +31,9 @@ internal abstract class InsertTableColumnAction(private val insertAfter: Boolean
 
   override fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) {
     super.update(event, table, columnIndex)
-    event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
+    if (event.presentation.isEnabledAndVisible) {
+      event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
+    }
   }
 
   class InsertBefore: InsertTableColumnAction(insertAfter = false)

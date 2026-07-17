@@ -31,7 +31,6 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
 
-@ApiStatus.Internal
 internal class CellValidationImpl<out T>(
   private val dialogPanelConfig: DialogPanelConfig,
   private val cell: T,

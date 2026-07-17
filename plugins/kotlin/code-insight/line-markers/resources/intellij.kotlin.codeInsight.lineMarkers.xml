@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.lineMarkers">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>

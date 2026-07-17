@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.codeInsight.Nullability;
@@ -7,17 +7,24 @@ import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
 
 public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTestCase {
   public void testPrimitive() {
@@ -431,5 +438,47 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       }
       """);
     myFixture.checkHighlighting();
+  }
+
+  public void testInstantiateWithNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+      
+      @NullMarked
+      class JSpecifySameInstanceGenericInheritedBound {
+        interface Tag {}
+      
+        interface Box<E extends @Nullable Object> {}
+      
+        interface Source<V extends @Nullable Object> {
+          Box<V> create();
+          void acceptNullable(Box<@Nullable V> box);
+        }
+      
+        interface Derived<V extends @Nullable Object & @Nullable Tag> extends Source<V> {
+          default void use() {
+            acceptNullab<caret>le(create());
+          }
+        }
+      }
+      """);
+    PsiMethodCallExpression methodCallExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiMethodCallExpression.class);
+
+    //it is a usual pattern to get expected parameter type
+    JavaResolveResult result = methodCallExpression.resolveMethodGenerics();
+    PsiSubstitutor substitutor = result.getSubstitutor();
+    PsiMethod method = (PsiMethod)result.getElement();
+    PsiType firstParameterType = method.getParameterList().getParameters()[0].getType();
+    PsiType expectedParameterType = substitutor.substitute(firstParameterType);
+
+    assertEquals("JSpecifySameInstanceGenericInheritedBound.Box<V>", expectedParameterType.getCanonicalText());
+    PsiType parameterType = ((PsiClassType)expectedParameterType).getParameters()[0];
+    assertEquals("V", parameterType.getCanonicalText());
+    assertEquals("NULLABLE (@Nullable)", parameterType.getNullability().toString());
   }
 }

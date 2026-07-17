@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileThreadingContracts;
 import com.intellij.psi.FileTypeFileViewProviders;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.FileViewProviderFactory;
@@ -45,6 +46,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.impl.FileViewProviderCache.Entry;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -260,6 +262,10 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = myVFileToViewProviderMap.getAndReanimateIfNecessary(vFile, context);
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      return viewProvider;
+    }
+
     if (viewProvider == null) {
       return myLightViewProviderCache.getAndReanimateIfNecessary(vFile, context);
     }
@@ -283,6 +289,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
+    FileThreadingContracts.assertWriteAccessForExposedLightFile(vFile);
     // todo IJPL-339 investigate if we need a context here
     if (viewProvider == null) {
       // Let's drop all providers.
@@ -432,7 +439,7 @@ public final class FileManagerImpl implements FileManagerEx {
       FileViewProvider viewProvider = entry.getProvider();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile, context);
-      if (psiFile1 != null && viewProvider.isPhysical()) {
+      if (psiFile1 != null && viewProvider.correspondsToRealFile()) {
         PsiFile psi = viewProvider.getPsi(viewProvider.getBaseLanguage());
         assert psi != null : viewProvider + "; " + viewProvider.getBaseLanguage() + "; " + psiFile1;
         assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 + "; " + psi + "; " + psiFile1.getClass() + "; " + psi.getClass();
@@ -470,8 +477,8 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {

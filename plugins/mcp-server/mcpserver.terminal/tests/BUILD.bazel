@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.terminal.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -45,6 +44,8 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "//plugins/mcp-server:mcpserver",
         "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.testFramework",
+        "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
         "//plugins/mcp-server/tests/plugin",
@@ -90,7 +91,6 @@ exports_files(
 ### auto-generated section `iml intellij.mcpserver.terminal.tests` end
 
 ### auto-generated section `test intellij.mcpserver.terminal.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

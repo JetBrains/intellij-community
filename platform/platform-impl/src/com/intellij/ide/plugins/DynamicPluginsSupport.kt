@@ -18,7 +18,9 @@ interface DynamicPluginsSupport {
 
   // TODO consider adding suspend fun runPreventingDynamicReconfiguration(body: suspend? () -> Unit)
 
-  companion object
+  companion object {
+    fun getInstance(): DynamicPluginsSupport = instance
+  }
 }
 
 @ApiStatus.Internal
@@ -47,27 +49,20 @@ interface DynamicReconfigurationIsNotPossibleReason {
   }
 }
 
-private val instance: DynamicPluginsSupport? by lazy {
+private val instance: DynamicPluginsSupport by lazy {
   // note: dynamic plugin reconfiguration is available only after app init, so Registry is available
-  if (!Registry.`is`("dynamic.plugins.support.new.impl", false)) null
-  else {
-    val classloaderUnloadStrategy = when (Registry.get("dynamic.plugins.support.await.classloader.unload.strategy").selectedOption) {
-      "asyncPostReconfiguration" -> AwaitClassloaderUnloadAsyncPostReconfiguration()
-      "beforeLoad" -> AwaitClassloaderUnloadBeforeLoading()
-      else -> AwaitClassloaderUnloadBeforeLoading()
-    }
-    DynamicPluginsSupportImpl(classloaderUnloadStrategy)
+  val classloaderUnloadStrategy = when (Registry.get("dynamic.plugins.support.await.classloader.unload.strategy").selectedOption) {
+    "asyncPostReconfiguration" -> AwaitClassloaderUnloadAsyncPostReconfiguration()
+    "beforeLoad" -> AwaitClassloaderUnloadBeforeLoading()
+    else -> AwaitClassloaderUnloadBeforeLoading()
   }
+  DynamicPluginsSupportImpl(classloaderUnloadStrategy)
 }
-
-@ApiStatus.Internal
-fun DynamicPluginsSupport.Companion.getInstance(): DynamicPluginsSupport? = instance
 
 private class DynamicReconfigurationIsNotPossibleReasonImpl(
   override val logMessage: @NonNls String,
   override val problematicPlugin: PluginMainDescriptor?,
 ): DynamicReconfigurationIsNotPossibleReason
 
-@ApiStatus.Internal
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)

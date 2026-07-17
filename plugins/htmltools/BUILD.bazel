@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.html.tools` start
+jps_test(
+    name = "html-tools-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":html-tools-tests_test_lib"],
+)
 
+### skip generation section `test intellij.html.tools.tests`
+
+### auto-generated section `build intellij.html.tools` start
 jvm_library(
     name = "html-tools",
     srcs = glob(
@@ -90,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.html.tools` end
 
 ### auto-generated section `build intellij.html.tools.tests` start
-
 jvm_library(
     name = "html-tools-tests",
     srcs = glob(
@@ -145,6 +152,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
+        "//spellchecker/xml",
+        "//spellchecker/xml:xml_test_lib",
         "//plugins/grazie/src:core",
         "//plugins/grazie/src:core_test_lib",
         "//xml/xml-psi-api:psi",
@@ -173,6 +182,8 @@ jvm_library(
         "//xml/xml-analysis-api:analysis_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/ide-core",
@@ -192,11 +203,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.html.tools.tests` end
-
-### auto-generated section `test intellij.html.tools.tests` start
-
-jps_test(
-    name = "html-tools-tests_test",
-    runtime_deps = [":html-tools-tests_test_lib"],
-)
-### auto-generated section `test intellij.html.tools.tests` end

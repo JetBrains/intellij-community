@@ -12,9 +12,11 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
+import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 import org.intellij.plugins.markdown.model.psi.headers.MarkdownDirectUsageQuery
 import org.intellij.plugins.markdown.model.psi.headers.html.findInjectedHtmlFile
@@ -46,6 +48,9 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
     }
 
     fun buildSearchRequest(project: Project, target: MarkdownSymbol, searchText: String, searchScope: SearchScope): Query<out PsiUsage> {
+      if (DumbService.isDumb(project)) {
+        return EmptyQuery.getEmptyQuery()
+      }
       val symbolPointer = Pointer.hardPointer(target)
       return SearchService.getInstance()
         .searchWord(project, searchText)

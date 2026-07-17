@@ -1,4 +1,3 @@
-//#region node_modules/@chevrotain/regexp-to-ast/lib/src/utils.js
 function cc(char) {
 	return char.charCodeAt(0);
 }
@@ -25,8 +24,6 @@ function ASSERT_NEVER_REACH_HERE() {
 function isCharacter(obj) {
 	return obj["type"] === "Character";
 }
-//#endregion
-//#region node_modules/@chevrotain/regexp-to-ast/lib/src/character-classes.js
 var digitsCharCodes = [];
 for (let i = cc("0"); i <= cc("9"); i++) digitsCharCodes.push(i);
 var wordCharCodes = [cc("_")].concat(digitsCharCodes);
@@ -60,8 +57,6 @@ var whitespaceCodes = [
 	cc("　"),
 	cc("﻿")
 ];
-//#endregion
-//#region node_modules/@chevrotain/regexp-to-ast/lib/src/regexp-parser.js
 var hexDigitPattern = /[0-9a-fA-F]/;
 var decimalPattern = /[0-9]/;
 var decimalPatternNoZero = /[1-9]/;
@@ -730,8 +725,6 @@ var RegExpParser = class {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@chevrotain/regexp-to-ast/lib/src/base-regexp-visitor.js
 var BaseRegExpVisitor = class {
 	visitChildren(node) {
 		for (const key in node) {
@@ -819,8 +812,6 @@ var BaseRegExpVisitor = class {
 	visitGroupBackReference(node) {}
 	visitQuantifier(node) {}
 };
-//#endregion
-//#region node_modules/@chevrotain/utils/lib/src/print.js
 function PRINT_ERROR(msg) {
 	/* istanbul ignore else - can't override global.console in node.js */
 	if (console && console.error) console.error(`Error: ${msg}`);
@@ -829,8 +820,6 @@ function PRINT_WARNING(msg) {
 	/* istanbul ignore else - can't override global.console in node.js*/
 	if (console && console.warn) console.warn(`Warning: ${msg}`);
 }
-//#endregion
-//#region node_modules/@chevrotain/utils/lib/src/timer.js
 function timer(func) {
 	const start = (/* @__PURE__ */ new Date()).getTime();
 	const val = func();
@@ -839,8 +828,6 @@ function timer(func) {
 		value: val
 	};
 }
-//#endregion
-//#region node_modules/@chevrotain/utils/lib/src/to-fast-properties.js
 function toFastProperties(toBecomeFast) {
 	function FakeConstructor() {}
 	FakeConstructor.prototype = toBecomeFast;
@@ -852,8 +839,6 @@ function toFastProperties(toBecomeFast) {
 	fakeAccess();
 	return toBecomeFast;
 }
-//#endregion
-//#region node_modules/@chevrotain/gast/lib/src/model.js
 function tokenLabel$1(tokType) {
 	if (hasTokenLabel$1(tokType)) return tokType.LABEL;
 	else return tokType.name;
@@ -1040,8 +1025,6 @@ function serializeProduction(node) {
 function pickOnlyDefined(obj) {
 	return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== void 0));
 }
-//#endregion
-//#region node_modules/@chevrotain/gast/lib/src/visitor.js
 var GAstVisitor = class {
 	visit(node) {
 		const nodeAny = node;
@@ -1081,8 +1064,6 @@ var GAstVisitor = class {
 	/* c8 ignore next */
 	visitRule(node) {}
 };
-//#endregion
-//#region node_modules/@chevrotain/gast/lib/src/helpers.js
 function isSequenceProd(prod) {
 	return prod instanceof Alternative || prod instanceof Option || prod instanceof Repetition || prod instanceof RepetitionMandatory || prod instanceof RepetitionMandatoryWithSeparator || prod instanceof RepetitionWithSeparator || prod instanceof Terminal || prod instanceof Rule;
 }
@@ -1114,8 +1095,6 @@ function getProductionDslName(prod) {
 	else if (prod instanceof Terminal) return "CONSUME";
 	else throw Error("non exhaustive match");
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/rest.js
 /**
 *  A Grammar Walker that computes the "remaining" grammar "after" a productions in the grammar.
 */
@@ -1173,8 +1152,6 @@ var RestWalker = class {
 function restForRepetitionWithSeparator(repSepProd, currRest, prevRest) {
 	return [new Option({ definition: [new Terminal({ terminalType: repSepProd.separator })].concat(repSepProd.definition) })].concat(currRest, prevRest);
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/first.js
 function first(prod) {
 	/* istanbul ignore else */
 	if (prod instanceof NonTerminal) return first(prod.referencedRule);
@@ -1208,11 +1185,7 @@ function firstForBranching(prod) {
 function firstForTerminal(terminal) {
 	return [terminal.terminalType];
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/constants.js
 var IN = "_~IN~_";
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/follow.js
 var ResyncFollowsWalker = class extends RestWalker {
 	constructor(topProd) {
 		super();
@@ -1241,8 +1214,6 @@ function computeAllProdsFollows(topProductions) {
 function buildBetweenProdsFollowPrefix(inner, occurenceInParent) {
 	return inner.name + occurenceInParent + IN;
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/reg_exp_parser.js
 var regExpAstCache = {};
 var regExpParser = new RegExpParser();
 function getRegExpAst(regExp) {
@@ -1257,8 +1228,6 @@ function getRegExpAst(regExp) {
 function clearRegExpParserCache() {
 	regExpAstCache = {};
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/reg_exp.js
 var complementErrorMessage = "Complement Sets are not supported for first char optimization";
 var failedOptimizationPrefixMsg = "Unable to use \"first char\" lexer optimizations:\n";
 function getOptimizedStartCodesIndices(regExp, ensureOptimizations = false) {
@@ -1421,8 +1390,6 @@ function canMatchCharCode(charCodes, pattern) {
 		return false;
 	}
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/lexer.js
 var PATTERN = "PATTERN";
 var DEFAULT_MODE = "defaultMode";
 function analyzeTokenTypes(tokenTypes, options) {
@@ -2006,8 +1973,6 @@ function initCharCodeToOptimizedIndexMap() {
 		for (let i = 0; i < 65536; i++) charCodeToOptimizedIdxMap[i] = i > 255 ? 255 + ~~(i / 255) : i;
 	}
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/tokens.js
 function tokenStructuredMatcher(tokInstance, tokConstructor) {
 	const instanceType = tokInstance.tokenTypeIdx;
 	if (instanceType === tokConstructor.tokenTypeIdx) return true;
@@ -2089,8 +2054,6 @@ function hasExtendingTokensTypesMapProperty(tokType) {
 function isTokenType(tokType) {
 	return Object.hasOwn(tokType !== null && tokType !== void 0 ? tokType : {}, "tokenTypeIdx");
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/lexer_errors_public.js
 var defaultLexerErrorProvider = {
 	buildUnableToPopLexerModeMessage(token) {
 		return `Unable to pop Lexer Mode after encountering Token ->${token.image}<- The Mode Stack is empty`;
@@ -2099,8 +2062,6 @@ var defaultLexerErrorProvider = {
 		return `unexpected character: ->${fullText.charAt(startOffset)}<- at offset: ${startOffset}, skipped ${length} characters.`;
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/lexer_public.js
 var LexerDefinitionErrorType;
 (function(LexerDefinitionErrorType) {
 	LexerDefinitionErrorType[LexerDefinitionErrorType["MISSING_PATTERN"] = 0] = "MISSING_PATTERN";
@@ -2546,8 +2507,6 @@ var Lexer = class {
 };
 Lexer.SKIPPED = "This marks a skipped Token pattern, this means each token identified by it will be consumed and then thrown into oblivion, this can be used to for example to completely ignore whitespace.";
 Lexer.NA = /NOT_APPLICABLE/;
-//#endregion
-//#region node_modules/chevrotain/lib/src/scan/tokens_public.js
 function tokenLabel(tokType) {
 	if (hasTokenLabel(tokType)) return tokType.LABEL;
 	else return tokType.name;
@@ -2605,8 +2564,6 @@ function createTokenInstance(tokType, image, startOffset, endOffset, startLine, 
 function tokenMatcher(token, tokType) {
 	return tokenStructuredMatcher(token, tokType);
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/errors_public.js
 var defaultParserErrorProvider = {
 	buildMismatchTokenMessage({ expected, actual, previous, ruleName }) {
 		return `Expecting ${hasTokenLabel(expected) ? `--> ${tokenLabel(expected)} <--` : `token of type --> ${expected.name} <--`} but found --> '${actual.image}' <--`;
@@ -2701,8 +2658,6 @@ var defaultGrammarValidatorErrorProvider = {
 		return `Duplicate definition, rule: ->${ruleName}<- is already defined in the grammar: ->${options.grammarName}<-`;
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/resolver.js
 function resolveGrammar$1(topLevels, errMsgProvider) {
 	const refResolver = new GastRefResolverVisitor(topLevels, errMsgProvider);
 	refResolver.resolveRefs();
@@ -2734,8 +2689,6 @@ var GastRefResolverVisitor = class extends GAstVisitor {
 		} else node.referencedRule = ref;
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/interpreter.js
 var AbstractNextPossibleTokensWalker = class extends RestWalker {
 	constructor(topProd, path) {
 		super();
@@ -3091,8 +3044,6 @@ function expandTopLevelRule(topRule, currIdx, currRuleStack, currOccurrenceStack
 		occurrenceStack: newCurrOccurrenceStack
 	};
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/lookahead.js
 var PROD_TYPE;
 (function(PROD_TYPE) {
 	PROD_TYPE[PROD_TYPE["OPTION"] = 0] = "OPTION";
@@ -3418,8 +3369,6 @@ function isStrictPrefixOfPath(prefix, other) {
 function areTokenCategoriesNotUsed(lookAheadPaths) {
 	return lookAheadPaths.every((singleAltPaths) => singleAltPaths.every((singlePath) => singlePath.every((token) => token.categoryMatches.length === 0)));
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/checks.js
 function validateLookahead(options) {
 	return options.lookaheadStrategy.validate({
 		rules: options.rules,
@@ -3748,8 +3697,6 @@ function checkTerminalAndNoneTerminalsNameSpace(topLevels, tokenTypes, errMsgPro
 	});
 	return errors;
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/gast/gast_resolver_public.js
 function resolveGrammar(options) {
 	const actualOptions = Object.assign({ errMsgProvider: defaultGrammarResolverErrorProvider }, options);
 	const topRulesTable = {};
@@ -3763,8 +3710,6 @@ function validateGrammar(options) {
 	const errMsgProvider = (_a = options.errMsgProvider) !== null && _a !== void 0 ? _a : defaultGrammarValidatorErrorProvider;
 	return validateGrammar$1(options.rules, options.tokenTypes, errMsgProvider, options.grammarName);
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/exceptions_public.js
 var MISMATCHED_TOKEN_EXCEPTION = "MismatchedTokenException";
 var NO_VIABLE_ALT_EXCEPTION = "NoViableAltException";
 var EARLY_EXIT_EXCEPTION = "EarlyExitException";
@@ -3816,8 +3761,6 @@ var EarlyExitException = class extends RecognitionException {
 		this.name = EARLY_EXIT_EXCEPTION;
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/recoverable.js
 var EOF_FOLLOW_KEY = {};
 var IN_RULE_RECOVERY_EXCEPTION = "InRuleRecoveryException";
 var InRuleRecoveryException = class extends Error {
@@ -4024,8 +3967,6 @@ var AT_LEAST_ONE_SEP_IDX = 1536;
 function getKeyForAutomaticLookahead(ruleIdx, dslMethodIdx, occurrence) {
 	return occurrence | dslMethodIdx | ruleIdx;
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/grammar/llk_lookahead.js
 var LLkLookaheadStrategy = class {
 	constructor(options) {
 		var _a;
@@ -4065,8 +4006,6 @@ var LLkLookaheadStrategy = class {
 		return buildLookaheadFuncForOptionalProd(options.prodOccurrence, options.rule, options.maxLookahead, options.dynamicTokensEnabled, getProdType(options.prodType), buildSingleAlternativeLookaheadFunction);
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/looksahead.js
 /**
 * Trait responsible for the lookahead related utilities and optimizations.
 */
@@ -4186,8 +4125,6 @@ function collectMethods(rule) {
 	collectorVisitor.reset();
 	return dslMethods;
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/cst/cst.js
 /**
 * This nodeLocation tracking is not efficient and should only be used
 * when error recovery is enabled or the Token Vector contains virtual Tokens
@@ -4230,8 +4167,6 @@ function addNoneTerminalToCst(node, ruleName, ruleResult) {
 	if (node.children[ruleName] === void 0) node.children[ruleName] = [ruleResult];
 	else node.children[ruleName].push(ruleResult);
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/lang/lang_extensions.js
 var NAME = "name";
 function defineNameProp(obj, nameValue) {
 	Object.defineProperty(obj, NAME, {
@@ -4241,8 +4176,6 @@ function defineNameProp(obj, nameValue) {
 		value: nameValue
 	});
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/cst/cst_visitor.js
 function defaultVisit(ctx, param) {
 	const childrenNames = Object.keys(ctx);
 	const childrenNamesLength = childrenNames.length;
@@ -4306,8 +4239,6 @@ function validateMissingCstMethods(visitorInstance, ruleNames) {
 		};
 	}).filter(Boolean);
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/tree_builder.js
 /**
 * This trait is responsible for the CST building logic.
 */
@@ -4452,8 +4383,6 @@ var TreeBuilder = class {
 		return this.RULE_OCCURRENCE_STACK[this.RULE_OCCURRENCE_STACK_IDX];
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/lexer_adapter.js
 /**
 * Trait responsible abstracting over the interaction with Lexer output (Token vector).
 *
@@ -4510,8 +4439,6 @@ var LexerAdapter = class {
 		return this.exportLexerState();
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/recognizer_api.js
 /**
 * This trait is responsible for implementing the public API
 * for defining Chevrotain parsers, i.e:
@@ -4831,8 +4758,6 @@ var RecognizerApi = class {
 		return serializeGrammar(Object.values(this.gastProductionsCache));
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/recognizer_engine.js
 /**
 * This trait is responsible for the runtime parsing engine
 * Used by the official API (recognizer_api.ts)
@@ -5239,8 +5164,6 @@ var RecognizerEngine = class {
 		while (this.tokVector.at(-1) === END_OF_FILE) this.tokVector.pop();
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/error_handler.js
 /**
 * Trait responsible for runtime parsing errors.
 */
@@ -5297,8 +5220,6 @@ var ErrorHandler = class {
 		throw this.SAVE_ERROR(new NoViableAltException(errMsg, this.LA(1), previousToken));
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/gast_recorder.js
 var RECORDING_NULL_OBJECT = { description: "This Object indicates the Parser is during Recording Phase" };
 Object.freeze(RECORDING_NULL_OBJECT);
 var HANDLE_SEPARATOR = true;
@@ -5540,8 +5461,6 @@ function assertMethodIdxIsValid(idx) {
 		throw error;
 	}
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/traits/perf_tracer.js
 /**
 * Trait responsible for runtime parsing errors.
 */
@@ -5572,8 +5491,6 @@ var PerformanceTracer = class {
 		} else return phaseImpl();
 	}
 };
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/utils/apply_mixins.js
 function applyMixins(derivedCtor, baseCtors) {
 	baseCtors.forEach((baseCtor) => {
 		const baseProto = baseCtor.prototype;
@@ -5585,8 +5502,6 @@ function applyMixins(derivedCtor, baseCtors) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/chevrotain/lib/src/parse/parser/parser.js
 var END_OF_FILE = createTokenInstance(EOF, "", NaN, NaN, NaN, NaN, NaN, NaN);
 Object.freeze(END_OF_FILE);
 var DEFAULT_PARSER_CONFIG = Object.freeze({
@@ -5729,5 +5644,4 @@ var EmbeddedActionsParser = class extends Parser {
 		super(tokenVocabulary, configClone);
 	}
 };
-//#endregion
 export { RepetitionWithSeparator as _, defaultParserErrorProvider as a, RegExpParser as b, tokenMatcher as c, Alternation as d, NonTerminal as f, RepetitionMandatoryWithSeparator as g, RepetitionMandatory as h, getLookaheadPaths as i, Lexer as l, Repetition as m, EmbeddedActionsParser as n, EOF as o, Option as p, LLkLookaheadStrategy as r, tokenLabel as s, EMPTY_ALT as t, defaultLexerErrorProvider as u, Terminal as v, BaseRegExpVisitor as y };

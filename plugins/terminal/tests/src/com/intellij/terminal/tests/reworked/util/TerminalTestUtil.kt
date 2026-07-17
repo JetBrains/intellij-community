@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
+import java.awt.KeyboardFocusManager
 import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Internal
@@ -74,5 +75,17 @@ object TerminalTestUtil {
    */
   fun enginesWithCompletionSupport(): List<TerminalEngine> {
     return listOf(TerminalEngine.REWORKED, TerminalEngine.NEW_TERMINAL)
+  }
+
+  /**
+   * Replaces the keyboard focus manager with [focusManager]. The original focus manager is restored
+   * when [parentDisposable] is disposed.
+   */
+  fun replaceKeyboardFocusManager(parentDisposable: Disposable, focusManager: KeyboardFocusManager) {
+    val originalFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    Disposer.register(parentDisposable) {
+      KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager)
+    }
+    KeyboardFocusManager.setCurrentKeyboardFocusManager(focusManager)
   }
 }

@@ -2,13 +2,11 @@
 
 Rust/JNI bridge for the Windows WebView2 system WebView backend.
 
+Runtime design, including keyboard and shortcut interop, is documented in `../../docs/backends/windows-webview2-implementation-plan.md`.
+
 ## Output
 
-The crate is a `cdylib` and produces `win_webview2_bridge.dll`:
-
-```text
-pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1
-```
+The crate is a `cdylib` and produces `win_webview2_bridge.dll`.
 
 The build script runs Cargo in release mode and writes the intermediate DLL to:
 
@@ -16,35 +14,57 @@ The build script runs Cargo in release mode and writes the intermediate DLL to:
 community/plugins/ui.webview/native/WinWebView2Bridge/target/<rust-target>/release/win_webview2_bridge.dll
 ```
 
-The committed x64 runtime artifact lives in the WebView plugin directory:
+The committed runtime artifacts live in the WebView plugin directory:
 
 ```text
 community/plugins/ui.webview/lib/webview-native/win/x86_64/win_webview2_bridge.dll
+community/plugins/ui.webview/lib/webview-native/win/aarch64/win_webview2_bridge.dll
 ```
 
-The Kotlin bridge loads this loose file from WebView plugin resources via `PluginPathManager.getPluginResource(...)`, with a source-tree fallback for running from sources.
+The Kotlin bridge loads this loose file from the WebView plugin path, with a source-tree fallback for running from sources.
 
-## Updating The Committed DLL
+## Prerequisites
 
-Build and copy the release DLL from the repository root:
+Build from Windows with:
+
+- PowerShell 7 (`pwsh`) available on `PATH`;
+- Rust installed through `rustup`, with the MSVC toolchain selected;
+- Visual Studio 2022 Build Tools or Visual Studio 2022 Community with the C++ desktop toolchain;
+- MSVC v143 x64/x86 build tools and a Windows SDK installed by the Visual Studio setup;
+- MSVC ARM64 cross-build tools when building `aarch64-pc-windows-msvc` from an x64 host.
+
+Install both Rust targets before running `-All`:
 
 ```text
-pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1
+rustup target add x86_64-pc-windows-msvc aarch64-pc-windows-msvc
 ```
 
-On an x64 machine the script builds `x86_64-pc-windows-msvc` and copies the DLL to `community/plugins/ui.webview/lib/webview-native/win/x86_64/win_webview2_bridge.dll`. To update another committed architecture explicitly, pass the Rust target triple:
+The build links `WebView2LoaderStatic.lib` through `webview2-com-sys`, so no separate WebView2 loader DLL is required next to the bridge DLL.
+
+## Updating The Committed DLLs
+
+Rebuild both committed Windows artifacts from the repository root:
 
 ```text
+pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -All
+```
+
+The script builds `x86_64-pc-windows-msvc` and `aarch64-pc-windows-msvc`, then copies each DLL to the matching committed plugin path.
+
+To rebuild only one architecture for local debugging, pass a Rust target triple:
+
+```text
+pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -Target x86_64-pc-windows-msvc
 pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -Target aarch64-pc-windows-msvc
 ```
 
 Stop any dev IDE process that has loaded the DLL before copying; Windows locks loaded DLL files.
 
-The MSVC build statically links `WebView2LoaderStatic.lib` through `webview2-com-sys`, so do not commit a separate `WebView2Loader.dll` next to the bridge DLL.
+## Toolchain Notes
 
-If arm64 support is added, install the Rust `aarch64-pc-windows-msvc` standard library and the ARM64 MSVC toolchain before running the arm64 command above. The `cargo` selected by `PATH` must be the same toolchain where the target is installed; if Cargo still reports that `std` or `core` cannot be found for `aarch64-pc-windows-msvc`, put the rustup-managed `%USERPROFILE%\.cargo\bin` before any standalone Rust installation in `PATH`. Commit the matching DLL under `community/plugins/ui.webview/lib/webview-native/win/aarch64/win_webview2_bridge.dll`.
+The build script prepends the rustup-managed `%USERPROFILE%\.cargo\bin` to `PATH` when it exists. This avoids picking up standalone Rust installations that may not have the requested targets installed.
 
-Run arm64 builds from the Visual Studio `x64_arm64` developer environment, or initialize it first:
+For the arm64 target, the script tries to find Visual Studio `vcvarsall.bat` and runs Cargo from the `x64_arm64` developer environment. If that fails, initialize the environment manually and rerun the arm64 target command:
 
 ```text
 set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
@@ -56,8 +76,13 @@ pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -Targ
 
 ```text
 cargo check --manifest-path community/plugins/ui.webview/native/WinWebView2Bridge/Cargo.toml
-pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1
+pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1 -All
+git diff --numstat -- community/plugins/ui.webview/lib/webview-native/win
+git diff --stat -- community/plugins/ui.webview/lib/webview-native/win
+./bazel.cmd build @community//plugins/ui.webview:webview_plugin_zip
 ```
+
+`git diff --numstat` should show binary changes for both committed DLLs after rebuilding both architectures. The file sizes in `git diff --stat` may stay unchanged even when the binary contents changed.
 
 After changing the JNI boundary, update both native and Kotlin ABI constants before copying a new DLL.
 

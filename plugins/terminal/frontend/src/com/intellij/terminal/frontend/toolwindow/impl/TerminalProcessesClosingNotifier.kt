@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.execution.TerminateRemoteProcessDialog
+import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.ide.AppLifecycleListener
@@ -8,6 +9,7 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
@@ -19,12 +21,14 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import java.time.LocalDateTime
 
@@ -35,6 +39,10 @@ import java.time.LocalDateTime
  *
  * This class is responsible only for the notification,
  * actual processes termination is performed in [com.intellij.terminal.frontend.session.TerminalSessionsManager].
+ *
+ * Note that similar confirmation logic is performed in [org.jetbrains.plugins.terminal.TerminalTabCloseListener].
+ * But it is applied in a different context (should never intersect with the logic in this class).
+ * TerminalTabCloseListener runs when the user closes a single terminal tab, and the project is not closing at this moment.
  */
 internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListener, ApplicationListener {
   private val PROCESSES_TERMINATION_CONFIRMED_TIME_KEY = Key<LocalDateTime>("TERMINAL_PROCESSES_TERMINATION_CONFIRMED_TIME")
@@ -78,9 +86,20 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
       return true
     }
 
-    val tabTitlesToConfirm = runWithModalProgressBlocking(project, "") {
-      collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+    val tabTitlesToConfirm = try {
+      runWithModalProgressBlocking(project, TerminalBundle.message("checking.running.terminal.processes.progress")) {
+        collectTabTitlesToConfirm(reworkedViews, classicWidgets)
+      }
     }
+    catch (_: CancellationException) {
+      ProgressManager.checkCanceled()
+      // User pressed "cancel" in the progress dialog.
+      // Since the user's intention is to close the project,
+      // consider that the user wants to skip any additional checks and finally close the project.
+      project.putUserData(PROCESSES_TERMINATION_CONFIRMED_TIME_KEY, LocalDateTime.now())
+      return true
+    }
+
     if (tabTitlesToConfirm.isEmpty()) {
       return true
     }
@@ -125,7 +144,7 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
         it.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
       }
     }
-    return TerminateRemoteProcessDialog.show(project, tabTitles, fakeProcesses) != null
+    return TerminateRemoteProcessDialog.show(project, tabTitles, fakeProcesses) != ProcessCloseConfirmationResult.LEAVE_RUNNING
   }
 }
 

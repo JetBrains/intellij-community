@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2_ERROR: Multiple labels per statement are forbidden.
+// K2_ERROR: MULTIPLE_LABELS_ARE_FORBIDDEN
 fun test() {
     foo(bar@ foo@{ bar(it) }<caret>)
 }

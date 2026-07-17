@@ -1,7 +1,7 @@
 // "Convert too long character literal to string" "true"
 // ERROR: Unresolved reference: bar
-// K2_ERROR: Too many characters in a character literal.
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL
 
 fun foo() {
     'foo$bar'<caret>

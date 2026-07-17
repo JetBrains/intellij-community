@@ -2,9 +2,13 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.text.JTextComponent;
 
+/// @deprecated The functionality is redundant.
+@Deprecated
+@ApiStatus.Internal
 public interface AutoCompletionCommand {
 
   void completeQuery(JTextComponent textComponent);

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.util.io.impl` start
-
 jvm_library(
     name = "ide-util-io-impl",
     srcs = glob(

@@ -14,8 +14,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil.isRelativePathLike
+import org.jetbrains.annotations.ApiStatus
 
-internal object BacktickPathReferenceProvider {
+@ApiStatus.Internal
+object BacktickPathReferenceProvider {
   private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
   private const val SKILL_MD = "SKILL.md"
 

@@ -1,4 +1,3 @@
-//#region node_modules/hast-util-heading-rank/lib/index.js
 /**
 * @typedef {import('hast').Nodes} Nodes
 */
@@ -15,5 +14,4 @@ function headingRank(node) {
 	const code = name.length === 2 && name.charCodeAt(0) === 104 ? name.charCodeAt(1) : 0;
 	return code > 48 && code < 55 ? code - 48 : void 0;
 }
-//#endregion
 export { headingRank as t };

@@ -64,7 +64,7 @@ import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
+internal interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   /**
    * [backProperty] should only be used in [PathValidator] and its inheritors
    */

@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.text.MessageFormat
 
@@ -60,7 +61,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
     )
     val savedEventData = ourCurrentEventData
     ourCurrentEventData = currentEventData
-    val patchedEvent: AnActionEvent = getEventWithReporter(e)
+    val patchedEvent = getEventWithReporter(e)
     try {
       super.actionPerformed(patchedEvent)
     }
@@ -104,9 +105,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
     val editor = event.getData(CommonDataKeys.EDITOR)
     if (editor != null &&
         isMouseShortcut &&
-        (event.updateSession.compute(this, "isPointOverText", ActionUpdateThread.EDT) {
-          EditorUtil.isPointOverText(editor, RelativePoint(inputEvent).getPoint(editor.getContentComponent()))
-        } != true)
+        !computeIsPointOverText(event, editor, inputEvent)
     ) {
       LOG.trace { "GotoDeclarationAction disabled: reason=pointNotOverText, place=${event.place}" }
       event.presentation.setEnabled(false)
@@ -122,14 +121,26 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
 
     super.update(event)
 
-    // Diagnostic logging for IJPL: GotoDeclaration intermittently disabled while it should be available
-    // (notably when switching to an existing file from another). All output is TRACE-only and off by
-    // default; enable #com.intellij.codeInsight.navigation.actions.GotoDeclarationAction:trace to collect it.
-    if (!event.presentation.isEnabled) {
+    logUpdateStatus(event, inputEvent, isMouseShortcut)
+  }
+
+  /**
+   * Diagnostic logging for IJPL: GotoDeclaration intermittently disabled while it should be available (notably when switching to an existing file from another).
+   * All output is TRACE-only and off by default; enable #com.intellij.codeInsight.navigation.actions.GotoDeclarationAction:trace to collect it.
+   *
+   */
+  private fun logUpdateStatus(
+    event: AnActionEvent,
+    inputEvent: InputEvent?,
+    isMouseShortcut: Boolean,
+  ) {
+    if (event.presentation.isEnabled) {
+      LOG.trace { "GotoDeclarationAction enabled: place=${event.place}" }
+    }
+    else {
       LOG.trace {
         val project = event.project
         val baseEditor = event.getData(CommonDataKeys.EDITOR)
-        val psiInteractionAllowed = Elf.getElf().isPsiInteractionAllowed()
         val inElfScope = Elf.getElf().isInElfScope()
         val lookupActive = project != null && LookupManager.getInstance(project).activeLookup != null
         val document = baseEditor?.document
@@ -145,7 +156,7 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         // getPsiFileInEditor may THROW on an invalid file (ensureValid) — that is itself the disable cause:
         var psiInEditorError: String? = null
         val psiInEditor = try {
-          val f = if (project != null && baseEditor != null && psiInteractionAllowed) {
+          val f = if (project != null && baseEditor != null) {
             PsiUtilBase.getPsiFileInEditor(baseEditor, project)
           }
           else null
@@ -169,7 +180,6 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         ", document@$docId" +
         ", file=${vFile?.name ?: "null"}" +
         ", caretOffset=$caretOffset" +
-        ", psiInteractionAllowed=$psiInteractionAllowed" +
         ", inElfScope=$inElfScope" +
         ", lookupActive=$lookupActive" +
         ", documentCommitted=$committed" +
@@ -179,23 +189,29 @@ open class GotoDeclarationAction : BaseCodeInsightAction(), DumbAware, CtrlMouse
         (if (psiInEditorError == null) "" else ", getPsiFileInEditorError=$psiInEditorError")
       }
     }
-    else {
-      LOG.trace { "GotoDeclarationAction enabled: place=${event.place}" }
-    }
+  }
+
+  private fun computeIsPointOverText(
+    event: AnActionEvent,
+    editor: Editor,
+    inputEvent: MouseEvent,
+  ): Boolean =
+    event.updateSession.compute(this, "isPointOverText", ActionUpdateThread.EDT) {
+    EditorUtil.isPointOverText(editor, RelativePoint(inputEvent).getPoint(editor.getContentComponent()))
   }
 
   override fun isValidForLookup(): Boolean = true
 
+  private fun getEventWithReporter(e: AnActionEvent): AnActionEvent {
+    val reporter = GotoDeclarationFUSReporter()
+    val context = CustomizedDataContext.withSnapshot(e.dataContext) { sink ->
+      sink[GO_TO_DECLARATION_REPORTER_DATA_KEY] = reporter
+    }
+    return e.withDataContext(context)
+  }
+
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private fun getEventWithReporter(e: AnActionEvent): AnActionEvent {
-      val reporter = GotoDeclarationFUSReporter()
-      val context = CustomizedDataContext.withSnapshot(e.dataContext) { sink ->
-        sink[GO_TO_DECLARATION_REPORTER_DATA_KEY] = reporter
-      }
-      return e.withDataContext(context)
-    }
-
     @Suppress("ApiStatusInternalRedundantOnInternalDeclaration")
     @JvmStatic
     @ApiStatus.Internal

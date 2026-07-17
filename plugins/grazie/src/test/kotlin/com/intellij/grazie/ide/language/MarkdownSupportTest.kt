@@ -63,6 +63,11 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  fun `test no LT article warning before number starting with a vowel`() {
+    myFixture.configureByText("a.md", "Extract an 8x8 pixel square from an 11x11 square from an 18432x18432 square from an 11000.")
+    myFixture.checkHighlighting()
+  }
+
   fun `test no em dash warning for list bullet in injected markdown`() {
     myFixture.configureByText("a.md", """
       Something

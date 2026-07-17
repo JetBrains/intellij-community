@@ -16,5 +16,5 @@
 import javax.swing.*;
 
 public class UIClass {
-    private JButton OtherName;
+    JButton OtherName;
 }

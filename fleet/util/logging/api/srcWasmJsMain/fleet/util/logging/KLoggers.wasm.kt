@@ -6,7 +6,7 @@ import kotlin.math.absoluteValue
 import web.console.console
 import kotlin.reflect.KClass
 
-private var defaultLogLevel = BrowserConsoleLogLevel.DEBUG
+private var defaultLogLevel = BrowserConsoleLogLevel.INFO
 
 fun setDefaultLogLevel(loglevel: BrowserConsoleLogLevel) {
   defaultLogLevel = loglevel

@@ -1,5 +1,5 @@
 // "Change type argument to String" "true"
-// K2_ERROR: Type of 'val foo2: String' is not a subtype of overridden property 'val foo2: Int' defined in 'Test'.
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 abstract class Foo<T1, T2> {
     abstract fun foo1(): T1
     abstract val foo2: T2

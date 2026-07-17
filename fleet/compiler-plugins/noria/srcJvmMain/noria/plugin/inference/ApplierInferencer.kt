@@ -148,7 +148,7 @@ interface ErrorReporter<Node> {
  * The applier inference. This class can infer the token of the applier from the information
  * passed to [visitCall] and [visitVariable] given the adapters provided in the constructor.
  *
- * The inferencer uses [unification][https://en.wikipedia.org/wiki/Unification_(computer_science)]
+ * The inferencer uses [unification](https://en.wikipedia.org/wiki/Unification_(computer_science))
  * to infer the applier token similar to how type inference uses unification to infer types in a
  * functional programming language (e.g. ML or Haskell).
  *

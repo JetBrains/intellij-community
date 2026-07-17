@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.editor
 
 import com.intellij.grazie.GrazieTestBase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection
+import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
 
 internal class MarkdownSuppressionTest: GrazieTestBase() {
 

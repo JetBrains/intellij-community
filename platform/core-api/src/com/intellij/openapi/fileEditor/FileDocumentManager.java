@@ -44,7 +44,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * for the given virtual file is not yet cached, the file's contents are read from VFS and loaded into heap memory.
    * An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
    * <p>
-   * Should be invoked in a read action.
+   * Should be invoked in a read action or (experimental) {@link com.intellij.psi.util.PsiVersioningService#freezePsiVersion  versioned environment}.
    *
    * @param file the file for which the document is requested.
    * @return the document, or null if the file represents a directory, or is binary without an associated decompiler,
@@ -52,7 +52,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @see VirtualFile#contentsToByteArray()
    * @see Application#runReadAction(Computable)
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false)
   public abstract @Nullable Document getDocument(@NotNull VirtualFile file);
 
   @Internal

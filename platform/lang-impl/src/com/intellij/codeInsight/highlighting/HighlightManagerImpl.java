@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -8,13 +8,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -359,7 +359,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
 
     private void requestHideHighlights(@NotNull DataContext dataContext) {
-      Editor editor = ReadAction.computeBlocking(() -> CommonDataKeys.EDITOR.getData(dataContext));
+      // IJPL-238922 Assignee Konstantin Nisht, Dmitry Batkovich Committed 23b8b153d746db03ed793ba0286074bf376a1b82
+      Editor editor = Elf.getElf().runReadAction(() -> CommonDataKeys.EDITOR.getData(dataContext));
       if (editor != null) {
         hideHighlights(editor, HIDE_BY_ANY_KEY);
       }

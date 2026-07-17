@@ -1,7 +1,7 @@
 // "Create class 'Foo'" "false"
 // ERROR: Unresolved reference: Foo
-// K2_ERROR: Unresolved reference 'Foo'.
-// K2_AFTER_ERROR: Unresolved reference 'Foo'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 final class A
 

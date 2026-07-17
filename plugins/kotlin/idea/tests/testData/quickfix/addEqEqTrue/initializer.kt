@@ -1,5 +1,5 @@
 // "Add '== true'" "true"
-// K2_ERROR: Initializer type mismatch: expected 'Boolean', actual 'Boolean?'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 class Foo {
     fun bar() = true
 }

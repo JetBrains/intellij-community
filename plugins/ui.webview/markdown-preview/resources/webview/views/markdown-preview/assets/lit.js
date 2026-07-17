@@ -1,4 +1,3 @@
-//#region ../../webview-src/node_modules/@lit/reactive-element/css-tag.js
 /**
 * @license
 * Copyright 2019 Google LLC
@@ -40,8 +39,6 @@ var r$2 = (t) => new n$2("string" == typeof t ? t : t + "", void 0, s$2), i$3 = 
 	for (const s of t.cssRules) e += s.cssText;
 	return r$2(e);
 })(t) : t;
-//#endregion
-//#region ../../webview-src/node_modules/@lit/reactive-element/reactive-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -270,8 +267,6 @@ var y$1 = class extends HTMLElement {
 	firstUpdated(t) {}
 };
 y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$1("elementProperties")] = /* @__PURE__ */ new Map(), y$1[d$1("finalized")] = /* @__PURE__ */ new Map(), p$1?.({ ReactiveElement: y$1 }), (a$1.reactiveElementVersions ??= []).push("2.1.2");
-//#endregion
-//#region ../../webview-src/node_modules/lit-html/lit-html.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -521,8 +516,6 @@ var D = (t, i, s) => {
 	}
 	return h._$AI(t), h;
 };
-//#endregion
-//#region ../../webview-src/node_modules/lit-element/lit-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -554,5 +547,4 @@ i._$litElement$ = !0, i["finalized"] = !0, s.litElementHydrateSupport?.({ LitEle
 var o = s.litElementPolyfillSupport;
 o?.({ LitElement: i });
 (s.litElementVersions ??= []).push("4.2.2");
-//#endregion
 export { i$3 as i, A as n, b as r, i as t };

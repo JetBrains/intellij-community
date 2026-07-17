@@ -44,7 +44,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sc
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
-import com.jetbrains.python.documentation.PyTypeRenderer
+import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
@@ -100,6 +100,7 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestMethodOrder
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -179,6 +180,7 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
+    val copyDirectoryToProject: List<Pair<String, String>> = emptyList(),
   )
 
 
@@ -325,6 +327,9 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun doTest(options: TestOptions, fileName: String, fileContent: String, otherFiles: Array<out Pair<String, String>>) {
+    for ((from, to) in options.copyDirectoryToProject) {
+      myFixture.copyDirectoryToProject(from, to)
+    }
     for ((filename, content) in otherFiles) {
       myFixture.createFile(filename, content.trimIndent())
     }
@@ -428,7 +433,7 @@ abstract class PyCodeInsightTestCase {
     for (idx in actualAssertionsAligned.lastIndex downTo 0) {
       val actualAssertion = actualAssertionsAligned[idx]
       val expectedAssertion = counterparts[actualAssertion] ?: continue
-      if (expectedAssertion.type == PyTestAssertionType.ISSUES.name && actualAssertion.type != PyTestAssertionType.ISSUES.name) {
+      if (expectedAssertion.isWildcard && !actualAssertion.isWildcard) {
         actualAssertionsAligned.removeAt(idx)
         continue
       }
@@ -532,7 +537,7 @@ abstract class PyCodeInsightTestCase {
     val containingFile = expr.containingFile
 
     fun renderType(context: TypeEvalContext) =
-      PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRenderer.Feature.UNSAFE_UNION)
+      PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRendererFeature.UNSAFE_UNION)
 
     val actualTypeCA = renderType(codeAnalysis(project, containingFile).withTracing())
     val actualTypeUI = renderType(userInitiated(project, containingFile).withTracing())
@@ -599,6 +604,8 @@ data class PyTestAssertion(
   fun isInlineAssertion(): Boolean {
     return codeColumnStart < 0
   }
+
+  val isWildcard: Boolean get() = type == PyTestAssertionType.ISSUES.name
 
   val codeColumnEndEffective: Int get() = if (codeColumnStart + 1 == codeColumnEnd) -1 else codeColumnEnd
 
@@ -719,21 +726,34 @@ private object PyTestAssertionInliner {
   ): Map<PyTestAssertion, PyTestAssertion> {
 
     val matches = mutableMapOf<PyTestAssertion, PyTestAssertion>()
+    val usedExpected = mutableSetOf<PyTestAssertion>()
 
     for (actual in actualAssertions) {
-      val expectedIndex = expectedAssertions.indexOfFirst { expected ->
-        areCounterparts(expected, actual)
-      }
-
-      val expected = expectedAssertions.getOrNull(expectedIndex) ?: continue
+      val expected = findBestCounterpart(actual, expectedAssertions, usedExpected) ?: continue
       matches[actual] = expected
+      if (!expected.isWildcard) usedExpected += expected
     }
 
     return matches
   }
 
+  private fun findBestCounterpart(
+    actual: PyTestAssertion,
+    expectedAssertions: List<PyTestAssertion>,
+    usedExpected: Set<PyTestAssertion>,
+  ): PyTestAssertion? {
+    return expectedAssertions
+      .filter { it !in usedExpected && areCounterparts(it, actual) }
+      .minWithOrNull(
+        compareBy(
+          { expected -> if (expected.content == actual.content) 0 else 1 },
+          { expected -> abs(expected.codeColumnStart - actual.codeColumnStart) },
+        )
+      )
+  }
+
   private fun areCounterparts(expected: PyTestAssertion, actual: PyTestAssertion): Boolean {
-    if (expected.type == PyTestAssertionType.ISSUES.name && expected.type != actual.type) {
+    if (expected.isWildcard && expected.type != actual.type) {
       if (!defaultSeverityNames.contains(actual.type)) return false
     }
     else if (expected.type != actual.type) return false

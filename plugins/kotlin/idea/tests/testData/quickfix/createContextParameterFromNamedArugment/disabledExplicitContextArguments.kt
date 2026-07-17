@@ -1,7 +1,7 @@
 // "Add context parameter to function" "false"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:-ExplicitContextArguments
-// K2_ERROR: No parameter with name 'ctx2' found.
-// K2_AFTER_ERROR: No parameter with name 'ctx2' found.
+// K2_AFTER_ERROR: NAMED_PARAMETER_NOT_FOUND
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
 class Ctx
 class Ctx2<T>
 

@@ -167,7 +167,7 @@ private class RpcClient(
   }
 
   companion object {
-    val logger = KLoggers.logger(RpcClient::class)
+    val logger by lazy { KLoggers.logger(RpcClient::class) }
   }
 
   private sealed class Event {

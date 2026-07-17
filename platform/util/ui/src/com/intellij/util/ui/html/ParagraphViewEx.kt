@@ -82,7 +82,7 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
 
   inner class ParagraphRow internal constructor(elem: Element) : BoxView(elem, X_AXIS) {
 
-    override fun loadChildren(f: ViewFactory) {
+    override fun loadChildren(f: ViewFactory?) {
     }
 
     override fun getAttributes(): AttributeSet? =

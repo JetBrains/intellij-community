@@ -19,9 +19,9 @@ import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.UriUtil
+import com.intellij.markdown.backend.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
-import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import java.io.IOException
@@ -107,7 +107,7 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     }
   }
 
-  private fun collectHeaders(anchor: String, targetFile: VirtualFile, project: Project): List<MarkdownHeaderInfo>? {
+  private fun collectHeaders(anchor: String, targetFile: VirtualFile, project: Project): List<MarkdownHeaderInfo> {
     return runReadAction {
       if (DumbService.isDumb(project)) {
         return@runReadAction emptyList()

@@ -1,0 +1,62 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.mermaid.json` start
+jvm_library(
+    name = "json",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mermaid.json",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/analysis-api:analysis",
+        "//platform/projectModel-api:projectModel",
+        "//platform/ide-core",
+        "//plugins/mermaid",
+        "//json/backend",
+    ],
+)
+
+jvm_library(
+    name = "json_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mermaid.json",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":json",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//plugins/mermaid:mermaid_test_lib",
+        "//json/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.mermaid.json` end
+
+### auto-generated section `iml intellij.mermaid.json` start
+exports_files(
+    [
+        "intellij.mermaid.json.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.mermaid.json` end

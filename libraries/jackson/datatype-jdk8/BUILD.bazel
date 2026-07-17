@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.jackson.datatype.jdk8` start
-
 jvm_library(
     name = "libraries-jackson-datatype-jdk8",
     srcs = glob(

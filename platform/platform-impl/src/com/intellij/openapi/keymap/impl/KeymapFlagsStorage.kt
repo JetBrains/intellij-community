@@ -34,7 +34,6 @@ private class KeymapFlagsStorageListener : KeymapManagerListener {
   }
 }
 
-@Internal
 @State(name = "KeymapFlagsStorage",
        category = SettingsCategory.KEYMAP,
        exportable = true,

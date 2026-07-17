@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.ide.concurrency` start
+jps_test(
+    name = "ide-concurrency-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-concurrency-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.ide.concurrency.tests`
+
+### auto-generated section `build intellij.platform.ide.concurrency` start
 jvm_library(
     name = "concurrency",
     srcs = glob(
@@ -78,7 +86,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ide.concurrency` end
 
 ### auto-generated section `build intellij.platform.ide.concurrency.tests` start
-
 jvm_library(
     name = "ide-concurrency-tests",
     srcs = glob(
@@ -149,11 +156,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide.concurrency.tests` end
-
-### auto-generated section `test intellij.platform.ide.concurrency.tests` start
-
-jps_test(
-    name = "ide-concurrency-tests_test",
-    runtime_deps = [":ide-concurrency-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.ide.concurrency.tests` end

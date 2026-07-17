@@ -8,6 +8,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -50,11 +51,11 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     if (startOffset == -1) return
 
     ApplicationManager.getApplication().invokeLater {
-      commandProcessor.runUndoTransparentAction(
-        {
+      commandProcessor.runUndoTransparentAction {
+        WriteIntentReadAction.run {
           completionCommand.execute(startOffset, psiFile, editor)
         }
-      )
+      }
     }
   }
 

@@ -15,7 +15,6 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab

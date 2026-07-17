@@ -54,94 +54,16 @@ create_kotlinc_options(
     jvm_target = "25",
 )
 
-java_binary(
-    name = "main_run",
-    jvm_flags = [
-        "--add-opens=java.base/java.io=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.ref=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-        "--add-opens=java.base/java.net=ALL-UNNAMED",
-        "--add-opens=java.base/java.nio=ALL-UNNAMED",
-        "--add-opens=java.base/java.nio.charset=ALL-UNNAMED",
-        "--add-opens=java.base/java.text=ALL-UNNAMED",
-        "--add-opens=java.base/java.time=ALL-UNNAMED",
-        "--add-opens=java.base/java.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
-        "--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED",
-        "--add-opens=java.base/sun.net.dns=ALL-UNNAMED",
-        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
-        "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
-        "--add-opens=java.base/sun.security.util=ALL-UNNAMED",
-        "--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED",
-        "--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED",
-        "--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED",
-        "--add-opens=java.desktop/com.sun.java.swing=ALL-UNNAMED",
-        "--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",
-        "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
-        "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
-        "--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED",
-        "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
-        "--add-opens=java.desktop/javax.swing.text.html.parser=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.java2d=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.swing.text=ALL-UNNAMED",
-        "--add-opens=java.management/sun.management=ALL-UNNAMED",
-        "--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED",
-        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-        "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
-        "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED",
-        "-Didea.home.path=$${BUILD_WORKSPACE_DIRECTORY}",
-        # same as .idea/runConfigurations/IDEA.xml:
-        "-Xmx2g",
-        "-XX:MaxJavaStackTraceDepth=10000",
-        "-XX:+AllowEnhancedClassRedefinition",
-        "-XX:PrintIdealGraphLevl=3",
-        "-XX:+IgnoreUnrecognizedVMOptions",
-        "-ea",
-        "-Dsun.io.useCanonCaches=false",
-        "-Dsun.awt.disablegrab=true",
-        "-Dsun.java2d.metal=true",
-        "-Dapple.laf.useScreenMenuBar=true",
-        "-Djdk.attach.allowAttachSelf",
-        "-Djdk.module.illegalAccess.silent=true",
-        "-DjbScreenMenuBar.enabled=true",
-        "-Didea.jre.check=true",
-        "-Didea.is.internal=true",
-        "-Didea.debug.mode=true",
-        "-Didea.config.path=$${BUILD_WORKSPACE_DIRECTORY}/config/idea",
-        "-Didea.system.path=$${BUILD_WORKSPACE_DIRECTORY}/system/idea",
-        "-Didea.diagnostic.opentelemetry.file=opentelemetry.json",
-        "-Dfus.internal.test.mode=true",
-        "-Dcompose.swing.render.on.graphics=true",
-    ],
-    main_class = "com.intellij.idea.Main",
-    runtime_deps = [":main"],
-)
-
 ## used to determine community root path in the test
 ## see community/build/tests-options.bzl
 exports_files(["intellij.idea.community.main.iml"])
 
-### auto-generated section `build intellij.idea.community.main` start
+exports_files(
+    glob(["build.txt"]),
+    visibility = ["//visibility:public"],
+)
 
+### auto-generated section `build intellij.idea.community.main` start
 jvm_library(
     name = "main",
     srcs = glob(
@@ -223,6 +145,7 @@ jvm_library(
         "//RegExpSupport:regexp",
         "//plugins/svn4idea:vcs-svn",
         "//plugins/testng",
+        "//plugins/testng/langInjection",
         "//java/langInjection",
         "//xml/langInjection",
         "//plugins/xpath",
@@ -410,6 +333,7 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//plugins/svn4idea:vcs-svn_test_lib",
         "//plugins/testng:testng_test_lib",
+        "//plugins/testng/langInjection:langInjection_test_lib",
         "//java/langInjection:langInjection_test_lib",
         "//xml/langInjection:langInjection_test_lib",
         "//plugins/xpath:xpath_test_lib",
@@ -527,7 +451,6 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.main` end
 
 ### auto-generated section `build intellij.idea.community.main.android` start
-
 jvm_library(
     name = "main-android",
     srcs = glob(
@@ -585,7 +508,6 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.main.android` end
 
 ### auto-generated section `build intellij.idea.community.main.tests` start
-
 jvm_library(
     name = "main-tests",
     srcs = glob(
@@ -794,6 +716,8 @@ jvm_library(
         "//python/python-pyproject:pyproject-tests_test_lib",
         "//python/python-pytools/tests",
         "//python/python-pytools/tests:tests_test_lib",
+        "//python/mcp:mcp-tests",
+        "//python/mcp:mcp-tests_test_lib",
         "//python/services/internal-impl:python-community-services-internal-impl-tests",
         "//python/services/internal-impl:python-community-services-internal-impl-tests_test_lib",
         "//python/python-test-env/common",
@@ -978,8 +902,6 @@ jvm_library(
         "//plugins/coverage-common:coverage-tests_test_lib",
         "//platform/credential-store-impl:credentialStore-impl-tests",
         "//platform/credential-store-impl:credentialStore-impl-tests_test_lib",
-        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer-tests",
-        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer-tests_test_lib",
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension-tests",
         "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension-tests_test_lib",
         "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt-tests",
@@ -1176,6 +1098,8 @@ jvm_library(
         "//plugins/mermaid:mermaid-tests_test_lib",
         "//platform/discoverability:discoverability-tests",
         "//platform/discoverability:discoverability-tests_test_lib",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
         "//plugins/mcp-server/mcpserver.terminal/tests",

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.util` start
-
 jvm_provided_library(
     name = "platform_util_troveCompileOnly_provided",
     lib = "//platform/util/troveCompileOnly",
@@ -135,7 +134,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util` end
 
 ### auto-generated section `build intellij.platform.util.tests` start
-
 resourcegroup(
     name = "util-tests_test_resources",
     srcs = glob(
@@ -287,7 +285,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.tests` end
 
 ### auto-generated section `test intellij.platform.util.tests` start
-
 jps_test(
     name = "util-tests_test",
     runtime_deps = [":util-tests_test_lib"],
@@ -295,7 +292,6 @@ jps_test(
 ### auto-generated section `test intellij.platform.util.tests` end
 
 ### auto-generated section `build intellij.platform.util.ui` start
-
 kt_javac_options(
     name = "custom-javac-options",
     add_exports = [

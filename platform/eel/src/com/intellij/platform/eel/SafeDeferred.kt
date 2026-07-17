@@ -32,7 +32,22 @@ import kotlin.coroutines.cancellation.CancellationException
  *   It does not show the place where [Deferred.await] is actually called.
  */
 @ApiStatus.Experimental
-class SafeDeferred<T>(private val deferred: Deferred<T>) {
+class SafeDeferred<T>(
+  private val deferred: Deferred<T>,
+
+  /**
+   * An optional, opt-in mapper for failures of a dead backing session.
+   *
+   * When the backing [deferred] fails (with anything other than a [CancellationException]), [await] first offers the
+   * raw failure to this mapper. If it returns a non-null throwable, that throwable is wrapped into [FailedDeferred]
+   * in place of the raw failure. This lets owners (e.g. IJent) surface a canonical domain exception as the
+   * [FailedDeferred] cause instead of a low-level one, while still honoring the [ThrowsChecked] contract of [await].
+   * Non-owners keep the default behavior (the parameter defaults to `null`).
+   */
+  internal val deadSessionMapper: (suspend (Throwable) -> Throwable?)?,
+) {
+  constructor(deferred: Deferred<T>) : this(deferred, null)
+
   sealed class DeferredException(override val cause: Throwable) : RuntimeException(cause.message, cause)
 
   /**
@@ -59,7 +74,8 @@ class SafeDeferred<T>(private val deferred: Deferred<T>) {
       throw CancelledDeferred(err)
     }
     catch (err: Exception) {
-      throw FailedDeferred(err)
+      val mapped = deadSessionMapper?.invoke(err)
+      throw FailedDeferred(mapped ?: err)
     }
 
   sealed interface State<T> {
@@ -132,7 +148,7 @@ class SafeDeferred<T>(private val deferred: Deferred<T>) {
 }
 
 @ApiStatus.Experimental
-inline fun <A, B> SafeDeferred<A>.map(crossinline block: (A) -> B): SafeDeferred<B> {
+fun <A, B> SafeDeferred<A>.map(block: (A) -> B): SafeDeferred<B> {
   val result = CompletableDeferred<B>()
   invokeWhenCompleted {
     when (it) {
@@ -141,7 +157,9 @@ inline fun <A, B> SafeDeferred<A>.map(crossinline block: (A) -> B): SafeDeferred
       is SafeDeferred.State.Failed -> result.completeExceptionally(it.error)
     }
   }
-  return SafeDeferred(result)
+  // Preserve the dead-session mapping across the transformation so the mapped deferred still surfaces the canonical
+  // exception instead of FailedDeferred.
+  return SafeDeferred(result, deadSessionMapper)
 }
 
 @ApiStatus.Experimental

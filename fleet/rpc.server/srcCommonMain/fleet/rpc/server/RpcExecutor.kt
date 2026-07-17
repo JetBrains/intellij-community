@@ -65,7 +65,7 @@ class RpcExecutor private constructor(
   private val parents: MultiplatformConcurrentHashMap<InstanceId, InstanceId> = MultiplatformConcurrentHashMap()
 
   companion object {
-    internal val logger = KLoggers.logger(RpcExecutor::class)
+    internal val logger by lazy { KLoggers.logger(RpcExecutor::class) }
 
     suspend fun serve(
       services: RpcServiceLocator,

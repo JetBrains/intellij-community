@@ -99,7 +99,7 @@ object InternalPsiVersioning {
     if (isInsideVersioningButNotLocks()) {
       return
     }
-    ThreadingAssertions.assertReadAccess()
+    ThreadingAssertions.softAssertReadAccess()
   }
 
   @JvmStatic
@@ -487,9 +487,7 @@ object InternalPsiVersioning {
   }
 
   override fun toString(): String {
-    val explanation = if (getCurrentPsiVersion() % 2 == 1L) {
-      " (Odd version -- changes are running in exclusive modification scope and they are invisible to anyone but this thread)"
-    } else if (getCurrentPsiVersion() % 2 == 0L && getCurrentPsiVersion() > PsiVersionRegistry.instance.latestPublishedVersion) {
+    val explanation = if (getCurrentPsiVersion() > PsiVersionRegistry.instance.latestPublishedVersion) {
       " (Thread-local version is ahead of the published version -- the changes happening in a write action and they will be published)"
     } else {
       ""

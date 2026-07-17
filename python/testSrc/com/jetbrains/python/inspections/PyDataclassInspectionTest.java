@@ -459,6 +459,18 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  @TestFor(issues = "PY-89637")
+  public void testPydanticValidateByAliasAndNameFalseInspection() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  @TestFor(issues = "PY-89637")
+  public void testPydanticValidateByAliasAndNameFalseInModelConfigInspection() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
   @TestFor(issues="PY-89180")
   public void testMutatingFrozenFieldPydantic() {
     myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");

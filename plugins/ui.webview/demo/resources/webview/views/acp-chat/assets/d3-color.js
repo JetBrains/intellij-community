@@ -1,9 +1,6 @@
 import { f as rgbConvert, l as Color, m as extend, p as define_default, u as Rgb } from "./d3.js";
-//#region node_modules/d3-color/src/math.js
 var radians = Math.PI / 180;
 var degrees = 180 / Math.PI;
-//#endregion
-//#region node_modules/d3-color/src/lab.js
 var K = 18, Xn = .96422, Yn = 1, Zn = .82521, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1;
 function labConvert(o) {
 	if (o instanceof Lab) return new Lab(o.l, o.a, o.b, o.opacity);
@@ -85,5 +82,4 @@ define_default(Hcl, hcl, extend(Color, {
 		return hcl2lab(this).rgb();
 	}
 }));
-//#endregion
 export { hcl as t };

@@ -449,7 +449,7 @@ internal class WorkspaceFileIndexDataImpl(
     resetFileCache()
     val registeredFileSets = storeRegistrar.registeredFileSets
     val removedFileSets = removeRegistrar.removedFileSets
-    deduplicateFileSetsAndPublishChangeEvent(registeredFileSets, removedFileSets, event.storageAfter)
+    deduplicateFileSetsAndPublishChangeEvent(registeredFileSets, removedFileSets)
   }
 
   /**
@@ -463,7 +463,6 @@ internal class WorkspaceFileIndexDataImpl(
   private fun deduplicateFileSetsAndPublishChangeEvent(
     registeredFileSets: MutableSet<StoredFileSet>,
     removedFileSets: MutableSet<StoredFileSet>,
-    storageAfter: ImmutableEntityStorage,
   ) {
     val iterator = registeredFileSets.iterator()
     while (iterator.hasNext()) {
@@ -477,7 +476,7 @@ internal class WorkspaceFileIndexDataImpl(
     val registeredFileSets = registeredFileSets.filterIsInstance<WorkspaceFileSet>()
 
     if (registeredFileSets.isNotEmpty() || removedExclusions.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(registeredFileSets, removedExclusions, storageAfter)
+      val changeLog = WorkspaceFileIndexChangedEvent(registeredFileSets, removedExclusions)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
   }
@@ -512,7 +511,7 @@ internal class WorkspaceFileIndexDataImpl(
 
     removedFileSets.addAll(removeRegistrar.removedFileSets)
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
-    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets, removedFileSets, storage)
+    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets, removedFileSets)
   }
 
   override fun resetFileCache() {

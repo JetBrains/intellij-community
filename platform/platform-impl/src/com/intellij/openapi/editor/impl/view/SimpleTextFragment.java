@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -18,14 +18,19 @@ final class SimpleTextFragment extends TextFragment {
   private final @NotNull Font myFont;
   private final float @Nullable [] myCharAlignment;
 
-  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
-    super(end - start, view);
+  SimpleTextFragment(
+    char @NotNull [] lineChars,
+    int start,
+    int end,
+    @NotNull FontInfo fontInfo,
+    @Nullable EditorView view
+  ) {
+    super(end - start, false, view);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     float x = 0;
     char[] text = myText;
     float[] charAlignment = null;
-    float[] charPositions = myCharPositions;
     boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
     for (int i = 0; i < text.length; i++) {
       int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
@@ -41,19 +46,49 @@ final class SimpleTextFragment extends TextFragment {
         }
       }
       x += charWidth;
-      charPositions[i] = x;
+      myCharPositions[i] = x;
     }
     myCharAlignment = charAlignment;
   }
 
   @Override
-  boolean isRtl() {
-    return false;
+  protected int offsetToLogicalColumn(int offset) {
+    return offset;
   }
 
   @Override
-  int offsetToLogicalColumn(int offset) {
-    return offset;
+  public int getLogicalColumnCount(int startColumn) {
+    return myCharPositions.length;
+  }
+
+  @Override
+  public int getVisualColumnCount(float startX) {
+    return myCharPositions.length;
+  }
+
+  @Override
+  public int visualColumnToOffset(float startX, int column) {
+    return column;
+  }
+
+  @Override
+  public float visualColumnToX(float startX, int column) {
+    return startX + getX(column);
+  }
+
+  @Override
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
+    float relX = x - startX;
+    float prevPos = 0;
+    for (int i = 0; i < myCharPositions.length; i++) {
+      float newPos = myCharPositions[i];
+      if (relX < (newPos + prevPos) / 2) {
+        return new VisualColumn(i, relX > prevPos);
+      }
+      prevPos = newPos;
+    }
+    boolean leansRight = relX > myCharPositions[myCharPositions.length - 1];
+    return new VisualColumn(myCharPositions.length, leansRight);
   }
 
   @Override
@@ -104,39 +139,5 @@ final class SimpleTextFragment extends TextFragment {
       }
       // Postcondition: i == j == end or the next character to draw.
     }
-  }
-
-  @Override
-  public int getLogicalColumnCount(int startColumn) {
-    return myCharPositions.length;
-  }
-
-  @Override
-  public int getVisualColumnCount(float startX) {
-    return myCharPositions.length;
-  }
-
-  @Override
-  public int visualColumnToOffset(float startX, int column) {
-    return column;
-  }
-
-  @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
-    float relX = x - startX;
-    float prevPos = 0;
-    for (int i = 0; i < myCharPositions.length; i++) {
-      float newPos = myCharPositions[i];
-      if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX <= prevPos ? 0 : 1};
-      }
-      prevPos = newPos;
-    }
-    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
-  }
-
-  @Override
-  public float visualColumnToX(float startX, int column) {
-    return startX + getX(column);
   }
 }

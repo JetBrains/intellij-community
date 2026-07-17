@@ -32,11 +32,11 @@ import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeProjection
 
@@ -77,7 +77,7 @@ private fun buildCallExpressionWithoutTypeArgs(element: KtCallExpression): KtCal
         typeArgumentListRange.end - contextStartOffset,
     )
 
-    val (prefix, suffix) = if (context !is KtScriptInitializer && context.parent !is KtClassBody) {
+    val (prefix, suffix) = if (hasPropertyAccessorBetween(element, context)) {
         "object __Obj__  {" to "}"
     } else "" to ""
 
@@ -87,6 +87,26 @@ private fun buildCallExpressionWithoutTypeArgs(element: KtCallExpression): KtCal
     ).createBlockCodeFragment("$prefix$textWithoutTypeArgs$suffix", context)
 
     return codeFragment.findElementAt(typeArgumentListRange.start + prefix.length - contextStartOffset)?.parentOfType()
+}
+
+/**
+ * Detects whether the code fragment is created inside a property accessor.
+ * This is needed because `KtBlockCodeFragment` loses expected-type information
+ * for property accessors.
+ *
+ * See:
+ * - org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated.RemoveExplicitTypeArgumentsFormerIntentionTest#testGetterBody
+ * - org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated.RemoveExplicitTypeArgumentsFormerIntentionTest#testGetterBodyInsideClass
+ * - org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated.RemoveExplicitTypeArgumentsFormerIntentionTest#testSetterBody
+ * - org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated.RemoveExplicitTypeArgumentsFormerIntentionTest#testSetterBodyInsideClass
+ */
+private fun hasPropertyAccessorBetween(element: KtElement, context: KtElement): Boolean {
+    var current = element.parent
+    while (current != null && current != context) {
+        if (current is KtPropertyAccessor) return true
+        current = current.parent
+    }
+    return false
 }
 
 private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =

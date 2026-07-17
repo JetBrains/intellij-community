@@ -50,7 +50,7 @@ fun startTerminalProcess(
 @ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
 fun createTerminalSession(
-  project: Project,
+  project: Project?,
   ttyConnector: TtyConnector,
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
@@ -63,7 +63,9 @@ fun createTerminalSession(
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
-  shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
+  if (project != null) {
+    shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
+  }
   val outputFlow = createTerminalOutputFlow(
     services,
     shellIntegrationController,

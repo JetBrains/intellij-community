@@ -1,13 +1,13 @@
 fun test() {
-   <warning descr="[DEPRECATION] 'companion object of MyClass' is deprecated. Use A instead">MyClass</warning>.test
+   <warning descr="[DEPRECATION]">MyClass</warning>.test
    MyClass()
    val a: MyClass? = null
    val b: MyInterface? = null
-   <warning descr="[DEPRECATION] 'companion object of MyInterface' is deprecated. Use A instead">MyInterface</warning>.test
-   MyInterface.<warning descr="[DEPRECATION] 'companion object of MyInterface' is deprecated. Use A instead">Companion</warning>
-   <warning descr="[DEPRECATION] 'companion object of MyInterface' is deprecated. Use A instead">MyInterface</warning>
-   MyClass.<warning descr="[DEPRECATION] 'companion object of MyClass' is deprecated. Use A instead">Companion</warning>
-   MyClass.<warning descr="[DEPRECATION] 'companion object of MyClass' is deprecated. Use A instead">Companion</warning>.test
+   <warning descr="[DEPRECATION]">MyInterface</warning>.test
+   MyInterface.<warning descr="[DEPRECATION]">Companion</warning>
+   <warning descr="[DEPRECATION]">MyInterface</warning>
+   MyClass.<warning descr="[DEPRECATION]">Companion</warning>
+   MyClass.<warning descr="[DEPRECATION]">Companion</warning>.test
 
    a == b
 }

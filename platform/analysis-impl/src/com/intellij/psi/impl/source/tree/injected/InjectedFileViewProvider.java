@@ -107,8 +107,8 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     return true;
   }
 
-  default boolean isPhysicalImpl() {
-    return isEventSystemEnabled();
+  default boolean correspondsToRealFileImpl() {
+    return supportsSendingPsiEvents();
   }
 
   default void performNonPhysically(@NotNull Runnable runnable) {
@@ -139,7 +139,7 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     return getDocument().getShreds();
   }
 
-  default boolean isEventSystemEnabledImpl() {
+  default boolean supportsSendingPsiEventsImpl() {
     return !SingleRootInjectedFileViewProvider.disabledTemporarily.get();
   }
 

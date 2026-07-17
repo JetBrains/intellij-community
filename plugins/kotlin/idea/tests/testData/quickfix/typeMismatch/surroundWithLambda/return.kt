@@ -1,6 +1,6 @@
 // "Surround with lambda" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Return type mismatch: expected '() -> String?', actual 'String'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun foo(): () -> String? {
     return <caret>"foo"
 }

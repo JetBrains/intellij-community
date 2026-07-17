@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.settings.local` start
+jps_test(
+    name = "settings-local-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":settings-local-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.settings.local.tests`
+
+### auto-generated section `build intellij.platform.settings.local` start
 create_kotlinc_options(
     name = "custom_settings-local",
     opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"],
@@ -103,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.settings.local` end
 
 ### auto-generated section `build intellij.platform.settings.local.tests` start
-
 create_kotlinc_options(
     name = "custom_settings-local-tests",
     opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"],
@@ -211,11 +218,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.settings.local.tests` end
-
-### auto-generated section `test intellij.platform.settings.local.tests` start
-
-jps_test(
-    name = "settings-local-tests_test",
-    runtime_deps = [":settings-local-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.settings.local.tests` end

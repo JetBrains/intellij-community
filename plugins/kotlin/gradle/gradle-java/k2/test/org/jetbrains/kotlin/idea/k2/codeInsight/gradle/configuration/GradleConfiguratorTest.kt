@@ -463,7 +463,55 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesDifferentVersions() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringShortForm() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringWithBraces() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringWithSpaces() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProvider() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderGet() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinVersionPluginManagementGradlePropertiesKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderGetKts() {
         runJvmToolchainTest()
     }
 

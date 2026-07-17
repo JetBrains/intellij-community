@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.TextRange;
@@ -51,17 +50,6 @@ public final class DebuggerContextUtil {
     else {
       manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
     }
-  }
-
-  public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
-    ThreadingAssertions.assertEventDispatchThread();
-
-    final DebuggerSession session = contextManager.getContext().getDebuggerSession();
-    final DebuggerContextImpl newContext =
-      DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
-
-    contextManager.setState(newContext, session != null ? session.getState() : DebuggerSession.State.DISPOSED,
-                            DebuggerSession.Event.CONTEXT, null);
   }
 
   public static @NotNull DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext) {

@@ -1,9 +1,9 @@
 // IS_APPLICABLE: false
 // ERROR: 'if' must have both main and 'else' branches if used as an expression
 // ERROR: Expression 'if "test" is String' of type 'Unit' cannot be invoked as a function. The function 'invoke()' is not found
-// K2_ERROR: 'if' must have both main and 'else' branches when used as an expression.
-// K2_ERROR: Unresolved reference 'invoke' on receiver of type 'Boolean'.
 // AFTER-WARNING: Check for instance is always 'true'
+// K2_ERROR: INVALID_IF_AS_EXPRESSION
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun <T> doSomething(a: T) {}
 
 fun main() {

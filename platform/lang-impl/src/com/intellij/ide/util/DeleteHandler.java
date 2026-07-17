@@ -9,7 +9,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.DumbService;
@@ -66,6 +64,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.ide.util.DeleteUtil.generateDeleteWarningMessageWithModalProgress;
+import static com.intellij.ide.util.DeleteUtil.generateSafeDeleteWarningMessageWithModalProgress;
 
 @SuppressWarnings("SplitModeApiUsage")
 public final class DeleteHandler {
@@ -137,7 +138,8 @@ public final class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       if (needConfirmation) {
         final Ref<Boolean> exit = Ref.create(false);
-        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+        var warningMessage = generateSafeDeleteWarningMessageWithModalProgress(project, true, elements);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, warningMessage, new SafeDeleteDialog.Callback() {
           @Override
           public void run(final SafeDeleteDialog dialog) {
             if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
@@ -162,32 +164,8 @@ public final class DeleteHandler {
       }
     }
     else {
-      String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", elements);
-
-      boolean anyDirectories = false;
-      String directoryName = null;
-      for (PsiElement psiElement : elementsToDelete) {
-        if (psiElement instanceof PsiDirectory && !PsiUtilBase.isSymLink((PsiDirectory)psiElement)) {
-          anyDirectories = true;
-          directoryName = ((PsiDirectory)psiElement).getName();
-          break;
-        }
-      }
-      if (anyDirectories) {
-        if (elements.length == 1) {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName);
-        }
-        else {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
-        }
-      }
-
-      if (safeDeleteApplicable) {
-        warningMessage +=
-          LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
-      }
-
       if (needConfirmation) {
+        var warningMessage = generateDeleteWarningMessageWithModalProgress(project, elementsToDelete, elements, safeDeleteApplicable);
         int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
                                                  ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
                                                  Messages.getQuestionIcon());

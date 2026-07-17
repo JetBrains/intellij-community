@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -114,7 +115,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myMapper = new EditorCoordinateMapper(this);
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
-    myLogicalPositionCache = new LogicalPositionCache(this);
+    myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
     mySelectionVisualModel = new SelectionVisualModel(myEditor);
@@ -154,12 +155,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertEditorAccessible();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
+  public int offsetToLogicalColumn(int line, int intraLineOffset) {
+    return myMapper.offsetToLogicalColumn(line, intraLineOffset);
+  }
+
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertEditorAccessible();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -231,7 +234,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myPrefixText = prefixText;
     synchronized (myLock) {
       myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                       LineLayout.create(this, prefixText, attributes.getFontType());
+                       LineLayout.createForStandaloneText(this, prefixText, attributes.getFontType());
     }
     myPrefixAttributes = attributes;
     mySizeManager.invalidateRange(0, 0);
@@ -318,7 +321,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
       default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     };
-    myLogicalPositionCache.reset(false);
+    myLogicalPositionCache.reset(false, getTabSize());
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
     myCharWidthCache.clear();
@@ -345,7 +348,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    */
   @RequiresEdt
   public void reset() {
-    myLogicalPositionCache.reset(true);
+    myLogicalPositionCache.reset(true, getTabSize());
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
   }
@@ -476,9 +479,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       offset = text.length();
       leanTowardsLargerOffsets = true;
     }
-    int logicalColumn = LogicalPositionCache.calcColumn(text, 0, 0, offset, getTabSize());
     int maxColumn = 0;
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+    int logicalColumn = DocumentInternalUtil.calcLogicalColumn(text, 0, 0, offset, getTabSize());
+    for (LineVisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
       int startLC = fragment.getStartLogicalColumn();
       int endLC = fragment.getEndLogicalColumn();
       if (logicalColumn > startLC && logicalColumn < endLC ||
@@ -494,14 +497,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     if (visualColumn < 0 || visualColumn == 0 && !leansRight) return 0;
     String text = region.getPlaceholderText();
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+    for (LineVisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
       int startVC = fragment.getStartVisualColumn();
       int endVC = fragment.getEndVisualColumn();
       if (visualColumn > startVC && visualColumn < endVC ||
           visualColumn == startVC && leansRight ||
           visualColumn == endVC && !leansRight) {
         int logicalColumn = fragment.visualToLogicalColumn(visualColumn);
-        return LogicalPositionCache.calcOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
+        return DocumentInternalUtil.calcLogicalOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
       }
     }
     return text.length();
@@ -615,10 +618,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myPrefixAttributes;
   }
 
-  boolean isAd() {
-    return myEditorModel.isAd();
-  }
-
   EditorImpl getEditor() {
     return myEditor;
   }
@@ -706,8 +705,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
       TextAttributes placeholderAttributes = getFoldingModel().getPlaceholderAttributes();
-      layout = LineLayout.create(this, StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
-                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
+      layout = LineLayout.createForStandaloneText(
+        this,
+        StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
+        placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType()
+      );
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }
     return layout;
@@ -837,12 +839,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
       getFoldingModel().updateCachedOffsets();
-    }
-  }
-
-  private void assertEditorAccessible() {
-    if (!myEditorModel.isAd()) {
-      EditorThreading.assertInteractionAllowed();
     }
   }
 

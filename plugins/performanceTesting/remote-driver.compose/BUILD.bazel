@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` start
-
 jvm_library(
     name = "remote-driver.compose",
     srcs = glob(

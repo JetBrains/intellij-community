@@ -1,5 +1,4 @@
 import { n as __exportAll } from "./rolldown-runtime.js";
-//#region node_modules/katex/dist/katex.mjs
 var katex_exports = /* @__PURE__ */ __exportAll({
 	ParseError: () => ParseError,
 	SETTINGS_SCHEMA: () => SETTINGS_SCHEMA,
@@ -26338,8 +26337,6 @@ var katex = {
 	*/
 	__domTree
 };
-//#endregion
-//#region node_modules/katex/dist/contrib/auto-render.mjs
 var findEndOfMath = function findEndOfMath(delimiter, text, startIndex) {
 	var index = startIndex;
 	var braceLevel = 0;
@@ -26501,5 +26498,4 @@ var renderMathInElement = function renderMathInElement(elem, options) {
 	optionsCopy.macros = optionsCopy.macros || {};
 	_renderElem(elem, optionsCopy);
 };
-//#endregion
 export { katex_exports as n, renderMathInElement as t };

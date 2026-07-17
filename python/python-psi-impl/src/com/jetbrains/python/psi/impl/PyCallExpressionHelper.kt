@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.flattenToCallables
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -73,7 +74,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
@@ -288,7 +289,7 @@ object PyCallExpressionHelper {
     val callee = expression.callee ?: return null
     val context = resolveContext.typeEvalContext
     if (callee !is PyReferenceExpression) {
-      val callables = context.getType(callee).components.filterIsInstance<PyCallableType>()
+      val callables = context.getType(callee).compositeComponents.filterIsInstance<PyCallableType>()
       return if (callables.isEmpty()) null else PyUnionType.union(callables)
     }
 
@@ -313,7 +314,7 @@ object PyCallExpressionHelper {
           callableTypes.add(adjustCallableType(it, expression, clarified, context))
         }
     }
-    val callables = PyUnionType.union(callableTypes).components.filterIsInstance<PyCallableType>()
+    val callables = PyUnionType.union(callableTypes).compositeComponents.filterIsInstance<PyCallableType>()
     return if (callables.isEmpty()) null else PyUnionType.union(callables)
   }
 
@@ -788,7 +789,16 @@ object PyCallExpressionHelper {
 
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, callableType: PyCallableType, context: TypeEvalContext): PyArgumentsMapping {
-    val arguments = expression.getArguments(callableType.callable)
+    return mapArguments(expression, expression.getArguments(callableType.callable), callableType, context)
+  }
+
+  @JvmStatic
+  fun mapArguments(
+    expression: PyCallSiteOwner,
+    arguments: List<PyExpression>,
+    callableType: PyCallableType,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
     val parameters = callableType.getParameters(context)
         ?.let { unpackParametersIfNeeded(it, arguments, context) }
 
@@ -931,13 +941,8 @@ object PyCallExpressionHelper {
       val resolveResults = classType.resolveMember(PyNames.CALL, null, AccessDirection.READ, resolveContext)
       if (resolveResults.isNullOrEmpty()) return PyAnyType.unknown
 
-      val callType = PyTypeUtil.specializeMemberType(classType, classType, PyTypeUtil.getTypeOfMember(resolveResults, context), context)
-      if (callType is PyClassType) {
-        return createCallableFromClass(callType, resolveContext, errors)
-      }
-
-      val memberOwner = PyTypeUtil.getContainingClass(resolveResults)
-      return PyTypeUtil.bindFunction(classType, callType, memberOwner, context, errors)
+      val callType = PyTypeUtil.getTypeOfBoundMember(classType, resolveResults, context, errors)
+      return if (callType is PyClassType) createCallableFromClass(callType, resolveContext, errors) else callType
     }
 
     // https://typing.python.org/en/latest/spec/constructors.html

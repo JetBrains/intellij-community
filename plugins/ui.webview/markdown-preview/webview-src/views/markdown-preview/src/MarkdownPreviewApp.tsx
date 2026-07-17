@@ -1,18 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react"
+import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react"
 import ReactMarkdown, { type Components, type Options } from "react-markdown"
-import rehypeHighlight from "rehype-highlight"
+import { getPerfLogger } from "@jetbrains/intellij-webview"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
 import rehypeSlug from "rehype-slug"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import { FloatingMarkdownControls } from "./FloatingMarkdownControls"
-import { MarkdownImageBlock } from "./MarkdownImageBlock"
-import { MermaidBlock } from "./MermaidBlock"
+import { markdownDiagnosticDetails } from "./markdownDiagnostics"
 import { codeNodeFromPreNode, type HastNode } from "./markdownHastUtils"
-import { renderMarkdownLatex } from "./markdownLatex"
 import { collectPathLinkCandidates, renderPathLinks } from "./markdownPathLinks"
 import type {
   MarkdownChangedBlockDescriptor,
@@ -73,6 +71,16 @@ interface MarkdownPreviewAppProps {
 }
 
 const emptyPathSet = new Set<string>()
+const markdownLogger = getPerfLogger("markdown")
+const LazyMarkdownImageBlock = lazy(() => import("./MarkdownImageBlock").then(module => ({ default: module.MarkdownImageBlock })))
+const LazyMermaidBlock = lazy(() => import("./MermaidBlock").then(module => ({ default: module.MermaidBlock })))
+type RehypePlugin = NonNullable<Options["rehypePlugins"]>[number]
+type IdleCallbackHandle = number
+
+type WindowWithIdleCallback = Window & {
+  requestIdleCallback: ((callback: () => void, options?: { timeout?: number }) => IdleCallbackHandle) | undefined
+  cancelIdleCallback: ((handle: IdleCallbackHandle) => void) | undefined
+}
 
 const remarkPlugins: Options["remarkPlugins"] = [
   remarkGfm,
@@ -80,11 +88,10 @@ const remarkPlugins: Options["remarkPlugins"] = [
   remarkFrontmatterBlocks,
   remarkSourcePositionAttributes,
 ]
-const rehypePlugins: Options["rehypePlugins"] = [
+const baseRehypePlugins: NonNullable<Options["rehypePlugins"]> = [
   rehypeRaw,
   rehypeSlug,
   [rehypeSanitize, markdownSanitizeSchema],
-  [rehypeHighlight, { detect: true, plainText: ["mermaid", "text", "txt"] }],
 ]
 
 export function MarkdownPreviewApp({
@@ -103,7 +110,12 @@ export function MarkdownPreviewApp({
   onSetFontSize,
 }: MarkdownPreviewAppProps) {
   const commandCandidates: MarkdownCommandCandidate[] = []
-  const pathLinkCandidates = useMemo(() => collectPathLinkCandidates(markdown), [markdown])
+  const pathLinkCandidates = useMemo(() => {
+    const startedAtMs = performance.now()
+    const candidates = collectPathLinkCandidates(markdown)
+    markdownLogger.perfSince("pathLinks.collect", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}`))
+    return candidates
+  }, [contentVersion, markdown])
   const [resolvedCommands, setResolvedCommands] = useState<{ contentVersion: number, commands: MarkdownCommandDescriptor[] }>({
     contentVersion: -1,
     commands: [],
@@ -117,6 +129,15 @@ export function MarkdownPreviewApp({
   const commands = commandsReady ? resolvedCommands.commands : []
   const resolvedRawPaths = pathLinksReady ? resolvedPathLinks.rawPaths : emptyPathSet
   const commandLookup = createCommandLookup(commands)
+  const [rehypeHighlightState, setRehypeHighlightState] = useState<{ contentVersion: number, plugin: RehypePlugin } | undefined>()
+  const rehypeHighlightPlugin = rehypeHighlightState?.contentVersion === contentVersion ? rehypeHighlightState.plugin : undefined
+  const rehypePlugins = useMemo<Options["rehypePlugins"]>(() => {
+    if (!rehypeHighlightPlugin) return baseRehypePlugins
+    return [
+      ...baseRehypePlugins,
+      [rehypeHighlightPlugin, { detect: true, plainText: ["mermaid", "text", "txt"] }],
+    ] as Options["rehypePlugins"]
+  }, [rehypeHighlightPlugin])
   const components: Components = {
     a({ href, children, ...props }) {
       function handleClick(event: MouseEvent<HTMLAnchorElement>): void {
@@ -138,7 +159,12 @@ export function MarkdownPreviewApp({
     p({ node, className, children, ...props }) {
       const image = standaloneImageFromParagraphNode(node)
       if (image) {
-        return <MarkdownImageBlock {...props} className={className} src={markdownResourceSrc(image.src) ?? image.src} alt={image.alt} title={image.title} />
+        const imageSrc = markdownResourceSrc(image.src) ?? image.src
+        return (
+          <Suspense fallback={<p {...props} className={className}><img src={imageSrc} alt={image.alt ?? ""} title={image.title} /></p>}>
+            <LazyMarkdownImageBlock {...props} className={className} src={imageSrc} alt={image.alt} title={image.title} />
+          </Suspense>
+        )
       }
       return <p {...props} className={className}>{children}</p>
     },
@@ -168,15 +194,15 @@ export function MarkdownPreviewApp({
       const sourcePosition = sourcePositionFromPreNode(node)
       const codeNode = codeNodeFromPreNode(node)
       const isMermaidFence = codeNode ? isMermaidCodeNode(codeNode) : false
-      if (sourcePosition && codeNode && !isMermaidFence) {
-        commandCandidates.push(...codeFenceCommandCandidates(sourcePosition, codeNode))
-      }
+      const codeFenceCandidates = sourcePosition && codeNode && !isMermaidFence ? codeFenceCommandCandidates(sourcePosition, codeNode) : []
+      commandCandidates.push(...codeFenceCandidates)
       if (isMermaidFence) {
         return <>{children}</>
       }
       const blockCommand = sourcePosition ? findBlockCommand(commandLookup, sourcePosition) : undefined
       const lineCommands = sourcePosition ? findLineCommands(commandLookup, sourcePosition, blockCommand?.firstLineCommandId) : []
-      if (!blockCommand && lineCommands.length === 0) {
+      const hasCommandGutter = codeFenceCandidates.length > 0 || blockCommand || lineCommands.length > 0
+      if (!hasCommandGutter) {
         return <pre className={className} {...props}>{children}</pre>
       }
       return (
@@ -195,7 +221,11 @@ export function MarkdownPreviewApp({
     code({ node, className, children, ...props }) {
       const code = codeToString(children).replace(/\n$/, "")
       if (className?.split(/\s+/).includes("language-mermaid")) {
-        return <MermaidBlock chart={code} theme={theme} />
+        return (
+          <Suspense fallback={<div className="mermaidBlock isRendering">Rendering diagram...</div>}>
+            <LazyMermaidBlock chart={code} theme={theme} />
+          </Suspense>
+        )
       }
       const sourcePosition = sourcePositionFromHastNode(node)
       if (sourcePosition && !hasLanguageClass(className)) {
@@ -223,36 +253,91 @@ export function MarkdownPreviewApp({
 
     let cancelled = false
     setResolvedPathLinks({ contentVersion: -1, rawPaths: emptyPathSet })
-    void onResolvePathLinks({ contentVersion, candidates: pathLinkCandidates }).then(response => {
-      if (cancelled) return
-      const resolvedIds = new Set(response.resolvedIds)
-      setResolvedPathLinks({
-        contentVersion,
-        rawPaths: new Set(pathLinkCandidates.filter(candidate => resolvedIds.has(candidate.id)).map(candidate => candidate.rawPath)),
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void onResolvePathLinks({ contentVersion, candidates: pathLinkCandidates }).then(response => {
+        if (cancelled) return
+        const resolvedIds = new Set(response.resolvedIds)
+        markdownLogger.perfSince(
+          "pathLinks.resolve",
+          startedAtMs,
+          markdownDiagnosticDetails(markdown, contentVersion, `candidates=${pathLinkCandidates.length}, resolved=${resolvedIds.size}`),
+        )
+        setResolvedPathLinks({
+          contentVersion,
+          rawPaths: new Set(pathLinkCandidates.filter(candidate => resolvedIds.has(candidate.id)).map(candidate => candidate.rawPath)),
+        })
+      }).catch(() => {
+        if (!cancelled) setResolvedPathLinks({ contentVersion, rawPaths: emptyPathSet })
       })
-    }).catch(() => {
-      if (!cancelled) setResolvedPathLinks({ contentVersion, rawPaths: emptyPathSet })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
   }, [contentVersion, onResolvePathLinks, pathLinkCandidates])
 
   useEffect(() => {
     let cancelled = false
-    void onResolveRunCommands({ contentVersion, candidates: uniqueCommandCandidates(commandCandidates) }).then(response => {
-      if (!cancelled) setResolvedCommands({ contentVersion, commands: response.commands })
+    setResolvedCommands({ contentVersion: -1, commands: [] })
+    const candidates = uniqueCommandCandidates(commandCandidates)
+    if (candidates.length === 0) {
+      setResolvedCommands({ contentVersion, commands: [] })
+      return
+    }
+
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void onResolveRunCommands({ contentVersion, candidates }).then(response => {
+        if (cancelled) return
+        setResolvedCommands({ contentVersion, commands: response.commands })
+        markdownLogger.perfSince(
+          "runCommands.resolve",
+          startedAtMs,
+          markdownDiagnosticDetails(markdown, contentVersion, `candidates=${candidates.length}, resolved=${response.commands.length}`),
+        )
+      })
     })
     return () => {
       cancelled = true
+      cancelIdle()
     }
   }, [contentVersion, onResolveRunCommands])
 
   useEffect(() => {
-    if (commandsReady && pathLinksReady) {
-      renderMarkdownLatex()
+    if (!markdownMayNeedSyntaxHighlighting(markdown) || rehypeHighlightState?.contentVersion === contentVersion) return
+
+    let cancelled = false
+    const cancelIdle = executeWhenIdle(() => {
+      void import("rehype-highlight").then(module => {
+        if (!cancelled) {
+          setRehypeHighlightState({ contentVersion, plugin: module.default as RehypePlugin })
+        }
+      })
+    })
+    return () => {
+      cancelled = true
+      cancelIdle()
     }
-  }, [commandsReady, markdown, pathLinksReady, theme])
+  }, [contentVersion, markdown, rehypeHighlightState])
+
+  useEffect(() => {
+    if (!commandsReady || !pathLinksReady || !markdownMayContainLatex(markdown)) return
+
+    let cancelled = false
+    const cancelIdle = executeWhenIdle(() => {
+      const startedAtMs = performance.now()
+      void import("./markdownLatex").then(({ renderMarkdownLatex }) => {
+        if (cancelled) return
+        renderMarkdownLatex()
+        markdownLogger.perfSince("latex.render", startedAtMs, markdownDiagnosticDetails(markdown, contentVersion))
+      })
+    })
+    return () => {
+      cancelled = true
+      cancelIdle()
+    }
+  }, [commandsReady, contentVersion, markdown, pathLinksReady, theme])
 
   useEffect(() => {
     scrollMarkdownPreviewToLine(scrollLine)
@@ -363,4 +448,92 @@ function isWhitespaceTextNode(node: HastNode): boolean {
 
 function stringProperty(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
+}
+
+function markdownMayNeedSyntaxHighlighting(markdown: string): boolean {
+  return /(^|\n)(```|~~~| {4}|\t|<pre\b|<code\b)/.test(markdown)
+}
+
+function markdownMayContainLatex(markdown: string): boolean {
+  return /\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\\begin\{[A-Za-z*]+}/.test(markdown) || markdownMayContainDollarLatex(markdown)
+}
+
+function markdownMayContainDollarLatex(markdown: string): boolean {
+  for (let index = 0; index < markdown.length; index++) {
+    if (markdown[index] !== "$" || isEscaped(markdown, index)) continue
+
+    const displayMath = markdown[index + 1] === "$"
+    const delimiter = displayMath ? "$$" : "$"
+    const contentStart = index + delimiter.length
+    if (!displayMath && (contentStart >= markdown.length || /\s|\d/.test(markdown[contentStart]))) {
+      index = contentStart - 1
+      continue
+    }
+
+    const contentEnd = unescapedIndexOf(markdown, delimiter, contentStart)
+    if (contentEnd < 0) {
+      index = contentStart - 1
+      continue
+    }
+    if (!displayMath && (contentEnd === contentStart || /\s/.test(markdown[contentEnd - 1]))) {
+      index = contentEnd + delimiter.length - 1
+      continue
+    }
+    return true
+  }
+  return false
+}
+
+function unescapedIndexOf(text: string, search: string, startIndex: number): number {
+  let index = text.indexOf(search, startIndex)
+  while (index >= 0 && isEscaped(text, index)) {
+    index = text.indexOf(search, index + search.length)
+  }
+  return index
+}
+
+function isEscaped(text: string, index: number): boolean {
+  let backslashCount = 0
+  for (let offset = index - 1; offset >= 0 && text[offset] === "\\"; offset--) {
+    backslashCount++
+  }
+  return backslashCount % 2 === 1
+}
+
+function executeWhenIdle(callback: () => void): () => void {
+  let cancelled = false
+  let animationFrameHandle: number | undefined
+  let idleCallbackHandle: IdleCallbackHandle | undefined
+  let timeoutHandle: number | undefined
+
+  function run(): void {
+    if (!cancelled) callback()
+  }
+
+  animationFrameHandle = requestAnimationFrame(() => {
+    animationFrameHandle = undefined
+    if (cancelled) return
+
+    const idleWindow = window as WindowWithIdleCallback
+    if (idleWindow.requestIdleCallback) {
+      idleCallbackHandle = idleWindow.requestIdleCallback(() => {
+        idleCallbackHandle = undefined
+        run()
+      }, { timeout: 1000 })
+    }
+    else {
+      timeoutHandle = window.setTimeout(() => {
+        timeoutHandle = undefined
+        run()
+      }, 0)
+    }
+  })
+
+  return () => {
+    cancelled = true
+    if (animationFrameHandle !== undefined) cancelAnimationFrame(animationFrameHandle)
+    const idleWindow = window as WindowWithIdleCallback
+    if (idleCallbackHandle !== undefined) idleWindow.cancelIdleCallback?.(idleCallbackHandle)
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle)
+  }
 }

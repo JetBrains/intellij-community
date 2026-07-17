@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.i18n">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.java-i18n"/>
   </dependencies>

@@ -116,26 +116,30 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     val checkers = this.checkers
     if (checkers != null) return checkers
 
-    val set = LinkedHashSet<SpellerTool>()
-    runWithCheckCanceled {
-      val state = GrazieConfig.get()
-      val enabledHunspell = getHunspellLanguages(state)
-      for (lang in state.enabledLanguages.filterNot { it.isEnglish() }) {
-        if (lang.hunspellRemote != null && lang.iso in enabledHunspell) continue
-        val tool = LangTool.getTool(lang, TextStyleDomain.Other)
-        tool.allSpellingCheckRules.firstOrNull()
-          ?.let { set.add(SpellerTool(tool, lang, it)) }
-      }
-    }
+    val set = runWithCheckCanceled { buildTools() }
     this.checkers = set
     return set
+  }
+
+  private fun buildTools(): Set<SpellerTool> {
+    val tools = LinkedHashSet<SpellerTool>()
+    val state = GrazieConfig.get()
+    val enabledHunspell = getHunspellLanguages(state)
+    for (lang in state.enabledLanguages.filterNot { it.isEnglish() }) {
+      if (lang.hunspellRemote != null && lang.iso in enabledHunspell) continue
+      if (lang.jLanguage == null) continue
+      val tool = LangTool.getTool(lang, TextStyleDomain.Other)
+      tool.allSpellingCheckRules.firstOrNull()
+        ?.let { tools.add(SpellerTool(tool, lang, it)) }
+    }
+    return tools
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     if (prevState.enabledLanguages == newState.enabledLanguages) return
     checkers = null
     configurationScope.launch {
-      heavyInit()
+      checkers = buildTools()
     }
   }
 

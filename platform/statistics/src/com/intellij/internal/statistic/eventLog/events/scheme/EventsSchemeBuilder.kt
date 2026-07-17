@@ -33,7 +33,7 @@ object EventsSchemeBuilder {
   )
 
   private val classValidationRules = setOf(
-    "class_name", "dialog_class", "quick_fix_class_name", "run_config_factory", "tip_info", "run_config_factory",
+    "class_name", "dialog_class", "quick_fix_class_name", "run_config_factory", "tip_info",
     "run_config_id", "facets_type", "registry_key"
   ).map { "{util#$it}" }
 
@@ -139,15 +139,19 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        recorders.add(bean.collector.group.recorder)
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
+        val collector = bean.getCollectorIfApplicable() ?: return@processWithPluginDescriptor
+
+        recorders.add(collector.group.recorder)
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        recorders.add(bean.collector.group.recorder)
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
+        val collector = bean.getCollectorIfApplicable() ?: return@processWithPluginDescriptor
+
+        recorders.add(collector.group.recorder)
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, descriptions, recorder))

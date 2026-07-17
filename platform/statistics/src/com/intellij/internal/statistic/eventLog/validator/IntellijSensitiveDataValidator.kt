@@ -89,7 +89,7 @@ open class IntellijSensitiveDataValidator protected constructor(
   private val recorderId: String,
 ) : SensitiveDataValidator<MetadataStorage<EventLogBuild>>(fusComponents?.metadataStorage ?: EMPTY_METADATA_STORAGE) {
   companion object {
-    private val instances = ConcurrentHashMap<String, IntellijSensitiveDataValidator>()
+    private val instances = ConcurrentHashMap<String, Lazy<IntellijSensitiveDataValidator>>()
 
     init {
       CustomValidationRule.EP_NAME.addChangeListener({ instances.clear() }, null)
@@ -104,18 +104,22 @@ open class IntellijSensitiveDataValidator protected constructor(
     @JvmStatic
     fun getInstance(recorderId: String): IntellijSensitiveDataValidator {
       return instances.computeIfAbsent(recorderId) { id ->
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-          BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(id), id)
+        // Validator creation initializes metadata storage and may do IO; keep it outside ConcurrentHashMap locks.
+        lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+          if (ApplicationManager.getApplication().isUnitTestMode) {
+            BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(id), id)
+          }
+          else {
+            IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(id), id)
+          }
         }
-        else {
-          IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(id), id)
-        }
-      }
+      }.value
     }
 
     @JvmStatic
     fun getIfInitialized(recorderId: String): IntellijSensitiveDataValidator? {
-      return instances[recorderId]
+      val validator = instances[recorderId] ?: return null
+      return if (validator.isInitialized()) validator.value else null
     }
 
     private val EMPTY_METADATA_STORAGE: MetadataStorage<EventLogBuild> = object : MetadataStorage<EventLogBuild> {

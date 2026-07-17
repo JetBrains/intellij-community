@@ -218,6 +218,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
              !isReExportInPackageInit(node, target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"))
     }
+    // If an attribute was resolved on some members of a union, we still need to report those where it doesn't exist
     else if (PyUnionType.isStrictSemanticsEnabled() && node is PyQualifiedExpression) {
       val referencedName = node.referencedName
       val qualifier: PyExpression? = if (node is PyCallSiteExpression && target is PyCallable) {
@@ -622,6 +623,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
    */
   private fun isUnionMemberIgnored(type: PyUnionType, reference: PsiReference, name: String): Boolean {
     if (PyUnionType.isStrictSemanticsEnabled()) {
+      // There is no union member for which the unresolved attribute shouldn't be ignored (e.g. `Any` in `int | Any`)
       return findStrictUnionMemberMissingAttribute(type, reference, name) == null
     }
     return type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }

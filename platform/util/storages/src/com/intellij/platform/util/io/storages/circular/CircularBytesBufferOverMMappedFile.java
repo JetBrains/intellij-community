@@ -26,10 +26,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
+import static java.util.Objects.requireNonNull;
 
 /**
  * {@linkplain CircularBytesBuffer} implementation over a memory-mapped file ({@link MMappedFileStorage}).
@@ -40,8 +39,8 @@ import static java.nio.file.StandardOpenOption.READ;
  * {@link #flush()} only asks OS to sync the file to the underlying storage.
  * <p>
  * {@link #read(DataReader)} scans all 'unprocessed' records without consuming them.
- * {@link #readConsuming(ConsumingDataReader)} scans all 'unprocessed' records -- records accepted by the reader are
- * marked as consumed (=processed).
+ * {@link #readConsuming(DataReader)} scans all 'unprocessed' records -- records accepted by the reader are marked as
+ * consumed (=processed).
  */
 @ApiStatus.Internal
 public final class CircularBytesBufferOverMMappedFile implements CircularBytesBuffer, Closeable, Flushable, Unmappable, CleanableStorage {
@@ -69,20 +68,25 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
   ///Since records are marked 'consumed' (processed) _individually_, headCursor is not really needed -- we could
   /// always iterate over `[max(0, tail-capacity) .. tail)` region, skipping over already-consumed records. But such
   /// an iteration is quite ineffective, especially if the capacity is big, but most of the records are 'consumed'.
-  /// The headCursor is as an optimization: it moves forward over the continuous region (prefix) of 'consumed' records,
+  /// The headCursor is as an optimization: it moves forward over the continuous region (=prefix) of 'consumed' records,
   /// until the first 'not consumed' record (or until the tail is reached) -- so the `[head .. tail)` region is the
   /// only region where 'unconsumed' records could ever be.
   ///
-  ///Record 'leases': we don't want reading to be protected by exclusive lock ([#append] is ok), so reading must happen
-  /// outside [#lock] -- but:
+  ///Record 'leases': we don't want the reading to be protected by exclusive lock (for [#append] it is ok), so reading must
+  /// happen outside [#lock] -- but:
   /// 1) we must ensure only-once consuming semantics
   /// 2) we must ensure mmapped buffer is not released in [#close] while some reader is still reading it
   /// For that [#activeReadOperations] and [#leasedRecordCursors] were introduced: [#activeReadOperations] ensures that
   /// buffer won't be released until all the readers leave it, while [#leasedRecordCursors] ensures only 1 reader could
   /// access a record at any given moment.
-  ///TODO RC: 'pure readers' ([DataReader]), without consuming semantics, do not need _exclusive_ record lease -- but for
-  /// now I think it is ok. Exclusive/non-exclusive leases could be implemented later, if needed.
   ///
+  ///It seems like 'pure' readers ([DataReader]) -- without consuming semantics -- do not need _exclusive_ record lease.
+  /// This is not exactly true, because of 'consumed record shouldn't be available for reading' semantics -- at that
+  /// moment the record become 'consumed'? Using the same exclusive lease by both 'pure' and 'consuming' readers solves
+  /// this problem, because consuming become 'atomic' then. Without an exclusive lease 'pure' reader could read a record
+  /// that is right now being processed by 'consuming' reader -- which could be ok for some specific use-cases, and not
+  /// ok for others.
+  /// Hence, it was decided to be on a safe side, and use exclusive leases for both 'pure' and 'consuming' readers.
   ///=======================================================================================================================
 
 
@@ -213,31 +217,18 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       RecordLayout.putDataRecord(pageBuffer, dataOffset(tailOffset), payloadSize, writer);
       tail += recordLength;
 
-      HeaderLayout.putHeadCursor(pageBuffer, head);
       HeaderLayout.putTailCursor(pageBuffer, tail);
     }
   }
 
   @Override
-  public void read(@NotNull DataReader reader) throws IOException {
-    readImpl(entryData -> {
-      reader.read(entryData);
-      return false;
-    });
-  }
-
-  @Override
-  public int readConsuming(@NotNull ConsumingDataReader reader) throws IOException {
-    return readImpl(reader);
-  }
-
-  private int readImpl(@NotNull ConsumingDataReader reader) throws IOException {
+  public int readMaybeConsuming(@NotNull OptionallyConsumingDataReader reader) throws IOException {
     long scanCursor;
-    long tailSnapshot;
+    long tailSnapshot; //don't count new records possibly added along the way
     synchronized (lock) {
-      ByteBuffer pageBuffer = pageBuffer();
       checkNotClosing();
       activeReadOperations++;
+      ByteBuffer pageBuffer = pageBuffer();
       scanCursor = HeaderLayout.readHeadCursor(pageBuffer);
       tailSnapshot = HeaderLayout.readTailCursor(pageBuffer);
     }
@@ -248,27 +239,27 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       while (true) {
         LeasedRecord leasedRecord;
         synchronized (lock) {
-          leasedRecord = tryLeaseNextRecord(scanCursor, tailSnapshot);
-          if (leasedRecord == null) {
-            advanceTailOverConsumedRecords(pageBuffer());
-            return consumedRecords;
-          }
+          leasedRecord = fetchAndLeaseNextRecord(scanCursor, tailSnapshot, reader);
+        }
+        if (leasedRecord == null) {
+          return consumedRecords;
         }
 
-        boolean successfullyConsumed = false;
-        boolean readerCompleted = false;
+        ReadDecision decision = leasedRecord.decision();
+        boolean readerCompletedSuccessfully = false;
         try {
-          successfullyConsumed = reader.read(leasedRecord.payloadData());
-          readerCompleted = true;
+          decision.process(leasedRecord.payloadData());
+          readerCompletedSuccessfully = true;
         }
         finally {
           synchronized (lock) {
             try {
-              if (readerCompleted && successfullyConsumed) {
-                RecordLayout.markConsumed(pageBuffer(), leasedRecord.recordOffset(), leasedRecord.header());
+              ByteBuffer pageBuffer = pageBuffer();
+              if (readerCompletedSuccessfully && decision.shouldConsumeAfterProcess()) {
+                RecordLayout.markConsumed(pageBuffer, leasedRecord.recordOffset(), leasedRecord.header());
                 consumedRecords++;
               }
-              advanceTailOverConsumedRecords(pageBuffer());
+              advanceTailOverConsumedRecords(pageBuffer);
             }
             finally {
               leasedRecordCursors.remove(leasedRecord.cursor());
@@ -356,8 +347,8 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
    * Moves tailCursor forward, over the longest continuous region of 'consumed' (processed) records possible.
    * I.e., moves tailCursor forward until the first non-consumed record -- or until it reaches headCursor.
    *
-   * @return true if (head != tail) at the end == some unprocessed records remain;
-   * false if (head==tail) == no unprocessed records left == queue is empty.
+   * @return true if (head != tail) at the end => some unprocessed records remain;
+   * false if (head==tail) => no unprocessed records left => queue is empty.
    */
   private boolean advanceTailOverConsumedRecords(@NotNull ByteBuffer pageBuffer) throws IOException {
     long headCursor = HeaderLayout.readHeadCursor(pageBuffer);
@@ -365,7 +356,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     int used = bytesUsed(headCursor, tailCursor);
 
     // Only a continuous prefix could be released. Consumed records after the first unconsumed one remain
-    // inside [head, tail), but read() will skip them by the consumed bit.
+    // inside [head, tail), but read() will skip them
     while (used > 0) {
       int recordOffsetInDataSection = offsetInDataSection(headCursor);
       int recordOffsetInFile = dataOffset(recordOffsetInDataSection);
@@ -419,49 +410,84 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     }
   }
 
-  /**
-   * Finds the next unconsumed record in [fromCursor, tailSnapshot), leases it, and returns a payload slice.
-   * Must be called under {@link #lock} by an active read operation.
-   */
-  private @Nullable LeasedRecord tryLeaseNextRecord(long fromCursor,
-                                                    long tailSnapshot) throws IOException {
-    while (true) {
-      ByteBuffer pageBuffer = pageBuffer();
-      long headCursor = HeaderLayout.readHeadCursor(pageBuffer);
-      long cursor = Math.max(fromCursor, headCursor);
-      if (cursor >= tailSnapshot) {
-        return null;
+  /// Finds the next record selected by the reader in [fromCursor, tailSnapshot), leases it, and returns a [LeasedRecord].
+  /// Returned null means the iteration should be stopped.
+  /// Must be called under [#lock] by an active read operation.
+  private @Nullable LeasedRecord fetchAndLeaseNextRecord(long fromCursor,
+                                                         long tailSnapshot,
+                                                         @NotNull OptionallyConsumingDataReader reader) throws IOException {
+    ByteBuffer pageBuffer = pageBuffer();
+    long cursor = Math.max(fromCursor, HeaderLayout.readHeadCursor(pageBuffer));
+    while (cursor < tailSnapshot) {
+      int bytesLeft = bytesUsed(cursor, tailSnapshot);
+      int offset = offsetInDataSection(cursor);
+      int recordOffset = dataOffset(offset);
+      int header = RecordLayout.readHeader(pageBuffer, recordOffset);
+      int recordLength = RecordLayout.recordLength(header, offset, bytesLeft, storage.storagePath());
+
+      if (!RecordLayout.isDataHeader(header) || RecordLayout.isConsumed(header)) {
+        cursor += recordLength;
+        continue;
       }
 
-      int bytesLeft = bytesUsed(cursor, tailSnapshot);
-      while (bytesLeft > 0) {
-        int offset = offsetInDataSection(cursor);
-        int recordOffset = dataOffset(offset);
-        int header = RecordLayout.readHeader(pageBuffer, recordOffset);
-        int recordLength = RecordLayout.recordLength(header, offset, bytesLeft, storage.storagePath());
+      ByteBuffer payloadData = payloadData(pageBuffer, recordOffset, header);
+      //MAYBE RC: calling decide() under the .lock is risky for scalability -- and also not logically required.
+      //          Moving it outside would require preventing the record bytes from being consumed and reused between
+      //          the header check and the decision callback -- which could be done, but a separate task by itself.
+      //          So, for now we just expect decide() to be very fast (~just few memory reads)
+      ReadDecision decision = reader.decide(payloadData);
+      requireNonNull(decision, "reader.decide() must not return null");
+      if (decision.shouldStop()) {
+        return null;
+      }
+      if (!decision.shouldProcess()) {
+        cursor += recordLength;
+        continue;
+      }
 
-        if (RecordLayout.isDataHeader(header) && !RecordLayout.isConsumed(header)) {
-          if (leasedRecordCursors.contains(cursor)) {
-            waitForRecordLeaseToRelease(cursor);
-            break;
-          }
+      if (leasedRecordCursors.contains(cursor)) {
+        waitForRecordLeaseToRelease(cursor);
 
-          int payloadLength = RecordLayout.payloadLength(header);
-          ByteBuffer payloadData = pageBuffer
-            .slice(recordOffset + RecordLayout.PAYLOAD_OFFSET, payloadLength)
-            .order(pageBuffer.order());
-          leasedRecordCursors.add(cursor);
-          return new LeasedRecord(cursor, cursor + recordLength, recordOffset, header, payloadData);
+        //.lock is released during waiting, so re-get & re-check the crucial bits of state:
+        pageBuffer = pageBuffer();
+        long headCursor = HeaderLayout.readHeadCursor(pageBuffer);
+        if (cursor < headCursor) {
+          cursor = headCursor;
+          continue;
         }
 
-        cursor += recordLength;
-        bytesLeft -= recordLength;
+        // Only 'consumed' bit can change during record lifetime, record type and length are immutable
+        // (as long, as record is not overwritten -- which is checked above)
+        header = RecordLayout.readHeader(pageBuffer, recordOffset);
+        if (RecordLayout.isConsumed(header)) {
+          cursor += recordLength;
+          continue;
+        }
       }
 
-      if (bytesLeft == 0) {
-        return null;
-      }
+      resetPayloadData(payloadData, pageBuffer);
+      leasedRecordCursors.add(cursor);
+      return new LeasedRecord(cursor, cursor + recordLength, recordOffset, header, payloadData, decision);
     }
+
+    return null;
+  }
+
+  /** Creates a read-only payload view for the record at recordOffset */
+  private static @NotNull ByteBuffer payloadData(@NotNull ByteBuffer pageBuffer,
+                                                 int recordOffset,
+                                                 int header) throws CorruptedException {
+    int payloadLength = RecordLayout.payloadLength(header);
+    return pageBuffer
+      .slice(recordOffset + RecordLayout.PAYLOAD_OFFSET, payloadLength)
+      .asReadOnlyBuffer()
+      .order(pageBuffer.order());
+  }
+
+  /** Restores the payload view before passing the same view to the processing phase. */
+  private static void resetPayloadData(@NotNull ByteBuffer payloadData, @NotNull ByteBuffer pageBuffer) {
+    payloadData.clear();
+    payloadData.order(pageBuffer.order());
   }
 
   private void waitForRecordLeaseToRelease(long cursor) throws ClosedStorageException {
@@ -489,9 +515,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     return Math.floorMod(position, capacity);
   }
 
-  /**
-   * @return occupied bytes in the logical interval [head, tail).
-   */
+  /** @return occupied bytes in the logical interval [head, tail). */
   private int bytesUsed(long headCursor,
                         long tailCursor) throws IOException {
     long used = tailCursor - headCursor;
@@ -506,7 +530,8 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
                               long nextCursor,
                               int recordOffset,
                               int header,
-                              @NotNull ByteBuffer payloadData) {
+                              @NotNull ByteBuffer payloadData,
+                              @NotNull ReadDecision decision) {
   }
 
   public static final class Factory implements StorageFactory<CircularBytesBufferOverMMappedFile> {
@@ -826,31 +851,31 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     /**
      * Extracts record length (full, including alignment padding, if any) from the record header
      *
-     * @param storagePath used only to format error messages
+     * @param storagePathForDebug used only to format error messages
      */
     private static int recordLength(int header,
                                     int offsetInDataSection,
                                     int bytesLeft,
-                                    @NotNull Path storagePath) throws IOException {
+                                    @NotNull Path storagePathForDebug) throws IOException {
       // We should only be called for bytes inside [head, tail). A zero header there means either a torn/corrupted header or
       // an incorrect queue interval in the persisted header.
       if (header == 0) {
-        throw new CorruptedException("[" + storagePath + "] is corrupted: zero record header at data offset " +
+        throw new CorruptedException("[" + storagePathForDebug + "] is corrupted: zero record header at data offset " +
                                      offsetInDataSection + ", bytesLeft=" + bytesLeft);
       }
 
       int rawRecordLength = rawRecordLength(header);
       int length = isPaddingHeader(header) ? rawRecordLength : AlignmentUtils.roundUpToInt32(rawRecordLength);
       if (length <= 0 || length > bytesLeft) {
-        throw new CorruptedException("[" + storagePath + "] is corrupted: recordLength(=" + length + ") at data offset " +
+        throw new CorruptedException("[" + storagePathForDebug + "] is corrupted: recordLength(=" + length + ") at data offset " +
                                      offsetInDataSection + " is outside remaining bytes " + bytesLeft);
       }
       if (isDataHeader(header) && rawRecordLength < PAYLOAD_OFFSET) {
-        throw new CorruptedException("[" + storagePath + "] is corrupted: data record rawLength(=" + rawRecordLength + ") " +
+        throw new CorruptedException("[" + storagePathForDebug + "] is corrupted: data record rawLength(=" + rawRecordLength + ") " +
                                      "is smaller than header size at data offset " + offsetInDataSection);
       }
       if (!AlignmentUtils.is32bAligned(length)) {
-        throw new CorruptedException("[" + storagePath + "] is corrupted: recordLength(=" + length + ") is not 32b-aligned");
+        throw new CorruptedException("[" + storagePathForDebug + "] is corrupted: recordLength(=" + length + ") is not 32b-aligned");
       }
       return length;
     }

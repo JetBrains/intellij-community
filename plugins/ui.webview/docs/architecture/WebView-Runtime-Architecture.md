@@ -98,7 +98,8 @@ Backend URL shapes are internal details:
 
 - WKWebView uses the custom `ij-webview-asset:/...` scheme.
 - JCEF uses `https://ij-webview-assets.local/...` and a CEF resource handler.
-- Windows WebView2 uses `https://ij-webview-assets.local/...` and handles requests through `WebResourceRequested`.
+- Windows WebView2 uses the custom `ij-webview-asset://assets/...` origin and handles requests through each view's `WebResourceRequested` callback.
+  The fixed `assets` authority is intentional: WebView2 ES module loading needs a non-opaque custom-scheme origin, while per-view routing still happens through the per-`CoreWebView2` handler.
 - Linux WebKitGTK currently rejects `loadAsset`; its provider reports `assetServing = false`.
 
 ## Message Bus

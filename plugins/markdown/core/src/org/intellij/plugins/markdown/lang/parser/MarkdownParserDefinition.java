@@ -9,14 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.plugins.markdown.lang.MarkdownFileElementType;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.lang.lexer.MarkdownToplevelLexer;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiFactory;
-import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownParserDefinition implements ParserDefinition {
@@ -54,10 +52,7 @@ public class MarkdownParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull PsiElement createElement(ASTNode node) {
-    final IElementType type = node.getElementType();
-    return type instanceof MarkdownStubElementType
-           ? ((MarkdownStubElementType<?, ?>)type).createElement(node)
-           : MarkdownPsiFactory.createElement(node);
+    return MarkdownPsiFactory.createElement(node);
   }
 
   @Override

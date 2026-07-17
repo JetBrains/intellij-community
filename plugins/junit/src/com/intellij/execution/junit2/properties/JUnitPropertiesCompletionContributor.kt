@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.properties
 
 import com.intellij.codeInsight.TailTypes
@@ -7,15 +7,21 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
+import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
+import com.intellij.lang.properties.psi.impl.PropertyValueImpl
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
+import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
+
+private const val VALUE_HINT_PRIORITY: Double = 100.0
 
 internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
   init {
@@ -35,10 +41,26 @@ internal class JUnitPropertiesCompletionContributor : CompletionContributor() {
 
           result.addAllElements(variants.map {
             val builder = LookupElementBuilder.create(it.key)
-              .withPsiElement(it.declaration.retrieve())
+              .withPsiElement(it.declaration?.retrieve())
               .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property))
 
             TailTypeDecorator.withTail(builder, defaultDelimiterType)
+          })
+        }
+      }
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement(PropertyValueImpl::class.java)
+        .inFile(psiFile().withName(JUNIT_PLATFORM_PROPERTIES_CONFIG)),
+
+      object : CompletionProvider<CompletionParameters>() {
+        override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+          val key = parameters.position.parentOfType<Property>()?.key ?: return
+          val property = getJUnitPlatformProperties(parameters.originalFile)[key] ?: return
+          result.addAllElements(property.variants.map {
+            PrioritizedLookupElement.withPriority(LookupElementBuilder.create(it), VALUE_HINT_PRIORITY)
           })
         }
       }

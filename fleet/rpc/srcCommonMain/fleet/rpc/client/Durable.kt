@@ -79,5 +79,5 @@ private const val INITIAL_RETRY_DELAY = 100L
 private const val MAX_RETRY_DELAY = 10000L // 10 seconds
 
 private object DurableLogger {
-  val logger = logger<DurableLogger>()
+  val logger by lazy { logger<DurableLogger>() }
 }

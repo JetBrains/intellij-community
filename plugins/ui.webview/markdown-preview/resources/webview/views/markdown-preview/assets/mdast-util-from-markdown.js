@@ -1,7 +1,6 @@
 import { n as __exportAll } from "./rolldown-runtime.js";
 import { r as stringifyPosition } from "./hast-util-to-jsx-runtime.js";
 import { t as decodeNamedCharacterReference } from "./decode-named-character-reference.js";
-//#region node_modules/mdast-util-to-string/lib/index.js
 /**
 * @typedef {import('mdast').Nodes} Nodes
 *
@@ -82,8 +81,6 @@ function all(values, includeImageAlt, includeHtml) {
 function node(value) {
 	return Boolean(value && typeof value === "object");
 }
-//#endregion
-//#region node_modules/micromark-util-chunked/index.js
 /**
 * Like `Array#splice`, but smarter for giant arrays.
 *
@@ -152,8 +149,6 @@ function push(list, items) {
 	}
 	return items;
 }
-//#endregion
-//#region node_modules/micromark-util-combine-extensions/index.js
 /**
 * @import {
 *   Extension,
@@ -223,8 +218,6 @@ function constructs(existing, list) {
 	while (++index < list.length) (list[index].add === "after" ? existing : before).push(list[index]);
 	splice(existing, 0, 0, before);
 }
-//#endregion
-//#region node_modules/micromark-util-decode-numeric-character-reference/index.js
 /**
 * Turn the number (in string form as either hexa- or plain decimal) coming from
 * a numeric character reference into a character.
@@ -244,8 +237,6 @@ function decodeNumericCharacterReference(value, base) {
 	if (code < 9 || code === 11 || code > 13 && code < 32 || code > 126 && code < 160 || code > 55295 && code < 57344 || code > 64975 && code < 65008 || (code & 65535) === 65535 || (code & 65535) === 65534 || code > 1114111) return "�";
 	return String.fromCodePoint(code);
 }
-//#endregion
-//#region node_modules/micromark-util-normalize-identifier/index.js
 /**
 * Normalize an identifier (as found in references, definitions).
 *
@@ -268,8 +259,6 @@ function decodeNumericCharacterReference(value, base) {
 function normalizeIdentifier(value) {
 	return value.replace(/[\t\n\r ]+/g, " ").replace(/^ | $/g, "").toLowerCase().toUpperCase();
 }
-//#endregion
-//#region node_modules/micromark-util-character/index.js
 /**
 * @import {Code} from 'micromark-util-types'
 */
@@ -496,8 +485,6 @@ function regexCheck(regex) {
 		return code !== null && code > -1 && regex.test(String.fromCharCode(code));
 	}
 }
-//#endregion
-//#region node_modules/micromark-factory-space/index.js
 /**
 * @import {Effects, State, TokenType} from 'micromark-util-types'
 */
@@ -555,8 +542,6 @@ function factorySpace(effects, ok, type, max) {
 		return ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark/lib/initialize/content.js
 /**
 * @import {
 *   InitialConstruct,
@@ -622,8 +607,6 @@ function initializeContent(effects) {
 		return data;
 	}
 }
-//#endregion
-//#region node_modules/micromark/lib/initialize/document.js
 /**
 * @import {
 *   Construct,
@@ -838,8 +821,6 @@ function initializeDocument(effects) {
 function tokenizeContainer(effects, ok, nok) {
 	return factorySpace(effects, effects.attempt(this.parser.constructs.document, ok, nok), "linePrefix", this.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4);
 }
-//#endregion
-//#region node_modules/micromark-util-classify-character/index.js
 /**
 * @import {Code} from 'micromark-util-types'
 */
@@ -861,8 +842,6 @@ function classifyCharacter(code) {
 	if (code === null || markdownLineEndingOrSpace(code) || unicodeWhitespace(code)) return 1;
 	if (unicodePunctuation(code)) return 2;
 }
-//#endregion
-//#region node_modules/micromark-util-resolve-all/index.js
 /**
 * @import {Event, Resolver, TokenizeContext} from 'micromark-util-types'
 */
@@ -891,8 +870,6 @@ function resolveAll(constructs, events, context) {
 	}
 	return events;
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/attention.js
 /**
 * @import {
 *   Code,
@@ -1111,8 +1088,6 @@ function movePoint(point, offset) {
 	point.offset += offset;
 	point._bufferIndex += offset;
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/autolink.js
 /**
 * @import {
 *   Construct,
@@ -1322,8 +1297,6 @@ function tokenizeAutolink(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/blank-line.js
 /**
 * @import {
 *   Construct,
@@ -1379,8 +1352,6 @@ function tokenizeBlankLine(effects, ok, nok) {
 		return code === null || markdownLineEnding(code) ? ok(code) : nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/block-quote.js
 /**
 * @import {
 *   Construct,
@@ -1506,8 +1477,6 @@ function tokenizeBlockQuoteContinuation(effects, ok, nok) {
 function exit(effects) {
 	effects.exit("blockQuote");
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/character-escape.js
 /**
 * @import {
 *   Construct,
@@ -1566,8 +1535,6 @@ function tokenizeCharacterEscape(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/character-reference.js
 /**
 * @import {
 *   Code,
@@ -1704,8 +1671,6 @@ function tokenizeCharacterReference(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/code-fenced.js
 /**
 * @import {
 *   Code,
@@ -2119,8 +2084,6 @@ function tokenizeNonLazyContinuation(effects, ok, nok) {
 		return self.parser.lazy[self.now().line] ? nok(code) : ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/code-indented.js
 /**
 * @import {
 *   Construct,
@@ -2263,8 +2226,6 @@ function tokenizeFurtherStart(effects, ok, nok) {
 		return tail && tail[1].type === "linePrefix" && tail[2].sliceSerialize(tail[1], true).length >= 4 ? ok(code) : markdownLineEnding(code) ? furtherStart(code) : nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/code-text.js
 /**
 * @import {
 *   Construct,
@@ -2448,8 +2409,6 @@ function tokenizeCodeText(effects, ok, nok) {
 		return data(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-util-subtokenize/lib/splice-buffer.js
 /**
 * Some of the internal operations of micromark do lots of editing
 * operations on very large arrays. This runs into problems with two
@@ -2678,8 +2637,6 @@ function chunkedPush(list, right) {
 		chunkStart += 1e4;
 	}
 }
-//#endregion
-//#region node_modules/micromark-util-subtokenize/index.js
 /**
 * @import {Chunk, Event, Token} from 'micromark-util-types'
 */
@@ -2833,8 +2790,6 @@ function subcontent(events, eventIndex) {
 	}
 	return gaps;
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/content.js
 /**
 * @import {
 *   Construct,
@@ -2966,8 +2921,6 @@ function tokenizeContinuation(effects, ok, nok) {
 		return effects.interrupt(self.parser.constructs.flow, nok, ok)(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-factory-destination/index.js
 /**
 * @import {Effects, State, TokenType} from 'micromark-util-types'
 */
@@ -3150,8 +3103,6 @@ function factoryDestination(effects, ok, nok, type, literalType, literalMarkerTy
 		return raw(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-factory-label/index.js
 /**
 * @import {
 *   Effects,
@@ -3282,8 +3233,6 @@ function factoryLabel(effects, ok, nok, type, markerType, stringType) {
 		return labelInside(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-factory-title/index.js
 /**
 * @import {
 *   Code,
@@ -3427,8 +3376,6 @@ function factoryTitle(effects, ok, nok, type, markerType, stringType) {
 		return inside(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-factory-whitespace/index.js
 /**
 * @import {Effects, State} from 'micromark-util-types'
 */
@@ -3467,8 +3414,6 @@ function factoryWhitespace(effects, ok) {
 		return ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/definition.js
 /**
 * @import {
 *   Construct,
@@ -3682,8 +3627,6 @@ function tokenizeTitleBefore(effects, ok, nok) {
 		return code === null || markdownLineEnding(code) ? ok(code) : nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/hard-break-escape.js
 /**
 * @import {
 *   Construct,
@@ -3739,8 +3682,6 @@ function tokenizeHardBreakEscape(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/heading-atx.js
 /**
 * @import {
 *   Construct,
@@ -3924,8 +3865,6 @@ function tokenizeHeadingAtx(effects, ok, nok) {
 		return data;
 	}
 }
-//#endregion
-//#region node_modules/micromark-util-html-tag-name/index.js
 /**
 * List of lowercase HTML “block” tag names.
 *
@@ -4023,8 +3962,6 @@ var htmlRawNames = [
 	"style",
 	"textarea"
 ];
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/html-flow.js
 /**
 * @import {
 *   Code,
@@ -4796,8 +4733,6 @@ function tokenizeBlankLineBefore(effects, ok, nok) {
 		return effects.attempt(blankLine, ok, nok);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/html-text.js
 /**
 * @import {
 *   Code,
@@ -5410,8 +5345,6 @@ function tokenizeHtmlText(effects, ok, nok) {
 		return returnState(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/label-end.js
 /**
 * @import {
 *   Construct,
@@ -5880,8 +5813,6 @@ function tokenizeReferenceCollapsed(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/label-start-image.js
 /**
 * @import {
 *   Construct,
@@ -5973,8 +5904,6 @@ function tokenizeLabelStartImage(effects, ok, nok) {
 		return code === 94 && "_hiddenFootnoteSupport" in self.parser.constructs ? nok(code) : ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/label-start-link.js
 /**
 * @import {
 *   Construct,
@@ -6021,8 +5950,6 @@ function tokenizeLabelStartLink(effects, ok, nok) {
 		return code === 94 && "_hiddenFootnoteSupport" in self.parser.constructs ? nok(code) : ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/line-ending.js
 /**
 * @import {
 *   Construct,
@@ -6051,8 +5978,6 @@ function tokenizeLineEnding(effects, ok) {
 		return factorySpace(effects, ok, "linePrefix");
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/thematic-break.js
 /**
 * @import {
 *   Code,
@@ -6146,8 +6071,6 @@ function tokenizeThematicBreak(effects, ok, nok) {
 		return markdownSpace(code) ? factorySpace(effects, atBreak, "whitespace")(code) : atBreak(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/list.js
 /**
 * @import {
 *   Code,
@@ -6318,8 +6241,6 @@ function tokenizeListItemPrefixWhitespace(effects, ok, nok) {
 		return !markdownSpace(code) && tail && tail[1].type === "listItemPrefixWhitespace" ? ok(code) : nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-core-commonmark/lib/setext-underline.js
 /**
 * @import {
 *   Code,
@@ -6470,8 +6391,6 @@ function tokenizeSetextUnderline(effects, ok, nok) {
 		return nok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark/lib/initialize/flow.js
 /**
 * @import {
 *   InitialConstruct,
@@ -6517,8 +6436,6 @@ function initializeFlow(effects) {
 		return initial;
 	}
 }
-//#endregion
-//#region node_modules/micromark/lib/initialize/text.js
 /**
 * @import {
 *   Code,
@@ -6694,8 +6611,6 @@ function resolveAllLineSuffixes(events, context) {
 	}
 	return events;
 }
-//#endregion
-//#region node_modules/micromark/lib/constructs.js
 /**
 * @import {Extension} from 'micromark-util-types'
 */
@@ -6772,8 +6687,6 @@ var insideSpan = { null: [attention, resolver] };
 var attentionMarkers = { null: [42, 95] };
 /** @satisfies {Extension['disable']} */
 var disable = { null: [] };
-//#endregion
-//#region node_modules/micromark/lib/create-tokenizer.js
 /**
 * @import {
 *   Chunk,
@@ -7241,8 +7154,6 @@ function serializeChunks(chunks, expandTabs) {
 	}
 	return result.join("");
 }
-//#endregion
-//#region node_modules/micromark/lib/parse.js
 /**
 * @import {
 *   Create,
@@ -7285,8 +7196,6 @@ function parse(options) {
 		}
 	}
 }
-//#endregion
-//#region node_modules/micromark/lib/postprocess.js
 /**
 * @import {Event} from 'micromark-util-types'
 */
@@ -7300,8 +7209,6 @@ function postprocess(events) {
 	while (!subtokenize(events));
 	return events;
 }
-//#endregion
-//#region node_modules/micromark/lib/preprocess.js
 /**
 * @import {Chunk, Code, Encoding, Value} from 'micromark-util-types'
 */
@@ -7401,8 +7308,6 @@ function preprocess() {
 		return chunks;
 	}
 }
-//#endregion
-//#region node_modules/micromark-util-decode-string/index.js
 var characterEscapeOrReference = /\\([!-/:-@[-`{-~])|&(#(?:\d{1,7}|x[\da-f]{1,6})|[\da-z]{1,31});/gi;
 /**
 * Decode markdown strings (which occur in places such as fenced code info
@@ -7438,8 +7343,6 @@ function decode($0, $1, $2) {
 	}
 	return decodeNamedCharacterReference($2) || $0;
 }
-//#endregion
-//#region node_modules/mdast-util-from-markdown/lib/index.js
 /**
 * @import {
 *   Break,
@@ -8404,5 +8307,4 @@ function defaultOnError(left, right) {
 		end: right.end
 	}) + ") is still open");
 }
-//#endregion
 export { toString as _, factorySpace as a, asciiControl as c, markdownSpace as d, unicodePunctuation as f, splice as g, combineExtensions as h, classifyCharacter as i, markdownLineEnding as l, normalizeIdentifier as m, blankLine as n, asciiAlpha as o, unicodeWhitespace as p, resolveAll as r, asciiAlphanumeric as s, fromMarkdown as t, markdownLineEndingOrSpace as u };

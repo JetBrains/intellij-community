@@ -5,8 +5,8 @@
 // ACTION: Make private
 // ACTION: Extract 'A' from current file
 // ERROR: Object 'A' is not abstract and does not implement abstract member public abstract val foo: Int defined in I
-// K2_ERROR: Object 'A' is not abstract and does not implement abstract member:<br>val foo: Int
-// K2_AFTER_ERROR: Object 'A' is not abstract and does not implement abstract member:<br>val foo: Int
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 interface I {
     val foo: Int
 }

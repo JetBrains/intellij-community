@@ -1,6 +1,6 @@
 // "Add 'Parcelable' supertype" "true"
 // WITH_STDLIB
-// K2_ERROR: No 'Parcelable' supertype.
+// K2_ERROR: NO_PARCELABLE_SUPERTYPE
 
 package com.myapp.activity
 

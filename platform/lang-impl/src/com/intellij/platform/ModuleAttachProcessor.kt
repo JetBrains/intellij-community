@@ -19,22 +19,31 @@ import com.intellij.openapi.module.PrimaryModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.getProjectDataPathRoot
+import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectAttachProcessor.Companion.canAttachToProject
+import com.intellij.projectImport.ProjectEntitiesAttacher
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
-import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<ModuleAttachProcessor>()
 
@@ -77,8 +86,15 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       }
     }
 
-    val newModule = try {
-      findMainModule(project, dotIdeaDir) ?: findMainModule(project, projectDir)
+    val (imported: Boolean, newModule: Module?) = try {
+      val importedFromWsm = findMainModuleInSystemDir(project, projectDir)
+      if (importedFromWsm != null) {
+        Pair(true, importedFromWsm.firstOrNull())
+      }
+      else {
+        val module = findMainModule(project, dotIdeaDir) ?: findMainModule(project, projectDir)
+        Pair(module != null, module)
+      }
     }
     catch (e: CancellationException) {
       throw e
@@ -95,9 +111,11 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
     LifecycleUsageTriggerCollector.onProjectModuleAttached(project)
 
-    if (newModule != null) {
-      withContext(Dispatchers.EDT) {
-        callback?.projectOpened(project, newModule)
+    if (imported) {
+      if (newModule != null) {
+        withContext(Dispatchers.EDT) {
+          callback?.projectOpened(project, newModule)
+        }
       }
       return true
     }
@@ -116,12 +134,33 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 }
 
 private suspend fun findMainModule(project: Project, projectDir: Path): Module? {
-  projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION) }) { directoryStream ->
+  return projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION) }) { directoryStream ->
     for (file in directoryStream) {
       return attachModule(project, file)
     }
+    return null
   }
-  return null
+}
+
+private suspend fun findMainModuleInSystemDir(project: Project, projectDir: Path): List<Module>? {
+  val projectWsmCachePath = getProjectDataPathRoot(projectDir).resolve(WorkspaceModelCacheImpl.DATA_DIR_NAME)
+  val cacheFile = projectWsmCachePath.resolve("cache.data")
+  if (!cacheFile.exists()) {
+    return null
+  }
+  val serializer = WorkspaceModelCacheSerializer(project.workspaceModel.getVirtualFileUrlManager(), null)
+  val invalidateCachesMarkerFile: Path = projectsDataDir.resolve(".invalidate")
+  val invalidateProjectCacheMarkerFile = projectWsmCachePath.resolve(".invalidate")
+  val storage = serializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
+  if (storage == null) {
+    return null
+  }
+  val toMigrate = ProjectEntitiesAttacher.getAllEntitiesToMigrate(storage)
+  project.workspaceModel.update("Importing workspace model from $projectDir to project name=${project.name}, locationHash=${project.locationHash}") {
+    it.applyChangesFrom(toMigrate)
+  }
+  val snapshot = project.workspaceModel.currentSnapshot
+  return snapshot.entities(ModuleEntity::class.java).mapNotNull { it.findModule(snapshot) }.toList()
 }
 
 private suspend fun attachModule(project: Project, imlFile: Path): Module {

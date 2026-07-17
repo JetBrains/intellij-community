@@ -104,7 +104,7 @@ data class Rete internal constructor(
   }
 
   companion object: CoroutineContext.Key<Rete> {
-    internal val logger = logger<Rete>()
+    internal val logger by lazy { logger<Rete>() }
   }
 
   override val key: CoroutineContext.Key<*> = Rete

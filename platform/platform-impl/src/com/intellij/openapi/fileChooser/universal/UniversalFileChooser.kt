@@ -6,12 +6,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -20,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
@@ -186,7 +189,9 @@ object UniversalFileChooser {
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
     contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
-  ) : JPanel() {
+    private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
+    private val extraPopupActions: ActionGroup = DefaultActionGroup()
+  ) : JPanel(), FileBrowserPanel {
 
     companion object {
       private val FILE_VIEW_KEY: Key<FileView?> = Key.create<FileView>("universalFileChooser.fileView")
@@ -203,6 +208,8 @@ object UniversalFileChooser {
 
     private val topToolbar: ActionToolbar
     private val toolbarActionGroup: DefaultActionGroup
+    private val popupActionGroup: DefaultActionGroup
+    private val effectiveContributors: Collection<UniversalFileChooserContributor>
 
     init {
       layout = BorderLayout()
@@ -213,17 +220,19 @@ object UniversalFileChooser {
       val (toolbar, group) = createTopToolbar()
       topToolbar = toolbar
       toolbarActionGroup = group
+      popupActionGroup = DefaultActionGroup(toolbarActionGroup, Separator.getInstance(), extraPopupActions)
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
-      val effectiveContributors = if (descriptor.isEnvironmentRestricted) {
-        projectContributor(project)?.let { listOf(it) } ?: contributors
+      effectiveContributors = if (descriptor.isEnvironmentRestricted) {
+        val restricted = projectContributor(project) ?: localContributor(contributors)
+        restricted?.let { listOf(it) } ?: contributors
       }
       else {
         contributors
       }
       for (contributor in effectiveContributors) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, toolbarActionGroup, ::updateOkEnabled)
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled)
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
@@ -408,7 +417,8 @@ object UniversalFileChooser {
         add(showHiddenAction)
       }
 
-      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
+      val toolbarGroup = DefaultActionGroup(actionGroup, Separator.getInstance(), extraToolbarActions)
+      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", toolbarGroup, true)
       return toolbar to actionGroup
     }
 
@@ -416,6 +426,11 @@ object UniversalFileChooser {
       if (project.isDefault) return null
       val basePath = project.basePath ?: project.projectFilePath ?: return null
       return UniversalFileChooserContributor.findOwner(Path.of(basePath))
+    }
+
+    private fun localContributor(contributors: Collection<UniversalFileChooserContributor>): UniversalFileChooserContributor? {
+      val localHome = runCatching { Path.of(SystemProperties.getUserHome()) }.getOrNull() ?: return null
+      return contributors.firstOrNull { it.ownsPath(localHome) }
     }
 
     private fun preselectProjectTab(project: Project) {
@@ -466,7 +481,7 @@ object UniversalFileChooser {
     }
 
 
-    fun getSelectedFiles(): List<Path> {
+    override fun getSelectedFiles(): List<Path> {
       val fileView = getActiveFileView()
       return fileView?.getSelectedFiles() ?: emptyList()
     }
@@ -555,7 +570,7 @@ object UniversalFileChooser {
       scope.launch {
         withContext(Dispatchers.IO) {
           val basePath = project.basePath?.let { Path.of(it) }
-                         ?: Path.of(SystemProperties.getUserHome())
+                         ?: findNonProjectBasePath()
                          ?: return@withContext
           val homePath = basePath.asEelPath().descriptor.toEelApi().userInfo.home.asNioPath()
           runOnEdt {
@@ -564,6 +579,15 @@ object UniversalFileChooser {
           }
         }
       }
+    }
+
+    private fun findNonProjectBasePath(): Path? {
+      val localHome = Path.of(SystemProperties.getUserHome())
+      if (effectiveContributors.find { c -> c.ownsPath(localHome) } != null) return localHome
+      val activeView = getActiveFileView() ?: return null
+      return activeView.roots.asSequence()
+        .mapNotNull { runCatching { Path.of(it) }.getOrNull() }
+        .firstOrNull()
     }
 
     private fun navigateToProject() {
@@ -603,16 +627,17 @@ object UniversalFileChooser {
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
-      toolbarActionGroup: DefaultActionGroup,
+      popupActionGroup: ActionGroup,
       private val okEnabledUpdater: () -> Unit = {},
     ) {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
+      private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
 
       var fileToSelect: Path? = null
-      private val pathTextField: NioPathTextField = NioPathTextField(scope)
+      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles)
 
       @Volatile
       private var pathTextFieldInvalid: Boolean = false
@@ -705,7 +730,7 @@ object UniversalFileChooser {
           topToolbar.updateActionsAsync()
         }
 
-        PopupHandler.installPopupMenu(tree, toolbarActionGroup, "UniversalFileChooserTreePopup")
+        PopupHandler.installPopupMenu(tree, popupActionGroup, "UniversalFileChooserTreePopup")
 
         tree.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
@@ -846,7 +871,7 @@ object UniversalFileChooser {
       fun isOkEnabled(): Boolean {
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
-          file.parent != null
+          file.parent != null && !(hasExtensionFilter && Files.isDirectory(file))
         }
       }
 
@@ -1073,4 +1098,114 @@ object UniversalFileChooser {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
   }
 
+}
+
+@ApiStatus.Experimental
+interface FileBrowserPanel {
+  /**
+   * Returns the files and/or directories currently selected in the active tab of the panel.
+   */
+  fun getSelectedFiles(): List<Path>
+}
+
+object FileBrowser {
+  /**
+   * Entry point for building an embeddable [FileBrowserPanel].
+   *
+   * The [parentDisposable] owns the panel's lifecycle: background loaders, listeners, and the
+   * internal coroutine scope are released when it is disposed. Callers should not rely on any
+   * dialog-close events.
+   *
+   * Typical usage:
+   * ```
+   * val panel = FileBrowser.builder(descriptor, parentDisposable)
+   *   .forProject(myProject)
+   *   .contributors(listOf(myContributor))
+   *   .onDefaultAction { openSelected() }
+   *   .toolbarActions(myToolbarGroup)
+   *   .popupActions(myPopupGroup)
+   *   .build()
+   * ```
+   *
+   * @param descriptor        file chooser descriptor
+   * @param parentDisposable  disposable owning the returned panel
+   */
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun builder(descriptor: FileChooserDescriptor, parentDisposable: Disposable): Builder =
+    Builder(descriptor, parentDisposable)
+
+  /**
+   * Fluent builder for an embeddable [FileBrowserPanel].
+   *
+   * Only [project], [descriptor], and [parentDisposable] are required; all other parameters have
+   * reasonable defaults. Use [contributors] or [root] to restrict which tabs are shown, and
+   * [toolbarActions] / [popupActions] to inject additional actions.
+   *
+   * @see FileBrowser.builder
+   */
+  @ApiStatus.Experimental
+  class Builder internal constructor(
+    private val descriptor: FileChooserDescriptor,
+    private val parentDisposable: Disposable,
+  ) {
+    private var contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList
+    private var onDefaultAction: Runnable = Runnable {}
+    private var toolbarActions: ActionGroup = DefaultActionGroup()
+    private var popupActions: ActionGroup = DefaultActionGroup()
+    private var project: Project = ProjectManager.getInstance().defaultProject
+
+    /**
+     * Sets the project for the builder.
+     *
+     * @param project the project to be associated with the builder, defaults to `ProjectManager.getInstance().defaultProject`
+     */
+    fun forProject(project: Project) {
+      this.project = project
+    }
+
+    /**
+     * Restricts the tabs shown in the panel to the given [contributors]. By default all registered
+     * [UniversalFileChooserContributor] extensions are used.
+     */
+    fun contributors(contributors: Collection<UniversalFileChooserContributor>): Builder = apply {
+      this.contributors = contributors
+    }
+
+    /**
+     * Shortcut for a single contributor rooted at [root]: the panel will show only that contributor's
+     * subtree starting at [root]. Returns `false` if no [UniversalFileChooserContributor] owns [root];
+     * in that case the builder is left unchanged so callers can decide how to react.
+     */
+    fun root(root: Path): Boolean {
+      val contributor = UniversalFileChooserContributor.findOwner(root) ?: return false
+      this.contributors = listOf(SingleRootContributor(contributor, root))
+      return true
+    }
+
+    /**
+     * Callback invoked when the user triggers the default action on the current selection
+     * (Enter / double-click).
+     */
+    fun onDefaultAction(action: Runnable): Builder = apply {
+      this.onDefaultAction = action
+    }
+
+    /**
+     * Additional actions appended to the panel's top toolbar (after the built-in navigation actions).
+     */
+    fun toolbarActions(actions: ActionGroup): Builder = apply {
+      this.toolbarActions = actions
+    }
+
+    /**
+     * Additional actions appended to the tree's context popup (after the toolbar actions).
+     */
+    fun popupActions(actions: ActionGroup): Builder = apply {
+      this.popupActions = actions
+    }
+
+    fun build(): FileBrowserPanel =
+      Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors, toolbarActions, popupActions)
+  }
 }

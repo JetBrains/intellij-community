@@ -34,7 +34,7 @@ data class RpcToken(val token: UID) : CoroutineContext.Element {
 
 
 private object RpcStream {
-  val logger = logger<RpcStream>()
+  val logger by lazy { logger<RpcStream>() }
 }
 
 @ApiStatus.Internal
@@ -217,7 +217,7 @@ interface PrefetchStrategy {
 
   companion object {
 
-    private val logger = logger<PrefetchStrategy>()
+    private val logger by lazy { logger<PrefetchStrategy>() }
 
     //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.app.fleet.tests"])
     const val STREAM_BURST_SIZE: Int = 100

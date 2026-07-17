@@ -84,6 +84,9 @@ fun setHeatmapColoringEnable(project: Project, value: Boolean) {
 fun isArrayCell(request: GridCellRequest<GridRow, GridColumn>): Boolean {
   val col = request.getColumn()
   if (col == null) return false
-  if (col.type == Types.ARRAY && !col.attributes.contains(ColumnDescriptor.Attribute.MULTI_DIMENSIONAL_ARRAY)) return true
-  return false;
+  if (col.type == Types.ARRAY
+      && !col.attributes.contains(ColumnDescriptor.Attribute.MULTI_DIMENSIONAL_ARRAY)
+      && !col.attributes.contains(ColumnDescriptor.Attribute.JSON_ARRAY)
+     ) return true
+  return false
 }

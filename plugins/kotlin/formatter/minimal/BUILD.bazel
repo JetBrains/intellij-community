@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.kotlin.formatter.minimal` start
-
 resourcegroup(
     name = "minimal_resources",
     srcs = glob(

@@ -1021,6 +1021,26 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/constructor/PrivateConstructor.kt");
         }
 
+        @TestMetadata("PrivateConstructorForNested.kt")
+        public void testPrivateConstructorForNested() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested2.kt")
+        public void testPrivateConstructorForNested2() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested2.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested3.kt")
+        public void testPrivateConstructorForNested3() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested3.kt");
+        }
+
+        @TestMetadata("PrivateConstructorForNested4.kt")
+        public void testPrivateConstructorForNested4() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested4.kt");
+        }
+
         @TestMetadata("SingleConstructor.kt")
         public void testSingleConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");

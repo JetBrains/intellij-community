@@ -431,6 +431,9 @@ internal class CommandCompletionCharFilter : CharFilter() {
     }
 
     if (element.isCommand()) {
+      if (element.lookupString == c.toString()) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP
+      }
       return Result.ADD_TO_PREFIX
     }
 

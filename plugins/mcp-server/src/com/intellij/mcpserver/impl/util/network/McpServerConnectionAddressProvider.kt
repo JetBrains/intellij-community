@@ -1,13 +1,11 @@
 package com.intellij.mcpserver.impl.util.network
 
 import com.intellij.mcpserver.impl.McpServerService
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import java.net.InetAddress
 
 open class McpServerConnectionAddressProvider {
-
   private val loopbackHost: String = InetAddress.getLoopbackAddress().hostAddress
 
   private val serverService: McpServerService
@@ -52,11 +50,11 @@ open class McpServerConnectionAddressProvider {
     }
   }
 
-  private fun formatHostForUrl(host: String): String =
-    if (host.contains(':') && !(host.startsWith("[") && host.endsWith("]"))) "[$host]" else host
+  private fun formatHostForUrl(host: String): String {
+    return if (host.contains(':') && !(host.startsWith("[") && host.endsWith("]"))) "[$host]" else host
+  }
 
   companion object {
-
     fun getInstanceOrNull(): McpServerConnectionAddressProvider? {
       return serviceOrNull<McpServerConnectionAddressProvider>()
     }

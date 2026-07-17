@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `iml intellij.gradle.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml` start
-
 jvm_library(
     name = "toml",
     srcs = glob(
@@ -77,7 +76,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.completion.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml.tests` start
-
 jvm_library(
     name = "gradle-completion-toml-tests",
     srcs = glob(
@@ -178,7 +176,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` end
 
 ### auto-generated section `test intellij.gradle.completion.toml.tests` start
-
 jps_test(
     name = "gradle-completion-toml-tests_test",
     runtime_deps = [":gradle-completion-toml-tests_test_lib"],

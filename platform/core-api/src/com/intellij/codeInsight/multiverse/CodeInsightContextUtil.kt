@@ -42,11 +42,11 @@ fun List<FileViewProvider>.isEventSystemEnabled(): Boolean {
   if (size == 0) return false
 
   val first = first()
-  val value = first.isEventSystemEnabled
+  val value = first.supportsSendingPsiEvents()
   if (size == 1) return value
 
   for (provider in this) {
-    if (!provider.isEventSystemEnabled) {
+    if (!provider.supportsSendingPsiEvents()) {
       log.error("files with multiple file providers must have event system enabled")
       return false
     }

@@ -1,5 +1,5 @@
 // "Create parameter 'name'" "true"
-// K2_ERROR: Unresolved reference 'name'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 class B {
     constructor() {
         object : A(<caret>name) {

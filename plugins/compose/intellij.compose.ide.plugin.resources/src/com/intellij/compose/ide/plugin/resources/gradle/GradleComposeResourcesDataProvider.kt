@@ -3,6 +3,7 @@ package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesData
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider
+import com.intellij.compose.ide.plugin.resources.getAllComposeResourcesDirs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -85,10 +86,4 @@ internal class GradleComposeResourcesDataProvider : ComposeResourcesDataProvider
     get() = getModuleNameForComposeResourcesTask()?.let { moduleName ->
       project.service<GradleComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.directoriesBySourceSetName.orEmpty()
     } ?: emptyMap()
-
-  /**
-   * Return a list of all the Compose resources directories present in the given [Project]
-   * */
-  private fun Project.getAllComposeResourcesDirs(): List<GradleComposeResourcesDir> =
-    service<GradleComposeResourcesManager>().composeResourcesByModulePath.flatMap { it.value.directoriesBySourceSetName.values }
 }

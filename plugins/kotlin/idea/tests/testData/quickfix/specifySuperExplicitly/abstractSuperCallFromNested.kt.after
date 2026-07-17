@@ -1,5 +1,5 @@
 // "Specify super type 'IntA' explicitly" "true"
-// K2_ERROR: Abstract member cannot be accessed directly.
+// K2_ERROR: ABSTRACT_SUPER_CALL
 
 interface IntA {
     fun check(): String = "OK"

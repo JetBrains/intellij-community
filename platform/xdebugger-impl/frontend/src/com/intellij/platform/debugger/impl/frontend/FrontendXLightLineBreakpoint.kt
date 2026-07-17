@@ -26,7 +26,7 @@ internal class FrontendXLightLineBreakpoint(
   parentCs: CoroutineScope,
   override val type: XLineBreakpointTypeProxy,
   private val installationInfo: XLineBreakpointInstallationInfo,
-  private val breakpointManager: XBreakpointManagerProxy,
+  private val breakpointManager: FrontendXBreakpointManager,
 ) : XLightLineBreakpointProxy {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
@@ -35,7 +35,7 @@ internal class FrontendXLightLineBreakpoint(
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
     cs.launch(Dispatchers.EDT) {
-      breakpointManager.getLineBreakpointManager().breakpointChanged(this@FrontendXLightLineBreakpoint)
+      breakpointManager.getLineBreakpointVisualizationManager().breakpointChanged(this@FrontendXLightLineBreakpoint)
     }
   }
 

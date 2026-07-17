@@ -34,7 +34,7 @@ fun some(
         when {
             test2 != null -> {
             }
-            test1 == null<error descr="[COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT] Deprecated syntax. Use '||' instead of commas in when-condition for 'when' without argument">,</error> test1.toLong() == 100L -> {
+            test1 == null<error descr="[COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT]">,</error> test1.toLong() == 100L -> {
             }
         }
     }

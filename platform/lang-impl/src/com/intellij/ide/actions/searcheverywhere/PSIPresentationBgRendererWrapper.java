@@ -51,7 +51,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor, EssentialContributor,
+                                                               PossibleSlowContributor, EssentialContributor,
                                                                SearchEverywhereExtendedInfoProvider, SearchEverywherePreviewProvider,
                                                                SearchEverywhereContributorWrapper, PossibleInternalCommandsContributor {
   private static final Logger LOG = Logger.getInstance(PSIPresentationBgRendererWrapper.class);
@@ -63,13 +63,6 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   public PSIPresentationBgRendererWrapper(WeightedSearchEverywhereContributor<Object> delegate) { myDelegate = delegate; }
-
-  @Override
-  public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
-    return myDelegate instanceof AutoCompletionContributor
-           ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
-           : Collections.emptyList();
-  }
 
   @Override
   public boolean isSlow() {
@@ -117,12 +110,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
     Function<PsiElement, TargetPresentation> psiCalculator = createPSICalculator();
-    ListCellRenderer<? super Object> delegateRenderer = myDelegate.getElementsRenderer();
-    SearchEverywherePresentationProvider<? super Object> presentationProvider = (delegateRenderer instanceof SearchEverywherePresentationProvider)
-                                                                        ? (SearchEverywherePresentationProvider<Object>)delegateRenderer
-                                                                        : null;
     myDelegate.fetchWeightedElements(pattern, progressIndicator, descriptor -> {
-      FoundItemDescriptor<Object> presentationDescriptor = element2presentation(descriptor, psiCalculator, presentationProvider);
+      FoundItemDescriptor<Object> presentationDescriptor = element2presentation(descriptor, psiCalculator);
       return consumer.process(presentationDescriptor);
     });
   }
@@ -152,15 +141,14 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
-                                                           Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
-                                                           @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {
+                                                                  Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator) {
     if (elementDescriptor.getItem() instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
-      TargetPresentation presentation = calcPresentation(itemWithSimilarity.getValue(), psiPresentationCalculator, rendererPresentationProvider);
+      TargetPresentation presentation = calcPresentation(itemWithSimilarity.getValue(), psiPresentationCalculator);
       PsiItemWithSimilarity<?> newItemWithSimilarity = new PsiItemWithSimilarity<>(itemWithSimilarity.getValue(), itemWithSimilarity.getSimilarityScore());
       return new FoundItemDescriptor<>(new ItemWithPresentation<>(newItemWithSimilarity, presentation), elementDescriptor.getWeight());
     }
 
-    TargetPresentation presentation = calcPresentation(elementDescriptor.getItem(), psiPresentationCalculator, rendererPresentationProvider);
+    TargetPresentation presentation = calcPresentation(elementDescriptor.getItem(), psiPresentationCalculator);
 
     if (elementDescriptor.getItem() instanceof PsiElement psi) {
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
@@ -174,8 +162,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
   }
 
-  private static TargetPresentation calcPresentation(Object item, Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
-                                                     @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {
+  private static TargetPresentation calcPresentation(Object item, Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator) {
     if (item instanceof PsiElement psi) {
       return psiPresentationCalculator.apply(psi);
     }
@@ -192,10 +179,6 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
     if (item instanceof ItemPresentation itemPresentation) {
       return convertPresentation(itemPresentation);
-    }
-
-    if (rendererPresentationProvider != null) {
-      return rendererPresentationProvider.getTargetPresentation(item);
     }
 
     LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + item.getClass() + "] is not");

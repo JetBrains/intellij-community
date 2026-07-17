@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.idea.community.build.tasks.tests`
 
 ### auto-generated section `build intellij.idea.community.build.tasks` start
-
 jvm_library(
     name = "tasks",
     srcs = glob(
@@ -116,7 +115,6 @@ exports_files(
 ### auto-generated section `iml intellij.idea.community.build.tasks` end
 
 ### auto-generated section `build intellij.idea.community.build.tasks.tests` start
-
 jvm_library(
     name = "tasks-tests",
     srcs = glob(

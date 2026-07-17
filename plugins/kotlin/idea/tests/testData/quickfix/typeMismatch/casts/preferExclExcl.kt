@@ -7,8 +7,8 @@
 // ACTION: Surround with null check
 // ACTION: Wrap with '?.let { ... }' call
 // ERROR: Type mismatch: inferred type is String? but String was expected
-// K2_ERROR: Argument type mismatch: actual type is 'String?', but 'String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String?', but 'String' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(s: String?) {
     bar(<caret>s)

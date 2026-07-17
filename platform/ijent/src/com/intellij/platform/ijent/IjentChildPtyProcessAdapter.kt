@@ -3,6 +3,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelProcessManagementApi
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineScope
@@ -20,8 +21,9 @@ import java.util.concurrent.TimeUnit
  */
 @ApiStatus.Internal
 class IjentChildPtyProcessAdapter(
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
   private val ijentChildProcess: EelProcess,
+  private val processManagement: EelProcessManagementApi? = null,
 ) : PtyProcess(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
@@ -77,6 +79,18 @@ class IjentChildPtyProcessAdapter(
    */
   override fun pid(): Long =
     throw UnsupportedOperationException()
+
+  /**
+   * Returns a [ProcessHandle] for the remote process backed by [ijentChildProcess].
+   *
+   * Unlike [pid], the handle intentionally exposes the environment-side pid and the process tree of the environment, so that callers
+   * can navigate [ProcessHandle.children] / [ProcessHandle.descendants] and terminate subtrees.
+   */
+  override fun toHandle(): ProcessHandle =
+    if (processManagement != null)
+      IjentChildProcessHandlerAdapter(processManagement, coroutineScope, ijentChildProcess.pid.value, ownProcess = ijentChildProcess, cachedInfo = null)
+    else
+      super.toHandle()
 
   override fun onExit(): CompletableFuture<Process> =
     delegate.onExit().thenApply { this }

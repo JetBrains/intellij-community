@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -10,8 +10,12 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ContextAwareActionHandler;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,6 +26,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +36,9 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -122,14 +130,26 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       line = editor.getCaretModel().getLogicalPosition().line;
     }
 
-    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
-
     int finalOffset = offset;
-    List<? extends GenerationInfo> newMembers = WriteAction.compute(
-      () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
-        () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members))));
 
-    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
+    List<? extends GenerationInfo> prototypes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.computeBlocking(
+        () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> generateMemberPrototypes(aClass, members))),
+      myChooserTitle, true, project);
+
+    List<? extends GenerationInfo> newMembers;
+    if (ContainerUtil.exists(prototypes, info -> !info.getClass().equals(PsiGenerationInfo.class))) {
+      // Interactive templates operate on the physical editor afterwards; keep this case on the
+      // legacy write-action path.
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
+      newMembers = WriteAction.compute(
+        () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+          () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, prototypes)));
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
+    }
+    else {
+      newMembers = insertMembersInBackground(project, editor, aClass, finalOffset, members);
+    }
 
     if (newMembers.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -163,10 +183,55 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     }
   }
 
+  private @NotNull List<? extends GenerationInfo> insertMembersInBackground(@NotNull Project project,
+                                                                            @NotNull Editor editor,
+                                                                            @NotNull PsiClass aClass,
+                                                                            int offset,
+                                                                            ClassMember[] members) {
+    PsiFile containingFile = aClass.getContainingFile();
+    ActionContext context = ActionContext.from(editor, containingFile);
+    List<TextRange> memberRanges = new ArrayList<>();
+    ModCommandExecutor.executeInteractively(context, myChooserTitle, editor, () ->
+      ModCommand.psiUpdate(context, updater -> {
+        PsiClass classCopy = updater.getWritable(aClass);
+        List<? extends GenerationInfo> inserted =
+          GenerateMembersUtil.insertMembersAtOffset(classCopy, offset, generateMemberPrototypes(aClass, members));
+        CodeStyleManager manager = CodeStyleManager.getInstance(project);
+        for (GenerationInfo info : inserted) {
+          PsiMember member = info.getPsiMember();
+          if (member != null) {
+            manager.reformat(member);
+          }
+        }
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(classCopy.getContainingFile().getFileDocument());
+        for (GenerationInfo info : inserted) {
+          PsiMember psiMember = info.getPsiMember();
+          if (psiMember != null) {
+            memberRanges.add(psiMember.getTextRange());
+          }
+        }
+      }));
+
+    // The command has been applied synchronously;
+    // get the inserted members in the physical file.
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile == null) return List.of();
+    List<GenerationInfo> result = new ArrayList<>();
+    for (TextRange memberRange : memberRanges) {
+      PsiMember member = PsiTreeUtil.findElementOfClassAtRange(psiFile, memberRange.getStartOffset(), memberRange.getEndOffset(), PsiMember.class);
+      if (member != null) {
+        result.add(new PsiGenerationInfo<>(member));
+      }
+    }
+    return result;
+  }
+
   protected void notifyOnSuccess(Editor editor,
                                  ClassMember[] members,
                                  List<? extends GenerationInfo> generatedMembers) {
-    generatedMembers.get(0).positionCaret(editor, false);
+    generatedMembers.getFirst().positionCaret(editor, false);
   }
 
   protected @NlsContexts.HintText String getNothingFoundMessage() {

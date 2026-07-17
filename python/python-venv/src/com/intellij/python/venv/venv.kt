@@ -75,9 +75,13 @@ suspend fun createVenv(
     add(venvDir)
   }
   val version = python.validatePythonAndGetInfo().getOr(PyVenvBundle.message("py.venv.error.cant.base.version")) { return it }.languageLevel
-  val helper = if (version.isAtLeast(LanguageLevel.PYTHON38)) VIRTUALENV_ZIPAPP_NAME else LEGACY_VIRTUALENV_ZIPAPP_NAME
-  execService.executeHelper(python, helper, args, ExecOptions(timeout = 3.minutes))
-    .getOr(PyVenvBundle.message("py.venv.error.executing.script", helper)) { return it }
+  if (!version.isAtLeast(MINIMUM_SUPPORTED_VENV_PYTHON_VERSION)) {
+    return PyResult.localizedError(PyVenvBundle.message("py.venv.error.unsupported.version",
+                                                        version.toPythonVersion(),
+                                                        MINIMUM_SUPPORTED_VENV_PYTHON_VERSION.toPythonVersion()))
+  }
+  execService.executeHelper(python, VIRTUALENV_ZIPAPP_NAME, args, ExecOptions(timeout = 3.minutes))
+    .getOr(PyVenvBundle.message("py.venv.error.executing.script", VIRTUALENV_ZIPAPP_NAME)) { return it }
 
   return Result.success(Unit)
 }
@@ -86,10 +90,13 @@ suspend fun createVenv(
 @Internal
 const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
 
-// Ancient version, the last one compatible with Py 2.7, 3.6, 3.7
+/**
+ * Minimum Python version supported by the IDE's bundled environment tooling: the [VIRTUALENV_ZIPAPP_NAME]
+ * zipapp and the bundled pip/setuptools wheels all require Python >= 3.8. Older interpreters stay selectable,
+ * but the IDE can neither create a virtual environment for them nor provision packaging tools.
+ */
 @Internal
-const val LEGACY_VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.13.0.pyz"
-
+val MINIMUM_SUPPORTED_VENV_PYTHON_VERSION: LanguageLevel = LanguageLevel.PYTHON38
 
 /**
  * Creates [PythonSdkAdditionalData] for virtual env

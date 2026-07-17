@@ -1,5 +1,5 @@
 // "Convert string to character literal" "true"
-// K2_ERROR: Return type mismatch: expected 'Char', actual 'String'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun bar(): Char {
     return <caret>"a"
 }

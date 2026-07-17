@@ -1,6 +1,6 @@
 // "Create object 'ClassCheckerImpl'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
 
-// K2_ERROR: Unresolved reference 'ClassCheckerImpl'.
 interface FirDeclarationChecker<T>
 
 class FirClass

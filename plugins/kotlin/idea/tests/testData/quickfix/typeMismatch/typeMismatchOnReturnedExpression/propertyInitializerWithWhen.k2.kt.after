@@ -1,5 +1,5 @@
 // "Change type of 'foo' to 'Any'" "true"
-// K2_ERROR: Initializer type mismatch: expected 'O', actual 'Any'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 class O
 class P
 

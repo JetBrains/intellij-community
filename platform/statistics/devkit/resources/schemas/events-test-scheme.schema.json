@@ -40,7 +40,10 @@
             "type": "string"
           },
           "examples": [
-            "{util#action}"
+            "{util#action}",
+            "{default_value:fallback1|event_name|1}",
+            "{default_value:fallback2|event_name|1..2}",
+            "{required:true|event_name|1}"
           ],
           "minItems": 1
         }

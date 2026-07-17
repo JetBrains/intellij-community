@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WslExecution")
 @file:ApiStatus.Internal
 
@@ -13,7 +13,6 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.wsl.WSLUtil.LOG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
@@ -38,7 +37,7 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText))
   if (options.isExecuteCommandInInteractiveShell) {
     // Disable oh-my-zsh auto update on shell initialization
-    commandLine.environment[EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE] = "true"
+    commandLine.environment["DISABLE_AUTO_UPDATE"] = "true"
     options.isPassEnvVarsUsingInterop = true
   }
   val output: ProcessOutput = executeOnWsl(commandLine, options, timeout, processHandlerCustomizer)

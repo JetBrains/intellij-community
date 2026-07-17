@@ -59,6 +59,32 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     return myTemplatesList.getSelectedValue().templateName();
   }
 
+  public void setNameFieldToTemplateNameOnSelection() {
+    myTemplatesList.addListSelectionListener(e -> {
+      if (!e.getValueIsAdjusting() && isNameFieldEmptyOrTemplateName()) {
+        TemplatePresentation selectedTemplate = myTemplatesList.getSelectedValue();
+        if (selectedTemplate != null) {
+          myTextField.setText(selectedTemplate.templateName());
+        }
+      }
+    });
+  }
+
+  private boolean isNameFieldEmptyOrTemplateName() {
+    String enteredName = getEnteredName();
+    if (enteredName.isEmpty()) {
+      return true;
+    }
+
+    ListModel<TemplatePresentation> model = myTemplatesList.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (StringUtil.equals(enteredName, model.getElementAt(i).templateName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void setTextFieldIcon(Icon icon) {
     myTextField.setExtensions(new TemplateIconExtension(icon));
     myTextField.repaint();

@@ -383,6 +383,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     refresh(::softMargins)
     refresh(::rightMargin)
     refresh(::myStickyLinesShownForLanguage)
+    refresh(::myWrapWhenTypingReachesRightMargin)
     editor?.putUserData(EDITOR_LANGUAGE, language)
   }
 }

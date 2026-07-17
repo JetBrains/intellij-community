@@ -2,33 +2,52 @@
 package com.intellij.ui.webview.impl.windows
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
-import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.WEBVIEW_CONSOLE_NOTIFICATION_METHOD
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
+import com.intellij.ui.webview.impl.webViewAssetCustomSchemeUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.engine.WebViewScript
+import com.intellij.ui.webview.impl.traceWebViewPerf
+import com.intellij.ui.webview.impl.traceWebViewPerfSince
+import com.intellij.ui.webview.impl.webViewLifecycle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+private val LOG = logger<WinWebViewEngine>()
 
 @ApiStatus.Internal
 internal class WinWebViewEngine(
@@ -37,6 +56,8 @@ internal class WinWebViewEngine(
   private val debugName: String? = null,
   documentStartScripts: List<WebViewScript> = emptyList(),
   private val webViewDispatcher: CoroutineDispatcher = WebView2Dispatcher.coroutineDispatcher,
+  private val devToolsCpuProfilingEnabled: () -> Boolean = { Registry.get(DEVTOOLS_CPU_PROFILING_REGISTRY_KEY).asBoolean() },
+  private val customSchemeAssetLoadingEnabled: () -> Boolean = { Registry.get(WINDOWS_ASSET_CUSTOM_SCHEME_REGISTRY_KEY).asBoolean() },
 ) : WebViewEngineBridge {
   override val isHeavyweight: Boolean = true
 
@@ -48,6 +69,11 @@ internal class WinWebViewEngine(
     data class Url(val url: String) : PendingLoad
     data class Html(val html: String, val baseUrl: String?) : PendingLoad
   }
+
+  private data class DevToolsCallResult(
+    val result: String?,
+    val error: String?,
+  )
 
   private data class PendingBounds(
     val x: Int,
@@ -65,9 +91,20 @@ internal class WinWebViewEngine(
   private val handleReady = AtomicReference(CompletableDeferred<Long>())
   private val nextEvalId = AtomicLong(0)
   private val pendingEvals = ConcurrentHashMap<Long, (String?) -> Unit>()
+  private val pendingDevToolsCalls = ConcurrentHashMap<Long, (String?, String?) -> Unit>()
   private val activeAssetResolver = AtomicReference<WebViewAssetResolver?>(null)
   private val recoveryAttempts = ArrayDeque<Long>()
   private val documentStartScript = documentStartScripts.joinToString("\n;\n") { it.script }
+  private val nativeCreateStartedAt = AtomicReference<TimeMark?>(null)
+  private val firstLoadRequestedAt = AtomicReference<TimeMark?>(null)
+  private val firstLoadApplied = AtomicBoolean(false)
+  private val consoleFramesBeforeFirstNavigation = AtomicInteger(0)
+  private val consoleCharsBeforeFirstNavigation = AtomicLong(0)
+  private val firstNavigationCompleted = AtomicBoolean(false)
+  private val consoleStartupSummaryLogged = AtomicBoolean(false)
+  private val devToolsCpuProfileStartRequested = AtomicBoolean(false)
+  private val devToolsCpuProfileStarted = AtomicBoolean(false)
+  private val devToolsCpuProfileStopRequested = AtomicBoolean(false)
 
   @Volatile
   private var nativeHandle: Long = 0
@@ -121,8 +158,12 @@ internal class WinWebViewEngine(
       state.set(State.Active)
       consecutiveRenderUnresponsiveCount = 0
       handleReady.get().complete(handle)
+      nativeCreateStartedAt.getAndSet(null)?.let { startedAt ->
+        LOG.traceWebViewPerfSince("win-webview2.create.untilReady", startedAt, diagnosticDetails())
+      }
+      startDevToolsCpuProfileIfNeeded(handle)
       applyPendingState(handle)
-      WebViewLogger.logLifecycle("win-webview2-create", "WebView2 ready${diagnosticContext()}")
+      LOG.webViewLifecycle("win-webview2-create", "WebView2 ready${diagnosticContext()}")
     }
 
     override fun onCreateFailed(message: String) {
@@ -130,10 +171,11 @@ internal class WinWebViewEngine(
       handleReady.get().completeExceptionally(IllegalStateException(message))
       cancelPendingEvaluations()
       clearActiveAssetResolver()
-      WebViewLogger.LOG.error("Failed to initialize WebView2${messageWithContext(message)}")
+      LOG.error("Failed to initialize WebView2${messageWithContext(message)}")
     }
 
     override fun onMessage(raw: String) {
+      recordConsoleStartupFrame(raw)
       inboundMessageHandler(raw)
     }
 
@@ -142,8 +184,12 @@ internal class WinWebViewEngine(
     }
 
     override fun onEvaluationError(evalId: Long, message: String) {
-      WebViewLogger.LOG.warn("WebView2 JavaScript evaluation failed: $message")
+      LOG.warn("WebView2 JavaScript evaluation failed: $message")
       pendingEvals.remove(evalId)?.invoke(null)
+    }
+
+    override fun onDevToolsProtocolMethodResult(callId: Long, result: String?, error: String?) {
+      pendingDevToolsCalls.remove(callId)?.invoke(result, error)
     }
 
     override fun onAcceleratorKeyPressed(keyEventKind: Int, virtualKey: Int, modifiers: Int, keyEventLParam: Int): Boolean {
@@ -160,15 +206,17 @@ internal class WinWebViewEngine(
 
     override fun onLog(level: Int, message: String) {
       when {
-        level >= NATIVE_DIAGNOSTIC_ERROR -> WebViewLogger.LOG.error(message)
-        level >= NATIVE_DIAGNOSTIC_WARN -> WebViewLogger.LOG.warn(message)
-        level >= NATIVE_DIAGNOSTIC_INFO -> WebViewLogger.LOG.info(message)
-        level >= NATIVE_DIAGNOSTIC_DEBUG -> WebViewLogger.LOG.debug(message)
-        else -> WebViewLogger.LOG.trace(message)
+        level >= NATIVE_DIAGNOSTIC_ERROR -> LOG.error(message)
+        level >= NATIVE_DIAGNOSTIC_WARN -> LOG.warn(message)
+        else -> LOG.trace(message)
       }
     }
 
     override fun onNativeDiagnostic(level: Int, event: String, message: String, data: String) {
+      if (event == NATIVE_EVENT_NAVIGATION_COMPLETED && firstNavigationCompleted.compareAndSet(false, true)) {
+        logConsoleStartupSummary(event, force = true)
+        scheduleDevToolsCpuProfileStopAfterFirstNavigation()
+      }
       logNativeDiagnostic(level, event, message, data)
       when (event) {
         NATIVE_EVENT_PROCESS_FAILED_FATAL, NATIVE_EVENT_BROWSER_PROCESS_EXITED_FATAL -> invokeOnWebView {
@@ -181,7 +229,7 @@ internal class WinWebViewEngine(
     }
 
     override fun resolveAsset(url: String): WinWebView2Bridge.AssetResponse? {
-      val response = resolveWebViewAssetUrl(url, activeAssetResolver.get()) ?: return null
+      val response = resolveWebViewAssetUrl(url, activeAssetResolver.get(), "windows") ?: return null
       return response.toNativeAssetResponse()
     }
   }
@@ -257,7 +305,13 @@ internal class WinWebViewEngine(
 
   override suspend fun loadAsset(root: WebViewAssetRoot, entry: WebViewAssetPath, query: String?) {
     activeAssetResolver.set(WebViewAssetResolver(root))
-    loadUrlInternal(webViewAssetHttpsUrl(entry, query))
+    val url = if (isCustomSchemeAssetLoadingEnabled()) {
+      webViewAssetCustomSchemeUrl(entry, query)
+    }
+    else {
+      webViewAssetHttpsUrl(entry, query)
+    }
+    loadUrlInternal(url)
   }
 
   override suspend fun loadHtml(html: String, baseFile: Path?) {
@@ -267,6 +321,7 @@ internal class WinWebViewEngine(
 
   private fun loadUrlInternal(url: String) {
     val load = PendingLoad.Url(url)
+    recordFirstLoadRequested()
     pendingLoad.set(load)
     lastLoad = load
     if (state.get() == State.Closed) return
@@ -275,6 +330,7 @@ internal class WinWebViewEngine(
 
   private fun loadHtmlInternal(html: String, baseUrl: String?) {
     val load = PendingLoad.Html(html, baseUrl)
+    recordFirstLoadRequested()
     pendingLoad.set(load)
     lastLoad = load
     if (state.get() == State.Closed) return
@@ -317,12 +373,15 @@ internal class WinWebViewEngine(
         bridge.transferToJs(handle, rawJson)
       }
       catch (t: IllegalStateException) {
-        WebViewLogger.LOG.debug("Dropping WebView2 message while the view is not ready", t)
+        LOG.trace("Dropping WebView2 message while the view is not ready")
+        LOG.trace(t)
       }
     }
   }
 
   override suspend fun close() {
+    logConsoleStartupSummary("close", force = false)
+    stopDevToolsCpuProfile("close")
     loop@ while (true) {
       when (val current = state.get()) {
         State.New -> {
@@ -331,7 +390,7 @@ internal class WinWebViewEngine(
             cancelPendingEvaluations()
             clearActiveAssetResolver()
             handleReady.get().cancel(CancellationException("Engine closed before initialization"))
-            WebViewLogger.logLifecycle("win-webview2-close", "closed from New state")
+            LOG.webViewLifecycle("win-webview2-close", "closed from New state")
             return
           }
         }
@@ -339,7 +398,7 @@ internal class WinWebViewEngine(
           if (state.compareAndSet(current, State.Closing)) break@loop
         }
         State.Closing, State.Closed -> {
-          WebViewLogger.logLifecycle("win-webview2-close", "already closing/closed, idempotent no-op")
+          LOG.webViewLifecycle("win-webview2-close", "already closing/closed, idempotent no-op")
           return
         }
       }
@@ -355,7 +414,7 @@ internal class WinWebViewEngine(
         bridge.destroy(handle)
         handleReady.get().cancel(CancellationException("Engine closed"))
         state.set(State.Closed)
-        WebViewLogger.logLifecycle("win-webview2-close", "native cleanup complete")
+        LOG.webViewLifecycle("win-webview2-close", "native cleanup complete")
       }
     }
     else {
@@ -368,8 +427,8 @@ internal class WinWebViewEngine(
   private fun applyPendingState(handle: Long) {
     applyAttachmentState(handle)
     when (val load = pendingLoad.getAndSet(null)) {
-      is PendingLoad.Url -> bridge.loadUrl(handle, load.url)
-      is PendingLoad.Html -> bridge.loadHtml(handle, load.html, load.baseUrl)
+      is PendingLoad.Url -> applyLoad(handle, load)
+      is PendingLoad.Html -> applyLoad(handle, load)
       null -> Unit
     }
   }
@@ -386,8 +445,11 @@ internal class WinWebViewEngine(
     val parent = pendingAttachParent.getAndSet(0)
     if (parent == 0L || state.get() == State.Closed) return
     try {
-      WebViewLogger.logLifecycle("win-webview2-create", "initializing WebView2${diagnosticContext()}")
-      nativeHandle = bridge.create(parent, userDataDir().toString(), documentStartScript, callbacks)
+      LOG.webViewLifecycle("win-webview2-create", "initializing WebView2${diagnosticContext()}")
+      nativeCreateStartedAt.set(TimeSource.Monotonic.markNow())
+      nativeHandle = LOG.traceWebViewPerf("win-webview2.bridge.create.call", diagnosticDetails()) {
+        bridge.create(parent, userDataDir().toString(), documentStartScript, callbacks)
+      }
       applyAttachmentState(nativeHandle)
     }
     catch (t: Throwable) {
@@ -395,7 +457,7 @@ internal class WinWebViewEngine(
       handleReady.get().completeExceptionally(t)
       cancelPendingEvaluations()
       clearActiveAssetResolver()
-      WebViewLogger.LOG.error("Failed to start WebView2 initialization${diagnosticContext()}", t)
+      LOG.error("Failed to start WebView2 initialization${diagnosticContext()}", t)
     }
   }
 
@@ -460,7 +522,8 @@ internal class WinWebViewEngine(
         }
       }
       catch (e: IllegalStateException) {
-        WebViewLogger.LOG.debug("Failed to apply WebView2 focus operation: operation=$focusOp${diagnosticContext()}", e)
+        LOG.trace("Failed to apply WebView2 focus operation: operation=$focusOp${diagnosticContext()}")
+        LOG.trace(e)
       }
     }
   }
@@ -472,8 +535,8 @@ internal class WinWebViewEngine(
       val handle = nativeHandle
       if (handle == 0L || state.get() != State.Active) return@invokeOnWebView
       when (val load = pendingLoad.getAndSet(null)) {
-        is PendingLoad.Url -> bridge.loadUrl(handle, load.url)
-        is PendingLoad.Html -> bridge.loadHtml(handle, load.html, load.baseUrl)
+        is PendingLoad.Url -> applyLoad(handle, load)
+        is PendingLoad.Html -> applyLoad(handle, load)
         null -> Unit
       }
     }
@@ -508,11 +571,9 @@ internal class WinWebViewEngine(
       }
     }
     when {
-      level >= NATIVE_DIAGNOSTIC_ERROR -> WebViewLogger.LOG.error(formattedMessage)
-      level >= NATIVE_DIAGNOSTIC_WARN -> WebViewLogger.LOG.warn(formattedMessage)
-      level >= NATIVE_DIAGNOSTIC_INFO -> WebViewLogger.LOG.info(formattedMessage)
-      level >= NATIVE_DIAGNOSTIC_DEBUG -> WebViewLogger.LOG.debug(formattedMessage)
-      else -> WebViewLogger.LOG.trace(formattedMessage)
+      level >= NATIVE_DIAGNOSTIC_ERROR -> LOG.error(formattedMessage)
+      level >= NATIVE_DIAGNOSTIC_WARN -> LOG.warn(formattedMessage)
+      else -> LOG.trace(formattedMessage)
     }
   }
 
@@ -548,12 +609,15 @@ internal class WinWebViewEngine(
 
     if (oldHandle != 0L) {
       runCatching { bridge.destroy(oldHandle) }
-        .onFailure { WebViewLogger.LOG.error("Failed to destroy crashed WebView2 handle${diagnosticContext()}", it) }
+        .onFailure { LOG.error("Failed to destroy crashed WebView2 handle${diagnosticContext()}", it) }
     }
 
     try {
-      WebViewLogger.logLifecycle("win-webview2-recovery", "recreating after $event${diagnosticContext()}")
-      nativeHandle = bridge.create(parentHwnd, userDataDir().toString(), documentStartScript, callbacks)
+      LOG.webViewLifecycle("win-webview2-recovery", "recreating after $event${diagnosticContext()}")
+      nativeCreateStartedAt.set(TimeSource.Monotonic.markNow())
+      nativeHandle = LOG.traceWebViewPerf("win-webview2.bridge.create.call", "recovery=true, ${diagnosticDetails()}") {
+        bridge.create(parentHwnd, userDataDir().toString(), documentStartScript, callbacks)
+      }
       bridge.setVisible(nativeHandle, !hidden)
     }
     catch (t: Throwable) {
@@ -571,9 +635,9 @@ internal class WinWebViewEngine(
     handleReady.get().completeExceptionally(cause)
     if (oldHandle != 0L) {
       runCatching { bridge.destroy(oldHandle) }
-        .onFailure { WebViewLogger.LOG.error("Failed to destroy WebView2 handle after fatal failure${diagnosticContext()}", it) }
+        .onFailure { LOG.error("Failed to destroy WebView2 handle after fatal failure${diagnosticContext()}", it) }
     }
-    WebViewLogger.LOG.error("WebView2 engine closed after fatal native failure${diagnosticContext()}: $event - $message [$data]", cause)
+    LOG.error("WebView2 engine closed after fatal native failure${diagnosticContext()}: $event - $message [$data]", cause)
   }
 
   private fun recordRecoveryAttempt(): Boolean {
@@ -611,10 +675,226 @@ internal class WinWebViewEngine(
     pendingEvals.keys.forEach { evalId ->
       pendingEvals.remove(evalId)?.invoke(null)
     }
+    pendingDevToolsCalls.keys.forEach { callId ->
+      pendingDevToolsCalls.remove(callId)?.invoke(null, "cancelled")
+    }
   }
 
   private fun clearActiveAssetResolver() {
     activeAssetResolver.set(null)
+  }
+
+  private fun recordFirstLoadRequested() {
+    firstLoadRequestedAt.compareAndSet(null, TimeSource.Monotonic.markNow())
+  }
+
+  private fun applyLoad(handle: Long, load: PendingLoad) {
+    val firstLoad = firstLoadApplied.compareAndSet(false, true)
+    if (firstLoad) {
+      firstLoadRequestedAt.getAndSet(null)?.let { requestedAt ->
+        LOG.traceWebViewPerfSince("win-webview2.firstLoad.waitBeforeNativeCall", requestedAt, loadDiagnosticDetails(load))
+      }
+    }
+
+    if (firstLoad) {
+      LOG.traceWebViewPerf("win-webview2.firstLoad.nativeCall", loadDiagnosticDetails(load)) {
+        applyLoadToBridge(handle, load)
+      }
+    }
+    else {
+      applyLoadToBridge(handle, load)
+    }
+  }
+
+  private fun applyLoadToBridge(handle: Long, load: PendingLoad) {
+    when (load) {
+      is PendingLoad.Url -> {
+        startDevToolsCpuProfileIfNeeded(handle)
+        bridge.loadUrl(handle, load.url)
+      }
+      is PendingLoad.Html -> bridge.loadHtml(handle, load.html, load.baseUrl)
+    }
+  }
+
+  private fun startDevToolsCpuProfileIfNeeded(handle: Long) {
+    if (!isDevToolsCpuProfilingEnabled()) return
+    if (!devToolsCpuProfileStartRequested.compareAndSet(false, true)) return
+    callDevToolsProtocolMethod(handle, "Profiler.enable", "{}") { _, enableError ->
+      if (enableError != null) {
+        LOG.warn("Failed to enable WebView2 DevTools CPU profiler${diagnosticContext()}: $enableError")
+      }
+    }
+    devToolsCpuProfileStarted.set(true)
+    callDevToolsProtocolMethod(handle, "Profiler.start", "{}") { _, startError ->
+      if (startError != null) {
+        LOG.warn("Failed to start WebView2 DevTools CPU profiler${diagnosticContext()}: $startError")
+        return@callDevToolsProtocolMethod
+      }
+      LOG.trace { "Started WebView2 DevTools CPU profile${diagnosticContext()}" }
+    }
+  }
+
+  private suspend fun stopDevToolsCpuProfile(reason: String) {
+    if (!devToolsCpuProfileStarted.get()) return
+    if (!devToolsCpuProfileStopRequested.compareAndSet(false, true)) return
+    val handle = nativeHandle
+    if (handle == 0L) return
+
+    val stopResult = withTimeoutOrNull(DEVTOOLS_CPU_PROFILE_STOP_TIMEOUT_MILLIS) {
+      callDevToolsProtocolMethodAwait(handle, "Profiler.stop", "{}")
+    }
+    when {
+      stopResult == null -> {
+        LOG.warn("Timed out waiting for WebView2 DevTools CPU profiler to stop${diagnosticContext()}")
+      }
+      stopResult.error != null -> {
+        LOG.warn("Failed to stop WebView2 DevTools CPU profiler${diagnosticContext()}: ${stopResult.error}")
+      }
+      stopResult.result.isNullOrBlank() -> {
+        LOG.warn("WebView2 DevTools CPU profiler returned empty result${diagnosticContext()}")
+      }
+      else -> writeDevToolsCpuProfile(stopResult.result, reason)
+    }
+  }
+
+  private fun scheduleDevToolsCpuProfileStopAfterFirstNavigation() {
+    if (!devToolsCpuProfileStarted.get()) return
+    // TODO: Replace this coarse post-navigation snapshot with real startup profiling
+    // that stops at first meaningful WebView content paint/readiness.
+    scope.launch {
+      delay(DEVTOOLS_CPU_PROFILE_POST_NAVIGATION_DELAY_MILLIS)
+      stopDevToolsCpuProfile("post-navigation-delay")
+    }
+  }
+
+  private suspend fun callDevToolsProtocolMethodAwait(handle: Long, methodName: String, paramsJson: String): DevToolsCallResult? {
+    return suspendCancellableCoroutine { continuation ->
+      val callId = callDevToolsProtocolMethod(handle, methodName, paramsJson) { result, error ->
+        if (continuation.isActive) {
+          continuation.resume(DevToolsCallResult(result, error))
+        }
+      }
+      if (callId == null) {
+        continuation.resume(null)
+        return@suspendCancellableCoroutine
+      }
+      continuation.invokeOnCancellation {
+        pendingDevToolsCalls.remove(callId)
+      }
+    }
+  }
+
+  private suspend fun writeDevToolsCpuProfile(result: String, reason: String) {
+    withContext(Dispatchers.IO) {
+      writeDevToolsCpuProfileBlocking(result, reason)
+    }
+  }
+
+  private fun writeDevToolsCpuProfileBlocking(result: String, reason: String) {
+    val profile = extractDevToolsCpuProfile(result)
+    val directory = Path.of(PathManager.getLogPath(), "webview-cpu-profiles")
+    val fileName = "webview2-${safeProfileName()}-${System.currentTimeMillis()}-$reason.cpuprofile"
+    val file = directory.resolve(fileName)
+    runCatching {
+      Files.createDirectories(directory)
+      Files.writeString(file, profile, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
+    }.onSuccess {
+      LOG.info("Saved WebView2 DevTools CPU profile${diagnosticContext()}: $file")
+    }.onFailure { t ->
+      LOG.warn("Failed to save WebView2 DevTools CPU profile${diagnosticContext()}: ${t.message}")
+    }
+  }
+
+  private fun isDevToolsCpuProfilingEnabled(): Boolean {
+    return devToolsCpuProfilingEnabled()
+  }
+
+  private fun isCustomSchemeAssetLoadingEnabled(): Boolean {
+    return customSchemeAssetLoadingEnabled()
+  }
+
+  private fun callDevToolsProtocolMethod(handle: Long, methodName: String, paramsJson: String, onResult: (String?, String?) -> Unit): Long? {
+    val callId = nextEvalId.incrementAndGet()
+    pendingDevToolsCalls[callId] = onResult
+    invokeOnWebView {
+      try {
+        bridge.callDevToolsProtocolMethod(handle, callId, methodName, paramsJson)
+      }
+      catch (t: IllegalStateException) {
+        pendingDevToolsCalls.remove(callId)?.invoke(null, t.message)
+        LOG.warn("Failed to call WebView2 DevTools protocol method $methodName${diagnosticContext()}: ${t.message}")
+      }
+    }
+    return callId
+  }
+
+  private fun extractDevToolsCpuProfile(result: String): String {
+    val profileKey = "\"profile\""
+    val keyIndex = result.indexOf(profileKey)
+    if (keyIndex < 0) return result
+    val objectStart = result.indexOf('{', keyIndex + profileKey.length)
+    if (objectStart < 0) return result
+
+    var depth = 0
+    var inString = false
+    var escaping = false
+    for (index in objectStart until result.length) {
+      val ch = result[index]
+      if (escaping) {
+        escaping = false
+        continue
+      }
+      if (ch == '\\' && inString) {
+        escaping = true
+        continue
+      }
+      if (ch == '"') {
+        inString = !inString
+        continue
+      }
+      if (inString) continue
+      when (ch) {
+        '{' -> depth++
+        '}' -> {
+          depth--
+          if (depth == 0) return result.substring(objectStart, index + 1)
+        }
+      }
+    }
+    return result
+  }
+
+  private fun safeProfileName(): String {
+    val base = debugName.orEmpty().ifBlank { "webview" }
+    return base.map { ch -> if (ch.isLetterOrDigit() || ch == '-' || ch == '_') ch else '-' }
+      .joinToString("")
+      .trim('-')
+      .ifBlank { "webview" }
+  }
+
+  private fun recordConsoleStartupFrame(raw: String) {
+    if (firstNavigationCompleted.get() || !raw.contains(WEBVIEW_CONSOLE_NOTIFICATION_METHOD)) return
+    consoleFramesBeforeFirstNavigation.incrementAndGet()
+    consoleCharsBeforeFirstNavigation.addAndGet(raw.length.toLong())
+  }
+
+  private fun logConsoleStartupSummary(reason: String, force: Boolean) {
+    val frames = consoleFramesBeforeFirstNavigation.get()
+    val chars = consoleCharsBeforeFirstNavigation.get()
+    if (!force && frames == 0 && firstLoadRequestedAt.get() == null && !firstLoadApplied.get()) return
+    if (!consoleStartupSummaryLogged.compareAndSet(false, true)) return
+    LOG.trace { "perf: win-webview2.console.beforeFirstNavigationComplete = 0ms - frames=$frames, chars=$chars, reason=$reason, ${diagnosticDetails()}" }
+  }
+
+  private fun loadDiagnosticDetails(load: PendingLoad): String {
+    return when (load) {
+      is PendingLoad.Url -> "load=Url, urlChars=${load.url.length}, ${diagnosticDetails()}"
+      is PendingLoad.Html -> "load=Html, htmlChars=${load.html.length}, ${diagnosticDetails()}"
+    }
+  }
+
+  private fun diagnosticDetails(): String {
+    return "debugName=${debugName.orEmpty()}"
   }
 
   private fun WebViewAssetResponse.toNativeAssetResponse(): WinWebView2Bridge.AssetResponse {
@@ -642,8 +922,6 @@ internal class WinWebViewEngine(
   }
 
   private companion object {
-    private const val NATIVE_DIAGNOSTIC_DEBUG = 1
-    private const val NATIVE_DIAGNOSTIC_INFO = 2
     private const val NATIVE_DIAGNOSTIC_WARN = 3
     private const val NATIVE_DIAGNOSTIC_ERROR = 4
     private const val MAX_RECOVERY_ATTEMPTS = 2
@@ -652,6 +930,11 @@ internal class WinWebViewEngine(
     private const val NATIVE_EVENT_PROCESS_FAILED_FATAL = "process-failed.fatal"
     private const val NATIVE_EVENT_PROCESS_FAILED_UNRESPONSIVE = "process-failed.unresponsive"
     private const val NATIVE_EVENT_BROWSER_PROCESS_EXITED_FATAL = "browser-process-exited.fatal"
+    private const val NATIVE_EVENT_NAVIGATION_COMPLETED = "navigation.completed"
+    private const val DEVTOOLS_CPU_PROFILING_REGISTRY_KEY = "ide.webview.windows.devtools.cpu.profiling"
+    private const val DEVTOOLS_CPU_PROFILE_STOP_TIMEOUT_MILLIS = 3_000L
+    private const val DEVTOOLS_CPU_PROFILE_POST_NAVIGATION_DELAY_MILLIS = 2_000L
+    private const val WINDOWS_ASSET_CUSTOM_SCHEME_REGISTRY_KEY = "ide.webview.windows.asset.custom.scheme.enabled"
   }
 }
 

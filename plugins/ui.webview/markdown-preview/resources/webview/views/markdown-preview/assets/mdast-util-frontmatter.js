@@ -1,7 +1,6 @@
 import "./devlop.js";
 import { t as fault } from "./fault.js";
 import { t as escapeStringRegexp } from "./escape-string-regexp.js";
-//#region node_modules/micromark-extension-frontmatter/lib/to-matters.js
 /**
 * @typedef {'toml' | 'yaml'} Preset
 *   Known name of a frontmatter style.
@@ -107,8 +106,6 @@ function matter(option) {
 	if (!own.call(result, "fence") && !own.call(result, "marker")) throw fault("Missing `marker` or `fence` in matter `%j`", result);
 	return result;
 }
-//#endregion
-//#region node_modules/mdast-util-frontmatter/lib/index.js
 /**
 * @typedef {import('mdast').Literal} Literal
 *
@@ -265,5 +262,4 @@ function fence(matter, prop) {
 function pick(schema, prop) {
 	return typeof schema === "string" ? schema : schema[prop];
 }
-//#endregion
 export { frontmatterToMarkdown as n, toMatters as r, frontmatterFromMarkdown as t };

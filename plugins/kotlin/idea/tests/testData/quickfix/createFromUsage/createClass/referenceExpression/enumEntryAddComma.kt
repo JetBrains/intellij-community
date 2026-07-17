@@ -1,5 +1,5 @@
 // "Create enum constant 'PUBLIC'" "true"
-// K2_ERROR: Unresolved reference 'PUBLIC'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 enum class TopicState {
     PRIVATE
 }

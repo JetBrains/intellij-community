@@ -22,6 +22,8 @@ import fleet.util.multiplatform.Actual
 @Actual internal fun isJavaIdentifierPartJvm(codepoint: Int): Boolean = Character.isJavaIdentifierPart(codepoint)
 @Actual internal fun isISOControlJvm(codepoint: Int): Boolean = Character.isISOControl(codepoint)
 @Actual internal fun getUnicodeScriptJvm(codepoint: Int): UnicodeScript = jvmScriptToUnicodeScript(Character.UnicodeScript.of(codepoint))
+@Actual internal fun isPrivateUseJvm(codepoint: Int): Boolean = Character.getType(codepoint).toByte() == Character.PRIVATE_USE
+@Actual internal fun isDefinedJvm(codepoint: Int): Boolean = Character.isDefined(codepoint)
 
 private fun jvmScriptToUnicodeScript(jvmScript: Character.UnicodeScript): UnicodeScript = when (jvmScript) {
   Character.UnicodeScript.UNKNOWN -> UnicodeScript.UNKNOWN

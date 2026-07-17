@@ -680,9 +680,7 @@ f:com.intellij.openapi.application.Experiments
 f:com.intellij.openapi.application.Experiments$Companion
 - f:getInstance():com.intellij.openapi.application.Experiments
 c:com.intellij.openapi.fileChooser.FileChooserDescriptor
-- java.lang.Cloneable
 - <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
-- f:clone():java.lang.Object
 - getDescription():java.lang.String
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - getRoots():java.util.List

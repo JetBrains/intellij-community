@@ -1,5 +1,5 @@
 // "Inline type parameter" "true"
-// K2_ERROR: Initializer type mismatch: expected 'S (of fun <S : Int> foo)', actual 'Int'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 
 data class DC(val x: Int, val y: String) {
     fun <S : Int<caret>> foo() {

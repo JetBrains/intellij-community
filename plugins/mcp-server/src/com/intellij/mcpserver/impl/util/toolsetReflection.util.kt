@@ -11,6 +11,7 @@ import com.intellij.mcpserver.impl.ReflectionCallableMcpTool
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import io.modelcontextprotocol.kotlin.sdk.types.ToolAnnotations
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.Nls
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -71,7 +72,10 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
     fullyQualifiedName = this.qualifiedName ?: "Unknown",
     isExperimental = thisRef?.isExperimental() ?: false,
     alwaysIncluded = thisRef?.alwaysIncluded() ?: false,
+    displayName = thisRef?.displayName(),
+    displayDescription = thisRef?.displayDescription(),
   )
+  val presentableDescriptionProvider: ((String) -> @Nls String?)? = thisRef?.let { ts -> { toolName -> ts.displayDescription(toolName) } }
   return this.functions.filter { m ->
     m.getPreferredToolAnnotation() != null
   }.map {
@@ -79,6 +83,7 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
               thisRef = thisRef,
               category = category,
               fullyQualifiedName = this.qualifiedName + "." + it.name,
+              presentableDescriptionProvider = presentableDescriptionProvider,
               additionalImplicitParameters = arrayOf(projectPathParameter))
   }.apply {
     require(isNotEmpty()) { "No tools found in ${this@asTools}" }
@@ -143,10 +148,11 @@ fun KFunction<*>.asTool(
   description: String? = null,
   category: McpToolCategory? = null,
   fullyQualifiedName: String? = null,
+  presentableDescriptionProvider: ((toolName: String) -> @Nls String?)? = null,
   vararg additionalImplicitParameters: KParameter,
 ): ReflectionCallableMcpTool {
   val toolDescriptor =
-    this.asToolDescriptor(name = name, description = description, category, fullyQualifiedName, *additionalImplicitParameters)
+    this.asToolDescriptor(name = name, description = description, category, fullyQualifiedName, presentableDescriptionProvider, *additionalImplicitParameters)
   if (instanceParameter != null && thisRef == null) error("Instance parameter is not null, but no 'this' object is provided")
   val callableBridge = CallableBridge(callable = this, thisRef = thisRef, json = json)
   return ReflectionCallableMcpTool(descriptor = toolDescriptor, callableBridge = callableBridge)
@@ -160,12 +166,14 @@ fun KFunction<*>.asToolDescriptor(
   description: String? = null,
   category: McpToolCategory? = null,
   fullyQualifiedName: String? = null,
+  presentableDescriptionProvider: ((toolName: String) -> @Nls String?)? = null,
   vararg additionalImplicitParameters: KParameter,
 ): McpToolDescriptor {
   val preferredToolAnnotation = this.getPreferredToolAnnotation()
   val toolName = name ?: preferredToolAnnotation?.name?.ifBlank { this.name } ?: this.name
   val toolTitle = preferredToolAnnotation?.title?.ifEmpty { null }
   val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description?.trimMargin() ?: this.name
+  val toolDisplayDescription = presentableDescriptionProvider?.invoke(toolName)
   val toolAnnotations = resolveToolAnnotations(this)
 
   val parametersSchema = parametersSchema(this, *additionalImplicitParameters)
@@ -174,6 +182,7 @@ fun KFunction<*>.asToolDescriptor(
     name = toolName,
     title = toolTitle,
     description = toolDescription,
+    displayDescription = toolDisplayDescription,
     category = category ?: unknownCategory,
     fullyQualifiedName = fullyQualifiedName ?: toolName,
     inputSchema = parametersSchema,

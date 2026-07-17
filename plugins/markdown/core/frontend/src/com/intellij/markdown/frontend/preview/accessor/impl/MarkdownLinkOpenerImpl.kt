@@ -4,6 +4,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.markdown.frontend.preview.accessor.MarkdownLinkOpenerUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -11,7 +12,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
@@ -36,26 +36,15 @@ import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
-import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil
-import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil.findVirtualFile
-import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 import org.intellij.plugins.markdown.util.MarkdownDisposable
+import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 import java.net.URI
 import java.net.URISyntaxException
 
 internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : MarkdownLinkOpener {
   @Deprecated("Use openLink(project, link, sourceFile) instead", replaceWith = ReplaceWith("openLink(project, link, sourceFile)"))
   override fun openLink(project: Project?, link: String) {
-    val uri = createUri(link) ?: return
-    if (tryOpenInEditorDeprecated(project, uri)) {
-      return
-    }
-    if (isLocalFilePathLink(link)) {
-      return
-    }
-    coroutineScope.launch {
-      openExternalLink(project, uri)
-    }
+    openLink(project, link, null)
   }
 
   override fun openLink(currentProject: Project?, link: String, containingFile: VirtualFile?) {
@@ -187,63 +176,6 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
         return MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.do.not.ask.again.text", protocol)
       }
     }
-  }
-
-  private fun tryOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
-    if (uri.scheme != "file") {
-      return false
-    }
-    return runReadAction {
-      actuallyOpenInEditorDeprecated(project, uri)
-    }
-  }
-
-  private fun actuallyOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
-    val targetFile = uri.findVirtualFile() ?: return false
-    @Suppress("NAME_SHADOWING")
-    val project = project ?: guessProjectForFile(targetFile) ?: return false
-    val anchor = uri.fragment
-    if (!targetFile.fileType.isMarkdownType()) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        openNonMarkdownFile(project, targetFile, anchor)
-      }
-      return true
-    }
-    if (anchor == null){
-      coroutineScope.launch(Dispatchers.EDT) {
-        OpenFileAction.Companion.openFile(targetFile, project)
-      }
-      return true
-    }
-    val headers = MarkdownLinkOpenerUtil.collectHeaders(project, anchor, targetFile)
-    if (headers == null) {
-      coroutineScope.launch {
-        DumbService.Companion.getInstance(project).showDumbModeNotificationForFunctionality(
-          message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
-          functionality = DumbModeBlockedFunctionality.ActionWithoutId
-        )
-      }
-      // Return true to prevent external navigation from happening
-      return true
-    }
-    if (headers.size == 1) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        MarkdownLinkOpenerUtil.navigateToHeader(project, headers.first())
-      }
-      return true
-    }
-    val point = obtainHeadersPopupPosition(project)
-    if (point == null) {
-      logger.warn("Failed to obtain screen point for showing popup")
-      return false
-    }
-    coroutineScope.launch {
-      when {
-        headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-        headers.size > 1 ->  showHeadersPopup(project, headers, point)
-      }
-    }
-    return true
   }
 
   private fun openNonMarkdownFile(project: Project, fileToOpen: VirtualFile, fragment: String?) {

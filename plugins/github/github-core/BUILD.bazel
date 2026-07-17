@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-### auto-generated section `build intellij.vcs.github` start
+jps_test(
+    name = "vcs-github-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":vcs-github-tests_test_lib"],
+)
+### skip generation section `test intellij.vcs.github.tests`
 
+### auto-generated section `build intellij.vcs.github` start
 resourcegroup(
     name = "vcs-github_resources",
     srcs = glob(
@@ -208,7 +215,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github.tests` start
-
 jvm_library(
     name = "vcs-github-tests",
     srcs = glob(
@@ -408,11 +414,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.github.tests` end
-
-### auto-generated section `test intellij.vcs.github.tests` start
-
-jps_test(
-    name = "vcs-github-tests_test",
-    runtime_deps = [":vcs-github-tests_test_lib"],
-)
-### auto-generated section `test intellij.vcs.github.tests` end

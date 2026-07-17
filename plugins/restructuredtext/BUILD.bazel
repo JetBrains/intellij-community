@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.restructuredtext` start
-
 jvm_provided_library(
     name = "platform_lang-impl_provided",
     lib = "//platform/lang-impl",
@@ -123,7 +122,6 @@ exports_files(
 ### auto-generated section `iml intellij.restructuredtext` end
 
 ### auto-generated section `build intellij.restructuredtext.tests` start
-
 jvm_library(
     name = "restructuredtext-tests",
     srcs = glob(

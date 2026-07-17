@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.sh.copyright` start
-
 jvm_library(
     name = "copyright",
     srcs = glob(
@@ -64,7 +63,6 @@ exports_files(
 ### auto-generated section `iml intellij.sh.copyright` end
 
 ### auto-generated section `build intellij.sh.copyright.tests` start
-
 jvm_library(
     name = "copyright-tests",
     srcs = glob(
@@ -128,7 +126,6 @@ exports_files(
 ### auto-generated section `iml intellij.sh.copyright.tests` end
 
 ### auto-generated section `test intellij.sh.copyright.tests` start
-
 jps_test(
     name = "copyright-tests_test",
     runtime_deps = [":copyright-tests_test_lib"],

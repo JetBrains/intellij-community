@@ -55,5 +55,22 @@ abstract class J2kConverterExtension {
         val EP_NAME = ExtensionPointName<J2kConverterExtension>("org.jetbrains.kotlin.j2kConverterExtension")
 
         fun extension(): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == Kind.K2 }
+
+        suspend fun convertJavaFilesToKotlin(
+            files: List<PsiJavaFile>,
+            project: Project,
+            module: Module,
+            settings: ConverterSettings,
+            preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
+            postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList,
+        ): ConversionResult {
+            val j2kConverterExtension = extension()
+            return j2kConverterExtension.createJavaToKotlinConverter(project, module, settings).filesToKotlin(
+                files = files,
+                postProcessor = j2kConverterExtension.createPostProcessor(),
+                preprocessorExtensions = preprocessorExtensions,
+                postprocessorExtensions = postprocessorExtensions,
+            )
+        }
     }
 }

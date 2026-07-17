@@ -22,10 +22,8 @@ import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
@@ -84,12 +82,11 @@ internal class IDEFrontendHandler(
                 && System.getenv("DISPLAY") == null && frontendContext.ide.vmOptions.environmentVariables["DISPLAY"] != null && SystemInfo.isLinux
                 && !frontendContext.ide.vmOptions.hasHeadlessMode()) {
               // It means the ide will be started on a new display, so we need to add win manager
-              val fluxboxJob = this@async.launch(Dispatchers.IO) {
-                XorgWindowManagerHandler.startFluxBox(this@runIdeSuspending)
-              }
-              EventsBus.subscribeOnce(fluxboxJob) { event: IdeAfterLaunchEvent ->
-                if (event.runContext === this@runIdeSuspending) {
-                  fluxboxJob.cancelAndJoin()
+              XorgWindowManagerHandler.startFluxBox(this@runIdeSuspending, this@async)?.let { fluxboxJob ->
+                EventsBus.subscribeOnce(fluxboxJob) { event: IdeAfterLaunchEvent ->
+                  if (event.runContext === this@runIdeSuspending) {
+                    fluxboxJob.cancelAndJoin()
+                  }
                 }
               }
             }

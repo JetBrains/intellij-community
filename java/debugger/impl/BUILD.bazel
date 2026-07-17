@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.java.debugger.impl` start
-
 create_kotlinc_options(
     name = "custom_impl",
     x_context_parameters = True,
@@ -271,7 +270,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.debugger.impl` end
 
 ### auto-generated section `test intellij.java.debugger.impl` start
-
 jps_test(
     name = "impl_test",
     runtime_deps = [":impl_test_lib"],

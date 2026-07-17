@@ -7,23 +7,19 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.inspections.dependencies.DependenciesMap
+import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.psi.getStringOrNull
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.getValueByKey
-import org.toml.lang.psi.ext.kind
-
 
 private val dependencyHeaders = setOf("packages", "dev-packages")
 private const val versionKey = "version"
 
-@ApiStatus.Internal
 internal object PipEnvParser {
   private val gson = Gson()
 
@@ -36,7 +32,7 @@ internal object PipEnvParser {
   }
 
   @JvmStatic
-  fun getPipFileDependenciesMap(file: TomlFile): DependenciesMap =
+  fun getPipFileDependenciesMap(file: TomlFile): DependencyMap =
     file
       .children
       .filterIsInstance<TomlTable>()
@@ -80,9 +76,3 @@ internal object PipEnvParser {
     }
   }
 }
-
-private fun TomlLiteral.getStringOrNull(): String? =
-  when (val kind = kind) {
-    is TomlLiteralKind.String -> kind.value
-    else -> null
-  }

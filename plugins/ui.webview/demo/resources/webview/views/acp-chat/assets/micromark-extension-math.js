@@ -1,5 +1,4 @@
 import { a as factorySpace, l as markdownLineEnding } from "./mdast-util-from-markdown.js";
-//#region node_modules/micromark-extension-math/lib/math-flow.js
 /**
 * @import {Construct, State, TokenizeContext, Tokenizer} from 'micromark-util-types'
 */
@@ -303,8 +302,6 @@ function tokenizeNonLazyContinuation(effects, ok, nok) {
 		return self.parser.lazy[self.now().line] ? nok(code) : ok(code);
 	}
 }
-//#endregion
-//#region node_modules/micromark-extension-math/lib/math-text.js
 /**
 * @import {Options} from 'micromark-extension-math'
 * @import {Construct, Previous, Resolver, State, Token, TokenizeContext, Tokenizer} from 'micromark-util-types'
@@ -489,8 +486,6 @@ function resolveMathText(events) {
 function previous(code) {
 	return code !== 36 || this.events[this.events.length - 1][1].type === "characterEscape";
 }
-//#endregion
-//#region node_modules/micromark-extension-math/lib/syntax.js
 /**
 * @import {Options} from 'micromark-extension-math'
 * @import {Extension} from 'micromark-util-types'
@@ -510,5 +505,4 @@ function math(options) {
 		text: { [36]: mathText(options) }
 	};
 }
-//#endregion
 export { math as t };

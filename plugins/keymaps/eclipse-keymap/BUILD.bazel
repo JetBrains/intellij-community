@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.eclipse` start
-
 jvm_library(
     name = "keymap-eclipse",
     srcs = glob(

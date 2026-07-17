@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -110,34 +111,6 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       )
     }
   }
-
-  /**
-   * Test that only basic fields are recorded for (eap = false, don't pass the random threshold, not random pass)
-   */
-  @Test
-  fun testFullLogFiltered() {
-    withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer()
-      logsContainer.mockRandom(1f)
-      logsContainer.add(TestPhasedLogs.basicTestField with 42)
-      logsContainer.add(TestPhasedLogs.fullTestField with 1337)
-
-      val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
-      }
-
-      // expect only the basic log
-      assertMaps(
-        mapOf(
-          "inline_api_starting" to mapOf(
-            "basic_test_field" to "42"
-          )
-        ),
-        logs.first().event.data
-      )
-    }
-  }
-
   /**
    * Fields which are not registered for a specific phase are not allowed.
    */
@@ -148,6 +121,53 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
     assertThrows(IllegalArgumentException::class.java) {
       logsContainer.add(EventFields.Boolean("incorrect_field").with(false))
     }
+  }
+
+  /**
+   * The same field added several times per session (e.g. repeated postprocessing passes or `updateLatestLogs`)
+   * must not accumulate into duplicate logs: the container keeps a single entry with the latest value.
+   * Two logs with the same field name in one phase would otherwise break mlapi feature selection.
+   */
+  @Test
+  fun testDuplicateFieldKeepsOnlyLatest(): Unit = timeoutRunBlocking {
+    val logsContainer = InlineCompletionLogsContainer()
+    logsContainer.mockRandom(1f)
+    logsContainer.add(TestPhasedLogs.basicTestField with 42)
+    logsContainer.add(TestPhasedLogs.basicTestField with 99)
+
+    val phased = logsContainer.awaitAndGetCurrentLogsPhased()
+      .getValue(Phase.INLINE_API_STARTING)
+      .filter { it.field.name == "basic_test_field" }
+    assertEquals("Duplicate field must not accumulate", 1, phased.size)
+    assertEquals("The latest value must be kept", 99, phased.single().data)
+
+    val flat = logsContainer.awaitAndGetCurrentLogs().filter { it.field.name == "basic_test_field" }
+    assertEquals("Duplicate field must not accumulate", 1, flat.size)
+    assertEquals("The latest value must be kept", 99, flat.single().data)
+  }
+
+  /**
+   * The value logged for a field written twice is the latest one.
+   */
+  @Test
+  fun testDuplicateFieldLogsLatestValue() {
+      val logsContainer = InlineCompletionLogsContainer()
+      logsContainer.mockRandom(1f)
+      logsContainer.add(TestPhasedLogs.basicTestField with 42)
+      logsContainer.add(TestPhasedLogs.basicTestField with 99)
+
+      val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
+        logsContainer.logCurrent()
+      }
+
+      assertMaps(
+        mapOf(
+          "inline_api_starting" to mapOf(
+            "basic_test_field" to "99",
+          )
+        ),
+        logs.first().event.data
+      )
   }
 
   private fun withEap(isEAP: Boolean, action: () -> Unit) {

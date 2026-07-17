@@ -1,5 +1,5 @@
 // "Convert to anonymous object" "true"
-// K2_ERROR: Interface 'interface B<T, U> : Any' does not have constructors.
+// K2_ERROR: INTERFACE_AS_FUNCTION
 interface B<T, U> {
     fun bar(x: T): U
 }

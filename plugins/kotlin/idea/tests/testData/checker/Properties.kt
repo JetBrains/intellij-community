@@ -1,15 +1,15 @@
- var x : Int = 1 + <error descr="[UNINITIALIZED_VARIABLE] Variable 'x' must be initialized">x</error>
+ var x : Int = 1 + <error descr="[UNINITIALIZED_VARIABLE]">x</error>
    get() : Int = 1
-   set(value : <error descr="[WRONG_SETTER_PARAMETER_TYPE] Setter parameter type must be equal to the type of the property, i.e. 'Int'">Long</error>) {
+   set(value : <error descr="[WRONG_SETTER_PARAMETER_TYPE]">Long</error>) {
       field = value.toInt()
-      field = <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Long but Int was expected">1.toLong()</error>
+      field = <error descr="[TYPE_MISMATCH]">1.toLong()</error>
     }
 
- val xx : Int = <error descr="[PROPERTY_INITIALIZER_NO_BACKING_FIELD] Initializer is not allowed here because this property has no backing field">1 + x</error>
+ val xx : Int = <error descr="[PROPERTY_INITIALIZER_NO_BACKING_FIELD]">1 + x</error>
    get() : Int = 1
-   <error descr="[VAL_WITH_SETTER] A 'val'-property cannot have a setter">set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning> : <error descr="[WRONG_SETTER_PARAMETER_TYPE] Setter parameter type must be equal to the type of the property, i.e. 'Int'">Long</error>) {}</error>
+   <error descr="[VAL_WITH_SETTER]">set(<warning descr="[UNUSED_PARAMETER]">value</warning> : <error descr="[WRONG_SETTER_PARAMETER_TYPE]">Long</error>) {}</error>
 
-  val p : Int = <error descr="[PROPERTY_INITIALIZER_NO_BACKING_FIELD] Initializer is not allowed here because this property has no backing field">1</error>
+  val p : Int = <error descr="[PROPERTY_INITIALIZER_NO_BACKING_FIELD]">1</error>
     get() = 1
 
 class Test() {

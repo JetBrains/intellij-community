@@ -44,10 +44,8 @@ def _iter_packages(major_version, minor_version):
     objects (attribute access) instead of the legacy dict-like entries returned by ``get_index``.
     """
     if major_version >= 25:
-        init_context()
-        from conda.core.subdir_data import SubdirData
-        for pkg in SubdirData.query_all('*'):
-            yield Pkg(name=pkg.name, version=pkg.version, depends=pkg.depends)
+        for pkg in _iter_packages_subdir_data():
+            yield pkg
         return
 
     if major_version >= 22 or (major_version >= 4 and minor_version >= 4):
@@ -66,6 +64,39 @@ def _iter_packages(major_version, minor_version):
 
     for pkg in index.values():
         yield Pkg(name=pkg["name"], version=pkg["version"], depends=pkg["depends"])
+
+
+def _iter_packages_subdir_data():
+    """Iterate package records via ``SubdirData`` for conda 25+.
+
+    The ``SubdirData.query_all`` signature changed across releases: conda 25 accepts a single
+    positional ``MatchSpec`` and infers ``channels``/``subdirs`` from the current context, while
+    conda 26 made ``channels`` and ``subdirs`` required keyword arguments (passing only the spec
+    raises ``TypeError``). Try the modern explicit form first, then fall back to the older one.
+    """
+    context = init_context()
+    from conda.core.subdir_data import SubdirData
+    try:
+        from conda.models.match_spec import MatchSpec
+        spec = MatchSpec("*")
+    except ImportError:
+        spec = "*"
+
+    channels = getattr(context, "channels", None) if context is not None else None
+    subdirs = getattr(context, "subdirs", None) if context is not None else None
+
+    records = None
+    if channels is not None and subdirs is not None:
+        try:
+            records = SubdirData.query_all(spec, channels=channels, subdirs=subdirs)
+        except TypeError:
+            records = None
+
+    if records is None:
+        records = SubdirData.query_all(spec)
+
+    for pkg in records:
+        yield Pkg(name=pkg.name, version=pkg.version, depends=pkg.depends)
 
 
 def do_list_channels():

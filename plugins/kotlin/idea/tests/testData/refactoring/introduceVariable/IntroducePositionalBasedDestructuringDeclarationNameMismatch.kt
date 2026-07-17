@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// WITH_STDLIB
+fun foo(pair: Pair<String, Int>) {
+    <selection>pair</selection>
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -17,22 +17,28 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -40,8 +46,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +61,7 @@ import java.util.Set;
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
   private static final Logger LOG = Logger.getInstance(JavaIntroduceParameterObjectClassDescriptor.class);
   private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
-  private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
+  private final Map<ParameterInfoImpl, Property> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
 
   public JavaIntroduceParameterObjectClassDescriptor(@NotNull String className,
@@ -112,41 +119,38 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   public String getGetter(ParameterInfoImpl param) {
-    final ParameterBean bean = getBean(param);
-    return bean != null ? bean.getGetter() : null;
+    final Property property = myExistingClassProperties.get(param);
+    return property != null ? property.getGetter() : null;
   }
 
   public String getSetter(ParameterInfoImpl param) {
-    final ParameterBean bean = getBean(param);
-    return bean != null ? bean.getSetter() : null;
+    final Property property = myExistingClassProperties.get(param);
+    return property != null ? property.getSetter() : null;
   }
 
   @Override
   public String getSetterName(ParameterInfoImpl parameterInfo, @NotNull PsiElement context) {
-    final ParameterBean bean = getBean(parameterInfo);
-    @NonNls String setter = bean != null ? bean.getSetter() : null;
+    final Property property = myExistingClassProperties.get(parameterInfo);
+    @NonNls String setter = property != null ? property.getSetter() : null;
     if (setter == null) {
-      setter = bean != null && bean.getField() != null
-               ? GenerateMembersUtil.suggestSetterName(bean.getField())
-               : GenerateMembersUtil
-                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
-                                    context.getProject());
+      setter = property != null && property.getField() != null
+               ? GenerateMembersUtil.suggestSetterName(property.getField())
+               : GenerateMembersUtil.suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
+                                                       context.getProject());
     }
 
     return setter;
   }
 
   @Override
-  public String getGetterName(ParameterInfoImpl paramInfo,
-                              @NotNull PsiElement context,
-                              ReadWriteAccessDetector.Access access) {
-    final ParameterBean bean = getBean(paramInfo);
-    @NonNls String getter = bean != null ? bean.getGetter() : null;
+  public String getGetterName(ParameterInfoImpl paramInfo, @NotNull PsiElement context, ReadWriteAccessDetector.Access access) {
+    final Property property = myExistingClassProperties.get(paramInfo);
+    @NonNls String getter = property != null ? property.getGetter() : null;
     if (getter == null) {
-      if (bean != null && bean.getField() != null) {
-        getter = GenerateMembersUtil.suggestGetterName(bean.getField());
+      if (property != null && property.getField() != null) {
+        getter = GenerateMembersUtil.suggestGetterName(property.getField());
       }
-      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
+      else if (property == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
         getter = paramInfo.getName();
       }
       else {
@@ -166,12 +170,12 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   public @Nullable PsiField getField(ParameterInfoImpl parameter) {
-    final ParameterBean bean = getBean(parameter);
-    return bean != null ? bean.getField() : null;
+    final Property property = myExistingClassProperties.get(parameter);
+    return property != null ? property.getField() : null;
   }
 
-  public ParameterBean getBean(ParameterInfoImpl param) {
-    return myExistingClassProperties.get(param);
+  boolean hasProperty(ParameterInfoImpl param) {
+    return myExistingClassProperties.get(param) != null;
   }
 
   private @Nullable PsiMethod findCompatibleConstructor(@NotNull PsiClass aClass) {
@@ -181,10 +185,10 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass);
       String fqn = aClass.getQualifiedName();
       if (fqn != null && TypeConversionUtil.isPrimitiveWrapper(fqn)) {
-        ParameterBean bean = new ParameterBean();
-        bean.setField(aClass.findFieldByName("value", false));
-        bean.setGetter(paramType.getCanonicalText() + "Value");
-        myExistingClassProperties.put(parameterInfo, bean);
+        Property property = new Property();
+        property.setField(aClass.findFieldByName("value", false));
+        property.setGetter(paramType.getCanonicalText() + "Value");
+        myExistingClassProperties.put(parameterInfo, property);
         for (PsiMethod constructor : aClass.getConstructors()) {
           if (isConstructorCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
         }
@@ -200,35 +204,41 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
 
     PsiField[] fields = aClass.getFields();
-    if (compatibleConstructor == null && !areTypesCompatible(getParamsToMerge(), fields, aClass)) {
+    if (compatibleConstructor == null && !areTypesCompatible(paramsToMerge, fields, aClass)) {
       return null;
     }
 
-    final PsiVariable[] constructorParams = compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters()
-                                                                          : fields;
-    for (int i = 0; i < getParamsToMerge().length; i++) {
-      final int oldIndex = getParamsToMerge()[i].getOldIndex();
+    final PsiVariable[] constructorParams =
+      compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters() : fields;
+    for (int i = 0; i < paramsToMerge.length; i++) {
+      final int oldIndex = paramsToMerge[i].getOldIndex();
       final ParameterInfoImpl methodParam = getParameterInfo(oldIndex);
-      final ParameterBean bean = new ParameterBean();
-      myExistingClassProperties.put(methodParam, bean);
+      final Property property = new Property();
+      myExistingClassProperties.put(methodParam, property);
 
       final PsiVariable var = constructorParams[i];
 
-      final PsiField field = var instanceof PsiParameter ? findFieldAssigned((PsiParameter)var, compatibleConstructor) : (PsiField)var;
+      final PsiField field = var instanceof PsiParameter parameter
+              ? new ParamAssignmentFinder(parameter, compatibleConstructor).findFieldAssigned()
+              : (PsiField)var;
       if (field == null) {
         return null;
       }
 
-      bean.setField(field);
+      property.setField(field);
 
-      final PsiMethod getterForField = PropertyUtilBase.findGetterForField(field);
+      final PsiMethod getterForField = field instanceof LightRecordField f
+                                       ? JavaPsiRecordUtil.getAccessorForRecordComponent(f.getRecordComponent())
+                                       : PropertyUtilBase.findGetterForField(field);
       if (getterForField != null) {
-        bean.setGetter(getterForField.getName());
+        property.setGetter(getterForField.getName());
       }
 
-      final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
-      if (setterForField != null) {
-        bean.setSetter(setterForField.getName());
+      if (!(field instanceof LightRecordField)) {
+        final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
+        if (setterForField != null) {
+          property.setSetter(setterForField.getName());
+        }
       }
     }
     return compatibleConstructor;
@@ -252,20 +262,31 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return true;
   }
 
-  private static PsiField findFieldAssigned(PsiParameter param, PsiMethod constructor) {
-    final ParamAssignmentFinder visitor = new ParamAssignmentFinder(param);
-    constructor.accept(visitor);
-    return visitor.getFieldAssigned();
-  }
-
   @Override
   public PsiClass createClass(PsiMethod method, ReadWriteAccessDetector.Access[] accessors) {
     if (isUseExistingClass()) {
       return getExistingClass();
     }
 
+    final PsiClass containingClass = method.getContainingClass();
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
-    beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
+    if (containingClass != null && containingClass.isInterface() && isCreateInnerClass()) {
+      // nested class in interface is public by default and is not allowed to be anything else
+      beanClassBuilder.setVisibility("");
+    }
+    else if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      beanClassBuilder.setVisibility(PsiModifier.PUBLIC);
+    }
+    else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+      beanClassBuilder.setVisibility(PsiModifier.PROTECTED);
+    }
+    else if (method.hasModifierProperty(PsiModifier.PRIVATE) && isCreateInnerClass()) {
+      // top-level class cannot be private
+      beanClassBuilder.setVisibility(PsiModifier.PRIVATE);
+    }
+    else {
+      beanClassBuilder.setVisibility("");
+    }
     beanClassBuilder.setProject(method.getProject());
     beanClassBuilder.setFile(method.getContainingFile());
     beanClassBuilder.setTypeArguments(getTypeParameters());
@@ -288,11 +309,13 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       final PsiJavaFile newFile =
         (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
       if (isCreateInnerClass()) {
-        final PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
         final PsiClass[] classes = newFile.getClasses();
         assert classes.length > 0 : classString;
         final PsiClass innerClass = (PsiClass)containingClass.add(classes[0]);
-        PsiUtil.setModifierProperty(innerClass, PsiModifier.STATIC, true);
+        if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiUtil.setModifierProperty(innerClass, PsiModifier.STATIC, true);
+        }
         return (PsiClass)JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       }
       else {
@@ -331,44 +354,71 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
 
   private static class ParamAssignmentFinder extends JavaRecursiveElementWalkingVisitor {
-
-    private final PsiParameter param;
-
+    private PsiParameter myParameter;
+    private PsiMethod myMethod;
     private PsiField fieldAssigned;
 
-    ParamAssignmentFinder(PsiParameter param) {
-      this.param = param;
+    ParamAssignmentFinder(PsiParameter parameter, PsiMethod method) {
+      myParameter = parameter;
+      myMethod = method;
     }
 
     @Override
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
-      super.visitAssignmentExpression(assignment);
-      final PsiExpression lhs = assignment.getLExpression();
-      final PsiExpression rhs = assignment.getRExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        return;
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      if (fieldAssigned != null) return;
+      super.visitReferenceExpression(expression);
+      if (expression.resolve() != myParameter) return;
+      PsiExpression e = expression;
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression p) {
+        e = p;
+        parent = p.getExpression();
       }
-      if (!(rhs instanceof PsiReferenceExpression)) {
-        return;
+      if (parent instanceof PsiAssignmentExpression assignment) {
+        if (assignment.getRExpression() == e
+            && assignment.getLExpression() instanceof PsiReferenceExpression ref
+            && ref.resolve() instanceof PsiField field) {
+          fieldAssigned = field;
+        }
       }
-      final PsiElement referent = ((PsiReference)rhs).resolve();
-      if (referent == null || !referent.equals(param)) {
-        return;
+      else if (parent instanceof PsiExpressionList list
+               && parent.getParent() instanceof PsiMethodCallExpression call
+               && JavaPsiConstructorUtil.isChainedConstructorCall(call)) {
+        PsiExpression[] expressions = list.getExpressions();
+        int i = ArrayUtil.find(expressions, e);
+        PsiMethod method = call.resolveMethod();
+        if (method != null && i >= 0) {
+          myMethod = method;
+          myParameter = method.getParameterList().getParameter(i);
+        }
       }
-      final PsiElement assigned = ((PsiReference)lhs).resolve();
-      if (!(assigned instanceof PsiField)) {
-        return;
-      }
-      fieldAssigned = (PsiField)assigned;
     }
 
-    public PsiField getFieldAssigned() {
+    private boolean followChain() {
+      if (myMethod == null || fieldAssigned != null) return false;
+      PsiMethod method = myMethod;
+      myMethod = null;
+      if (method instanceof LightRecordCanonicalConstructor
+          && myParameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter p) {
+        PsiRecordComponent component = p.getRecordComponent();
+        if (component != null) {
+          fieldAssigned = JavaPsiRecordUtil.getFieldForComponent(component);
+          return false;
+        }
+      }
+      method.accept(this);
+      return true;
+    }
+
+    public PsiField findFieldAssigned() {
+      while (followChain()) {
+        // empty
+      }
       return fieldAssigned;
     }
   }
 
-  @ApiStatus.Internal
-  public static final class ParameterBean {
+  private static final class Property {
     private PsiField myField;
     private String myGetter;
     private String mySetter;

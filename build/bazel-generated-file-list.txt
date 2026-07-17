@@ -818,7 +818,6 @@ platform/polySymbols
 platform/polySymbols/backend
 platform/pratt
 platform/problemsView/backend
-platform/problemsView/buildView
 platform/problemsView/collector
 platform/problemsView/core
 platform/problemsView/frontend
@@ -924,7 +923,6 @@ platform/testIntegration-ui
 platform/testRunner
 platform/testRunner/plugin
 platform/threadDumpParser
-platform/tips-of-the-day
 platform/todo
 platform/todo/backend
 platform/todo/plugin
@@ -1037,6 +1035,7 @@ plugins/cucumber-jvm-formatter5
 plugins/dev
 plugins/dev/intellij.dev
 plugins/dev/intellij.dev.codeInsight
+plugins/dev/intellij.dev.leakDetection
 plugins/dev/intellij.dev.psiViewer
 plugins/dev/intellij.groovy.dev
 plugins/dev/intellij.java.dev
@@ -1172,6 +1171,7 @@ plugins/hg4idea
 plugins/htmltools
 plugins/ide-features-trainer
 plugins/ide-features-trainer/onboarding
+plugins/ide-features-trainer/tips
 plugins/ide-startup/importSettings
 plugins/java-decompiler/engine
 plugins/java-decompiler/plugin
@@ -1476,11 +1476,14 @@ plugins/mcp-server/mcpserver.terminal
 plugins/mcp-server/mcpserver.terminal.frontend
 plugins/mcp-server/mcpserver.terminal.frontend/tests
 plugins/mcp-server/mcpserver.terminal/tests
+plugins/mcp-server/mcpserver.testFramework
 plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/mermaid
+plugins/mermaid/json
 plugins/mermaid/markdown
+plugins/mermaid/spellchecker
 plugins/ml-local-models
 plugins/ml-local-models/java
 plugins/performanceTesting/backend
@@ -1555,6 +1558,7 @@ plugins/terminal/frontend
 plugins/terminal/sh
 plugins/terminal/tests
 plugins/testng
+plugins/testng/langInjection
 plugins/testng_rt
 plugins/testng_rt/tests
 plugins/textmate
@@ -1565,6 +1569,8 @@ plugins/textmate/core/tests
 plugins/textmate/joni
 plugins/textmate/plugin
 plugins/textmate/tests
+plugins/tips-of-the-day
+plugins/tips-of-the-day/plugin
 plugins/toml
 plugins/toml/backend
 plugins/toml/core
@@ -1608,6 +1614,7 @@ python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
 python/interpreters
 python/junit5Tests-framework
+python/mcp
 python/openapi
 python/pipenv
 python/pluginCore
@@ -1649,8 +1656,6 @@ python/python-restructuredtext
 python/python-ruff
 python/python-sdk
 python/python-sdk-configurator/backend
-python/python-sdk-configurator/common
-python/python-sdk-configurator/frontend
 python/python-sdk-ui
 python/python-syntax
 python/python-syntax-core

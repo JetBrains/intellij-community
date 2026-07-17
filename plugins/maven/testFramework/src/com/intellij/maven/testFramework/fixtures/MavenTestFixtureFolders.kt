@@ -78,6 +78,15 @@ fun MavenTestFixture.assertTestResources(moduleName: String, vararg expectedSour
   doAssertSourceRoots(moduleName, JavaResourceRootType.TEST_RESOURCE, *expectedSources)
 }
 
+/**
+ * Asserts the source roots of the given [rootType] in [moduleName]. Generalizes [assertSources] / [assertTestResources]
+ * to an arbitrary [JpsModuleSourceRootType] so language plugins (e.g. Kotlin source/resource root types) can reuse the
+ * workspace-model root inspection. Mirrors the legacy `MavenImportingTestCase.doAssertContentFolders(rootType)`.
+ */
+fun MavenTestFixture.assertSourceRoots(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg expected: String) {
+  doAssertSourceRoots(moduleName, rootType, *expected)
+}
+
 fun MavenImportingTestFixture.assertDefaultResources(moduleName: String, vararg additionalSources: String) {
   val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
   assertResources(moduleName, *expectedSources)

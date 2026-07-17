@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.jvm` start
-
 create_kotlinc_options(
     name = "custom_kotlin-jvm",
     opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
@@ -146,7 +145,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.jvm` end
 
 ### auto-generated section `build intellij.kotlin.jvm.tests` start
-
 jvm_library(
     name = "kotlin-jvm-tests",
     srcs = glob(
@@ -238,7 +236,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.jvm.tests` end
 
 ### auto-generated section `test intellij.kotlin.jvm.tests` start
-
 jps_test(
     name = "kotlin-jvm-tests_test",
     runtime_deps = [":kotlin-jvm-tests_test_lib"],

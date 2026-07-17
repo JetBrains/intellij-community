@@ -18,6 +18,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.lsp.core.typeEngine.BuiltInPyTypeEngineProvider"/>
 
+    <registryKey key="python.lsp.type.engine.notebooks"
+                 defaultValue="false"
+                 description="Enable Python LSP-backed type engines in notebooks"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector"/>
     <projectSettings service="com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings"/>
     <notificationGroup id="Python LSP Tools" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"

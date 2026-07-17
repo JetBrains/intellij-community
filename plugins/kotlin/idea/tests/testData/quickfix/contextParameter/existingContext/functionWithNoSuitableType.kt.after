@@ -1,6 +1,6 @@
 // "Add 'TODO()' as 'Long' to existing context" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: No context argument for 'l: Long' found.
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(s: String, l: Long) fun bar() {}
 
 fun foo(i: Int) {

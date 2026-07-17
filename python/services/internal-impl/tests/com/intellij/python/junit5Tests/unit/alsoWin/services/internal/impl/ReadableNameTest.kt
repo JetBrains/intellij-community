@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.services.internal.impl
 
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.python.PathShortener
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -13,7 +14,6 @@ import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import kotlin.io.path.pathString
 
 @TestApplication
 class ReadableNameTest {
@@ -25,7 +25,7 @@ class ReadableNameTest {
   fun testNoHomePath(@TempDir path: Path): Unit = runBlocking {
     val fakePython = path.resolve(PYTHON_FILE_NAME)
     val name = VanillaPythonWithPythonInfoImpl(fakePython, PythonInfo(LanguageLevel.PYTHON312)).getReadableName()
-    assertThat("Wrong name generated", name, allOf(containsString("3.12"), containsString(fakePython.pathString)))
+    assertThat("Wrong name generated", name, allOf(containsString("3.12"), containsString(PathShortener.shorten(fakePython))))
   }
 
   @Test

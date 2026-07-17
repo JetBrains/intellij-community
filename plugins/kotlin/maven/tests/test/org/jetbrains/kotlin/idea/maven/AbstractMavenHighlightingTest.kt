@@ -7,7 +7,10 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
 import java.nio.file.Path
 
-abstract class AbstractMavenHighlightingTest : AbstractMavenImportingTest() {
+abstract class AbstractMavenHighlightingTest(
+  mavenVersion: String,
+  modelVersion: String,
+) : AbstractMavenImportingTest(mavenVersion, modelVersion) {
 
     override val beforeDirectoryPrefix: String = ""
     override val afterDirectoryPrefix: String = ""

@@ -11,6 +11,6 @@ fun main(args: Array<String>) {
     list.foo { object : A() {} }
 }
 
-private fun <E> List<E>.foo(function: () -> A) {
+private fun List<Int>.foo(function: () -> `<anonymous>`) {
     TODO("Not yet implemented")
 }

@@ -1,11 +1,12 @@
 <idea-plugin package="com.intellij.toml.grazie">
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <dependencies>
       <plugin id="tanvd.grazi"/>
-      <module name="intellij.toml.core"/>
-      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
       <module name="intellij.grazie.core"/>
-      <!-- endregion -->
+      <module name="intellij.platform.backend"/>
+      <module name="intellij.toml.core"/>
     </dependencies>
+    <!-- endregion -->
 
     <extensions defaultExtensionNs="com.intellij.grazie">
         <textExtractor language="TOML" implementationClass="com.intellij.toml.grazie.TomlTextExtractor"/>

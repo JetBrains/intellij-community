@@ -1,5 +1,5 @@
 // "Add 'abstract fun f()' to 'A'" "true"
-// K2_ERROR: 'f' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 interface A
 class B : A {
     <caret>override fun f() {}

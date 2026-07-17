@@ -4,10 +4,8 @@ package com.intellij.ui.dsl.validation.impl
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.validation.Level
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal fun createValidationInfo(component: JComponent,
                                   @NlsContexts.DialogMessage message: String,
                                   level: Level = Level.ERROR): ValidationInfo {

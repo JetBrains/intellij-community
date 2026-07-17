@@ -1,6 +1,6 @@
 // ERROR: No value passed for parameter 'p'
-// K2_ERROR: No value passed for parameter 'p'.
-// K2_AFTER_ERROR: No value passed for parameter 'p'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 
 open class B {
     open fun foo(p: String){}

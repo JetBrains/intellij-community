@@ -91,6 +91,7 @@ kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl"
 kotlin_test_deps(name = "kotlin_test_deps")
 
 include("//:debugger_test_deps.MODULE.bazel")
+include("//platform/jewel:jewel_deps.MODULE.bazel")
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
 
@@ -130,3 +131,5 @@ use_repo(
     use_extension("//build:jps_dynamic_deps_community.bzl", "jps_dynamic_deps_community_extension"),
     "jps_dynamic_deps_community",
 )
+
+include("//:fleet/kmp.MODULE.bazel")

@@ -9,7 +9,6 @@ import kotlinx.coroutines.debug.CoroutineInfo
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
-import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
@@ -345,7 +344,7 @@ private fun JobRepresentation.withoutJobAddress(): JobRepresentation {
 
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
   val trace = info.lastObservedStackTrace
-  if (stripTrace && info.state == SUSPENDED) {
+  if (stripTrace && info.state == kotlinx.coroutines.debug.internal.SUSPENDED) {
     return stripCoroutineTrace(trace)
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)

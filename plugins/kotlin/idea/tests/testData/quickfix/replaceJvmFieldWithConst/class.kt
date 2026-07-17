@@ -9,8 +9,8 @@
 // ACTION: Specify type explicitly
 // ACTION: Add use-site target 'field'
 // ACTION: Remove @JvmField annotation
-// K2_ERROR: JvmField has no effect on a private property.
-// K2_AFTER_ERROR: JvmField has no effect on a private property.
+// K2_AFTER_ERROR: INAPPLICABLE_JVM_FIELD
+// K2_ERROR: INAPPLICABLE_JVM_FIELD
 class Foo {
     <caret>@JvmField private val a = "Lorem ipsum"
 }

@@ -151,7 +151,7 @@ error.parsing.file.template: "<TYPO descr="Typo: In word 'Fehler'">Fehler</TYPO>
 title.velocity.error: Velocity-<TYPO descr="Typo: In word 'Fehelr'">Fehelr</TYPO>
 action.from.file.template: Aus <TYPO descr="Typo: In word 'Dateivorlgae'">Dateivorlgae</TYPO>…
 action.edit.file.templates: <TYPO descr="Typo: In word 'Dateivorlgaen'">Dateivorlgaen</TYPO> <TYPO descr="Typo: In word 'bearbeiten'">bearbeiten</TYPO>…
-error.unable.to.parse.template.message: "<TYPO descr="Typo: In word 'Vorlgae'">Vorlgae</TYPO> \"{0}\" <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'geparst'">geparst</TYPO> <TYPO descr="Typo: In word 'werden'">werden</TYPO>\<TYPO descr="Typo: In word 'nFehlermeldung'">nFehlermeldung</TYPO>: {1}"
+error.unable.to.parse.template.message: "<TYPO descr="Typo: In word 'Vorlgae'">Vorlgae</TYPO> \"{0}\" <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'geparst'">geparst</TYPO> <TYPO descr="Typo: In word 'werden'">werden</TYPO>\n<TYPO descr="Typo: In word 'Fehlermeldung'">Fehlermeldung</TYPO>: {1}"
 error.invalid.template.file.name.or.extension: <TYPO descr="Typo: In word 'Ungültiger'">Ungültiger</TYPO> <TYPO descr="Typo: In word 'Vorlagendateinaem'">Vorlagendateinaem</TYPO> <TYPO descr="Typo: In word 'oder'">oder</TYPO> -erweiterung
 title.cannot.create.class: <TYPO descr="Typo: In word 'Klasse'">Klasse</TYPO> <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'erstellt'">erstellt</TYPO> <TYPO descr="Typo: In word 'werdne'">werdne</TYPO>
 title.cannot.create.file: <TYPO descr="Typo: In word 'Datei'">Datei</TYPO> <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'erstellt'">erstellt</TYPO> <TYPO descr="Typo: In word 'werdne'">werdne</TYPO>
@@ -689,7 +689,7 @@ action.description.create.new.package: <TYPO descr="Typo: In word 'Neues'">Neues
 tab.chooser.project: <TYPO descr="Typo: In word 'Projekt'">Projekt</TYPO>
 tab.chooser.search.by.name: <TYPO descr="Typo: In word 'Nach'">Nach</TYPO> <TYPO descr="Typo: In word 'Namen'">Namen</TYPO> <TYPO descr="Typo: In word 'suchen'">suchen</TYPO>
 prompt.filechooser.enter.file.name: <TYPO descr="Typo: In word 'Dateinamen'">Dateinamen</TYPO> <TYPO descr="Typo: In word 'eingeben'">eingeben</TYPO>
-prompt.create.non.existing.package: "Paket {0} <TYPO descr="Typo: In word 'existiert'">existiert</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO>.\<TYPO descr="Typo: In word 'nMöchten'">nMöchten</TYPO> Sie es <TYPO descr="Typo: In word 'erstellen'">erstellen</TYPO>?"
+prompt.create.non.existing.package: "Paket {0} <TYPO descr="Typo: In word 'existiert'">existiert</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO>.\n<TYPO descr="Typo: In word 'Möchten'">Möchten</TYPO> Sie es <TYPO descr="Typo: In word 'erstellen'">erstellen</TYPO>?"
 title.package.not.found: Paket <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'gefunden'">gefunden</TYPO>
 title.choose.destination.directory: <TYPO descr="Typo: In word 'Zielverzeichnis'">Zielverzeichnis</TYPO> <TYPO descr="Typo: In word 'auswählen'">auswählen</TYPO>
 title.delete: <TYPO descr="Typo: In word 'Löschen'">Löschen</TYPO>
@@ -828,7 +828,7 @@ add.scope.dialog.title: <TYPO descr="Typo: In word 'Neuen'">Neuen</TYPO> <TYPO d
 scope.banner.text: "<TYPO descr="Typo: In word 'Bereich'">Bereich</TYPO> ''{0}''"
 scopes.save.dialog.title.shared: Als <TYPO descr="Typo: In word 'geteilten'">geteilten</TYPO> <TYPO descr="Typo: In word 'Bereich'">Bereich</TYPO> <TYPO descr="Typo: In word 'speichern'">speichern</TYPO>
 scopes.save.dialog.title.local: Als <TYPO descr="Typo: In word 'lokalen'">lokalen</TYPO> <TYPO descr="Typo: In word 'Bereich'">Bereich</TYPO> <TYPO descr="Typo: In word 'speichern'">speichern</TYPO>
-detach.library.from.module: "<TYPO descr="Typo: In word 'Bibliothek'">Bibliothek</TYPO> ''{0}'' von <TYPO descr="Typo: In word 'Modul'">Modul</TYPO> ''{1}'' <TYPO descr="Typo: In word 'lösen'">lösen</TYPO>?\<TYPO descr="Typo: In word 'nKeine'">nKeine</TYPO> <TYPO descr="Typo: In word 'Datei'">Datei</TYPO> auf der <TYPO descr="Typo: In word 'Festplatte'">Festplatte</TYPO> <TYPO descr="Typo: In word 'wird'">wird</TYPO> <TYPO descr="Typo: In word 'beschädigt'">beschädigt</TYPO>."
+detach.library.from.module: "<TYPO descr="Typo: In word 'Bibliothek'">Bibliothek</TYPO> ''{0}'' von <TYPO descr="Typo: In word 'Modul'">Modul</TYPO> ''{1}'' <TYPO descr="Typo: In word 'lösen'">lösen</TYPO>?\n<TYPO descr="Typo: In word 'Keine'">Keine</TYPO> <TYPO descr="Typo: In word 'Datei'">Datei</TYPO> auf der <TYPO descr="Typo: In word 'Festplatte'">Festplatte</TYPO> <TYPO descr="Typo: In word 'wird'">wird</TYPO> <TYPO descr="Typo: In word 'beschädigt'">beschädigt</TYPO>."
 detach.library: <TYPO descr="Typo: In word 'Bibliothek'">Bibliothek</TYPO> <TYPO descr="Typo: In word 'lösen'">lösen</TYPO>
 scope.unable.to.save.scope.message: <TYPO descr="Typo: In word 'Möchten'">Möchten</TYPO> Sie den <TYPO descr="Typo: In word 'Bereich'">Bereich</TYPO> als <TYPO descr="Typo: In word 'geteilt'">geteilt</TYPO> <TYPO descr="Typo: In word 'speichern'">speichern</TYPO>?
 scope.unable.to.save.scope.title: <TYPO descr="Typo: In word 'Lokaler'">Lokaler</TYPO> <TYPO descr="Typo: In word 'Bereich'">Bereich</TYPO> <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'verwendet'">verwendet</TYPO> <TYPO descr="Typo: In word 'werden'">werden</TYPO>
@@ -991,7 +991,7 @@ searcheverywhere.test.dialog.title: Such-Contributors <TYPO descr="Typo: In word
 show.in.find.window.button.name: Im Such-<TYPO descr="Typo: In word 'Toolfenster'">Toolfenster</TYPO> <TYPO descr="Typo: In word 'öffnen'">öffnen</TYPO>
 show.in.find.window.button.name.newui: <TYPO descr="Typo: In word 'Ergebnisse'">Ergebnisse</TYPO> im Such-Fenster <TYPO descr="Typo: In word 'öffnen'">öffnen</TYPO>
 show.in.find.window.button.description: <TYPO descr="Typo: In word 'Suchergebnisse'">Suchergebnisse</TYPO> im Such-<TYPO descr="Typo: In word 'Toolfenster'">Toolfenster</TYPO> <TYPO descr="Typo: In word 'öffnen'">öffnen</TYPO>
-run.anything.console.process.finished: "\<TYPO descr="Typo: In word 'nProzess'">nProzess</TYPO> <TYPO descr="Typo: In word 'beendet'">beendet</TYPO> mit Exit-Code {0}."
+run.anything.console.process.finished: "\n<TYPO descr="Typo: In word 'Prozess'">Prozess</TYPO> <TYPO descr="Typo: In word 'beendet'">beendet</TYPO> mit Exit-Code {0}."
 run.anything.console.error.title: <TYPO descr="Typo: In word 'Befehl'">Befehl</TYPO> <TYPO descr="Typo: In word 'kann'">kann</TYPO> <TYPO descr="Typo: In word 'nicht'">nicht</TYPO> <TYPO descr="Typo: In word 'ausgeführt'">ausgeführt</TYPO> <TYPO descr="Typo: In word 'werden'">werden</TYPO>
 run.anything.run.debug.title: "Debug:"
 run.anything.run.in.context.title: Im <TYPO descr="Typo: In word 'Kontext'">Kontext</TYPO> <TYPO descr="Typo: In word 'ausführen'">ausführen</TYPO>

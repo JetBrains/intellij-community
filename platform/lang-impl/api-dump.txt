@@ -213,7 +213,10 @@ f:com.intellij.build.BuildContentDescriptor
 f:com.intellij.build.BuildTextConsoleView
 - com.intellij.execution.impl.ConsoleViewImpl
 - com.intellij.build.BuildConsoleView
-- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- <init>(com.intellij.openapi.project.Project,Z,java.util.List):V
+- append(java.lang.String,Z):V
+- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+- print(java.lang.String,com.intellij.openapi.util.Key):V
 f:com.intellij.build.BuildTreeConsoleView
 - com.intellij.build.BuildConsoleView
 - com.intellij.build.Filterable
@@ -247,12 +250,15 @@ c:com.intellij.build.DefaultBuildDescriptor
 - setActivateToolWindowWhenFailed(Z):V
 - setNavigateToError(com.intellij.util.ThreeState):V
 - withContentDescriptor(java.util.function.Supplier):com.intellij.build.DefaultBuildDescriptor
+- withNavigateToError(com.intellij.util.ThreeState):com.intellij.build.DefaultBuildDescriptor
 c:com.intellij.build.ExecutionNode
 - com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - add(com.intellij.build.ExecutionNode):V
 - getChildList():java.util.List
 - getDuration():java.lang.String
+- getHint():java.lang.String
 - getName():java.lang.String
+- getNavigatable():com.intellij.pom.Navigatable
 - getParent():com.intellij.build.ExecutionNode
 - getResult():com.intellij.build.events.EventResult
 - getStartTime():J
@@ -775,6 +781,8 @@ c:com.intellij.codeInsight.documentation.DocumentationComponent
 - getText():java.lang.String
 c:com.intellij.codeInsight.documentation.DocumentationManager
 - com.intellij.codeInsight.documentation.DockablePopupManager
+- com.intellij.openapi.Disposable
+- dispose():V
 - getDocInfoHint():com.intellij.openapi.ui.popup.JBPopup
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.documentation.DocumentationManager
 - s:getOriginalElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -2260,7 +2268,6 @@ com.intellij.find.actions.ShowUsagesActionHandler
 - a:navigateToSingleUsageImmediately():Z
 - a:showDialog():com.intellij.find.actions.ShowUsagesActionHandler
 - a:withScope(com.intellij.psi.search.SearchScope):com.intellij.find.actions.ShowUsagesActionHandler
-c:com.intellij.find.actions.ShowUsagesManager
 f:com.intellij.find.actions.UsageListCellRenderer
 - com.intellij.ui.ColoredListCellRenderer
 - s:getVirtualFile(com.intellij.usages.Usage):com.intellij.openapi.vfs.VirtualFile
@@ -2659,6 +2666,7 @@ c:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 - getEnteredName():java.lang.String
 - getNameField():javax.swing.JTextField
 - getSelectedTemplate():java.lang.String
+- setNameFieldToTemplateNameOnSelection():V
 - setTemplateSelectorMatcher(java.util.function.BiFunction):V
 f:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel$TemplatePresentation
 - java.lang.Record
@@ -2771,12 +2779,10 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getSearchProviderId():java.lang.String
 c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - dispose():V
@@ -2789,8 +2795,6 @@ com.intellij.ide.actions.searcheverywhere.MergeableElement
 - a:mergeWith(com.intellij.ide.actions.searcheverywhere.MergeableElement):com.intellij.ide.actions.searcheverywhere.MergeableElement
 - a:shouldBeMergedIntoAnother():Z
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
-- com.intellij.ide.actions.searcheverywhere.AutoCompletionContributor
-- com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
@@ -2868,7 +2872,6 @@ f:com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Fa
 f:com.intellij.ide.extensionResources.ExtensionsRootType
 - com.intellij.ide.scratch.RootType
 - s:getInstance():com.intellij.ide.extensionResources.ExtensionsRootType
-f:com.intellij.ide.extensionResources.ExternalResourcesUnpackExtensionBean
 com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer
 - sf:CREATE_FROM_TEMPLATE_REPLACER:com.intellij.openapi.extensions.ExtensionPointName
 - a:replaceCreateFromFileTemplateAction(com.intellij.ide.fileTemplates.FileTemplate):com.intellij.openapi.actionSystem.AnAction
@@ -4428,6 +4431,13 @@ c:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 - com.intellij.ide.DeleteProvider
 - com.intellij.ide.TitledHandler
 - <init>():V
+- f:canDeleteElement(com.intellij.openapi.actionSystem.DataContext):Z
+- f:deleteElement(com.intellij.openapi.actionSystem.DataContext):V
+- p:doDetachModules(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[],java.util.List):V
+- f:getActionTitle():java.lang.String
+- f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
+- s:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
 f:com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp
 - com.intellij.openapi.extensions.PluginAware
 - implementationClass:java.lang.String
@@ -5303,6 +5313,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - performInplaceRename():Z
 c:com.intellij.refactoring.safeDelete.SafeDeleteDialog
 - com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback):V
 - isSearchForTextOccurences():Z
 - isSearchInComments():Z
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
@@ -5618,7 +5629,6 @@ a:com.intellij.ui.tabs.ColorButtonBase
 - setColor(java.awt.Color):V
 pc:com.intellij.ui.tabs.ColorButtonBase$ColorButtonUI
 - javax.swing.plaf.basic.BasicToggleButtonUI
-f:com.intellij.unscramble.AnalyzeStacktraceUtil
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
 a:com.intellij.util.TextFieldCompletionProvider

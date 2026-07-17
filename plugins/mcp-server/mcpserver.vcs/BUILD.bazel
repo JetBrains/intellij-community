@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.vcs` start
-
 jvm_library(
     name = "mcpserver.vcs",
     srcs = glob(

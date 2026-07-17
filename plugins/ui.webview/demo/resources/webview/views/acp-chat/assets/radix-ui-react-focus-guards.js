@@ -1,6 +1,5 @@
 import { o as __toESM } from "./rolldown-runtime.js";
 import { it as require_react } from "./assistant-ui-core.js";
-//#region node_modules/@radix-ui/react-focus-guards/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var count = 0;
 var guards = null;
@@ -34,5 +33,4 @@ function createFocusGuard() {
 	element.style.pointerEvents = "none";
 	return element;
 }
-//#endregion
 export { useFocusGuards as t };

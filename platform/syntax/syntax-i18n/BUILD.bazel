@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.syntax.i18n` start
+jps_test(
+    name = "i18n-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":i18n-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.syntax.i18n.tests`
+
+### auto-generated section `build intellij.platform.syntax.i18n` start
 create_kotlinc_options(
     name = "custom_i18n",
     jvm_target = "8",
@@ -73,7 +81,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.syntax.i18n` end
 
 ### auto-generated section `build intellij.platform.syntax.i18n.tests` start
-
 jvm_library(
     name = "i18n-tests",
     srcs = glob(
@@ -123,11 +130,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.syntax.i18n.tests` end
-
-### auto-generated section `test intellij.platform.syntax.i18n.tests` start
-
-jps_test(
-    name = "i18n-tests_test",
-    runtime_deps = [":i18n-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.syntax.i18n.tests` end

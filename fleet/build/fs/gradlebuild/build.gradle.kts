@@ -50,12 +50,17 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
+    implementation(jps.com.github.luben.zstd.jni705422806.get())
+    implementation(jps.org.tukaani.xz14489971.get())
+  }
+  sourceSets.commonTest.dependencies {
+    implementation(project(":fleet.test.runtime"))
+  }
+  sourceSets.jvmMain.dependencies {
     implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-    implementation(jps.com.github.luben.zstd.jni705422806.get())
-    implementation(jps.org.tukaani.xz14489971.get())
     implementation(jps.org.apache.commons.commons.compress347955106.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "commons-codec", module = "commons-codec")
       exclude(group = "commons-io", module = "commons-io")
@@ -65,9 +70,6 @@ kotlin {
       isTransitive = false
     }
     implementation(jps.commons.io.commons.io645698317.get())
-  }
-  sourceSets.commonTest.dependencies {
-    implementation(project(":fleet.test.runtime"))
   }
   // KOTLIN__MARKER_END
 }

@@ -23,7 +23,7 @@ internal abstract class SoftWrapRecalculationManager : InlayModel.SimpleAdapter(
 
   abstract fun release()
 
-  abstract fun recalculate()
+  abstract fun recalculate(reason: String)
 
   abstract fun dumpName(): String
 

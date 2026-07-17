@@ -2,7 +2,6 @@ import { o as __toESM } from "./rolldown-runtime.js";
 import { it as require_react } from "./assistant-ui-core.js";
 import { w as require_react_dom } from "./assistant-ui-react.js";
 import { a as hide$1, c as shift$1, i as flip$1, l as size$1, o as limitShift$1, r as computePosition, s as offset$1, t as arrow$2 } from "./floating-ui-dom.js";
-//#region node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 var index = typeof document !== "undefined" ? import_react.useLayoutEffect : function noop() {};
@@ -317,5 +316,4 @@ var arrow = (options, deps) => {
 		options: [options, deps]
 	};
 };
-//#endregion
 export { offset as a, useFloating as c, limitShift as i, flip as n, shift as o, hide as r, size as s, arrow as t };

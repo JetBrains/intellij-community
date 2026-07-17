@@ -1,3 +1,4 @@
+import builtins
 import email.message
 import http.client
 import re
@@ -197,7 +198,7 @@ class Response(dict[str, str | _T]):
     status: int
     reason: str
     previous: Response[_T] | None
-    def __init__(self, info: http.client.HTTPResponse | email.message.Message | dict[str, _T]) -> None: ...
+    def __init__(self, info: http.client.HTTPResponse | email.message.Message | builtins.dict[str, _T]) -> None: ...
     @property
     def dict(self) -> Self: ...
 

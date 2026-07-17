@@ -7,7 +7,7 @@
 // ACTION: Propagate 'B' opt-in requirement to 'SomeImplementation'
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // LANGUAGE_VERSION: 2.1
-// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@B', '@OptIn(B::class)' or '@SubclassOptInRequired(B::class)'
+// K2_ERROR: OPT_IN_TO_INHERITANCE_ERROR
 
 @RequiresOptIn
 annotation class A

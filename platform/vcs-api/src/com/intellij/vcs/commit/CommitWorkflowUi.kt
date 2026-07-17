@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.ui.TextAccessor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventListener
 
@@ -45,6 +46,13 @@ interface CommitMessageUi : TextAccessor {
   fun focus()
   fun startLoading()
   fun stopLoading()
+
+  fun addCommitMessageListener(listener: CommitMessageListener) { }
+}
+
+interface CommitMessageListener : EventListener {
+  @RequiresEdt
+  fun onTextChanged(text: String)
 }
 
 interface CommitExecutorListener : EventListener {

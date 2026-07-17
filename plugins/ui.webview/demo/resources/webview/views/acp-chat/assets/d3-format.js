@@ -1,4 +1,3 @@
-//#region node_modules/d3-format/src/formatDecimal.js
 function formatDecimal_default(x) {
 	return Math.abs(x = Math.round(x)) >= 1e21 ? x.toLocaleString("en").replace(/,/g, "") : x.toString(10);
 }
@@ -7,13 +6,9 @@ function formatDecimalParts(x, p) {
 	var i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e"), coefficient = x.slice(0, i);
 	return [coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient, +x.slice(i + 1)];
 }
-//#endregion
-//#region node_modules/d3-format/src/exponent.js
 function exponent_default(x) {
 	return x = formatDecimalParts(Math.abs(x)), x ? x[1] : NaN;
 }
-//#endregion
-//#region node_modules/d3-format/src/formatGroup.js
 function formatGroup_default(grouping, thousands) {
 	return function(value, width) {
 		var i = value.length, t = [], j = 0, g = grouping[0], length = 0;
@@ -26,8 +21,6 @@ function formatGroup_default(grouping, thousands) {
 		return t.reverse().join(thousands);
 	};
 }
-//#endregion
-//#region node_modules/d3-format/src/formatNumerals.js
 function formatNumerals_default(numerals) {
 	return function(value) {
 		return value.replace(/[0-9]/g, function(i) {
@@ -35,8 +28,6 @@ function formatNumerals_default(numerals) {
 		});
 	};
 }
-//#endregion
-//#region node_modules/d3-format/src/formatSpecifier.js
 var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
 function formatSpecifier(specifier) {
 	if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
@@ -70,8 +61,6 @@ function FormatSpecifier(specifier) {
 FormatSpecifier.prototype.toString = function() {
 	return this.fill + this.align + this.sign + this.symbol + (this.zero ? "0" : "") + (this.width === void 0 ? "" : Math.max(1, this.width | 0)) + (this.comma ? "," : "") + (this.precision === void 0 ? "" : "." + Math.max(0, this.precision | 0)) + (this.trim ? "~" : "") + this.type;
 };
-//#endregion
-//#region node_modules/d3-format/src/formatTrim.js
 function formatTrim_default(s) {
 	out: for (var n = s.length, i = 1, i0 = -1, i1; i < n; ++i) switch (s[i]) {
 		case ".":
@@ -88,8 +77,6 @@ function formatTrim_default(s) {
 	}
 	return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
 }
-//#endregion
-//#region node_modules/d3-format/src/formatPrefixAuto.js
 var prefixExponent;
 function formatPrefixAuto_default(x, p) {
 	var d = formatDecimalParts(x, p);
@@ -97,16 +84,12 @@ function formatPrefixAuto_default(x, p) {
 	var coefficient = d[0], exponent = d[1], i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n = coefficient.length;
 	return i === n ? coefficient : i > n ? coefficient + new Array(i - n + 1).join("0") : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i) : "0." + new Array(1 - i).join("0") + formatDecimalParts(x, Math.max(0, p + i - 1))[0];
 }
-//#endregion
-//#region node_modules/d3-format/src/formatRounded.js
 function formatRounded_default(x, p) {
 	var d = formatDecimalParts(x, p);
 	if (!d) return x + "";
 	var coefficient = d[0], exponent = d[1];
 	return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1) : coefficient + new Array(exponent - coefficient.length + 2).join("0");
 }
-//#endregion
-//#region node_modules/d3-format/src/formatTypes.js
 var formatTypes_default = {
 	"%": (x, p) => (x * 100).toFixed(p),
 	"b": (x) => Math.round(x).toString(2),
@@ -122,13 +105,9 @@ var formatTypes_default = {
 	"X": (x) => Math.round(x).toString(16).toUpperCase(),
 	"x": (x) => Math.round(x).toString(16)
 };
-//#endregion
-//#region node_modules/d3-format/src/identity.js
 function identity_default(x) {
 	return x;
 }
-//#endregion
-//#region node_modules/d3-format/src/locale.js
 var map = Array.prototype.map, prefixes = [
 	"y",
 	"z",
@@ -216,8 +195,6 @@ function locale_default(locale) {
 		formatPrefix
 	};
 }
-//#endregion
-//#region node_modules/d3-format/src/defaultLocale.js
 var locale;
 var format;
 var formatPrefix;
@@ -232,21 +209,14 @@ function defaultLocale(definition) {
 	formatPrefix = locale.formatPrefix;
 	return locale;
 }
-//#endregion
-//#region node_modules/d3-format/src/precisionFixed.js
 function precisionFixed_default(step) {
 	return Math.max(0, -exponent_default(Math.abs(step)));
 }
-//#endregion
-//#region node_modules/d3-format/src/precisionPrefix.js
 function precisionPrefix_default(step, value) {
 	return Math.max(0, Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3 - exponent_default(Math.abs(step)));
 }
-//#endregion
-//#region node_modules/d3-format/src/precisionRound.js
 function precisionRound_default(step, max) {
 	step = Math.abs(step), max = Math.abs(max) - step;
 	return Math.max(0, exponent_default(max) - exponent_default(step)) + 1;
 }
-//#endregion
 export { formatPrefix as a, format as i, precisionPrefix_default as n, formatSpecifier as o, precisionFixed_default as r, precisionRound_default as t };

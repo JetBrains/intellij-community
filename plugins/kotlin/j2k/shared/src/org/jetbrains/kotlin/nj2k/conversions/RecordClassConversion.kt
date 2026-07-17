@@ -13,7 +13,6 @@ import com.intellij.psi.util.JavaPsiRecordUtil.isCompactConstructor
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_RECORD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKLightMethodData
 import org.jetbrains.kotlin.nj2k.hasWritableUsages
 import org.jetbrains.kotlin.nj2k.isLocalClass
 import org.jetbrains.kotlin.nj2k.psi
@@ -81,7 +80,7 @@ class RecordClassConversion(context: ConverterContext) : RecursiveConversion(con
         for (component in recordComponents) {
             val psiRecordComponent = component.psi<PsiRecordComponent>() ?: continue
             val accessor = getAccessorForRecordComponent(psiRecordComponent) ?: continue
-            context.externalCodeProcessor.addMember(JKLightMethodData(accessor))
+            context.externalCodeProcessor.registerLightMethod(accessor)
         }
     }
 

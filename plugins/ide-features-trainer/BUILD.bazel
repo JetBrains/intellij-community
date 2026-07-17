@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.featuresTrainer.tests`
 
 ### auto-generated section `build intellij.featuresTrainer` start
-
 jvm_library(
     name = "featuresTrainer",
     srcs = glob(
@@ -68,7 +67,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/lvcs-impl",
-        "//platform/tips-of-the-day:tips",
         "//platform/diagnostic",
         "//platform/execution",
         "//platform/xdebugger-impl/ui",
@@ -128,7 +126,6 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/lvcs-impl:lvcs-impl_test_lib",
-        "//platform/tips-of-the-day:tips_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
@@ -151,7 +148,6 @@ exports_files(
 ### auto-generated section `iml intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer.tests` start
-
 jvm_library(
     name = "featuresTrainer-tests",
     srcs = glob(
@@ -268,8 +264,8 @@ jvm_library(
         "//platform/lvcs-impl:lvcs-impl_test_lib",
         "//platform/vcs/plugin",
         "//platform/vcs/plugin:plugin_test_lib",
-        "//platform/tips-of-the-day:tips",
-        "//platform/tips-of-the-day:tips_test_lib",
+        "//plugins/tips-of-the-day:tips",
+        "//plugins/tips-of-the-day:tips_test_lib",
         "//platform/todo/plugin",
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner",

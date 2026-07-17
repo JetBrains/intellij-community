@@ -448,7 +448,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       any: "Any" = 1
 
       expr = any.imag
-      #└ TYPE Unknown FIXME Any
+      #└ TYPE Any
       """)
   }
 

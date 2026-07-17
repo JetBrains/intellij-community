@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.tools.ide.starter.junit5` start
-
 create_kotlinc_options(
     name = "custom_ide-starter-junit5",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -120,7 +119,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.starter.junit5` end
 
 ### auto-generated section `build intellij.tools.ide.starter.junit5.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-starter-junit5-tests",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -228,7 +226,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.starter.junit5.tests` end
 
 ### auto-generated section `test intellij.tools.ide.starter.junit5.tests` start
-
 jps_test(
     name = "ide-starter-junit5-tests_test",
     runtime_deps = [":ide-starter-junit5-tests_test_lib"],

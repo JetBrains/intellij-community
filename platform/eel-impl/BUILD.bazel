@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.eel.impl` start
-
 jvm_library(
     name = "eel-impl",
     srcs = glob(
@@ -38,6 +37,7 @@ jvm_library(
         "//platform/core-impl",
         "//libraries/hash4j",
         "//platform/eel-impl-base",
+        "//platform/external-process-auth-helper/rt",
     ],
 )
 
@@ -68,6 +68,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//platform/eel-impl-base:eel-impl-base_test_lib",
+        "//platform/external-process-auth-helper/rt:rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.impl` end

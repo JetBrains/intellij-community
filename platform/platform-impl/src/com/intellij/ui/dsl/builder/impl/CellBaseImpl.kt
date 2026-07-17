@@ -8,15 +8,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   var horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT
@@ -90,12 +87,6 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   override fun gap(rightGap: RightGap): CellBase<T> {
     this.rightGap = rightGap
     return this
-  }
-
-  @Deprecated("Use customize(UnscaledGaps) instead")
-  @ApiStatus.ScheduledForRemoval
-  open fun customize(customGaps: Gaps): CellBase<T> {
-    return customize(customGaps.toUnscaled())
   }
 
   override fun customize(customGaps: UnscaledGaps): CellBase<T> {

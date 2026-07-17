@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.sdkConfigurator.backend` start
-
 create_kotlinc_options(
     name = "custom_backend",
     x_context_parameters = True,
@@ -43,7 +42,6 @@ jvm_library(
         "//platform/project/shared:project",
         "//platform/kernel/rpc.backend",
         "//platform/remote-topics/shared:rpc-topics",
-        "//python/python-sdk-configurator/common",
         "//python/common",
         "//platform/projectModel-impl",
         "//platform/workspace/jps",
@@ -80,7 +78,6 @@ jvm_library(
         "//platform/project/shared:project_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
-        "//python/python-sdk-configurator/common:common_test_lib",
         "//python/common:common_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/workspace/jps:jps_test_lib",

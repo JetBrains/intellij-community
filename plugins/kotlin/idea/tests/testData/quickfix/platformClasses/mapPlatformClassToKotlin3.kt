@@ -1,6 +1,6 @@
 // "Change all usages of 'java.lang.Comparable<T>' in this file to 'kotlin.Comparable<T>'" "true"
-// K2_ERROR: Conflicting import: imported name 'Comparable' is ambiguous.
-// K2_ERROR: Conflicting import: imported name 'Comparable' is ambiguous.
+// K2_ERROR: CONFLICTING_IMPORT
+// K2_ERROR: CONFLICTING_IMPORT
 import java.lang.*
 import java.lang.Comparable
 import java.lang.Comparable

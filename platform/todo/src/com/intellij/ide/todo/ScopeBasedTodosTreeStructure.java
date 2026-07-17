@@ -2,6 +2,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.ide.todo.scopeChooser.TodoScopeChooser;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
-  private final ScopeChooserCombo myScopes;
+  private final TodoScopeChooser myScopes;
 
-  public ScopeBasedTodosTreeStructure(Project project, ScopeChooserCombo scopes) {
+  public ScopeBasedTodosTreeStructure(Project project, TodoScopeChooser scopes) {
     super(project);
     myScopes = scopes;
   }
@@ -22,8 +23,7 @@ public final class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   @Override
   public boolean accept(final @NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
-
-    SearchScope scope = myScopes.getSelectedScope();
+    SearchScope scope = ((ScopeChooserCombo) myScopes.asComponent()).getSelectedScope();
     VirtualFile file = psiFile.getVirtualFile();
     boolean isAffected = scope != null && file != null && scope.contains(file);
     return isAffected && acceptTodoFilter(psiFile);

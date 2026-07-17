@@ -43,7 +43,7 @@ public final class UsageCollectorBean implements PluginAware {
     return collector;
   }
 
-  @Nullable FeatureUsagesCollector getCollectorIfApplicable() {
+  public @Nullable FeatureUsagesCollector getCollectorIfApplicable() {
     Object result = instance;
     if (result == NOT_APPLICABLE) return null;
     if (result != null) return (FeatureUsagesCollector)result;

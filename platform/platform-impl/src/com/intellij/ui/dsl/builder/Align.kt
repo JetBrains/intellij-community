@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import org.jetbrains.annotations.ApiStatus
-
 sealed interface Align {
   companion object {
     @JvmField
@@ -35,5 +33,4 @@ operator fun AlignY.plus(alignX: AlignX): Align {
   return AlignBoth(alignX, this)
 }
 
-@ApiStatus.Internal
 internal class AlignBoth(val alignX: AlignX, val alignY: AlignY) : Align

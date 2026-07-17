@@ -7,10 +7,9 @@ import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.impl.source.tree.mvcc.ConcurrentWeakVersionedValueHashMap
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
-import com.intellij.util.containers.CollectionFactory
-import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
 
 /**
@@ -23,7 +22,7 @@ internal class ClassicFileViewProviderCache(
 ) : FileViewProviderCache {
 
   private val cache = AtomicMapCache<VirtualFile, FileViewProvider> {
-    CollectionFactory.createConcurrentWeakValueMap()
+    ConcurrentWeakVersionedValueHashMap()
   }
 
   private val myTempProviderStorage = createTemporaryProviderStorage()

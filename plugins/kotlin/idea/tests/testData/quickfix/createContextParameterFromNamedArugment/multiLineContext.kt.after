@@ -1,10 +1,10 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
-// K2_ERROR: No context argument for 'a: A' found.
-// K2_ERROR: No context argument for 'b: B' found.
-// K2_ERROR: No parameter with name 'ctx2' found.
-// K2_AFTER_ERROR: No context argument for 'a: A' found.
-// K2_AFTER_ERROR: No context argument for 'b: B' found.
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 class A
 class B
 class Ctx2

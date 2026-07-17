@@ -1,7 +1,7 @@
 // IS_APPLICABLE: false
 // ERROR: Unresolved reference: t
+// K2_ERROR: UNRESOLVED_REFERENCE
 
-// K2_ERROR: Unresolved reference 't'.
 val <T> T.foo: T get() = t
 
 fun test() {

@@ -102,18 +102,17 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   public static @Nullable PsiFile getPsiFileInEditor(@NotNull Caret caret, final @NotNull Project project) {
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
-      // TODO: rework for lock-free typing, getPsiFile requires RA on EDT
-      return null;
-    }
-
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
     if (psiFile == null) return null;
 
-    ensureValid(psiFile);
+    if (Elf.getElf().isPsiInteractionAllowed()) {
+      // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+      // from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+      ensureValid(psiFile);
+    }
 
     if (psiFile instanceof PsiFileWithOneLanguage) {
       return psiFile;
@@ -160,6 +159,13 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
+    if (!Elf.getElf().isPsiInteractionAllowed()) {
+      // 1) PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+      //    from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+      // 2) element.getContainingFile: throws from LeafPsiElement.invalid
       return file;
     }
 

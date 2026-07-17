@@ -49,13 +49,41 @@ internal object CheckinActionUtil {
     presentation.isVisible = true
   }
 
-  fun performCommonCommitAction(e: AnActionEvent,
-                                project: Project,
-                                initialChangeList: LocalChangeList,
-                                pathsToCommit: List<FilePath>,
-                                actionName: @NlsActions.ActionText String?,
-                                executor: CommitExecutor?,
-                                forceUpdateCommitStateFromContext: Boolean) {
+  /**
+   * Compatibility for TeamCity plugin
+   */
+  @Suppress("unused")
+  fun performCommonCommitAction(
+    e: AnActionEvent,
+    project: Project,
+    initialChangeList: LocalChangeList,
+    pathsToCommit: List<FilePath>,
+    actionName: @NlsActions.ActionText String?,
+    executor: CommitExecutor?,
+    forceUpdateCommitStateFromContext: Boolean,
+  ) {
+    performCommonCommitAction(
+      e = e,
+      project = project,
+      initialChangeList = initialChangeList,
+      pathsToCommit = pathsToCommit,
+      actionName = actionName,
+      executor = executor,
+      forceUpdateCommitStateFromContext = forceUpdateCommitStateFromContext,
+      saveCommentOnCancel = true,
+    )
+  }
+
+  fun performCommonCommitAction(
+    e: AnActionEvent,
+    project: Project,
+    initialChangeList: LocalChangeList,
+    pathsToCommit: List<FilePath>,
+    actionName: @NlsActions.ActionText String?,
+    executor: CommitExecutor?,
+    forceUpdateCommitStateFromContext: Boolean,
+    saveCommentOnCancel: Boolean,
+  ) {
     LOG.debug("performCommonCommitAction")
 
     val isFreezedDialogTitle = actionName?.let {
@@ -77,18 +105,29 @@ internal object CheckinActionUtil {
     val selectedUnversioned = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY)?.toList().orEmpty()
     val filteredPaths = DescindingFilesFilter.filterDescindingFiles(pathsToCommit.toTypedArray(), project).asList()
 
-    performCheckInAfterUpdate(project, selectedChanges, selectedUnversioned, initialChangeList, filteredPaths,
-                              executor, forceUpdateCommitStateFromContext)
+    performCheckInAfterUpdate(
+      project = project,
+      selectedChanges = selectedChanges,
+      selectedUnversioned = selectedUnversioned,
+      initialChangeList = initialChangeList,
+      pathsToCommit = filteredPaths,
+      executor = executor,
+      forceUpdateCommitStateFromContext = forceUpdateCommitStateFromContext,
+      saveCommentOnCancel = saveCommentOnCancel,
+    )
   }
 
   @RequiresEdt
-  fun performCheckInAfterUpdate(project: Project,
-                                selectedChanges: List<Change>,
-                                selectedUnversioned: List<FilePath>,
-                                initialChangeList: LocalChangeList,
-                                pathsToCommit: List<FilePath>,
-                                executor: CommitExecutor?,
-                                forceUpdateCommitStateFromContext: Boolean) {
+  fun performCheckInAfterUpdate(
+    project: Project,
+    selectedChanges: List<Change>,
+    selectedUnversioned: List<FilePath>,
+    initialChangeList: LocalChangeList,
+    pathsToCommit: List<FilePath>,
+    executor: CommitExecutor?,
+    forceUpdateCommitStateFromContext: Boolean,
+    saveCommentOnCancel: Boolean,
+  ) {
     StoreUtil.saveDocumentsAndProjectSettings(project)
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
@@ -102,7 +141,7 @@ internal object CheckinActionUtil {
         true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
         val included = getIncludedChanges(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit)
         if (executor != null) {
-          CommitChangeListDialog.commitWithExecutor(project, included, initialChangeList, executor, null, null)
+          CommitChangeListDialog.commitWithExecutor(project, included, initialChangeList, executor, null, saveCommentOnCancel, null)
         }
         else {
           CommitChangeListDialog.commitVcsChanges(project, included, initialChangeList, null, null)

@@ -1,4 +1,3 @@
-//#region node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
 /**
 * Custom positioning reference element.
 * @see https://floating-ui.com/docs/virtual-elements
@@ -126,8 +125,6 @@ function rectToClientRect(rect) {
 		y
 	};
 }
-//#endregion
-//#region node_modules/@floating-ui/core/dist/floating-ui.core.mjs
 function computeCoordsFromPlacement(_ref, placement, rtl) {
 	let { reference, floating } = _ref;
 	const sideAxis = getSideAxis(placement);
@@ -694,5 +691,4 @@ var size = function(options) {
 		}
 	};
 };
-//#endregion
 export { limitShift as a, size as c, max as d, min as f, hide as i, createCoords as l, round as m, computePosition as n, offset as o, rectToClientRect as p, flip as r, shift as s, arrow as t, floor as u };

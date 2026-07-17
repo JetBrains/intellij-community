@@ -11,6 +11,9 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 
 internal class CreatePatchAction : AbstractCommitChangesAction() {
+
+  override val saveCommentOnCancel = false
+
   override fun getExecutor(project: Project): CommitExecutor = CreatePatchCommitExecutor(project)
 
   override fun isActionEnabled(manager: ChangeListManager, it: Change): Boolean {

@@ -23,6 +23,7 @@ import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.getOrNull
+import com.intellij.platform.eel.nioFs.impl.utils.getCaseSensitivity
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountProvider
@@ -71,6 +72,7 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
     return FileAttributes.fromNio(nioPath, nioAttributes)
   }
   else {
+    @OptIn(EelDelicateApi::class)
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
       eelPath.fsBlocking {
@@ -103,6 +105,7 @@ fun listWithAttributesUsingEel(
     if (eelDescriptor === LocalEelDescriptor) {
       return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
     }
+    @OptIn(EelDelicateApi::class)
     val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
       eelPath.fsBlocking {
@@ -163,6 +166,7 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
       val nioPath = root.fileSystem.getNioPath(root) ?: return@mapNotNull null
       val descriptor = nioPath.getEelDescriptor()
       if (descriptor === LocalEelDescriptor) return@mapNotNull null
+      @OptIn(EelDelicateApi::class)
       val eelPath = nioPath.asEelPath(descriptor)
       // Skip FS root — prefetching entire remote filesystem is wasteful,
       // VFS refresh from root only checks cached children anyway
@@ -374,7 +378,7 @@ private fun EelFileInfo.toVfs(isWritable: Boolean, isSymLink: Boolean): FileAttr
   val length = (attrs.type as? EelFileInfo.Type.Regular)?.size ?: 0
   val lastModified = FileTime.from(attrs.lastModifiedTime?.toInstant() ?: Instant.MIN).toMillis()
   val caseSensitivity = when (val type = attrs.type) {
-    is EelFileInfo.Type.Directory -> EelPathUtils.getCaseSensitivity(type)
+    is EelFileInfo.Type.Directory -> type.getCaseSensitivity()
     else -> FileAttributes.CaseSensitivity.UNKNOWN
   }
 

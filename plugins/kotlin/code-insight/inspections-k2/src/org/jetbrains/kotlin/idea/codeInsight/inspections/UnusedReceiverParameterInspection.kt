@@ -110,6 +110,12 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
         )
     }
 
+    context(_: KaSession)
+    private fun KtTypeReference.collectUsedTypeParameters(): Set<KaTypeParameterSymbol> =
+        sequenceOf(this)
+            .plus(collectDescendantsOfType<KtTypeReference>())
+            .mapNotNullTo(mutableSetOf()) { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
+
     private fun checkElement(callableDeclaration: KtCallableDeclaration, holder: ProblemsHolder) {
         val receiverTypeReference = callableDeclaration.receiverTypeReference
         if (receiverTypeReference == null || receiverTypeReference.textRange.isEmpty) return
@@ -133,9 +139,10 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
 
         analyze(callableDeclaration) {
             if (callableDeclaration.expectedType != null) return
-            val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
-                .mapNotNull { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
-                .filterTo(mutableSetOf()) { it.isReified }
+
+            val usedTypeParametersInReceiver = receiverTypeReference.collectUsedTypeParameters()
+            val usedInReturnType = callableDeclaration.typeReference?.collectUsedTypeParameters().orEmpty()
+            if (usedTypeParametersInReceiver.any { it in usedInReturnType }) return
 
             val receiverType = receiverTypeReference.typeIfSafeToResolve
             val receiverTypeSymbol = receiverType?.symbol
@@ -156,7 +163,8 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                 }
             }
 
-            if (!isReceiverUsedInside(callableDeclaration, usedTypeParametersInReceiver)) {
+            val usedReifiedTypeParametersInReceiver = usedTypeParametersInReceiver.filterTo(mutableSetOf()) { it.isReified }
+            if (!isReceiverUsedInside(callableDeclaration, usedReifiedTypeParametersInReceiver)) {
                 registerProblem(holder, receiverTypeReference, textForReceiver = null)
             }
         }
@@ -307,6 +315,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
             partiallyAppliedSymbol.dispatchReceiver?.getThisReceiverOwner() == symbol ||
                     partiallyAppliedSymbol.extensionReceiver?.getThisReceiverOwner() == symbol ||
+                    partiallyAppliedSymbol.contextArguments.any { it.getThisReceiverOwner() == symbol } ||
                     (receiverType != null && resolvedCall.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
         }
 

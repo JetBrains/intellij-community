@@ -278,8 +278,8 @@ public final class BlockSupportImpl extends BlockSupport {
     lightFile.setOriginalFile(virtualFile);
 
     FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
-    if (providerCopy.isEventSystemEnabled()) {
-      throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
+    if (providerCopy.supportsSendingPsiEvents()) {
+      throw new AssertionError("Copied view provider must not corerspond to real file for reparse to deliver correct events: " + viewProvider);
     }
     providerCopy.getLanguages();
     SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
@@ -289,11 +289,13 @@ public final class BlockSupportImpl extends BlockSupport {
 
     ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
+      Document docCachedByFile = PsiDocumentManager.getInstance(fileImpl.getProject()).getCachedDocument(fileImpl);
+      Document docByViewProvider = viewProvider.getDocument();
       throw new IncorrectOperationException(
         "Last committed text length: " + lastCommittedText.length() + ", " +
         "old file node length: " + oldFileNode.getTextLength() + ", " +
-        "cached document by PsiFile: " + PsiDocumentManager.getInstance(fileImpl.getProject()).getCachedDocument(fileImpl) + ", " +
-        "document by view provider: " + viewProvider.getDocument() + ", " +
+        "cached document by PsiFile: " + docCachedByFile + "@" + System.identityHashCode(docCachedByFile) + ", " +
+        "document by view provider: " + docByViewProvider + "@" + System.identityHashCode(docByViewProvider) + ", " +
         "viewProvider: " + viewProvider);
     }
     DiffLog diffLog = mergeTrees(fileImpl, oldFileNode, newFileElement, indicator, lastCommittedText);

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.ide.customization` start
-
 jvm_library(
     name = "ide-customization",
     srcs = glob(
@@ -86,7 +85,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.ide.customization` end
 
 ### auto-generated section `build intellij.java.ide.customization.tests` start
-
 jvm_library(
     name = "ide-customization-tests",
     srcs = glob(
@@ -173,7 +171,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.ide.customization.tests` end
 
 ### auto-generated section `test intellij.java.ide.customization.tests` start
-
 jps_test(
     name = "ide-customization-tests_test",
     runtime_deps = [":ide-customization-tests_test_lib"],

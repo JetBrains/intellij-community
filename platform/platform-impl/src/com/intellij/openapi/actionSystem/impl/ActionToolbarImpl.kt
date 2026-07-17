@@ -211,7 +211,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
   override val alphaContext: AlphaAnimationContext = AlphaAnimationContext(this)
 
-  private val myListeners = EventDispatcher.create<ActionToolbarListener>(ActionToolbarListener::class.java)
+  private val myListeners = EventDispatcher.create(ActionToolbarListener::class.java)
 
   private var mySeparatorCreator: Function<in String?, out Component> = Function { MySeparator(it) }
 

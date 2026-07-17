@@ -106,5 +106,16 @@ interface EditorThreading {
         ApplicationManager.getApplication().runWriteAction(action)
       }
     }
+
+    @Internal
+    @JvmStatic
+    fun read(action: Runnable) {
+      if (ElfFeatureFlag.isEnabled() && EDT.isCurrentThreadEdt()) {
+        action.run()
+      }
+      else {
+        ApplicationManager.getApplication().runReadAction(action)
+      }
+    }
   }
 }

@@ -272,8 +272,6 @@ a:com.intellij.openapi.util.IconPathPatcher
 - patchPath(java.lang.String,java.lang.ClassLoader):java.lang.String
 f:com.intellij.openapi.util.IntRef
 - set(I):V
-@:com.intellij.openapi.util.IntellijInternalApi
-- java.lang.annotation.Annotation
 c:com.intellij.openapi.util.JDOMExternalizableStringList
 - <init>(I):V
 - <init>(java.util.Collection):V
@@ -1106,19 +1104,6 @@ f:com.intellij.util.DefaultBundleService
 - s:isDefaultBundle():Z
 f:com.intellij.util.EmptyConsumer
 - <init>():V
-f:com.intellij.util.EnvironmentUtil
-- sf:BASH_EXECUTABLE_NAME:java.lang.String
-- sf:DISABLE_OMZ_AUTO_UPDATE:java.lang.String
-- sf:ENV_ZERO_ARGUMENT:java.lang.String
-- sf:MacOS_LOADER_BINARY:java.lang.String
-- sf:SHELL_COMMAND_ARGUMENT:java.lang.String
-- sf:SHELL_ENV_COMMAND:java.lang.String
-- sf:SHELL_LOGIN_ARGUMENT:java.lang.String
-- sf:SHELL_SOURCE_COMMAND:java.lang.String
-- sf:SHELL_VARIABLE_NAME:java.lang.String
-- s:containsEnvKeySubstitution(java.lang.String,java.lang.String):Z
-- s:inlineParentOccurrences(java.util.Map,java.util.Map):V
-- s:setLocaleEnv(java.util.Map,java.nio.charset.Charset):java.lang.String
 f:com.intellij.util.EventDispatcher
 - addListener(java.util.EventListener,com.intellij.openapi.Disposable):V
 - s:create(java.lang.Class,java.util.Map):com.intellij.util.EventDispatcher

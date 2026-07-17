@@ -48,6 +48,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.modules.ultimate",
     "com.intellij.jetbrains.client",
     "com.intellij.modules.appcode.ide",
+    "com.intellij.modules.rustrover",
   ),
   componentImplementationClassesToIgnore = setOf(
     "com.intellij.designer.DesignerToolWindowManager",

@@ -4,8 +4,8 @@
 // ERROR: Unresolved reference: SomethingElse
 // ERROR: Unresolved reference: somethingElse
 // SKIP_ERRORS_AFTER
-// K2_ERROR: Unresolved reference 'SomethingElse'.
-// K2_ERROR: Unresolved reference 'somethingElse'.
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 import java.util.regex.Pattern
 

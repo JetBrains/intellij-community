@@ -1,5 +1,5 @@
 // "Change 'y' to '*y'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'String' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(vararg x: String) {}
 

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.projectFrame` start
-
 jvm_library(
     name = "project-frame",
     srcs = glob(

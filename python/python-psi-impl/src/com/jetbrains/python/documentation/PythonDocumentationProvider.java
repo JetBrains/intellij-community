@@ -32,7 +32,6 @@ import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -68,6 +67,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -418,7 +418,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @see #getTypeHint(PyType, TypeEvalContext)
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.noneOf(Feature.class))).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.noneOf(PyTypeRendererFeature.class))).toString();
   }
 
   /**
@@ -428,13 +428,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @param context  TypeEvalContext instance to infer extra types with
    * @param features additional rendering features to enable
    * @return string representation of the type
-   * @see PyTypeRenderer.Feature
+   * @see PyTypeRendererFeature
    */
   @ApiStatus.Experimental
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type,
                                                      @NotNull TypeEvalContext context,
-                                                     Feature @NotNull ... features) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, EnumSet.copyOf(Arrays.asList(features)))).toString();
+                                                     PyTypeRendererFeature @NotNull ... features) {
+    EnumSet<PyTypeRendererFeature> featureSet = features.length == 0 ? EnumSet.noneOf(PyTypeRendererFeature.class) : EnumSet.copyOf(Arrays.asList(features));
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, featureSet)).toString();
   }
 
   /**
@@ -447,7 +448,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return PEP-484 compatible representation of the type
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.noneOf(Feature.class))).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.noneOf(PyTypeRendererFeature.class))).toString();
   }
 
   /**
@@ -462,7 +463,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    */
   @ApiStatus.Experimental
   public static @NotNull String getFullyQualifiedTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.of(Feature.USE_FQN))).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.of(PyTypeRendererFeature.USE_FQN))).toString();
   }
 
   /**
@@ -474,7 +475,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return getTypeName(type, context, Feature.TYPE_VAR_BOUNDS);
+    return getTypeName(type, context, PyTypeRendererFeature.TYPE_VAR_BOUNDS);
   }
 
   /**
@@ -493,19 +494,19 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   public static @NotNull @NlsSafe String getTypeNameWithLinks(@Nullable PyType type,
                                                               @NotNull TypeEvalContext context,
                                                               @NotNull PsiElement anchor,
-                                                              Feature @NotNull ... features) {
-    EnumSet<Feature> featureSet = features.length == 0 ? EnumSet.noneOf(Feature.class) : EnumSet.copyOf(Arrays.asList(features));
+                                                              PyTypeRendererFeature @NotNull ... features) {
+    EnumSet<PyTypeRendererFeature> featureSet = features.length == 0 ? EnumSet.noneOf(PyTypeRendererFeature.class) : EnumSet.copyOf(Arrays.asList(features));
     return PyTypeVisitor.visit(type, new PyTypeRenderer.TooltipDocumentation(context, anchor, featureSet)).toString();
   }
 
   /**
-   * Same as {@link #getTypeNameWithLinks(PyType, TypeEvalContext, PsiElement, Feature...)} with the verbose
+   * Same as {@link #getTypeNameWithLinks(PyType, TypeEvalContext, PsiElement, PyTypeRendererFeature...)} with the verbose
    * features enabled (see {@link #getVerboseTypeName(PyType, TypeEvalContext)}).
    */
   public static @NotNull @NlsSafe String getVerboseTypeNameWithLinks(@Nullable PyType type,
                                                                      @NotNull TypeEvalContext context,
                                                                      @NotNull PsiElement anchor) {
-    return getTypeNameWithLinks(type, context, anchor, Feature.TYPE_VAR_BOUNDS);
+    return getTypeNameWithLinks(type, context, anchor, PyTypeRendererFeature.TYPE_VAR_BOUNDS);
   }
 
   /**

@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.tools.ide.util.common` start
-
 create_kotlinc_options(
     name = "custom_ide-util-common",
     opt_in = ["kotlin.time.ExperimentalTime"],

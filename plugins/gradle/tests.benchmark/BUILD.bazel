@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.tests.benchmark` start
-
 jvm_library(
     name = "tests.benchmark",
     srcs = glob(
@@ -89,7 +88,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.tests.benchmark` end
 
 ### auto-generated section `test intellij.gradle.tests.benchmark` start
-
 jps_test(
     name = "tests.benchmark_test",
     runtime_deps = [":tests.benchmark_test_lib"],

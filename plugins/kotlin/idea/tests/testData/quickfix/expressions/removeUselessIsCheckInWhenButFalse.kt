@@ -1,4 +1,5 @@
 // "Remove redundant 'is' check" "true"
+// K2_ERROR: IMPOSSIBLE_IS_CHECK_ERROR
 
 interface Base
 interface Derived: Base

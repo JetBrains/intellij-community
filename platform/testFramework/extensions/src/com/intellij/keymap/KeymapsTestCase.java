@@ -24,7 +24,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
                                    "EditorEnter", "NextTemplateVariable", "Git.Log.Branches.Change.Branch.Filter", "SplitChooser.Split",
                                    "JupyterMarkdownDestroyControllerAction", "Console.TableResult.GotoReferencedResult",
-                                   "AIAssistant.Chat.SendActions.Send"},
+                                   "AIAssistant.Chat.SendActions.Send", "Air.Chat.Prompt.Send"},
       {"ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor", "CloseDiffEditor"},
       {"F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
       {"F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue",
@@ -119,7 +119,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
       {"shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction",
                                    "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit",
-                                   "PyExecuteCellActionWithMove", "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine"},
+                                   "PyExecuteCellActionWithMove", "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine", "Air.Chat.Prompt.NewLine"},
       {"shift F4",                 "XDebugger.JumpToTypeSource", "EditSourceInNewWindow"},
       {"shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
       {"shift F7",                 "PreviousDiff", "SmartStepInto"},
@@ -444,7 +444,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     }),
     Map.entry("NetBeans 6.5", new String[][]{
       {"F4",                       "RunToCursor", "EditSource"},
-      {"F5",                       "Debugger.ResumeThread", "Resume", "Graph.RouteEdges", "WebInspector.Browser.Refresh"},
+      {"F5",                       "Resume", "Graph.RouteEdges", "WebInspector.Browser.Refresh"},
       {"alt UP",                   "GotoPrevElementUnderCaretUsage", "JupyterNotebookMoveCellUpCommandModeAction", "NotebookMoveCellUpAction"},
       {"alt DOWN",                 "GotoNextElementUnderCaretUsage", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction", "NotebookMoveCellDownAction"},
       {"control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
@@ -543,7 +543,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ctrl alt UP",              "Console.TableResult.PreviousPage", "EditorCloneCaretAbove"},
       {"shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction",
                                    "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit",
-                                   "PyExecuteCellActionWithMove", "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine"},
+                                   "PyExecuteCellActionWithMove", "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine", "Air.Chat.Prompt.NewLine"},
       {"shift INSERT",             "EditorPasteSimple", "Terminal.Paste", "Settings.Paste"},
       {"shift ctrl D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff", "JavaScript.ShowComponentUsages"},
       {"shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction",
@@ -583,7 +583,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt RIGHT",           "AIAssistant.Editor.AcceptOneLineCompletion", "NextTab"},
       {"shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine",
                                    "PyExecuteCellActionWithMove", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit",
-                                   "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine"},
+                                   "RConsoleNextLineAction", "AIAssistant.Chat.SendActions.NewLine", "Air.Chat.Prompt.NewLine"},
       {"shift ctrl DOWN",          "EditorCloneCaretBelow", "ShowContent"},
       {"shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff", "JavaScript.ShowComponentUsages"},
       {"shift meta R",             "GotoSymbol", "WebInspector.Browser.Refresh"},
@@ -626,7 +626,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateUnitTestsToolWindow", "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow",
     "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction",
     "RebuildSolutionAction",
-    "ActivateInspectionResultsToolWindow", "", "ValidateXml"
+    "ActivateInspectionResultsToolWindow", ""
   );
 
   private static final Set<String> DEFAULT_BOUND_ACTIONS = Set.of(

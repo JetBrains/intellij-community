@@ -7,9 +7,6 @@ load("//:rules/impl/transitions.bzl", "jvm_platform_transition", "scrubbed_host_
 visibility("private")
 
 def _wasmjs_library(ctx):
-    if ctx.attr.neverlink and ctx.attr.runtime_deps:
-        fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
-
     return wasmjs_produce_module_actions(ctx, "wasmjs_library")
 
 wasmjs_library = rule(
@@ -61,6 +58,12 @@ wasmjs_library = rule(
             default = [],
             providers = [[KtWasmJsInfo], [KtWasmJsInfo, _KtJvmInfo]],
         ),
+        "runtime_deps": attr.label_list(
+            doc = "Dependencies exposed to the Wasm/JS link path only.",
+            default = [],
+            providers = [[KtWasmJsInfo], [KtWasmJsInfo, _KtJvmInfo]],
+            allow_files = False,
+        ),
         "_wasmjs_builder": attr.label(
             default = "//kotlin-builder-wasmjs:kotlin-builder-wasmjs_deploy.jar",
             allow_single_file = True,
@@ -72,10 +75,6 @@ wasmjs_library = rule(
         "_wasmjs_builder_launcher": attr.label(
             default = "//:rules/impl/MemoryLauncher.java",
             allow_single_file = True,
-        ),
-        "neverlink": attr.bool(
-            doc = """If true only use this library for compilation and not at runtime.""",
-            default = False,
         ),
     }),
     toolchains = common_toolchains,

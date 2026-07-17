@@ -73,7 +73,7 @@ internal sealed interface KaBaseReference : KtReference, KaResolvableReferenceBr
 context(_: KaSession)
 internal fun KaSymbol.getPsiDeclarations(): Collection<PsiElement> {
     val intersectionOverriddenSymbolsOrSingle = when {
-        this.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE && this is KaCallableSymbol -> this.intersectionOverriddenSymbols
+        origin == KaSymbolOrigin.INTERSECTION_OVERRIDE && this is KaCallableSymbol -> intersectionOverriddenSymbols
         else -> listOf(this)
     }
 

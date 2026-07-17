@@ -8,10 +8,10 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -86,14 +86,19 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
 @Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(): EelPath {
+  @OptIn(EelDelicateApi::class)
   return asEelPath(getEelDescriptor())
 }
 
 /**
+ * **Do not use this function** ! Use [asEelPath] instead.
+ * This function will be dropped soon.
+ *
  * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
  */
 @Throws(EelPathException::class)
-@ApiStatus.Experimental
+@ApiStatus.Internal
+@EelDelicateApi
 fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
   if (descriptor is LocalEelDescriptor) {
     return EelPath.parse(toString(), descriptor)

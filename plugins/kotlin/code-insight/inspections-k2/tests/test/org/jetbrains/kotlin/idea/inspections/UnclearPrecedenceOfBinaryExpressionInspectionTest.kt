@@ -14,7 +14,7 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     fun `test elvis elvis`() = doTest("fun foo(i: Int?, j: Int?, k: Int?) = i ?: j <caret>?: k")
 
     fun `test elvis as`() = doTest(
-        "fun foo(i: Int?, j: Int?) = i ?: j<caret> <warning descr=\"[UNSAFE_CAST_RELYING_ON_NULL] This cast only succeeds when the expression is null. Consider rewriting it explicitly.\">as</warning> String?",
+        "fun foo(i: Int?, j: Int?) = i ?: j<caret> <warning descr=\"[UNSAFE_CAST_RELYING_ON_NULL]\">as</warning> String?",
         "fun foo(i: Int?, j: Int?) = i ?: (j as String?)"
     )
 

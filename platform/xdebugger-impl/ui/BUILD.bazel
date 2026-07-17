@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.debugger.impl.ui` start
+jps_test(
+    name = "debugger-impl-ui-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":debugger-impl-ui-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.debugger.impl.ui.tests`
+
+### auto-generated section `build intellij.platform.debugger.impl.ui` start
 create_kotlinc_options(
     name = "custom_ui",
     x_context_parameters = True,
@@ -150,7 +158,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl.ui` end
 
 ### auto-generated section `build intellij.platform.debugger.impl.ui.tests` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl-ui-tests",
     x_context_parameters = True,
@@ -291,11 +298,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.debugger.impl.ui.tests` end
-
-### auto-generated section `test intellij.platform.debugger.impl.ui.tests` start
-
-jps_test(
-    name = "debugger-impl-ui-tests_test",
-    runtime_deps = [":debugger-impl-ui-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.debugger.impl.ui.tests` end

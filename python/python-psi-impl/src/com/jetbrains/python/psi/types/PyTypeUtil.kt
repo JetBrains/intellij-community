@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyTargetExpression
@@ -173,11 +174,13 @@ object PyTypeUtil {
   }
 
   /**
-   * Given a type creates a stream of all its members if it's a union type or of only the type itself otherwise.
+   * Given a type creates a stream of all its members if it's a [PyCompositeType] or of only the type itself otherwise.
    *
    *
-   * It allows to process types received as the result of multiresolve uniformly with the others.
+   * It lets a composite type (e.g. the union produced when a reference resolves to several declarations) be processed
+   * uniformly with a non-composite one.
    */
+  @Deprecated("Use the high level composite api instead `PyType.compositeX`")
   @JvmStatic
   fun PyType?.toStream(): StreamEx<PyType?> =
     if (this is PyCompositeType)
@@ -288,13 +291,106 @@ object PyTypeUtil {
     }
   }
 
-  val PyType?.components: List<PyType?>
+  val PyType?.compositeComponents: List<PyType?>
     @ApiStatus.Experimental
     get() = if (this is PyCompositeType) members.toList() else listOf(this)
 
-  val PyType?.componentSequence: Sequence<PyType?>
+  val PyType?.compositeComponentSequence: Sequence<PyType?>
     @ApiStatus.Experimental
     get() = if (this is PyCompositeType) members.asSequence() else sequenceOf(this)
+
+  /**
+   * Decomposes [this] into the list of its members (or a single-element list for a non-composite type),
+   * hands that list to [transform], and reassembles the result into a composite type *of the same kind*
+   * ([PyUnionType], [PyUnsafeUnionType] or [PyIntersectionType]); a non-composite type is rebuilt as a union,
+   * which collapses a single remaining member back to itself.
+   *
+   * It lets one uniformly deconstruct a composite type, process its members and build it back without branching
+   * on the concrete composite kind:
+   * ```
+   * val transformed = someType.compositeTransform { members ->
+   *   members.map { ... }.filter { ... }.mapNotNull { ... }
+   * }
+   * ```
+   *
+   * If [transform] returns an empty list, the result is the identity element of the composite kind:
+   * `Never` for a union or an unsafe union (bottom), and `object` for an intersection (top). The `object` type is
+   * resolved against [this]'s original members and degrades to [PyAnyType.unknown] only for an anchorless intersection
+   * (one made solely of `Any`/`None`).
+   *
+   * @see compositeMap
+   * @see compositeMatchesAsSubtype
+   * @see compositeMatchesAsSupertype
+   */
+  @ApiStatus.Experimental
+  fun PyType?.compositeTransform(transform: (List<PyType?>) -> List<PyType?>): PyType? =
+    rebuildLike(transform(compositeComponents))
+
+  /**
+   * Applies [mapper] to every leaf member of [this] composite type and reassembles the results into composite types
+   * of the same kinds; a non-composite type is passed to [mapper] directly.
+   *
+   * Recurses through nested composites ([PyUnionType], [PyUnsafeUnionType], [PyIntersectionType]) so that [mapper]
+   * always receives a non-composite type, e.g. `Union[Intersection[A, B], C]` is mapped to
+   * `Union[Intersection[f(A), f(B)], f(C)]`. Use [compositeTransform] instead when you need the flat list of the
+   * *direct* members without recursion.
+   *
+   * @see compositeTransform
+   * @see PyUnionType.map
+   */
+  @ApiStatus.Experimental
+  fun PyType?.compositeMap(mapper: (PyType?) -> PyType?): PyType? =
+    if (this is PyCompositeType) compositeTransform { members -> members.map { it.compositeMap(mapper) } }
+    else mapper(this)
+
+  /**
+   * Tests [predicate] against the members of [this] composite type with the quantifier that decides whether the
+   * *whole composite is a subtype* of some other type: since `Union[Ts] <: T` iff every `Ti <: T`, *all* members of a
+   * [PyUnionType] must match; since `Intersection[Ts] <: T` (and `UnsafeUnion[Ts] <: T`) iff some `Ti <: T`, *any*
+   * member of a [PyIntersectionType] or a [PyUnsafeUnionType] is enough. For a non-composite type [predicate] is
+   * applied directly.
+   *
+   * [predicate] is expected to test the member on the subtype side, e.g. `compositeMatchesAsSubtype { match(it, target) }`.
+   *
+   * @see compositeMatchesAsSupertype
+   */
+  @ApiStatus.Experimental
+  fun PyType?.compositeMatchesAsSubtype(predicate: (PyType?) -> Boolean): Boolean =
+    when (this) {
+      is PyUnionType -> members.all(predicate)
+      is PyIntersectionType, is PyUnsafeUnionType -> members.any(predicate)
+      else -> predicate(this)
+    }
+
+  /**
+   * The mirror of [compositeMatchesAsSubtype]: the quantifier that decides whether some other type is a *subtype of the whole
+   * composite*. Since `T <: Union[Ts]` iff some `T <: Ti`, *any* member of a [PyUnionType] (or a [PyUnsafeUnionType])
+   * suffices; since `T <: Intersection[Ts]` iff `T <: Ti` for every member, *all* members of a [PyIntersectionType]
+   * must match. For a non-composite type [predicate] is applied directly.
+   *
+   * [predicate] is expected to test the member on the supertype side, e.g. `compositeMatchesAsSupertype { match(target, it) }`.
+   *
+   * @see compositeMatchesAsSubtype
+   */
+  @ApiStatus.Experimental
+  fun PyType?.compositeMatchesAsSupertype(predicate: (PyType?) -> Boolean): Boolean =
+    when (this) {
+      is PyUnionType, is PyUnsafeUnionType -> members.any(predicate)
+      is PyIntersectionType -> members.all(predicate)
+      else -> predicate(this)
+    }
+
+  /**
+   * Rebuilds a composite type of the same kind as [this] from [members], folding an empty [members] to the identity
+   * element of that kind: `Never` for unions/unsafe unions, `Unknown` for intersections.
+   */
+  private fun PyType?.rebuildLike(members: List<PyType?>): PyType? =
+    when (this) {
+      // TODO: use PyTopType when it is introduced PY-90942
+      is PyIntersectionType -> if (members.isEmpty()) PyAnyType.unknown else PyIntersectionType.intersection(members)
+      is PyUnsafeUnionType -> if (members.isEmpty()) PyNeverType.NEVER else PyUnsafeUnionType.unsafeUnion(members)
+      else -> PyUnionType.unionOrNever(members)
+    }
 
   private fun toUnion(unionFactory: (List<PyType?>) -> PyType?): Collector<PyType?, *, PyType?> {
     return Collectors.collectingAndThen(Collectors.toList(), unionFactory)
@@ -417,21 +513,8 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun isInstanceMember(resolveResults: List<@JvmWildcard RatedResolveResult>, context: TypeEvalContext): Boolean {
-    return resolveResults.any {
-      val element = it.element
-      element is PyTargetExpression &&
-      PyTypingTypeProvider.getAnnotationValue(element, context) != null &&
-      !PyTypingTypeProvider.isClassVar(element, context) &&
-      !(PyTypingTypeProvider.isFinal(element, context) && element.hasAssignedValue())
-    }
-  }
-
-  @ApiStatus.Internal
-  @JvmStatic
   fun getContainingClass(resolveResults: List<@JvmWildcard RatedResolveResult>): PyClass? {
-    return resolveResults.asReversed()
-      .asSequence()
+    return resolveResults.asSequence()
       .map { it.element }
       .filterIsInstance<PyPossibleClassMember>()
       .firstNotNullOfOrNull { it.containingClass }
@@ -445,21 +528,11 @@ object PyTypeUtil {
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>? = null,
-  ): PyType? = getTypeOfBoundMember(classType, classType, memberResolveResults, context, errors)
-
-  @ApiStatus.Internal
-  @JvmStatic
-  @JvmOverloads
-  fun getTypeOfBoundMember(
-    classType: PyClassType,
-    selfType: PyInstantiableType<*>,
-    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
-    context: TypeEvalContext,
-    errors: MutableList<ProblemMessage>? = null,
   ): PyType? {
-    val memberType = specializeMemberType(classType, selfType, getTypeOfMember(memberResolveResults, context), context)
+    val memberType = getTypeOfMember(memberResolveResults, context)
+    val specializedMemberType = specializeMemberType(classType, classType, memberType, context)
     val memberOwner = getContainingClass(memberResolveResults)
-    return bindFunction(selfType, memberType, memberOwner, context, errors)
+    return bindFunction(classType, specializedMemberType, memberOwner, context, errors)
   }
 
   @ApiStatus.Internal
@@ -468,25 +541,32 @@ object PyTypeUtil {
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
   ): PyType? {
-    val elements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
-    if (elements.isEmpty()) return PyAnyType.unknown
+    val resolvedElements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
+    if (resolvedElements.isEmpty()) return PyAnyType.unknown
 
-    // Skip elements whose type is `staticmethod`/`classmethod` - these decorators
-    // are taken into account by `PyFunctionImpl.modifier`.
-    var lastIndex = elements.lastIndex
-    var lastType = context.getType(elements[lastIndex])
-    if (isStaticOrClassMethod(lastType)) {
-      for (i in lastIndex - 1 downTo 0) {
-        val type = context.getType(elements[i])
-        if (type is PyCallableType && type !is PyClassLikeType) {
-          lastIndex = i
-          lastType = type
-          break
-        }
+    // Element with a declared type takes precedence.
+    val elementsWithDeclaredType = resolvedElements
+      .filter {
+        it is PyClass ||
+        it is PyFunction ||
+        it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
       }
+    val elements = elementsWithDeclaredType.ifEmpty { resolvedElements }
+
+    val last = elements.last()
+    val lastType = context.getType(last)
+    if (lastType !is PyFunctionType) {
+      val memberType = if (last is PyTargetExpression && last.isQualified && !PyTypingTypeProvider.isFinal(last, context)) {
+        PyLiteralType.upcastLiteralToClass(lastType)
+      }
+      else {
+        lastType
+      }
+      if (elementsWithDeclaredType.isEmpty() && memberType.isNoneType) {
+        return PyUnsafeUnionType.unsafeUnion(memberType, PyAnyType.unknown)
+      }
+      return memberType
     }
-    val last = elements[lastIndex]
-    if (lastType !is PyFunctionType) return lastType
 
     val overloads = mutableListOf<PyCallableType?>()
     var impl: Ref<PyType?>? = null
@@ -496,7 +576,7 @@ object PyTypeUtil {
     else {
       impl = Ref.create(lastType)
     }
-    for (i in lastIndex - 1 downTo 0) {
+    for (i in elements.lastIndex - 1 downTo 0) {
       val el = elements[i]
       if (!PyiUtil.isOverload(el, context)) break
       overloads.add(context.getType(el) as? PyCallableType)
@@ -505,13 +585,6 @@ object PyTypeUtil {
 
     overloads.reverse()
     return PyOverloadType(overloads, impl)
-  }
-
-  private fun isStaticOrClassMethod(type: PyType?): Boolean {
-    if (type !is PyClassType) return false
-    val builtins = PyBuiltinCache.getInstance(type.pyClass)
-    return type.pyClass === builtins.staticMethodType?.pyClass ||
-           type.pyClass === builtins.classMethodType?.pyClass
   }
 
   @ApiStatus.Internal

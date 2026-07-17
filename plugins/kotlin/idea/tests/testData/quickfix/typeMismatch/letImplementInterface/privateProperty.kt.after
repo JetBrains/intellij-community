@@ -1,5 +1,5 @@
 // "Let 'A' implement interface 'IA'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'A', but 'IA' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 interface IA {
     var a: Int

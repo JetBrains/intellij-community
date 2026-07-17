@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public interface DuplicateMessageAware {
+public interface DuplicateMessageAware extends MessageEvent {
 }

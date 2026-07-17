@@ -97,24 +97,30 @@ public final class IdeaLogger extends JulLogger {
     return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
-  private static void reportToFus(Throwable t) {
+  private static void reportToFus(Throwable rawThrowable) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred() || FUS_RECURSION_GUARD.get() != null) {
       return;
     }
 
     FUS_RECURSION_GUARD.set(true);
+
+    var throwable = rawThrowable;
+    if (rawThrowable instanceof UnhandledException uh) {
+      throwable = uh.getCause();
+    }
+
     try {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
         var pluginUtil = PluginUtil.getInstance();
         if (pluginUtil != null) {
-          var pluginId = pluginUtil.findPluginId(t);
-          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-          LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+          var pluginId = pluginUtil.findPluginId(throwable);
+          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable);
+          LifecycleUsageTriggerCollector.onError(pluginId, throwable, kind);
           if (pluginId != null) {
             var sinkService = UnhandledReportSinkService.getInstance();
             if (sinkService != null) { // might be null in CLI utils
-              sinkService.report(new PluginExceptionReportData(pluginId, t));
+              sinkService.report(new PluginExceptionReportData(pluginId, throwable));
             }
           }
         }

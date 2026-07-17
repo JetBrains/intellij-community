@@ -11,7 +11,6 @@
     <module name="intellij.platform.problemView.shared"/>
     <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.problemView.backend"/>
-    <module name="intellij.platform.problemView.buildView"/>
     <module name="intellij.platform.problemView.frontend"/>
   </content>
 </idea-plugin>

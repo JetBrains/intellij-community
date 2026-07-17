@@ -3,8 +3,10 @@ package com.intellij.openapi.vcs.merge
 
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.ColumnInfo
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -39,4 +41,26 @@ internal object MergeUIUtil {
     is FilePath -> node.virtualFile
     else -> null
   }
+
+  private const val ITERATIVE_MERGE_COLUMNS_NUMBER = 3
+
+  /**
+   * Returns a Pair of columns labels or `Yours` and `Theirs` as a fallback.
+   */
+  internal fun getYoursAndTheirsLabes(columns: Array<ColumnInfo<*, *>>): Pair<String, String> {
+    val columnNames = columns.mapIndexed { index, _ -> columns[index].name }
+    return getYoursAndTheirsLabes(columnNames)
+  }
+
+  /**
+   * Returns a Pair of columns labels or `Yours` and `Theirs` as a fallback.
+   */
+  internal fun getYoursAndTheirsLabes(columnNames: List<String>) =
+    if (columnNames.size == ITERATIVE_MERGE_COLUMNS_NUMBER) {
+      Pair(columnNames[1], columnNames[2])
+    }
+    else {
+      Pair(VcsBundle.message("multiple.file.merge.dialog.branch.name.yours"),
+           VcsBundle.message("multiple.file.merge.dialog.branch.name.theirs"))
+    }
 }

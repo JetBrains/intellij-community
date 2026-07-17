@@ -3,14 +3,14 @@ import kotlin.contracts.contract
 
 fun testIsContract(x: Any) {
     val b = testString(x)
-    if (b && <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">x is String</warning>) {
+    if (b && <warning descr="[USELESS_IS_CHECK]">x is String</warning>) {
         println()
     }
 }
 
 fun testNullOrBlank(str: String?) {
     val b = str.isNullOrBlank()
-    if (<warning descr="Condition '!b && str == null' is always false">!b && <warning descr="[SENSELESS_COMPARISON] Condition is always 'false'.">str == null</warning></warning>) {
+    if (<warning descr="Condition '!b && str == null' is always false">!b && <warning descr="[SENSELESS_COMPARISON]">str == null</warning></warning>) {
         println()
     }
 }

@@ -7,9 +7,12 @@ import com.intellij.ide.starter.report.ErrorType
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.tools.ide.starter.bus.EventsBus
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.LifecycleMethodExecutionExceptionHandler
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler
 import org.opentest4j.TestAbortedException
 import java.util.concurrent.CopyOnWriteArrayList
@@ -18,23 +21,57 @@ import java.util.concurrent.CopyOnWriteArrayList
  * JUnit5 extension that downgrades a failing test to ABORTED (reported to TeamCity as `testIgnored`)
  * when the IDE under test produced an error matching an [IgnoreOnIdeError] filter.
  *
+ * The failure is downgraded no matter where it is thrown: from the test body, or from a lifecycle
+ * method (`@BeforeAll`/`@BeforeEach`/`@AfterEach`/`@AfterAll`). This matters because IDE runs often
+ * happen during setup (e.g. project import / library resolution): a flaky IDE error there fails the
+ * test as a "Class Configuration" error, which must be ignored just like a matching test-body failure.
+ *
  * **Scope:**
  *  - Method-level filters use per-test state: only errors from that test are checked.
- *  - Class-level filters use shared state: errors from any test in the class are accumulated and checked.
+ *  - Class-level filters use shared state: errors from any run in the class (including class-level
+ *    setup in `@BeforeAll`) are accumulated and checked.
  *
  * Lifecycle:
- *  - `beforeEach`: subscribes to [IdeAfterLaunchEvent]. Creates per-test state for method-level filters,
- *    and retrieves/creates shared class-level state for class-level filters.
- *  - `handleTestExecutionException`: on test failure, checks:
- *    1. Method-level filters against per-test run contexts (if any method-level annotations exist)
+ *  - `beforeAll`: for class-level filters, creates shared class-level state and subscribes it to
+ *    [IdeAfterLaunchEvent] *before* any user `@BeforeAll` runs, so IDE errors produced during
+ *    class-level setup are captured.
+ *  - `beforeEach`: subscribes per-test state to [IdeAfterLaunchEvent] for method-level filters.
+ *  - `handleTestExecutionException` / `handle*MethodExecutionException`: on failure, checks:
+ *    1. Method-level filters against per-test run contexts (for method scope; skipped for `@BeforeAll`/`@AfterAll`)
  *    2. Class-level filters against accumulated class-level run contexts (if any class-level annotations exist)
  *    If any filter matches, throws [TestAbortedException] (cause: the original failure).
  *    Otherwise rethrows the original failure unchanged.
- *  - `afterEach`: unsubscribes per-test state and removes it. Class-level state persists across all tests.
+ *  - `afterEach`: unsubscribes per-test state and removes it.
+ *  - `afterAll`: unsubscribes class-level state and removes it.
  *
- * A passing test is never downgraded: this handler is only invoked when the test threw.
+ * A passing test is never downgraded: these handlers are only invoked when something threw.
  */
-internal class IgnoreOnIdeErrorExtension : BeforeEachCallback, AfterEachCallback, TestExecutionExceptionHandler {
+internal class IgnoreOnIdeErrorExtension :
+  BeforeAllCallback,
+  AfterAllCallback,
+  BeforeEachCallback,
+  AfterEachCallback,
+  TestExecutionExceptionHandler,
+  LifecycleMethodExecutionExceptionHandler {
+
+  override fun beforeAll(context: ExtensionContext) {
+    // Class-level state must be subscribed before any user `@BeforeAll` runs so that IDE errors
+    // produced during class-level setup (project import, library resolution, indexing) are captured.
+    if (collectClassLevelFilters(context).isEmpty()) return
+    val store = context.getStore(NAMESPACE)
+    if (store.get(CLASS_STATE_KEY, State::class.java) != null) return
+    val classState = State()
+    store.put(CLASS_STATE_KEY, classState)
+    EventsBus.subscribe<IdeAfterLaunchEvent>(classState) { event ->
+      classState.runContexts.add(event.runContext)
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    val store = context.getStore(NAMESPACE)
+    val classState = store.remove(CLASS_STATE_KEY, State::class.java) ?: return
+    EventsBus.unsubscribe<IdeAfterLaunchEvent>(classState)
+  }
 
   override fun beforeEach(context: ExtensionContext) {
     val store = context.getStore(NAMESPACE)
@@ -45,44 +82,62 @@ internal class IgnoreOnIdeErrorExtension : BeforeEachCallback, AfterEachCallback
     EventsBus.subscribe<IdeAfterLaunchEvent>(testState) { event ->
       testState.runContexts.add(event.runContext)
     }
-
-    // Get or create class-level shared state for class-level annotations
-    val classLevelFilters = collectClassLevelFilters(context)
-    if (classLevelFilters.isNotEmpty()) {
-      val classState = store.get(CLASS_STATE_KEY, State::class.java)
-      if (classState == null) {
-        // First test in the class: create class state and subscribe it
-        val newClassState = State()
-        store.put(CLASS_STATE_KEY, newClassState)
-        EventsBus.subscribe<IdeAfterLaunchEvent>(newClassState) { event ->
-          newClassState.runContexts.add(event.runContext)
-        }
-      }
-      // Subsequent tests: state already exists and subscribed; nothing to do
-    }
   }
 
   override fun afterEach(context: ExtensionContext) {
     val store = context.getStore(NAMESPACE)
     val testState = store.remove(TEST_STATE_KEY, State::class.java) ?: return
     EventsBus.unsubscribe<IdeAfterLaunchEvent>(testState)
-    // Note: class state persists across all tests and is cleaned up when the class context ends
+    // Note: class state persists across all tests and is cleaned up in `afterAll`.
   }
 
   override fun handleTestExecutionException(context: ExtensionContext, throwable: Throwable) {
-    val methodFilters = collectMethodLevelFilters(context)
-    val testState = context.getStore(NAMESPACE).get(TEST_STATE_KEY, State::class.java)
-    if (methodFilters.isNotEmpty()) {
-      checkFiltersAndThrow(methodFilters, testState?.collectErrors().orEmpty(), throwable)
+    abortIfIdeErrorMatches(context, throwable, includeMethodLevel = true)
+    throw throwable
+  }
+
+  override fun handleBeforeEachMethodExecutionException(context: ExtensionContext, throwable: Throwable) {
+    abortIfIdeErrorMatches(context, throwable, includeMethodLevel = true)
+    throw throwable
+  }
+
+  override fun handleAfterEachMethodExecutionException(context: ExtensionContext, throwable: Throwable) {
+    abortIfIdeErrorMatches(context, throwable, includeMethodLevel = true)
+    throw throwable
+  }
+
+  override fun handleBeforeAllMethodExecutionException(context: ExtensionContext, throwable: Throwable) {
+    // `@BeforeAll` is a class-level method: no per-test state exists, only class-level filters apply.
+    abortIfIdeErrorMatches(context, throwable, includeMethodLevel = false)
+    throw throwable
+  }
+
+  override fun handleAfterAllMethodExecutionException(context: ExtensionContext, throwable: Throwable) {
+    // `@AfterAll` is a class-level method: no per-test state exists, only class-level filters apply.
+    abortIfIdeErrorMatches(context, throwable, includeMethodLevel = false)
+    throw throwable
+  }
+
+  /**
+   * Throws [TestAbortedException] (downgrading the failure to IGNORED) when a captured IDE error
+   * matches an applicable filter. Returns normally when nothing matches, so the caller can rethrow.
+   */
+  private fun abortIfIdeErrorMatches(context: ExtensionContext, throwable: Throwable, includeMethodLevel: Boolean) {
+    val store = context.getStore(NAMESPACE)
+
+    if (includeMethodLevel) {
+      val methodFilters = collectMethodLevelFilters(context)
+      if (methodFilters.isNotEmpty()) {
+        val testState = store.get(TEST_STATE_KEY, State::class.java)
+        checkFiltersAndThrow(methodFilters, testState?.collectErrors().orEmpty(), throwable)
+      }
     }
 
     val classFilters = collectClassLevelFilters(context)
     if (classFilters.isNotEmpty()) {
-      val classState = context.getStore(NAMESPACE).get(CLASS_STATE_KEY, State::class.java)
+      val classState = store.get(CLASS_STATE_KEY, State::class.java)
       checkFiltersAndThrow(classFilters, classState?.collectErrors().orEmpty(), throwable)
     }
-
-    throw throwable
   }
 
   private fun checkFiltersAndThrow(filters: List<IgnoreOnIdeError>, errors: List<Error>, throwable: Throwable) {

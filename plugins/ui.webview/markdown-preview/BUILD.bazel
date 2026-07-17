@@ -32,7 +32,6 @@ webview_plugin_zip(
 )
 
 ### auto-generated section `build intellij.markdown.webview.preview` start
-
 jvm_library(
     name = "markdown-webview-preview",
     srcs = glob(

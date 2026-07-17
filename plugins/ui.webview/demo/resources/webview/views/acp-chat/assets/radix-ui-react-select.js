@@ -10,7 +10,6 @@ import { t as FocusScope } from "./radix-ui-react-focus-scope.js";
 import { t as useFocusGuards } from "./radix-ui-react-focus-guards.js";
 import { t as hideOthers } from "./aria-hidden.js";
 import { t as clamp } from "./radix-ui-number.js";
-//#region node_modules/@radix-ui/react-visually-hidden/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
@@ -39,8 +38,6 @@ var VisuallyHidden = import_react.forwardRef((props, forwardedRef) => {
 });
 VisuallyHidden.displayName = NAME;
 var Root = VisuallyHidden;
-//#endregion
-//#region node_modules/@radix-ui/react-use-previous/dist/index.mjs
 function usePrevious(value) {
 	const ref = import_react.useRef({
 		value,
@@ -54,8 +51,6 @@ function usePrevious(value) {
 		return ref.current.previous;
 	}, [value]);
 }
-//#endregion
-//#region node_modules/@radix-ui/react-select/dist/index.mjs
 var OPEN_KEYS = [
 	" ",
 	"Enter",
@@ -1038,5 +1033,4 @@ function findNextItem(items, search, currentItem) {
 function wrapArray(array, startIndex) {
 	return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
-//#endregion
 export { SelectItem as a, SelectPortal as c, SelectSeparator as d, SelectTrigger as f, Root as g, usePrevious as h, SelectIcon as i, SelectScrollDownButton as l, SelectViewport as m, SelectContent as n, SelectItemIndicator as o, SelectValue as p, SelectGroup as r, SelectItemText as s, Select as t, SelectScrollUpButton as u };

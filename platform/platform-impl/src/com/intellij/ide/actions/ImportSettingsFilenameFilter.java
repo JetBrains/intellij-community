@@ -1,23 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * This class is serialized into StartupActionScript stream and must thus reside in bootstrap module.
- */
+/// This class is no longer serialized by [com.intellij.ide.startup.StartupActionScriptManager],
+/// but still has to reside in the same module for backward compatibility.
 @ApiStatus.Internal
 public final class ImportSettingsFilenameFilter implements Predicate<String>, Serializable {
   public static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
-  private static final long serialVersionUID = 201708031943L;
+  @Serial private static final long serialVersionUID = 201708031943L;
 
   private final String[] myRelativeNamesToExtract;
 
@@ -33,7 +33,7 @@ public final class ImportSettingsFilenameFilter implements Predicate<String>, Se
     }
 
     relativePath = relativePath.replace('\\', '/');
-    for (String allowedRelPath : myRelativeNamesToExtract) {
+    for (var allowedRelPath : myRelativeNamesToExtract) {
       if (relativePath.startsWith(allowedRelPath)) {
         return true;
       }

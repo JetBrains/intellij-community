@@ -114,6 +114,7 @@ import com.intellij.ui.components.TwoSideComponent;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -961,6 +962,7 @@ public class GridUtil extends GridUtilCore {
     return createDataGrid(project, dataHookUp, popupActions, configure, false);
   }
 
+  @RequiresEdt
   public static @NotNull DataGrid createDataGrid(@NotNull Project project,
                                                  @NotNull GridDataHookUp<GridRow, GridColumn> dataHookUp,
                                                  @NotNull ActionGroup popupActions,

@@ -4,7 +4,6 @@ import { b as useComposedRefs, g as Primitive, h as composeEventHandlers } from 
 import { h as usePrevious } from "./radix-ui-react-select.js";
 import { n as createContextScope } from "./radix-ui-react-collection.js";
 import { m as useControllableState, u as useSize } from "./radix-ui-react-popover.js";
-//#region node_modules/@radix-ui/react-switch/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
 var SWITCH_NAME = "Switch";
@@ -153,5 +152,4 @@ function isFunction(value) {
 function getState(checked) {
 	return checked ? "checked" : "unchecked";
 }
-//#endregion
 export { SwitchThumb as n, Switch as t };

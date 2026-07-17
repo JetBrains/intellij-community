@@ -23,7 +23,6 @@ import java.util.List;
 
 import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
-import static com.intellij.ide.todo.rpc.TodoHelperKt.getTodoCount;
 
 @ApiStatus.Internal
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
@@ -109,7 +108,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       if (virtualFile == null) {
         return 0;
       }
-      return getTodoCount(myProject, virtualFile, myTodoFilter);
+      return myBuilder.getRemoteTodoItemCount();
     }
 
     int count = 0;

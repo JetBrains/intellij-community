@@ -1,0 +1,11 @@
+<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <defs>
+    <path d="M50,0 21,90 98,35 2,35 79,90z" id="star"/>
+  </defs>
+
+  <clipPath id="clipStar">
+    <use href="#star" clip-rule="evenodd"/>
+    <use href="#star" clip-rule="nonzero" transform="translate(100, 0)"/>
+  </clipPath>
+  <rect clip-path="url(#clipStar)" width="200" height="90" fill="blue"/>
+</svg>

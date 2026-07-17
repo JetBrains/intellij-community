@@ -26,10 +26,8 @@ import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities
 import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoHandlerDto
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
@@ -48,13 +46,13 @@ import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
@@ -63,7 +61,7 @@ import org.jetbrains.annotations.ApiStatus
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return
     val manager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
     val old = manager.frontendCapabilities
     val new = XFrontendDebuggerCapabilities(
@@ -74,7 +72,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   override suspend fun sessions(projectId: ProjectId): XDebugSessionsList {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull()
+                  ?: return XDebugSessionsList(emptyList(), emptyFlow<XDebuggerManagerSessionEvent>().toRpc())
     val sessions = XDebuggerManager.getInstance(project).debugSessions.map { createSessionDto(it as XDebugSessionImpl, it.debugProcess) }
     val initialSessions = sessions.map { it.id }.toSet()
     return XDebugSessionsList(sessions, createSessionManagerEvents(projectId, initialSessions).toRpc())
@@ -141,9 +140,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     childActionsOrStubs.mapNotNull { it?.rpcId(cs) }
 
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionManagerEvents(projectId: ProjectId, initialSessionIds: Set<XDebugSessionId>): Flow<XDebuggerManagerSessionEvent> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return channelFlow {
       val listener = object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
@@ -203,7 +201,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     managerImpl.removeSessionNoNotify(session)
   }
   override suspend fun getBreakpoints(projectId: ProjectId): XBreakpointsSetDto {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull()
+                  ?: return XBreakpointsSetDto(emptySet(), emptyFlow<XBreakpointEvent>().toRpc())
     val breakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager
 
     val initialBreakpoints = breakpointManager.allBreakpoints.mapTo(LinkedHashSet()) {
@@ -272,7 +271,6 @@ internal fun XDebuggerEditorsProvider.toRpc(cs: CoroutineScope): XDebuggerEditor
   return XDebuggerEditorsProviderDto(id, fileType.name, this)
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Internal
 fun XDebugSessionImpl.getSessionEventsFlow(
   initialSessionState: XDebugSessionState = state(),

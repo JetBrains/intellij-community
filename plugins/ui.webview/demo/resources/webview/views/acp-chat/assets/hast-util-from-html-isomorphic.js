@@ -1,5 +1,4 @@
 import { t as fromDom } from "./hast-util-from-dom.js";
-//#region node_modules/hast-util-from-html-isomorphic/lib/browser.js
 /**
 * @typedef {import('hast').Root} Root
 *
@@ -21,5 +20,4 @@ function parseFragment(value) {
 	template.innerHTML = value;
 	return template.content;
 }
-//#endregion
 export { fromHtmlIsomorphic as t };

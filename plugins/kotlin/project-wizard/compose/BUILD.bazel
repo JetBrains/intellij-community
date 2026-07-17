@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.projectWizard.compose` start
-
 jvm_library(
     name = "compose",
     srcs = glob(
@@ -89,7 +88,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.projectWizard.compose` end
 
 ### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` start
-
 jvm_library(
     name = "kotlin-projectWizard-compose-tests",
     srcs = glob(
@@ -173,7 +171,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.projectWizard.compose.tests` end
 
 ### auto-generated section `test intellij.kotlin.projectWizard.compose.tests` start
-
 jps_test(
     name = "kotlin-projectWizard-compose-tests_test",
     runtime_deps = [":kotlin-projectWizard-compose-tests_test_lib"],

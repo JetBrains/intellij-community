@@ -175,9 +175,13 @@ internal class SelectionVisualModel(
     val xEnd = area.x + area.width
 
     val lineProbe = SelectionLine(AxisBounds(yStart, yStart))
-    lines.withAllIntersecting(yStart, yEnd, lineProbe) { _, line ->
-      line.invalidateSegment(xStart, xEnd)
+    val emptyLines = buildSet {
+      lines.withAllIntersecting(yStart, yEnd, lineProbe) { _, line ->
+        line.invalidateSegment(xStart, xEnd)
+        if (line.items.isEmpty()) add(line)
+      }
     }
+    lines.items.removeAll(emptyLines)
   }
 
   fun paint(graphics: Graphics2D, clip: Rectangle2D, lineHeight: Int) {

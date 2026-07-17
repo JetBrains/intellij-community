@@ -1,6 +1,6 @@
 // "Add getter" "true"
 // WITH_STDLIB
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 class Test {
     var x: Int<caret>
         set(value) {}

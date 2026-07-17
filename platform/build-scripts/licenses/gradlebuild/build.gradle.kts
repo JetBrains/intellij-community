@@ -42,6 +42,8 @@ kotlin {
       exclude(group = "org.jetbrains", module = "annotations")
     }
     implementation(jps.tools.jackson.core.jackson.core235935781.get())
+  }
+  sourceSets.jvmMain.dependencies {
     implementation(jps.com.fasterxml.jackson.core.jackson.annotations21522943.get())
   }
   // KOTLIN__MARKER_END

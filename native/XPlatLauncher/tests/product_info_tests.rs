@@ -1,24 +1,14 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #[cfg(test)]
 mod tests {
     use std::env;
     use xplat_launcher::default::{compute_launch_info, read_product_info, ProductLaunchInfo};
-    use xplat_launcher::ProductInfo;
 
     #[test]
     fn product_info_test() {
         assert_default_values("product_info.json", None);
         assert_default_values("product_info.json", Some(&String::from("custom-command")));
-    }
-
-    #[test]
-    fn app_user_model_id() {
-        let product_info = load_product_info("product_info.json");
-        assert_eq!(product_info.app_user_model_id(), "Cross-platform Launcher Test 1234.5");
-
-        let product_info = load_product_info("../product_info_windows.json");
-        assert_eq!(product_info.app_user_model_id(), "Cross-platform Launcher Test 1234.5 EAP");
     }
 
     #[test]
@@ -62,14 +52,10 @@ mod tests {
         assert!(product_launch_info.custom_data_directory_name.is_none(), "Custom data directory must not be set")
     }
 
-    fn load_product_info(file_name: &str) -> ProductInfo {
+    fn load_launch_info(file_name: &str, command: Option<&String>) -> ProductLaunchInfo {
         let project_root = env::current_dir().expect("Failed to get project root");
         let product_info_path = project_root.join(format!("resources/product-info/{file_name}"));
-        read_product_info(&product_info_path).expect("product-info must be loaded")
-    }
-
-    fn load_launch_info(file_name: &str, command: Option<&String>) -> ProductLaunchInfo {
-        let product_info = load_product_info(file_name);
+        let product_info = read_product_info(&product_info_path).expect("product-info must be loaded");
         compute_launch_info(&product_info, command).expect("launch data must be found")
     }
 }

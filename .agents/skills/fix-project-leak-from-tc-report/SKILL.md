@@ -1,6 +1,12 @@
 ---
 name: fix-project-leak-from-tc-report
-description: End-to-end workflow to fix a `_LastInSuiteTest.testProjectLeak` failure reported by TeamCity. Given a TC ashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test, reproduce the leak locally 10× with `tests.cmd`, analyze every unique retention chain observed, apply fixes per chain, and verify by rerunning the leak-hunter until it stops firing. Use when the user asks to fix (not just investigate) a project leak surfaced by TC. Self-contained: does not depend on other skills.
+description: >-
+  End-to-end workflow to fix a `_LastInSuiteTest.testProjectLeak` failure reported by TeamCity.
+  Given a TC hashcode / leak diagnostic, this skill drives the full cycle — identify the culprit test,
+  reproduce the leak locally 10x with `tests.cmd`, analyze every unique retention chain observed,
+  apply fixes per chain, and verify by rerunning the leak-hunter until it stops firing.
+  Use when the user asks to fix (not just investigate) a project leak surfaced by TC.
+  Self-contained: does not depend on other skills.
 ---
 
 # Fix a `_LastInSuiteTest.testProjectLeak` from a TeamCity report
@@ -27,7 +33,7 @@ The leaked `Project` name is the strongest signal. In `ProjectRule()` / heavy-pr
 
 If the project name is generic (`light_temp_…`), pick the first non-platform class from the retention chain (`ProjectCodeStyleSettingsManager`, a plugin service, a Mockito mock, …) and search callers/tests referencing it plus the plugin area.
 
-Fallback ordering (in decreasing signal strength): heap Instance line → CI ashcode branch → retention-chain class names → the user.
+Fallback ordering (in decreasing signal strength): heap Instance line → CI hashcode branch → retention-chain class names → the user.
 
 ## Phase 2 — reproduce locally 10 times
 
@@ -88,6 +94,50 @@ Then hand-write `<archive-dir>/ANALYSIS.md` — **required before writing any fi
 
 ## Phase 4 — apply fixes
 
+### Root cause first — fix disposal, not the reference
+
+A `Project` reaches the leak-hunter because *some* object holds it. That object falls into one of two categories, and the correct fix depends on which:
+
+- **(A) Legitimately outlives the `Project` by design** — an application-scope cache, message bus, extension point, thread-local, static field. Then the *retention itself* is the bug: break it (unregister the listener, clear the cache on `projectClosed`, add a `parentDisposable`), or — only when unregistration is genuinely impossible — weaken the reference at the retention boundary.
+- **(B) Should NOT outlive the `Project`** — a project service, a project-scoped listener, a project-scoped `CoroutineScope`, or *anything registered under the `Project`'s Disposer subtree*. Then the retention is a **symptom of a disposal bug**. Find out why disposal is not happening (or is happening too late) and fix *that*.
+
+**Category (B) is by far the more common case, and `WeakReference` is not a valid fix for it.** Wrapping a service's own `myProject` field in `WeakReference` only makes the `Project` GC-able while leaving the underlying disposal bug in place — see the anti-pattern below.
+
+Only reach for `WeakReference` after you have identified case (A) and confirmed the container legitimately outlives its contents.
+
+### Anti-pattern — `WeakReference` on a service's own `Project` field
+
+**Do not** "fix" a project-service leak by wrapping the service's own `myProject` field in a `WeakReference`. Example of what NOT to do:
+
+```java
+// BAD — hides the disposal bug, does not fix it.
+private final WeakReference<Project> myProjectRef;
+public MyService(Project project) { myProjectRef = new WeakReference<>(project); }
+private Project project() { return Objects.requireNonNull(myProjectRef.get(), "disposed"); }
+```
+
+Why this is wrong:
+
+- A project service **must be disposed together with the project**. If the retention chain shows a project service pinning its own `Project`, the service is outliving the project — that is the actual bug. The most common concrete culprits:
+  - The service's constructor calls `Disposer.register(this, child)`. This **inserts the service itself into `ObjectTree.myObject2ParentNode` as a key** and it stays there until `Disposer.dispose(service)` is called. If the container disposes the service via plain `service.dispose()` instead of `Disposer.dispose(service)`, or if the container does not dispose the service at all on a given code path (light-project reset races, temporary-dispose paths, plugin unload), the entry lingers.
+  - The service registered a listener on an application-scope extension point / message bus without a `parentDisposable` tied to the project.
+  - The service registered itself into a static / application-scope cache and no `projectClosed` handler evicts it.
+- Weakening the field only masks the `Project` reference. The service instance itself is still leaked (still reachable from wherever the disposal bug is). Message-bus subscriptions still fire on the "dead" service; `Disposable` children of the service stay in the tree; log lines and telemetry keep referencing the disposed project by name.
+- `Objects.requireNonNull(myProjectRef.get(), ...)` starts throwing NPE from unexpected paths (`isDisposed()` checks, teardown callbacks, log formatters) as soon as GC clears the reference — usually intermittently and only under load.
+- Every future GC pause, heap-shape change, or class-loader tweak can silently re-expose the leak by making the retention checker report the SERVICE (still leaked) or a downstream field instead of the `Project`. You have not fixed the leak; you have moved the leak checker's crosshair. TC will keep reporting a leak; the report just points somewhere else.
+
+**Correct approach for a service-in-the-Disposer-tree chain:**
+
+1. Identify what registered the service into `ObjectTree`. Read the service's constructor: any `Disposer.register(this, …)` call inserts the service as a key. Any listener on an app-scope EP with `parentDisposable = this` does too indirectly. Any static/app-scope cache that stores `this` does too.
+2. Establish why disposal is not happening in time. `git log` the container / test-framework paths — light-project reset semantics (`LightPlatformTestCase.tearDown`, `TestApplicationManager` release) are frequent offenders and are already tracked (search recent commits under `IJPL-247543`).
+3. Prefer, in order:
+   - Remove the misplaced `Disposer.register(this, child)` and register the child under `project` (or an explicit `parentDisposable`) so the service does not become a root in `ObjectTree`.
+   - Route the disposal call through `Disposer.dispose(service)` where the container currently calls `service.dispose()` directly.
+   - Register the service into the parent's Disposer subtree explicitly with `Disposer.register(project, this)` when the service framework does not do it automatically for this scope.
+4. Only after these are exhausted and you have confirmed with a repro loop that the service genuinely cannot be disposed in time (an infrastructure bug that is out of scope for the ticket), consider surface-level containment — and prefer a **test-side dispose in `tearDown`** or an explicit unregistration hook over field-weakening.
+
+### Chain families
+
 Two chain families cover the vast majority of `testProjectLeak` failures. Match your observed chain to one of the patterns:
 
 ### Pattern A — Mockito thread-local retention on the EDT
@@ -146,9 +196,13 @@ The `Mockito.reset(...)` route resolves the ThreadLocal on whichever thread it's
 
 Signature: chain contains `ExtensionPointImpl.listeners` (or `MessageBusImpl.subscribers`) → `<listenerAdapter>.handle` → a lambda / anonymous inner class whose `arg$1` is the retaining service, whose field points at the leaked `Project`.
 
+This pattern applies at a **retention boundary** where an application-scope container (`ExtensionPointImpl.listeners`, `MessageBusImpl.subscribers`) legitimately outlives a project-scope service by design. That is a category (A) case — the app-scope container is *supposed* to live longer than any single project. `WeakReference` here weakens the reference *at the boundary between scopes*, on the lambda's captured `this`. It does not weaken the service's own `myProject` field (see anti-pattern above).
+
+If your chain does not go through `ExtensionPointImpl.listeners` / `MessageBusImpl.subscribers` and instead terminates in `ObjectTree.myObject2ParentNode` or a project-scope holder, this is not Pattern B — do not apply this fix. Go back to the "Root cause first" section.
+
 **Root cause.** A project-scoped service registered a listener on an application-scoped extension point using `addChangeListener(listener, parentDisposable)`. `ExtensionPointImpl.addChangeListener` adds the adapter to `listeners` **immediately** and only removes it in a `Disposer.register(parentDisposable) { removeExtensionPointListener(adapter) }` cleanup. If that cleanup does not run (or runs after the leak check), the adapter — and everything the listener lambda captures, including the service and its `Project` field — stays alive at the application scope.
 
-**Preferred fix.** Break the strong `this` capture by wrapping in a `WeakReference`. Example (from `CodeStyleSettingsManager.java:199-208`, before/after):
+**Preferred fix.** First, verify that removing / unregistering the listener at project dispose is genuinely not feasible (usually because the `parentDisposable` disposal path is not under your control). Only then, break the strong `this` capture by wrapping in a `WeakReference` at the lambda boundary. Example (from `CodeStyleSettingsManager.java:199-208`, before/after):
 
 ```java
 // BEFORE
@@ -229,6 +283,7 @@ Attach the diff of the fixes (test-side + platform-side) and the path to the arc
 
 ## Guardrails
 
+- **`WeakReference` is not the default fix.** The default fix for a project-scope retention is to *fix disposal* — remove the misplaced `Disposer.register(this, child)`, add a missing `parentDisposable`, unregister the listener, evict from the cache on `projectClosed`. `WeakReference` only applies at a genuine cross-scope boundary (Pattern B). Wrapping a service's own `myProject` in `WeakReference` is an anti-pattern that hides the disposal bug rather than fixing it (see Phase 4 "Anti-pattern"). If you find yourself reaching for `WeakReference<Project>` on a service field, stop and re-read the "Root cause first" preamble.
 - **Never edit `_LastInSuiteTest`, `JUnit5TestSessionListener`, or `TestCaseLoader` to work around a leak** — those are the leak checker itself. If the check is spuriously failing, that is a testFramework bug, not a per-test fix.
 - **Do not silence the leak checker locally** (e.g. `-Dintellij.build.test.ignoreFirstAndLastTests=true`) as a "fix" — that only hides it.
 - **Do not shorten a WeakReference wrapper into a soft/phantom reference.** Soft references defer collection under memory pressure and will not close the leak deterministically. Phantom references cannot be `get()`-ed.

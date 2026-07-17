@@ -65,7 +65,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -84,7 +83,6 @@ import javax.swing.ListCellRenderer
 import javax.swing.SpinnerNumberModel
 
 @Suppress("OVERRIDE_DEPRECATION")
-@ApiStatus.Internal
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val panelContext: PanelContext,
                             private val parent: PanelImpl,

@@ -31,5 +31,7 @@
     <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinProjectOpenerCollector"/>
+
+    <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.LanguageFeatureValidationRule"/>
   </extensions>
 </idea-plugin>

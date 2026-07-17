@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.gradle.tests.benchmark.main` start
-
 jvm_library(
     name = "tests.benchmark.main",
     srcs = glob(

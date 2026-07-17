@@ -84,6 +84,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -291,6 +292,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   private void fillJvmVersionList() {
+    Set<@NlsSafe String> addedDescriptions = new HashSet<>();
     for (TargetPlatform jvm : JvmIdePlatformKind.INSTANCE.getPlatforms()) {
       JvmTarget jvmTarget = PlatformUtilKt.subplatformsOfType(jvm, JdkPlatform.class).get(0).getTargetVersion();
       @NlsSafe String description = jvmTarget.getDescription();
@@ -298,7 +300,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         description += " " + KotlinBaseCompilerConfigurationUiBundle.message("deprecated.jvm.version");
       }
 
-      ui.jvmVersionComboBox.addItem(description);
+      if (addedDescriptions.add(description)) {
+        ui.jvmVersionComboBox.addItem(description);
+      }
     }
   }
 

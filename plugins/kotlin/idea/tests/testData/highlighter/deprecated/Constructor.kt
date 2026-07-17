@@ -1,7 +1,7 @@
 package test
 
 class A {
-    constructor(x: Int) : <warning descr="[DEPRECATION] 'constructor A(Int, Int)' is deprecated. use one-arg overload">this</warning>(x, 0) {
+    constructor(x: Int) : <warning descr="[DEPRECATION]">this</warning>(x, 0) {
     }
 
     @Deprecated("use one-arg overload")

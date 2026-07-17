@@ -1,6 +1,6 @@
 package inspections.insertCancellationCheckFix
 
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 import inspections.cancellationCheckInLoops.Foo.doSomething
@@ -13,7 +13,7 @@ fun withSuspendLambda(l: suspend () -> Any) { }
 fun test(map: Map<String, String>) {
   withSuspendLambda {
     map.forEach { k, v ->
-        checkCancelled()
+        checkCanceled()
         // comments
         doSomething()
     }

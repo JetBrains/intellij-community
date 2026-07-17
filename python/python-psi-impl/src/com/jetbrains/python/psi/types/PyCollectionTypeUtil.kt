@@ -19,17 +19,24 @@ object PyCollectionTypeUtil {
 
   @JvmStatic
   fun getListLiteralType(expression: PyListLiteralExpression, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass("list") ?: return PyAnyType.unknown
-    return PyCollectionTypeImpl(cls, false, listOf(getListOrSetIteratedValueType(expression, context)))
+    return getListOrSetLiteralType(expression, "list", context)
   }
 
   @JvmStatic
   fun getSetLiteralType(expression: PySetLiteralExpression, context: TypeEvalContext): PyType? {
-    val cls = PyBuiltinCache.getInstance(expression).getClass("set") ?: return PyAnyType.unknown
-    return PyCollectionTypeImpl(cls, false, listOf(getListOrSetIteratedValueType(expression, context)))
+    return getListOrSetLiteralType(expression, "set", context)
   }
 
-  private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
+  private fun getListOrSetLiteralType(expression: PySequenceExpression, className: String, context: TypeEvalContext): PyType? {
+    val cls = PyBuiltinCache.getInstance(expression).getClass(className) ?: return PyAnyType.unknown
+    val substitutions = PyTypeInferenceCspFactory.unifySequenceExpression(expression, cls, context)
+    val genericListType = PyTypeChecker.findGenericDefinitionType(cls, context)
+    val concreteListType = PyTypeChecker.substitute(genericListType, substitutions, context)
+    return concreteListType
+  }
+
+  @JvmStatic
+  fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
     val analyzedElementsType = PyUnionType.union(
       elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { element ->

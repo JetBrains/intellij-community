@@ -6,7 +6,7 @@
 // TODO: Drop IGNORE_K2 when KT-87415 is fixed
 
 fun f(nullable: Int?) {
-    val pair: Pair<String, Int?> = "" to nullable?.div(100)
+    val pair: Pair<String, Int?> = "" to (nullable?.div(100) ?: TODO())
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

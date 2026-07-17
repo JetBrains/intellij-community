@@ -1533,11 +1533,6 @@ a:com.intellij.ide.actions.PrintActionHandler
 - a:canPrint(com.intellij.openapi.actionSystem.DataContext):Z
 - s:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.actions.PrintActionHandler
 - a:print(com.intellij.openapi.actionSystem.DataContext):V
-com.intellij.ide.actions.searcheverywhere.AutoCompletionCommand
-- a:completeQuery(javax.swing.text.JTextComponent):V
-- a:getPresentationString():java.lang.String
-com.intellij.ide.actions.searcheverywhere.AutoCompletionContributor
-- a:getAutocompleteItems(java.lang.String,I):java.util.List
 c:com.intellij.ide.actions.searcheverywhere.ContributorSearchResult
 - <init>(java.util.List):V
 - <init>(java.util.List,Z):V
@@ -1551,10 +1546,6 @@ c:com.intellij.ide.actions.searcheverywhere.ContributorSearchResult$Builder
 - build():com.intellij.ide.actions.searcheverywhere.ContributorSearchResult
 - itemsCount():I
 - setHasMore(Z):V
-com.intellij.ide.actions.searcheverywhere.EssentialContributor
-- s:checkEssential(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
-- s:checkEssentialByDefault(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
-- isEssentialByDefault():Z
 c:com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - <init>():V
 - <init>(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
@@ -1571,8 +1562,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereCommandInfo
 - getDefinition():java.lang.String
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-com.intellij.ide.actions.searcheverywhere.SearchEverywherePresentationProvider
-- a:getTargetPresentation(java.lang.Object):com.intellij.platform.backend.presentation.TargetPresentation
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 - a:canToggleEverywhere():Z
 - a:isEverywhere():Z

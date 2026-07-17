@@ -10,9 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.Version
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
@@ -42,8 +40,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
-interface PythonToolViewModel {
+internal interface PythonToolViewModel {
   fun initialize(scope: CoroutineScope)
 }
 
@@ -111,7 +110,10 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.EDT)
 
-    scope.launch(TraceContext(message("trace.context.loading.interpreter.list"), scope) + Dispatchers.EDT) {
+    val coroutineContext = if (fileSystem.isLocal) {
+      TraceContext(message("trace.context.loading.interpreter.list"), scope)
+    } else EmptyCoroutineContext
+    scope.launch(coroutineContext + Dispatchers.EDT) {
       installable = fileSystem.getInstallableInterpreters()
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)
@@ -164,13 +166,6 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
     return PyResult.success(interpreter)
   }
 
-
-  @RequiresEdt
-  internal fun addInstalledInterpreter(homePath: P, pythonInfo: PythonInfo): DetectedSelectableInterpreter<P> {
-    val installedInterpreter = DetectedSelectableInterpreter(homePath, pythonInfo, true)
-    detectedInterpretersUnfiltered.value = (detectedInterpretersUnfiltered.value ?: emptyList()) + installedInterpreter
-    return installedInterpreter
-  }
 }
 
 abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :

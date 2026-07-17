@@ -5,6 +5,8 @@ import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.equalsCaseSensitive
@@ -12,10 +14,12 @@ import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.pathString
 import kotlin.system.measureTimeMillis
 
 interface FilePathChange {
@@ -95,10 +99,10 @@ object RefreshVFsSynchronously {
     TIME_LOG.debug { "VFS refresh took ${time}ms, ${files.size} files, isRecursive=$isRecursive" }
   }
 
-  private fun findValidParent(file: Path?): VirtualFile? {
-    return generateSequence(file) { it.parent }
-      .mapNotNull { LocalFileSystem.getInstance().findFileByNioFile(it) }
-      .firstOrNull { it.isValid }
+  private fun findValidParent(file: Path): VirtualFile? {
+    val fileSystem = LocalFileSystem.getInstance()
+    val (resolvedFile, lastCachedFile) = NewVirtualFileSystem.findCachedFileByPath(fileSystem, file.pathString)
+    return resolvedFile ?: lastCachedFile
   }
 
   @JvmStatic

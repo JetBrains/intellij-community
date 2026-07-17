@@ -109,7 +109,7 @@ interface Transactor : CoroutineContext.Element {
   val meta: MutableOpenMap<Transactor>
 
   companion object : CoroutineContext.Key<Transactor> {
-    val logger: KLogger = KLoggers.logger(Transactor::class)
+    val logger: KLogger by lazy { KLoggers.logger(Transactor::class) }
   }
 }
 

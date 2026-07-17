@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jetbrains.env.python.testing.PythonNoseTestingTest
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
@@ -74,7 +75,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
                                             "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel,
                                             *additionalRoots)
         sdk.sdkModificator.let {
-          it.sdkAdditionalData = PythonSdkAdditionalData()
+          it.sdkAdditionalData = sdkAdditionalData ?: PythonSdkAdditionalData()
           ApplicationManager.getApplication().runWriteAction {
             it.commitChanges()
           }
@@ -83,6 +84,8 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
       }
     }
   }
+
+  open val sdkAdditionalData: PythonSdkAdditionalData? = null
 
   override fun getBasePath(): String {
     return "/community/python/testData/requirements/"

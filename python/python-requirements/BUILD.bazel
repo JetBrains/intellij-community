@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.requirements` start
-
 jvm_library(
     name = "requirements",
     srcs = glob(

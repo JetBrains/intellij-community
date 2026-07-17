@@ -8,5 +8,8 @@
     <drawablePreviewRenderer
       implementation="com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewRenderer"
       order="first"/>
+    <vectorIconPicker
+      implementation="com.intellij.compose.ide.plugin.resources.android.AndroidVectorIconPicker"
+      order="first"/>
   </extensions>
 </idea-plugin>

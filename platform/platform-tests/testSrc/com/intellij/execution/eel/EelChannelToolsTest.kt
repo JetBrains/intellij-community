@@ -54,6 +54,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Nested
@@ -699,6 +700,33 @@ class EelChannelToolsTest {
       result.add(line.trim())
     }
     Assertions.assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
+  }
+
+  @Nested
+  inner class ReversibleAdapters {
+    @Test
+    fun `InputStream to EelReceiveChannel to InputStream`() {
+      val source = mockk<InputStream>()
+      assertSame(source, source.consumeAsEelChannel().consumeAsInputStream())
+    }
+
+    @Test
+    fun `OutputStream to EelSendChannel to OutputStream`() {
+      val sink = mockk<OutputStream>()
+      assertSame(sink, sink.asEelChannel().asOutputStream())
+    }
+
+    @Test
+    fun `EelReceiveChannel to InputStream to EelReceiveChannel`() {
+      val source = mockk<EelReceiveChannel>()
+      assertSame(source, source.consumeAsInputStream().consumeAsEelChannel())
+    }
+
+    @Test
+    fun `EelSendChannel to OutputStream to EelSendChannel`() {
+      val sink = mockk<EelSendChannel>()
+      assertSame(sink, sink.asOutputStream().asEelChannel())
+    }
   }
 }
 

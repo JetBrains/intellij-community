@@ -48,13 +48,7 @@ public class GitHubTableBlockRendererRememberKeysTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(markdownStyling, listOf(rendererExtension))
-                    renderer.render(
-                        blocks,
-                        enabled = true,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 
@@ -96,11 +90,10 @@ public class GitHubTableBlockRendererRememberKeysTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(markdownStyling, listOf(rendererExtension))
-                    renderer.render(
-                        blocks,
+                    renderer.RenderBlocks(
+                        blocks = blocks,
                         enabled = enabled,
                         onUrlClick = { url -> clickedUrl = url },
-                        onTextClick = {},
                         modifier = Modifier,
                     )
                 }

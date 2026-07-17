@@ -25,7 +25,6 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import javax.swing.border.EmptyBorder
 
-@ApiStatus.Internal
 internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
                                   panelContext: PanelContext,
                                   parent: PanelImpl,

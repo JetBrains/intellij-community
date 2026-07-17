@@ -1,6 +1,6 @@
 // "Import class 'KClass'" "true"
 // WITH_STDLIB
-// K2_ERROR: Unresolved reference 'KClass'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun foo(x: <caret>KClass<Int>) {}
 

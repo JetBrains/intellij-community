@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.ImportPath
 
 context(_: KaSession)
@@ -167,13 +170,35 @@ internal class OptimizedImportsBuilder(
         val fileWithReplacedImports = KtFileWithReplacedImports.createFrom(file)
         val referencesMap = KtReferencesInCopyMap.createFor(file, fileWithReplacedImports.ktFile)
 
+        val referencesInFile = file.descendants()
+            .flatMap { it.references.asSequence() }
+            .toSet()
+
+        val logger = logger<OptimizedImportsBuilder>()
+
+        for (usedReference in usedReferencesData.references) {
+            if (usedReference !in referencesInFile) {
+                logger.warn(buildString {
+                    appendLine("Reference $usedReference not in file ${file.name}")
+                    appendLine("Element in context:")
+
+                    appendLine("===")
+
+                    append(usedReference.element.getElementTextWithContext())
+
+                    appendLine()
+                    appendLine("===")
+                })
+            }
+        }
+
         fileWithReplacedImports.setImports(newImports)
 
         for ((names, references) in usedReferencesData.references.groupBy { it.resolvesByNames }) {
             // TODO check if new and old scopes contain different symbols for names set
             fileWithReplacedImports.analyze {
                 for (originalReference in references) {
-                    val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
+                    val alternativeReference = referencesMap.findReferenceInCopy(originalReference) ?: continue
 
                     val originalSymbols = analyze(file) {
                         // We use the original file to analyze the original reference, because if it is a dangling file,

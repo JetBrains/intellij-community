@@ -4,6 +4,7 @@ package com.intellij.tests.bazel;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -28,6 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 class BazelJUnitOutputListenerTest {
+  //Disable test-purpose classes to prevent them from being executed as actual tests.
+  private static final String SCENARIO_DISABLED_REASON = "Executed explicitly by BazelJUnitOutputListenerTest";
+
   @Test
   void reportsClassConfigurationFailureWhenBeforeAllFails(@TempDir Path tempDir) throws Exception {
     Document xml = executeAndReadXml(BeforeAllFailureScenario.class, tempDir.resolve("beforeAllFailure.xml"));
@@ -104,6 +108,7 @@ class BazelJUnitOutputListenerTest {
                                          .build());
     var request = LauncherDiscoveryRequestBuilder.request()
       .selectors(selectClass(scenarioRootClass))
+      .configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition")
       .build();
 
     try (var listener = new BazelJUnitOutputListener(xmlOutputFile)) {
@@ -155,6 +160,7 @@ class BazelJUnitOutputListenerTest {
     return count;
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class BeforeAllFailureScenario {
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -174,6 +180,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class AfterAllFailureScenario {
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -189,6 +196,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class ParameterizedScenario {
     @ParameterizedTest(name = "{0}")
     @EnumSource(ParameterizedValue.class)
@@ -201,6 +209,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class AbortedScenario {
     @Test
     void abortedTest() {
@@ -212,6 +221,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class MultipleComparisonFailuresScenario {
     @Test
     void assertAllWithTwoComparisonFailures() {

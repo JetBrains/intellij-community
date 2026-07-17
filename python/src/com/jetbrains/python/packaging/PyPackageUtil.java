@@ -114,12 +114,13 @@ public final class PyPackageUtil {
   @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) {
-      return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
+    if (sdk != null) {
+      VirtualFile stored = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk);
+      if (stored != null) {
+        return stored;
+      }
     }
-    else {
-      return PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk);
-    }
+    return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
   }
 
   @RequiresReadLock(generateAssertion = false)

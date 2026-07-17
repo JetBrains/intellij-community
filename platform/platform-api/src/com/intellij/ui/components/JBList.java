@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -15,6 +15,7 @@ import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.ExpandedItemRendererComponentWrapper;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -62,6 +63,7 @@ import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
@@ -273,7 +275,11 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
     putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
     myExpandableItemsHandler = createExpandableItemsHandler();
-    setCellRenderer(new DefaultListCellRenderer());
+    if (Registry.is("ide.ui.use.new.jblist.renderer", false)) {
+      setCellRenderer(BuilderKt.textListCellRenderer("", Objects::toString));
+    } else {
+      setCellRenderer(new DefaultListCellRenderer());
+    }
 
     setSelectionModel(new BulkDefaultListSelectionModel(this));
   }

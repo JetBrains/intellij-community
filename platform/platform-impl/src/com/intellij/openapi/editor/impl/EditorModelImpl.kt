@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.SoftWrapModelEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 
-
 internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
   override fun getDocument(): DocumentEx = editor.elfDocument
   override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
@@ -24,6 +23,5 @@ internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
   override fun getSelectionModel(): SelectionModel = editor.selectionModel
   override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
   override fun getFocusModel(): FocusModeModel = editor.focusModeModel
-  override fun isAd(): Boolean = false
   override fun dispose() {}
 }

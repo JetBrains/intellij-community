@@ -9,9 +9,10 @@ import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
+import com.jetbrains.python.sdk.poetry.POETRY_TOOL
 import kotlinx.coroutines.CoroutineScope
 
-class PoetryViewModel<P : PathHolder>(
+internal class PoetryViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
 ) : PythonToolViewModel {
@@ -22,6 +23,7 @@ class PoetryViewModel<P : PathHolder>(
     toolVersionPrefix = "poetry",
     backProperty = poetryExecutable,
     propertyGraph = propertyGraph,
+    toolCommandSpec = POETRY_TOOL.toCommandSpec(),
     defaultPathSupplier = { getPoetryExecutable(fileSystem) }
   )
 

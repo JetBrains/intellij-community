@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
  */
 class KotlinRegExpHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    fun testUnescapedDollarSign() = doTest("\\\\\$<error descr=\"[UNRESOLVED_REFERENCE] Unresolved reference 'A'.\">A</error>")
+    fun testUnescapedDollarSign() = doTest("\\\\\$<error descr=\"[UNRESOLVED_REFERENCE]\">A</error>")
 
     private fun doTest(@NonNls code: String) {
         // we need this allow call here because KotlinLanguageInjectionContributor does some resolve that loads the AST

@@ -1,6 +1,5 @@
 import { n as mathToMarkdown, t as mathFromMarkdown } from "./mdast-util-math.js";
 import { t as math } from "./micromark-extension-math.js";
-//#region node_modules/remark-math/lib/index.js
 /**
 * @typedef {import('mdast').Root} Root
 * @typedef {import('mdast-util-math').ToOptions} Options
@@ -27,5 +26,4 @@ function remarkMath(options) {
 	fromMarkdownExtensions.push(mathFromMarkdown());
 	toMarkdownExtensions.push(mathToMarkdown(settings));
 }
-//#endregion
 export { remarkMath as t };

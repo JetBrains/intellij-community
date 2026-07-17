@@ -47,7 +47,7 @@ import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.debugger.impl.shared.awaitCommited
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.FileColorManager
@@ -105,7 +105,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun supportedLanguages(projectId: ProjectId, editorsProviderId: XDebuggerEditorsProviderId, sourcePositionDto: XSourcePositionDto?): List<LanguageDto> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyList()
     val editorsProvider = editorsProviderId.findValue() ?: return emptyList()
     val position = sourcePositionDto?.sourcePosition()
     return smartReadAction(project) {

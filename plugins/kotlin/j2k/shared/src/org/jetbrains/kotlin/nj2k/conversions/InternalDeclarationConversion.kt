@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.nj2k.OriginalJavaSemanticResolver
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.isLocalClass
 import org.jetbrains.kotlin.nj2k.psi
@@ -36,7 +37,7 @@ class InternalDeclarationConversion(context: ConverterContext) : RecursiveConver
 
         val containingClassVisibility = containingClass?.visibility
             ?: psiContainingClass
-                ?.visibility(context.converter.referenceSearcher, null)
+                ?.visibility(context.converter.referenceSearcher, OriginalJavaSemanticResolver(), assignNonCodeElements = null)
                 ?.visibility
 
         val defaultVisibility = when {

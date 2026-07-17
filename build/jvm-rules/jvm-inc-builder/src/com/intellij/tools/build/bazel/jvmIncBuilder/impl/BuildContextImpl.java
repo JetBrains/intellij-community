@@ -550,6 +550,9 @@ public class BuildContextImpl implements BuildContext {
       if (msg.getKind() == Message.Kind.ERROR) {
         myMessageSink.append("Error: ");
       }
+      else if (msg.getKind() == Message.Kind.WARNING) {
+        myMessageSink.append("Warning: ");
+      }
       myMessageSink.append(msg.getText()).append("\n");
     }
     catch (IOException e) {

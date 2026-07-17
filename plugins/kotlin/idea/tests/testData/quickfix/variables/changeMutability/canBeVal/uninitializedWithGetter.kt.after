@@ -1,5 +1,5 @@
 // "Change to 'val'" "true"
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 class Test {
     val foo
         get() = 1

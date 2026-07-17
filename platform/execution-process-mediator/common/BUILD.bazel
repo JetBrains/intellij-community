@@ -11,7 +11,6 @@ jps_test(
 ### skip generation section `test intellij.execution.process.mediator.common.tests`
 
 ### auto-generated section `build intellij.execution.process.mediator.common` start
-
 jvm_library(
     name = "common",
     srcs = glob(
@@ -76,7 +75,6 @@ exports_files(
 ### auto-generated section `iml intellij.execution.process.mediator.common` end
 
 ### auto-generated section `build intellij.execution.process.mediator.common.tests` start
-
 jvm_library(
     name = "execution-process-mediator-common-tests",
     srcs = glob(

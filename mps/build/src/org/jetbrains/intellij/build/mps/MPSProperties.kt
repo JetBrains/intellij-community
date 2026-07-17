@@ -190,7 +190,6 @@ class MPSProperties : JetBrainsProductProperties() {
         moduleSet(CommunityModuleSets.ideCommon())
 
         module("intellij.platform.whatsNew")
-        module("intellij.platform.tips")
         module("intellij.ide.startup.importSettings")
 
         module("intellij.platform.customization.min")

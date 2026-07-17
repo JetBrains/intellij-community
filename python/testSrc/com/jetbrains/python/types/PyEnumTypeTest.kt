@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [enum][https://docs.python.org/3/library/enum.html] members,
+ * Type and type-checker tests for [enum](https://docs.python.org/3/library/enum.html) members,
  * values, aliases and narrowing.
  */
 @Subsystems.Typing
@@ -437,6 +437,103 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `Self-returning method on an enum member widens to the enum class`() = test("""
+      from enum import Enum
+      from typing import Self
+
+      class E(Enum):
+          a = 1
+          def f(self) -> Self: ...
+
+      expr = E.a.f()
+      # └ TYPE E
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `plain enum member access stays a literal`() = test("""
+      from enum import Enum
+
+      class E(Enum):
+          a = 1
+
+      expr = E.a
+      # └ TYPE Literal[E.a]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `combining Flag members with bitwise or yields the flag class`() = test("""
+      from enum import Flag, auto
+
+      class Color(Flag):
+          RED = auto()
+          GREEN = auto()
+          BLUE = auto()
+
+      expr = Color.RED | Color.BLUE
+      # └ TYPE Color
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `combining Flag members with bitwise and and xor yields the flag class`() = test("""
+      from enum import Flag, auto
+
+      class Color(Flag):
+          RED = auto()
+          GREEN = auto()
+          BLUE = auto()
+
+      expr = (Color.RED & Color.BLUE, Color.RED ^ Color.BLUE)
+      # └ TYPE tuple[Color, Color]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `chained combination of Flag members yields the flag class`() = test("""
+      from enum import Flag, auto
+
+      class Color(Flag):
+          RED = auto()
+          GREEN = auto()
+          BLUE = auto()
+
+      expr = Color.RED | Color.GREEN | Color.BLUE
+      # └ TYPE Color
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `combining IntFlag members yields the flag class`() = test("""
+      from enum import IntFlag, auto
+
+      class Perm(IntFlag):
+          READ = auto()
+          WRITE = auto()
+          EXECUTE = auto()
+
+      expr = Perm.READ | Perm.WRITE
+      # └ TYPE Perm
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90694"])
+    fun `union of flag classes remains a type union`() = test("""
+      from enum import Flag
+
+      class A(Flag):
+          X = 1
+
+      class B(Flag):
+          Y = 1
+
+      expr = A | B
+      # └ TYPE UnionType | type[A] | type[B]
+      """)
+
+    @Test
     @TestFor(issues = ["PY-87344"])
     fun `set of StrEnum class inferred from values classmethod`() = test("""
       from enum import StrEnum
@@ -694,6 +791,24 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class MyEnum(Enum):
           OK = 1
           ALSO_OK = "string"
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88892"])
+    fun `plain enum member declared as a tuple is validated as the whole value`() = test("""
+      from enum import Enum, StrEnum, IntEnum
+
+      # Plain stdlib enums have no metaclass/constructor that consumes extra elements: the whole tuple is the value,
+      # so a str/int-based enum rejects it (runtime TypeError). Only framework enums (e.g. django Choices) relax this
+      # via PyEnumMemberDeclarationProvider; see DjangoEnumTypeTest.
+      class PlainStr(StrEnum):
+          A = "A", "A"   # WARNING Expected type 'str', got 'tuple[Literal["A"], Literal["A"]]' instead
+
+      class PlainInt(IntEnum):
+          B = 1, "label" # WARNING Expected type 'int', got 'tuple[Literal[1], Literal["label"]]' instead
+
+      class PlainEnum(Enum):
+          C = 1, 2       # OK: value type is inferred as the tuple itself
       """)
 
     @Test

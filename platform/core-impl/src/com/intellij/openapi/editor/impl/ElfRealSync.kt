@@ -177,6 +177,7 @@ internal abstract class ElfRealSync(
       change.newModStamp,
       changeEvent.isWholeTextReplaced,
       change.clearLineFlags,
+      false,
     )
   }
 

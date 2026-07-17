@@ -18,7 +18,10 @@ interface GradleEntitySource : EntitySource {
    * However, for Gradle older than 8.0, the buildSrc is synced as independent Gradle model.
    * Therefore, it needs separately identified entity source to avoid the main Gradle model entities' replacement.
    *
-   * @see org.jetbrains.plugins.gradle.service.project.ProjectResolverContext.projectPath
+   * This value matches [org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext.projectPath] of the context
+   * that contributed this entity. It identifies the current Gradle sync model, not the IDE project.
+   *
+   * @see org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext.projectPath
    */
   val projectPath: String
 

@@ -14,10 +14,13 @@
     <sequential>
       <echo message="Applying @{file}"/>
       <exec executable="git" dir="${platform.root}" failonerror="true">
+        <env key="GIT_DIR" file="/dev/null"/>
         <arg value="apply"/>
         <!-- Remove this argument to apply patches directly in the master repository (mostly for testing purposes) -->
         <arg value="-p2"/>
         <arg value="&#45;-ignore-space-change"/>
+        <arg value="--verbose"/>
+        <arg value="--no-index"/>
         <arg value="@{file}"/>
       </exec>
     </sequential>

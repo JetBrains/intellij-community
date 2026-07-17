@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [literal types][https://typing.python.org/en/latest/spec/literal.html]
+ * Type and type-checker tests for [literal types](https://typing.python.org/en/latest/spec/literal.html)
  * (`typing.Literal` / `typing_extensions.Literal`): literal inference and widening, unions of literals,
  * literal narrowing via `==`/`is`/`in`, and `Literal` in overloads and assignability checks.
  */
@@ -949,7 +949,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       def f[T: Literal[1]](t: T) -> list[T]: ...
       expr = f(1)
-      #└ TYPE list[Unknown] FIXME list[Literal[1]]
+      #└ TYPE list[Literal[1]]
       """)
   }
 }

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -76,7 +75,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//python/python-exec-service:community-execService",
-        "//python/python-sdk-configurator/common",
         "//python/python-sdk-ui:sdk-ui",
         "//python/python-poetry/common",
         "//python/python-uv/common",
@@ -160,7 +158,6 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
-        "//python/python-sdk-configurator/common:common_test_lib",
         "//python/python-sdk-ui:sdk-ui_test_lib",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common:common_test_lib",
@@ -187,7 +184,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl` end
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` start
-
 jvm_library(
     name = "pycharm-community-ide-impl-tests",
     srcs = glob(
@@ -326,8 +322,6 @@ jvm_library(
         "//platform/ide-core",
         "//python/python-exec-service:community-execService",
         "//python/python-exec-service:community-execService_test_lib",
-        "//python/python-sdk-configurator/common",
-        "//python/python-sdk-configurator/common:common_test_lib",
         "//python/python-sdk-ui:sdk-ui",
         "//python/python-sdk-ui:sdk-ui_test_lib",
         "//python/python-poetry/common",
@@ -362,7 +356,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.tests` end
 
 ### auto-generated section `test intellij.pycharm.community.ide.impl.tests` start
-
 jps_test(
     name = "pycharm-community-ide-impl-tests_test",
     runtime_deps = [":pycharm-community-ide-impl-tests_test_lib"],

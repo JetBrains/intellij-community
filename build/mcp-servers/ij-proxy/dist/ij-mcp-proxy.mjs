@@ -25830,7 +25830,7 @@ function createRenameSchema() {
 }
 
 // proxy-tools/registry.ts
-var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "execute_tool"]), EXTRA_REPLACED_TOOL_NAMES = [
+var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "execute_tool", "skill_search"]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
@@ -27052,12 +27052,18 @@ function parseLintFilesToolResult(result) {
   let items = extractItems({ structuredContent: structured });
   return structured.more === !0 ? { items, more: !0 } : { items };
 }
+function lintItemPathKey(filePath) {
+  let normalized = normalizeProjectRelativePath(projectPath, filePath);
+  return path10.sep === "\\" ? normalized.toLowerCase() : normalized;
+}
 function orderLintItems(filePaths, items) {
   let itemsByPath = /* @__PURE__ */ new Map;
-  for (let item of items)
-    if (!itemsByPath.has(item.filePath))
-      itemsByPath.set(item.filePath, item);
-  return filePaths.map((filePath) => itemsByPath.get(filePath)).filter((item) => item != null);
+  for (let item of items) {
+    let key = lintItemPathKey(item.filePath);
+    if (!itemsByPath.has(key))
+      itemsByPath.set(key, item);
+  }
+  return filePaths.map((filePath) => itemsByPath.get(lintItemPathKey(filePath))).filter((item) => item != null);
 }
 function transformLintItems(items, transformer) {
   return transformer ? transformer(items) : items;

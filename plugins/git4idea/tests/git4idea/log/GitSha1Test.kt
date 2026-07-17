@@ -20,13 +20,20 @@ import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import git4idea.repo.GitObjectFormat
+import git4idea.repo.GitRepository
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.add
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
+import git4idea.test.createRepository
 import java.nio.file.Paths
 
 class GitSha1Test : GitSingleRepoTest() {
+  override fun createRepository(): GitRepository {
+    return createRepository(project, projectNioRoot, makeInitialCommit(), GitObjectFormat.SHA1)
+  }
+
   private var A_FILE = "a.txt"
 
   @Throws(Exception::class)

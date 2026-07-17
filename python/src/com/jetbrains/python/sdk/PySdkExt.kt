@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
@@ -116,18 +115,6 @@ private fun Sdk.isLocatedInsideModule(module: Module): Boolean {
   return moduleDir != null && sdkDir != null && VfsUtil.isAncestor(moduleDir, sdkDir, true)
 }
 
-
-private val PY_VER_REGEX = Regex(""".*python(\d\.\d)""")
-
-@Deprecated("See com.intellij.python.junit5Tests.env.services.internal.impl.PythonWithLanguageLevelImplTest.testSunnyDay")
-@get:Internal
-private val Sdk.guessedLanguageLevel: LanguageLevel?
-  get() {
-    val path = homePath ?: return null
-    val result = PY_VER_REGEX.find(path) ?: return null
-    val versionString = result.groupValues.getOrNull(1) ?: return null
-    return LanguageLevel.fromPythonVersion(versionString)
-  }
 
 private fun Sdk.containsModuleName(module: Module?): Boolean {
   val path = homePath ?: return false

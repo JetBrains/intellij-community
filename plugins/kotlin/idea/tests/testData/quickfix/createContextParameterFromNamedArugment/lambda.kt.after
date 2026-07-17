@@ -1,7 +1,7 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
-// K2_ERROR: No parameter with name 'callback' found.
 // WITH_STDLIB
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
 
 context(callback: (Int) -> String)
 fun f1() {}

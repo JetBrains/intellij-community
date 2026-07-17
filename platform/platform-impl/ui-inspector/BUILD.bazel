@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.ui.inspector` start
-
 jvm_library(
     name = "ide-ui-inspector",
     srcs = glob(
@@ -39,6 +38,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/execution",
         "//platform/util/concurrency",
+        "//platform/platform-frontend:frontend",
     ],
 )
 
@@ -73,6 +73,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.ui.inspector` end

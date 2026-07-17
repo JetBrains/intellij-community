@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.textmate.backend` start
-
 jvm_provided_library(
     name = "plugins_textmate_common_provided",
     lib = "//plugins/textmate/common",

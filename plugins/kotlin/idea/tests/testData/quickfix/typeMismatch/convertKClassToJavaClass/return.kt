@@ -1,7 +1,7 @@
 // "Convert 'KClass' to 'Class'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
-// K2_ERROR: Return type mismatch: expected 'Class<*>', actual 'KClass<Foo>'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun foo(): Class<*> {
     return Foo::class<caret>

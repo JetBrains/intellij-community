@@ -38,7 +38,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleTextSelectionHandler
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -74,11 +73,9 @@ import kotlin.math.min
  * Supersedes one unfortunate [com.intellij.ui.messages.NativeMacMessageManager].
  */
 @Service
-@ApiStatus.Internal
 internal class AlertMessagesManager {
 
   companion object {
-
     @JvmStatic
     fun getInstanceIfPossible(): AlertMessagesManager? {
       return if (LoadingState.COMPONENTS_LOADED.isOccurred

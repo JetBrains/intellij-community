@@ -11,6 +11,7 @@ import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
+import org.junit.jupiter.api.assertDoesNotThrow
 
 object GrazieSpellchecker {
   fun lookup(word: String): Dictionary.LookupStatus = ProgressManager.getInstance().runProcess(
@@ -89,5 +90,12 @@ class SpellCheckerTest : GrazieTestBase() {
     enableProofreadingFor(setOf(Lang.RUSSIAN))
     doSuggestionTest("Врядтли", "Вряд ли")
     doSuggestionTest("Грейзи", "Грацие")
+  }
+
+  fun `test unavailable enabled language is ignored`() {
+    enableProofreadingFor(setOf(Lang.ARABIC))
+    assertDoesNotThrow {
+      GrazieSpellchecker.lookup("مرحبا")
+    }
   }
 }

@@ -1,9 +1,9 @@
 // "Change to constructor invocation" "true"
 // PRIORITY: HIGH
 // ERROR: No value passed for parameter 'x'
-// K2_ERROR: No value passed for parameter 'x'.
-// K2_ERROR: This type has a constructor, so it must be initialized here.
-// K2_AFTER_ERROR: No value passed for parameter 'x'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 open class A(x : Int) {}
 class B : A<caret> {}
 

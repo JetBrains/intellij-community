@@ -1,5 +1,4 @@
 import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
-//#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
 	if (relList && relList.supports && relList.supports("modulepreload")) return;
@@ -29,18 +28,12 @@ import { i, n as A, r as b, t as i$1 } from "./assets/lit.js";
 		fetch(link.href, fetchOpts);
 	}
 })();
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/aria.ts
 function boolAttribute(value) {
 	return value ? "true" : A;
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/define.ts
 function defineControl(tagName, constructor, registry = customElements) {
 	if (!registry.get(tagName)) registry.define(tagName, constructor);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/styles.ts
 var hostStyles = i`
   :host {
     box-sizing: border-box;
@@ -482,8 +475,6 @@ var choiceStyles = i`
     opacity: 1;
   }
 `;
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/action-button/action-button.ts
 var JbActionButton = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -528,8 +519,6 @@ var JbActionButton = class extends i$1 {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/button/button.ts
 var JbButton = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -599,8 +588,6 @@ var JbButton = class extends i$1 {
 		this.hasIcon = hasAssignedElement || hasAssignedText;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/events.ts
 function emitStandardEvent(host, type) {
 	host.dispatchEvent(new Event(type, {
 		bubbles: true,
@@ -614,8 +601,6 @@ function emitValueEvent(host, type, value) {
 		composed: true
 	}));
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/checkbox/checkbox.ts
 var JbCheckbox = class extends i$1 {
 	static properties = {
 		checked: {
@@ -696,8 +681,6 @@ var JbCheckbox = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.checked ? this.value : "");
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/focus.ts
 var WEBVIEW_FOCUS_LEAVE_EVENT = "wvi-focus-leave";
 var WebViewFocusLeaveController = class {
 	onFocusLeave;
@@ -713,16 +696,12 @@ var WebViewFocusLeaveController = class {
 		window.removeEventListener(WEBVIEW_FOCUS_LEAVE_EVENT, this.listener);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/foundation/options.ts
 function normalizeOptions(options) {
 	return Array.isArray(options) ? options : [];
 }
 function optionLabel(options, value, placeholder = "") {
 	return options.find((option) => option.value === value)?.label ?? placeholder;
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/text-field/text-input-base.ts
 var TextInputBase = class extends i$1 {
 	static properties = {
 		autocomplete: {
@@ -816,8 +795,6 @@ var TextInputBase = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/combobox/combobox.ts
 var JbCombobox = class extends TextInputBase {
 	static properties = {
 		...TextInputBase.properties,
@@ -852,8 +829,6 @@ var JbCombobox = class extends TextInputBase {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/context-help/context-help.ts
 var JbContextHelp = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -905,8 +880,6 @@ var JbContextHelp = class extends i$1 {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/disclosure/disclosure.ts
 var JbDisclosure = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -947,8 +920,6 @@ var JbDisclosure = class extends i$1 {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/menu-button/menu-button.ts
 var JbMenuButton = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1023,13 +994,9 @@ var JbMenuButton = class extends i$1 {
 		emitValueEvent(this, "jb-select", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/dropdown-link/dropdown-link.ts
 var JbDropdownLink = class extends JbMenuButton {
 	variant = "link";
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/expandable-text-field/expandable-text-field.ts
 var JbExpandableTextField = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1128,8 +1095,6 @@ var JbExpandableTextField = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/field/field.ts
 var JbField = class extends i$1 {
 	static properties = {
 		error: {
@@ -1182,8 +1147,6 @@ var JbField = class extends i$1 {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/field-group/field-group.ts
 var JbFieldGroup = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1224,8 +1187,6 @@ var JbFieldGroup = class extends i$1 {
 		return b`<fieldset part="group" ?disabled=${this.disabled}>${this.label ? b`<legend part="label">${this.label}</legend>` : A}<div part="body" class="body"><slot></slot></div></fieldset>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/help-text/help-text.ts
 var JbHelpText = class extends i$1 {
 	static properties = { tone: {
 		type: String,
@@ -1252,8 +1213,6 @@ var JbHelpText = class extends i$1 {
 		return b`<div part="help" class=${["help", this.tone].join(" ")}><slot></slot></div>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/icon/icon.ts
 var JbIcon = class extends i$1 {
 	static properties = {
 		label: {
@@ -1317,8 +1276,6 @@ var JbIcon = class extends i$1 {
 		return b`<slot>${this.name}</slot>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/label/label.ts
 var JbLabel = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1358,8 +1315,6 @@ var JbLabel = class extends i$1 {
 		return b`<label part="label" for=${this.for || A}><slot></slot>${this.required ? b`<span part="required" class="required">*</span>` : A}</label>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/number-field/number-field.ts
 var JbNumberField = class extends TextInputBase {
 	static properties = {
 		...TextInputBase.properties,
@@ -1404,15 +1359,11 @@ var JbNumberField = class extends TextInputBase {
     `;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/password-field/password-field.ts
 var JbPasswordField = class extends TextInputBase {
 	get inputType() {
 		return "password";
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/radio/radio.ts
 var JbRadio = class extends i$1 {
 	static properties = {
 		checked: {
@@ -1481,8 +1432,6 @@ var JbRadio = class extends i$1 {
 		}
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/radio-group/radio-group.ts
 var JbRadioGroup = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1545,8 +1494,6 @@ var JbRadioGroup = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/segmented-control/segmented-control.ts
 var JbSegmentedControl = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1604,8 +1551,6 @@ var JbSegmentedControl = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/select/select.ts
 var JbSelect = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1679,8 +1624,6 @@ var JbSelect = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/separator/separator.ts
 var JbSeparator = class extends i$1 {
 	static properties = { orientation: {
 		type: String,
@@ -1713,8 +1656,6 @@ var JbSeparator = class extends i$1 {
 		return b`<div part="separator" class="separator" role="separator" aria-orientation=${this.orientation}></div>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/slider/slider.ts
 var JbSlider = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1766,8 +1707,6 @@ var JbSlider = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/spinner/spinner.ts
 var JbSpinner = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1850,8 +1789,6 @@ var JbSpinner = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/tabs/tabs.ts
 var JbTabs = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -1910,8 +1847,6 @@ var JbTabs = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/text/text.ts
 var JbText = class extends i$1 {
 	static properties = {
 		size: {
@@ -1963,8 +1898,6 @@ var JbText = class extends i$1 {
 		].join(" ")}><slot></slot></span>`;
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/text-area/text-area.ts
 var JbTextArea = class extends i$1 {
 	static properties = {
 		disabled: {
@@ -2040,11 +1973,7 @@ var JbTextArea = class extends i$1 {
 		emitValueEvent(this, "jb-change", this.value);
 	}
 };
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/text-field/text-field.ts
 var JbTextField = class extends TextInputBase {};
-//#endregion
-//#region ../../webview-src/packages/controls/src/tokens.ts
 var controlsTokenStyleId = "jb-webview-controls-tokens";
 var controlsTokenStyles = `
 :root {
@@ -2112,8 +2041,6 @@ function ensureControlsTokensInstalled() {
 	const target = document.head || document.documentElement;
 	target.insertBefore(style, target.firstChild);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/elements/index.ts
 var allControlDefinitions = {
 	"jb-action-button": JbActionButton,
 	"jb-button": JbButton,
@@ -2147,11 +2074,7 @@ function defineAllControls(registry = customElements) {
 	ensureControlsTokensInstalled();
 	for (const [tagName, constructor] of Object.entries(allControlDefinitions)) defineControl(tagName, constructor, registry);
 }
-//#endregion
-//#region ../../webview-src/packages/controls/src/define/all.ts
 defineAllControls();
-//#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 function apiId() {
 	return function createApiId(namespace) {
 		validateApiNamespace(namespace);
@@ -2187,8 +2110,6 @@ function createLazyWebViewTheme() {
 	});
 }
 var webViewTheme = createLazyWebViewTheme();
-//#endregion
-//#region ../../webview-src/packages/api/src/iconSet.ts
 var IconSet = /* @__PURE__ */ Object.freeze({ define(id) {
 	validateIconSetId(id);
 	return new DefinedIconSet(id);
@@ -2218,8 +2139,6 @@ function encodeIconResourcePath(resourcePath) {
 }
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -2242,8 +2161,6 @@ function createLazyWebViewBridge() {
 	});
 }
 createLazyWebViewBridge();
-//#endregion
-//#region views/controls-showcase/src/main.ts
 var root = document.getElementById("root");
 if (!root) throw new Error("#root missing");
 var iconSamples = [
@@ -2784,4 +2701,3 @@ function toOption(value) {
 		label: value.charAt(0).toUpperCase() + value.slice(1)
 	};
 }
-//#endregion

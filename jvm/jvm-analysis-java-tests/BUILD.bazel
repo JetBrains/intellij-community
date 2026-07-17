@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.jvm.analysis.java.tests` start
+jps_test(
+    name = "analysis-java-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":analysis-java-tests_test_lib"],
+)
 
+### skip generation section `test intellij.jvm.analysis.java.tests`
+
+### auto-generated section `build intellij.jvm.analysis.java.tests` start
 jvm_library(
     name = "analysis-java-tests",
     srcs = glob(
@@ -51,6 +59,34 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//java/java-backend:backend",
+        "//java/java-backend:backend_test_lib",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//plugins/junit",
+        "//plugins/junit:junit_test_lib",
+        "//plugins/testng",
+        "//plugins/testng:testng_test_lib",
+        "//platform/smRunner",
+        "//platform/smRunner:smRunner_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
         "//jvm/jvm-analysis-impl:analysis-impl",
         "//jvm/jvm-analysis-impl:analysis-impl_test_lib",
         "//jvm/jvm-analysis-testFramework:analysis-testFramework",
@@ -66,6 +102,7 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "@lib//:easymock",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.java.tests` end
@@ -78,11 +115,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.jvm.analysis.java.tests` end
-
-### auto-generated section `test intellij.jvm.analysis.java.tests` start
-
-jps_test(
-    name = "analysis-java-tests_test",
-    runtime_deps = [":analysis-java-tests_test_lib"],
-)
-### auto-generated section `test intellij.jvm.analysis.java.tests` end

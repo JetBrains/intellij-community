@@ -1,5 +1,5 @@
 // "Create class 'Unknown'" "true"
-// K2_ERROR: Unresolved reference 'Unknown'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A : Unknown<caret> {
     constructor()
 }

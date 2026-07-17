@@ -1,21 +1,34 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.importer
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.junit.Assert.assertArrayEquals
-import org.junit.Test
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class AllOpenKotlinMavenImporterTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
 
     @Test
     fun testAllOpenIsNotEnabledViaJpaPluginInOldKotlinVersions() = runBlocking {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa"))
+        maven.importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa"))
 
-        assertModules("project")
+        maven.assertModules("project")
 
         with(facetSettings) {
             val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
@@ -26,30 +39,30 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
 
     @Test
     fun testAllOpenIsNotEnabledViaJpaAndSpringPluginInOldKotlinVersions() = runBlocking {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa", "spring"))
+        maven.importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa", "spring"))
 
-        assertModules("project")
+        maven.assertModules("project")
 
         with(facetSettings) {
             val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
             assertTrue(
-                pluginClasspaths.joinToString { it },
-                pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) },
+                pluginClasspaths.joinToString { it })
             assertTrue(
-                pluginClasspaths.joinToString { it },
-                pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) },
+                pluginClasspaths.joinToString { it })
         }
     }
 
     @Test
     fun testAllOpenIsEnabledViaJpaPlugin() = runBlocking {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa"))
+        maven.importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa"))
 
-        assertModules("project")
+        maven.assertModules("project")
 
         with(facetSettings) {
             val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
@@ -78,11 +91,11 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
 
     @Test
     fun testAllOpenIsEnabledViaJpaAndSpringPlugin() = runBlocking {
-        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+        maven.createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa", "spring"))
+        maven.importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa", "spring"))
 
-        assertModules("project")
+        maven.assertModules("project")
 
         with(facetSettings) {
             val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")

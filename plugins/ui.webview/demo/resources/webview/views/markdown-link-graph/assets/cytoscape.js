@@ -1,4 +1,3 @@
-//#region node_modules/cytoscape/dist/cytoscape.esm.mjs
 /**
 * Copyright (c) 2016-2026, The Cytoscape Consortium.
 *
@@ -28219,5 +28218,4 @@ cytoscape.warnings = function(bool) {
 };
 cytoscape.version = version;
 cytoscape.stylesheet = cytoscape.Stylesheet = _Stylesheet;
-//#endregion
 export { cytoscape as t };

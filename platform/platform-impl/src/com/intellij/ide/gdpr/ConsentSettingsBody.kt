@@ -26,7 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 
 private const val JETBRAINS_VENDOR_NAME = "JetBrains"
 
-@ApiStatus.Internal
 internal fun createNoOptionsConsentSettings(preferencesMode: Boolean): DialogPanel {
   return panel {
     row {
@@ -38,7 +37,6 @@ internal fun createNoOptionsConsentSettings(preferencesMode: Boolean): DialogPan
   }
 }
 
-@ApiStatus.Internal
 internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStateSupplier>,
                                    preferencesMode: Boolean,
                                    isJetBrainsVendor: Boolean,

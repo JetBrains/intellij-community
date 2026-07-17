@@ -2,13 +2,16 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -31,9 +34,10 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.components.ValidationType
+import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
@@ -185,6 +189,7 @@ class PythonNewEnvironmentDialogNavigator {
 internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpreter(
   isLoading: Boolean,
   interpreter: PythonSelectableInterpreter<P>?,
+  validation: ValidationInfo? = null,
 ) {
   when {
     isLoading -> {
@@ -222,6 +227,24 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
       append(" " + replaceHomePathToTilde(interpreter.homePath.toString()), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
   }
+
+  if (validation != null) {
+    icon?.let { base -> icon = badgeIcon(base, warning = validation.warning) }
+  }
+}
+
+/**
+ * Decorates an interpreter icon with a small corner badge: a warning mark for non-blocking warnings,
+ * or an error mark for blocking errors. The mark is scaled down and pinned to the bottom-right corner
+ * so the base icon stays recognizable.
+ */
+private fun badgeIcon(icon: javax.swing.Icon, warning: Boolean): javax.swing.Icon {
+  val mark = if (warning) AllIcons.General.Warning else AllIcons.General.Error
+  val smallMark = com.intellij.util.IconUtil.scale(mark, null, 0.5f)
+  return com.intellij.ui.LayeredIcon(2).apply {
+    setIcon(icon, 0)
+    setIcon(smallMark, 1, javax.swing.SwingConstants.SOUTH_EAST)
+  }
 }
 
 private val userHomePath = lazy {
@@ -255,8 +278,10 @@ fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
 }
 
 
-class PythonSdkComboBoxListCellRenderer<P : PathHolder>(val isLoading: () -> Boolean) :
-  ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
+class PythonSdkComboBoxListCellRenderer<P : PathHolder>(
+  val isLoading: () -> Boolean,
+  private val validator: ((PythonSelectableInterpreter<*>) -> ValidationInfo?)? = null,
+) : ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
 
   override fun getListCellRendererComponent(
     list: JList<out PythonSelectableInterpreter<P>?>?,
@@ -275,7 +300,8 @@ class PythonSdkComboBoxListCellRenderer<P : PathHolder>(val isLoading: () -> Boo
     selected: Boolean,
     hasFocus: Boolean,
   ) {
-    customizeForPythonInterpreter(isLoading.invoke(), value)
+    val validation = if (value != null) validator?.invoke(value) else null
+    customizeForPythonInterpreter(isLoading.invoke(), value, validation)
   }
 }
 
@@ -313,9 +339,16 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter<P>?>, // todo not sdk
   validationRequestor: DialogValidationRequestor,
   onPathSelected: suspend (P) -> PyResult<PythonSelectableInterpreter<P>>,
+  /**
+   * Optional extra validation for the selected interpreter, e.g. to reject base pythons the created
+   * environment cannot support. Return an error [ValidationInfo] to invalidate the field (which also
+   * disables the dialog's action button and badges the icon), a warning ([ValidationInfo.asWarning]) for
+   * a non-blocking hint, or `null` if the selection is acceptable. Defaults to no extra check.
+   */
+  additionalValidation: ((PythonSelectableInterpreter<*>) -> ValidationInfo?)? = null,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox<P> {
-  val comboBox = PythonInterpreterComboBox(onPathSelected, fileSystem, ErrorSink())
+  val comboBox = PythonInterpreterComboBox(onPathSelected, fileSystem, ErrorSink(), additionalValidation)
     .apply {
       setBusy(true)
     }
@@ -333,14 +366,41 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
             and WHEN_PROPERTY_CHANGED(comboBox.isLoading)
         )
         .validationInfo {
+          val selected = selectedSdkProperty.get()
           when {
             !it.isVisible -> null
             it.isLoading.get() -> ValidationInfo(message("python.add.sdk.panel.wait"))
-            selectedSdkProperty.get() == null -> ValidationInfo("")
-            else -> null
+            selected == null -> ValidationInfo("")
+            // Only gate the action button here (empty, silent error); the human-readable text is rendered
+            // inline below the field via validationTooltip. Warnings don't gate, so return null.
+            else -> additionalValidation?.invoke(selected)?.takeIf { vi -> !vi.warning }?.let { ValidationInfo("") }
           }
         }
         .align(Align.FILL)
+    }
+
+    if (additionalValidation != null) {
+      val errorMessage = AtomicProperty("")
+      val warningMessage = AtomicProperty("")
+      fun refreshValidationMessages() {
+        val info = selectedSdkProperty.get()?.let(additionalValidation)
+        errorMessage.set(if (info != null && !info.warning) info.message else "")
+        warningMessage.set(if (info != null && info.warning) info.message else "")
+      }
+      selectedSdkProperty.afterChange { refreshValidationMessages() }
+      refreshValidationMessages()
+
+      // An external-link "Learn more" per tooltip (a Swing component can't be shared) opening the supported-versions docs.
+      fun versionsHelpLink() = ActionLink(message("sdk.create.python.versions.help.link")) {
+        BrowserUtil.browse(message("sdk.create.python.versions.help.url"))
+      }.apply { setExternalLinkIcon() }
+
+      row("") {
+        validationTooltip(errorMessage, firstActionLink = versionsHelpLink(), validationType = ValidationType.ERROR, inline = true).align(Align.FILL)
+      }.visibleIf(errorMessage.transform { it.isNotEmpty() })
+      row("") {
+        validationTooltip(warningMessage, firstActionLink = versionsHelpLink(), validationType = ValidationType.WARNING, inline = true).align(Align.FILL)
+      }.visibleIf(warningMessage.transform { it.isNotEmpty() })
     }
   }.also { customizer(it) }
 
@@ -351,11 +411,12 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
   val onPathSelected: suspend (P) -> PyResult<PythonSelectableInterpreter<P>>,
   val fileSystem: FileSystem<P>,
   private val errorSink: ErrorSink,
+  interpreterValidator: ((PythonSelectableInterpreter<*>) -> ValidationInfo?)? = null,
 ) : ComboBox<PythonSelectableInterpreter<P>?>() {
   val isLoading: ObservableMutableProperty<Boolean> = AtomicBooleanProperty(true)
 
   init {
-    renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
+    renderer = PythonSdkComboBoxListCellRenderer({ isLoading.get() }, interpreterValidator)
     preferredSize = preferredSize.withAdjustedWidth
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
@@ -376,7 +437,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
         }
       }
     }
-    editor = ComboBoxWithBrowseButtonEditor(this, fileSystem, PyBundle.message("sdk.select.path"), newOnPathSelected)
+    editor = ComboBoxWithBrowseButtonEditor(this, fileSystem, message("sdk.select.path"), interpreterValidator, newOnPathSelected)
   }
 
   fun initialize(scope: CoroutineScope, flow: Flow<List<PythonSelectableInterpreter<P>>?>) {

@@ -1,4 +1,3 @@
-//#region node_modules/khroma/dist/utils/channel.js
 var Channel = {
 	min: {
 		r: 0,
@@ -71,8 +70,6 @@ var Channel = {
 		}
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/utils/index.js
 var Utils = {
 	channel: Channel,
 	lang: {
@@ -89,8 +86,6 @@ var Utils = {
 		return hex.length > 1 ? hex : `0${hex}`;
 	} }
 };
-//#endregion
-//#region node_modules/khroma/dist/constants.js
 var DEC2HEX = {};
 for (let i = 0; i <= 255; i++) DEC2HEX[i] = Utils.unit.dec2hex(i);
 var TYPE = {
@@ -98,8 +93,6 @@ var TYPE = {
 	RGB: 1,
 	HSL: 2
 };
-//#endregion
-//#region node_modules/khroma/dist/channels/type.js
 var Type = class {
 	constructor() {
 		this.type = TYPE.ALL;
@@ -118,8 +111,6 @@ var Type = class {
 		return this.type === type;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/channels/index.js
 var Channels = class {
 	constructor(data, color) {
 		this.color = color;
@@ -228,16 +219,12 @@ var Channels = class {
 		this.data.a = a;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/channels/reusable.js
 var channels = new Channels({
 	r: 0,
 	g: 0,
 	b: 0,
 	a: 0
 }, "transparent");
-//#endregion
-//#region node_modules/khroma/dist/color/hex.js
 var Hex = {
 	re: /^#((?:[a-f0-9]{2}){2,4}|[a-f0-9]{3})$/i,
 	parse: (color) => {
@@ -266,8 +253,6 @@ var Hex = {
 		else return `#${DEC2HEX[Math.round(r)]}${DEC2HEX[Math.round(g)]}${DEC2HEX[Math.round(b)]}`;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/color/hsl.js
 var HSL = {
 	re: /^hsla?\(\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e-?\d+)?(?:deg|grad|rad|turn)?)\s*?(?:,|\s)\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e-?\d+)?%)\s*?(?:,|\s)\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e-?\d+)?%)(?:\s*?(?:,|\/)\s*?\+?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e-?\d+)?(%)?))?\s*?\)$/i,
 	hueRe: /^(.+?)(deg|grad|rad|turn)$/i,
@@ -302,8 +287,6 @@ var HSL = {
 		else return `hsl(${Utils.lang.round(h)}, ${Utils.lang.round(s)}%, ${Utils.lang.round(l)}%)`;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/color/keyword.js
 var Keyword = {
 	colors: {
 		aliceblue: "#f0f8ff",
@@ -465,8 +448,6 @@ var Keyword = {
 		for (const name in Keyword.colors) if (Keyword.colors[name] === hex) return name;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/color/rgb.js
 var RGB = {
 	re: /^rgba?\(\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e\d+)?(%?))\s*?(?:,|\s)\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e\d+)?(%?))\s*?(?:,|\s)\s*?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e\d+)?(%?))(?:\s*?(?:,|\/)\s*?\+?(-?(?:\d+(?:\.\d+)?|(?:\.\d+))(?:e\d+)?(%?)))?\s*?\)$/i,
 	parse: (color) => {
@@ -488,8 +469,6 @@ var RGB = {
 		else return `rgb(${Utils.lang.round(r)}, ${Utils.lang.round(g)}, ${Utils.lang.round(b)})`;
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/color/index.js
 var Color = {
 	format: {
 		keyword: Keyword,
@@ -512,15 +491,11 @@ var Color = {
 		else return Hex.stringify(channels);
 	}
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/change.js
 var change = (color, channels) => {
 	const ch = Color.parse(color);
 	for (const c in channels) ch[c] = Utils.channel.clamp[c](channels[c]);
 	return Color.stringify(ch);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/rgba.js
 var rgba = (r, g, b = 0, a = 1) => {
 	if (typeof r !== "number") return change(r, { a: g });
 	const channels$1 = channels.set({
@@ -531,30 +506,20 @@ var rgba = (r, g, b = 0, a = 1) => {
 	});
 	return Color.stringify(channels$1);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/channel.js
 var channel = (color, channel) => {
 	return Utils.lang.round(Color.parse(color)[channel]);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/luminance.js
 var luminance = (color) => {
 	const { r, g, b } = Color.parse(color);
 	const luminance = .2126 * Utils.channel.toLinear(r) + .7152 * Utils.channel.toLinear(g) + .0722 * Utils.channel.toLinear(b);
 	return Utils.lang.round(luminance);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/is_light.js
 var isLight = (color) => {
 	return luminance(color) >= .5;
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/is_dark.js
 var isDark = (color) => {
 	return !isLight(color);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/adjust_channel.js
 var adjustChannel = (color, channel, amount) => {
 	const channels = Color.parse(color);
 	const amountCurrent = channels[channel];
@@ -562,23 +527,15 @@ var adjustChannel = (color, channel, amount) => {
 	if (amountCurrent !== amountNext) channels[channel] = amountNext;
 	return Color.stringify(channels);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/lighten.js
 var lighten = (color, amount) => {
 	return adjustChannel(color, "l", amount);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/darken.js
 var darken = (color, amount) => {
 	return adjustChannel(color, "l", -amount);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/transparentize.js
 var transparentize = (color, amount) => {
 	return adjustChannel(color, "a", -amount);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/adjust.js
 var adjust = (color, channels) => {
 	const ch = Color.parse(color);
 	const changes = {};
@@ -588,8 +545,6 @@ var adjust = (color, channels) => {
 	}
 	return change(color, changes);
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/mix.js
 var mix = (color1, color2, weight = 50) => {
 	const { r: r1, g: g1, b: b1, a: a1 } = Color.parse(color1);
 	const { r: r2, g: g2, b: b2, a: a2 } = Color.parse(color2);
@@ -600,8 +555,6 @@ var mix = (color1, color2, weight = 50) => {
 	const weight2 = 1 - weight1;
 	return rgba(r1 * weight1 + r2 * weight2, g1 * weight1 + g2 * weight2, b1 * weight1 + b2 * weight2, a1 * weightScale + a2 * (1 - weightScale));
 };
-//#endregion
-//#region node_modules/khroma/dist/methods/invert.js
 var invert = (color, weight = 100) => {
 	const inverse = Color.parse(color);
 	inverse.r = 255 - inverse.r;
@@ -609,5 +562,4 @@ var invert = (color, weight = 100) => {
 	inverse.b = 255 - inverse.b;
 	return mix(inverse, color, weight);
 };
-//#endregion
 export { lighten as a, rgba as c, darken as i, adjust as n, isDark as o, transparentize as r, channel as s, invert as t };

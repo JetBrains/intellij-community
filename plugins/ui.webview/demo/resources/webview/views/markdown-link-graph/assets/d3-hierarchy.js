@@ -1,4 +1,3 @@
-//#region node_modules/d3-hierarchy/src/hierarchy/count.js
 function count(node) {
 	var sum = 0, children = node.children, i = children && children.length;
 	if (!i) sum = 1;
@@ -8,15 +7,11 @@ function count(node) {
 function count_default() {
 	return this.eachAfter(count);
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/each.js
 function each_default(callback, that) {
 	let index = -1;
 	for (const node of this) callback.call(that, node, ++index, this);
 	return this;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/eachBefore.js
 function eachBefore_default(callback, that) {
 	var node = this, nodes = [node], children, i, index = -1;
 	while (node = nodes.pop()) {
@@ -25,8 +20,6 @@ function eachBefore_default(callback, that) {
 	}
 	return this;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/eachAfter.js
 function eachAfter_default(callback, that) {
 	var node = this, nodes = [node], next = [], children, i, n, index = -1;
 	while (node = nodes.pop()) {
@@ -36,14 +29,10 @@ function eachAfter_default(callback, that) {
 	while (node = next.pop()) callback.call(that, node, ++index, this);
 	return this;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/find.js
 function find_default(callback, that) {
 	let index = -1;
 	for (const node of this) if (callback.call(that, node, ++index, this)) return node;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/sum.js
 function sum_default(value) {
 	return this.eachAfter(function(node) {
 		var sum = +value(node.data) || 0, children = node.children, i = children && children.length;
@@ -51,15 +40,11 @@ function sum_default(value) {
 		node.value = sum;
 	});
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/sort.js
 function sort_default(compare) {
 	return this.eachBefore(function(node) {
 		if (node.children) node.children.sort(compare);
 	});
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/path.js
 function path_default(end) {
 	var start = this, ancestor = leastCommonAncestor(start, end), nodes = [start];
 	while (start !== ancestor) {
@@ -85,20 +70,14 @@ function leastCommonAncestor(a, b) {
 	}
 	return c;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/ancestors.js
 function ancestors_default() {
 	var node = this, nodes = [node];
 	while (node = node.parent) nodes.push(node);
 	return nodes;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/descendants.js
 function descendants_default() {
 	return Array.from(this);
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/leaves.js
 function leaves_default() {
 	var leaves = [];
 	this.eachBefore(function(node) {
@@ -106,8 +85,6 @@ function leaves_default() {
 	});
 	return leaves;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/links.js
 function links_default() {
 	var root = this, links = [];
 	root.each(function(node) {
@@ -118,8 +95,6 @@ function links_default() {
 	});
 	return links;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/iterator.js
 function* iterator_default() {
 	var node = this, current, next = [node], children, i, n;
 	do {
@@ -130,8 +105,6 @@ function* iterator_default() {
 		}
 	} while (next.length);
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/hierarchy/index.js
 function hierarchy(data, children) {
 	if (data instanceof Map) {
 		data = [void 0, data];
@@ -189,14 +162,10 @@ Node.prototype = hierarchy.prototype = {
 	copy: node_copy,
 	[Symbol.iterator]: iterator_default
 };
-//#endregion
-//#region node_modules/d3-hierarchy/src/accessors.js
 function required(f) {
 	if (typeof f !== "function") throw new Error();
 	return f;
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/constant.js
 function constantZero() {
 	return 0;
 }
@@ -205,16 +174,12 @@ function constant_default(x) {
 		return x;
 	};
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/treemap/round.js
 function round_default(node) {
 	node.x0 = Math.round(node.x0);
 	node.y0 = Math.round(node.y0);
 	node.x1 = Math.round(node.x1);
 	node.y1 = Math.round(node.y1);
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/treemap/dice.js
 function dice_default(parent, x0, y0, x1, y1) {
 	var nodes = parent.children, node, i = -1, n = nodes.length, k = parent.value && (x1 - x0) / parent.value;
 	while (++i < n) {
@@ -222,8 +187,6 @@ function dice_default(parent, x0, y0, x1, y1) {
 		node.x0 = x0, node.x1 = x0 += node.value * k;
 	}
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/treemap/slice.js
 function slice_default(parent, x0, y0, x1, y1) {
 	var nodes = parent.children, node, i = -1, n = nodes.length, k = parent.value && (y1 - y0) / parent.value;
 	while (++i < n) {
@@ -231,8 +194,6 @@ function slice_default(parent, x0, y0, x1, y1) {
 		node.y0 = y0, node.y1 = y0 += node.value * k;
 	}
 }
-//#endregion
-//#region node_modules/d3-hierarchy/src/treemap/squarify.js
 var phi = (1 + Math.sqrt(5)) / 2;
 function squarifyRatio(ratio, parent, x0, y0, x1, y1) {
 	var rows = [], nodes = parent.children, row, nodeValue, i0 = 0, i1 = 0, n = nodes.length, dx, dy, value = parent.value, sumValue, minValue, maxValue, newRatio, minRatio, alpha, beta;
@@ -277,8 +238,6 @@ var squarify_default = (function custom(ratio) {
 	};
 	return squarify;
 })(phi);
-//#endregion
-//#region node_modules/d3-hierarchy/src/treemap/index.js
 function treemap_default() {
 	var tile = squarify_default, round = false, dx = 1, dy = 1, paddingStack = [0], paddingInner = constantZero, paddingTop = constantZero, paddingRight = constantZero, paddingBottom = constantZero, paddingLeft = constantZero;
 	function treemap(root) {
@@ -341,5 +300,4 @@ function treemap_default() {
 	};
 	return treemap;
 }
-//#endregion
 export { hierarchy as n, treemap_default as t };

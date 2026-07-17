@@ -74,7 +74,9 @@ Use the harness's native file tools for reading, editing, writing, and listing r
 <!-- /IF_TOOL:JUNIE -->
 
 ### Search & navigation (ijproxy preferred)
+
 <!-- IF_TOOL:CODEX -->
+- Inspect the deferred tool catalog (`ALL_TOOLS`) for `mcp__ijproxy__*` tools before using a shell or non-ijproxy fallback.
 - **Search symbols (preferred):** `mcp__ijproxy__search_symbol`
 - Find files (glob): `mcp__ijproxy__search_file`
 - Search text: `mcp__ijproxy__search_text`

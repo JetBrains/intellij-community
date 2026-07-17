@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.java.analysis.impl` start
-
 create_kotlinc_options(
     name = "custom_analysis-impl",
     x_explicit_api_mode = "strict",

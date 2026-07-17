@@ -24,7 +24,7 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 
-class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) :
+internal class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) :
   PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var comboBox: PythonInterpreterComboBox<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>? = null
@@ -38,6 +38,8 @@ class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpre
         selectedSdkProperty = model.state.selectedInterpreter,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
+        // Existing < 3.8 interpreters stay usable, but the IDE no longer provides pip/setuptools for them.
+        additionalValidation = { unsupportedPythonManagementWarning(it) },
       )
     }
   }

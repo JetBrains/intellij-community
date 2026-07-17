@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.scopes` start
-
 jvm_library(
     name = "scopes",
     srcs = glob(

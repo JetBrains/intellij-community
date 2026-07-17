@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.git.coverage` start
-
 jvm_library(
     name = "vcs-git-coverage",
     srcs = glob(
@@ -81,7 +80,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.git.coverage` end
 
 ### auto-generated section `build intellij.vcs.git.coverage.tests` start
-
 jvm_library(
     name = "vcs-git-coverage-tests",
     srcs = glob(
@@ -159,7 +157,6 @@ exports_files(
 ### auto-generated section `iml intellij.vcs.git.coverage.tests` end
 
 ### auto-generated section `test intellij.vcs.git.coverage.tests` start
-
 jps_test(
     name = "vcs-git-coverage-tests_test",
     runtime_deps = [":vcs-git-coverage-tests_test_lib"],

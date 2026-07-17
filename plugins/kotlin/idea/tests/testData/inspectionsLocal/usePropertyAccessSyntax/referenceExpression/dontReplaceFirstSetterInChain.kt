@@ -1,7 +1,7 @@
 // PROBLEM: none
 // ERROR: Unresolved reference: setValue
 // ERROR: Unresolved reference: with
-// K2_ERROR: Unresolved reference 'setValue'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 import java.io.File
 

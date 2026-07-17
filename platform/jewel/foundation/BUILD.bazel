@@ -2,8 +2,17 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.foundation` start
+jps_test(
+    name = "foundation-tests_test",
+    timeout = "moderate",
+    data = ["//platform/jewel:jewel_build_metadata"],
+    tags = ["community-aggregator"],
+    runtime_deps = [":foundation-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.foundation.tests`
+
+### auto-generated section `build intellij.platform.jewel.foundation` start
 create_kotlinc_options(
     name = "custom_foundation",
     opt_in = [
@@ -89,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.foundation` end
 
 ### auto-generated section `build intellij.platform.jewel.foundation.tests` start
-
 create_kotlinc_options(
     name = "custom_foundation-tests",
     opt_in = [
@@ -154,6 +162,8 @@ jvm_library(
         "//libraries/skiko:skiko_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.foundation.tests` end
@@ -166,11 +176,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.foundation.tests` end
-
-### auto-generated section `test intellij.platform.jewel.foundation.tests` start
-
-jps_test(
-    name = "foundation-tests_test",
-    runtime_deps = [":foundation-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.foundation.tests` end

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.TreeSet
 
@@ -157,16 +158,13 @@ private class GradleSyncActionRunner {
   }
 }
 
-@Internal
-const val GRADLE_SYNC_FAILURE_GROUP: String = "gradle.sync.failure.group"
-
 private class GradleSyncFailureHandler {
 
   fun reportSyncFailures(context: ProjectResolverContext, failureResult: GradleModelFetchFailureResult) {
     for (failure in failureResult.failures) {
       context.reporter.failure(createIssueFailure(failure))
         .withSuppressed(true)
-        .withGroup(GRADLE_SYNC_FAILURE_GROUP)
+        .withGroup(GradleModelBuilderMessageCollector.FailureGroup.GRADLE_SYNC_FAILURE_GROUP)
         .withTargetPath(failureResult.targetPath?.toPath())
         .report()
     }

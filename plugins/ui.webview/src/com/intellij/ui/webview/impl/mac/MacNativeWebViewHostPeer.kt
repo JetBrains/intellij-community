@@ -4,10 +4,12 @@ package com.intellij.ui.webview.impl.mac
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.mac.foundation.MacUtil
-import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.MacMainThreadDispatcher
+import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.WebViewEditCommand
 import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.WebViewShortcutRouter
+import com.intellij.ui.webview.impl.WebViewShortcutRouting
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
 import com.intellij.ui.webview.impl.host.WebViewEditShortcutPolicy
 import com.intellij.util.ui.update.DebouncedUpdates
@@ -16,6 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.KeyboardFocusManager
+import java.awt.Toolkit
 import java.awt.event.KeyEvent
 import javax.swing.SwingUtilities
 import javax.swing.Timer
@@ -83,6 +87,9 @@ internal class MacNativeWebViewHostPeer(
     val anchor = SwingWebViewHostPanel.resolveAnchor(host) ?: return false
     val initialFrame = SwingWebViewHostPanel.calculateNativeFrame(host, anchor)
     WebViewLogger.LOG.info("Attaching WKWebView host: frame=$initialFrame, showing=${host.isShowing}")
+    // WKWebView reports bare modifier transitions through AppKit while it owns first responder.
+    // The Swing host is the right boundary for mirroring them into AWT because it owns attach/detach lifecycle.
+    engine.setModifierKeyHandler { event -> postModifierKeyEvent(host, event) }
     hostHidden = true
     positiveFrameApplied = false
     frameTemporarilyInvalid = true
@@ -110,6 +117,7 @@ internal class MacNativeWebViewHostPeer(
       engine.detachFromParent()
     }
     resetFrameRetries()
+    engine.setModifierKeyHandler(null)
     attached = false
     hostHidden = true
     positiveFrameApplied = false
@@ -191,6 +199,29 @@ internal class MacNativeWebViewHostPeer(
    */
   override fun handleWebViewShortcut(event: KeyEvent, command: WebViewEditCommand): Boolean {
     return attached && event.id == KeyEvent.KEY_PRESSED && engine.performEditCommand(command)
+  }
+
+  /**
+   * Mirrors native modifier-only transitions into the AWT event queue without moving focus out of WKWebView.
+   * The shared router keeps this path limited to bare Shift/Ctrl gesture candidates; browser edit shortcuts
+   * and normal WebKit handling stay untouched.
+   */
+  private fun postModifierKeyEvent(host: Component, event: WKWebViewBridge.ModifierKeyEvent) {
+    if (!attached || !host.isShowing) return
+
+    val eventSource = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow ?: host
+    val keyEvent = KeyEvent(
+      eventSource,
+      event.id,
+      System.currentTimeMillis(),
+      event.modifiersEx,
+      event.keyCode,
+      KeyEvent.CHAR_UNDEFINED,
+      event.keyLocation,
+    )
+    if (WebViewShortcutRouter.route(keyEvent) != WebViewShortcutRouting.FORWARD_TO_IDE_KEEP_BROWSER_HANDLING) return
+
+    Toolkit.getDefaultToolkit().systemEventQueue.postEvent(keyEvent)
   }
 
   private fun applyFrame(frame: SwingWebViewHostPanel.NativeFrame) {

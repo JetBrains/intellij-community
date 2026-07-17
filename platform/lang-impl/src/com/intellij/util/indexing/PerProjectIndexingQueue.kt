@@ -176,7 +176,6 @@ class PerProjectIndexingQueue(private val project: Project) {
 
   internal val scanningIndexingMutex = Mutex()
 
-  @Internal
   internal fun wrapIndexing(indexingRoutine: Runnable) {
     runBlockingCancellable {
       scanningIndexingMutex.withLock("indexing", indexingRoutine::run)

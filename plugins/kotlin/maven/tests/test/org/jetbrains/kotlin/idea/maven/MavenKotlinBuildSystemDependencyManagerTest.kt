@@ -3,6 +3,12 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.projectRoot
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.writeCommandAction
@@ -12,18 +18,29 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.Internal
-class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenKotlinBuildSystemDependencyManagerTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
     private lateinit var mavenDependencyManager: MavenKotlinBuildSystemDependencyManager
 
     private val simplePom = """
@@ -38,14 +55,14 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
         </properties>
     """.trimIndent()
 
-    override fun setUp() {
-        super.setUp()
+    @BeforeEach
+    fun setUpDependencyManager() {
         mavenDependencyManager = KotlinBuildSystemDependencyManager.findConfigurator<MavenKotlinBuildSystemDependencyManager>(project)
     }
 
     @Test
     fun testMavenDependencyManagerIsApplicable() = runBlocking {
-        importProjectAsync(simplePom)
+        maven.importProjectAsync(simplePom)
         val module = project.modules.first()
         val extensions = project.extensionArea.getExtensionPoint(KotlinBuildSystemDependencyManager.EP_NAME).extensionList
         val applicableConfigurators = extensions.filter { it.isApplicable(module) }
@@ -54,21 +71,21 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
 
     @Test
     fun testGettingBuildFile() = runBlocking {
-        importProjectAsync(simplePom)
+        maven.importProjectAsync(simplePom)
         val module = project.modules.first()
         val buildScript = runReadAction {
             mavenDependencyManager.getBuildScriptFile(module)
         }
         assertNotNull(buildScript)
         val buildScriptPath = buildScript!!.toNioPath()
-        val projectPath = projectRoot.toNioPath()
+        val projectPath = maven.projectRoot.toNioPath()
 
         val relativePath = projectPath.relativize(buildScriptPath)
         assertEquals("pom.xml", relativePath.invariantSeparatorsPathString)
     }
 
     private suspend fun importProjectWithSubmodule() {
-        val mainModulePom = createProjectPom(
+        val mainModulePom = maven.createProjectPom(
             """
             <groupId>test</groupId>
             <artifactId>mainModule</artifactId>
@@ -78,14 +95,14 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
             </modules>
               """
         )
-        val submodulePom = createModulePom(
+        val submodulePom = maven.createModulePom(
             "submodule", """
               <groupId>test</groupId>
               <artifactId>submodule</artifactId>
               <version>1</version>
               """
         )
-        importProjectsAsync(mainModulePom, submodulePom)
+        maven.importProjectsAsync(mainModulePom, submodulePom)
     }
 
     @Test
@@ -98,7 +115,7 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
         }
         assertNotNull(buildScript)
         val buildScriptPath = buildScript!!.toNioPath()
-        val projectPath = projectRoot.toNioPath()
+        val projectPath = maven.projectRoot.toNioPath()
 
         val relativePath = projectPath.relativize(buildScriptPath)
         assertEquals("submodule/pom.xml", relativePath.invariantSeparatorsPathString)
@@ -146,20 +163,20 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
                             it.scope.stringValue == expectedScope
 
                 }
-                assertNotNull("Did not find expected dependency in pom.xml", foundDependency)
+                assertNotNull( foundDependency,"Did not find expected dependency in pom.xml")
             }
         }
     }
 
     @Test
     fun testAddingDependency() = runBlocking {
-        importProjectAsync(simplePom)
+        maven.importProjectAsync(simplePom)
         doAddingDependencyTest("project", getTestLibraryDescriptor(DependencyScope.COMPILE))
     }
 
     @Test
     fun testAddingTestDependency() = runBlocking {
-        importProjectAsync(simplePom)
+        maven.importProjectAsync(simplePom)
         doAddingDependencyTest("project", getTestLibraryDescriptor(DependencyScope.TEST), "test")
     }
 

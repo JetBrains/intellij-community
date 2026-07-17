@@ -56,6 +56,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -1703,6 +1704,7 @@ public final class DiffUtil {
    * We expect the file itself still being usable after.
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public static void cleanCachesAfterUse(@Nullable Project project, VirtualFile @NotNull ... files) {
     if (project == null) return;
 
@@ -1710,7 +1712,10 @@ public final class DiffUtil {
       if (file instanceof LightVirtualFileBase) {
         PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
         if (psiManager instanceof PsiManagerEx psiManagerEx) {
-          psiManagerEx.getFileManager().setViewProvider(file, null);
+          // Dropping the view provider invalidates the file's PSI. Once a light file has been exposed to an editor it must
+          // obey the write-lock contract like a physical file (IJPL-249128); resetting it off the write lock can invalidate
+          // PSI concurrently with a background read action still reading it, breaking FileViewProvider#getPsi (IJPL-245339).
+          WriteAction.run(() -> psiManagerEx.getFileManager().setViewProvider(file, null));
         }
       }
     }

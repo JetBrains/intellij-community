@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.ide.updateChecker` start
-
 create_kotlinc_options(
     name = "custom_update-checker",
     opt_in = ["kotlin.ExperimentalStdlibApi"],

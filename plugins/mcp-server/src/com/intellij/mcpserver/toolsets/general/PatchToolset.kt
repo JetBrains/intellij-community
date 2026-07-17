@@ -32,6 +32,10 @@ import kotlin.io.path.pathString
 import kotlin.time.measureTime
 
 class PatchToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.patch")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription("""
         Apply a patch using the Codex apply_patch format or unified git diff format.

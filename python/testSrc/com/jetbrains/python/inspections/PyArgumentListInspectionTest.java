@@ -98,11 +98,6 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-19412
-  public void testReassignedViaClassMethodInAnotherModule() {
-    doMultiFileTest("b.py");
-  }
-
   // PY-2294
   public void testTuples() {
     doTest();

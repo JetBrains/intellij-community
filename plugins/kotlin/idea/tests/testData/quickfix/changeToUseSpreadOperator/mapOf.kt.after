@@ -1,8 +1,8 @@
 // "Change 'pairs' to '*pairs'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Array<CapturedType(out Pair<String, String>)>', but 'Pair<uninferred K (of fun <K, V> yourMapOf), uninferred V (of fun <K, V> yourMapOf)>' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'K'. Specify it explicitly.
-// K2_ERROR: Cannot infer type for type parameter 'V'. Specify it explicitly.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 fun <K, V> yourMapOf(vararg pairs: Pair<K, V>) {}
 

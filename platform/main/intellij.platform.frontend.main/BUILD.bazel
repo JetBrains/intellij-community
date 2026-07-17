@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.frontend.main` start
-
 jvm_library(
     name = "frontend-main",
     srcs = glob(

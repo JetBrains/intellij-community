@@ -3,13 +3,10 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.nodes.NodeComparator;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
@@ -20,7 +17,6 @@ import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,38 +28,34 @@ import java.util.Map;
  * </ul>
  */
 public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager {
-  private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
-
-  private final DebuggerTree myDebuggerTree;
   private String myHistoryKey = null;
   private final Map<String, DescriptorTree> myHistories = new HashMap<>();
 
-  public NodeManagerImpl(Project project, DebuggerTree tree) {
+  public NodeManagerImpl(Project project) {
     super(project);
-    myDebuggerTree = tree;
   }
 
-  public static Comparator<DebuggerTreeNode> getNodeComparator() {
-    return ourNodeComparator;
+  /**
+   * @deprecated Use {@link #NodeManagerImpl(Project)}.
+   */
+  @SuppressWarnings({"removal", "unused"})
+  @Deprecated(forRemoval = true)
+  public NodeManagerImpl(Project project, DebuggerTree tree) {
+    this(project);
   }
 
   @Override
   public @NotNull DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-    ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
-    return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
-  }
-
-  public DebuggerTreeNodeImpl getDefaultNode() {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new DefaultNodeDescriptor());
+    return new DebuggerTreeNodeImpl(descriptor);
   }
 
   public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
+    return new DebuggerTreeNodeImpl(descriptor);
   }
 
   @Override
   public @NotNull DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
+    return new DebuggerTreeNodeImpl(new MessageDescriptor(message));
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
@@ -120,9 +112,5 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   public void dispose() {
     myHistories.clear();
     super.dispose();
-  }
-
-  private DebuggerTree getTree() {
-    return myDebuggerTree;
   }
 }

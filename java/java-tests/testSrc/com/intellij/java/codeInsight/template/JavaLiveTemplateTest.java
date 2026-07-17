@@ -938,49 +938,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     );
   }
 
-  public void testSTSSAvailable() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("stss", "Java//Previous preview templates");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
-      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
-      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25_PREVIEW, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
-    });
-  }
-
   public void testSTSAvailable() {
-    final TemplateImpl previousTemplate = TemplateSettings.getInstance().getTemplate("sts", "Java//Previous preview templates");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
-      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25_PREVIEW, () -> {
-      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", previousTemplate));
-    });
-
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("sts", "Java");
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_26_PREVIEW, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));

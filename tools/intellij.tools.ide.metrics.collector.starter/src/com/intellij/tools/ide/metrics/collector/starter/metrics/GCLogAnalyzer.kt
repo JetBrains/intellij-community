@@ -31,8 +31,8 @@ class GCLogAnalyzer(private val ideStartResult: IDEStartResult) {
    * `%` (percentage, fractional part dropped) are supported; fields of other types are ignored.
    */
   fun getGCMetrics(
-    requestedMetrics: Array<String> = arrayOf("gcPause", "fullGCPause", "gcPauseCount", "totalHeapUsedMax", "freedMemoryByGC", "freedMemoryByFullGC", "freedMemory",
-                                              "avgfootprintAfterFullGC", "maxPause", "accumPause", "totalPermUsedMax", "throughput"),
+    requestedMetrics: Array<String> = arrayOf("gcPause", "fullGCPause", "gcPauseCount", "fullGcPauseCount", "totalHeapUsedMax", "freedMemoryByGC", "freedMemoryByFullGC", "freedMemory",
+                                              "avgfootprintAfterFullGC", "maxPause", "maxFullGCPause", "accumPause", "totalPermUsedMax", "throughput"),
   ): Iterable<PerformanceMetrics.Metric> {
     val gcLogFile = (ideStartResult.runContext.reportsDir / "gcLog.log").toFile()
     return if (gcLogFile.exists()) {

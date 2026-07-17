@@ -1,6 +1,5 @@
 import { i as __reExport, o as __toESM, r as __exportAll, t as __commonJSMin } from "./rolldown-runtime.js";
 import { a as customAlphabet, i as createAssistantStreamController, n as ToolResponse, o as AssistantMetaTransformStream, r as parsePartialJsonObject, t as toolResultStream } from "./assistant-stream.js";
-//#region node_modules/react/cjs/react.production.min.js
 /**
 * @license React
 * react.production.min.js
@@ -323,13 +322,9 @@ var require_react_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.version = "18.3.1";
 }));
-//#endregion
-//#region node_modules/react/index.js
 var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_production_min();
 }));
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/helpers/execution-context.js
 var currentResourceFiber = null;
 function withResourceFiber(fiber, fn) {
 	fiber.currentIndex = 0;
@@ -352,8 +347,6 @@ function getCurrentResourceFiber() {
 function peekResourceFiber() {
 	return currentResourceFiber;
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/context.js
 var defaultContextValue = Symbol("tap.Context.defaultValue");
 var asTap = (context) => context;
 var currentContext = /* @__PURE__ */ new Map();
@@ -448,8 +441,6 @@ var hasContextDepsChanged = (fiber) => {
 	for (const context of changedContexts.keys()) if (fiber.contextDeps.has(context)) return true;
 	return false;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/helpers/commit.js
 var COMMIT_PRIORITIES = [
 	0,
 	1,
@@ -491,11 +482,7 @@ function cleanupAllEffects(executionContext) {
 		throw new AggregateError(errors, "Errors during cleanup");
 	}
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/helpers/env.js
 var isDevelopment = typeof process !== "undefined" && false;
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/helpers/root.js
 var createResourceFiberRoot = (dispatchUpdate) => {
 	return {
 		version: 0,
@@ -553,16 +540,12 @@ var markReducerDirty = (fiber, cell) => {
 		cell.isDirty = false;
 	});
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/utils/hookErrors.js
 var throwRenderedMoreHooks = () => {
 	throw new Error("Rendered more hooks than during the previous render. Hooks must be called in the exact same order in every render.");
 };
 var throwHookOrderChanged = () => {
 	throw new Error("Hook order changed between renders");
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useReducer.js
 var dispatchOnFiber = (fiber, record, eagerReducer) => {
 	if (fiber.isNeverMounted) throw new Error("Resource updated before mount");
 	let evaluated = false;
@@ -659,15 +642,11 @@ function useReducerImpl(reducer, initialArg, initFn, eagerBailout) {
 function useReducer$1(reducer, initialArg, init) {
 	return useReducerImpl(reducer, initialArg, init, false);
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useState.js
 var stateReducer = (state, action) => typeof action === "function" ? action(state) : action;
 var stateInit = (initial) => initial === void 0 ? void 0 : typeof initial === "function" ? initial() : initial;
 function useState$1(initial) {
 	return useReducerImpl(stateReducer, initial, stateInit, true);
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/utils/depsShallowEqual.js
 var depsShallowEqual = (a, b) => {
 	if (isDevelopment && a.length !== b.length) console.error(`The final argument passed to a hook changed size between renders. The order and size of this array must remain constant.
 
@@ -675,8 +654,6 @@ Previous: [${a.join(", ")}]\nIncoming: [${b.join(", ")}]`);
 	for (let i = 0; i < a.length && i < b.length; i++) if (!Object.is(a[i], b[i])) return false;
 	return true;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useMemo.js
 var addMemoCommit = (fiber, cell) => {
 	addCommit(fiber, 0, () => {
 		cell.current = cell.wip;
@@ -724,18 +701,12 @@ var useMemo$1 = (fn, deps) => {
 	addMemoCommit(fiber, memoCell);
 	return value;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useRef.js
 function useRef$2(initialValue) {
 	return useMemo$1(() => ({ current: initialValue }), []);
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useCallback.js
 var useCallback$2 = (fn, deps) => {
 	return useMemo$1(() => fn, deps);
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useEffect.js
 var newEffect = () => ({
 	type: "effect",
 	cleanup: void 0,
@@ -769,8 +740,6 @@ function useEffect$1(effect, deps) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useEffectEvent.js
 /**
 * Creates a stable function reference that always calls the most recent version of the callback.
 * Similar to React's useEffectEvent hook.
@@ -797,8 +766,6 @@ function useEffectEvent$1(callback) {
 		return callbackRef.current(...args);
 	}), []);
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/use.js
 /**
 * Reads a context from inside a resource render, the tap equivalent of React's
 * `use(Context)` / `useContext(Context)`. Accepts React contexts.
@@ -807,8 +774,6 @@ var use$1 = (usable) => {
 	if (!isReadableTapContext(usable)) throw new Error("A tap resource's `use()` only accepts a tap context.");
 	return useTapContext(usable);
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useSyncExternalStore.js
 var useSyncExternalStore$1 = (subscribe, getSnapshot, getServerSnapshot = getSnapshot) => {
 	const isFirstRender = useRef$2(true);
 	const value = isFirstRender.current ? getServerSnapshot() : getSnapshot();
@@ -823,11 +788,7 @@ var useSyncExternalStore$1 = (subscribe, getSnapshot, getServerSnapshot = getSna
 	}, [subscribe]);
 	return value;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-hooks/useDebugValue.js
 var useDebugValue$1 = (_value, _format) => {};
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-shim/useReactEffectEvent.js
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var ReactRuntime$3 = import_react.default;
 function useReactEffectEventShim(callback) {
@@ -838,8 +799,6 @@ function useReactEffectEventShim(callback) {
 	return (0, import_react.useCallback)(((...args) => callbackRef.current(...args)), []);
 }
 var useReactEffectEvent = ReactRuntime$3.useEffectEvent ?? useReactEffectEventShim;
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-shim/index.js
 var react_shim_exports = /* @__PURE__ */ __exportAll({
 	createContext: () => createContext,
 	default: () => import_react.default,
@@ -876,8 +835,6 @@ var createContext = (defaultValue) => {
 };
 var use = (usable) => inTap() && isReadableTapContext(usable) ? use$1(usable) : ReactRuntime$2.use(usable);
 var useContext = (context) => inTap() && isReadableTapContext(context) ? use$1(context) : ReactRuntime$2.useContext(context);
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/react-shim/compiler-runtime.js
 var ReactRuntime$1 = import_react.default;
 var MEMO_CACHE_SENTINEL = Symbol.for("react.memo_cache_sentinel");
 var createMemoCache = (size) => new Array(size).fill(MEMO_CACHE_SENTINEL);
@@ -904,16 +861,12 @@ var c = (size) => {
 	} else if (isDevelopment && cache.length !== size) console.error(`Expected a constant size argument for each invocation of c(). The previous cache was allocated with size ${cache.length} but size ${size} was requested.`);
 	return cache;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/resource.js
 function resource(hook) {
 	return (...args) => ({
 		hook,
 		args
 	});
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/withKey.js
 function withKey(key, element, deps) {
 	return deps ? {
 		...element,
@@ -924,8 +877,6 @@ function withKey(key, element, deps) {
 		key
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/scheduler.js
 var MAX_FLUSH_LIMIT = 50;
 var flushState = {
 	schedulers: /* @__PURE__ */ new Set([]),
@@ -1002,8 +953,6 @@ var flushTapSync = (callback) => {
 		flushState = prev;
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/react-dispatcher.js
 var tapDispatcher = {
 	useState: useState$1,
 	useReducer: useReducer$1,
@@ -1053,8 +1002,6 @@ function withReactDispatcher(render) {
 		slot.current = previous;
 	}
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/core/ResourceFiber.js
 function createResourceFiber(hook, root, markDirty = void 0, strictMode) {
 	return {
 		hook,
@@ -1120,8 +1067,6 @@ function commitResourceFiber(fiber) {
 	fiber.isNeverMounted = false;
 	commitAllCallbacks(commitCallbacks);
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/utils/useDevStrictMode.js
 var getTapDevMode = () => {
 	const currentResourceFiber = getCurrentResourceFiber();
 	if (currentResourceFiber.devStrictMode) return currentResourceFiber.isFirstRender ? "child" : "root";
@@ -1139,8 +1084,6 @@ var useDevStrictModeReact = () => {
 var useDevStrictMode = () => {
 	return peekResourceFiber() ? getTapDevMode : useDevStrictModeReact();
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/useTapRoot.js
 var useHostRoot = (render) => render();
 var useTapRoot = (render) => {
 	const scheduler = useMemo(() => new UpdateScheduler(() => handleUpdate()), []);
@@ -1218,8 +1161,6 @@ var useTapRoot = (render) => {
 		}
 	}), [subscribers]);
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/utils/useResourceFiberHostUtils.js
 var useResourceFiberHostUtilsTap = () => {
 	const versionRef = useRef(0);
 	const version = versionRef.current;
@@ -1269,8 +1210,6 @@ var useResourceFiberHost = () => {
 		}, [])
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/utils/useRenderMemo.js
 var useRenderMemo = (callback, deps, disableMemo) => {
 	const stateRef = useRef(null);
 	const state = stateRef.current ?? (stateRef.current = {
@@ -1290,8 +1229,6 @@ var useRenderMemo = (callback, deps, disableMemo) => {
 	state.wip = callback();
 	return state.wip;
 };
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/useResource.js
 function useResource(element) {
 	const { version, createFiber } = useResourceFiberHost();
 	const fiber = useMemo(() => {
@@ -1312,8 +1249,6 @@ function useResource(element) {
 	}, [fiber, result]);
 	return result.value;
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/useResources.js
 var markChildDirty = (fibers, key) => {
 	const state = fibers.get(key);
 	if (state) state.isDirty = true;
@@ -1411,8 +1346,6 @@ function useResources(elements) {
 	}, [val, fibers]);
 	return val;
 }
-//#endregion
-//#region node_modules/@assistant-ui/tap/dist/hooks/useTapHost.js
 var useHostRender = (render) => render();
 var useTapHost = (callback) => {
 	const { createFiber } = useResourceFiberHost();
@@ -1435,8 +1368,6 @@ var useTapHost = (callback) => {
 		effects
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/client/DataRenderers.js
 /**
 * Registers renderers for `data` message parts.
 *
@@ -1506,8 +1437,6 @@ function _temp$20() {
 		fallbacks: []
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/model-context/types.js
 var mergeModelContexts = (configSet) => {
 	const configs = Array.from(configSet).map((c) => c.getModelContext()).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
 	const toolPriorities = {};
@@ -1544,8 +1473,6 @@ var mergeModelContexts = (configSet) => {
 		return acc;
 	}, {});
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/utils/composite-context-provider.js
 var CompositeContextProvider = class {
 	_providers = /* @__PURE__ */ new Set();
 	getModelContext() {
@@ -1574,8 +1501,6 @@ var CompositeContextProvider = class {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/clients/model-context-client.js
 var EMPTY_TOOL_NAMES = [];
 var INITIAL_STATE = {
 	modelName: void 0,
@@ -1659,8 +1584,6 @@ var useModelContext = () => {
 	return t8;
 };
 var ModelContext = resource(useModelContext);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/model-context/toolbox.js
 /**
 * Resolves whether a tool's UI should be presented standalone (outside the
 * chain-of-thought grouping), applying the type-based defaults.
@@ -1692,8 +1615,6 @@ var makeToolCallTextComponent = (text) => {
 		return resolveToolCallText(text, part);
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/tap-client-stack-context.js
 /**
 * Symbol used to get the client index from a ClientProxy.
 */
@@ -1727,8 +1648,6 @@ var useClientStackProvider = (client, callback) => {
 	} else t0 = $[2];
 	return useContextProvider(ClientStackContext, t0, callback);
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/BaseProxyHandler.js
 var INTROSPECTION_PROPS = new Set([
 	"$$typeof",
 	"nodeType",
@@ -1773,8 +1692,6 @@ var BaseProxyHandler = class {
 		return false;
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/useClientResource.js
 /**
 * Symbol used internally to get state from ClientProxy.
 * This allows getState() to be optional in the user-facing client.
@@ -1859,8 +1776,6 @@ var useClientResource = (element) => {
 	};
 };
 var ClientResource = resource(useClientResource);
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/proxied-assistant-state.js
 var PROXIED_ASSISTANT_STATE_SYMBOL = Symbol("assistant-ui.store.proxiedAssistantState");
 var isIgnoredKey = (key) => {
 	return key === "on" || key === "subscribe" || typeof key === "symbol";
@@ -1889,8 +1804,6 @@ var createProxiedAssistantState = (client) => {
 var getProxiedAssistantState = (client) => {
 	return client[PROXIED_ASSISTANT_STATE_SYMBOL];
 };
-//#endregion
-//#region node_modules/react/cjs/react-jsx-runtime.production.min.js
 /**
 * @license React
 * react-jsx-runtime.production.min.js
@@ -1927,13 +1840,9 @@ var require_react_jsx_runtime_production_min = /* @__PURE__ */ __commonJSMin(((e
 	exports.jsx = q;
 	exports.jsxs = q;
 }));
-//#endregion
-//#region node_modules/react/jsx-runtime.js
 var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_jsx_runtime_production_min();
 }));
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/react-assistant-context.js
 var import_jsx_runtime = require_jsx_runtime();
 var NO_OP_SUBSCRIBE = () => () => {};
 var createErrorClientField = (message) => {
@@ -2022,8 +1931,6 @@ var AuiProvider = ({ value, children }) => {
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(UseTapEffects, {}), children]
 	});
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/Derived.js
 /**
 * Creates a derived client field that references a client from a parent scope.
 * The get callback always calls the most recent version (useEffectEvent pattern).
@@ -2047,8 +1954,6 @@ var useDerived = (_config) => {
 	return null;
 };
 var Derived = resource(useDerived);
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/attachTransformScopes.js
 var TRANSFORM_SCOPES = Symbol("assistant-ui.transform-scopes");
 function attachTransformScopes(hook, transform) {
 	const h = hook;
@@ -2058,8 +1963,6 @@ function attachTransformScopes(hook, transform) {
 function getTransformScopes(hook) {
 	return hook[TRANSFORM_SCOPES];
 }
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/types/events.js
 var normalizeEventSelector = (selector) => {
 	if (typeof selector === "string") return {
 		scope: selector.split(".")[0],
@@ -2070,8 +1973,6 @@ var normalizeEventSelector = (selector) => {
 		event: selector.event
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/tap-assistant-context.js
 var AssistantTapContext = createContext(null);
 var useAssistantTapContextProvider = (value, fn) => {
 	return useContextProvider(AssistantTapContext, value, fn);
@@ -2099,8 +2000,6 @@ var useAssistantEmit = () => {
 	} else t0 = $[2];
 	return useEffectEvent(t0);
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/splitClients.js
 /**
 * Splits a clients object into root clients and derived clients,
 * applying transformScopes from root client elements.
@@ -2159,8 +2058,6 @@ var useSplitClients = (clients, baseClient) => {
 	} else t3 = $[5];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/utils/NotificationManager.js
 var useNotificationManager = () => {
 	const $ = c(3);
 	let t0;
@@ -2243,8 +2140,6 @@ var useNotificationManager = () => {
 	return t2;
 };
 var NotificationManager = resource(useNotificationManager);
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/useAui.js
 var useShallowMemoArray = (array) => {
 	return useMemo(() => array, array);
 };
@@ -2514,8 +2409,6 @@ function useAui(clients, { parent } = { parent: useAssistantContextValue() }) {
 	if (parent === null) throw new Error("received null parent, this usage is not allowed");
 	return parent;
 }
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/useAuiState.js
 /**
 * Subscribes to a slice of {@link AssistantState} and re-renders the
 * component whenever that slice changes.
@@ -2576,8 +2469,6 @@ var useAuiState = (selector) => {
 	useDebugValue(slice);
 	return slice;
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/RenderChildrenWithAccessor.js
 var useGetItemAccessor = (getItemState) => {
 	const aui = useAui();
 	const accessedRef = useRef(false);
@@ -2630,8 +2521,6 @@ var useMemoizedProplessComponent = (node) => {
 		typeof el?.props === "object" && el.props != null && Object.entries(el.props).length === 0 ? EMPTY_OBJECT$1 : el?.props
 	]) ?? node;
 };
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/useClientLookup.js
 var getElementKey = (el) => {
 	if (el.key === void 0) throw new Error("useClientLookup: Element has no key");
 	return el.key;
@@ -2704,8 +2593,6 @@ function _temp2$5(acc, resource, index) {
 function _temp$19(el) {
 	return withKey(getElementKey(el), ClientResource(el), el.deps);
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/client/Tools.js
 /**
 * Registers tools with model context and installs tool-call renderers.
 *
@@ -2839,13 +2726,9 @@ function _temp4$1(acc, t0) {
 function _temp5$1(fn) {
 	return fn();
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/useSubscribable.js
 var useSubscribable = (subscribable) => {
 	return useSyncExternalStore(subscribable.subscribe, subscribable.getState);
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/attachment-runtime-client.js
 var useAttachmentRuntimeClient = (t0) => {
 	const $ = c(8);
 	const { runtime } = t0;
@@ -2877,8 +2760,6 @@ var useAttachmentRuntimeClient = (t0) => {
 	return t3;
 };
 var AttachmentRuntimeClient = resource(useAttachmentRuntimeClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/composer-runtime-client.js
 var useComposerAttachmentClientByIndex = (t0) => {
 	const $ = c(5);
 	const { runtime, index } = t0;
@@ -3098,13 +2979,9 @@ var ComposerClient = resource(useComposerClient);
 function _temp$17() {
 	throw new Error("beginEdit is not supported in this runtime");
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/liveRef.js
 var liveRef = (get) => ({ get current() {
 	return get();
 } });
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/message-part-runtime-client.js
 var useMessagePartClient = (t0) => {
 	const $ = c(13);
 	const { runtime } = t0;
@@ -3154,8 +3031,6 @@ var useMessagePartClient = (t0) => {
 	return t6;
 };
 var MessagePartClient = resource(useMessagePartClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/message-runtime-client.js
 var useMessageAttachmentClientByIndex = (t0) => {
 	const $ = c(5);
 	const { runtime, index } = t0;
@@ -3383,8 +3258,6 @@ var useMessageClient = (t0) => {
 	return t20;
 };
 var MessageClient = resource(useMessageClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/thread-runtime-client.js
 var useMessageClientById = (t0) => {
 	const $ = c(6);
 	const { runtime, id, threadIdRef } = t0;
@@ -3595,8 +3468,6 @@ var useThreadClient = (t0) => {
 	return t12;
 };
 var ThreadClient = resource(useThreadClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/thread-list-item-runtime-client.js
 var useThreadListItemClient = (t0) => {
 	const $ = c(20);
 	const { runtime } = t0;
@@ -3670,8 +3541,6 @@ var useThreadListItemClient = (t0) => {
 	return t5;
 };
 var ThreadListItemClient = resource(useThreadListItemClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/runtime-clients/thread-list-runtime-client.js
 var useThreadListItemClientById = (t0) => {
 	const $ = c(5);
 	const { runtime, id } = t0;
@@ -3826,8 +3695,6 @@ var useThreadListClient = (t0) => {
 	return t14;
 };
 var ThreadListClient = resource(useThreadListClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/clients/suggestions.js
 var useSuggestionClient = (state) => {
 	return { getState: () => state };
 };
@@ -3893,8 +3760,6 @@ function _temp$16(s) {
 function _temp2$3(suggestion, index) {
 	return withKey(index, SuggestionClient(suggestion), [suggestion]);
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/clients/runtime-adapter.js
 var baseRuntimeAdapterTransformScopes = (scopes, parent) => {
 	scopes.thread ??= Derived({
 		source: "threads",
@@ -3914,8 +3779,6 @@ var baseRuntimeAdapterTransformScopes = (scopes, parent) => {
 	if (!scopes.modelContext && parent.modelContext.source === null) scopes.modelContext = ModelContext();
 	if (!scopes.suggestions && parent.suggestions.source === null) scopes.suggestions = Suggestions();
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/RuntimeAdapter.js
 var useRuntimeAdapter = (runtime) => {
 	const $ = c(6);
 	const clientRef = useAssistantClientRef();
@@ -3950,8 +3813,6 @@ attachTransformScopes(useRuntimeAdapter, (scopes, parent) => {
 	if (!scopes.tools && parent.tools.source === null) scopes.tools = Tools({});
 	if (!scopes.dataRenderers && parent.dataRenderers.source === null) scopes.dataRenderers = DataRenderers();
 });
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/AssistantProvider.js
 var getRenderComponent = (runtime) => {
 	return runtime._core?.RenderComponent;
 };
@@ -3969,8 +3830,6 @@ var AssistantProviderBase = (0, react_shim_exports.memo)(({ runtime, aui: parent
 		children: inner
 	});
 });
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/AttachmentByIndexProvider.js
 var MessageAttachmentByIndexProvider = (t0) => {
 	const $ = c(7);
 	const { index, children } = t0;
@@ -4041,8 +3900,6 @@ var ComposerAttachmentByIndexProvider = (t0) => {
 	} else t3 = $[6];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/MessageByIndexProvider.js
 var MessageByIndexProvider = (t0) => {
 	const $ = c(10);
 	const { index, children } = t0;
@@ -4092,8 +3949,6 @@ var MessageByIndexProvider = (t0) => {
 	} else t4 = $[9];
 	return t4;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/PartByIndexProvider.js
 var PartByIndexProvider = (t0) => {
 	const $ = c(7);
 	const { index, children } = t0;
@@ -4129,8 +3984,6 @@ var PartByIndexProvider = (t0) => {
 	} else t3 = $[6];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/TextMessagePartProvider.js
 var useTextMessagePartClient = (t0) => {
 	const $ = c(7);
 	const { text, isRunning } = t0;
@@ -4208,8 +4061,6 @@ function _temp2$2() {
 function _temp3$1() {
 	throw new Error("Not supported");
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/clients/chain-of-thought-client.js
 var COMPLETE_STATUS$3 = Object.freeze({ type: "complete" });
 var useChainOfThoughtClient = (t0) => {
 	const $ = c(9);
@@ -4249,8 +4100,6 @@ var useChainOfThoughtClient = (t0) => {
 	return t3;
 };
 var ChainOfThoughtClient = resource(useChainOfThoughtClient);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/ChainOfThoughtByIndicesProvider.js
 var ChainOfThoughtByIndicesProvider = (t0) => {
 	const $ = c(5);
 	const { startIndex, endIndex, children } = t0;
@@ -4286,8 +4135,6 @@ var ChainOfThoughtByIndicesProvider = (t0) => {
 function _temp$14(s) {
 	return s.message.parts;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/ThreadListItemByIndexProvider.js
 var ThreadListItemByIndexProvider = (t0) => {
 	const $ = c(8);
 	const { index, archived, children } = t0;
@@ -4328,8 +4175,6 @@ var ThreadListItemByIndexProvider = (t0) => {
 	} else t3 = $[7];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/SuggestionByIndexProvider.js
 var SuggestionByIndexProvider = (t0) => {
 	const $ = c(7);
 	const { index, children } = t0;
@@ -4362,8 +4207,6 @@ var SuggestionByIndexProvider = (t0) => {
 	} else t3 = $[6];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/providers/QueueItemByIndexProvider.js
 var QueueItemByIndexProvider = (t0) => {
 	const $ = c(7);
 	const { index, children } = t0;
@@ -4396,8 +4239,6 @@ var QueueItemByIndexProvider = (t0) => {
 	} else t3 = $[6];
 	return t3;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/utils/external-store-message.js
 var symbolInnerMessage = Symbol("innerMessage");
 var symbolInnerMessages = Symbol("innerMessages");
 var EMPTY_ARRAY$3 = [];
@@ -4420,8 +4261,6 @@ var getExternalStoreMessages = (input) => {
 	container[symbolInnerMessages] = [value];
 	return container[symbolInnerMessages];
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/subscribable/subscribable.js
 var SKIP_UPDATE = Symbol("skip-update");
 function shallowEqual$1(objA, objB) {
 	if (objA === void 0 && objB === void 0) return true;
@@ -4616,8 +4455,6 @@ var EventSubscriptionSubject = class extends BaseSubject {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/attachment-runtime.js
 var AttachmentRuntimeImpl = class {
 	_core;
 	get path() {
@@ -4669,8 +4506,6 @@ var MessageAttachmentRuntimeImpl = class extends AttachmentRuntimeImpl {
 		throw new Error("Message attachments cannot be removed");
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/composer-runtime.js
 var EMPTY_ARRAY$2 = Object.freeze([]);
 var EMPTY_OBJECT = Object.freeze({});
 var getThreadComposerState = (runtime) => {
@@ -4924,13 +4759,9 @@ var EditComposerRuntimeImpl = class extends ComposerRuntimeImpl {
 		}), this._core);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/utils/text.js
 var getThreadMessageText = (message) => {
 	return message.content.filter((part) => part.type === "text").map((part) => part.text).join("\n\n");
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/utils/resolveToolApprovalResponse.js
 var APPROVED_BY_KIND = {
 	"allow-once": true,
 	"allow-always": true,
@@ -4961,8 +4792,6 @@ var resolveToolApprovalResponse = (approval, response) => {
 		...response.reason != null && { reason: response.reason }
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/message-part-runtime.js
 var MessagePartRuntimeImpl = class {
 	contentBinding;
 	messageApi;
@@ -5029,8 +4858,6 @@ var MessagePartRuntimeImpl = class {
 		return this.contentBinding.subscribe(callback);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/message-runtime.js
 var COMPLETE_STATUS$2 = Object.freeze({ type: "complete" });
 var toMessagePartStatus = (message, partIndex, part) => {
 	if (message.role !== "assistant") return COMPLETE_STATUS$2;
@@ -5200,8 +5027,6 @@ var MessageRuntimeImpl = class {
 		}));
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/thread-runtime.js
 var toResumeRunConfig = (message) => {
 	return {
 		parentId: message.parentId ?? null,
@@ -5450,14 +5275,10 @@ var ThreadRuntimeImpl = class {
 		return subject.subscribe(callback);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/runtimes/RuntimeAdapterProvider.js
 var RuntimeAdaptersContext = createContext(null);
 var useRuntimeAdapters = () => {
 	return useContext(RuntimeAdaptersContext);
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/thread-list-item-runtime.js
 var ThreadListItemRuntimeImpl = class {
 	_core;
 	_threadListBinding;
@@ -5545,8 +5366,6 @@ var ThreadListItemRuntimeImpl = class {
 		return this;
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/thread-list-runtime.js
 var RESOLVED_PROMISE$1 = Promise.resolve();
 var getThreadListState = (threadList) => {
 	return {
@@ -5706,8 +5525,6 @@ var ThreadListRuntimeImpl = class {
 		}), this._core);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/api/assistant-runtime.js
 var AssistantRuntimeImpl = class {
 	_core;
 	threads;
@@ -5728,8 +5545,6 @@ var AssistantRuntimeImpl = class {
 		return this._core.registerModelContextProvider(provider);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/base/base-assistant-runtime-core.js
 var BaseAssistantRuntimeCore = class {
 	_contextProvider = new CompositeContextProvider();
 	registerModelContextProvider(provider) {
@@ -5739,8 +5554,6 @@ var BaseAssistantRuntimeCore = class {
 		return this._contextProvider;
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtimes/external-store/external-store-thread-list-runtime-core.js
 var EMPTY_ARRAY$1 = Object.freeze([]);
 var DEFAULT_THREAD_ID = "DEFAULT_THREAD_ID";
 var DEFAULT_THREADS = Object.freeze([DEFAULT_THREAD_ID]);
@@ -5889,14 +5702,10 @@ var ExternalStoreThreadListRuntimeCore = class {
 		for (const callback of this._subscriptions) callback();
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/utils/id.js
 /**
 * @deprecated This API is experimental and may change without notice.
 */
 var generateId = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 7);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/utils/thread-message-like.js
 var convertDataPrefixedPart = (type, data) => {
 	if (!type.startsWith("data-")) return void 0;
 	return {
@@ -6024,8 +5833,6 @@ var fromThreadMessageLike = (like, fallbackId, fallbackStatus) => {
 		default: throw new Error(`Unknown message role: ${role}`);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/utils/auto-status.js
 var symbolAutoStatus = Symbol("autoStatus");
 var AUTO_STATUS_RUNNING = Object.freeze(Object.assign({ type: "running" }, { [symbolAutoStatus]: true }));
 var AUTO_STATUS_COMPLETE = Object.freeze(Object.assign({
@@ -6049,8 +5856,6 @@ var getAutoStatus = (isLast, isRunning, hasInterruptedToolCalls, hasPendingToolC
 	}, { [symbolAutoStatus]: true });
 	return isLast && isRunning ? AUTO_STATUS_RUNNING : hasInterruptedToolCalls ? AUTO_STATUS_INTERRUPT : hasPendingToolCalls ? AUTO_STATUS_PENDING : AUTO_STATUS_COMPLETE;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/utils/message-repository.js
 var ExportedMessageRepository = {
 	fromArray: (messages) => {
 		const conv = messages.map((m) => fromThreadMessageLike(m, generateId(), getAutoStatus(false, false, false, false, void 0)));
@@ -6283,11 +6088,7 @@ var MessageRepository = class {
 		this.resetHead(headId ?? messages.at(-1)?.message.id ?? null);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/store/scopes/queue-item.js
 var EMPTY_QUEUE_ITEMS = Object.freeze([]);
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/adapters/attachment.js
 function fileMatchesAccept(file, acceptString) {
 	if (acceptString === "*") return true;
 	const allowedTypes = acceptString.split(",").map((type) => type.trim().toLowerCase());
@@ -6345,8 +6146,6 @@ function liftNonTextParts(content) {
 	for (const part of content) if (part.type !== "text") result.push(partToCompleteAttachment(part));
 	return result;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/base/base-composer-runtime-core.js
 var isAttachmentComplete = (a) => a.status.type === "complete";
 var BaseComposerRuntimeCore = class extends BaseSubscribable {
 	isEditing = true;
@@ -6695,8 +6494,6 @@ var BaseComposerRuntimeCore = class extends BaseSubscribable {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/base/default-thread-composer-runtime-core.js
 var DefaultThreadComposerRuntimeCore = class extends BaseComposerRuntimeCore {
 	runtime;
 	_canCancel = false;
@@ -6759,8 +6556,6 @@ var DefaultThreadComposerRuntimeCore = class extends BaseComposerRuntimeCore {
 		this.runtime.cancelRun();
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/base/default-edit-composer-runtime-core.js
 var DefaultEditComposerRuntimeCore = class extends BaseComposerRuntimeCore {
 	runtime;
 	endEditCallback;
@@ -6826,8 +6621,6 @@ var DefaultEditComposerRuntimeCore = class extends BaseComposerRuntimeCore {
 		this._notifySubscribers();
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtime/base/base-thread-runtime-core.js
 var BaseThreadRuntimeCore = class {
 	_contextProvider;
 	_subscriptions = /* @__PURE__ */ new Set();
@@ -7171,8 +6964,6 @@ var BaseThreadRuntimeCore = class {
 		};
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtimes/external-store/thread-message-converter.js
 var ThreadMessageConverter = class {
 	cache = /* @__PURE__ */ new WeakMap();
 	convertMessages(messages, converter) {
@@ -7183,8 +6974,6 @@ var ThreadMessageConverter = class {
 		});
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/utils/json/is-json.js
 function isRecord(value) {
 	return value != null && typeof value === "object" && !Array.isArray(value);
 }
@@ -7196,8 +6985,6 @@ function isJSONValue(value, currentDepth = 0) {
 	if (isRecord(value)) return Object.entries(value).every(([key, val]) => typeof key === "string" && isJSONValue(val, currentDepth + 1));
 	return false;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/utils/json/is-json-equal.js
 var MAX_JSON_DEPTH = 100;
 var isJSONValueEqualAtDepth = (a, b, currentDepth) => {
 	if (a === b) return true;
@@ -7218,8 +7005,6 @@ var isJSONValueEqual = (a, b) => {
 	if (!isJSONValue(a) || !isJSONValue(b)) return false;
 	return isJSONValueEqualAtDepth(a, b, 0);
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtimes/tool-invocations/ToolInvocationTracker.js
 var isArgsTextComplete = (argsText) => {
 	try {
 		JSON.parse(argsText);
@@ -7647,8 +7432,6 @@ var ToolInvocationTracker = class {
 		}
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtimes/external-store/external-store-thread-runtime-core.js
 var EMPTY_ARRAY = Object.freeze([]);
 var shallowEqual = (a, b) => {
 	const aKeys = Object.keys(a);
@@ -7978,8 +7761,6 @@ var ExternalStoreThreadRuntimeCore = class extends BaseThreadRuntimeCore {
 		else this._store.setMessages?.(messages);
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/runtimes/external-store/external-store-runtime-core.js
 var getThreadListAdapter = (store) => {
 	return store.adapters?.threadList ?? {};
 };
@@ -7994,8 +7775,6 @@ var ExternalStoreRuntimeCore = class extends BaseAssistantRuntimeCore {
 		this.threads.getMainThreadRuntimeCore().__internal_setAdapter(adapter);
 	}
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/runtimes/useExternalStoreRuntime.js
 var useExternalStoreRuntime = (store) => {
 	const $ = c(11);
 	let t0;
@@ -8041,8 +7820,6 @@ var useExternalStoreRuntime = (store) => {
 	} else t4 = $[10];
 	return t4;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/thread/ThreadMessages.js
 var isComponentsSame = (prev, next) => {
 	return prev.Message === next.Message && prev.EditComposer === next.EditComposer && prev.UserEditComposer === next.UserEditComposer && prev.AssistantEditComposer === next.AssistantEditComposer && prev.SystemEditComposer === next.SystemEditComposer && prev.UserMessage === next.UserMessage && prev.AssistantMessage === next.AssistantMessage && prev.SystemMessage === next.SystemMessage;
 };
@@ -8164,15 +7941,11 @@ function _temp$13(s) {
 function _temp2$1(s_0) {
 	return s_0.message.composer.isEditing;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/utils/getMessageQuote.js
 var getMessageQuote = (state) => {
 	const metadata = state.message.metadata;
 	if (!metadata || typeof metadata !== "object") return void 0;
 	return metadata.custom?.quote;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/generativeUI/GenerativeUI.js
 /**
 * Thrown when a generative-ui spec references a component name that is not
 * present in the consumer-provided allowlist. The allowlist is the security
@@ -8293,12 +8066,8 @@ function _temp$12(s) {
 	const part = s.part;
 	return part?.type === "generative-ui" ? part.spec : void 0;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/types/message.js
 var MCP_APP_URI_SCHEME = "ui://";
 var isMcpAppUri = (uri) => !!uri?.startsWith(MCP_APP_URI_SCHEME);
-//#endregion
-//#region node_modules/zustand/esm/vanilla/shallow.mjs
 var isIterable = (obj) => Symbol.iterator in obj;
 var hasIterableEntries = (value) => "entries" in value;
 var compareEntries = (valueA, valueB) => {
@@ -8330,8 +8099,6 @@ function shallow(valueA, valueB) {
 	}
 	return compareEntries({ entries: () => Object.entries(valueA) }, { entries: () => Object.entries(valueB) });
 }
-//#endregion
-//#region node_modules/zustand/esm/react/shallow.mjs
 function useShallow(selector) {
 	const prev = import_react.useRef(void 0);
 	return (state) => {
@@ -8339,8 +8106,6 @@ function useShallow(selector) {
 		return shallow(prev.current, next) ? prev.current : prev.current = next;
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/message/MessageParts.js
 /**
 * Creates a group state manager for a specific part type.
 * Returns functions to start, end, and finalize groups.
@@ -9237,8 +9002,6 @@ function _temp11(s_0) {
 function _temp12(s) {
 	return s.message.parts.length;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/utils/groupParts.js
 /**
 * Hierarchical adjacent-coalescing grouping for message parts.
 *
@@ -9324,8 +9087,6 @@ var buildGroupTree = (paths, partIds) => {
 	while (stack.length > 1) closeTop();
 	return root.children;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/message/MessageGroupedParts.js
 var COMPLETE_STATUS = Object.freeze({ type: "complete" });
 var shouldShowIndicator = (mode, parts, isRunning) => {
 	if (!isRunning) return false;
@@ -9416,8 +9177,6 @@ var MessagePrimitiveGroupedParts = ({ groupBy, indicator = "no-text", children }
 	})] });
 };
 MessagePrimitiveGroupedParts.displayName = "MessagePrimitive.GroupedParts";
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/message/MessageQuote.js
 /**
 * Renders a quote block if the message has quote metadata.
 * Place this above `MessagePrimitive.Parts` in your message layout.
@@ -9454,8 +9213,6 @@ var MessagePrimitiveQuoteImpl = (t0) => {
 };
 var MessagePrimitiveQuote = (0, react_shim_exports.memo)(MessagePrimitiveQuoteImpl);
 MessagePrimitiveQuote.displayName = "MessagePrimitive.Quote";
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/message/MessageAttachments.js
 var getComponent$1 = (components, attachment) => {
 	switch (attachment.type) {
 		case "image": return components?.Image ?? components?.Attachment;
@@ -9556,8 +9313,6 @@ MessagePrimitiveAttachments.displayName = "MessagePrimitive.Attachments";
 function _temp$10(s) {
 	return s.attachment;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/composer/ComposerAttachments.js
 var getComponent = (components, attachment) => {
 	switch (attachment.type) {
 		case "image": return components?.Image ?? components?.Attachment;
@@ -9654,8 +9409,6 @@ ComposerPrimitiveAttachments.displayName = "ComposerPrimitive.Attachments";
 function _temp$9(s) {
 	return s.attachment;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/composer/ComposerQueue.js
 var ComposerPrimitiveQueueInner = ({ children }) => {
 	const queue = useAuiState((s) => s.composer.queue.length);
 	return useMemo(() => Array.from({ length: queue }, (_, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(QueueItemByIndexProvider, {
@@ -9685,8 +9438,6 @@ var ComposerPrimitiveQueueInner = ({ children }) => {
 */
 var ComposerPrimitiveQueue = (0, react_shim_exports.memo)(ComposerPrimitiveQueueInner);
 ComposerPrimitiveQueue.displayName = "ComposerPrimitive.Queue";
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/threadList/ThreadListItems.js
 /**
 * Renders a single thread list item at the specified index.
 */
@@ -9773,8 +9524,6 @@ var ThreadListPrimitiveItems = (t0) => {
 	return t2;
 };
 ThreadListPrimitiveItems.displayName = "ThreadListPrimitive.Items";
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/messagePart/MessagePartInProgress.js
 var MessagePartPrimitiveInProgress = (t0) => {
 	const { children } = t0;
 	return useAuiState(_temp$8) ? children : null;
@@ -9783,8 +9532,6 @@ MessagePartPrimitiveInProgress.displayName = "MessagePartPrimitive.InProgress";
 function _temp$8(s) {
 	return s.part.status.type === "running";
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/threadListItem/ThreadListItemTitle.js
 var ThreadListItemPrimitiveTitle = (t0) => {
 	const $ = c(2);
 	const { fallback } = t0;
@@ -9801,8 +9548,6 @@ ThreadListItemPrimitiveTitle.displayName = "ThreadListItemPrimitive.Title";
 function _temp$7(s) {
 	return s.threadListItem.title;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/thread/ThreadSuggestions.js
 var SuggestionComponent = (t0) => {
 	const $ = c(2);
 	const { components } = t0;
@@ -9883,8 +9628,6 @@ var ThreadPrimitiveSuggestions = (0, react_shim_exports.memo)(ThreadPrimitiveSug
 	if (prev.children || next.children) return prev.children === next.children;
 	return prev.components.Suggestion === next.components.Suggestion;
 });
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitives/composer/ComposerIf.js
 var useComposerIf = (props) => {
 	const $ = c(3);
 	let t0;
@@ -9922,8 +9665,6 @@ var ComposerPrimitiveIf = (t0) => {
 	return useComposerIf(query) ? children : null;
 };
 ComposerPrimitiveIf.displayName = "ComposerPrimitive.If";
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useComposerSend.js
 var useComposerSend = () => {
 	const $ = c(5);
 	const aui = useAui();
@@ -9952,8 +9693,6 @@ var useComposerSend = () => {
 function _temp$6(s) {
 	return !s.composer.canSend || s.thread.isRunning && !s.thread.capabilities.queue;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useComposerCancel.js
 var useComposerCancel = () => {
 	const $ = c(5);
 	const aui = useAui();
@@ -9982,8 +9721,6 @@ var useComposerCancel = () => {
 function _temp$5(s) {
 	return !s.composer.canCancel;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useComposerDictate.js
 var useComposerDictate = () => {
 	const $ = c(5);
 	const aui = useAui();
@@ -10012,8 +9749,6 @@ var useComposerDictate = () => {
 function _temp$4(s) {
 	return s.composer.dictation != null || !s.thread.capabilities.dictation || !s.composer.isEditing;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useComposerAddAttachment.js
 var useComposerAddAttachment = () => {
 	const $ = c(5);
 	const aui = useAui();
@@ -10040,8 +9775,6 @@ var useComposerAddAttachment = () => {
 function _temp$3(s) {
 	return !s.composer.isEditing;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useSuggestionTrigger.js
 var useSuggestionTrigger = (t0) => {
 	const $ = c(8);
 	const { prompt, send, clearComposer: t1 } = t0;
@@ -10090,8 +9823,6 @@ var useSuggestionTrigger = (t0) => {
 function _temp$2(s) {
 	return s.thread.isDisabled;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemArchive.js
 var useThreadListItemArchive = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -10112,8 +9843,6 @@ var useThreadListItemArchive = () => {
 	} else t1 = $[3];
 	return t1;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemDelete.js
 var useThreadListItemDelete = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -10134,8 +9863,6 @@ var useThreadListItemDelete = () => {
 	} else t1 = $[3];
 	return t1;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemUnarchive.js
 var useThreadListItemUnarchive = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -10156,8 +9883,6 @@ var useThreadListItemUnarchive = () => {
 	} else t1 = $[3];
 	return t1;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListItemTrigger.js
 var useThreadListItemTrigger = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -10178,8 +9903,6 @@ var useThreadListItemTrigger = () => {
 	} else t1 = $[3];
 	return t1;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListNew.js
 var useThreadListNew = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -10200,8 +9923,6 @@ var useThreadListNew = () => {
 	} else t1 = $[3];
 	return t1;
 };
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useThreadListLoadMore.js
 var useThreadListLoadMore = () => {
 	const $ = c(5);
 	const aui = useAui();
@@ -10230,16 +9951,12 @@ var useThreadListLoadMore = () => {
 function _temp$1(s) {
 	return !s.threads.hasMore || s.threads.isLoading || s.threads.isLoadingMore;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/react/primitive-hooks/useMessageError.js
 var useMessageError = () => {
 	return useAuiState(_temp);
 };
 function _temp(s) {
 	return s.message.status?.type === "incomplete" && s.message.status.reason === "error" ? s.message.status.error ?? "An error occurred" : void 0;
 }
-//#endregion
-//#region node_modules/@assistant-ui/core/dist/adapters/directive-formatter.js
 var DIRECTIVE_RE = /:([\w-]{1,64})\[([^\]\n]{1,1024})\](?:\{name=([^}\n]{1,1024})\})?/gu;
 /**
 * Default directive formatter using the `:type[label]{name=id}` syntax.
@@ -10275,5 +9992,4 @@ var unstable_defaultDirectiveFormatter = {
 		return segments;
 	}
 };
-//#endregion
 export { useLayoutEffect as $, defaultComponents as A, normalizeEventSelector as B, ComposerPrimitiveAttachments as C, MessagePrimitiveGroupedParts as D, MessagePrimitiveQuote as E, TextMessagePartProvider as F, c as G, useResource as H, PartByIndexProvider as I, useCallback as J, createContext as K, AssistantProviderBase as L, ThreadPrimitiveMessageByIndex as M, ThreadPrimitiveMessages as N, MessagePrimitivePartByIndex as O, useExternalStoreRuntime as P, useEffectEvent as Q, useAuiState as R, ComposerPrimitiveAttachmentByIndex as S, MessagePrimitiveAttachments as T, flushTapSync as U, require_jsx_runtime as V, resource as W, useDebugValue as X, useContext as Y, useEffect as Z, ThreadListItemPrimitiveTitle as _, useThreadListItemTrigger as a, ThreadListPrimitiveItems as b, useThreadListItemArchive as c, useComposerDictate as d, useMemo as et, useComposerCancel as f, ThreadPrimitiveSuggestions as g, ThreadPrimitiveSuggestionByIndex as h, useThreadListNew as i, require_react as it, MessagePrimitiveGenerativeUI as j, MessagePrimitiveParts as k, useSuggestionTrigger as l, ComposerPrimitiveIf as m, useMessageError as n, useState as nt, useThreadListItemUnarchive as o, useComposerSend as p, react_shim_exports as q, useThreadListLoadMore as r, useSyncExternalStore as rt, useThreadListItemDelete as s, unstable_defaultDirectiveFormatter as t, useRef as tt, useComposerAddAttachment as u, MessagePartPrimitiveInProgress as v, MessagePrimitiveAttachmentByIndex as w, ComposerPrimitiveQueue as x, ThreadListPrimitiveItemByIndex as y, useAui as z };

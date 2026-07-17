@@ -40,6 +40,11 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
     override val symbolicId: KotlinScriptLibraryEntityId = super.symbolicId
 
+    override val scope: String
+        get() {
+            readField("scope")
+            return dataSource.scope
+        }
     override val classes: List<VirtualFileUrl>
         get() {
             readField("classes")
@@ -95,6 +100,9 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
             }
+            if (!getEntityData().isScopeInitialized()) {
+                error("Field KotlinScriptLibraryEntity#scope should be initialized")
+            }
             if (!getEntityData().isClassesInitialized()) {
                 error("Field KotlinScriptLibraryEntity#classes should be initialized")
             }
@@ -126,6 +134,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
             dataSource as KotlinScriptLibraryEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+            if (this.scope != dataSource.scope) this.scope = dataSource.scope
             if (this.classes != dataSource.classes) this.classes = dataSource.classes.toMutableList()
             if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts = dataSource.usedInScripts.toMutableSet()
             if (this.sources != dataSource.sources) this.sources = dataSource.sources.toMutableSet()
@@ -140,6 +149,13 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
 
+            }
+        override var scope: String
+            get() = getEntityData().scope
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).scope = value
+                changedProperty.add("scope")
             }
         private val classesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
             val _diff = diff
@@ -212,10 +228,12 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptLibraryEntity>() {
+    lateinit var scope: String
     lateinit var classes: MutableList<VirtualFileUrl>
     lateinit var usedInScripts: MutableSet<VirtualFileUrl>
     var sources: MutableSet<VirtualFileUrl> = setOf<VirtualFileUrl>().toMutableWorkspaceSet()
 
+    internal fun isScopeInitialized(): Boolean = ::scope.isInitialized
     internal fun isClassesInitialized(): Boolean = ::classes.isInitialized
     internal fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
 
@@ -254,7 +272,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-        return KotlinScriptLibraryEntity(classes, usedInScripts, entitySource) {
+        return KotlinScriptLibraryEntity(scope, classes, usedInScripts, entitySource) {
             this.sources = this@KotlinScriptLibraryEntityData.sources.toMutableWorkspaceSet()
         }
     }
@@ -269,6 +287,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
         if (this.javaClass != other.javaClass) return false
         other as KotlinScriptLibraryEntityData
         if (this.entitySource != other.entitySource) return false
+        if (this.scope != other.scope) return false
         if (this.classes != other.classes) return false
         if (this.usedInScripts != other.usedInScripts) return false
         if (this.sources != other.sources) return false
@@ -279,6 +298,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
         if (other == null) return false
         if (this.javaClass != other.javaClass) return false
         other as KotlinScriptLibraryEntityData
+        if (this.scope != other.scope) return false
         if (this.classes != other.classes) return false
         if (this.usedInScripts != other.usedInScripts) return false
         if (this.sources != other.sources) return false
@@ -287,6 +307,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
+        result = 31 * result + scope.hashCode()
         result = 31 * result + classes.hashCode()
         result = 31 * result + usedInScripts.hashCode()
         result = 31 * result + sources.hashCode()
@@ -295,6 +316,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
 
     override fun hashCodeIgnoringEntitySource(): Int {
         var result = javaClass.hashCode()
+        result = 31 * result + scope.hashCode()
         result = 31 * result + classes.hashCode()
         result = 31 * result + usedInScripts.hashCode()
         result = 31 * result + sources.hashCode()

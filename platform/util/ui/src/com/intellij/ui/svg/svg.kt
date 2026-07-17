@@ -19,8 +19,10 @@ import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.EMPTY_ICON
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ImageWithShape
 import com.intellij.ui.icons.ReplaceableIcon
 import com.intellij.ui.icons.checkIconSize
+import com.intellij.ui.icons.computeShape
 import com.intellij.ui.icons.registerIconCacheCleaner
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
@@ -70,9 +72,10 @@ fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   colorPatcher = null,
-                                  colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY) {
+                                  colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY,
+                                  withShape = false) {
     data
-  }!!
+  }?.image!!
 }
 
 @Internal
@@ -86,7 +89,30 @@ fun loadSvg(path: String?,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
                                   colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
-                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },) {
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
+                                  withShape = false) {
+    stream.readAllBytes()
+  }!!.image
+}
+
+@Internal
+fun loadSvgMaybeWithShape(
+  path: String?,
+  stream: InputStream,
+  scale: Float,
+  compoundCacheKey: SvgCacheClassifier? = null,
+  colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
+  withShape: Boolean,
+): ImageWithShape<BufferedImage> {
+  return loadAndCacheIfApplicable(
+    path = path,
+    precomputedCacheKey = 0,
+    scale = scale,
+    compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
+    colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
+    colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
+    withShape = withShape
+  ) {
     stream.readAllBytes()
   }!!
 }
@@ -188,14 +214,16 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                          compoundCacheKey: SvgCacheClassifier,
                                          colorPatcher: SvgAttributePatcher?,
                                          colorPatcherDigest: LongArray,
-                                         dataProvider: () -> ByteArray?): BufferedImage? {
+                                         withShape: Boolean,
+                                         dataProvider: () -> ByteArray?): ImageWithShape<BufferedImage>? {
   return loadAndCacheIfApplicable(path = path,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcher,
                                   colorPatcherDigest = colorPatcherDigest,
-                                  dataProvider = dataProvider)
+                                  dataProvider = dataProvider,
+                                  withShape = withShape)
 }
 
 internal inline fun loadAndCacheIfApplicable(path: String?,
@@ -204,10 +232,11 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
                                              compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                              colorPatcher: SvgAttributePatcher?,
                                              colorPatcherDigest: LongArray,
-                                             dataProvider: () -> ByteArray?): BufferedImage? {
+                                             withShape: Boolean,
+                                             dataProvider: () -> ByteArray?): ImageWithShape<BufferedImage>? {
   val svgCache = activeSvgCache
   if (svgCache == null || scale > MAX_SCALE_TO_CACHE) {
-    return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
+    return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path, withShape = withShape)
   }
 
   val isPrecomputedKey = precomputedCacheKey != 0
@@ -223,13 +252,20 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
 
   try {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val result = svgCache.loadFromCache(key = key, isPrecomputed = data == null)
+    val image = svgCache.loadFromCache(key = key, isPrecomputed = data == null)
     if (start != -1L) {
       IconLoadMeasurer.svgCacheRead.end(start)
     }
 
-    result?.let {
-      return it
+    if (image != null) {
+      val dataForShape = if (withShape) {
+        data ?: dataProvider()
+      }
+      else {
+        null
+      }
+      // skip the color patcher here, because colors shouldn't affect the shape
+      return ImageWithShape(image, dataForShape?.let { data -> computeShape(createJSvgDocument(data)) })
     }
   }
   catch (e: ProcessCanceledException) {
@@ -249,6 +285,7 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
     key = key,
     cache = svgCache,
     isPrecomputedKey = isPrecomputedKey,
+    withShape = withShape,
   )
 }
 
@@ -260,8 +297,9 @@ private fun renderAndCache(
   key: LongArray,
   cache: SvgCacheManager,
   isPrecomputedKey: Boolean,
-): BufferedImage {
-  val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path)
+  withShape: Boolean,
+): ImageWithShape<BufferedImage> {
+  val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path, withShape = withShape)
   // maybe closed during rendering
   if (!cache.isActive()) {
     return image
@@ -269,7 +307,7 @@ private fun renderAndCache(
 
   try {
     val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    cache.storeLoadedImage(key = key, image = image, isPrecomputedKey = isPrecomputedKey)
+    cache.storeLoadedImage(key = key, image = image.image, isPrecomputedKey = isPrecomputedKey)
     IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart)
   }
   catch (e: ProcessCanceledException) {
@@ -285,7 +323,7 @@ private fun renderAndCache(
   return image
 }
 
-private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, scale: Float, path: String?): BufferedImage {
+private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, scale: Float, path: String?, withShape: Boolean): ImageWithShape<BufferedImage> {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
   val jsvgDocument = if (colorPatcher == null) {
     createJSvgDocument(data)
@@ -298,7 +336,13 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, sca
   if (decodingStart != -1L) {
     IconLoadMeasurer.svgDecoding.end(decodingStart)
   }
-  return bufferedImage
+  val shape = if (withShape) {
+    computeShape(jsvgDocument)
+  }
+  else {
+    null
+  }
+  return ImageWithShape(bufferedImage, shape)
 }
 
 @Internal

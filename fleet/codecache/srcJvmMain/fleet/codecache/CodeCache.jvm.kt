@@ -49,7 +49,7 @@ class CodeCache(
   private val hasher: CodeCacheHasher = CodeCacheHasher()
 
   companion object {
-    private val logger = logger(CodeCache::class)
+    private val logger by lazy { logger(CodeCache::class) }
   }
 
   suspend fun resolve(coord: Coordinates): String {

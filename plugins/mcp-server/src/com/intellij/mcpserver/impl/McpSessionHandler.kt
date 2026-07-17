@@ -59,6 +59,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicReference
@@ -424,7 +425,7 @@ internal class McpSessionHandler(
                 )
 
                 application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData)
+                  .afterMcpToolCall(mcpTool.descriptor, sideEffectResult.events, null, additionalData, sideEffectResult.result.deepCopy())
                 sideEffectResult.result
               }
               catch (ce: CancellationException) {
@@ -479,6 +480,18 @@ internal class McpSessionHandler(
 
 private suspend fun ServerSession.roots(): Set<String> {
   return listRoots().roots.map { it.uri }.toSet()
+}
+
+private fun McpToolCallResult.deepCopy(): McpToolCallResult {
+  val copiedContent: Array<McpToolCallResultContent> = content.map { content ->
+    when (content) {
+      is McpToolCallResultContent.Text -> McpToolCallResultContent.Text(content.text)
+    }
+  }.toTypedArray()
+  val copiedStructuredContent = structuredContent?.let {
+    Json.decodeFromString(JsonObject.serializer(), Json.encodeToString(JsonObject.serializer(), it))
+  }
+  return McpToolCallResult(copiedContent, copiedStructuredContent, isError)
 }
 
 private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {

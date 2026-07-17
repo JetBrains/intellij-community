@@ -76,7 +76,6 @@ internal fun psiCtrlMouseData(
   )
 }
 
-@Internal
 internal fun getReferenceRanges(elementAtPointer: PsiElement): List<TextRange> {
   if (!elementAtPointer.isPhysical) {
     return emptyList()

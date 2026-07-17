@@ -628,6 +628,11 @@ public class EditorSearchSession implements SearchSession,
     mySearchResults.removeListener(this);
   }
 
+  @ApiStatus.Internal
+  public void clearCursorHighlight() {
+    myLivePreviewController.clearCursorHighlight();
+  }
+
   protected void disposeLivePreview() {
     myLivePreviewController.dispose();
   }

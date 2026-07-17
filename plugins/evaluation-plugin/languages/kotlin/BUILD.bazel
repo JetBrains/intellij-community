@@ -12,7 +12,6 @@ jps_test(
 ### skip generation section `test intellij.evaluationPlugin.languages.kotlin.tests`
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` start
-
 jvm_library(
     name = "kotlin",
     srcs = glob(
@@ -97,7 +96,6 @@ exports_files(
 ### auto-generated section `iml intellij.evaluationPlugin.languages.kotlin` end
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin.tests` start
-
 jvm_library(
     name = "evaluationPlugin-languages-kotlin-tests",
     srcs = glob(

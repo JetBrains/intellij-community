@@ -15,12 +15,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +39,9 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 class HighlightVisitorRunner {
+  private static final String PRIORITY_HIGHLIGHTING_RANGE_SPAN = "Prioritized range";
+  private static final String RESTRICTED_BUT_NOT_PRIORITY_RANGE_SPAN = "Not prioritized range";
+
   @NotNull private final PsiFile myPsiFile;
   @Nullable private final TextAttributesScheme myScheme;
   private final boolean myRunVisitors;
@@ -118,18 +125,26 @@ class HighlightVisitorRunner {
         try {
           int[] sizeAfterRunVisitor = new int[1];
           HighlightInfoHolder holder = visitorInfo.holder();
-          boolean result = visitor.analyze(psiFile, myUpdateAll, holder, () -> {
-            reportOutOfRunVisitorInfos(0, ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
-            runVisitor(psiFile, elements1, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink);
-            runVisitor(psiFile, elements2, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink);
-            sizeAfterRunVisitor[0] = holder.size();
+          Span span = newSpan(progress, null, visitor.getClass().getName());
+          Ref<Boolean> result = Ref.create(false);
+          runWithSpan(span, () -> {
+            boolean resultValue = visitor.analyze(psiFile, myUpdateAll, holder, () -> {
+              reportOutOfRunVisitorInfos(0, ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
+              runWithSpan(newSpan(progress, span, PRIORITY_HIGHLIGHTING_RANGE_SPAN), () ->
+                runVisitor(psiFile, elements1, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink)
+              );
+              runWithSpan(newSpan(progress, span, RESTRICTED_BUT_NOT_PRIORITY_RANGE_SPAN), () ->
+                runVisitor(psiFile, elements2, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink));
+              sizeAfterRunVisitor[0] = holder.size();
+            });
+            result.set(resultValue);
           });
           reportOutOfRunVisitorInfos(sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
           if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
             GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitor finished " + visitor + "(" + visitor.getClass() + ") progress=" + progress+
-                                              (result ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
+                                              (result.get() ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
           }
-          return result;
+          return result.get();
         }
         catch (CancellationException e) {
           throw e;
@@ -145,6 +160,26 @@ class HighlightVisitorRunner {
       GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread()+"; progress="+progress+"; context job:"+ThreadContext.currentThreadContext().get(Job.Key));
     }
     return res;
+  }
+
+  private static @Nullable Span newSpan(@Nullable ProgressIndicator indicator,
+                                        @Nullable Span parentSpan,
+                                        @NonNls @NotNull String spanName) {
+    return indicator instanceof DaemonProgressIndicator daemonProgressIndicator
+           ? daemonProgressIndicator.newSpan(spanName, parentSpan)
+           : null;
+  }
+
+  private static void runWithSpan(@Nullable Span span,
+                                  @NotNull Runnable runnable) {
+    try (Scope ignored = span == null ? null : span.makeCurrent()) {
+      runnable.run();
+    }
+    finally {
+      if (span != null) {
+        span.end();
+      }
+    }
   }
 
   private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightFakePsiElement.create("ANALYZE_BEFORE_RUN_VISITOR");

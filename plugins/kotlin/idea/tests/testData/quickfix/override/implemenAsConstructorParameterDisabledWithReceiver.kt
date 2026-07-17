@@ -1,6 +1,6 @@
 // "Implement as constructor parameters" "false"
-// K2_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>val Int.foo: Int
-// K2_AFTER_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>val Int.foo: Int
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 interface I {
     val Int.foo: Int
 }

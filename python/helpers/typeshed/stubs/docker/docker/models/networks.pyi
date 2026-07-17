@@ -1,3 +1,4 @@
+import builtins
 from typing import Any, Literal
 
 from docker.types import IPAMConfig
@@ -33,5 +34,5 @@ class NetworkCollection(Collection[Network]):
     def get(
         self, network_id: str, verbose: bool | None = None, scope: Literal["local", "global", "swarm"] | None = None
     ) -> Network: ...  # type: ignore[override]
-    def list(self, *args, **kwargs) -> list[Network]: ...
+    def list(self, *args, **kwargs) -> builtins.list[Network]: ...
     def prune(self, filters: dict[str, Any] | None = None) -> dict[str, Any]: ...

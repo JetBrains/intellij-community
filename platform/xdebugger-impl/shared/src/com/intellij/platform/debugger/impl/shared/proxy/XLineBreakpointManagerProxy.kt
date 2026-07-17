@@ -7,6 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface XLineBreakpointManagerProxy {
   fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy>
-  fun breakpointChanged(breakpoint: XLightLineBreakpointProxy)
   fun getAllBreakpoints(): Collection<XLineBreakpointProxy>
 }

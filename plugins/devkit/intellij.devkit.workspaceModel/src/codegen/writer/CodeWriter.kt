@@ -215,16 +215,48 @@ object CodeWriter {
     copyHeaderComment(sourceFile, file)
   }
 
-  private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
-    val apiVersionInDevkit = getApiVersionFromJSON(CodeGenerator::class.java)
-    val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
+  private data class ApiVersion(val major: Int, val minor: Int, val patch: Int) : Comparable<ApiVersion> {
+    
+    fun compatible(other: ApiVersion): Boolean {
+      return major == other.major && minor == other.minor
+    }
 
-    if (apiVersionInDevkit == apiVersionFromDownloadedJar) {
+    override fun toString(): String = "$major.$minor.$patch"
+    
+    override fun compareTo(other: ApiVersion): Int {
+      return when {
+        major != other.major -> major - other.major
+        minor != other.minor -> minor - other.minor
+        else -> patch - other.patch
+      }
+    }
+  }
+  
+  private fun parseCodegenApi(codegenApiVersion: String): ApiVersion {
+    val (major, minor, patch) = codegenApiVersion.split(".", "-").take(3).map { it.toInt() }
+    return ApiVersion(major, minor, patch)
+  }
+
+  private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
+    val apiVersionInDevkit = getApiVersionFromJSON(CodeGenerator::class.java).let { parseCodegenApi(it) }
+    val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java).let { parseCodegenApi(it) }
+
+    if (apiVersionInDevkit.compatible(apiVersionFromDownloadedJar)) {
+      if (apiVersionInDevkit.patch == apiVersionFromDownloadedJar.patch)
+        return true
+      val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions")
+      val message = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions.content",
+                                                       apiVersionInDevkit,
+                                                       apiVersionFromDownloadedJar)
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(groupId)
+        .createNotification(title = groupId, message, NotificationType.WARNING)
+        .notify(project)
       return true
     }
 
     val message =
-      if (apiVersionFromDownloadedJar == CodegenApiVersion.UNKNOWN_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
+      if (apiVersionInDevkit > apiVersionFromDownloadedJar) {
         DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.newer",
                                            apiVersionInDevkit,
                                            apiVersionFromDownloadedJar)

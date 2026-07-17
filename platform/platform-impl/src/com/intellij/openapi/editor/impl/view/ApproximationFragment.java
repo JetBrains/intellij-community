@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +56,11 @@ final class ApproximationFragment implements LineFragment {
   }
 
   @Override
-  public int @NotNull [] xToVisualColumn(float startX, float x) {
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
     float relX = x - startX;
-    int column = relX < myWidth / 2 ? 0 : myColumnCount;
-    return new int[] {column, relX <= visualColumnToX(startX, column) ? 0 : 1};
+    int column = (relX < myWidth / 2) ? 0 : myColumnCount;
+    boolean leansRight = relX > visualColumnToX(startX, column);
+    return new VisualColumn(column, leansRight);
   }
 
   @Override

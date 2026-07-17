@@ -252,7 +252,6 @@ public abstract class JavaValueModifier extends XValueModifier {
                                                                                                      IncompatibleThreadStateException {
                   if (!indicator.isCanceled()) {
                     setValueRunnable.setValue(evaluationContext, newValue);
-                    //node.calcValue();
                   }
                 }
 

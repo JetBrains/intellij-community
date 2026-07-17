@@ -86,9 +86,6 @@
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="shift control F7"/>
   </action>
-  <action id="Debugger.ResumeThread">
-    <keyboard-shortcut first-keystroke="F5"/>
-  </action>
   <action id="EditorCompleteStatement">
     <keyboard-shortcut first-keystroke="shift control ENTER"/>
     <keyboard-shortcut first-keystroke="control SEMICOLON"/>

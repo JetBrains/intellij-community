@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
@@ -28,6 +30,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,13 +144,17 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
       }
 
       JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      PsiElement replacement = javaCodeStyleManager.shortenClassReferences(
+        commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString()));
       if (fieldTemplate != null) {
         PsiField field = (PsiField)aClass.add(fieldTemplate);
         field = (PsiField)javaCodeStyleManager.shortenClassReferences(field);
-        updater.rename(field, names);
+        ModTemplateBuilder builder = updater.templateBuilder();
+        builder.field(field.getNameIdentifier(), "field", new ConstantNode(names.getFirst()).withLookupStrings(names));
+        for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field, replacement)) {
+          builder.field(reference, "field", "field", false);
+        }
       }
-      javaCodeStyleManager.shortenClassReferences(
-        commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString()));
     }
 
     private static boolean needsQuote(PsiExpression expr) {

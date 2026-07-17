@@ -13,6 +13,8 @@ import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import kotlin.io.path.absolute
 
 @TestApplication
 class MavenSettingsCollectorTest {
@@ -84,7 +86,7 @@ class MavenSettingsCollectorTest {
             <version>17</version>
           </provides>
           <configuration>
-            <jdkHome>/tmp/jdk</jdkHome>
+            <jdkHome>${Path.of("tmp", "jdk").absolute()}</jdkHome>
           </configuration>
         </toolchain>
       </toolchains>

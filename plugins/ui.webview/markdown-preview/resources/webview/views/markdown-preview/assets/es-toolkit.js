@@ -1,35 +1,22 @@
-//#region node_modules/es-toolkit/dist/predicate/isLength.mjs
 function isLength(value) {
 	return Number.isSafeInteger(value) && value >= 0;
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isArrayLike.mjs
 function isArrayLike(value) {
 	return value != null && typeof value !== "function" && isLength(value.length);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/_internal/isUnsafeProperty.mjs
 function isUnsafeProperty(key) {
 	return key === "__proto__";
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/predicate/isPrimitive.mjs
 function isPrimitive(value) {
 	return value == null || typeof value !== "object" && typeof value !== "function";
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/_internal/getSymbols.mjs
 function getSymbols(object) {
 	return Object.getOwnPropertySymbols(object).filter((symbol) => Object.prototype.propertyIsEnumerable.call(object, symbol));
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/_internal/getTag.mjs
 function getTag(value) {
 	if (value == null) return value === void 0 ? "[object Undefined]" : "[object Null]";
 	return Object.prototype.toString.call(value);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/_internal/tags.mjs
 var regexpTag = "[object RegExp]";
 var stringTag = "[object String]";
 var numberTag = "[object Number]";
@@ -52,23 +39,15 @@ var int16ArrayTag = "[object Int16Array]";
 var int32ArrayTag = "[object Int32Array]";
 var float32ArrayTag = "[object Float32Array]";
 var float64ArrayTag = "[object Float64Array]";
-//#endregion
-//#region node_modules/es-toolkit/dist/_internal/globalThis.mjs
 var globalThis_ = typeof globalThis === "object" && globalThis || typeof window === "object" && window || typeof self === "object" && self || typeof global === "object" && global || (function() {
 	return this;
 })() || Function("return this")();
-//#endregion
-//#region node_modules/es-toolkit/dist/predicate/isBuffer.mjs
 function isBuffer(x) {
 	return typeof globalThis_.Buffer !== "undefined" && globalThis_.Buffer.isBuffer(x);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/predicate/isTypedArray.mjs
 function isTypedArray$1(x) {
 	return ArrayBuffer.isView(x) && !(x instanceof DataView);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/object/cloneDeepWith.mjs
 function cloneDeepWith$1(obj, cloneValue) {
 	return cloneDeepWithImpl(obj, void 0, obj, /* @__PURE__ */ new Map(), cloneValue);
 }
@@ -201,8 +180,6 @@ function isCloneableObject$1(object) {
 		default: return false;
 	}
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/object/cloneDeepWith.mjs
 function cloneDeepWith(obj, customizer) {
 	return cloneDeepWith$1(obj, (value, key, object, stack) => {
 		const cloned = customizer?.(value, key, object, stack);
@@ -233,33 +210,21 @@ function cloneDeepWith(obj, customizer) {
 		}
 	});
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/object/cloneDeep.mjs
 function cloneDeep(obj) {
 	return cloneDeepWith(obj);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isArguments.mjs
 function isArguments(value) {
 	return value !== null && typeof value === "object" && getTag(value) === "[object Arguments]";
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isObjectLike.mjs
 function isObjectLike(value) {
 	return typeof value === "object" && value !== null;
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isArrayLikeObject.mjs
 function isArrayLikeObject(value) {
 	return isObjectLike(value) && isArrayLike(value);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isArray.mjs
 function isArray(value) {
 	return Array.isArray(value);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/function/memoize.mjs
 function memoize(func, resolver) {
 	if (typeof func !== "function" || resolver != null && typeof resolver !== "function") throw new TypeError("Expected a function");
 	const memoized = function(...args) {
@@ -274,22 +239,14 @@ function memoize(func, resolver) {
 	return memoized;
 }
 memoize.Cache = Map;
-//#endregion
-//#region node_modules/es-toolkit/dist/function/noop.mjs
 function noop() {}
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/_internal/isPrototype.mjs
 function isPrototype(value) {
 	const constructor = value?.constructor;
 	return value === (typeof constructor === "function" ? constructor.prototype : Object.prototype);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isTypedArray.mjs
 function isTypedArray(x) {
 	return isTypedArray$1(x);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/object/clone.mjs
 function clone$1(obj) {
 	if (isPrimitive(obj)) return obj;
 	const tag = getTag(obj);
@@ -410,8 +367,6 @@ function copyPrototype(target, source) {
 		if (typeof source.constructor === "function") Object.setPrototypeOf(target, proto);
 	}
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isPlainObject.mjs
 function isPlainObject(object) {
 	if (typeof object !== "object") return false;
 	if (object == null) return false;
@@ -426,8 +381,6 @@ function isPlainObject(object) {
 	while (Object.getPrototypeOf(proto) !== null) proto = Object.getPrototypeOf(proto);
 	return Object.getPrototypeOf(object) === proto;
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/object/clone.mjs
 function clone(obj) {
 	if (isPrimitive(obj)) return obj;
 	if (Array.isArray(obj) || isTypedArray$1(obj) || obj instanceof ArrayBuffer || typeof SharedArrayBuffer !== "undefined" && obj instanceof SharedArrayBuffer) return obj.slice(0);
@@ -456,8 +409,6 @@ function clone(obj) {
 	if (typeof obj === "object") return Object.assign(Object.create(prototype), obj);
 	return obj;
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/object/mergeWith.mjs
 function mergeWith(object, ...otherArgs) {
 	const sources = otherArgs.slice(0, -1);
 	const merge = otherArgs[otherArgs.length - 1];
@@ -509,13 +460,9 @@ function mergeWithDeep(target, source, merge, stack) {
 	}
 	return target;
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/object/merge.mjs
 function merge(object, ...sources) {
 	return mergeWith(object, ...sources, noop);
 }
-//#endregion
-//#region node_modules/es-toolkit/dist/compat/predicate/isEmpty.mjs
 function isEmpty(value) {
 	if (value == null) return true;
 	if (isArrayLike(value)) {
@@ -530,5 +477,4 @@ function isEmpty(value) {
 	}
 	return true;
 }
-//#endregion
 export { memoize as i, merge as n, clone$1 as r, isEmpty as t };

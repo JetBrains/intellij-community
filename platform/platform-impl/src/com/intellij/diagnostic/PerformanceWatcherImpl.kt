@@ -119,6 +119,9 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   private val edtUnresponsiveIntervalLazy: RegistryValue by lazy {
     RegistryManager.getInstance().get("performance.watcher.unresponsive.interval.ms")
   }
+  private val forceEdtUnresponsiveIntervalLazy: RegistryValue by lazy {
+    RegistryManager.getInstance().get("performance.watcher.unresponsive.interval.force.value")
+  }
   private val pooledUnresponsiveIntervalLazy: RegistryValue by lazy {
     RegistryManager.getInstance().get("performance.watcher.pooled.unresponsive.interval.ms")
   }
@@ -303,7 +306,11 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   override val unresponsiveInterval: Int
     get() {
       val value = edtUnresponsiveIntervalLazy.asInteger()
-      return if (value <= 0) 0 else value.coerceIn(500, 20000)
+      return when {
+          value <= 0 -> 0
+          forceEdtUnresponsiveIntervalLazy.asBoolean() -> value
+          else -> value.coerceIn(500, 20000)
+      }
     }
 
   private val pooledUnresponsiveInterval: Int

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonLanguage
@@ -39,6 +40,7 @@ fun isPythonFile(
 ): Boolean {
   if (isPythonSourceFile(file)) return true
   if (!notebookSupported) return false
+  if (!Registry.`is`("jupyter.lsp.enabled", false)) return false
   return isPythonNotebookLanguage(file, resolvers)
 }
 

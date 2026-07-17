@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
@@ -79,6 +80,10 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
     myHintData = new HintData();
+
+    if (parentNode != null) {
+      parentNode.add(this);
+    }
   }
 
   boolean isAlwaysVisible() {
@@ -143,6 +148,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myTitle = title;
   }
 
+  public @BuildEventsNls.Hint @Nullable String getHint() {
+    assert myIsCorrectThread.get();
+    return myHint;
+  }
+
   public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
     assert myIsCorrectThread.get();
     myHint = hint;
@@ -204,9 +214,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   public ExecutionNode setEndTime(long endTime) {
     return setEndTime(endTime, true);
   }
-  @Nullable
+
   @ApiStatus.Internal
-  ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
+  @Nullable ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     this.endTime = endTime;
     return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
@@ -288,18 +298,18 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   public boolean hasWarnings() {
     return myWarnings.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.WARNING);
   }
 
   public boolean hasInfos() {
     return myInfos.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.INFO);
   }
 
   public boolean isFailed() {
     return isFailed(myResult) ||
            myErrors.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.ERROR);
   }
 
   public @Nullable EventResult getResult() {
@@ -336,18 +346,23 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myNavigatable = navigatable;
   }
 
+  public @Nullable Navigatable getNavigatable() {
+    List<Navigatable> navigatables = getNavigatables();
+    return navigatables.size() == 1 ? navigatables.getFirst() : null;
+  }
+
   public @NotNull List<Navigatable> getNavigatables() {
-    if (myNavigatable != null) {
+    if (myNavigatable != null && myNavigatable != NonNavigatable.INSTANCE) {
       return Collections.singletonList(myNavigatable);
     }
     if (myResult == null) return Collections.emptyList();
 
-    if (myResult instanceof FailureResult) {
-      List<Navigatable> result = new SmartList<>();
-      for (Failure failure : ((FailureResult)myResult).getFailures()) {
-        ContainerUtil.addIfNotNull(result, failure.getNavigatable());
+    if (myResult instanceof FailureResult result) {
+      List<Navigatable> navigatables = new SmartList<>();
+      for (Failure failure : result.getFailures()) {
+        ContainerUtil.addIfNotNull(navigatables, failure.getNavigatable());
       }
-      return result;
+      return navigatables;
     }
     return Collections.emptyList();
   }
@@ -387,11 +402,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   Icon getCurrentIcon() {
-    if (myPreferredIconValue != null) {
-      return myPreferredIconValue.getValue();
+    var preferredIconValue = myPreferredIconValue;
+    if (preferredIconValue != null) {
+      return preferredIconValue.getValue();
     }
-    else if (myResult instanceof MessageEventResult) {
-      return getIcon(((MessageEventResult)myResult).getKind());
+    else if (myResult instanceof MessageEventResult result) {
+      return getIcon(result.getKind());
     }
     else {
       return isRunning() ? NODE_ICON_RUNNING :

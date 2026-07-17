@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -48,7 +48,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     val patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
 
-    val matchingComponents = PyCaptureContext.getCaptureType(this, context).components.filter { captureType: PyType? ->
+    val matchingComponents = PyCaptureContext.getCaptureType(this, context).compositeComponents.filter { captureType: PyType? ->
       val mappingType = captureType.convertToType("typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
     }
@@ -70,7 +70,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     if (sequenceMember !is PyKeyValuePattern) return null
 
-    return PyCaptureContext.getCaptureType(this, context).components
+    return PyCaptureContext.getCaptureType(this, context).compositeComponents
       .map { possibleMapping -> possibleMapping.getValueType(sequenceMember, context) }
       .let { PyUnionType.union(it) }
   }

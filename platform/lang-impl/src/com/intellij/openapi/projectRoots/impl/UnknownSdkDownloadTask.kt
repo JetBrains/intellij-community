@@ -16,13 +16,11 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import java.util.function.Function
 
 private val LOG = logger<UnknownSdkDownloadTask>()
 
-@ApiStatus.Internal
 internal data class UnknownSdkDownloadTask
 @JvmOverloads constructor(
   private val info: UnknownSdk,

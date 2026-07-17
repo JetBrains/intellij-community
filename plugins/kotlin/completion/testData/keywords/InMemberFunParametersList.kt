@@ -10,4 +10,5 @@ class TestSample() {
 // EXIST: vararg
 // EXIST: noinline
 // EXIST: crossinline
+// EXIST: context
 // NOTHING_ELSE

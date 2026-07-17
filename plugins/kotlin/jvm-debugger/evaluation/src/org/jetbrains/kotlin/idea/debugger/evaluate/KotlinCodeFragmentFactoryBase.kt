@@ -47,7 +47,7 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
         val convertedFragment = try {
             val converter = JavaToKotlinConverter(project, javaExpression?.module, ConverterSettings.defaultSettings)
             val convertedExpression = ActionUtil.underModalProgress(project, KotlinDebuggerEvaluationBundle.message("progress.title.converting.java.expression.to.kotlin")) {
-                converter.elementsToKotlin(listOfNotNull(javaExpression), null)
+                converter.elementsToKotlin(listOfNotNull(javaExpression))
             }
             val newText = convertedExpression.results.singleOrNull()?.text
             val newImports = importList?.text

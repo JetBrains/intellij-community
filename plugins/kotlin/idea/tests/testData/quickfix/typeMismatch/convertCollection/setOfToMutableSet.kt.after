@@ -1,5 +1,5 @@
 // "Replace 'setOf(…)' with 'mutableSetOf(…)'" "true"
-// K2_ERROR: Return type mismatch: expected 'MutableSet<String>', actual 'Set<String>'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun bar(): MutableSet<String> {
     return mutableSetOf("a", "b")

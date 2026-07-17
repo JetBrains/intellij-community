@@ -1,4 +1,3 @@
-//#region node_modules/hast-util-is-element/lib/index.js
 /**
 * Generate a check from a test.
 *
@@ -95,5 +94,4 @@ function element(element) {
 function looksLikeAnElement(value) {
 	return value !== null && typeof value === "object" && "type" in value && "tagName" in value;
 }
-//#endregion
 export { convertElement as t };

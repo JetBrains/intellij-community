@@ -92,12 +92,13 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
-    return getPresentableText(includeDefaultValue, context, { it.isAnyOrUnknown })
+    return getPresentableText(includeDefaultValue, context, emptySet()) { it.isAnyOrUnknown }
   }
 
   override fun getPresentableText(
     includeDefaultValue: Boolean,
     context: TypeEvalContext?,
+    typeRendererFeatures: Set<PyTypeRendererFeature>,
     typeFilter: (PyType?) -> Boolean,
   ): String {
     if (parameter !is PyNamedParameter && parameter != null) {
@@ -111,7 +112,8 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
         val argumentType = getArgumentType(context)
         if (!typeFilter(argumentType)) {
           append(": ")
-          append(PythonDocumentationProvider.getTypeName(argumentType, context))
+          append(if (typeRendererFeatures.isEmpty()) PythonDocumentationProvider.getTypeName(argumentType, context)
+                 else PythonDocumentationProvider.getTypeName(argumentType, context, *typeRendererFeatures.toTypedArray()))
           renderedAsTyped = true
         }
       }

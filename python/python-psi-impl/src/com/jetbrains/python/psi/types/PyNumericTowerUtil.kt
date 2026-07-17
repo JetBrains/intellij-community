@@ -18,7 +18,16 @@ object PyNumericTowerUtil {
   fun enrich(type: PyType?): PyType? {
     PyAnyType.validate(type)
     if (!isEnabled) return type
-    return type.toStream().map(::expand).collect(PyTypeUtil.toUnion(type))
+    if (type is PyCompositeType) {
+      val mappedMembers = type.members.map { typeArg -> expand(typeArg) }
+      return when (type) {
+        is PyUnionType -> PyUnionType.union(mappedMembers)
+        is PyIntersectionType -> PyIntersectionType.intersection(mappedMembers)
+        is PyUnsafeUnionType -> PyUnsafeUnionType.unsafeUnion(mappedMembers)
+        else -> throw IllegalStateException("Unknown type: ${type.name}")
+      }
+    }
+    return expand(type)
   }
 
 

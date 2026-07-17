@@ -1,6 +1,9 @@
 - name: lib/intellij.libraries.testng.jar
   contentModules:
   - name: intellij.libraries.testng
+- name: lib/modules/intellij.testng.langInjection.jar
+  contentModules:
+  - name: intellij.testng.langInjection
 - name: lib/testng-plugin.jar
   modules:
   - name: intellij.testng

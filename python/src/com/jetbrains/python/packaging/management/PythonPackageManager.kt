@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
@@ -38,13 +39,14 @@ import com.jetbrains.python.packaging.common.loadInstalledPackagesMetadata
 import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyDependenciesFileProvider
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
 import kotlinx.coroutines.CompletableDeferred
@@ -86,10 +88,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @get:ApiStatus.Internal
   protected abstract val dependenciesFilesRelativePaths: List<Path>
-
-  val isInstalledPackagesLoaded: Boolean
-    @ApiStatus.Internal
-    get() = installedPackages != null
 
   private val isInited = AtomicBoolean(false)
   private val packageReloadMutex = Mutex()
@@ -396,14 +394,15 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun getRootDependenciesFile(): PyDependenciesFile? {
-    val baseDir = sdk.associatedModuleDir ?: return null
-    val persistedRelative = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.requiredTxtPath?.toString()
-    val virtualFile = if (persistedRelative != null) {
-      baseDir.findFileByRelativePath(persistedRelative)
+    val virtualFile = if (sdk.pySdkAdditionalData.requiredTxtPath != null) {
+      // An explicitly stored path wins over (and does not fall back to) the manager-specific defaults.
+      PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
     }
     else {
-      dependenciesFilesRelativePaths.firstNotNullOfOrNull { path ->
-        baseDir.findFileByRelativePath(path.toString())
+      sdk.associatedModuleDir?.let { baseDir ->
+        dependenciesFilesRelativePaths.firstNotNullOfOrNull { path ->
+          baseDir.findFileByRelativePath(FileUtil.toSystemIndependentName(path.toString()))
+        }
       }
     }
     return virtualFile?.let { PyDependenciesFileProvider.resolve(it) }
@@ -578,6 +577,20 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
   listDeclaredPackagesCached()
 }?.getOrNull()
+
+/**
+ * Lists installed packages, awaiting initial loading if necessary.
+ *
+ * Use this from non-suspending background contexts (e.g. inspection visitors) instead of
+ * [PythonPackageManager.listInstalledPackagesSnapshot] when freshness matters — the snapshot
+ * may be stale or empty before the initial reload finishes, which causes false-positive
+ * "requirement is not satisfied" diagnostics right after PPTW package operations
+ * (PY-89774).
+ */
+@RequiresBackgroundThread
+internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
+  listInstalledPackages()
+}
 
 @ApiStatus.Internal
 @JvmInline

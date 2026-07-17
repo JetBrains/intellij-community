@@ -572,7 +572,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   findDiagramPanel(cb)?.showToolWindowBars = cb.isSelected
                 }
               }
-              if (ExperimentalUI.isNewUI() && ResizeStripeManager.enabled()) {
+              if (ExperimentalUI.isNewUI()) {
                 row {
                   checkBox(cdShowToolWindowNames).onApply {
                     ResizeStripeManager.applyShowNames()

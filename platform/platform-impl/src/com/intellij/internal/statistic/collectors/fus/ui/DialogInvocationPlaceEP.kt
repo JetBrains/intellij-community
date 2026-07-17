@@ -3,12 +3,10 @@ package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension point to register an invocation place ID for a dialog to record in feature usage statistics.
  */
-@ApiStatus.Internal
 internal class DialogInvocationPlaceEP {
   @Attribute("id")
   @RequiredElement

@@ -89,6 +89,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <internalFileTemplate name="Markdown File"/>
+    <internalFileTemplate name="README"/>
+    <internalFileTemplate name="AGENTS"/>
+    <internalFileTemplate name="SKILL"/>
+
     <typedHandler implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableEnterHandler"/>
@@ -101,33 +106,6 @@
                                implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
                                id="MarkdownTableInlayProvider"/>
     <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectTableFormatting"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrect.table.formatting.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownNoTableBorders"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.no.table.borders.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownTablePipeInCodeSpan"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.table.pipe.in.code.span.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownTablePipeInCodeSpanInspection"/>
 
     <intentionAction>
       <language>Markdown</language>
@@ -202,7 +180,6 @@
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
-    <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridCustomizer"/>
     <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridEditorFactoryListener"/>
@@ -247,32 +224,15 @@
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownUnresolvedFileReference"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.unresolved.file.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownUnresolvedFileReferenceInspection"/>
-
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
-
-    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderTextIndex"/>
-    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownStubElementTypes"/>
-    <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
 
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan$Manipulator"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.test.TestPsiReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.AutoLinkWebReferenceContributor"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceContributor"/>
     <referencesSearch implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickReferenceSearcher"/>
     <useScopeEnlarger implementation="org.intellij.plugins.markdown.lang.references.backtick.MarkdownReferenceUseScopeEnlarger"/>
     <usageViewElementsListener implementation="org.intellij.plugins.markdown.lang.references.backtick.BacktickUsageViewElementsListener"/>
@@ -303,14 +263,6 @@
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
-    <localInspection language="Markdown"
-                     shortName="MarkdownIncorrectlyNumberedListItem"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.incorrectly.numbered.list.item.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.lists.inspections.IncorrectListNumberingInspection"/>
-
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
@@ -340,22 +292,6 @@
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownOutdatedTableOfContents"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.outdated.table.of.contents.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
-
-    <localInspection language="Markdown"
-                     shortName="MarkdownLinkDestinationWithSpaces"
-                     bundle="messages.MarkdownBundle"
-                     key="markdown.link.destination.with.spaces.inspection.name"
-                     groupKey="markdown.inspection.group.ruby.name"
-                     enabledByDefault="true"
-                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection"/>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
@@ -457,6 +393,12 @@
   </extensions>
 
   <actions>
+    <action id="Markdown.NewFile"
+            class="org.intellij.plugins.markdown.fileActions.MarkdownCreateFileAction"
+            icon="AllIcons.FileTypes.Markdown">
+      <add-to-group group-id="NewGroup"/>
+    </action>
+
     <group id="Markdown.TableActions" compact="true" class="org.intellij.plugins.markdown.editor.tables.actions.TableActionsGroup">
       <group id="Markdown.TableColumnActions" compact="true">
         <action id="Markdown.Table.SwapColumns.SwapWithLeftColumn"

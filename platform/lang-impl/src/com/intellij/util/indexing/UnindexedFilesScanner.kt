@@ -602,7 +602,7 @@ class UnindexedFilesScanner(
                 }
               }
             }
-            catch (e: ProcessCanceledException) {
+            catch (e: CancellationException) {
               files.addFirst(file)
               throw e
             }

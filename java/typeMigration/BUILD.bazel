@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.java.typeMigration` start
+jps_test(
+    name = "typeMigration-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":typeMigration-tests_test_lib"],
+)
+### skip generation section `test intellij.java.typeMigration.tests`
 
+### auto-generated section `build intellij.java.typeMigration` start
 jvm_library(
     name = "typeMigration",
     srcs = glob(
@@ -100,7 +107,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.typeMigration` end
 
 ### auto-generated section `build intellij.java.typeMigration.tests` start
-
 jvm_library(
     name = "typeMigration-tests",
     srcs = glob(
@@ -154,12 +160,22 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch_test_lib",
         "//platform/structuralsearch/plugin",
         "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//java/structuralsearch-java:structuralSearch",
+        "//java/structuralsearch-java:structuralSearch_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//java/java-syntax:syntax",
         "//java/java-syntax:syntax_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
         "//java/testFramework",
@@ -180,6 +196,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],
@@ -194,11 +212,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.typeMigration.tests` end
-
-### auto-generated section `test intellij.java.typeMigration.tests` start
-
-jps_test(
-    name = "typeMigration-tests_test",
-    runtime_deps = [":typeMigration-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.typeMigration.tests` end

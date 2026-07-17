@@ -107,7 +107,7 @@ import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.unifyReceiver
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
-import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
 import com.jetbrains.python.psi.types.isUnknown
@@ -505,6 +505,9 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (info == null || info.attributeKind != PyStdlibTypeProvider.EnumAttributeKind.MEMBER) return
 
         val expected = getEnumValueType(scopeOwner, myTypeEvalContext)
+        // `assignedValueType` is the member value type produced by the enum's metaclass/constructor. For enums that
+        // transform the declaration (e.g. Django's `ChoicesType.__new__` drops a trailing label), the type provider
+        // already stripped the extra elements, so a plain match here is correct for both stdlib and framework enums.
         val actual = info.assignedValueType
         if (!match(expected, actual, myTypeEvalContext)) {
           registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual,
@@ -851,7 +854,8 @@ open class PyTypeCheckerInspection : PyInspection() {
 
       // we use `PyTypingTypeProvider.getType` of the annotation directly, instead of `node.getType`,
       //  because otherwise `PyTypingTypeProvider` will inject the type of `None`
-      val expectedRef = PyTypingTypeProvider.getType(node.annotation!!.value!!, myTypeEvalContext)
+      val annotationValue = node.annotation?.value ?: return
+      val expectedRef = PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext)
       if (expectedRef == null) return
       val expected = expectedRef.get()
       val actual = tryPromotingType(defaultValue, expected)
@@ -925,7 +929,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         // (a member that is not callable at all is reported by PyCallingNonCallableInspection). This differs from an
         // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
         // TODO: intersection type
-        for (component in PyCallExpressionHelper.getCalleeType(callSite, resolveContext).components) {
+        for (component in PyCallExpressionHelper.getCalleeType(callSite, resolveContext).compositeComponents) {
           val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }.toList()
           if (reportIfNoneMatches(callSite, argumentsMappings)) break
         }

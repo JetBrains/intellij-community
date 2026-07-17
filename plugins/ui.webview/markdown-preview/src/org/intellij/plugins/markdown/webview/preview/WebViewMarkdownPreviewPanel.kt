@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
@@ -24,6 +25,8 @@ import com.intellij.ui.webview.api.WebViewIconSet
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.api.createWebViewPanel
+import com.intellij.ui.webview.impl.traceWebViewPerf
+import com.intellij.ui.webview.impl.traceWebViewPerfSince
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +46,7 @@ import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.time.TimeSource
 
 private val LOG = logger<WebViewMarkdownPreviewPanel>()
 
@@ -75,6 +79,8 @@ class WebViewMarkdownPreviewPanel(
   @Volatile
   private var nextContentVersion: Int = 0
 
+  private val panelCreatedAt = TimeSource.Monotonic.markNow()
+
   init {
     ApplicationManager.getApplication().messageBus.connect(coroutineScope.asDisposable()).subscribe(
       MarkdownPreviewSettings.ChangeListener.TOPIC,
@@ -102,6 +108,7 @@ class WebViewMarkdownPreviewPanel(
     )
     lastUpdate = update
     lastCommandSession = MarkdownRunCommandSession.EMPTY
+    LOG.trace { "markdown.webview.setMarkdown - ${update.diagnosticDetails()}" }
     sendContentUpdate(update)
   }
 
@@ -163,6 +170,11 @@ class WebViewMarkdownPreviewPanel(
     return object : MarkdownPreviewHostApi {
       override suspend fun pageReady() {
         pageReady = true
+        LOG.traceWebViewPerfSince(
+          "markdown.webview.pageReady.sincePanelCreate",
+          panelCreatedAt,
+          markdownDiagnosticDetails(lastUpdate),
+        )
         sendContentUpdate()
       }
 
@@ -314,14 +326,16 @@ class WebViewMarkdownPreviewPanel(
     val actualUpdate = update ?: return
     coroutineScope.launch {
       try {
-        panel.interop.callable(MarkdownPreviewPageApi.ID).contentChanged(
-          MarkdownContentChangedParams(
-            markdown = actualUpdate.markdown,
-            scrollLine = actualUpdate.initialScrollLineNumber,
-            settings = currentPreviewSettings(),
-            contentVersion = actualUpdate.contentVersion,
+        LOG.traceWebViewPerf("markdown.webview.contentChanged.call", actualUpdate.diagnosticDetails()) {
+          panel.interop.callable(MarkdownPreviewPageApi.ID).contentChanged(
+            MarkdownContentChangedParams(
+              markdown = actualUpdate.markdown,
+              scrollLine = actualUpdate.initialScrollLineNumber,
+              settings = currentPreviewSettings(),
+              contentVersion = actualUpdate.contentVersion,
+            )
           )
-        )
+        }
       }
       catch (e: CancellationException) {
         throw e
@@ -367,7 +381,12 @@ class WebViewMarkdownPreviewPanel(
     val initialScrollLineNumber: Int,
     val document: VirtualFile?,
     val contentVersion: Int,
-  )
+  ) {
+    fun diagnosticDetails(): String {
+      return "file=${document?.name.orEmpty()}, contentVersion=$contentVersion, markdownChars=${markdown.length}, " +
+             "markdownLines=${markdownLineCount(markdown)}, scrollLine=$initialScrollLineNumber"
+    }
+  }
 
   @Service(Service.Level.APP)
   private class ScopeHolder(
@@ -386,6 +405,19 @@ class WebViewMarkdownPreviewPanel(
         if (text[index] == '\n') line++
       }
       return line
+    }
+
+    private fun markdownDiagnosticDetails(update: MarkdownUpdate?): String {
+      return update?.diagnosticDetails() ?: "file=, contentVersion=none, markdownChars=0, markdownLines=0, scrollLine=none"
+    }
+
+    private fun markdownLineCount(text: String): Int {
+      if (text.isEmpty()) return 0
+      var lines = 1
+      for (ch in text) {
+        if (ch == '\n') lines++
+      }
+      return lines
     }
 
     private fun previewFontSizeOptions(vararg extraFontSizes: Int): List<Int> {

@@ -330,7 +330,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   @RequiresBackgroundThread
   private void reportErrorsToWolf(boolean hasErrors) {
     ThreadingAssertions.assertBackgroundThread();
-    if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    if (!getFile().getViewProvider().correspondsToRealFile()) return; // e.g. errors in evaluate expression
     Project project = getFile().getProject();
     if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries
     VirtualFile file = getFile().getVirtualFile();

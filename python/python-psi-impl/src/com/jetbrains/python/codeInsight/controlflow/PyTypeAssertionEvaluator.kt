@@ -159,10 +159,47 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       pushAssertion(lhs, myPositive) { getInstance(lhs).noneType }
       return
     }
+
+    // narrow `x` itself on `type(x) is C` / `x.__class__ is C` (and the symmetric operand order).
+    val lhsClassSubject = getRuntimeClassSubject(lhs)
+    if (lhsClassSubject != null) {
+      pushRuntimeClassAssertion(lhsClassSubject, rhs)
+      return
+    }
+    val rhsClassSubject = getRuntimeClassSubject(rhs)
+    if (rhsClassSubject != null) {
+      pushRuntimeClassAssertion(rhsClassSubject, lhs)
+      return
+    }
+
     val positive = myPositive
     pushAssertion(lhs, myPositive) { context ->
       val type: PyType? = getLiteralType(rhs, context)
       if (positive || type is PyLiteralType) type else null
+    }
+  }
+
+  /**
+   * If [expr] denotes the runtime class of a value — `type(x)` or `x.__class__` — returns that value (`x`).
+   * Comparing such an expression against a class object lets us narrow the value itself (PY-87917).
+   */
+  private fun getRuntimeClassSubject(expr: PyExpression): PyExpression? {
+    if (expr is PyCallExpression && expr.isCalleeText(PyNames.TYPE)) {
+      val args = expr.arguments
+      if (args.size == 1) return args[0]
+    }
+    if (expr is PyReferenceExpression && expr.isQualified && PyNames.__CLASS__ == expr.referencedName) {
+      return expr.qualifier
+    }
+    return null
+  }
+
+  private fun pushRuntimeClassAssertion(subject: PyExpression, classExpr: PyExpression) {
+    val positive = myPositive
+    pushAssertion(subject, myPositive) { context ->
+      // Only the positive edge is sound: `type(x) is not C` still permits subclasses of `C`,
+      // so nothing useful can be excluded from `x` on the negative edge.
+      if (positive) classObjectToInstanceType(context.getType(classExpr)) else null
     }
   }
 
@@ -314,6 +351,22 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
         return resolvedElements.singleOrNull() is PyClass
       }
       return false
+    }
+
+    /**
+     * Converts a class-object type (`type` of some class) into the corresponding instance type, mapping over unions.
+     * Returns `null` if [type] is not a class object (e.g. an instance type such as `None`),
+     * so that comparisons like `x.__class__ is None` do not narrow `x`.
+     */
+    private fun classObjectToInstanceType(type: PyType?): PyType? {
+      return when (type) {
+        is PyUnionType -> {
+          val members = type.members.map { classObjectToInstanceType(it) }
+          if (members.any { it == null }) null else PyUnionType.union(members)
+        }
+        is PyInstantiableType<*> -> if (type.isDefinition) type.toInstance() else null
+        else -> null
+      }
     }
 
     private fun getLiteralType(element: PyExpression, context: TypeEvalContext): PyType? {

@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
@@ -52,7 +50,9 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.EnumMap
 import java.util.concurrent.CancellationException
+import java.util.zip.ZipInputStream
 import kotlin.coroutines.CoroutineContext
+import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -102,8 +102,8 @@ class ApplicationStoreTest {
     val streamProvider = MyStreamProvider()
     val map = HashMap<String, String>()
     val fileSpec = "new.xml"
-    map.put(fileSpec, "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
-    streamProvider.data.put(RoamingType.DEFAULT, map)
+    map[fileSpec] = "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>"
+    streamProvider.data[RoamingType.DEFAULT] = map
 
     val storageManager = componentStore.storageManager
     storageManager.removeStreamProvider(MyStreamProvider::class.java)
@@ -184,24 +184,28 @@ class ApplicationStoreTest {
     assertThat(componentPath).isRegularFile()
 
     // additional export path
-    val additionalPath = configDir.resolve("foo")
-    additionalPath.resolve("bar.icls").createParentDirectories().writeText("")
-    val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""),
-                         ExportableItem(FileSpec("foo", "foo", true), "")), exportedData, mapOf(), storageManager)
+    val additionalPath = configDir.resolve("foo").createDirectories()
+    additionalPath.resolve("bar.icls").writeText("")
 
-    val relativePaths = getPaths(exportedData.toInputStream())
+    val exportedData = BufferExposingByteArrayOutputStream()
+    exportSettings(
+      setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""), ExportableItem(FileSpec("foo", "foo", true), "")),
+      exportedData, exportableThirdPartyFiles = mapOf(), storageManager
+    )
+
+    val relativePaths = ZipInputStream(exportedData.toInputStream()).use { zip ->
+      generateSequence { zip.nextEntry }.map { it.name.trimEnd('/') }.toList()
+    }
     assertThat(relativePaths).containsOnly("a.xml", "foo", "foo/bar.icls", "IntelliJ IDEA Global Settings")
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
     ApplicationManager.getApplication().registerServiceInstance(A::class.java, component)
     try {
-      assertThat(getExportableItemsFromLocalStorage(getExportableComponentsMap(false, storageManager), storageManager))
-        .containsOnly(
-          componentPath.to(listOf(LocalExportableItem(componentPath, ""))),
-          additionalPath.to(listOf(LocalExportableItem(additionalPath, " (schemes)")))
-        )
+      assertThat(getExportableItemsFromLocalStorage(getExportableComponentsMap(false, storageManager), storageManager)).containsOnly(
+        componentPath.to(listOf(LocalExportableItem(componentPath, ""))),
+        additionalPath.to(listOf(LocalExportableItem(additionalPath, " (schemes)")))
+      )
     }
     finally {
       (ApplicationManager.getApplication() as ComponentManagerEx).unregisterComponent(A::class.java)
@@ -212,7 +216,8 @@ class ApplicationStoreTest {
   fun `import deprecated settings`() {
     @State(name = "Comp", storages = [
       Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
-      Storage("new.xml", roamingType = RoamingType.PER_OS)])
+      Storage("new.xml", roamingType = RoamingType.PER_OS)]
+    )
     class Comp : FooComponent()
 
     val storageManager = componentStore.storageManager
@@ -227,11 +232,7 @@ class ApplicationStoreTest {
     val component = Comp()
     ApplicationManager.getApplication().registerServiceInstance(Comp::class.java, component)
     try {
-      val allItems = getExportableComponentsMap(
-        isComputePresentableNames = false,
-        storageManager = storageManager,
-        withDeprecated = true,
-      )
+      val allItems = getExportableComponentsMap(isComputePresentableNames = false, storageManager, withDeprecated = true)
       assertThat(allItems).containsKeys(
         fileSpec("old.xml"),
         fileSpec("$os/old.xml"),
@@ -239,9 +240,7 @@ class ApplicationStoreTest {
         fileSpec("$os/new.xml")
       )
 
-      val nonDeprecatedItems = getExportableComponentsMap(isComputePresentableNames = false,
-                                                          storageManager = storageManager,
-                                                          withDeprecated = false)
+      val nonDeprecatedItems = getExportableComponentsMap(isComputePresentableNames = false, storageManager, withDeprecated = false)
       assertThat(nonDeprecatedItems).containsKeys(fileSpec("$os/new.xml"))
       assertThat(nonDeprecatedItems).doesNotContainKeys(
         fileSpec("old.xml"),
@@ -334,7 +333,7 @@ class ApplicationStoreTest {
   }
 
   @Test
-  fun `parent scope is used if passed`() = runBlocking<Unit>(Dispatchers.Default) {    // 2. Define the element
+  fun `parent scope is used if passed`() = runBlocking(Dispatchers.Default) {
     writeConfig("a.xml", """<application><component name="A" foo="old" deprecated="old"/></application>""")
     testAppConfig.refreshVfs()
 
@@ -352,8 +351,7 @@ class ApplicationStoreTest {
         }
       }
     }
-    catch (_: CancellationException) {
-    }
+    catch (_: CancellationException) { }
     assertThat(component.options).isEqualTo(TestState(foo="old"))
     component.loadStateCallback = null
   }
@@ -587,7 +585,7 @@ class ApplicationStoreTest {
     testAppConfig.resolve("a.xml").createParentDirectories().writeText("")
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
     assertEquals("defaultValue", component.foo)
-    
+
     writeConfig("a.xml", createComponentFileContent("initial"))
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
     assertEquals("initial", component.foo)
@@ -621,8 +619,8 @@ class ApplicationStoreTest {
 
   @Test
   fun `check if storage is exportable`() {
-
     clearCacheStore()
+
     @State(name = "RegularComponent", storages = [Storage(value = "somefile.xml")])
     class RegularComponent : SerializablePersistentStateComponent<TestState>(TestState())
 
@@ -638,15 +636,16 @@ class ApplicationStoreTest {
     @State(name = "SpecialStorage", exportable = true, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, exportable = true)])
     class SpecialStorage : SerializablePersistentStateComponent<TestState>(TestState())
 
-
     with(RegularComponent::class.java.getAnnotation(State::class.java)!!) {
       assertTrue(isStorageExportable("Component", this, this.storages[0], false))
       assertTrue(isStorageExportable("Component", this, this.storages[0], true))
     }
+
     with(NonRoamableStorageComponent::class.java.getAnnotation(State::class.java)!!) {
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
     }
+
     with(NonRoamableExportableStorageComponent::class.java.getAnnotation(State::class.java)!!) {
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
       assertTrue(isStorageExportable("Component", this, this.storages[0], true))
@@ -656,12 +655,11 @@ class ApplicationStoreTest {
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
       assertTrue(isStorageExportable("Component", this, this.storages[0], true))
     }
+
     with(SpecialStorage::class.java.getAnnotation(State::class.java)!!) {
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
       assertFalse(isStorageExportable("Component", this, this.storages[0], false))
     }
-
-
   }
 
   private fun createComponentFileContent(fooValue: String, componentName: String = "A"): String {
@@ -687,7 +685,7 @@ class ApplicationStoreTest {
     val data: MutableMap<RoamingType, MutableMap<String, String>> = EnumMap(RoamingType::class.java)
 
     override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, content.decodeToString())
+      getMap(roamingType)[fileSpec] = content.decodeToString()
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }
@@ -719,9 +717,7 @@ class ApplicationStoreTest {
       storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path), Macro(StoragePathMacros.CACHE_FILE, path)))
     }
 
-    override fun error(error: PluginException) {
-      throw error
-    }
+    override fun error(error: PluginException): Unit = throw error
   }
 
   private abstract class FooComponent : PersistentStateComponent<Foo> {
@@ -766,6 +762,6 @@ internal open class A : PersistentStateComponent<TestState> {
 
   override fun loadState(state: TestState) {
     loadStateCallback?.invoke(state)
-    this.options = state
+    options = state
   }
 }

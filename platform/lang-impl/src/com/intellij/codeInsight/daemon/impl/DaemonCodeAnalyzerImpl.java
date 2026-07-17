@@ -125,7 +125,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -1726,5 +1728,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                      boolean canChangeFileSilently,
                                                      @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     HighlightingSessionImpl.runInsideAdditionalHighlightingSession(psiFile, editorColorsScheme, visibleRange, canChangeFileSilently, runnable);
+  }
+
+  @Override
+  @RequiresBackgroundThread
+  public void waitForExternalAnnotators(long timeout, @NotNull TimeUnit unit)
+      throws ExecutionException, InterruptedException, TimeoutException {
+    ExternalAnnotatorManager.getInstance().waitForAllExecuted(timeout, unit);
   }
 }

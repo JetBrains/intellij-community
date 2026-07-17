@@ -44,18 +44,15 @@ internal object HotSwapIncompatibilityReasons {
       presentModifierChanges(oldField.modifiers, currentField.modifiers),
     )
 
-  fun methodSignatureChanged(
-    className: String,
-    oldMethodId: HotSwapMethodId,
-    oldMethodShape: HotSwapMethodShape,
-    currentMethodId: HotSwapMethodId,
-    currentMethodShape: HotSwapMethodShape,
-  ): @NlsSafe String =
-    reasonChangedFromTo(
-      JavaDebuggerBundle.message("hotswap.incompatibility.reason.method.signature.changed.detail"),
-      oldValue = oldMethodId.present(className, oldMethodShape),
-      currentValue = currentMethodId.present(className, currentMethodShape),
-    )
+  fun methodSignatureChanged(className: String, methodId: HotSwapMethodId): @NlsSafe String {
+    val label = if (methodId.isConstructor) {
+      JavaDebuggerBundle.message("hotswap.incompatibility.reason.constructor.signature.changed.detail")
+    }
+    else {
+      JavaDebuggerBundle.message("hotswap.incompatibility.reason.method.signature.changed.detail")
+    }
+    return reasonWithDetail(label, code(methodId.presentName(className), shortenTypeNames = false))
+  }
 
   fun methodReturnTypeChanged(
     className: String,

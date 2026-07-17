@@ -1,4 +1,3 @@
-//#region node_modules/markdown-table/index.js
 /**
 * @typedef {Options} MarkdownTableOptions
 *   Configuration.
@@ -285,5 +284,4 @@ function toAlignment(value) {
 	const code = typeof value === "string" ? value.codePointAt(0) : 0;
 	return code === 67 || code === 99 ? 99 : code === 76 || code === 108 ? 108 : code === 82 || code === 114 ? 114 : 0;
 }
-//#endregion
 export { markdownTable as t };

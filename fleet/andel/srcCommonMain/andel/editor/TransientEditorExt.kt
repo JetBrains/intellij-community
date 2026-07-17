@@ -8,7 +8,7 @@ import andel.text.charSequence
 import andel.text.replaceOperation
 
 fun TransientEditor.moveCaret(absoluteOffset: Long): Unit =
-  moveCarets(listOf(currentCaret.copy(CaretPosition(absoluteOffset))))
+  moveCarets(listOf(currentCaret.copy(position = CaretPosition(absoluteOffset))))
 
 fun TransientEditor.moveCaretRelatively(relativeOffset: Int, expandSelection: Boolean = false): Unit =
   moveCaretRelatively(currentCaret, relativeOffset.toLong(), expandSelection)
@@ -20,9 +20,9 @@ fun TransientEditor.insert(offset: Long, text: String): Unit =
     )
   )
 
-fun TransientEditor.insertBeforeCaret(toInsert: Any): Unit = insertBeforeCarets(mapOf(currentCaret.caretId to toInsert.toString()))
+fun TransientEditor.insertBeforeCaret(toInsert: String): Unit = insertBeforeCarets(mapOf(currentCaret.caretId to toInsert))
 
-fun TransientEditor.insertAfterCaret(toInsert: Any): Unit = insertAfterCarets(mapOf(currentCaret.caretId to toInsert.toString()))
+fun TransientEditor.insertAfterCaret(toInsert: String): Unit = insertAfterCarets(mapOf(currentCaret.caretId to toInsert))
 
 fun TransientEditor.deleteBeforeCaret(delete: Long): Unit = deleteBeforeCarets(mapOf(currentCaret.caretId to delete))
 
@@ -35,7 +35,7 @@ fun TransientEditor.delete(start: CharOffset, end: CharOffset) {
   document.edit(Operation.deleteAt(start, textToDelete.toString(), document.text.charCount.toLong()))
 }
 
-fun TransientEditor.replace(from: Int, to: Int, replacement: String): Unit {
+fun TransientEditor.replace(from: Int, to: Int, replacement: String) {
   val op = document.text.view().replaceOperation(from, to, replacement)
   document.edit(op)
 }

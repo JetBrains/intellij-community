@@ -81,7 +81,7 @@ internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
       }
 
     val execArgs = ParametersList()
-    execArgs.addAll(MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters(parameters.vmParametersList))
+    execArgs.addAll(MavenExecutionEnvironmentProviderUtil.patchVmParameters(parameters.vmParametersList))
 
     execArgs.addParametersString(execArgsStr)
 

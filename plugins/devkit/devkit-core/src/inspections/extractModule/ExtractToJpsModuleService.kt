@@ -6,6 +6,9 @@ import com.intellij.ide.extractModule.ExtractModuleService
 import com.intellij.ide.extractModule.TargetModuleCreator
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -20,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,9 +34,16 @@ import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.task.ProjectTaskManager
 import com.intellij.util.xml.DomManager
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
@@ -41,14 +52,42 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
+import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.dom.processing.collectRegisteredClasses
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
 @Service(Service.Level.PROJECT)
 internal class ExtractToJpsModuleService(private val project: Project, private val coroutineScope: CoroutineScope) {
+  /**
+   * Finds the common package for classes referenced from the config file for an optional dependency and extracts that package to a separate
+   * module.
+   */
+  fun extractOptionalDependency(descriptor: ProblemDescriptor) {
+    coroutineScope.launch {
+      val originalData = readAction {
+        computeOriginalDataForExtractionFromOptionalDependency(descriptor)
+      } ?: return@launch
+
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        val actualData = withContext(Dispatchers.EDT) {
+          ExtractToJpsModuleDialog(originalData).showAndGetResult()
+        } ?: return@launch
+        buildProjectAndRunExtraction(actualData)
+      }
+      else {
+        runExtraction(originalData)
+      }
+    }
+  }
+
   fun extractContentModuleToJpsModule(problemDescriptor: ProblemDescriptor) {
     coroutineScope.launch {
       val originalData = readAction {
@@ -57,17 +96,30 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       val actualData = withContext(Dispatchers.EDT) {
         ExtractToJpsModuleDialog(originalData).showAndGetResult()
       } ?: return@launch
-      runExtraction(actualData)
+      buildProjectAndRunExtraction(actualData)
+    }
+  }
+
+  private fun buildProjectAndRunExtraction(data: ExtractToJpsModuleData) {
+    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess { result ->
+      if (!result.isAborted && !result.hasErrors()) {
+        coroutineScope.launch {
+          runExtraction(data)
+        }
+      }
     }
   }
 
   private suspend fun runExtraction(data: ExtractToJpsModuleData) {
-    val filesThatDependOnDescriptor = readAction {
-      PluginIdDependenciesIndex.findDescriptorsWithReferenceInDependenciesTag(
-        GlobalSearchScopesCore.projectProductionScope(project),
-        data.originalContentModuleName,
-      )
+    val filesThatDependOnDescriptor = if (data is ExtractToJpsModuleData.ContentModuleData) {
+      readAction {
+        PluginIdDependenciesIndex.findDescriptorsWithReferenceInDependenciesTag(
+          GlobalSearchScopesCore.projectProductionScope(project),
+          data.originalContentModuleName,
+        )
+      }
     }
+    else emptyList<VirtualFile>()
 
     createModule(data)
 
@@ -81,8 +133,17 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         data.descriptor.rename(this, "${data.newModuleName}.xml")
       }
       executeCommand(project = project) {
-        updateReferenceToContentModuleInPluginXml(data.pluginXmlFile, data.originalContentModuleName, data.newModuleName)
-        updateReferencesToContentModuleInDependenciesTags(filesThatDependOnDescriptor, data.originalContentModuleName, data.newModuleName)
+        when (data) {
+          is ExtractToJpsModuleData.ContentModuleData -> {
+            updateReferenceToContentModuleInPluginXml(data.pluginXmlFile, data.originalContentModuleName, data.newModuleName)
+            updateReferencesToContentModuleInDependenciesTags(filesThatDependOnDescriptor,
+                                                              data.originalContentModuleName,
+                                                              data.newModuleName)
+          }
+          is ExtractToJpsModuleData.OptionalDependencyData -> {
+            replaceDependsByContentModule(data.pluginXmlFile, data.descriptor, data.configFileAttributeValue, data.newModuleName)
+          }
+        }
       }
     }
     if (data.packageDirectory != null) {
@@ -104,7 +165,10 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
               return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newPackageDirectory)
             }
           }
-          project.service<ExtractModuleService>().analyzeDependenciesAndCreateModuleInBackground(data.packageDirectory, data.originalModule, creator)
+          withContext(Dispatchers.Default) {
+            project.service<ExtractModuleService>()
+              .analyzeDependenciesAndExtractModule(data.packageDirectory, data.originalModule, creator)
+          }
         }
         else {
           LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, newPackageDirectory = $newPackageDirectory")
@@ -112,6 +176,44 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       }
     }
     project.scheduleSave()
+  }
+
+  private fun replaceDependsByContentModule(pluginXmlFile: VirtualFile, configFileDescriptor: VirtualFile, configFileAttributeValue: String, contentModuleName: String) {
+    val psiFile = pluginXmlFile.findPsiFile(project) as? XmlFile ?: return
+    val domElement = DomManager.getDomManager(project).getFileElement(psiFile, IdeaPlugin::class.java)?.rootElement ?: return
+    val dependsElement = domElement.depends.find { it.configFile.stringValue == configFileAttributeValue }
+    val dependsTarget = dependsElement?.stringValue
+    dependsElement?.undefine()
+
+    //an extract module will often have dependency on internal module, so prefer a content element with a namespace if any
+    val existingContentTag = domElement.content.lastOrNull { it.namespace.exists() } ?: domElement.content.lastOrNull()
+
+    val contentTag = existingContentTag ?: domElement.addContent()
+    val moduleTag = contentTag.addModuleEntry()
+    moduleTag.name.stringValue = contentModuleName
+    val elementToReformat = (if (existingContentTag != null) moduleTag else contentTag).xmlElement
+    if (elementToReformat != null) {
+      CodeStyleManager.getInstance(project).reformat(elementToReformat)
+      //needed to add a new line after the module tag
+      CodeStyleManager.getInstance(project).reformatNewlyAddedElement(elementToReformat.parent.node, elementToReformat.node)
+    }
+
+    if (dependsTarget != null) {
+      val extractedDescriptorPsiFile = configFileDescriptor.findPsiFile(project) as? XmlFile ?: return
+      val rootTag = extractedDescriptorPsiFile.rootTag
+      if (rootTag != null && rootTag.findFirstSubTag("dependencies") == null) {
+        //use XML PSI instead of DOM to create the `dependencies` tag to ensure that it'll come first
+        rootTag.addSubTag(rootTag.createChildTag("dependencies", "", null, false), true)
+      }
+      val extractedDescriptorElement = DomManager.getDomManager(project).getFileElement(extractedDescriptorPsiFile, IdeaPlugin::class.java)?.rootElement ?: return
+      val dependencies = extractedDescriptorElement.dependencies
+      dependencies.addPlugin().id.stringValue = dependsTarget
+      val dependenciesXmlTag = dependencies.xmlTag
+      if (dependenciesXmlTag != null) {
+        CodeStyleManager.getInstance(project).reformat(dependenciesXmlTag)
+        CodeStyleManager.getInstance(project).reformatNewlyAddedElement(dependenciesXmlTag.parent.node, dependenciesXmlTag.node)
+      }
+    }
   }
 
   private fun updateReferencesToContentModuleInDependenciesTags(
@@ -187,6 +289,80 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
   private val ExtractToJpsModuleData.usePackagePrefix: Boolean
     get() = packageName != null && packageName.startsWith("com.${newModuleName}")
 
+  private fun computeOriginalDataForExtractionFromOptionalDependency(problemDescriptor: ProblemDescriptor): ExtractToJpsModuleData.OptionalDependencyData? {
+    val psiElement = problemDescriptor.psiElement
+    if (psiElement == null) {
+      reportError(DevKitBundle.message("extract.optional.dependency.error.cannot.apply"))
+      return null
+    }
+
+    val xmlElement = psiElement as XmlAttributeValue
+    val pluginXmlFile = xmlElement.containingFile as XmlFile
+    val pluginXmlVirtualFile = pluginXmlFile.virtualFile ?: error("Cannot find virtual file for $pluginXmlFile")
+    val domManager = DomManager.getDomManager(project)
+    val dependencyElement = domManager.getDomElement(xmlElement.parentOfType<XmlTag>()) as Dependency
+    val configFileAttributeValue = dependencyElement.configFile.stringValue ?: error("Config file attribute value is null")
+    val configFileXml = dependencyElement.configFile.value?.resolve()?.containingFile as? XmlFile
+    if (configFileXml == null) {
+      reportError(DevKitBundle.message("extract.optional.dependency.cannot.find.config.file.0", configFileAttributeValue))
+      return null
+    }
+
+    val configFileElement = domManager.getFileElement(configFileXml, IdeaPlugin::class.java)?.rootElement
+                            ?: error("Cannot find root element for $configFileXml")
+    val classesRegisteredInConfigFile = collectRegisteredClasses(configFileElement)
+    val commonPackageName = computeCommonPackage(classesRegisteredInConfigFile)
+    if (commonPackageName != null) {
+      val commonPackage = JavaPsiFacade.getInstance(project).findPackage(commonPackageName)
+      if (commonPackage == null) {
+        reportError(DevKitBundle.message("extract.optional.dependency.cannot.find.the.common.package.0", commonPackageName))
+        return null
+      }
+
+      val pluginXmlElement = domManager.getFileElement(pluginXmlFile, IdeaPlugin::class.java)?.rootElement
+                             ?: error("Cannot find root element for $pluginXmlFile")
+      val classesRegisteredInMainDescriptor = collectRegisteredClasses(pluginXmlElement)
+      val commonPackagePrefix = if (commonPackageName.isNotEmpty()) "$commonPackageName." else ""
+      val classesFromCommonPackage = classesRegisteredInMainDescriptor.filter { it.qualifiedName?.startsWith(commonPackagePrefix) == true }
+      if (classesFromCommonPackage.isNotEmpty()) {
+        showOptionalDescriptorClassesAreNotSeparatedView(
+          commonPackage = commonPackage,
+          classesFromOptionalDescriptor = classesRegisteredInConfigFile,
+          classesFromMainDescriptor = classesFromCommonPackage,
+          configFileName = configFileAttributeValue,
+          project = project
+        )
+        return null
+      }
+    }
+
+    val descriptor = configFileXml.virtualFile ?: error("Cannot find virtual file for $configFileXml")
+    val originalModule = ModuleUtilCore.findModuleForFile(pluginXmlVirtualFile, project) ?: error("Cannot find module for $pluginXmlVirtualFile")
+    val contentRoot = ModuleRootManager.getInstance(originalModule).contentRoots.firstOrNull() ?: error("Cannot find content root for $originalModule")
+    val packageDirectory =
+      if (commonPackageName != null) ModulePackageIndex.getInstance(originalModule)
+        .getDirsByPackageName(commonPackageName, originalModule.moduleProductionSourceScope).firstOrNull()
+      else null
+    val newModuleName = suggestModuleName(originalModule, descriptor)
+    val newModuleDirectoryPath = contentRoot.path + "/" + newModuleName.removePrefix(originalModule.name + ".")
+    return ExtractToJpsModuleData.OptionalDependencyData(
+      descriptor = descriptor,
+      pluginXmlFile = pluginXmlVirtualFile,
+      originalModule = originalModule,
+      newModuleName = newModuleName,
+      newModuleDirectoryPath = newModuleDirectoryPath,
+      packageName = commonPackageName?.takeIf { packageDirectory != null },
+      packageDirectory = packageDirectory,
+      configFileAttributeValue = configFileAttributeValue,
+    )
+  }
+
+  private fun reportError(errorMessage: @Nls String) {
+    NotificationGroupManager.getInstance().getNotificationGroup("DevKit Errors")
+      .createNotification(errorMessage, NotificationType.ERROR)
+      .notify(project)
+  }
+
   private fun computeOriginalDataForExtractionToJpsModule(problemDescriptor: ProblemDescriptor): ExtractToJpsModuleData? {
     val xmlElement = problemDescriptor.psiElement as? XmlTag ?: return null
     val domElement = DomManager.getDomManager(project).getDomElement(xmlElement) as? ContentDescriptor.ModuleDescriptor ?: return null
@@ -199,11 +375,12 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
 
     val packageName = resolvedModuleDescriptor.`package`.stringValue
     val packageDirectory =
-      if (packageName != null) ModulePackageIndex.getInstance(originalModule).getDirsByPackageName(packageName, originalModule.moduleProductionSourceScope).firstOrNull()
+      if (packageName != null) ModulePackageIndex.getInstance(originalModule)
+        .getDirsByPackageName(packageName, originalModule.moduleProductionSourceScope).firstOrNull()
       else null
     val newModuleName = descriptor.nameWithoutExtension
     val newModuleDirectoryPath = contentRoot.path + "/" + newModuleName.removePrefix(originalModule.name + ".")
-    return ExtractToJpsModuleData(
+    return ExtractToJpsModuleData.ContentModuleData(
       descriptor = descriptor,
       originalContentModuleName = originalContentModuleName,
       pluginXmlFile = pluginXmlFile,
@@ -214,19 +391,108 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       packageDirectory = packageDirectory
     )
   }
+
+  val coroutineScopeForTests: CoroutineScope
+    @TestOnly
+    get() = coroutineScope
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun getExtractToJpsModuleCoroutineScope(project: Project): CoroutineScope {
+  return project.service<ExtractToJpsModuleService>().coroutineScopeForTests
 }
 
 private val LOG = logger<ExtractToJpsModuleService>()
 private const val RESOURCES_DIR_NAME = "resources"
 private const val SRC_DIRECTORY_NAME = "src"
 
-internal data class ExtractToJpsModuleData(
+internal sealed class ExtractToJpsModuleData(
   val descriptor: VirtualFile,
-  val originalContentModuleName: @NlsSafe String,
   val pluginXmlFile: VirtualFile,
   val originalModule: Module,
   val newModuleName: String,
   val newModuleDirectoryPath: String,
   val packageName: String?,
   val packageDirectory: VirtualFile?,
-)
+) {
+  abstract fun copy(newModuleName: String, newModuleDirectoryPath: String): ExtractToJpsModuleData
+
+  internal class ContentModuleData(
+    descriptor: VirtualFile,
+    pluginXmlFile: VirtualFile,
+    originalModule: Module,
+    newModuleName: String,
+    newModuleDirectoryPath: String,
+    packageName: String?,
+    packageDirectory: VirtualFile?,
+    val originalContentModuleName: @NlsSafe String,
+  ) : ExtractToJpsModuleData(descriptor,
+                             pluginXmlFile,
+                             originalModule,
+                             newModuleName,
+                             newModuleDirectoryPath,
+                             packageName,
+                             packageDirectory) {
+    override fun copy(
+      newModuleName: String,
+      newModuleDirectoryPath: String,
+    ): ExtractToJpsModuleData = ContentModuleData(
+      descriptor,
+      pluginXmlFile,
+      originalModule,
+      newModuleName,
+      newModuleDirectoryPath,
+      packageName,
+      packageDirectory,
+      originalContentModuleName,
+    )
+  }
+
+  internal class OptionalDependencyData(
+    descriptor: VirtualFile,
+    pluginXmlFile: VirtualFile,
+    originalModule: Module,
+    newModuleName: String,
+    newModuleDirectoryPath: String,
+    packageName: String?,
+    packageDirectory: VirtualFile?,
+    val configFileAttributeValue: String,
+  ) : ExtractToJpsModuleData(descriptor,
+                             pluginXmlFile,
+                             originalModule,
+                             newModuleName,
+                             newModuleDirectoryPath,
+                             packageName,
+                             packageDirectory) {
+    override fun copy(
+      newModuleName: String,
+      newModuleDirectoryPath: String,
+    ): ExtractToJpsModuleData = OptionalDependencyData(
+      descriptor,
+      pluginXmlFile,
+      originalModule,
+      newModuleName,
+      newModuleDirectoryPath,
+      packageName,
+      packageDirectory,
+      configFileAttributeValue,
+    )
+  }
+}
+
+private fun computeCommonPackage(classes: Set<PsiClass>): @NlsSafe String? {
+  if (classes.isEmpty()) return null
+  val packages = classes.mapNotNullTo(HashSet()) { (it.containingFile as? PsiClassOwner)?.packageName }
+  return packages.reduce { s1, s2 ->
+    if (s1 == s2) s1
+    else StringUtil.commonPrefix(s1, s2).substringBeforeLast('.', missingDelimiterValue = "")
+  }
+}
+
+private fun suggestModuleName(originalModule: Module, configFileDescriptor: VirtualFile): String {
+  val configFileNameWords = configFileDescriptor.nameWithoutExtension.split('_', '-', '.').filter { it.isNotEmpty() }
+  val originalModuleNameWords = originalModule.name.split('.').toSet()
+  val suffix = configFileNameWords.dropWhile { it in originalModuleNameWords }.joinToString(".")
+  return "${originalModule.name}.$suffix"
+}

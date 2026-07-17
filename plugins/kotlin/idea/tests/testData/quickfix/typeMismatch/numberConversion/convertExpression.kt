@@ -1,6 +1,6 @@
 // "Convert expression to 'Int'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Long', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun foo() {
     bar("1".toLong()<caret>)
 }

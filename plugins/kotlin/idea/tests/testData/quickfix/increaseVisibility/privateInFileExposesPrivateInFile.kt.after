@@ -1,6 +1,6 @@
 // "Make 'Private' public" "true"
 // PRIORITY: HIGH
-// K2_ERROR: 'private-in-file' function exposes its 'private-in-class' return type 'Private'.
+// K2_ERROR: EXPOSED_FUNCTION_RETURN_TYPE
 
 private interface I2 {
     class Private

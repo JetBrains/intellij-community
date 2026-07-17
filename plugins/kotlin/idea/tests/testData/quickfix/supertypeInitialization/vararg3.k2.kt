@@ -1,7 +1,7 @@
 // "Add constructor parameters from Base(Int, vararg Int)" "true"
-// K2_ERROR: No value passed for parameter 'p1'.
-// K2_ERROR: This type has a constructor, so it must be initialized here.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'IntArray', but 'Int' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 open class Base(p1: Int, vararg p2: Int)
 
 class C(vararg p2: Int) : Base<caret>

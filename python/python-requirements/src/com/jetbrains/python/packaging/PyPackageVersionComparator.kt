@@ -12,7 +12,7 @@ import java.util.stream.Stream
 /**
  * Compares [PyPackageVersions][PyPackageVersion].
  *
- * Based on [PEP-440][https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering].
+ * Based on [PEP-440](https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering).
  */
 @ApiStatus.Experimental
 object PyPackageVersionComparator : Comparator<PyPackageVersion> {

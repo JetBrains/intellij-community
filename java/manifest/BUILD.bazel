@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.java.manifest` start
+jps_test(
+    name = "manifest-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":manifest-tests_test_lib"],
+)
 
+### skip generation section `test intellij.java.manifest.tests`
+
+### auto-generated section `build intellij.java.manifest` start
 jvm_library(
     name = "manifest",
     srcs = glob(
@@ -90,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.manifest` end
 
 ### auto-generated section `build intellij.java.manifest.tests` start
-
 jvm_library(
     name = "manifest-tests",
     srcs = glob(
@@ -159,6 +166,16 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],
@@ -173,11 +190,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.manifest.tests` end
-
-### auto-generated section `test intellij.java.manifest.tests` start
-
-jps_test(
-    name = "manifest-tests_test",
-    runtime_deps = [":manifest-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.manifest.tests` end

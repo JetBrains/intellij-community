@@ -3,5 +3,5 @@ class NormalLR:
         self.tau = tau
 
 class GradientLR(NormalLR):
-    def <warning descr="Call to __init__ of super class is missed">_<caret>_init__</warning>(self, *, tau=None):
+    def <warning descr="Call to '__init__' of super class is missing">_<caret>_init__</warning>(self, *, tau=None):
         pass

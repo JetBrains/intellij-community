@@ -7,9 +7,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
+import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -37,6 +42,8 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     val document = editor.document
     val file = psiDocumentManager.getPsiFile(document) as? MarkdownFile ?: return false
 
+    if (isCaretInsideNestedContentOfListItem(caret, file)) return false
+
     val firstLinesOfSelectedItems = getFirstLinesOfSelectedItems(caret, document, file)
 
     // use lines instead of items, because items may become invalid before used
@@ -56,6 +63,21 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
       }
     }
     return firstLinesOfSelectedItems.isNotEmpty() && indentPerformed
+  }
+
+  private fun isCaretInsideNestedContentOfListItem(caret: Caret, file: MarkdownFile): Boolean {
+    val element = file.findElementAt(caret.offset) ?: return false
+    val document = file.viewProvider.document
+    val insideTableCell = document != null && TableUtils.isProbablyInsideTableCell(document, caret.offset)
+    var current: PsiElement? = element
+    while (current != null) {
+      when (current) {
+        is MarkdownCodeFence, is MarkdownCodeBlock, is MarkdownBlockQuote -> return true
+        is MarkdownListItem -> return insideTableCell
+      }
+      current = current.parent
+    }
+    return false
   }
 
   private fun getFirstLinesOfSelectedItems(caret: Caret, document: Document, file: MarkdownFile): List<Int> {

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build kotlin.j2k.shared.tests` start
-
 create_kotlinc_options(
     name = "custom_tests",
     x_context_parameters = True,
@@ -114,7 +113,6 @@ exports_files(
 ### auto-generated section `iml kotlin.j2k.shared.tests` end
 
 ### auto-generated section `test kotlin.j2k.shared.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

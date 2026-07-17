@@ -12,6 +12,18 @@ public interface ResultViewColumn extends UserDataHolder {
 
   void setColumnWidth(int width);
 
+  /** Sets a width explicitly chosen by the user (persisted, and protected from auto-layout). */
+  default void setColumnWidthByUser(int width) {
+    setColumnWidth(width);
+  }
+
+  default boolean isWidthSetByUser() {
+    return false;
+  }
+
+  default void clearWidthSetByUser() {
+  }
+
   int getModelIndex();
 
   String getHeaderValue();

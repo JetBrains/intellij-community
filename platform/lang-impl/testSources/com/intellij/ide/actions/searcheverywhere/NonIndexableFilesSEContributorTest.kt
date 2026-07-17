@@ -71,7 +71,7 @@ open class NonIndexableFilesSEContributorTest {
     contributor.setScope(ScopeDescriptor(scope))
     Disposer.register(disposable, contributor)
 
-    val items = contributor.search(pattern, MockProgressIndicator()).toSet()
+    val items = contributor.search(pattern, MockProgressIndicator().apply { start() }).toSet()
 
     assertThat(items).allSatisfy { it is PsiFileSystemItem }
     return items.filterIsInstance<PsiFileSystemItem>().toSet()
@@ -252,7 +252,7 @@ open class NonIndexableFilesSEContributorTest {
     val contributor = FileSearchEverywhereContributor(createEvent(project))
     Disposer.register(disposable, contributor)
 
-    val items = contributor.search("file1", MockProgressIndicator())
+    val items = contributor.search("file1", MockProgressIndicator().apply { start() })
     assertThat(items).isEmpty()
   }
 
@@ -268,7 +268,7 @@ open class NonIndexableFilesSEContributorTest {
     val contributor = NonIndexableFilesSEContributor(createEvent(project))
     Disposer.register(disposable, contributor)
 
-    val items = contributor.search("file1", MockProgressIndicator()).toSet()
+    val items = contributor.search("file1", MockProgressIndicator().apply { start() }).toSet()
 
     assertThat(items).allSatisfy { it is PsiFileSystemItem }
     val names = items.map { (it as PsiFileSystemItem).name }
@@ -289,7 +289,7 @@ open class NonIndexableFilesSEContributorTest {
     contributor.setHiddenTypes(listOf(FileTypeRef.forFileType(file1.fileType)))
     Disposer.register(disposable, contributor)
 
-    val items = contributor.search("file1", MockProgressIndicator()).toSet()
+    val items = contributor.search("file1", MockProgressIndicator().apply { start() }).toSet()
 
     assertThat(items).isEmpty()
   }

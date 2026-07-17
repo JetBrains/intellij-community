@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.elf
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -60,11 +61,13 @@ interface Elf {
   /**
    * Returns whether typing-time code may interact with PSI in the current context.
    *
-   * This is currently `false` inside an elf scope because lock-free PSI is not
+   * This is currently `false` inside an elf scope because lock-free PSI is not fully
    * integrated yet. Callers that need PSI should skip their smart behavior instead
    * of forcing document commit or PSI access from the lock-free typing path.
    */
   fun isPsiInteractionAllowed(): Boolean
+
+  fun <T> runReadAction(action: () -> T): T
 
   /**
    * Returns the UI-side elf document corresponding to [document], or [document]
@@ -136,6 +139,10 @@ private object OffDuty : Elf {
 
   override fun isPsiInteractionAllowed(): Boolean {
     return true
+  }
+
+  override fun <T> runReadAction(action: () -> T): T {
+    return runReadActionBlocking(action)
   }
 
   override fun getElfDocument(document: Document): Document {

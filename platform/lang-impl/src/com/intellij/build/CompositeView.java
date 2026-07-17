@@ -33,17 +33,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, UiDataProvider {
-  private final Map<String, T> myViewMap = new ConcurrentHashMap<>();
+
+  private final @NotNull Map<String, T> myViewMap = new ConcurrentHashMap<>();
+  private final @NotNull Map<String, List<Consumer<? super T>>> myDeferredViewConsumers = new ConcurrentHashMap<>();
+
   private final @NonNls String mySelectionStateKey;
-  private final AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
+  private final @NotNull AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
   private final @NotNull SwitchViewAction mySwitchViewAction;
 
   public CompositeView(@NonNls String selectionStateKey) {
@@ -61,6 +65,11 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     myViewMap.put(viewName, view);
     add(view.getComponent(), viewName);
     Disposer.register(this, view);
+
+    var deferredConsumers = myDeferredViewConsumers.remove(viewName);
+    if (deferredConsumers != null) {
+      deferredConsumers.forEach(consumer -> consumer.accept(view));
+    }
   }
 
   public void addViewAndShowIfNeeded(@NotNull T view, @NotNull String viewName, boolean showByDefault, boolean requestFocus) {
@@ -103,6 +112,17 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return viewClass.isInstance(view) ? viewClass.cast(view) : null;
   }
 
+  public void withView(@NotNull String viewName, @NotNull Consumer<? super T> consumer) {
+    var view = getView(viewName);
+    if (view != null) {
+      consumer.accept(view);
+    }
+    else {
+      myDeferredViewConsumers.computeIfAbsent(viewName, k -> new CopyOnWriteArrayList<>())
+        .add(consumer);
+    }
+  }
+
   public AnAction @NotNull [] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;
   }
@@ -126,6 +146,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
 
   @Override
   public void dispose() {
+    myDeferredViewConsumers.clear();
   }
 
   @Override

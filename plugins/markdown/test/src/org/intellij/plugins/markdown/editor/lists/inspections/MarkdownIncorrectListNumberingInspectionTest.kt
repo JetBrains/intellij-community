@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor.lists.inspections
 
+import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.junit.Test

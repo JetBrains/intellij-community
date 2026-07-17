@@ -3,6 +3,8 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.LineIterator
+import com.intellij.openapi.editor.impl.modTree.ModificationTree
+import com.intellij.openapi.editor.impl.modTree.ModificationTreeImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.ImmutableCharSequence
@@ -15,6 +17,7 @@ internal class DocumentSnapshotImpl private constructor(
   private val modStamp: Long,
   private val modSequence: Int,
   private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
+  private var modTree: ModificationTree?,         // non-volatile intentionally, see tree()
   private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
 ) : DocumentSnapshot {
 
@@ -23,6 +26,7 @@ internal class DocumentSnapshotImpl private constructor(
     modStamp = DocumentModStamp.next(),
     modSequence = 0,
     lineSet = null,
+    modTree = null,
     textString = null,
   )
 
@@ -117,6 +121,19 @@ internal class DocumentSnapshotImpl private constructor(
     return getLineSet().createIterator()
   }
 
+  /**
+   * Same non-volatile lazy field as [textString]
+   */
+  override fun modTree(): ModificationTree {
+    var modTree = this.modTree
+    if (modTree != null) {
+      return modTree
+    }
+    modTree = ModificationTreeImpl.initial(textLength())
+    this.modTree = modTree
+    return modTree
+  }
+
   override fun dumpState(): String {
     val dump = StringBuilder()
     dump.append("intervals:\n")
@@ -141,7 +158,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (modStamp == newModStamp && modSequence == newModSequence) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, textString)
+    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, modTree, textString)
   }
 
   override fun withClearedLineFlags(
@@ -187,6 +204,7 @@ internal class DocumentSnapshotImpl private constructor(
       metadata.modStamp(),
       metadata.modSequence(),
       this.lineSet,
+      this.modTree,
       this.textString,
     )
   }
@@ -199,6 +217,7 @@ internal class DocumentSnapshotImpl private constructor(
     newModStamp: Long,
     wholeTextReplaced: Boolean,
     clearLineFlags: Boolean,
+    clearModTree: Boolean,
   ): DocumentSnapshotImpl {
     val oldFragmentLength = endOffset - startOffset
     val newFragmentLength = newFragment.length
@@ -228,14 +247,19 @@ internal class DocumentSnapshotImpl private constructor(
       newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
     }
     val newModSequence = nextModSequence()
-    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, null)
+    val newTree = if (clearModTree) {
+      null
+    } else {
+      updateModTree(oldFragmentLength, newFragmentLength, startOffset, endOffset)
+    }
+    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null)
   }
 
   private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
     if (this.lineSet === newLineSet) {
       return this
     }
-    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, textString)
+    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, modTree, textString)
   }
 
   /**
@@ -253,6 +277,24 @@ internal class DocumentSnapshotImpl private constructor(
     lineSet = LineSet.createLineSet(text)
     this.lineSet = lineSet
     return lineSet
+  }
+
+  private fun updateModTree(
+    oldFragmentLength: Int,
+    newFragmentLength: Int,
+    startOffset: Int,
+    endOffset: Int,
+  ): ModificationTree {
+    val oldTree = modTree()
+    if (oldFragmentLength == 0 && newFragmentLength != 0) {
+      return oldTree.insert(startOffset, newFragmentLength)
+    }
+    if (oldFragmentLength != 0 && newFragmentLength == 0) {
+      return oldTree.delete(startOffset, startOffset + oldFragmentLength)
+    }
+    return oldTree
+      .delete(startOffset, endOffset)
+      .insert(startOffset, newFragmentLength)
   }
 
   private fun nextModSequence(): Int {

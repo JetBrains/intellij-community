@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.OffsetTranslator;
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
 import com.intellij.codeInsight.completion.command.CommandCompletionService;
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
@@ -63,8 +64,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return keys;
   }
 
-  @ApiStatus.Experimental
-  public static @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull PostfixTemplateProvider provider,
+  private static @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull PostfixTemplateProvider provider,
                                                                                     @NotNull CharSequence documentContent,
                                                                                     int currentOffset) {
     int startOffset = currentOffset;
@@ -87,6 +87,29 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return String.valueOf(documentContent.subSequence(startOffset, currentOffset));
   }
 
+  /**
+   * Computes the template key at the given offset and, when command completion is enabled, adjusts it to account
+   * for the doubled terminal symbol (e.g. {@code expr..if}). Combines
+   * {@link #computeTemplateKeyWithoutContextChecking(PostfixTemplateProvider, CharSequence, int)} with
+   * {@link #adjustWithCommandCompletion(String, Project, Language, CharSequence, int)}.
+   *
+   * @param provider the postfix template provider
+   * @param project  the project used for the command-completion adjustment, may be {@code null}
+   * @param language the language used for the command-completion adjustment, may be {@code null}
+   * @param sequence the document contents
+   * @param offset   the offset at which the key ends (typically the caret/selection end)
+   * @return the (possibly adjusted) template key, or {@code null} if none matches
+   */
+  @ApiStatus.Experimental
+  public static @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull PostfixTemplateProvider provider,
+                                                                                    @Nullable Project project,
+                                                                                    @Nullable Language language,
+                                                                                    @NotNull CharSequence sequence,
+                                                                                    int offset) {
+    String key = computeTemplateKeyWithoutContextChecking(provider, sequence, offset);
+    return adjustWithCommandCompletion(key, project, language, sequence, offset);
+  }
+
   @Override
   public @Nullable @NlsSafe String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
@@ -94,8 +117,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     int offset = editor.getCaretModel().getOffset();
     Language language = getLanguage(callback);
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
-      String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, offset);
-      key = adjustWithCommandCompletion(key, editor.getProject(), language, charsSequence, offset);
+      String key = computeTemplateKeyWithoutContextChecking(provider, editor.getProject(), language, charsSequence, offset);
       if (key != null && isApplicableTemplate(provider, key, callback.getFile(), editor)) {
         return key;
       }
@@ -103,17 +125,36 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return null;
   }
 
+  /**
+   * Adjusts the provided key with command completion based on certain conditions.
+   *
+   * <p>Example: the {@code if} template has the key {@code .if}. Command completion uses the same {@code '.'}
+   * as its {@link CommandCompletionFactory#filterSuffix() filter suffix}, so typing {@code expr..if} triggers
+   * it. The raw key is still {@code .if}, missing the extra {@code '.'}, so this method widens it to
+   * {@code ..if} — matching the whole fragment that is replaced on expansion. Plain {@code expr.if} keeps the
+   * key {@code .if}.
+   *
+   * @param key The key to adjust, may be null.
+   * @param project The current project context, may be null.
+   * @param language The programming language context, may be null.
+   * @param sequence The character sequence where the key adjustment is taking place, must not be null.
+   * @param offset The offset within the character sequence where the adjustment is applied.
+   * @return The adjusted key if all conditions for command completion are met, otherwise the original key. If {@code key}, {@code project}, or {@code language} is null, the original
+   *  {@code key} is returned.
+   */
   private static String adjustWithCommandCompletion(@Nullable String key,
-                                                    @Nullable Project project,
-                                                    @Nullable Language language,
-                                                    @NotNull CharSequence sequence,
-                                                    int offset) {
+                                                   @Nullable Project project,
+                                                   @Nullable Language language,
+                                                   @NotNull CharSequence sequence,
+                                                   int offset) {
     if (key == null) return key;
     if (project == null) return key;
     if (language == null) return key;
+    if (!ApplicationCommandCompletionService.Companion.getInstance().commandCompletionEnabled()) return key;
     boolean showAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
     if (!showAsSeparateGroup) return key;
     CommandCompletionService completionService = project.getService(CommandCompletionService.class);
+    if (completionService == null) return key;
     CommandCompletionFactory completionServiceFactory = completionService.getFactory(language);
     if (completionServiceFactory == null) return key;
     Character filterSuffix = completionServiceFactory.filterSuffix();
@@ -135,8 +176,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       ProgressManager.checkCanceled();
       CharSequence charsSequence = editor.getDocument().getCharsSequence();
-      String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, currentOffset);
-      key = adjustWithCommandCompletion(key, editor.getProject(), language, charsSequence, currentOffset);
+      String key = computeTemplateKeyWithoutContextChecking(provider, editor.getProject(), language, charsSequence, currentOffset);
       if (key != null) return key;
     }
     return null;

@@ -19,6 +19,8 @@ import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.EelExecWindowsApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
+import com.intellij.platform.eel.EelProcessManagementPosixApi
+import com.intellij.platform.eel.EelProcessManagementWindowsApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.environmentVariablesAwaitReporter
@@ -225,6 +227,9 @@ class EelLocalExecPosixApi(
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
 
+  override val processManagement: EelProcessManagementPosixApi
+    get() = LocalEelPosixProcessManagementApi
+
   override suspend fun getUserLoginShell(): EelPath {
     return EelPath.parse(getUserShell(), descriptor)
   }
@@ -260,6 +265,9 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override val processManagement: EelProcessManagementWindowsApi
+    get() = LocalEelWindowsProcessManagementApi
 
   override suspend fun getUserLoginShell(): EelPath {
     for (name in listOf("pwsh.exe", "powershell.exe")) {

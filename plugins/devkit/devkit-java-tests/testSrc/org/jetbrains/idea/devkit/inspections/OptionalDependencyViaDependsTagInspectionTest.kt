@@ -2,14 +2,17 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.devkit.inspections.extractModule.getExtractToJpsModuleCoroutineScope
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -37,5 +40,51 @@ internal class OptionalDependencyViaDependsTagInspectionTest {
     withContext(Dispatchers.EDT) {
       fixture.testHighlighting(true, true, true, pluginXml.virtualFile)
     }
+  }
+
+  @Test
+  fun `quick fix to extract optional dependency`(): Unit = timeoutRunBlocking {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(projectFixture.get(), true)
+
+    withContext(Dispatchers.EDT) {
+      val pluginXml = fixture.addFileToProject("plugin.xml", """
+      |<idea-plugin>
+      |    <id>plugin</id>
+      |    <depends optional="true<caret>" config-file="optional.xml">anotherPlugin</depends>
+      |</idea-plugin>
+    """.trimMargin())
+      fixture.addFileToProject("optional.xml", """
+      |<idea-plugin>
+      |    <actions>
+      |        <action class="com.example.MyAction"/>
+      |    </actions>
+      |</idea-plugin>
+    """.trimMargin())
+      fixture.addClass("package com.example; class MyAction {}")
+      fixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+    }
+    val intention = fixture.findSingleIntention("Extract 'optional.xml' to a content module")
+    fixture.launchAction(intention)
+    waitCoroutinesBlocking(getExtractToJpsModuleCoroutineScope(projectFixture.get()), timeoutMs = 3_000)
+
+    val moduleName = moduleFixture.get().name
+    fixture.checkResult("""
+      |<idea-plugin>
+      |    <id>plugin</id>
+      |    <content>
+      |        <module name="$moduleName.optional"/>
+      |    </content>
+      |</idea-plugin>
+    """.trimMargin())
+    fixture.checkResult("optional/resources/$moduleName.optional.xml", """
+      |<idea-plugin>
+      |    <dependencies>
+      |        <plugin id="anotherPlugin"/>
+      |    </dependencies>
+      |    <actions>
+      |        <action class="com.example.MyAction"/>
+      |    </actions>
+      |</idea-plugin>
+    """.trimMargin(), true)
   }
 }

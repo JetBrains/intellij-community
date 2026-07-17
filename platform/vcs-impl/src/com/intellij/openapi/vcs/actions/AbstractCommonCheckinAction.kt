@@ -73,8 +73,16 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
     val executor = getExecutor(project)
     val forceUpdateCommitStateFromContext = isForceUpdateCommitStateFromContext()
 
-    CheckinActionUtil.performCheckInAfterUpdate(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
-                                                executor, forceUpdateCommitStateFromContext)
+    CheckinActionUtil.performCheckInAfterUpdate(
+      project = project,
+      selectedChanges = selectedChanges,
+      selectedUnversioned = selectedUnversioned,
+      initialChangeList = initialChangeList,
+      pathsToCommit = pathsToCommit,
+      executor = executor,
+      forceUpdateCommitStateFromContext = forceUpdateCommitStateFromContext,
+      saveCommentOnCancel = true,
+    )
   }
 
   @Deprecated("getActionName() will be used instead")

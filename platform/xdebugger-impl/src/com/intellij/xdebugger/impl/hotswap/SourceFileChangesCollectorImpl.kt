@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
@@ -352,7 +353,14 @@ class SourceFileChangesCollectorImpl(
     if (compatibilityCheckers.isEmpty()) return NoChecks
     if (oldContent == null) return CheckImpossible
     val change = SourceFileChange(file, oldContent)
-    return compatibilityCheckers.maxOf { checker -> checker.getCompatibility(change) }
+    try {
+      return compatibilityCheckers.maxOf { checker -> checker.getCompatibility(change) }
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      logger.error("Error during compatibility check", e)
+      return CheckImpossible
+    }
   }
 
   private fun reportSourceCompatibility(compatibility: HotSwapChangesCompatibility) {

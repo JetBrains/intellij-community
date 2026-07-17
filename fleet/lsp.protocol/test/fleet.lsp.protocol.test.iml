@@ -33,5 +33,7 @@
     <orderEntry type="module" module-name="fleet.ktor.client.core" scope="TEST" />
     <orderEntry type="module" module-name="fleet.lsp.protocol" scope="TEST" />
     <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.util.logging.slf4j" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="slf4j-jdk14" level="project" />
   </component>
 </module>

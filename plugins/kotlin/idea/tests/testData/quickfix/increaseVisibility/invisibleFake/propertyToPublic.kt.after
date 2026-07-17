@@ -1,6 +1,6 @@
 // "Make 'foo' public" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Cannot access 'val foo: Int': it is private in 'A'.
+// K2_ERROR: INVISIBLE_REFERENCE
 
 open class A {
     val foo = 1

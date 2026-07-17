@@ -41,10 +41,16 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 public final class GitIndexUtil {
   private static final Logger LOG = getInstance(GitIndexUtil.class);
 
-  public static final Hash NULL_HASH = HashImpl.build("0".repeat(40));
   public static final String EXECUTABLE_MODE = "100755";
   public static final String DEFAULT_MODE = "100644";
   public static final String SUBMODULE_MODE = "160000";
+
+  /**
+   * In index-related Git operations zeroed-out hash is used to indicate that the file is not present.
+   */
+  public static boolean isNullHash(@NotNull String hash) {
+    return hash.chars().allMatch(c -> c == '0');
+  }
 
   public static @Nullable StagedFile listStaged(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
     List<StagedFile> result = listStaged(repository, Collections.singleton(filePath));

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` start
-
 jvm_library(
     name = "benchmark",
     srcs = glob(
@@ -54,7 +53,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.immutableKeyValueStore.benchmark` end
 
 ### auto-generated section `test intellij.platform.util.immutableKeyValueStore.benchmark` start
-
 jps_test(
     name = "benchmark_test",
     runtime_deps = [":benchmark_test_lib"],

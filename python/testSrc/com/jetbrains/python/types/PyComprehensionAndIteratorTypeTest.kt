@@ -287,7 +287,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `iter on list of lists result`() = test("""
       expr = iter([[1, 2, 3]])
-      # └ TYPE Iterator[list[Literal[1, 2, 3]]]
+      # └ TYPE Iterator[list[int]]
       """)
 
     @Test
@@ -860,7 +860,12 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     // PY-6729
     @Test
-    fun `yield from non-iterable`() = test("""
+    fun `yield from non-iterable`() = test(
+      // `CustomIterable.__iter__` returns `self`, so its return type is inferred as `Self`. Matching such a type
+      // against the `Iterable`/`Iterator` protocols is inherently recursive (`__iter__` keeps yielding `Self`),
+      // and RecursionManager's prevention is the intended safe exit here
+      TestOptions(assertRecursionPrevention = false),
+      """
       class CustomIterable:
           def __iter__(self):
               return self

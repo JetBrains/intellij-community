@@ -249,5 +249,20 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #       └ WARNING Expected type 'str', got 'Literal[0]' instead
           y = 1  # type: int
       """)
+
+    @Test
+    @TestFor(issues = ["PY-90747"])
+    fun `missing parameter annotation does not throw`() = test("""
+      def incomplete1(x:): ...
+      #                 └ ERROR Expression expected
+      
+      def incomplete2(x: = 3): ...
+      #                 └ ERROR Expression expected
+
+      def with_type_comment(x=[],  # type: int
+                            ):
+          # type: (...) -> None
+          ...
+      """)
   }
 }

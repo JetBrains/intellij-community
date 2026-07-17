@@ -652,7 +652,9 @@ c:com.intellij.pom.tree.events.impl.ChangeInfoImpl
 a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
+- correspondsToRealFile():Z
 - f:markInvalidated():V
+- supportsSendingPsiEvents():Z
 com.intellij.psi.CustomHighlighterTokenType
 - sf:CHARACTER:com.intellij.psi.tree.IElementType
 - sf:CUSTOM_CONTENT:com.intellij.psi.tree.IElementType
@@ -741,6 +743,7 @@ f:com.intellij.psi.impl.CheckUtil
 - s:checkWritable(com.intellij.psi.PsiElement):V
 f:com.intellij.psi.impl.DebugUtil
 - s:lightTreeAsElementTypeToString(com.intellij.util.diff.FlyweightCapableTreeStructure,Z):java.lang.String
+- s:onInvalidated(com.intellij.psi.PsiElement):java.lang.Object
 - s:psiToStringIgnoringNonCode(com.intellij.psi.PsiElement):java.lang.String
 a:com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.util.UserDataHolderBase
@@ -1403,6 +1406,7 @@ f:com.intellij.util.indexing.FileContentImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.util.indexing.IndexedFile
 - com.intellij.util.indexing.PsiDependentFileContent
+- s:createByContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.project.Project):com.intellij.util.indexing.FileContent
 - s:createByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.FileContent
 - getPsiFile():com.intellij.psi.PsiFile
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink

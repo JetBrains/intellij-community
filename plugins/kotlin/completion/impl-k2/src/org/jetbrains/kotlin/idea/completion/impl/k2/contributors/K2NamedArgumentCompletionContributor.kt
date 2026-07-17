@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
@@ -28,8 +29,13 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameRefere
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
     positionContextClass = KotlinExpressionNameReferencePositionContext::class,
@@ -62,11 +68,17 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
             val candidates = collectCallCandidates(callElement)
                 .mapNotNull { it.candidate as? KaFunctionCall<*> }
-                .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
+                .filter { it.symbol.hasStableParameterNames }
+                .filter {
+                    val constructorPsi = it.symbol.psi as? KtPrimaryConstructor ?: return@filter true
+                    if (!constructorPsi.isPrivate()) return@filter true
+                    val constructorClass = constructorPsi.containingClass() ?: return@filter false
+                    constructorClass.isParentClassForELement(callElement)
+                }
 
             val namedArgumentInfos = buildList {
                 val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
-                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.argumentMapping, currentArgumentIndex)
+                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.valueArgumentMapping, currentArgumentIndex)
                 }
 
                 val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
@@ -122,6 +134,15 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             }
         }.map { it.applyWeighs() }
             .forEach { addElement(it) }
+    }
+
+    private fun KtClass.isParentClassForELement(expression: KtElement): Boolean {
+        val parentClass: KtClass? = expression.findParentOfType<KtClass>()
+        when (parentClass) {
+            null -> return false
+            this -> return true
+            else -> return isParentClassForELement(parentClass)
+        }
     }
 
     internal data class NamedParameterInfo(

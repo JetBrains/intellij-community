@@ -15,7 +15,6 @@ import javax.swing.JSpinner
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
-@ApiStatus.Internal
 internal class OnChangeManager<T : JComponent>(private val component: T) {
 
   private var binding = false

@@ -60,8 +60,6 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-76219"])
     fun `property type accessed via bounded type parameter`() = test("""
-      from typing_extensions import reveal_type
-
       class K:
           _text: str
           @property
@@ -570,6 +568,20 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
             b: dict[int, str] = {}
         """,
     )
+
+    @Test
+    fun `missing attribute in intersection member`() = test("""
+      class A:
+          ...
+
+      class B:
+          attr: int = 1
+
+      def f(p: B):
+          if isinstance(p, A):
+              expr = p.attr
+      #       └ TYPE int
+      """)
   }
 
   @Nested
@@ -582,6 +594,40 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       expr = MyClass().attr
       #└ TYPE MyClass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90894"])
+    fun `dunder getattr generic return type`() = test("""
+      class Box[T]:
+          def __getattr__(self, item) -> T:
+              raise NotImplementedError
+
+      def foo(box: Box[int]):
+          expr = box.whatever
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90894"])
+    fun `dunder getattr overloaded by literal name`() = test("""
+      from typing import Literal, overload
+
+      class C:
+          @overload
+          def __getattr__(self, item: Literal["foo"]) -> int: ...
+          @overload
+          def __getattr__(self, item: Literal["bar"]) -> str: ...
+          def __getattr__(self, item):
+              raise NotImplementedError
+
+      def f(c: C):
+          foo = c.foo
+      #   └ TYPE int
+          bar = c.bar
+      #   └ TYPE str
+          baz = c.baz
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -1774,6 +1820,41 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
     "m1.py" to """
       class C:
           foo = None
+      """,
+  )
+
+  @Test
+  fun `classmethod created via reassignment`() = test(
+    """
+    class A:
+        def foo(cls) -> int:
+            return 1
+
+        foo = classmethod(foo)
+
+    foo = A().foo
+    #└ TYPE () -> int
+    expr = foo()
+    #└ TYPE int
+    """
+  )
+
+  @Test
+  @TestFor(issues = ["PY-19412", "PY-90808"])
+  fun `classmethod created via reassignment in another module`() = test(
+    """
+    from a import Spam
+
+    expr = Spam.spam()
+    #└ TYPE int
+    """,
+    "a.py" to """
+      class Spam:
+          def spam(cls) -> int:
+              return 1
+
+          eggs = False
+          spam = classmethod(spam)
       """,
   )
 }

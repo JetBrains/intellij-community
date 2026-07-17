@@ -8,17 +8,21 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.ide.TextProblemSeverities
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
+import com.intellij.grazie.spellcheck.TypoProblem
+import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -26,6 +30,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.MockProblemDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.StringOperation
 import java.util.Locale
@@ -45,7 +51,7 @@ class ReportingTest : BasePlatformTestCase() {
     val info = assertOneElement(highlightings)
     assertEquals(TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES, info.type.attributesKey)
     val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
-    assertEquals(info.description, message)
+    assertEquals(message, info.description)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
 
@@ -53,7 +59,7 @@ class ReportingTest : BasePlatformTestCase() {
     configureCommit(myFixture, "I have an new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
     val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
-    assertEquals(info.description, message)
+    assertEquals(message, info.description)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
 
@@ -149,6 +155,19 @@ class ReportingTest : BasePlatformTestCase() {
       "Enable Cloud mode for deeper checks",
       "mock intention", // normal intentions are at the bottom
     )
+  }
+
+  fun `test YouTrack report action does not retain psi elements`() {
+    myFixture.configureByText("a.txt", "mispelled")
+    val range = TextRange(0, 9)
+    val text = TextExtractor.findTextAt(myFixture.file, 0, TextContent.TextDomain.ALL)!!
+    val problem = TypoProblem(text, range, "mispelled", false) { setOf("misspelled") }
+
+    val descriptor = MockProblemDescriptor(myFixture.file, "", ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    val action = assertOneElement(CheckerRunner.toFixes(problem, descriptor).filter {
+      it.familyName == GrazieBundle.message("grazie.report.bug.action.name")
+    })
+    LeakHunter.checkLeak(action, ASTNode::class.java)
   }
 
   private inline fun <reified T> intentionBean() = IntentionActionBean().also {

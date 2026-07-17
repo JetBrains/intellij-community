@@ -2,7 +2,7 @@
 @file:JvmName("EelProviderProjectUtilKt")
 package com.intellij.platform.eel.provider
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -14,7 +14,7 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private val logger = logger<EelInitialization>()
+private val logger = fileLogger()
 
 private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
 private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.platform.eel.descriptor")
@@ -26,6 +26,7 @@ private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.pl
  * project when it was opened. Unlike [resolveEelMachine] it does not perform resolution; it expects the project's environment to be
  * already initialized and throws if no machine can be determined.
  */
+@ApiStatus.Experimental
 fun Project.getEelMachine(): EelMachine {
   val descriptor = getEelDescriptor()
 
@@ -53,6 +54,7 @@ fun Project.getEelMachine(): EelMachine {
 /**
  * Associates [machine] with this project. Called by the platform during project initialization; not for general use.
  */
+@EelDelicateApi
 @ApiStatus.Internal
 fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)

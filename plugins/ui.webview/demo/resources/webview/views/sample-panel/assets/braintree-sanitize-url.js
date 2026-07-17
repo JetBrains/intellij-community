@@ -1,5 +1,4 @@
 import { t as __commonJSMin } from "./rolldown-runtime.js";
-//#region node_modules/@braintree/sanitize-url/dist/constants.js
 var require_constants = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.BLANK_URL = exports.relativeFirstCharacters = exports.whitespaceEscapeCharsRegex = exports.urlSchemeRegex = exports.ctrlCharactersRegex = exports.htmlCtrlEntityRegex = exports.htmlEntitiesRegex = exports.invalidProtocolRegex = void 0;
@@ -12,8 +11,6 @@ var require_constants = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.relativeFirstCharacters = [".", "/"];
 	exports.BLANK_URL = "about:blank";
 }));
-//#endregion
-//#region node_modules/@braintree/sanitize-url/dist/index.js
 var require_dist = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.sanitizeUrl = sanitizeUrl;
@@ -65,5 +62,4 @@ var require_dist = /* @__PURE__ */ __commonJSMin(((exports) => {
 		return backSanitized;
 	}
 }));
-//#endregion
 export { require_dist as t };

@@ -37,55 +37,40 @@ class KotlinGradlePropertyMethodCallQuickFixTest : K2GradleCodeInsightTestCase()
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testUnwrapListPropertyMethodCallWithGet(gradleVersion: GradleVersion) {
+    fun testDoesNotOfferGetFixForListPropertyMethodCall(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
-            testUnwrapQuickFix(
+            testNoUnwrapQuickFix(
                 sampleBuildScript(
                     """
           val joined = sample.names.<caret>joinToString(",")
           """.trimIndent()
                 ),
-                sampleBuildScript(
-                    """
-          val joined = sample.names.get().joinToString(",")
-          """.trimIndent()
-                ),
             )
         }
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testUnwrapSetPropertyMethodCallWithGet(gradleVersion: GradleVersion) {
+    fun testDoesNotOfferGetFixForSetPropertyMethodCall(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
-            testUnwrapQuickFix(
+            testNoUnwrapQuickFix(
                 sampleBuildScript(
                     """
           val contains = sample.tags.<caret>containsAll(setOf("release"))
           """.trimIndent()
                 ),
-                sampleBuildScript(
-                    """
-          val contains = sample.tags.get().containsAll(setOf("release"))
-          """.trimIndent()
-                ),
             )
         }
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testUnwrapMapPropertyMethodCallWithGet(gradleVersion: GradleVersion) {
+    fun testDoesNotOfferGetFixForMapPropertyMethodCall(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
-            testUnwrapQuickFix(
+            testNoUnwrapQuickFix(
                 sampleBuildScript(
                     """
           val contains = sample.coordinates.<caret>containsKey("group")
-          """.trimIndent()
-                ),
-                sampleBuildScript(
-                    """
-          val contains = sample.coordinates.get().containsKey("group")
           """.trimIndent()
                 ),
             )

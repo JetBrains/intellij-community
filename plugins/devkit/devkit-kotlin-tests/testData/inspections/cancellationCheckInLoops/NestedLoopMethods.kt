@@ -32,15 +32,15 @@ class Testing {
   fun suspendingLambdaContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     withSuspendLambda {
       array.forEach {
-        list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+        list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
       }
 
       for (i in 1..10) {
-        list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+        list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
       }
 
       sequence.forEach {
-        <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">for</warning> (i in 1..10) {
+        <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">for</warning> (i in 1..10) {
           doSomething()
         }
       }
@@ -50,15 +50,15 @@ class Testing {
   @RequiresReadLock
   suspend fun suspendingFunctionContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     array.forEach {
-      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
+      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
     }
 
     for (i in 1..10) {
-      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
+      list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
     }
 
     sequence.forEach {
-      <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">for</warning> (i in 1..10) {
+      <warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">for</warning> (i in 1..10) {
         doSomething()
       }
     }

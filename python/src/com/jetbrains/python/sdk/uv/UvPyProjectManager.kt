@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
@@ -12,6 +13,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectCreator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UV_TOOL
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
@@ -20,7 +22,10 @@ import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +39,15 @@ import kotlin.io.path.relativeTo
 
 
 internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
-  createRuntime = { fs, _ ->
-    val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return@ToolBasedProjectCreator it }
-    Result.success(createUvToolRuntime(tool.path))
-  },
-  createProject = { name, runtime -> runtime.uvCli().init(name) }
+  object : ToolBasedProjectCreator.PyToolFuns {
+    override suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError> {
+      val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return it }
+      return Result.success(createUvToolRuntime(tool.path))
+    }
+
+    override suspend fun createProject(name: @NlsSafe String?, runtime: PyToolRuntime, where: Directory): PyResult<*> =
+      runtime.uvCli().init(name)
+  }
 ) {
 
   override val id: ToolId = UV_TOOL_ID
@@ -146,11 +155,11 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 // but sufficient here since dependency names are already validated by uv.
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
-private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String>? =
-  toml.project?.dependencies?.let { it.project + it.allDepsFromGroups }?.mapNotNull {
+private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String> =
+  toml.project.dependencies.let { it.project + it.allDepsFromGroups }.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
-  }?.toSet()
+  }.toSet()
 
 private data class WorkspaceInfo(val members: List<PathMatcher>, val exclude: List<PathMatcher>) {
   fun match(path: Path): Boolean =
@@ -197,7 +206,7 @@ private fun getUvDependencies(
   if (sourcesTablesWithRoots.isEmpty()) {
     return null
   }
-  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
+  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml)
   // Dependency names indexed by their normalized form; a `tool.uv.sources` entry applies to a
   // dependency when their normalized names match, regardless of `-`/`_`/`.` spelling (PY-90207).
   val depByNormalizedName = deps.associateByTo(HashMap()) { PyPackageName.normalizeProjectName(it) }

@@ -7,7 +7,7 @@ class Dup {
 class A() {
   fun foo() : Unit {
     this@A
-    <error descr="[UNRESOLVED_LABEL] Unresolved label">this@a</error>
+    <error descr="[UNRESOLVED_LABEL]">this@a</error>
     this
   }
 
@@ -17,6 +17,6 @@ class A() {
 }
 
 fun foo1() : Unit {
-  <error descr="[NO_THIS] 'this' is not defined in this context">this</error>
-  <error descr="[UNRESOLVED_LABEL] Unresolved label">this@a</error>
+  <error descr="[NO_THIS]">this</error>
+  <error descr="[UNRESOLVED_LABEL]">this@a</error>
 }

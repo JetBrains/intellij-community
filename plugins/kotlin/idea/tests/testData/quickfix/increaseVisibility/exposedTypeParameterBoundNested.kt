@@ -8,7 +8,7 @@
 // ACTION: Make 'PrivateInnerClass' 'open'
 // ACTION: Make 'PrivateInnerClass' public
 // ACTION: Remove final upper bound
-// K2_ERROR: 'private-in-file' generic exposes its 'private-in-class' parameter bound type 'PrivateInnerClass'.
+// K2_ERROR: EXPOSED_TYPE_PARAMETER_BOUND
 
 private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass> {
     private class PrivateInnerClass

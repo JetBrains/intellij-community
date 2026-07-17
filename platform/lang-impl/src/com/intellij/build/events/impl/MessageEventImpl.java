@@ -84,7 +84,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
   public @NotNull MessageEventResult getResult() {
     return new MessageEventResult() {
       @Override
-      public Kind getKind() {
+      public @NotNull Kind getKind() {
         return myKind;
       }
 

@@ -3,6 +3,7 @@ package com.intellij.mcpserver.toolwindow
 import com.intellij.execution.services.ServiceEventListener
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallInfo
+import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolSideEffectEvent
 import com.intellij.mcpserver.ToolCallListener
@@ -22,7 +23,24 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.coroutines.cancellation.CancellationException
+
+private val responseJsonPrinter = Json { prettyPrint = true }
+
+private fun McpToolCallResult.renderResponseText(): String {
+  val text = content.joinToString("\n") { it.toString() }
+  if (text.isNotBlank()) return text.prettifyJsonOrSelf()
+  val structured = structuredContent ?: return text
+  return responseJsonPrinter.encodeToString(JsonObject.serializer(), structured)
+}
+
+/** Reformats a JSON string as pretty-printed JSON, or returns it unchanged when it is not valid JSON. */
+private fun String.prettifyJsonOrSelf(): String = runCatching {
+  responseJsonPrinter.encodeToString(JsonElement.serializer(), responseJsonPrinter.parseToJsonElement(this))
+}.getOrNull() ?: this
 
 @Service
 internal class McpDiagnosticService(private val cs: CoroutineScope) {
@@ -30,6 +48,10 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
 
   private val _sessions = MutableStateFlow<List<McpSessionInfo>>(emptyList())
   private val _toolCalls = MutableStateFlow<List<McpToolCallEntry>>(emptyList())
+
+  /** When enabled, tool call responses are captured into [McpToolCallEntry.responseText]. */
+  @Volatile
+  var recordResponses: Boolean = false
 
   val activeSessionCount: Int get() = _sessions.value.size
 
@@ -64,6 +86,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
         events: List<McpToolSideEffectEvent>,
         error: Throwable?,
         callInfo: McpCallInfo,
+        result: McpToolCallResult?,
       ) {
         val endTime = System.currentTimeMillis()
         val status = when (error) {
@@ -71,6 +94,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
           is CancellationException -> ToolCallStatus.CANCELLED
           else -> ToolCallStatus.ERROR
         }
+        val responseText = if (recordResponses) result?.renderResponseText() else null
         _toolCalls.update { current ->
           current.map { entry ->
             if (entry.callId == callInfo.callId) {
@@ -79,6 +103,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
                 status = status,
                 errorMessage = error?.message,
                 sideEffectsCount = events.size,
+                responseText = responseText,
               )
             }
             else entry

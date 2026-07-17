@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
-### auto-generated section `build intellij.platform.polySymbols` start
+jps_test(
+    name = "polySymbols-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":polySymbols-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.polySymbols.tests`
+
+### auto-generated section `build intellij.platform.polySymbols` start
 jvm_library(
     name = "polySymbols",
     srcs = glob(
@@ -103,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.polySymbols` end
 
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
-
 jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
@@ -222,7 +229,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
-
 jvm_library(
     name = "polySymbols-tests",
     srcs = glob(
@@ -342,11 +348,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.polySymbols.tests` end
-
-### auto-generated section `test intellij.platform.polySymbols.tests` start
-
-jps_test(
-    name = "polySymbols-tests_test",
-    runtime_deps = [":polySymbols-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.polySymbols.tests` end

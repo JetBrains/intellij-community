@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.markdown.frontend` start
-
 jvm_library(
     name = "frontend",
     srcs = glob(
@@ -33,6 +32,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
         "//platform/kernel/shared:kernel",
+        "//platform/lang-api:lang",
         "//platform/platform-impl/rpc",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
@@ -71,6 +71,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
+        "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",

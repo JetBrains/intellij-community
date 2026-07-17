@@ -1,5 +1,5 @@
 // "Add 'inline' to function 'foo'" "true"
-// K2_ERROR: Modifier is only allowed for function parameters of an inline function.
+// K2_ERROR: ILLEGAL_INLINE_PARAMETER_MODIFIER
 
 inline fun foo(<caret>crossinline body: () -> Unit) {
 

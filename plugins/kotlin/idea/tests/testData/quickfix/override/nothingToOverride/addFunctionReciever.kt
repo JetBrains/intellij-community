@@ -1,6 +1,6 @@
 // "Change function signature to 'fun Int.foo(a: String)'" "true"
-// K2_ERROR: 'foo' overrides nothing. Potential signatures for overriding:<br>fun Int.foo(a: String): Unit
-// K2_ERROR: Class 'B' is not abstract and does not implement abstract base class member:<br>fun Int.foo(a: String): Unit
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
 abstract class C {
     abstract fun Int.foo(a: String)
 }

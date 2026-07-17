@@ -143,6 +143,7 @@ internal abstract class DocumentRealMutator(
         newModStamp,
         changeEvent.isWholeTextReplaced,
         clearLineFlags,
+        false,
       )
     }
   }

@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,8 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
@@ -48,12 +44,7 @@ final class FileStatus {
   }
 
   static int @NotNull [] getAllKnownPassIds(@NotNull Project project) {
-    IntList r = IntArrayList.of(Pass.UPDATE_ALL, Pass.EXTERNAL_TOOLS, Pass.LOCAL_INSPECTIONS, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS, Pass.INJECTED_GENERAL);
-    TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx)TextEditorHighlightingPassRegistrar.getInstance(project);
-    for (DirtyScopeTrackingHighlightingPassFactory factory : registrar.getDirtyScopeTrackingFactories()) {
-      r.add(factory.getPassId());
-    }
-    return r.toIntArray();
+    return ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(project)).getAllPassIds();
   }
   private void markWholeFileDirty(@NotNull Project project) {
     for (int passId : getAllKnownPassIds(project)) {
@@ -73,17 +64,15 @@ final class FileStatus {
     return defensivelyMarked.contains(passId);
   }
 
-  void setDefensivelyMarked(boolean defensivelyMarked, int passId) {
-    if (defensivelyMarked) {
-      this.defensivelyMarked.add(passId);
-    }
-    else {
-      this.defensivelyMarked.remove(passId);
-    }
+  private void setDefensivelyMarked(int passId) {
+    defensivelyMarked.add(passId);
+  }
+  void clearDefensivelyMarked(int passId) {
+    defensivelyMarked.remove(passId);
   }
   void markDefensivelyForAllPasses(@NotNull Project project) {
     for (int passId : getAllKnownPassIds(project)) {
-      setDefensivelyMarked(true, passId);
+      setDefensivelyMarked(passId);
     }
   }
   void clearDefensivelyMarkedForAllPasses() {

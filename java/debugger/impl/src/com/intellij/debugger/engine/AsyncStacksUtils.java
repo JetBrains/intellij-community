@@ -41,6 +41,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.BazelEnvironmentUtil;
@@ -508,7 +509,7 @@ public final class AsyncStacksUtils {
 
   private static @NotNull Path createTemporaryAgentPath(@Nullable Project project, @Nullable Disposable disposable) {
     // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
-    Path debuggerAgentDir = EelPathUtils.createTemporaryDirectory(project, "debugger-agent", "", disposable == null);
+    Path debuggerAgentDir = EelProjectUtils.createTemporaryDirectory(project, "debugger-agent", "", disposable == null);
     if (disposable != null) {
       Disposer.register(disposable, () -> {
         try {
@@ -538,7 +539,7 @@ public final class AsyncStacksUtils {
     }
     if (!properties.isEmpty()) {
       try {
-        Path path = EelPathUtils.createTemporaryFile(project, "capture", ".props", true);
+        Path path = EelProjectUtils.createTemporaryFile(project, "capture", ".props", true);
         try (OutputStream out = Files.newOutputStream(path)) {
           properties.store(out, null);
           return "=" + EelPathUtils.getUriLocalToEel(path).toASCIIString();

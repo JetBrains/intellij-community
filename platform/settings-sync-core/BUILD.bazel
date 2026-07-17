@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.settingsSync.core` start
-
 jvm_library(
     name = "settingsSync-core",
     srcs = glob(
@@ -161,7 +160,6 @@ exports_files(
 ### auto-generated section `iml intellij.settingsSync.core` end
 
 ### auto-generated section `build intellij.settingsSync.core.tests` start
-
 jvm_library(
     name = "settingsSync-core-tests",
     srcs = glob(
@@ -323,7 +321,6 @@ exports_files(
 ### auto-generated section `iml intellij.settingsSync.core.tests` end
 
 ### auto-generated section `test intellij.settingsSync.core.tests` start
-
 jps_test(
     name = "settingsSync-core-tests_test",
     runtime_deps = [":settingsSync-core-tests_test_lib"],

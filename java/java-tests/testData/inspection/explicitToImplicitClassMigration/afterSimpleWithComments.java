@@ -8,5 +8,4 @@ void main(/*test*/) {
     //comments4
     IO.println("Hello, world!");
 }
-
 //comments5

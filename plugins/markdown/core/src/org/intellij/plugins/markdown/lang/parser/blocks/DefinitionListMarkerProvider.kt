@@ -42,7 +42,7 @@ class DefinitionListMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInf
     @JvmField
     val DEFINITION_MARKER: IElementType = MarkdownElementType("DEFINITION_MARKER", isToken = true)
 
-    fun isDefinitionLine(line: String): Boolean {
+    fun isDefinitionLine(line: CharSequence): Boolean {
       return line.trimStart(' ', '\t').startsWith(": ")
     }
   }

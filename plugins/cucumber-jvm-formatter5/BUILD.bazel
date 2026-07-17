@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.cucumber.jvmFormatter5` start
-
 jvm_library(
     name = "cucumber-jvmFormatter5",
     srcs = glob(

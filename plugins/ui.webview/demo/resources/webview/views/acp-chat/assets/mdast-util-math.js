@@ -1,6 +1,5 @@
 import "./devlop.js";
 import { t as longestStreak } from "./longest-streak.js";
-//#region node_modules/mdast-util-math/lib/index.js
 /**
 * @typedef {import('hast').Element} HastElement
 * @typedef {import('hast').ElementContent} HastElementContent
@@ -249,5 +248,4 @@ function mathToMarkdown(options) {
 		return "$";
 	}
 }
-//#endregion
 export { mathToMarkdown as n, mathFromMarkdown as t };

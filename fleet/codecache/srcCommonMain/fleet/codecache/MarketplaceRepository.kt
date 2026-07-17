@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 
 private object Marketplace {
-  val logger = logger<Marketplace>()
+  val logger by lazy { logger<Marketplace>() }
 }
 
 fun marketPlaceRepository(

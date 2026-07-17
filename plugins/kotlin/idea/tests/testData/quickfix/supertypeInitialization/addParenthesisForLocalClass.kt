@@ -1,6 +1,6 @@
 // "Change to constructor invocation" "true"
 // PRIORITY: HIGH
-// K2_ERROR: This type has a constructor, so it must be initialized here.
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 fun bar() {
     abstract class Foo {}
     class A : <caret>Foo {}

@@ -1,4 +1,5 @@
 // "Change to 'val'" "true"
+// K2_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
 import kotlin.reflect.KProperty
 
 fun test() {

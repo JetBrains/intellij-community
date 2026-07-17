@@ -4,10 +4,14 @@ package com.intellij.compose.ide.plugin.resources
 import com.android.ide.common.util.GeneratorTester
 import com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewRenderer
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.RenderResult
+import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.VectorDrawableOverrideInfo
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import java.awt.Color
 import java.io.File
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * Compares the ComposeResources VectorDrawable renderer against Android's VdPreview implementation.
@@ -79,6 +83,33 @@ class ComposeResourcesComparisonTest : BasePlatformTestCase() {
 
   fun `test radial gradient`() = compareRendering("test_radial_gradient")
 
+  fun `test overrideXmlContent with width change`() = compareOverridenRendering("width change", VectorDrawableOverrideInfo(width = 48.0))
+
+  fun `test overrideXmlContent with height change`() = compareOverridenRendering("height change", VectorDrawableOverrideInfo(height = 48.0))
+
+  fun `test overrideXmlContent with width and height change`() =
+    compareOverridenRendering("width and height change", VectorDrawableOverrideInfo(width = 64.0, height = 64.0))
+
+  fun `test overrideXmlContent with alpha change`() = compareOverridenRendering("alpha change", VectorDrawableOverrideInfo(alpha = 0.5))
+
+  fun `test overrideXmlContent with tint change`() = compareOverridenRendering("tint change", VectorDrawableOverrideInfo(tint = Color.RED))
+
+  fun `test overrideXmlContent with autoMirrored`() =
+    compareOverridenRendering("autoMirrored", VectorDrawableOverrideInfo(autoMirrored = true))
+
+  fun `test overrideXmlContent with all overrides`() = compareOverridenRendering(
+    "all overrides",
+    VectorDrawableOverrideInfo(width = 32.0, height = 32.0, tint = Color.BLUE, alpha = 0.75, autoMirrored = true)
+  )
+
+  fun `test overrideXmlContent with no changes`() = compareOverridenRendering("no changes", VectorDrawableOverrideInfo())
+
+  fun `test adjustIconColor with dark background inverts colors`() =
+    compareAdjustedIconColor("dark background", JPanel().apply { background = Color(50, 50, 50) })
+
+  fun `test adjustIconColor with light background returns unchanged`() =
+    compareAdjustedIconColor("light background", JPanel().apply { background = Color(200, 200, 200) })
+
   private fun compareRendering(testCase: String) {
     val xml = loadXmlResource(testCase)
     val kotlinResult = kotlinRenderer.renderPreview(xml, IMAGE_SIZE, IMAGE_SIZE)
@@ -95,6 +126,34 @@ class ComposeResourcesComparisonTest : BasePlatformTestCase() {
         fail("Result mismatch for $testCase: Android=${androidResult::class.simpleName}, Kotlin=${kotlinResult::class.simpleName}")
       }
     }
+  }
+
+  private fun compareOverridenRendering(context: String, overrideInfo: VectorDrawableOverrideInfo) {
+    val xml = loadXmlResource("test_fill_gradient")
+
+    val androidErrors = StringBuilder()
+    val kotlinErrors = StringBuilder()
+
+    val androidOverridenXml = androidRenderer.applyOverrides(xml, overrideInfo, androidErrors)
+    val kotlinOverridenXml = kotlinRenderer.applyOverrides(xml, overrideInfo, kotlinErrors)
+
+    assertEquals("Errors should match for override: $context", androidErrors.toString(), kotlinErrors.toString())
+
+    assertEquals("Both should have same result for override: $context", androidOverridenXml, kotlinOverridenXml)
+  }
+
+  private fun compareAdjustedIconColor(context: String, component: JComponent) {
+    val xml = loadXmlResource("test_fill_gradient")
+    val renderXml = androidRenderer.renderPreview(xml, IMAGE_SIZE, IMAGE_SIZE)
+
+    if (renderXml !is RenderResult.Success) {
+      fail("Failed to render XML for $context")
+      return
+    }
+    val androidResult = androidRenderer.adjustIconColor(component, renderXml.image)
+    val kotlinResult = kotlinRenderer.adjustIconColor(component, renderXml.image)
+
+    GeneratorTester.assertImageSimilar(context, androidResult, kotlinResult, 1.25f)
   }
 
   private fun loadXmlResource(testCase: String): String {

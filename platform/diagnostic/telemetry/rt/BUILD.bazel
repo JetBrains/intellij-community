@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` start
+jps_test(
+    name = "diagnostic-telemetry-rt-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":diagnostic-telemetry-rt-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.diagnostic.telemetry.rt.tests`
+
+### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` start
 jvm_library(
     name = "rt",
     srcs = glob(
@@ -56,7 +64,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt` end
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` start
-
 jvm_library(
     name = "diagnostic-telemetry-rt-tests",
     srcs = glob(
@@ -106,11 +113,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt.tests` end
-
-### auto-generated section `test intellij.platform.diagnostic.telemetry.rt.tests` start
-
-jps_test(
-    name = "diagnostic-telemetry-rt-tests_test",
-    runtime_deps = [":diagnostic-telemetry-rt-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.diagnostic.telemetry.rt.tests` end

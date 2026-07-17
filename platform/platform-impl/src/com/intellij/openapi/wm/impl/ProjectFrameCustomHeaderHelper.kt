@@ -17,7 +17,6 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
@@ -392,7 +391,7 @@ private fun installCustomHeader(
   val isDecoratedMenu = isDecoratedMenu(uiSettings)
   val isFloatingMenuBarSupported = isFloatingMenuBarSupported
   val hideNativeLinuxTitle = hideNativeLinuxTitle(uiSettings)
-  val ijpl43505fixEnabled = OS.isGenericUnix() && Registry.`is`("ide.linux.ijpl43505", true)
+  val ijpl43505fixEnabled = OS.isGenericUnix()
 
   return if (!isDecoratedMenu && !isFloatingMenuBarSupported && (!ijpl43505fixEnabled || !hideNativeLinuxTitle)) {
     createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)

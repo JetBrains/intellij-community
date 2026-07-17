@@ -1,6 +1,8 @@
 package com.intellij.mcpserver.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.openapi.Disposable
@@ -9,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
@@ -16,18 +19,26 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.Box
@@ -88,6 +99,24 @@ internal class McpToolCallsPanel(
     ) {
       override fun actionPerformed(e: AnActionEvent) {
         diagnosticService.clearToolCalls()
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+    })
+    toolbarGroup.add(object : ToggleAction(
+      McpServerBundle.message("mcp.toolwindow.calls.record.response"),
+      null,
+      AllIcons.Ide.Macro.Recording_1,
+    ) {
+      override fun isSelected(e: AnActionEvent): Boolean = diagnosticService.recordResponses
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        diagnosticService.recordResponses = state
+      }
+
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        e.presentation.icon = if (isSelected(e)) AllIcons.Actions.Pause else AllIcons.Ide.Macro.Recording_1
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -259,24 +288,15 @@ internal class McpToolCallsPanel(
 }
 
 private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
-  private val editor: EditorEx
+  private val request = EditorSection(McpServerBundle.message("mcp.toolwindow.calls.detail.request"), HIGHLIGHT_LANGUAGE_KEY_REQUEST)
+  private val response = EditorSection(McpServerBundle.message("mcp.toolwindow.calls.detail.response"), HIGHLIGHT_LANGUAGE_KEY_RESPONSE)
+  // The request panel stays mounted as the first component; only the second (response) component is toggled.
+  private val splitter = OnePixelSplitter(false, 0.5f).apply { firstComponent = request.panel }
 
   init {
-    val document = EditorFactory.getInstance().createDocument("")
-    editor = EditorFactory.getInstance().createViewer(document, null, EditorKind.PREVIEW) as EditorEx
-    editor.settings.apply {
-      isLineNumbersShown = false
-      isFoldingOutlineShown = false
-      isLineMarkerAreaShown = false
-      isIndentGuidesShown = false
-      additionalLinesCount = 0
-      additionalColumnsCount = 0
-      isUseSoftWraps = true
-    }
-    editor.setCaretVisible(false)
-
-    add(editor.component, BorderLayout.CENTER)
+    add(splitter, BorderLayout.CENTER)
     border = JBUI.Borders.emptyTop(2)
+    showResponse(false)
   }
 
   fun showEntry(entry: McpToolCallEntry?) {
@@ -285,7 +305,6 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
       return
     }
     val sb = StringBuilder()
-    sb.appendLine("${McpServerBundle.message("mcp.toolwindow.calls.detail.parameters")}:")
     sb.appendLine(formatJson(entry.arguments))
     if (entry.errorMessage != null) {
       sb.appendLine()
@@ -296,20 +315,138 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
       sb.appendLine()
       sb.appendLine(McpServerBundle.message("mcp.toolwindow.calls.detail.side.effects", entry.sideEffectsCount))
     }
-    setText(sb.toString())
+    request.setContent(sb.toString())
+
+    val responseText = entry.responseText
+    response.setContent(responseText ?: "")
+    showResponse(responseText != null)
   }
 
   fun clear() {
-    setText("")
+    request.setContent("")
+    response.setContent("")
+    showResponse(false)
   }
 
-  private fun setText(text: String) {
+  /** Shows the response editor side-by-side with the request one only when [visible]; otherwise the request takes the full width. */
+  private fun showResponse(visible: Boolean) {
+    splitter.secondComponent = if (visible) response.panel else null
+    splitter.revalidate()
+    splitter.repaint()
+  }
+
+  override fun dispose() {
+    request.dispose()
+    response.dispose()
+  }
+}
+
+/**
+ * A titled read-only editor with its own highlighting-language dropdown.
+ */
+private class EditorSection(@Nls private val title: String, private val languageKey: String) {
+  private val editor: EditorEx = createViewerEditor()
+  val panel: JPanel = createPanel()
+
+  fun setContent(text: String) {
     runWriteAction { editor.document.setText(text) }
     editor.scrollingModel.scrollTo(LogicalPosition(0, 0), ScrollType.MAKE_VISIBLE)
   }
 
-  override fun dispose() {
+  fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
+  }
+
+  private fun createPanel(): JPanel {
+    val panel = JPanel(BorderLayout())
+    panel.add(createHeader(), BorderLayout.NORTH)
+    panel.add(editor.component, BorderLayout.CENTER)
+    applyHighlighter()
+    return panel
+  }
+
+  private fun createHeader(): JPanel {
+    val header = JPanel(BorderLayout())
+    header.border = JBUI.Borders.empty(2, 4)
+    header.add(JBLabel(title), BorderLayout.WEST)
+
+    val combo = ComboBox(HighlightLanguage.entries.filter { it.resolveFileType() != null }.toTypedArray())
+    combo.selectedItem = loadSelectedLanguage(languageKey)
+    combo.setToolTipText(HtmlChunk.text(McpServerBundle.message("mcp.toolwindow.calls.detail.highlight.label")))
+    combo.maximumSize = combo.preferredSize
+    combo.addActionListener {
+      val selected = combo.selectedItem as? HighlightLanguage ?: return@addActionListener
+      saveSelectedLanguage(languageKey, selected)
+      applyHighlighter()
+    }
+    header.add(combo, BorderLayout.EAST)
+    return header
+  }
+
+  private fun applyHighlighter() {
+    val fileType = loadSelectedLanguage(languageKey).resolveFileType() ?: return
+    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(null, fileType)
+  }
+}
+
+private fun createViewerEditor(): EditorEx {
+  val document = EditorFactory.getInstance().createDocument("")
+  val editor = EditorFactory.getInstance().createViewer(document, null, EditorKind.PREVIEW) as EditorEx
+  editor.settings.apply {
+    isLineNumbersShown = false
+    isFoldingOutlineShown = false
+    isLineMarkerAreaShown = false
+    isIndentGuidesShown = false
+    additionalLinesCount = 0
+    additionalColumnsCount = 0
+    isUseSoftWraps = true
+  }
+  editor.setCaretVisible(false)
+  return editor
+}
+
+private fun loadSelectedLanguage(languageKey: String): HighlightLanguage {
+  val stored = PropertiesComponent.getInstance().getValue(languageKey)
+  return HighlightLanguage.entries.find { it.name == stored } ?: HighlightLanguage.JSON
+}
+
+private fun saveSelectedLanguage(languageKey: String, language: HighlightLanguage) {
+  PropertiesComponent.getInstance().setValue(languageKey, language.name)
+}
+
+private const val HIGHLIGHT_LANGUAGE_KEY_REQUEST = "mcp.toolcalls.detail.highlight.lang.request"
+private const val HIGHLIGHT_LANGUAGE_KEY_RESPONSE = "mcp.toolcalls.detail.highlight.lang.response"
+
+/**
+ * Languages offered in the tool-call detail highlighting dropdown. [PLAIN] disables highlighting.
+ * File types are resolved at runtime via [FileTypeManager] so no static dependency on the
+ * JSON/XML/Markdown modules is required (Markdown is a plugin and may be disabled).
+ */
+private enum class HighlightLanguage {
+  JSON, XML, MARKDOWN, PLAIN;
+
+  fun resolveFileType(): FileType? = when (this) {
+    JSON -> FileTypeManager.getInstance().getStdFileType("JSON")
+    PLAIN -> FileTypes.PLAIN_TEXT
+    XML -> resolveByExtension("xml")
+    MARKDOWN -> resolveByExtension("md")
+  }
+
+  @NonNls
+  fun displayName(): String = when (this) {
+    JSON -> "JSON"
+    PLAIN -> McpServerBundle.message("mcp.toolwindow.calls.detail.highlight.plain")
+    XML -> "XML"
+    MARKDOWN -> "Markdown"
+  }
+
+  override fun toString(): String = displayName()
+
+  companion object {
+    private fun resolveByExtension(extension: String): FileType {
+      val fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension)
+      return if (fileType == FileTypes.UNKNOWN) FileTypes.PLAIN_TEXT else fileType
+    }
   }
 }
 
@@ -331,6 +468,7 @@ internal data class McpToolCallEntry(
   val status: ToolCallStatus,
   val errorMessage: String?,
   val sideEffectsCount: Int,
+  val responseText: String? = null,
 )
 
 internal enum class ToolCallStatus {

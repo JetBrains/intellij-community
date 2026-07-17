@@ -103,7 +103,7 @@ export function resolveMoreFlag(result: unknown, itemCount: number, maxResults: 
   return itemCount >= maxResults
 }
 
-function normalizeProjectRelativePath(projectPath: string, filePath: string): string {
+export function normalizeProjectRelativePath(projectPath: string, filePath: string): string {
   if (!filePath) return ''
   if (path.isAbsolute(filePath)) {
     const relative = path.relative(projectPath, filePath)

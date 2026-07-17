@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.grazie.tests.pro` start
-
 resourcegroup(
     name = "tests.pro_test_resources",
     srcs = glob(
@@ -164,7 +163,6 @@ exports_files(
 ### auto-generated section `iml intellij.grazie.tests.pro` end
 
 ### auto-generated section `test intellij.grazie.tests.pro` start
-
 jps_test(
     name = "tests.pro_test",
     runtime_deps = [":tests.pro_test_lib"],

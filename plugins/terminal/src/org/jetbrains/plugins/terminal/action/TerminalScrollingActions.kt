@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
@@ -48,7 +49,9 @@ private abstract class ScrollingHandlerImpl(private val unit: Unit, private val 
       Unit.LINE -> 1
       Unit.PAGE -> editor.scrollingModel.visibleArea.height / editor.lineHeight
     }
-    EditorActionUtil.scrollRelatively(editor, amount * direction, 0, false)
+    editor.doTerminalOutputScrollChangingAction {
+      EditorActionUtil.scrollRelatively(editor, amount * direction, 0, false)
+    }
   }
 }
 

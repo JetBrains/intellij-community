@@ -513,6 +513,7 @@ a:com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - pa:getExecutor(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.CommitExecutor
+- getSaveCommentOnCancel():Z
 - p:isActionEnabled(com.intellij.openapi.vcs.changes.ChangeListManager,com.intellij.openapi.vcs.changes.Change):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
@@ -1877,6 +1878,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 - f:shelveChanges(java.util.Collection,java.lang.String,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - f:shelveChanges(java.util.Collection,java.lang.String,Z,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - f:shelveSilentlyUnderProgress(java.util.List,Z):V
+- sf:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.io.File,java.lang.String):java.io.File
 - sf:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.nio.file.Path,java.lang.String):java.nio.file.Path
 - f:unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - f:unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z,Z,Z,java.lang.String,java.lang.String,Z):com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
@@ -1890,6 +1892,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$Companion
 - f:getShelfPath(com.intellij.openapi.project.Project):java.lang.String
 - f:loadPatches(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.vcs.changes.CommitContext):java.util.List
 - f:loadPatchesWithoutContent(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.vcs.changes.CommitContext):java.util.List
+- f:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.io.File,java.lang.String):java.io.File
 - f:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.nio.file.Path,java.lang.String):java.nio.file.Path
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch
@@ -2292,7 +2295,7 @@ a:com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 - p:afterInit():V
 - s:commitChanges(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.CommitExecutor,java.lang.String):Z
 - s:commitVcsChanges(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,java.lang.String,com.intellij.openapi.vcs.changes.CommitResultHandler):Z
-- s:commitWithExecutor(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.CommitExecutor,java.lang.String,com.intellij.openapi.vcs.changes.CommitResultHandler):Z
+- s:commitWithExecutor(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.CommitExecutor,java.lang.String,java.lang.Boolean,com.intellij.openapi.vcs.changes.CommitResultHandler):Z
 - confirmCommitWithEmptyMessage():Z
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
@@ -2323,7 +2326,7 @@ a:com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 - isDefaultCommitEnabled():Z
 - refreshDataBeforeCommit():V
 - setDefaultCommitActionName(java.lang.String):V
-- s:showCommitDialog(com.intellij.openapi.project.Project,java.util.Set,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,java.lang.String,com.intellij.openapi.vcs.changes.CommitResultHandler):Z
+- s:showCommitDialog(com.intellij.openapi.project.Project,java.util.Set,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,java.lang.String,java.lang.Boolean,com.intellij.openapi.vcs.changes.CommitResultHandler):Z
 - s:showNothingToCommitMessage(com.intellij.openapi.project.Project):V
 - startBeforeCommitChecks():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
@@ -3269,6 +3272,7 @@ c:com.intellij.openapi.vcs.ui.CommitMessage
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,Z,java.lang.String):V
+- addCommitMessageListener(com.intellij.vcs.commit.CommitMessageListener):V
 - createToolbar(Z):javax.swing.JComponent
 - dispose():V
 - focus():V
@@ -4164,12 +4168,11 @@ f:com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler
 - com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 - com.intellij.vcs.commit.CommitWorkflowUiStateListener
 - com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi$ChangeListListener
-- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi,java.lang.String,java.util.Collection):V
+- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi,java.lang.String,java.util.Collection,Z):V
 - f:activate():Z
 - beforeCommitChecksEnded(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.CommitChecksResult):V
 - cancelled():V
 - changeListChanged(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.LocalChangeList):V
-- f:getInitiallyIncluded():java.util.Collection
 - getUi():com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 - getWorkflow():com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 - isExecutorEnabled(com.intellij.openapi.vcs.changes.CommitExecutor):Z

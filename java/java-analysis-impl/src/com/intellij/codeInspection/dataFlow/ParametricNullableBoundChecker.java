@@ -274,6 +274,13 @@ final class ParametricNullableBoundChecker {
     return ContainerUtil.filter(problems, problem -> problem.getKind() == NullabilityProblemKind.nullableReturn);
   }
 
+  private static void collectClasses(PsiClass psiClass, List<PsiClass> sink) {
+    sink.add(psiClass);
+    for (PsiClass inner : psiClass.getInnerClasses()) {
+      collectClasses(inner, sink);
+    }
+  }
+
   private static @Nullable CloneFileContainer getOrCreateNonNullBoundClone(@NotNull PsiElement originalContext) {
     PsiFile originalFile = originalContext.getContainingFile();
     if (originalFile == null) return null;
@@ -285,7 +292,11 @@ final class ParametricNullableBoundChecker {
         if (!(clone instanceof PsiJavaFile javaFileClone)) return null;
         if (!(originalFile instanceof PsiJavaFile originalJavaFile)) return null;
         Map<PsiMethod, @Nullable CloneMethodContainer> methods = new HashMap<>();
-        for (PsiClass originalClass : originalJavaFile.getClasses()) {
+        List<PsiClass> allClasses = new ArrayList<>();
+        for (PsiClass topLevel : originalJavaFile.getClasses()) {
+          collectClasses(topLevel, allClasses);
+        }
+        for (PsiClass originalClass : allClasses) {
           if (!originalClass.isPhysical()) continue;
           for (PsiMethod originalMethod : originalClass.getMethods()) {
             if (!originalMethod.isPhysical() || !isBodyFullyPhysical(originalMethod)) continue;

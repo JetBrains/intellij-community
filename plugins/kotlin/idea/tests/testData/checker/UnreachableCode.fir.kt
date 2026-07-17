@@ -4,7 +4,7 @@ fun t1() : Int{
 }
 
 fun t1a() : Int {
-  <error descr="[RETURN_TYPE_MISMATCH] Return type mismatch: expected kotlin/Int, actual kotlin/Unit">return</error>
+  <error descr="[RETURN_TYPE_MISMATCH]">return</error>
   return 1
   1
 }
@@ -17,7 +17,7 @@ fun t1b() : Int {
 
 fun t1c() : Int {
   return 1
-  <error descr="[RETURN_TYPE_MISMATCH] Return type mismatch: expected kotlin/Int, actual kotlin/Unit">return</error>
+  <error descr="[RETURN_TYPE_MISMATCH]">return</error>
   1
 }
 
@@ -107,7 +107,7 @@ fun t7() : Int {
     return 1
     2
   }
-  catch (<error descr="[THROWABLE_TYPE_MISMATCH] Throwable type mismatch: actual type is kotlin/Any">e : Any</error>) {
+  catch (<error descr="[THROWABLE_TYPE_MISMATCH]">e : Any</error>) {
     2
   }
   return 1 // this is OK, like in Java
@@ -118,7 +118,7 @@ fun t8() : Int {
     return 1
     2
   }
-  catch (<error descr="[THROWABLE_TYPE_MISMATCH] Throwable type mismatch: actual type is kotlin/Any">e : Any</error>) {
+  catch (<error descr="[THROWABLE_TYPE_MISMATCH]">e : Any</error>) {
     return 1
     2
   }

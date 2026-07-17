@@ -12,19 +12,19 @@ class B() : A() {
 
 fun f9(a : A?) {
   a?.foo()
-  a?.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+  a?.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
   if (a is B) {
     a.bar()
     a.foo()
   }
   a?.foo()
-  a?.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+  a?.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
   if (!(a is B)) {
-    a?.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+    a?.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
     a?.foo()
   }
   if (!(a is B) || a.bar() == Unit) {
-      a?.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+      a?.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
   }
   if (!(a is B)) {
     return;
@@ -71,7 +71,7 @@ fun f11(a : A?) {
     is B -> a.bar()
     is A -> a.foo()
     is Any -> a.foo()
-    is Any? -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+    is Any? -> a.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
     else -> a?.foo()
   }
 }
@@ -81,13 +81,13 @@ fun f12(a : A?) {
     is B -> a.bar()
     is A -> a.foo()
     is Any -> a.foo();
-    is Any? -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+    is Any? -> a.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
     is C -> a.bar()
     else -> a?.foo()
   }
 
   if (a is Any?) {
-    a?.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+    a?.<error descr="[UNRESOLVED_REFERENCE]">bar</error>()
   }
   if (a is B) {
     a.bar()
@@ -101,7 +101,7 @@ fun f13(a : A?) {
   }
   else {
     a?.foo()
-    <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: c">c</error>.bar()
+    <error descr="[UNRESOLVED_REFERENCE]">c</error>.bar()
   }
 
   a?.foo()
@@ -159,7 +159,7 @@ fun illegalWhenBody(a: Any): Int = when(a) {
 fun illegalWhenBlock(a: Any): Int {
     when(a) {
         is Int -> return a
-        is String -> return <error descr="[RETURN_TYPE_MISMATCH] Return type mismatch: expected kotlin/Int, actual kotlin/String">a</error>
+        is String -> return <error descr="[RETURN_TYPE_MISMATCH]">a</error>
         else -> return 1
     }
 }
@@ -194,20 +194,20 @@ fun returnFunctionLiteral(a: Any?): Function0<Int> =
 
 fun mergeSmartCasts(a: Any?) {
   if (a is String || a is Int) {
-    a.compareTo(<error descr="[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is kotlin/String but it(kotlin/String & kotlin/Int) was expected">""</error>)
+    a.compareTo(<error descr="[ARGUMENT_TYPE_MISMATCH]">""</error>)
     a.toString()
   }
   if (a is Int || a is String) {
-    a.compareTo(<error descr="[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is kotlin/String but it(kotlin/Int & kotlin/String) was expected">""</error>)
+    a.compareTo(<error descr="[ARGUMENT_TYPE_MISMATCH]">""</error>)
   }
   when (a) {
-    is String, is Any -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("")
+    is String, is Any -> a.<error descr="[UNRESOLVED_REFERENCE]">compareTo</error>("")
   }
   if (a is String && a is Any) {
     val i: Int = a.compareTo("")
   }
   if (a is String && a.compareTo("") == 0) {}
-  if (a is String || a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("") == 0) {}
+  if (a is String || a.<error descr="[UNRESOLVED_REFERENCE]">compareTo</error>("") == 0) {}
 }
 
 //mutability
@@ -216,11 +216,11 @@ fun f(): String {
     if (a is String) {
         val i: String = a
         a.compareTo("f")
-        val f: Function0<String> = <error descr="[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected kotlin/Function0<kotlin/String>, actual kotlin/Function0<kotlin/Int>">{
+        val f: Function0<String> = <error descr="[INITIALIZER_TYPE_MISMATCH]">{
             a = 42
             a
         }</error>
-        return <error descr="[RETURN_TYPE_MISMATCH] Return type mismatch: expected kotlin/String, actual kotlin/Int">a</error>
+        return <error descr="[RETURN_TYPE_MISMATCH]">a</error>
     }
     return ""
 }
@@ -232,13 +232,13 @@ class Mutable(var x: String?) {
 
     fun foo(): String {
         if (x is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'kotlin/String' is impossible, because 'this@R|/Mutable|.R|/Mutable.x|' is a mutable property that could have been changed by this time">x</error>
+            return <error descr="[SMARTCAST_IMPOSSIBLE]">x</error>
         }
         if (x != null) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'kotlin/String' is impossible, because 'this@R|/Mutable|.R|/Mutable.x|' is a mutable property that could have been changed by this time">x</error>
+            return <error descr="[SMARTCAST_IMPOSSIBLE]">x</error>
         }
         if (xx is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'kotlin/String' is impossible, because 'this@R|/Mutable|.R|/Mutable.xx|' is a property that has open or custom getter">xx</error>
+            return <error descr="[SMARTCAST_IMPOSSIBLE]">xx</error>
         }
         return ""
     }
@@ -246,7 +246,7 @@ class Mutable(var x: String?) {
     fun bar(other: Mutable): String {
         var y = other
         if (y.x is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'kotlin/String' is impossible, because 'R|<local>/y|.R|/Mutable.x|' is a mutable property that could have been changed by this time">y.x</error>
+            return <error descr="[SMARTCAST_IMPOSSIBLE]">y.x</error>
         }
         return ""
     }
@@ -264,7 +264,7 @@ fun inForLoop(x: Any?) {
     if (x is Array<*>) {
         for (i in x) {}
     }
-    for (i in <error descr="[ITERATOR_MISSING] ">x</error>) {}
+    for (i in <error descr="[ITERATOR_MISSING]">x</error>) {}
 }
 
 class ExplicitAccessorForAnnotation {

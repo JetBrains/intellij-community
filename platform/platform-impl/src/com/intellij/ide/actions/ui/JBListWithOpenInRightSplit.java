@@ -16,6 +16,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,37 +111,38 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
   public void paint(Graphics g) {
     super.paint(g);
 
-    boolean isSelectedUnderMouse = false;
+    int selectedIndex = getSelectedIndex();
+    int hoveredIndex = ListHoverListener.getHoveredIndex(this);
+    boolean isSelectedUnderMouse = selectedIndex != -1 && selectedIndex == hoveredIndex;
     Point mousePoint = mouseTracker.getMousePoint();
 
-    if (mousePoint != null) {
-      int index = locationToIndex(mousePoint);
-      if (index != -1 && canOpenInSplitter(getModel().getElementAt(index))) {
-        isSelectedUnderMouse = getSelectedIndex() == index;
-        final Rectangle iconRect = getIconRectangle(index);
-        boolean isIconHover = iconRect.contains(mousePoint);
-        Icon icon = getIcon();
-        if (isSelectedUnderMouse) {
-          icon = IconLoader.getDarkIcon(icon, true);
-        }
-        if (!isIconHover && !isSelectedUnderMouse) {
-          icon = IconLoader.getTransparentIcon(icon);
-        }
-
-        icon = toSize(icon);
-
-        icon.paintIcon(this, g, iconRect.x, iconRect.y);
+    if (isValidIndex(hoveredIndex) && mousePoint != null && canOpenInSplitter(getModel().getElementAt(hoveredIndex))) {
+      final Rectangle iconRect = getIconRectangle(hoveredIndex);
+      boolean isIconHover = iconRect.contains(mousePoint);
+      Icon icon = getIcon();
+      if (isSelectedUnderMouse) {
+        icon = IconLoader.getDarkIcon(icon, true);
       }
+      if (!isIconHover && !isSelectedUnderMouse) {
+        icon = IconLoader.getTransparentIcon(icon);
+      }
+      icon = toSize(icon);
+      icon.paintIcon(this, g, iconRect.x, iconRect.y);
     }
-
-    int index = getSelectedIndex();
-    if (index != -1 && !isSelectedUnderMouse && canOpenInSplitter(getModel().getElementAt(index))) {
-      final Rectangle iconRect = getIconRectangle(index);
+    
+    if (isValidIndex(selectedIndex) && !isSelectedUnderMouse && canOpenInSplitter(getModel().getElementAt(selectedIndex))) {
+      final Rectangle iconRect = getIconRectangle(selectedIndex);
       Icon icon = getIcon();
       icon = IconLoader.getDarkIcon(icon, true);
       icon = toSize(icon);
       icon.paintIcon(this, g, iconRect.x, iconRect.y);
     }
+
+  }
+
+  private boolean isValidIndex(int index) {
+    // ListHoverListener.getHoveredIndex() can return a stale index for some time, so this check is necessary
+    return index >= 0 && index < getModel().getSize();
   }
 
   private boolean canOpenInSplitter(@NotNull T item) {

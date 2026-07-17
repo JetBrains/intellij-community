@@ -3,15 +3,19 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.LinkedHashMap;
@@ -50,8 +54,7 @@ public final class EditorListenerTracker {
         }
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
         afterList.removeIf(listener -> {
-          //noinspection CastConflictsWithInstanceof
-          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerEx)listener).isDefaultProject()) {
+          if (isDefaultProjectOwned(listener)) {
             return true;
           }
 
@@ -75,5 +78,72 @@ public final class EditorListenerTracker {
     finally {
       before.clear();
     }
+  }
+
+  private static boolean isDefaultProjectOwned(EventListener listener) {
+    Boolean direct = getDirectProjectOwnership(listener);
+    if (direct != null) return direct;
+
+    // It's done to filter out not only direct connections to default project,
+    // but also more complicated scenarios (e.g., com.intellij.codeInsight.ExternalAnnotationsManagerImpl.MyDocumentListener).
+    Object owner = getEnclosingInstance(listener);
+    return owner != null && Boolean.TRUE.equals(getProjectOwnership(owner));
+  }
+
+  private static Object getEnclosingInstance(EventListener listener) {
+    Class<?> aClass = listener.getClass();
+    while (aClass != null) {
+      try {
+        Field field = aClass.getDeclaredField("this$0");
+        field.setAccessible(true);
+        return field.get(listener);
+      }
+      catch (NoSuchFieldException ignored) {
+        aClass = aClass.getSuperclass();
+      }
+      catch (IllegalAccessException | RuntimeException ignored) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  private static Boolean getProjectOwnership(Object object) {
+    Class<?> aClass = object.getClass();
+    while (aClass != null) {
+      for (Field field : aClass.getDeclaredFields()) {
+        if (Modifier.isStatic(field.getModifiers())) {
+          continue;
+        }
+
+        Class<?> fieldType = field.getType();
+        if (!Project.class.isAssignableFrom(fieldType) &&
+            !PsiManager.class.isAssignableFrom(fieldType) &&
+            !PsiDocumentManagerEx.class.isAssignableFrom(fieldType)) {
+          continue;
+        }
+
+        try {
+          field.setAccessible(true);
+          Boolean fieldOwnership = getDirectProjectOwnership(field.get(object));
+          if (fieldOwnership != null) return fieldOwnership;
+        }
+        catch (IllegalAccessException | RuntimeException ignored) {
+        }
+      }
+      aClass = aClass.getSuperclass();
+    }
+    return null;
+  }
+
+  private static Boolean getDirectProjectOwnership(Object object) {
+    if (object instanceof PsiManager manager) {
+      return manager.getProject().isDefault();
+    }
+    if (object instanceof PsiDocumentManager) {
+      //noinspection CastConflictsWithInstanceof
+      return ((PsiDocumentManagerEx)object).isDefaultProject();
+    }
+    return null;
   }
 }

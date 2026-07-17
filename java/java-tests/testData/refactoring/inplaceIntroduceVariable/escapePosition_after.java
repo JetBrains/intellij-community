@@ -1,5 +1,5 @@
 class C {
     {
-        C c = <caret>new C();
+        C c = new <caret>C();
     }
 }

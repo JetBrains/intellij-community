@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.lambda.sampleTests` start
-
 create_kotlinc_options(
     name = "custom_lambda-sampleTests",
     x_context_parameters = True,
@@ -91,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.lambda.sampleTests` end
 
 ### auto-generated section `test intellij.lambda.sampleTests` start
-
 jps_test(
     name = "lambda-sampleTests_test",
     runtime_deps = [":lambda-sampleTests_test_lib"],

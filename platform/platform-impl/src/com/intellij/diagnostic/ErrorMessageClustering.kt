@@ -12,9 +12,11 @@ import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.diagnostic.ProblematicPluginInfoBasedOnDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
 internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope) {
@@ -25,8 +27,9 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
   internal fun clusterMessages(): Deferred<List<ErrorMessageCluster>> {
     return coroutineScope.async {
       val messages = MessagePool.getInstance().getFatalErrors(true, true)
+      val deduplicateReports = ErrorMessageClusteringSettings.isDeduplicationEnabled()
       messages
-        .groupBy { hashMessage(it) }
+        .groupBy { if (deduplicateReports) hashMessage(it) else it }
         .map { createCluster(it.value) }
     }
   }
@@ -56,6 +59,20 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
     val uiModel = UiPluginManager.getInstance().getPlugin(pluginId) ?: return null
     return ProblematicPluginInfoBasedOnModel(uiModel)
   }
+}
+
+@ApiStatus.Internal
+object ErrorMessageClusteringSettings {
+  const val DEDUPLICATE_REPORTS: String = "ide.errors.deduplicate"
+
+  @Volatile
+  private var deduplicationOverride: Boolean? = null
+
+  fun setDeduplicationOverride(enabled: Boolean?) {
+    deduplicationOverride = enabled
+  }
+
+  fun isDeduplicationEnabled(): Boolean = deduplicationOverride ?: Registry.`is`(DEDUPLICATE_REPORTS, true)
 }
 
 internal inline fun <reified T : Throwable> Throwable.isBackendInstance(): Boolean {

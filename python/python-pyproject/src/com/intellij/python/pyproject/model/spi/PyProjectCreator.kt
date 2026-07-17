@@ -11,9 +11,9 @@ import org.jetbrains.annotations.CheckReturnValue
  */
 fun interface PyProjectCreator {
   /**
-   * Create project named [name] on [where].
-   * Error will be displayed to user, [where] will be refreshed in case of success
+   * Create project named [name] on [where] (or convert [where] to pyproject if [name] is `null`).
+   * Error will be displayed to user, [where] will be refreshed in case of success.
    */
   @CheckReturnValue
-  suspend fun createProject(where: Directory, name: @NlsSafe String): PyResult<Unit>
+  suspend fun createProject(where: Directory, name: @NlsSafe String?): PyResult<Unit>
 }

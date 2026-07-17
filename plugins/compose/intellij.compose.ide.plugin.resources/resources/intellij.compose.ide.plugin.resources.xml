@@ -11,11 +11,16 @@
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->
+  <resource-bundle>messages.ComposeIdeBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.drawablePreviewRenderer"
       interface="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.vectorIconPicker"
+      interface="com.intellij.compose.ide.plugin.resources.actions.vectorAsset.BaseVectorIconPicker"/>
     <extensionPoint
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.dataProvider"
@@ -71,7 +76,13 @@
     <xml.elementDescriptorProvider
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlElementDescriptorProvider"/>
   </extensions>
-
+  <actions>
+    <action id="compose.newVectorAsset"
+            class="com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeResourcesNewVectorAsset"
+            icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ComposeMultiplatform">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+  </actions>
   <projectListeners>
     <listener class="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager$ComposeResourcesProjectDataImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>

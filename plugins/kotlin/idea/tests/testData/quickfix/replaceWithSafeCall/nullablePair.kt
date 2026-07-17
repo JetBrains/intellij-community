@@ -1,6 +1,6 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 // IGNORE_K2
 // TODO: Drop IGNORE_K2 when KT-87415 is fixed

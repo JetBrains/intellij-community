@@ -17,6 +17,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
@@ -198,6 +199,46 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }""".trimIndent()
     assertEquals(expected, preview.modifiedText())
+  }
+
+  fun testPostfixPreviewAfterDoubleDot() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    Registry.get("ide.completion.group.mode.enabled").setValue(true, getTestRootDisposable())
+    val settings = PostfixTemplatesSettings.getInstance()
+    val oldValue = settings.isShowAsSeparateGroup
+    settings.isShowAsSeparateGroup = true
+    try {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+          void foo() {
+            "string"..soutv<caret>
+          }
+        }
+        """.trimIndent())
+      val elements = myFixture.completeBasic()
+      val item = elements.first { element -> element.lookupString.contains("sout", ignoreCase = true) }
+        .`as`(LookupElementCustomPreviewHolder::class.java)
+      if (item == null) {
+        fail()
+        return
+      }
+      val preview = item.preview(ActionContext.from(myFixture.editor, myFixture.file))
+      if (preview !is IntentionPreviewInfo.CustomDiff) {
+        fail()
+        return
+      }
+      val expected = """
+        class A {
+          void foo() {
+              System.out.println("\"string\" = " + "string");
+          }
+        }""".trimIndent()
+      assertEquals(expected, preview.modifiedText())
+    }
+    finally {
+      settings.isShowAsSeparateGroup = oldValue
+    }
   }
 
   fun testFormatNothing() {
@@ -1767,6 +1808,49 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.none { element -> element.lookupString.contains("toString", ignoreCase = true) })
+  }
+
+  fun testNoJavaCompletionAfterSingleDotInParameterList() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String.<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements == null || elements.isEmpty())
+  }
+
+  fun testVarargsDotCommandIsFirstAfterDoubleDotInParameterList() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String..<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertEquals(".", elements.first().lookupString)
+    assertNotNull(elements.first().`as`(CommandCompletionLookupElement::class.java))
+  }
+
+  fun testVarargsDotCommandInsert() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method(String..<caret> text) {
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first())
+    myFixture.checkResult("""
+        class A {
+            void method(String... text) {
+            }
+        }
+      """.trimIndent())
   }
 
   fun testNoCreateFromUsagesAfterDoubleDot() {

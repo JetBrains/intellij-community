@@ -1,7 +1,7 @@
 // "Create extension property 'Unit.foo'" "true"
 // WITH_STDLIB
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Extension property must have accessors or be abstract.
+// K2_AFTER_ERROR: EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 private val Unit.foo: Int
 

@@ -1485,8 +1485,7 @@ public class HighlightInfo implements Segment {
                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
     if (project.isDisposed()
         || PsiDocumentManager.getInstance(project).isUncommited(document)
-        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp
-    ) {
+        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp) {
       return List.of();
     }
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
@@ -1511,6 +1510,11 @@ public class HighlightInfo implements Segment {
     };
     computation.accept(registrarDelegate);
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
+    if (!lazyDescriptors.isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("computeQuickFixesSynchronously finished: " + lazyDescriptors);
+      }
+    }
     return lazyDescriptors;
   }
 
@@ -1530,12 +1534,12 @@ public class HighlightInfo implements Segment {
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
-    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>(new DaemonProgressIndicator());
+    AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>();
     updateOffsetStore(oldStore -> {
-      if (!progressIndicator.get().isCanceled()) {
-        progressIndicator.get().cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
+      ProgressIndicator oldIndicator = progressIndicator.getAndSet(new DaemonProgressIndicator());
+      if (oldIndicator != null && !oldIndicator.isCanceled()) {
+        oldIndicator.cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
       }
-      progressIndicator.set(new DaemonProgressIndicator());
       if (oldStore == TOMB) {
         return oldStore;
       }
@@ -1543,12 +1547,8 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          var promise = ReadAction.nonBlocking(() ->
-              doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer))
-            .wrapProgress(progressIndicator.get())
-            .submit(ForkJoinPool.commonPool());
-          future = promise;
-          promise.onSuccess(descriptors -> fireQuickFixesAvailable(descriptors, project, document));
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool())
+            .onSuccess(descriptors -> fireQuickFixesAvailable(descriptors, project, document));
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
@@ -1557,15 +1557,12 @@ public class HighlightInfo implements Segment {
     });
   }
 
-  private void fireQuickFixesAvailable(
-    @NotNull List<IntentionActionDescriptor> descriptors,
-    @NotNull Project project,
-    @NotNull Document document
-  ) {
-    if (descriptors.isEmpty() || project.isDisposed()) {
-      return;
+  private void fireQuickFixesAvailable(@NotNull List<IntentionActionDescriptor> descriptors,
+                                       @NotNull Project project,
+                                       @NotNull Document document) {
+    if (!descriptors.isEmpty() && !project.isDisposed()) {
+      project.getMessageBus().syncPublisher(LazyQuickFixUpdater.TOPIC).quickFixesAvailable(this, document);
     }
-    project.getMessageBus().syncPublisher(LazyQuickFixUpdater.TOPIC).quickFixesAvailable(this, document);
   }
 
   final void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {

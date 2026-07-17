@@ -29,11 +29,9 @@ import {
 } from './routing'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling} from './proxy-tools/tooling'
-import {
-  handleReformatFileTool,
-  normalizeReformatFileArgs
-} from './proxy-tools/handlers/reformat-file'
+import {handleReformatFileTool, normalizeReformatFileArgs} from './proxy-tools/handlers/reformat-file'
 import {extractItems, extractStructuredContent, extractTextFromResult} from './proxy-tools/shared'
+import {normalizeProjectRelativePath} from './proxy-tools/handlers/search-shared'
 import type {SearchItem, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 import {detectContainerSession} from './container-session'
 
@@ -1034,14 +1032,21 @@ function parseLintFilesToolResult(result: unknown): LintFilesToolResult {
   return structured.more === true ? {items, more: true} : {items}
 }
 
+function lintItemPathKey(filePath: string): string {
+  const normalized = normalizeProjectRelativePath(projectPath, filePath)
+  return path.sep === '\\' ? normalized.toLowerCase() : normalized
+}
+
 function orderLintItems(filePaths: string[], items: SearchItem[]): SearchItem[] {
   const itemsByPath = new Map<string, SearchItem>()
   for (const item of items) {
-    if (!itemsByPath.has(item.filePath)) {
-      itemsByPath.set(item.filePath, item)
+    const key = lintItemPathKey(item.filePath)
+    if (!itemsByPath.has(key)) {
+      itemsByPath.set(key, item)
     }
   }
-  return filePaths.map((filePath) => itemsByPath.get(filePath)).filter((item): item is SearchItem => item != null)
+  return filePaths.map((filePath) => itemsByPath.get(lintItemPathKey(filePath)))
+    .filter((item): item is SearchItem => item != null)
 }
 
 function transformLintItems(items: SearchItem[], transformer?: ItemTransformer): SearchItem[] {

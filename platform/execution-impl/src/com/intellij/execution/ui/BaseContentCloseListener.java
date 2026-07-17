@@ -3,8 +3,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TerminateRemoteProcessDialog;
+import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,11 +154,11 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   }
 
   private boolean doAskUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
-    ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
-    if (rc == null) { // cancel
+    ProcessCloseConfirmationResult result = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
+    if (result == ProcessCloseConfirmationResult.LEAVE_RUNNING) { // cancel
       return false;
     }
-    boolean destroyProcess = rc == ProcessCloseConfirmation.TERMINATE;
+    boolean destroyProcess = result == ProcessCloseConfirmationResult.TERMINATE;
     if (destroyProcess) {
       processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true);
       processHandler.destroyProcess();

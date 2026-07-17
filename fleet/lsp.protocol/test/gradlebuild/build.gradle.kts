@@ -83,5 +83,12 @@ kotlin {
     implementation(project(":fleet.lsp.protocol"))
     implementation(project(":fleet.test.runtime"))
   }
+  sourceSets.jvmTest.dependencies {
+    implementation(jps.org.slf4j.slf4j.jdk141933517271.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-api")
+    }
+    implementation(project(":fleet.util.logging.slf4j"))
+  }
   // KOTLIN__MARKER_END
 }

@@ -109,9 +109,11 @@ interface OsSpecificDistributionBuilder {
 
       launch {
         checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256).also {
+          context.notifyArtifactBuilt(it)
           sign(context, it)
         }
         checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA512).also {
+          context.notifyArtifactBuilt(it)
           sign(context, it)
         }
       }

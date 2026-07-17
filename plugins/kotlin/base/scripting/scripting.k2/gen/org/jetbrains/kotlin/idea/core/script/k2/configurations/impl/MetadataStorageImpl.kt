@@ -83,6 +83,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
+                    name = "scope",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
                     name = "classes",
                     valueType = ValueTypeMetadata.ParameterizedType(
                         generics = listOf(
@@ -151,12 +159,22 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                             isComputable = false,
                                             isKey = false,
                                             isOpen = false,
+                                            name = "scope",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
                                             name = "classes",
                                             valueType = ValueTypeMetadata.ParameterizedType(
                                                 generics = listOf(
                                                     ValueTypeMetadata.SimpleType.CustomType(
                                                         isNullable = false,
-                                                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                                                        typeMetadata = FinalClassMetadata.KnownClass(
+                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"
+                                                        )
                                                     )
                                                 ), primitive = primitiveTypeListNotNullable
                                             ),
@@ -450,6 +468,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
+                    name = "scope",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
                     name = "classes",
                     valueType = ValueTypeMetadata.ParameterizedType(
                         generics = listOf(
@@ -505,12 +531,22 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                     isComputable = false,
                                     isKey = false,
                                     isOpen = false,
+                                    name = "scope",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
                                     name = "classes",
                                     valueType = ValueTypeMetadata.ParameterizedType(
                                         generics = listOf(
                                             ValueTypeMetadata.SimpleType.CustomType(
                                                 isNullable = false,
-                                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                    fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"
+                                                )
                                             )
                                         ), primitive = primitiveTypeListNotNullable
                                     ),
@@ -657,12 +693,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1743471275)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 303131952)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
             metadataHash = 2055694198
         )
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 1246211390)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = -1724257234)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",

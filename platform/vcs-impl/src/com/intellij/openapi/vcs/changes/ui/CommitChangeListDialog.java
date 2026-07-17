@@ -167,6 +167,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   /**
    * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
+   *
+   * But still used by https://plugins.jetbrains.com/plugin/9238-jetforcer--the-smartest-force-com-ide
    */
   @Deprecated
   public static boolean commitChanges(@NotNull Project project,
@@ -175,7 +177,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor != null) {
-      return commitWithExecutor(project, included, initialChangeList, executor, comment, null);
+      return commitWithExecutor(project, included, initialChangeList, executor, comment, true, null);
     }
     else {
       return commitVcsChanges(project, included, initialChangeList, comment, null);
@@ -202,6 +204,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                            @Nullable LocalChangeList initialChangeList,
                                            @NotNull CommitExecutor executor,
                                            @Nullable String comment,
+                                           @NotNull Boolean saveCommentOnCancel,
                                            @Nullable CommitResultHandler customResultHandler) {
     boolean showVcsCommit = false;
     Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
@@ -212,7 +215,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     List<CommitExecutor> executors = singletonList(executor);
     return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
-                            comment, customResultHandler);
+                            comment, saveCommentOnCancel, customResultHandler);
   }
 
   public static boolean commitVcsChanges(@NotNull Project project,
@@ -229,7 +232,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     List<CommitExecutor> executors = getCommitExecutors(project, affectedVcses);
     return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
-                            comment, customResultHandler);
+                            comment, true, customResultHandler);
   }
 
   /**
@@ -255,6 +258,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                          @NotNull List<? extends CommitExecutor> executors,
                                          boolean showVcsCommit,
                                          @Nullable String comment,
+                                         @NotNull Boolean saveCommentOnCancel,
                                          @Nullable CommitResultHandler customResultHandler) {
     List<Change> changes = ContainerUtil.filterIsInstance(included, Change.class);
     for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(affectedVcses)) {
@@ -268,7 +272,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                                                                  executors, showVcsCommit, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
-    return new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, included).activate();
+    return new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, included, saveCommentOnCancel).activate();
   }
 
   public static void showNothingToCommitMessage(@NotNull Project project) {

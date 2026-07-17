@@ -41,6 +41,9 @@ open class EditorInspectionsActionToolbar(
 
   override fun paintComponent(g: Graphics) {
     editorButtonLook.paintBackground(g, this, editor.backgroundColor)
+
+    // Prevents flickering while the toolbar is being rebuilt
+    super.paintComponent(g)
   }
 
   override fun getSeparatorHeight(): Int = EditorMarkupModelImpl.statusIconSize

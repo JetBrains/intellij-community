@@ -1,6 +1,6 @@
 // "Change all usages of 'java.lang.Iterable<T>' in this file to a Kotlin class" "true"
-// K2_ERROR: Conflicting import: imported name 'Iterable' is ambiguous.
-// K2_ERROR: Conflicting import: imported name 'Iterable' is ambiguous.
+// K2_ERROR: CONFLICTING_IMPORT
+// K2_ERROR: CONFLICTING_IMPORT
 import java.lang.*
 import java.lang.Iterable
 import java.lang.Iterable

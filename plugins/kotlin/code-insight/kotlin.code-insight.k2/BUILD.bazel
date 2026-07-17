@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight",
     opt_in = [
@@ -197,7 +196,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight` end
 
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-tests",
     opt_in = [
@@ -249,6 +247,11 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlinc-analysis-api",
         "@lib//:kotlinc-analysis-api-platform-interface",
+        "@lib//:kotlinc-kotlin-script-runtime",
+        "@lib//:kotlinc-kotlin-scripting-common",
+        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+        "@lib//:kotlinc-kotlin-scripting-dependencies",
         "//java/java-indexing-api:indexing",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis",
@@ -263,6 +266,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//platform/workspace/storage",
+        "//platform/workspace/storage:storage_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring",
@@ -342,6 +347,8 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching/base:base_test_lib",
         "//platform/ide-core-impl",
         "//platform/ide-core",
+        "//platform/backend/workspace",
+        "//platform/backend/workspace:workspace_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/indices",
@@ -372,6 +379,8 @@ jvm_library(
         "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled_test_lib",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting.shared",
+        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -382,6 +391,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//plugins/kotlin/scripting",
+        "//plugins/kotlin/scripting:scripting_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
@@ -400,7 +411,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.tests` start
-
 jps_test(
     name = "kotlin-codeInsight-tests_test",
     runtime_deps = [":kotlin-codeInsight-tests_test_lib"],

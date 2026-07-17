@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -19,6 +19,7 @@ import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
 internal class DefaultWebServerPathHandler : WebServerPathHandler {
   private val FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
@@ -94,8 +95,9 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
 
     val canonicalPath = if (indexUsed) "${path}/${pathInfo.name}" else path
     for (fileHandler in FILE_HANDLER_EP_NAME.extensionList) {
+      val projectNameForHandlers = if (isCustomHost) null else projectName
       LOG.runAndLogException {
-        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, authHeaders)) {
+        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, projectNameForHandlers, authHeaders)) {
           return true
         }
       }
@@ -111,12 +113,14 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
     else -> true
   }
 
-  private fun checkAccess(file: Path, project: Project): Boolean =
-    hasAccess(file) &&
-    TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
+  private fun checkAccess(file: Path, project: Project): Boolean = (
+    runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false) ||
+    TrustedProjects.isProjectTrusted(project) && checkAccess(file)
+  )
 }
 
-// deny access to any dot-prefixed file
+/** Denies access to hidden/dot-prefixed paths. */
 @ApiStatus.Internal
-fun hasAccess(result: Path): Boolean =
-  Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))
+fun checkAccess(file: Path): Boolean = generateSequence(file) { it.parent?.takeIf { parent -> parent != file.root } }.all(::canAccess)
+
+private fun canAccess(path: Path): Boolean = Files.isReadable(path) && !(Files.isHidden(path) || path.name.startsWith('.'))

@@ -8,7 +8,17 @@ import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
+    /**
+     * Provider-specific identity scope.
+     *
+     * Libraries with the same scope and class roots intentionally share one entity in the workspace model.
+     * Providers that contribute script models for projects inside a workspace should use a scope that identifies
+     * the owning project, so equal library roots from different projects are not merged accidentally.
+     */
+    val scope: @NlsSafe String
+
     val classes: List<VirtualFileUrl>
+
     val usedInScripts: Set<VirtualFileUrl>
 
     @Suppress("RemoveExplicitTypeArguments")
@@ -16,15 +26,18 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         @Default get() = setOf<VirtualFileUrl>()
 
     override val symbolicId: KotlinScriptLibraryEntityId
-        get() = KotlinScriptLibraryEntityId(classes)
+        get() = KotlinScriptLibraryEntityId(scope, classes)
 }
 
-data class KotlinScriptLibraryEntityId(val classes: List<VirtualFileUrl>) :
-    SymbolicEntityId<KotlinScriptLibraryEntity> {
-    constructor(classUrl: VirtualFileUrl) : this(listOf(classUrl))
-
+data class KotlinScriptLibraryEntityId(
+    val scope: @NlsSafe String,
+    val classes: List<VirtualFileUrl>,
+) : SymbolicEntityId<KotlinScriptLibraryEntity> {
     override val presentableName: @NlsSafe String
-        get() = "KotlinScriptLibraryEntityId(classes=$classes)"
+        get() = kotlinScriptLibraryPresentableName(scope, classes)
 
     override fun toString(): String = presentableName
 }
+
+fun kotlinScriptLibraryPresentableName(scope: @NlsSafe String, classUrls: Collection<VirtualFileUrl>): @NlsSafe String =
+    classUrls.joinToString(prefix = "$scope: ") { it.presentableUrl }

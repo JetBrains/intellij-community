@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.tools.ide.starter.product.goland` start
-
 create_kotlinc_options(
     name = "custom_ide-starter-product-goland",
     opt_in = ["kotlin.time.ExperimentalTime"],

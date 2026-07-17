@@ -816,7 +816,7 @@ class Confirm(Class):
         def encode(self) -> list[bytes]: ...
 
 class BasicProperties(Properties):
-    CLASS: ClassVar[type[Basic]]
+    CLASS: ClassVar[builtins.type[Basic]]
     INDEX: ClassVar[int]
     FLAG_CONTENT_TYPE: ClassVar[int]
     FLAG_CONTENT_ENCODING: ClassVar[int]

@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.python.processOutput.frontend` start
+jps_test(
+    name = "python-processOutput-frontend-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":python-processOutput-frontend-tests_test_lib"],
+)
 
+### skip generation section `test intellij.python.processOutput.frontend.tests`
+
+### auto-generated section `build intellij.python.processOutput.frontend` start
 create_kotlinc_options(
     name = "custom_frontend",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -132,7 +140,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.processOutput.frontend` end
 
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` start
-
 create_kotlinc_options(
     name = "custom_python-processOutput-frontend-tests",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -254,11 +261,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.processOutput.frontend.tests` end
-
-### auto-generated section `test intellij.python.processOutput.frontend.tests` start
-
-jps_test(
-    name = "python-processOutput-frontend-tests_test",
-    runtime_deps = [":python-processOutput-frontend-tests_test_lib"],
-)
-### auto-generated section `test intellij.python.processOutput.frontend.tests` end

@@ -1,17 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [overloads][https://docs.python.org/3/library/typing.html#typing.overload]:
+ * Type and type-checker tests for [overloads](https://docs.python.org/3/library/typing.html#typing.overload):
  * overload resolution and matching, overloaded return types, and `Overload[...]` type assignability.
  */
 @Subsystems.Typing
@@ -967,6 +967,14 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def bar(p: int) -> int: pass
       """,
   )
+
+  @TestFor(issues = ["PY-88624"])
+  @Test
+  fun `catch warnings overload without arguments`() = test(
+    """
+    from warnings import catch_warnings
+    catch_warnings() # expect no issues here
+    """)
 
   @Test
   fun `class overloaded method bound and imported as global function`() = test(

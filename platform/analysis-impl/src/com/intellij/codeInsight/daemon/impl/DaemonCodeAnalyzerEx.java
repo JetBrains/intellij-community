@@ -31,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
@@ -206,4 +209,15 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                                               @NotNull ProperTextRange visibleRange,
                                                               boolean canChangeFileSilently,
                                                               @NotNull Consumer<? super @NotNull HighlightingSession> runnable);
+
+  /**
+   * Blocks until all pending external annotators (e.g. ClangTidyAnnotator) have written their
+   * results to the {@link com.intellij.openapi.editor.impl.DocumentMarkupModel}.
+   * No-op by default; overridden in {@code DaemonCodeAnalyzerImpl}.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void waitForExternalAnnotators(long timeout, @NotNull TimeUnit unit)
+      throws ExecutionException, InterruptedException, TimeoutException {
+  }
 }

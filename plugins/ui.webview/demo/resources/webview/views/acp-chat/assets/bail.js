@@ -1,4 +1,3 @@
-//#region node_modules/bail/index.js
 /**
 * Throw a given error.
 *
@@ -9,5 +8,4 @@
 function bail(error) {
 	if (error) throw error;
 }
-//#endregion
 export { bail as t };

@@ -6,9 +6,9 @@
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type B?
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'B?'.
-// K2_AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'B?'.
 // WITH_STDLIB
+// K2_AFTER_ERROR: UNSAFE_CALL
+// K2_ERROR: UNSAFE_CALL
 
 class A {
     fun foo() {}

@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiImplicitClass
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLambdaExpression
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.util.JavaImplicitClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
@@ -95,9 +97,16 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
   }
 
   private fun PsiClass.className(qualified: Boolean = true): @NlsSafe String =
-    (if (qualified) this.qualifiedName else this.name)
+    implicitClassName()
+    ?: (if (qualified) this.qualifiedName else this.name)
     ?: this.name
     ?: unknownClassShapes("Cannot determine Java class name in ${this.containingFile.name}")
+
+  private fun PsiClass.implicitClassName(): @NlsSafe String? {
+    if (this !is PsiImplicitClass) return null
+    val fileName = (containingFile as? PsiJavaFile)?.name ?: return null
+    return JavaImplicitClassUtil.getJvmName(fileName)
+  }
 
   private fun PsiClass.sourceLambdas(): List<PsiLambdaExpression> =
     PsiTreeUtil.collectElementsOfType(this, PsiLambdaExpression::class.java)
@@ -138,18 +147,22 @@ class JavaHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
   context(_: Context)
   private fun PsiClass.extendsSuperTypeSignatures(): Set<String> {
+    val types = extendsListTypes
+    if (types.isEmpty()) return emptySet()
     val dependency = if (this is PsiAnonymousClass) baseClassReference else extendsList
     if (dependency == null) return emptySet()
     return cached(dependency, "extendsList") {
-      extendsListTypes.mapTo(hashSetOf()) { it.signature("Java supertype '${it.canonicalText}'") }
+      types.mapTo(hashSetOf()) { it.signature("Java supertype '${it.canonicalText}'") }
     }
   }
 
   context(_: Context)
   private fun PsiClass.interfaceSuperTypeSignatures(): Set<String> {
+    val types = implementsListTypes
+    if (types.isEmpty()) return emptySet()
     val dependency = implementsList ?: return emptySet()
     return cached(dependency, "implementsList") {
-      implementsListTypes.mapTo(hashSetOf()) { it.signature("Java supertype '${it.canonicalText}'") }
+      types.mapTo(hashSetOf()) { it.signature("Java supertype '${it.canonicalText}'") }
     }
   }
 

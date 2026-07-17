@@ -8,13 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     com_intellij_ui_win_WinShellIntegration_Bridge
- * Method:    setAppUserModelIdNative
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_intellij_ui_win_WinShellIntegration_00024Bridge_setAppUserModelIdNative
-  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_intellij_ui_win_WinShellIntegration_Bridge

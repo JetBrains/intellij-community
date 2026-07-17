@@ -1,5 +1,4 @@
 import { t as sanitize } from "./hast-util-sanitize.js";
-//#region node_modules/rehype-sanitize/lib/index.js
 /**
 * @typedef {import('hast').Root} Root
 * @typedef {import('hast-util-sanitize').Schema} Schema
@@ -23,5 +22,4 @@ function rehypeSanitize(options) {
 		return sanitize(tree, options);
 	};
 }
-//#endregion
 export { rehypeSanitize as t };

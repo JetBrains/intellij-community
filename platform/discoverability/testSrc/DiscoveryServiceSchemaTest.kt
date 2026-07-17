@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.networknt.schema.InputFormat
 import com.networknt.schema.SchemaRegistry
 import com.networknt.schema.SpecificationVersion
+import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.net.InetAddress
 
@@ -25,7 +26,9 @@ class DiscoveryServiceSchemaTest : BasePlatformTestCase() {
       .getSchema(mapper.writeValueAsString(schemaNode))
 
     val out = ByteArrayOutputStream()
-    writeDiscoveryInfoJson(out, InetAddress.getLoopbackAddress(), 63342)
+    runBlocking {
+      writeDiscoveryInfoJson(out, InetAddress.getLoopbackAddress(), 63342)
+    }
 
     val errors = schema.validate(out.toString(Charsets.UTF_8.name()), InputFormat.JSON)
     assertTrue("JSON schema validation errors:\n${errors.joinToString("\n") { it.message }}", errors.isEmpty())

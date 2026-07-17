@@ -1,7 +1,7 @@
 // "Cast expression 'listOf(1)' to 'List<T>'" "true"
 // WITH_STDLIB
 // ERROR: Type mismatch: inferred type is IntegerLiteralType[Int,Long,Byte,Short] but T was expected
-// K2_ERROR: Initializer type mismatch: expected 'List<T (of fun <T> f)>', actual 'List<Int>'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 
 fun <T> f() {
     val someList: List<T> = lis<caret>tOf(1)

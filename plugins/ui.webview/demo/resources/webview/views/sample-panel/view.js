@@ -2,7 +2,6 @@ import { o as __toESM } from "./assets/rolldown-runtime.js";
 import { t as require_react } from "./assets/react.js";
 import { t as require_client } from "./assets/react-dom.js";
 import { u as mermaid_default } from "./assets/mermaid.js";
-//#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
 	if (relList && relList.supports && relList.supports("modulepreload")) return;
@@ -32,8 +31,6 @@ import { u as mermaid_default } from "./assets/mermaid.js";
 		fetch(link.href, fetchOpts);
 	}
 })();
-//#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_client = require_client();
 function apiId() {
@@ -73,8 +70,6 @@ function createLazyWebViewTheme() {
 var webViewTheme = createLazyWebViewTheme();
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -97,8 +92,6 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
-//#endregion
-//#region views/sample-panel/src/main.ts
 window.mermaid = mermaid_default;
 /**
 * @typedef {Object} Task
@@ -1204,4 +1197,3 @@ try {
 } catch (error) {
 	renderFallback("React app initialization failed: " + (error && error.message ? error.message : "Unknown React bootstrap error"));
 }
-//#endregion

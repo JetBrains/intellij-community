@@ -489,8 +489,13 @@ open class IDETestContext(
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )
-      configure(runContext)
-
+      try {
+        configure(runContext)
+      }
+      catch (throwable: Throwable) {
+        runContext.publishArtifacts()
+        throw throwable
+      }
       try {
         val ideRunResult = runContext.runIdeSuspending()
         if (isReportPublishingEnabled) {
@@ -757,6 +762,7 @@ open class IDETestContext(
 
   fun withProjectSdk(sdkObject: SdkObject) = copy(sdk = sdkObject)
 
+  @Deprecated("Use withProjectSdk instead")
   fun setupSdk(sdkObjects: SdkObject?, cleanDirs: Boolean = true): IDETestContext = computeWithSpan("setupSdk") {
     if (sdkObjects == null) return this
     try {

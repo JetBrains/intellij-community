@@ -3,7 +3,6 @@ import { t as cytoscape } from "./assets/cytoscape.js";
 import { t as require_cytoscape_fcose } from "./assets/cytoscape-fcose.js";
 import { n as marked } from "./assets/marked.js";
 import { u as mermaid_default } from "./assets/mermaid.js";
-//#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
 	if (relList && relList.supports && relList.supports("modulepreload")) return;
@@ -33,8 +32,6 @@ import { u as mermaid_default } from "./assets/mermaid.js";
 		fetch(link.href, fetchOpts);
 	}
 })();
-//#endregion
-//#region ../../webview-src/packages/api/src/webViewApi.ts
 var import_cytoscape_fcose = /* @__PURE__ */ __toESM(require_cytoscape_fcose(), 1);
 function apiId() {
 	return function createApiId(namespace) {
@@ -73,8 +70,6 @@ function createLazyWebViewTheme() {
 var webViewTheme = createLazyWebViewTheme();
 apiId()("webview.focus");
 apiId()("webview.focus");
-//#endregion
-//#region ../../webview-src/packages/api/src/bridge.ts
 function getWebViewBridge() {
 	return window.__WVI__;
 }
@@ -97,8 +92,6 @@ function createLazyWebViewBridge() {
 	});
 }
 var webView = createLazyWebViewBridge();
-//#endregion
-//#region views/markdown-link-graph/src/main.ts
 cytoscape.use(import_cytoscape_fcose.default);
 var hostApi = webView.callable(apiId()("markdown.linkGraph"));
 var contentElement = requiredElement("content");
@@ -610,4 +603,3 @@ var DEFAULT_PREVIEW_WIDTH = 420;
 var KEYBOARD_RESIZE_STEP = 32;
 var MAX_PREVIEW_WIDTH_RATIO = .75;
 var MIN_PREVIEW_WIDTH = 280;
-//#endregion

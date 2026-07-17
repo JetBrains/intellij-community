@@ -9,7 +9,6 @@
   <!-- region additional -->
   <content namespace="jetbrains">
     <module name="intellij.platform.whatsNew"/>
-    <module name="intellij.platform.tips"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.customization.min"/>
     <module name="intellij.idea.customization.base"/>

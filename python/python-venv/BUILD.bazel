@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.venv` start
-
 jvm_library(
     name = "venv",
     srcs = glob(
@@ -75,7 +74,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.venv` end
 
 ### auto-generated section `build intellij.python.venv.tests` start
-
 jvm_library(
     name = "venv-tests",
     srcs = glob(

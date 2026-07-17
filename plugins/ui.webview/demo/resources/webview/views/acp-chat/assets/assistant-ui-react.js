@@ -1,6 +1,5 @@
 import { o as __toESM, t as __commonJSMin } from "./rolldown-runtime.js";
 import { $ as useLayoutEffect$1, A as defaultComponents$1, B as normalizeEventSelector, C as ComposerPrimitiveAttachments, D as MessagePrimitiveGroupedParts, E as MessagePrimitiveQuote, F as TextMessagePartProvider, G as c, H as useResource, I as PartByIndexProvider, J as useCallback, K as createContext, L as AssistantProviderBase, M as ThreadPrimitiveMessageByIndex, N as ThreadPrimitiveMessages, O as MessagePrimitivePartByIndex, Q as useEffectEvent$1, R as useAuiState, S as ComposerPrimitiveAttachmentByIndex, T as MessagePrimitiveAttachments, U as flushTapSync, V as require_jsx_runtime, W as resource, X as useDebugValue, Y as useContext, Z as useEffect, _ as ThreadListItemPrimitiveTitle, a as useThreadListItemTrigger, b as ThreadListPrimitiveItems, c as useThreadListItemArchive, d as useComposerDictate, et as useMemo, f as useComposerCancel, g as ThreadPrimitiveSuggestions, h as ThreadPrimitiveSuggestionByIndex, i as useThreadListNew, it as require_react, j as MessagePrimitiveGenerativeUI, k as MessagePrimitiveParts$1, l as useSuggestionTrigger, m as ComposerPrimitiveIf, n as useMessageError, nt as useState, o as useThreadListItemUnarchive, p as useComposerSend$1, q as react_shim_exports, r as useThreadListLoadMore, rt as useSyncExternalStore, s as useThreadListItemDelete, t as unstable_defaultDirectiveFormatter, tt as useRef, u as useComposerAddAttachment, v as MessagePartPrimitiveInProgress, w as MessagePrimitiveAttachmentByIndex, x as ComposerPrimitiveQueue, y as ThreadListPrimitiveItemByIndex, z as useAui } from "./assistant-ui-core.js";
-//#region node_modules/scheduler/cjs/scheduler.production.min.js
 /**
 * @license React
 * scheduler.production.min.js
@@ -240,13 +239,9 @@ var require_scheduler_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 		};
 	};
 }));
-//#endregion
-//#region node_modules/scheduler/index.js
 var require_scheduler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_scheduler_production_min();
 }));
-//#endregion
-//#region node_modules/react-dom/cjs/react-dom.production.min.js
 /**
 * @license React
 * react-dom.production.min.js
@@ -6920,8 +6915,6 @@ var require_react_dom_production_min = /* @__PURE__ */ __commonJSMin(((exports) 
 	};
 	exports.version = "18.3.1-next-f1338f8080-20240426";
 }));
-//#endregion
-//#region node_modules/react-dom/index.js
 var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function checkDCE() {
 		if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -6934,8 +6927,6 @@ var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	checkDCE();
 	module.exports = require_react_dom_production_min();
 }));
-//#endregion
-//#region node_modules/use-effect-event/dist/index.js
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var context = import_react.createContext(!0);
 function forbiddenInRender() {
@@ -6958,8 +6949,6 @@ function useEffectEvent(fn) {
 		return latestFn(...args);
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/store/dist/useAuiEvent.js
 /**
 * Subscribes to an assistant event for the lifetime of the component.
 *
@@ -7038,8 +7027,6 @@ var useAuiEvent = (selector, callback) => {
 	} else t2 = $[10];
 	useEffect(t1, t2);
 };
-//#endregion
-//#region node_modules/zustand/esm/vanilla.mjs
 var createStoreImpl = (createState) => {
 	let state;
 	const listeners = /* @__PURE__ */ new Set();
@@ -7067,8 +7054,6 @@ var createStoreImpl = (createState) => {
 	return api;
 };
 var createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
-//#endregion
-//#region node_modules/zustand/esm/react.mjs
 var identity$1 = (arg) => arg;
 function useStore(api, selector = identity$1) {
 	const slice = import_react.useSyncExternalStore(api.subscribe, import_react.useCallback(() => selector(api.getState()), [api, selector]), import_react.useCallback(() => selector(api.getInitialState()), [api, selector]));
@@ -7082,8 +7067,6 @@ var createImpl = (createState) => {
 	return useBoundStore;
 };
 var create = ((createState) => createState ? createImpl(createState) : createImpl);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/utils/createContextHook.js
 /**
 * Creates a context hook with optional support.
 * @param context - The React context to consume.
@@ -7098,8 +7081,6 @@ function createContextHook(context, providerName) {
 	}
 	return useContextHook;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/utils/createContextStoreHook.js
 /**
 * Creates hooks for accessing a store within a context.
 * @param contextHook - The hook to access the context.
@@ -7129,12 +7110,8 @@ function createContextStoreHook(contextHook, contextKey) {
 		[`${contextKey}Store`]: useStoreStoreHook
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/ThreadViewportContext.js
 var ThreadViewportContext = createContext(null);
 var { useThreadViewport, useThreadViewportStore } = createContextStoreHook(createContextHook(ThreadViewportContext, "ThreadPrimitive.Viewport"), "useThreadViewport");
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/stores/ThreadViewport.js
 var createSizeRegistry = (onChange) => {
 	const entries = /* @__PURE__ */ new Map();
 	const recalculate = () => {
@@ -7242,13 +7219,9 @@ var makeThreadViewportStore = (options = {}) => {
 	}));
 	return store;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/ReadonlyStore.js
 var writableStore = (store) => {
 	return store;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/providers/ThreadViewportProvider.js
 var import_jsx_runtime = require_jsx_runtime();
 var useThreadViewportStoreValue = (options) => {
 	const $ = c(11);
@@ -7331,8 +7304,6 @@ var ThreadPrimitiveViewportProvider = (t0) => {
 	} else t4 = $[6];
 	return t4;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/legacy-runtime/AssistantRuntimeProvider.js
 var DevToolsRegistration = () => {
 	const $ = c(3);
 	const aui = useAui();
@@ -7381,16 +7352,12 @@ var AssistantRuntimeProviderImpl = (t0) => {
 	return t4;
 };
 var AssistantRuntimeProvider = (0, react_shim_exports.memo)(AssistantRuntimeProviderImpl);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/utils/ensureBinding.js
 var ensureBinding = (r) => {
 	const runtime = r;
 	if (runtime.__isBound) return;
 	runtime.__internal_bindMethods?.();
 	runtime.__isBound = true;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/utils/useRuntimeState.js
 function useRuntimeStateInternal(runtime, t0) {
 	const $ = c(4);
 	const selector = t0 === void 0 ? identity : t0;
@@ -7413,8 +7380,6 @@ function useRuntimeStateInternal(runtime, t0) {
 	return slice;
 }
 var identity = (arg) => arg;
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/context/react/utils/createStateHookForRuntime.js
 function createStateHookForRuntime(useRuntime) {
 	function useStoreHook(param) {
 		let optional = false;
@@ -7430,8 +7395,6 @@ function createStateHookForRuntime(useRuntime) {
 	}
 	return useStoreHook;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/legacy-runtime/hooks/ComposerContext.js
 function useComposerRuntime(options) {
 	const $ = c(2);
 	const aui = useAui();
@@ -7445,8 +7408,6 @@ function useComposerRuntime(options) {
 	if (!runtime && !options?.optional) throw new Error("ComposerRuntime is not available");
 	return runtime;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/legacy-runtime/hooks/MessageContext.js
 function useMessageRuntime(options) {
 	const $ = c(2);
 	const aui = useAui();
@@ -7499,8 +7460,6 @@ function useMessageRuntime(options) {
 * ```
 */
 var useMessage = createStateHookForRuntime(useMessageRuntime);
-//#endregion
-//#region node_modules/@radix-ui/react-compose-refs/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 function setRef(ref, value) {
 	if (typeof ref === "function") return ref(value);
@@ -7526,8 +7485,6 @@ function composeRefs(...refs) {
 function useComposedRefs(...refs) {
 	return import_react.useCallback(composeRefs(...refs), refs);
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/_virtual/_rolldown/runtime.js
 var __defProp = Object.defineProperty;
 var __exportAll = (all, no_symbols) => {
 	let target = {};
@@ -7538,8 +7495,6 @@ var __exportAll = (all, no_symbols) => {
 	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
 	return target;
 };
-//#endregion
-//#region node_modules/@radix-ui/react-slot/dist/index.mjs
 // @__NO_SIDE_EFFECTS__
 function createSlot(ownerName) {
 	const Slot2 = import_react.forwardRef((props, forwardedRef) => {
@@ -7639,8 +7594,6 @@ var createSlottableError = (ownerName) => {
 	return `${ownerName} failed to slot onto its \`Slottable\`. Expected \`Slottable\` to receive a single React element child.`;
 };
 var use = import_react[" use ".trim().toString()];
-//#endregion
-//#region node_modules/@radix-ui/react-primitive/dist/index.mjs
 var Primitive$1 = [
 	"a",
 	"button",
@@ -7679,8 +7632,6 @@ var Primitive$1 = [
 function dispatchDiscreteCustomEvent(target, event) {
 	if (target) import_react_dom.flushSync(() => target.dispatchEvent(event));
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/Primitive.js
 /**
 * Thin wrapper around `@radix-ui/react-primitive` that adds `render` prop support.
 *
@@ -7792,8 +7743,6 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
 		if (checkForDefaultPrevented === false || !event.defaultPrevented) return ourEventHandler?.(event);
 	};
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/createActionButton.js
 var createActionButton = (displayName, useActionButton, forwardProps = []) => {
 	const ActionButton = (0, react_shim_exports.forwardRef)((props, forwardedRef) => {
 		const $ = c(6);
@@ -7829,8 +7778,6 @@ var createActionButton = (displayName, useActionButton, forwardProps = []) => {
 	ActionButton.displayName = displayName;
 	return ActionButton;
 };
-//#endregion
-//#region node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
 function useCallbackRef(callback) {
 	const callbackRef = import_react.useRef(callback);
 	import_react.useEffect(() => {
@@ -7838,8 +7785,6 @@ function useCallbackRef(callback) {
 	});
 	return import_react.useMemo(() => ((...args) => callbackRef.current?.(...args)), []);
 }
-//#endregion
-//#region node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs
 function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
 	const onEscapeKeyDown = useCallbackRef(onEscapeKeyDownProp);
 	import_react.useEffect(() => {
@@ -7850,8 +7795,6 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
 		return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
 	}, [onEscapeKeyDown, ownerDocument]);
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentRoot.js
 /**
 * The root container component for an attachment.
 *
@@ -7881,8 +7824,6 @@ var AttachmentPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) =>
 	return t0;
 });
 AttachmentPrimitiveRoot.displayName = "AttachmentPrimitive.Root";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentThumb.js
 var AttachmentPrimitiveThumb = (0, react_shim_exports.forwardRef)((props, ref) => {
 	const $ = c(4);
 	const ext = useAuiState(_temp$20);
@@ -7905,8 +7846,6 @@ function _temp$20(s) {
 	const parts = s.attachment.name.split(".");
 	return parts.length > 1 ? parts.pop() : "";
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentName.js
 var AttachmentPrimitiveName = () => {
 	const $ = c(2);
 	const name = useAuiState(_temp$19);
@@ -7922,8 +7861,6 @@ AttachmentPrimitiveName.displayName = "AttachmentPrimitive.Name";
 function _temp$19(s) {
 	return s.attachment.name;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/attachment/AttachmentRemove.js
 var useAttachmentRemove = () => {
 	const $ = c(2);
 	const aui = useAui();
@@ -7938,16 +7875,12 @@ var useAttachmentRemove = () => {
 	return t0;
 };
 var AttachmentPrimitiveRemove = createActionButton("AttachmentPrimitive.Remove", useAttachmentRemove);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/attachment.js
 var attachment_exports = /* @__PURE__ */ __exportAll({
 	Name: () => AttachmentPrimitiveName,
 	Remove: () => AttachmentPrimitiveRemove,
 	Root: () => AttachmentPrimitiveRoot,
 	unstable_Thumb: () => AttachmentPrimitiveThumb
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message/MessageIf.js
 var useMessageIf = (props) => {
 	const $ = c(12);
 	let t0;
@@ -8005,8 +7938,6 @@ var MessagePrimitiveIf = (t0) => {
 	return useMessageIf(query) ? children : null;
 };
 MessagePrimitiveIf.displayName = "MessagePrimitive.If";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerInputPluginContext.js
 var ComposerInputPluginRegistryContext = createContext(null);
 var useComposerInputPluginRegistryOptional = () => {
 	return useContext(ComposerInputPluginRegistryContext);
@@ -8083,8 +8014,6 @@ function _temp2$5(t0) {
 	const [plugin] = t0;
 	return plugin;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverRootContext.js
 var TriggerPopoverRootContext = createContext(null);
 var TriggerPopoverAriaPublishContext = createContext(null);
 var useTriggerPopoverRootContext = () => {
@@ -8347,8 +8276,6 @@ var ComposerPrimitiveTriggerPopoverRoot = (t0) => {
 };
 ComposerPrimitiveTriggerPopoverRoot.displayName = "ComposerPrimitive.TriggerPopoverRoot";
 function _temp$17() {}
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/detectTrigger.js
 var WHITESPACE_RE = /\s/u;
 /**
 * Detect a trigger character in text relative to the cursor position.
@@ -8370,8 +8297,6 @@ function detectTrigger(text, triggerChar, cursorPosition) {
 	}
 	return null;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/triggerDetectionResource.js
 /** Tracks cursor position and derives the active trigger + query from composer text. */
 var useTriggerDetectionResource = (t0) => {
 	const $ = c(7);
@@ -8402,8 +8327,6 @@ var useTriggerDetectionResource = (t0) => {
 	return t2;
 };
 var TriggerDetectionResource = resource(useTriggerDetectionResource);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/triggerKeyboardResource.js
 /** Relies on `Unstable_TriggerCategory` never carrying a `type` field. */
 function isTriggerItem(x) {
 	return "type" in x;
@@ -8533,8 +8456,6 @@ var useTriggerKeyboardResource = (t0) => {
 	return t7;
 };
 var TriggerKeyboardResource = resource(useTriggerKeyboardResource);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/triggerNavigationResource.js
 function matchesQuery$1(item, lower) {
 	return item.id.toLowerCase().includes(lower) || item.label.toLowerCase().includes(lower) || (item.description?.toLowerCase().includes(lower) ?? false);
 }
@@ -8749,8 +8670,6 @@ var useTriggerNavigationResource = (t0) => {
 	return t11;
 };
 var TriggerNavigationResource = resource(useTriggerNavigationResource);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/triggerSelectionResource.js
 /** Owns composer text mutation + behavior dispatch on item selection. */
 var useTriggerSelectionResource = (t0) => {
 	const $ = c(15);
@@ -8827,8 +8746,6 @@ var useTriggerSelectionResource = (t0) => {
 	return t4;
 };
 var TriggerSelectionResource = resource(useTriggerSelectionResource);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverResource.js
 /** Composes detection, navigation, keyboard, and selection sub-resources. */
 var useTriggerPopoverResource = (t0) => {
 	const $ = c(46);
@@ -8958,8 +8875,6 @@ var useTriggerPopoverResource = (t0) => {
 	return t6;
 };
 var TriggerPopoverResource = resource(useTriggerPopoverResource);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopover.js
 var TriggerPopoverScopeContext = createContext(null);
 var useTriggerPopoverScopeContext = () => {
 	const ctx = useContext(TriggerPopoverScopeContext);
@@ -9236,8 +9151,6 @@ ComposerPrimitiveTriggerPopover$1.displayName = "ComposerPrimitive.TriggerPopove
 function _temp$16(s) {
 	return s.composer.text;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerSend.js
 var useComposerSend = () => {
 	const $ = c(2);
 	const { disabled, send } = useComposerSend$1();
@@ -9266,8 +9179,6 @@ var useComposerSend = () => {
 * ```
 */
 var ComposerPrimitiveSend = createActionButton("ComposerPrimitive.Send", useComposerSend);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerRoot.js
 /**
 * The root form container for message composition.
 *
@@ -9330,8 +9241,6 @@ var ComposerPrimitiveRoot = (0, react_shim_exports.forwardRef)((t0, forwardedRef
 	return t3;
 });
 ComposerPrimitiveRoot.displayName = "ComposerPrimitive.Root";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/hooks/useOnScrollToBottom.js
 var useOnScrollToBottom = (callback) => {
 	const $ = c(4);
 	const callbackRef = useCallbackRef(callback);
@@ -9354,8 +9263,6 @@ var useOnScrollToBottom = (callback) => {
 function _temp$15(vp) {
 	return vp.onScrollToBottom;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/hooks/useMediaQuery.js
 var getServerSnapshot = () => false;
 var noopUnsubscribe = () => {};
 var useMediaQuery = (query) => {
@@ -9383,8 +9290,6 @@ var useMediaQuery = (query) => {
 	} else t1 = $[3];
 	return useSyncExternalStore(subscribe, t1, getServerSnapshot);
 };
-//#endregion
-//#region node_modules/@babel/runtime/helpers/esm/extends.js
 function _extends() {
 	return _extends = Object.assign ? Object.assign.bind() : function(n) {
 		for (var e = 1; e < arguments.length; e++) {
@@ -9394,8 +9299,6 @@ function _extends() {
 		return n;
 	}, _extends.apply(null, arguments);
 }
-//#endregion
-//#region node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js
 function _objectWithoutPropertiesLoose(r, e) {
 	if (null == r) return {};
 	var t = {};
@@ -9405,11 +9308,7 @@ function _objectWithoutPropertiesLoose(r, e) {
 	}
 	return t;
 }
-//#endregion
-//#region node_modules/use-isomorphic-layout-effect/dist/use-isomorphic-layout-effect.browser.esm.js
 var index$1 = import_react.useLayoutEffect;
-//#endregion
-//#region node_modules/use-latest/dist/use-latest.esm.js
 var useLatest = function useLatest(value) {
 	var ref = import_react.useRef(value);
 	index$1(function() {
@@ -9417,8 +9316,6 @@ var useLatest = function useLatest(value) {
 	});
 	return ref;
 };
-//#endregion
-//#region node_modules/use-composed-ref/dist/use-composed-ref.esm.js
 var updateRef = function updateRef(ref, value) {
 	if (typeof ref === "function") {
 		ref(value);
@@ -9436,8 +9333,6 @@ var useComposedRef = function useComposedRef(libRef, userRef) {
 		updateRef(userRef, instance);
 	}, [userRef]);
 };
-//#endregion
-//#region node_modules/react-textarea-autosize/dist/react-textarea-autosize.browser.esm.js
 var HIDDEN_TEXTAREA_STYLE = {
 	"min-height": "0",
 	"max-height": "none",
@@ -9609,8 +9504,6 @@ var index = /* #__PURE__ */ import_react.forwardRef(function TextareaAutosize(_r
 		ref
 	}));
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerInput.js
 var TOUCH_PRIMARY_QUERY = "(pointer: coarse) and (not (any-pointer: fine))";
 /**
 * A text input component for composing messages.
@@ -9793,8 +9686,6 @@ var ComposerPrimitiveInput = (0, react_shim_exports.forwardRef)(({ autoFocus = f
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(asChild ? Slot : index, { ...inputProps });
 });
 ComposerPrimitiveInput.displayName = "ComposerPrimitive.Input";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerCancel.js
 var useComposerCancel$1 = () => {
 	const { disabled, cancel } = useComposerCancel();
 	if (disabled) return null;
@@ -9814,8 +9705,6 @@ var useComposerCancel$1 = () => {
 * ```
 */
 var ComposerPrimitiveCancel = createActionButton("ComposerPrimitive.Cancel", useComposerCancel$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerAddAttachment.js
 var useComposerAddAttachment$1 = (t0) => {
 	const $ = c(6);
 	let t1;
@@ -9859,8 +9748,6 @@ var useComposerAddAttachment$1 = (t0) => {
 	return callback;
 };
 var ComposerPrimitiveAddAttachment = createActionButton("ComposerPrimitive.AddAttachment", useComposerAddAttachment$1, ["multiple"]);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerAttachmentDropzone.js
 var ComposerPrimitiveAttachmentDropzone = (0, react_shim_exports.forwardRef)((t0, ref) => {
 	const $ = c(30);
 	const { disabled, asChild: t1, render, children, ...rest } = t0;
@@ -9990,8 +9877,6 @@ var ComposerPrimitiveAttachmentDropzone = (0, react_shim_exports.forwardRef)((t0
 	return t12;
 });
 ComposerPrimitiveAttachmentDropzone.displayName = "ComposerPrimitive.AttachmentDropzone";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerDictate.js
 var useComposerDictate$1 = () => {
 	const { disabled, startDictation } = useComposerDictate();
 	if (disabled) return null;
@@ -10010,8 +9895,6 @@ var useComposerDictate$1 = () => {
 * ```
 */
 var ComposerPrimitiveDictate = createActionButton("ComposerPrimitive.Dictate", useComposerDictate$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerStopDictation.js
 var useComposerStopDictation = () => {
 	const $ = c(2);
 	const aui = useAui();
@@ -10044,8 +9927,6 @@ var ComposerPrimitiveStopDictation = createActionButton("ComposerPrimitive.StopD
 function _temp$14(s) {
 	return s.composer.dictation != null;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerDictationTranscript.js
 /**
 * Renders the current interim (partial) transcript while dictation is active.
 *
@@ -10095,8 +9976,6 @@ ComposerPrimitiveDictationTranscript.displayName = "ComposerPrimitive.DictationT
 function _temp$13(s) {
 	return s.composer.dictation?.transcript;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/ComposerQuote.js
 /**
 * Renders a container for the quoted text preview in the composer.
 * Only renders when a quote is set.
@@ -10224,8 +10103,6 @@ function _temp$12(s) {
 function _temp2$4(s) {
 	return s.composer.quote?.text;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverCategories.js
 /**
 * Renders the top-level category list via a render function.
 * Only renders when no category is active and search mode is off.
@@ -10374,8 +10251,6 @@ var ComposerPrimitiveTriggerPopoverCategoryItem = (0, react_shim_exports.forward
 	return t8;
 });
 ComposerPrimitiveTriggerPopoverCategoryItem.displayName = "ComposerPrimitive.TriggerPopoverCategoryItem";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverItems.js
 /**
 * Renders the list of items within a category or search results via a render function.
 * Only renders when a category is active or search mode is on.
@@ -10522,8 +10397,6 @@ var ComposerPrimitiveTriggerPopoverItem = (0, react_shim_exports.forwardRef)((t0
 	return t8;
 });
 ComposerPrimitiveTriggerPopoverItem.displayName = "ComposerPrimitive.TriggerPopoverItem";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverBack.js
 /**
 * A button that navigates back from category items to the category list.
 * Only renders when a category is active (drill-down view).
@@ -10566,8 +10439,6 @@ var ComposerPrimitiveTriggerPopoverBack = (0, react_shim_exports.forwardRef)((t0
 	return t2;
 });
 ComposerPrimitiveTriggerPopoverBack.displayName = "ComposerPrimitive.TriggerPopoverBack";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverAction.js
 /**
 * Configures a `<TriggerPopover>` to fire a handler when an item is selected,
 * optionally leaving a directive chip behind as an audit trail. Render exactly
@@ -10604,8 +10475,6 @@ var ComposerPrimitiveTriggerPopoverAction = ({ formatter, onExecute, removeOnExe
 	return null;
 };
 ComposerPrimitiveTriggerPopoverAction.displayName = "ComposerPrimitive.TriggerPopoverAction";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/TriggerPopoverDirective.js
 /**
 * Configures a `<TriggerPopover>` to insert a directive chip when an item is
 * selected. Render exactly one behavior sub-primitive per `<TriggerPopover>`.
@@ -10636,14 +10505,10 @@ var ComposerPrimitiveTriggerPopoverDirective = ({ formatter, onInserted }) => {
 	return null;
 };
 ComposerPrimitiveTriggerPopoverDirective.displayName = "ComposerPrimitive.TriggerPopoverDirective";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer/trigger/index.js
 var ComposerPrimitiveTriggerPopover = Object.assign(ComposerPrimitiveTriggerPopover$1, {
 	Directive: ComposerPrimitiveTriggerPopoverDirective,
 	Action: ComposerPrimitiveTriggerPopoverAction
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/composer.js
 var composer_exports = /* @__PURE__ */ __exportAll({
 	AddAttachment: () => ComposerPrimitiveAddAttachment,
 	AttachmentByIndex: () => ComposerPrimitiveAttachmentByIndex,
@@ -10675,8 +10540,6 @@ var composer_exports = /* @__PURE__ */ __exportAll({
 	unstable_useTriggerPopoverTriggers: () => useTriggerPopoverTriggers,
 	unstable_useTriggerPopoverTriggersOptional: () => useTriggerPopoverTriggersOptional
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/useMessagePartText.js
 /**
 * @deprecated Use {@link useAuiState} to select and narrow `s.part`.
 * Return `null` for optional rendering, or throw inside the selector to
@@ -10699,8 +10562,6 @@ function _temp$11(s) {
 	if (s.part.type !== "text" && s.part.type !== "reasoning") throw new Error("MessagePartText can only be used inside text or reasoning message parts.");
 	return s.part;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/smooth/SmoothContext.js
 var SmoothContext = createContext(null);
 function useSmoothContext(options) {
 	const context = useContext(SmoothContext);
@@ -10708,8 +10569,6 @@ function useSmoothContext(options) {
 	return context;
 }
 var { useSmoothStatus, useSmoothStatusStore } = createContextStoreHook(useSmoothContext, "useSmoothStatus");
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/smooth/useSmooth.js
 var DEFAULT_DRAIN_MS = 250;
 var DEFAULT_MAX_CHAR_INTERVAL_MS = 5;
 var TextStreamAnimator = class {
@@ -10874,8 +10733,6 @@ var useSmooth = (state, smooth = false) => {
 		text
 	]);
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/useMessagePartImage.js
 /**
 * @deprecated Use {@link useAuiState} to select and narrow `s.part`.
 * Return `null` for optional rendering, or throw inside the selector to
@@ -10898,8 +10755,6 @@ function _temp$10(s) {
 	if (s.part.type !== "image") throw new Error("MessagePartImage can only be used inside image message parts.");
 	return s.part;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/MessagePartText.js
 /**
 * Renders the text content of a message part with optional smooth streaming.
 *
@@ -10953,8 +10808,6 @@ var MessagePartPrimitiveText = (0, react_shim_exports.forwardRef)((t0, forwarded
 	return t3;
 });
 MessagePartPrimitiveText.displayName = "MessagePartPrimitive.Text";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/MessagePartImage.js
 /**
 * Renders an image from the current message part context.
 *
@@ -10988,8 +10841,6 @@ var MessagePartPrimitiveImage = (0, react_shim_exports.forwardRef)((props, forwa
 	return t0;
 });
 MessagePartPrimitiveImage.displayName = "MessagePartPrimitive.Image";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/hooks/useManagedRef.js
 var useManagedRef = (callback) => {
 	const $ = c(2);
 	const cleanupRef = useRef(void 0);
@@ -11007,8 +10858,6 @@ var useManagedRef = (callback) => {
 	} else t0 = $[1];
 	return t0;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/topAnchorUtils.js
 /**
 * Convert a supported CSS length string (`px`, `em`, `rem`) into pixels,
 * resolving font-relative units against the supplied element's computed style.
@@ -11050,8 +10899,6 @@ var snapScrollTop = (top) => {
 	const pixelRatio = window.devicePixelRatio || 1;
 	return Math.round(top * pixelRatio) / pixelRatio;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message/MessageRoot.js
 var useIsHoveringRef = () => {
 	const $ = c(4);
 	const aui = useAui();
@@ -11290,8 +11137,6 @@ function _temp3$2(s) {
 function _temp4$1(s) {
 	return s.message.id;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message/MessageParts.js
 var webDefaultComponents = {
 	...defaultComponents$1,
 	Text: () => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
@@ -11364,15 +11209,11 @@ var MessagePrimitiveParts = (props) => {
 	return t2;
 };
 MessagePrimitiveParts.displayName = "MessagePrimitive.Parts";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message/MessageError.js
 var MessagePrimitiveError = (t0) => {
 	const { children } = t0;
 	return useMessageError() !== void 0 ? children : null;
 };
 MessagePrimitiveError.displayName = "MessagePrimitive.Error";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message/MessagePartsGrouped.js
 /**
 * Groups message parts by their parent ID.
 * Parts without a parent ID appear in their chronological position as individual groups.
@@ -11880,8 +11721,6 @@ function _temp3$1(s) {
 function _temp4(s) {
 	return s.message.parts.length;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/message.js
 var message_exports = /* @__PURE__ */ __exportAll({
 	AttachmentByIndex: () => MessagePrimitiveAttachmentByIndex,
 	Attachments: () => MessagePrimitiveAttachments,
@@ -11897,8 +11736,6 @@ var message_exports = /* @__PURE__ */ __exportAll({
 	Unstable_PartsGrouped: () => MessagePrimitiveUnstable_PartsGrouped,
 	Unstable_PartsGroupedByParentId: () => MessagePrimitiveUnstable_PartsGroupedByParentId
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/hooks/useOnResizeContent.js
 var useOnResizeContent = (callback) => {
 	const $ = c(2);
 	const callbackRef = useCallbackRef(callback);
@@ -11931,8 +11768,6 @@ var useOnResizeContent = (callback) => {
 function _temp$7(m) {
 	return m.type !== "attributes" || m.attributeName !== "style";
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/useThreadViewportAutoScroll.js
 var useThreadViewportAutoScroll = ({ autoScroll, scrollToBottomOnRunStart = true, scrollToBottomOnInitialize = true, scrollToBottomOnThreadSwitch = true }) => {
 	const divRef = useRef(null);
 	const hasMessages = useAuiState((s) => s.thread.messages.length > 0);
@@ -12036,8 +11871,6 @@ var useThreadViewportAutoScroll = ({ autoScroll, scrollToBottomOnRunStart = true
 	});
 	return useComposedRefs(resizeRef, scrollRef, divRef);
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadRoot.js
 /**
 * The root container component for a thread.
 *
@@ -12070,8 +11903,6 @@ var ThreadPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
 	return t0;
 });
 ThreadPrimitiveRoot.displayName = "ThreadPrimitive.Root";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadEmpty.js
 /**
 * @deprecated Use `<AuiIf condition={(s) => s.thread.isEmpty} />` instead.
 */
@@ -12083,8 +11914,6 @@ ThreadPrimitiveEmpty.displayName = "ThreadPrimitive.Empty";
 function _temp$6(s) {
 	return s.thread.isEmpty;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadIf.js
 var useThreadIf = (props) => {
 	const $ = c(4);
 	let t0;
@@ -12124,8 +11953,6 @@ var ThreadPrimitiveIf = (t0) => {
 	return useThreadIf(query) ? children : null;
 };
 ThreadPrimitiveIf.displayName = "ThreadPrimitive.If";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/hooks/useSizeHandle.js
 /**
 * Hook that creates a ref for tracking element size via a SizeHandle.
 * Automatically sets up ResizeObserver and reports height changes.
@@ -12159,8 +11986,6 @@ var useSizeHandle = (register, getHeight) => {
 	} else t0 = $[2];
 	return useManagedRef(t0);
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/computeTopAnchorSlack.js
 var getDocumentOffsetTop = (element) => {
 	let top = 0;
 	let current = element;
@@ -12207,8 +12032,6 @@ var computeTopAnchorReserve = ({ viewport, reserve, ...targetOptions }) => {
 		scrollHeight: viewport.scrollHeight - reserve.offsetHeight
 	});
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/createReserveObservers.js
 var createReserveObservers = (onChange) => {
 	const resizeObserver = new ResizeObserver(onChange);
 	const mutationObserver = new MutationObserver(onChange);
@@ -12241,8 +12064,6 @@ var createReserveObservers = (onChange) => {
 		disconnect
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/mountTopAnchorReserve.js
 var createFrameScheduler = (fn) => {
 	let frame = null;
 	return {
@@ -12312,8 +12133,6 @@ var mountTopAnchorReserve = (store) => {
 		reserve?.remove();
 	};
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/useTopAnchorReserve.js
 /**
 * Mounts the top-turn-anchor reserve element against the active
 * `ThreadViewport` store. Call this from inside the scrollable viewport so
@@ -12340,8 +12159,6 @@ var useTopAnchorReserve = (enabled) => {
 	}
 	useLayoutEffect$1(t0, t1);
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/topAnchor/topAnchorTurn.js
 var getActiveTopAnchorTurn = ({ isRunning, messages }) => {
 	if (!isRunning) return null;
 	const target = messages.at(-1);
@@ -12354,8 +12171,6 @@ var getActiveTopAnchorTurn = ({ isRunning, messages }) => {
 };
 var getActiveTopAnchorAnchorId = (options) => getActiveTopAnchorTurn(options)?.anchorId;
 var getActiveTopAnchorTargetId = (options) => getActiveTopAnchorTurn(options)?.targetId;
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadViewport.js
 var useViewportSizeRef = () => {
 	return useSizeHandle(useThreadViewport(_temp$5), _temp2$1);
 };
@@ -12578,8 +12393,6 @@ function _temp2$1(el) {
 function _temp3(s) {
 	return s.registerViewportElement;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadViewportFooter.js
 /**
 * A footer container that measures its height for scroll calculations.
 *
@@ -12627,8 +12440,6 @@ function _temp2(el) {
 	const marginTop = parseFloat(getComputedStyle(el).marginTop) || 0;
 	return el.offsetHeight + marginTop;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadScrollToBottom.js
 var useThreadScrollToBottom = (t0) => {
 	const $ = c(5);
 	let t1;
@@ -12657,8 +12468,6 @@ var ThreadPrimitiveScrollToBottom = createActionButton("ThreadPrimitive.ScrollTo
 function _temp$3(s) {
 	return s.isAtBottom;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread/ThreadSuggestion.js
 var useThreadSuggestion = (t0) => {
 	const $ = c(4);
 	const { prompt, send, clearComposer, autoSend } = t0;
@@ -12686,8 +12495,6 @@ var ThreadPrimitiveSuggestion = createActionButton("ThreadPrimitive.Suggestion",
 	"autoSend",
 	"method"
 ]);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/thread.js
 var thread_exports = /* @__PURE__ */ __exportAll({
 	Empty: () => ThreadPrimitiveEmpty,
 	If: () => ThreadPrimitiveIf,
@@ -12702,8 +12509,6 @@ var thread_exports = /* @__PURE__ */ __exportAll({
 	ViewportFooter: () => ThreadPrimitiveViewportFooter,
 	ViewportProvider: () => ThreadPrimitiveViewportProvider
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListNew.js
 var ThreadListPrimitiveNew = (0, react_shim_exports.forwardRef)((t0, forwardedRef) => {
 	const $ = c(15);
 	let disabled;
@@ -12761,16 +12566,12 @@ ThreadListPrimitiveNew.displayName = "ThreadListPrimitive.New";
 function _temp$2(s) {
 	return s.threads.newThreadId === s.threads.mainThreadId;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListLoadMore.js
 var useThreadListLoadMore$1 = () => {
 	const { loadMore, disabled } = useThreadListLoadMore();
 	if (disabled) return null;
 	return loadMore;
 };
 var ThreadListPrimitiveLoadMore = createActionButton("ThreadListPrimitive.LoadMore", useThreadListLoadMore$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadList/ThreadListRoot.js
 var ThreadListPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
 	const $ = c(3);
 	let t0;
@@ -12786,8 +12587,6 @@ var ThreadListPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) =>
 	return t0;
 });
 ThreadListPrimitiveRoot.displayName = "ThreadListPrimitive.Root";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadList.js
 var threadList_exports = /* @__PURE__ */ __exportAll({
 	ItemByIndex: () => ThreadListPrimitiveItemByIndex,
 	Items: () => ThreadListPrimitiveItems,
@@ -12795,8 +12594,6 @@ var threadList_exports = /* @__PURE__ */ __exportAll({
 	New: () => ThreadListPrimitiveNew,
 	Root: () => ThreadListPrimitiveRoot
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemRoot.js
 var ThreadListItemPrimitiveRoot = (0, react_shim_exports.forwardRef)((props, ref) => {
 	const $ = c(6);
 	const isMain = useAuiState(_temp$1);
@@ -12827,36 +12624,26 @@ ThreadListItemPrimitiveRoot.displayName = "ThreadListItemPrimitive.Root";
 function _temp$1(s) {
 	return s.threads.mainThreadId === s.threadListItem.id;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemArchive.js
 var useThreadListItemArchive$1 = () => {
 	const { archive } = useThreadListItemArchive();
 	return archive;
 };
 var ThreadListItemPrimitiveArchive = createActionButton("ThreadListItemPrimitive.Archive", useThreadListItemArchive$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemUnarchive.js
 var useThreadListItemUnarchive$1 = () => {
 	const { unarchive } = useThreadListItemUnarchive();
 	return unarchive;
 };
 var ThreadListItemPrimitiveUnarchive = createActionButton("ThreadListItemPrimitive.Unarchive", useThreadListItemUnarchive$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemDelete.js
 var useThreadListItemDelete$1 = () => {
 	const { delete: deleteThread } = useThreadListItemDelete();
 	return deleteThread;
 };
 var ThreadListItemPrimitiveDelete = createActionButton("ThreadListItemPrimitive.Delete", useThreadListItemDelete$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem/ThreadListItemTrigger.js
 var useThreadListItemTrigger$1 = () => {
 	const { switchTo } = useThreadListItemTrigger();
 	return switchTo;
 };
 var ThreadListItemPrimitiveTrigger = createActionButton("ThreadListItemPrimitive.Trigger", useThreadListItemTrigger$1);
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/threadListItem.js
 var threadListItem_exports = /* @__PURE__ */ __exportAll({
 	Archive: () => ThreadListItemPrimitiveArchive,
 	Delete: () => ThreadListItemPrimitiveDelete,
@@ -12865,8 +12652,6 @@ var threadListItem_exports = /* @__PURE__ */ __exportAll({
 	Trigger: () => ThreadListItemPrimitiveTrigger,
 	Unarchive: () => ThreadListItemPrimitiveUnarchive
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/utils/getSelectionMessageId.js
 var findMessageId = (node) => {
 	let el = node instanceof HTMLElement ? node : node?.parentElement ?? null;
 	while (el) {
@@ -12884,8 +12669,6 @@ var getSelectionMessageId = (selection) => {
 	if (!anchorId || anchorId !== focusId) return null;
 	return anchorId;
 };
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar/SelectionToolbarRoot.js
 var SelectionToolbarContext = createContext(null);
 var useSelectionToolbarInfo = () => {
 	return useContext(SelectionToolbarContext);
@@ -13030,8 +12813,6 @@ var SelectionToolbarPrimitiveRoot = (0, react_shim_exports.forwardRef)((t0, forw
 	return t8;
 });
 SelectionToolbarPrimitiveRoot.displayName = "SelectionToolbarPrimitive.Root";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar/SelectionToolbarQuote.js
 /**
 * A button that quotes the currently selected text.
 *
@@ -13105,14 +12886,10 @@ var SelectionToolbarPrimitiveQuote = (0, react_shim_exports.forwardRef)((t0, for
 	return t4;
 });
 SelectionToolbarPrimitiveQuote.displayName = "SelectionToolbarPrimitive.Quote";
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/selectionToolbar.js
 var selectionToolbar_exports = /* @__PURE__ */ __exportAll({
 	Quote: () => SelectionToolbarPrimitiveQuote,
 	Root: () => SelectionToolbarPrimitiveRoot
 });
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/primitives/messagePart/useMessagePartReasoning.js
 /**
 * @deprecated Use {@link useAuiState} to select and narrow `s.part`.
 * Return `null` for optional rendering, or throw inside the selector to
@@ -13135,8 +12912,6 @@ function _temp(s) {
 	if (s.part.type !== "reasoning") throw new Error("MessagePartReasoning can only be used inside reasoning message parts.");
 	return s.part;
 }
-//#endregion
-//#region node_modules/@assistant-ui/react/dist/unstable/useSlashCommandAdapter.js
 /**
 * @deprecated Under active development and may change without notice.
 *
@@ -13202,5 +12977,4 @@ function matchesQuery(cmd, lower) {
 	if (cmd.description?.toLowerCase().includes(lower)) return true;
 	return false;
 }
-//#endregion
 export { AssistantRuntimeProvider as C, useComposerRuntime as S, dispatchDiscreteCustomEvent as _, threadList_exports as a, useComposedRefs as b, useSmooth as c, useTriggerPopoverScopeContext as d, attachment_exports as f, Primitive$1 as g, composeEventHandlers as h, threadListItem_exports as i, useMessagePartText as l, useCallbackRef as m, useMessagePartReasoning as n, thread_exports as o, useEscapeKeydown as p, selectionToolbar_exports as r, message_exports as s, unstable_useSlashCommandAdapter as t, composer_exports as u, createSlot as v, require_react_dom as w, useMessage as x, createSlottable as y };

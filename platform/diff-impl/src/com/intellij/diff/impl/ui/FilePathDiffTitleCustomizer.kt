@@ -33,6 +33,7 @@ class FilePathDiffTitleCustomizer(
     init {
       if (revisionLabel != null) {
         add(revisionLabel, GridBagConstraints().apply {
+          anchor = GridBagConstraints.BASELINE_LEADING
           fill = GridBagConstraints.BOTH
           weightx = 0.0
           gridx = 0
@@ -40,6 +41,7 @@ class FilePathDiffTitleCustomizer(
         })
       }
       add(pathLabel, GridBagConstraints().apply {
+        anchor = GridBagConstraints.BASELINE_LEADING
         fill = GridBagConstraints.BOTH
         weightx = 1.0;
         gridx = 1
@@ -80,6 +82,7 @@ class DiffFilePathLabelWrapper(val displayedPath: String, val fullPath: String) 
   override fun getMinimumSize(): Dimension = wrappedLabel.minimumSize
   override fun getPreferredSize(): Dimension = wrappedLabel.preferredSize
   override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
+  override fun getBaseline(width: Int, height: Int): Int = wrappedLabel.getBaseline(width, height)
 }
 
 private class DiffFilePathLabel(path: String, fullPath: @NlsSafe String) : JBLabel() {

@@ -1,5 +1,5 @@
 // "Create property 'foo' as constructor parameter" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A {
     val test: Int get() = <caret>foo

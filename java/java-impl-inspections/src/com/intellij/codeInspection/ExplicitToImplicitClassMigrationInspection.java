@@ -351,7 +351,11 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         tracker.grabComments(child);
       }
 
-      document.deleteString(rLimit.getTextRange().getStartOffset(), psiClass.getTextRange().getEndOffset());
+      int endOffset = psiClass.getTextRange().getEndOffset();
+      if (document.getTextLength() > endOffset && document.getCharsSequence().charAt(endOffset) == '\n') {
+        endOffset++;
+      }
+      document.deleteString(rLimit.getTextRange().getStartOffset(), endOffset);
       document.deleteString(psiClass.getTextRange().getStartOffset(), lLimit.getTextRange().getStartOffset());
 
       psiDocumentManager.commitDocument(document);

@@ -1,5 +1,5 @@
 // "Change type argument to String" "true"
-// K2_ERROR: Type of 'val x: String' is not a subtype of overridden property 'val x: Int' defined in 'Outer.FooImpl'.
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 
 interface Foo<T> { val x: T}
 

@@ -47,15 +47,6 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
     }
   }
 
-  private fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
-    if (leaf !is XmlToken) return false
-    if (leaf.getNode().elementType != XmlTokenType.XML_NAME) return false
-    val prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken::class.java)
-    if (prev == null || prev.node.elementType !== XmlTokenType.XML_START_TAG_START) return false
-    if (!leaf.textMatches("idea-plugin")) return false
-    return DomUtil.getDomElement(leaf) is IdeaPlugin
-  }
-
   private fun findDependingContentModuleEntries(element: PsiElement): List<ModuleDescriptor> {
     val xmlFile = element.containingFile as? XmlFile ?: return emptyList()
     return findDependingContentModuleEntriesInFile(xmlFile).toList()
@@ -109,4 +100,13 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
       return moduleDescriptor.loading.value?.value ?: "optional"
     }
   }
+}
+
+internal fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
+  if (leaf !is XmlToken) return false
+  if (leaf.getNode().elementType != XmlTokenType.XML_NAME) return false
+  val prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken::class.java)
+  if (prev == null || prev.node.elementType !== XmlTokenType.XML_START_TAG_START) return false
+  if (!leaf.textMatches("idea-plugin")) return false
+  return DomUtil.getDomElement(leaf) is IdeaPlugin
 }

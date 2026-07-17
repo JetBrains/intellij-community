@@ -8,9 +8,9 @@ import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
@@ -227,7 +228,7 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
     reporterFixture.reporter.failure(failure)
-      .withKind(MessageEvent.Kind.WARNING)
+      .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
       .report()
 
     assertCollectionOrdered(reporterFixture.events) {
@@ -241,7 +242,7 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure = GradleIssueFailure.createIssueFailure(message, "description")
 
     reporterFixture.reporter.failure(failure)
-      .withKind(MessageEvent.Kind.WARNING)
+      .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
       .report()
 
     assertCollectionOrdered(reporterFixture.events) {

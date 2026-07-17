@@ -2,13 +2,13 @@
 // ERROR: No value passed for parameter 'a'
 // ERROR: No value passed for parameter 'b'
 // ERROR: No value passed for parameter 'c'
-// K2_ERROR: No value passed for parameter 'a'.
-// K2_ERROR: No value passed for parameter 'b'.
-// K2_ERROR: No value passed for parameter 'c'.
-// K2_AFTER_ERROR: No value passed for parameter 'a'.
-// K2_AFTER_ERROR: No value passed for parameter 'b'.
-// K2_AFTER_ERROR: No value passed for parameter 'c'.
 // WITH_STDLIB
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 fun foo(a: Int, b: Int, c: Int) {}
 
 fun test() {

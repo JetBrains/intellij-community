@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+  version="1.1"
+  width="64"
+  height="64"
+  id="svg2993">
+
+  <use href="#shape" x="15" y="25"/>
+  <use href="#shape" x="40" y="25"/>
+  <use href="#shape" x="1" y="2"/>
+
+  <defs>
+    <g id="shape">
+      <rect x="12" y="12" width="10" height="10" fill="red"/>
+      <circle cx="12" cy="12" r="10" fill="yellow"/>
+      <g>
+        <rect x="0" y="0" width="10" height="10" fill="blue"/>
+        <g>
+          <rect x="0" y="12" width="10" height="10" fill="green"/>
+        </g>
+      </g>
+    </g>
+  </defs>
+
+</svg>
+
+

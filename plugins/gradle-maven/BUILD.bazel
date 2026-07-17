@@ -10,7 +10,6 @@ jps_test(
 ### skip generation section `test intellij.gradle.java.maven.tests`
 
 ### auto-generated section `build intellij.gradle.java.maven` start
-
 jvm_library(
     name = "gradle-java-maven",
     srcs = glob(
@@ -96,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.java.maven` end
 
 ### auto-generated section `build intellij.gradle.java.maven.tests` start
-
 jvm_library(
     name = "gradle-java-maven-tests",
     srcs = glob(

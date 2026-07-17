@@ -1,8 +1,8 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community` start
-
 resourcegroup(
     name = "pycharm-community_resources",
     srcs = glob(
@@ -72,7 +72,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community` end
 
 ### auto-generated section `build intellij.pycharm.community.customization` start
-
 jvm_library(
     name = "pycharm-community-customization",
     srcs = glob(
@@ -88,7 +87,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//python/ide/impl",
-        "@lib//:tips-pycharm-community",
         "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
         "//python/ide/customization.shared",
@@ -125,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.customization` end
 
 ### auto-generated section `build intellij.pycharm.community.main` start
-
 jvm_library(
     name = "pycharm-community-main",
     srcs = glob(
@@ -257,7 +254,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.main` end
 
 ### auto-generated section `build intellij.python.commonTests` start
-
 jvm_library(
     name = "python-commonTests",
     srcs = glob(
@@ -336,7 +332,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.commonTests` end
 
 ### auto-generated section `test intellij.python.commonTests` start
-
 jps_test(
     name = "python-commonTests_test",
     runtime_deps = [":python-commonTests_test_lib"],
@@ -344,6 +339,10 @@ jps_test(
 ### auto-generated section `test intellij.python.commonTests` end
 
 ### auto-generated section `build intellij.python.community.impl` start
+create_kotlinc_options(
+    name = "custom_python-community-impl",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+)
 
 jvm_library(
     name = "python-community-impl",
@@ -357,6 +356,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_python-community-impl",
     module_name = "intellij.python.community.impl",
     resource_strip_prefix = "pluginResources",
     resources = glob(
@@ -496,7 +496,6 @@ jvm_library(
         "//python/impl.helperLocator:community-helpersLocator",
         "//python/python-exec-service/execService.python",
         "//python/interpreters",
-        "//python/python-sdk-configurator/common",
         "//python/python-poetry/common",
         "//python/python-uv/common",
         "//python/common",
@@ -525,6 +524,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_python-community-impl",
     module_name = "intellij.python.community.impl",
     visibility = ["//visibility:public"],
     exports = [
@@ -653,7 +653,6 @@ jvm_library(
         "//python/impl.helperLocator:community-helpersLocator_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/interpreters:interpreters_test_lib",
-        "//python/python-sdk-configurator/common:common_test_lib",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common:common_test_lib",
         "//python/common:common_test_lib",
@@ -686,7 +685,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.impl` end
 
 ### auto-generated section `build intellij.python.community.impl.tests` start
-
 jvm_library(
     name = "python-community-impl-tests",
     srcs = glob(
@@ -953,8 +951,6 @@ jvm_library(
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/interpreters",
         "//python/interpreters:interpreters_test_lib",
-        "//python/python-sdk-configurator/common",
-        "//python/python-sdk-configurator/common:common_test_lib",
         "//python/python-poetry/common",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common",
@@ -995,7 +991,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.impl.tests` end
 
 ### auto-generated section `build intellij.python.community.plugin.main` start
-
 jvm_library(
     name = "python-community-plugin-main",
     srcs = glob(
@@ -1049,7 +1044,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.plugin.main` end
 
 ### auto-generated section `build intellij.python.community.plugin.modules` start
-
 jvm_library(
     name = "python-community-plugin-modules",
     srcs = glob(
@@ -1101,6 +1095,13 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
+create_kotlinc_options(
+    name = "custom_python-community-tests",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+)
 
 jvm_library(
     name = "python-community-tests",
@@ -1155,6 +1156,7 @@ jvm_library(
         "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
     ],
+    kotlinc_opts = ":custom_python-community-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -1420,6 +1422,8 @@ jvm_library(
         "//python/python-pyright:pyright_test_lib",
         "//plugins/toml/core",
         "//plugins/toml/core:core_test_lib",
+        "//python/python-poetry/backend",
+        "//python/python-poetry/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end
@@ -1434,7 +1438,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.tests` end
 
 ### auto-generated section `test intellij.python.community.tests` start
-
 jps_test(
     name = "python-community-tests_test",
     runtime_deps = [":python-community-tests_test_lib"],
@@ -1442,7 +1445,6 @@ jps_test(
 ### auto-generated section `test intellij.python.community.tests` end
 
 ### auto-generated section `build intellij.python.helpers` start
-
 jvm_library(
     name = "python-helpers",
     srcs = glob(
@@ -1480,7 +1482,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
-
 resourcegroup(
     name = "python-helpers-tests_test_resources",
     srcs = glob(
@@ -1534,7 +1535,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
-
 jvm_library(
     name = "python-pydev",
     srcs = glob(

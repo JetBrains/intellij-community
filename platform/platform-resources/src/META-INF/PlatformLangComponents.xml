@@ -227,8 +227,6 @@
                         serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsInternalPainterProvider"/>
     <!---->
 
-    <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />
-
     <projectSettings service="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"/>
     <applicationSettings service="com.intellij.ide.ui.laf.LafManagerImpl"/>
     <applicationSettings service="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>

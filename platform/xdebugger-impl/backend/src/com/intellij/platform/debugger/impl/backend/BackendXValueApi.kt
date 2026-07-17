@@ -10,6 +10,7 @@ import com.intellij.platform.debugger.impl.rpc.XContainerId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHyperlinkId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeExpandedNode
 import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorId
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
 import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
@@ -18,7 +19,7 @@ import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.platform.debugger.impl.rpc.XValueGroupId
 import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.platform.debugger.impl.rpc.XValuePresentationDataDto
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
@@ -75,8 +76,8 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class BackendXValueApi : XValueApi {
-  override suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation> {
-    val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
+  override suspend fun computeTooltipPresentation(xValueId: XValueId): XValuePresentationDataDto? {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
     return xValueModel.computeTooltipPresentation()
   }
 
@@ -100,13 +101,8 @@ internal class BackendXValueApi : XValueApi {
    * The return value might be simplified to a single [XFullValueEvaluatorResult],
    * but the [com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback.evaluated] method might be called multiple times.
    */
-  override suspend fun evaluateFullValue(xValueId: XValueId): Flow<XFullValueEvaluatorResult> = channelFlow {
-    val xValueModel = BackendXValueModel.findById(xValueId)
-    if (xValueModel == null) {
-      send(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
-      return@channelFlow
-    }
-    val xFullValueEvaluator = xValueModel.fullValueEvaluator.value
+  override suspend fun evaluateFullValue(evaluatorId: XFullValueEvaluatorId): Flow<XFullValueEvaluatorResult> = channelFlow {
+    val xFullValueEvaluator = evaluatorId.findValue()
     if (xFullValueEvaluator == null) {
       send(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
       return@channelFlow
@@ -337,7 +333,7 @@ private sealed interface RawComputeChildrenEvent {
       fun subscribeToFullValueFlow(model: BackendXValueModel) {
         parentCoroutineScope.launch {
           model.fullValueEvaluator.collectLatest {
-            channel.send(XValueComputeChildrenEvent.XValueFullValueEvaluatorEvent(model.id, it?.toRpc()))
+            channel.send(XValueComputeChildrenEvent.XValueFullValueEvaluatorEvent(model.id, it?.toRpc(model.cs)))
           }
         }
       }

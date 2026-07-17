@@ -552,9 +552,12 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
 private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMINAL_EDITOR_SIZE_CHANGING_ACTION")
 
 /**
- * Indicates that action that may modify scroll offset or editor size is in progress.
- * It should be used only to indicate internal programmatic actions that are not explicitly caused by the user interaction.
- * For example, terminal output text update, or adding inlays to create insets between command blocks.
+ * Indicates that **the user-triggered** action that modifies the editor viewport (scroll position and size) is in progress.
+ *
+ * It should be used only to indicate **user-triggered** scroll changes,
+ * for example, [org.jetbrains.plugins.terminal.action.TerminalScrollingAction]
+ *
+ * This property is used in `TerminalOutputScrollingModelImpl` to control the state of `shouldScrollToCursor` property.
  */
 @get:ApiStatus.Internal
 @set:ApiStatus.Internal
@@ -565,11 +568,14 @@ var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
 @ApiStatus.Internal
 inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
   isTerminalOutputScrollChangingActionInProgress = true
-  try {
-    return action()
+  return try {
+    action()
   }
   finally {
-    isTerminalOutputScrollChangingActionInProgress = false
+    // Will execute immediately if there is no animation or after the current animation request is finished.
+    scrollingModel.runActionOnScrollingFinished {
+      isTerminalOutputScrollChangingActionInProgress = false
+    }
   }
 }
 

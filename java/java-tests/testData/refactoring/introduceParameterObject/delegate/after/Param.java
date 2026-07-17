@@ -1,2 +1,2 @@
-public record Param(int... i) {
+record Param(int... i) {
 }

@@ -16,7 +16,7 @@ fun range(i : Int?) {
 }
 fun alwaysNull(i : Int?) {
     if (i == null) {
-        <warning descr="[ALWAYS_NULL] The result of the expression is always null"><weak_warning descr="Value of 'i' is always null">i</weak_warning></warning><warning descr="Operation will always fail as operand is always null">!!</warning>
+        <warning descr="[ALWAYS_NULL]"><weak_warning descr="Value of 'i' is always null">i</weak_warning></warning><warning descr="Operation will always fail as operand is always null">!!</warning>
     }
     null!! // too obvious, looks intended
 }

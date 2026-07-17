@@ -168,7 +168,13 @@ object TableFormattingUtils {
     delayedCaretMoves?.moveCarets()
   }
 
-  fun reformatAllColumns(table: MarkdownTable, document: Document, trimToMaxContent: Boolean = true, preventExpand: Boolean = false) {
+  fun reformatAllColumns(
+    table: MarkdownTable,
+    document: Document,
+    trimToMaxContent: Boolean = true,
+    preventExpand: Boolean = false,
+    carets: Iterable<Caret> = emptyList()
+  ) {
     val columnsIndices = table.columnsIndices
     val tableOffset = table.startOffset
     for (columnIndex in columnsIndices) {
@@ -177,7 +183,7 @@ object TableFormattingUtils {
       if (columnIndex !in currentTable.columnsIndices) {
         break
       }
-      currentTable.reformatColumnOnChange(document, emptyList(), columnIndex, trimToMaxContent, preventExpand)
+      currentTable.reformatColumnOnChange(document, carets, columnIndex, trimToMaxContent, preventExpand)
     }
   }
 

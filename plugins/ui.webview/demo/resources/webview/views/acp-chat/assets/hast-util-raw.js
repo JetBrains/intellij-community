@@ -3,7 +3,6 @@ import { n as stringify } from "./comma-separated-tokens.js";
 import { a as stringify$1, c as find, n as webNamespaces, o as html, s as svg } from "./hast-util-from-dom.js";
 import { t as fromParse5 } from "./hast-util-from-parse5.js";
 import { n as EntityDecoder, r as htmlDecodeTree, t as DecodingMode } from "./entities.js";
-//#region node_modules/unist-util-position/lib/index.js
 /**
 * @typedef {import('unist').Node} Node
 * @typedef {import('unist').Point} Point
@@ -82,8 +81,6 @@ function position(node) {
 		end
 	};
 }
-//#endregion
-//#region node_modules/@ungap/structured-clone/esm/deserialize.js
 var env = typeof self === "object" ? self : globalThis;
 var guard = (name, init) => {
 	switch (name) {
@@ -157,8 +154,6 @@ var deserializer = ($, _) => {
 * @returns {any}
 */
 var deserialize = (serialized) => deserializer(/* @__PURE__ */ new Map(), serialized)(0);
-//#endregion
-//#region node_modules/@ungap/structured-clone/esm/serialize.js
 var EMPTY = "";
 var { toString } = {};
 var { keys } = Object;
@@ -275,8 +270,6 @@ var serialize = (value, { json, lossy } = {}) => {
 	const _ = [];
 	return serializer(!(json || lossy), !!json, /* @__PURE__ */ new Map(), _)(value), _;
 };
-//#endregion
-//#region node_modules/@ungap/structured-clone/esm/index.js
 /**
 * @typedef {Array<string,any>} Record a type representation
 */
@@ -289,8 +282,6 @@ var serialize = (value, { json, lossy } = {}) => {
 * @returns {Record[]}
 */
 var esm_default = typeof structuredClone === "function" ? (any, options) => options && ("json" in options || "lossy" in options) ? deserialize(serialize(any, options)) : structuredClone(any) : (any, options) => deserialize(serialize(any, options));
-//#endregion
-//#region node_modules/unist-util-is/lib/index.js
 /**
 * Generate an assertion from a test.
 *
@@ -403,8 +394,6 @@ function ok() {
 function looksLikeANode(value) {
 	return value !== null && typeof value === "object" && "type" in value;
 }
-//#endregion
-//#region node_modules/unist-util-visit-parents/lib/color.js
 /**
 * @param {string} d
 * @returns {string}
@@ -412,8 +401,6 @@ function looksLikeANode(value) {
 function color(d) {
 	return d;
 }
-//#endregion
-//#region node_modules/unist-util-visit-parents/lib/index.js
 /**
 * @import {Node as UnistNode, Parent as UnistParent} from 'unist'
 */
@@ -737,8 +724,6 @@ function toResult(value) {
 	if (typeof value === "number") return [true, value];
 	return value === null || value === void 0 ? empty : [value];
 }
-//#endregion
-//#region node_modules/unist-util-visit/lib/index.js
 /**
 * @import {Node as UnistNode, Parent as UnistParent} from 'unist'
 * @import {VisitorResult} from 'unist-util-visit-parents'
@@ -1022,8 +1007,6 @@ function visit(tree, testOrVisitor, visitorOrReverse, maybeReverse) {
 		return visitor(node, index, parent);
 	}
 }
-//#endregion
-//#region node_modules/zwitch/index.js
 /**
 * @callback Handler
 *   Handle a value, with a certain ID field set to a certain value.
@@ -1127,8 +1110,6 @@ function zwitch(key, options) {
 	one.unknown = settings.unknown;
 	return one;
 }
-//#endregion
-//#region node_modules/hast-util-to-parse5/lib/index.js
 /**
 * @import {Comment, Doctype, Element, Nodes, RootContent, Root, Text} from 'hast'
 * @import {DefaultTreeAdapterMap, Token} from 'parse5'
@@ -1387,8 +1368,6 @@ function patch(from, to) {
 		};
 	}
 }
-//#endregion
-//#region node_modules/html-void-elements/index.js
 /**
 * List of HTML void tag names.
 *
@@ -1416,8 +1395,6 @@ var htmlVoidElements = [
 	"track",
 	"wbr"
 ];
-//#endregion
-//#region node_modules/parse5/dist/common/unicode.js
 var UNDEFINED_CODE_POINTS = new Set([
 	65534,
 	65535,
@@ -1506,8 +1483,6 @@ function isControlCodePoint(cp) {
 function isUndefinedCodePoint(cp) {
 	return cp >= 64976 && cp <= 65007 || UNDEFINED_CODE_POINTS.has(cp);
 }
-//#endregion
-//#region node_modules/parse5/dist/common/error-codes.js
 var ERR;
 (function(ERR) {
 	ERR["controlCharacterInInputStream"] = "control-character-in-input-stream";
@@ -1571,8 +1546,6 @@ var ERR;
 	ERR["nestedNoscriptInHead"] = "nested-noscript-in-head";
 	ERR["eofInElementThatCanContainOnlyText"] = "eof-in-element-that-can-contain-only-text";
 })(ERR || (ERR = {}));
-//#endregion
-//#region node_modules/parse5/dist/tokenizer/preprocessor.js
 var DEFAULT_BUFFER_WATERLINE = 65536;
 var Preprocessor = class {
 	constructor(handler) {
@@ -1722,8 +1695,6 @@ var Preprocessor = class {
 		this.isEol = false;
 	}
 };
-//#endregion
-//#region node_modules/parse5/dist/common/token.js
 var TokenType;
 (function(TokenType) {
 	TokenType[TokenType["CHARACTER"] = 0] = "CHARACTER";
@@ -1740,8 +1711,6 @@ function getTokenAttr(token, attrName) {
 	for (let i = token.attrs.length - 1; i >= 0; i--) if (token.attrs[i].name === attrName) return token.attrs[i].value;
 	return null;
 }
-//#endregion
-//#region node_modules/parse5/dist/common/html.js
 /** All valid namespaces in HTML. */
 var NS;
 (function(NS) {
@@ -2280,8 +2249,6 @@ new Set([
 	TAG_NAMES.NOFRAMES,
 	TAG_NAMES.PLAINTEXT
 ]);
-//#endregion
-//#region node_modules/parse5/dist/tokenizer/index.js
 var State;
 (function(State) {
 	State[State["DATA"] = 0] = "DATA";
@@ -4338,8 +4305,6 @@ var Tokenizer = class {
 		}
 	}
 };
-//#endregion
-//#region node_modules/parse5/dist/parser/open-element-stack.js
 var IMPLICIT_END_TAG_REQUIRED = new Set([
 	TAG_ID.DD,
 	TAG_ID.DT,
@@ -4630,8 +4595,6 @@ var OpenElementStack = class {
 		while (this.currentTagId !== void 0 && this.currentTagId !== exclusionId && IMPLICIT_END_TAG_REQUIRED_THOROUGHLY.has(this.currentTagId)) this.pop();
 	}
 };
-//#endregion
-//#region node_modules/parse5/dist/parser/formatting-element-list.js
 var NOAH_ARK_CAPACITY = 3;
 var EntryType;
 (function(EntryType) {
@@ -4720,8 +4683,6 @@ var FormattingElementList = class {
 		return this.entries.find((entry) => entry.type === EntryType.Element && entry.element === element);
 	}
 };
-//#endregion
-//#region node_modules/parse5/dist/tree-adapters/default.js
 var defaultTreeAdapter = {
 	createDocument() {
 		return {
@@ -4882,8 +4843,6 @@ var defaultTreeAdapter = {
 		};
 	}
 };
-//#endregion
-//#region node_modules/parse5/dist/common/doctype.js
 var VALID_DOCTYPE_NAME = "html";
 var VALID_SYSTEM_ID = "about:legacy-compat";
 var QUIRKS_MODE_SYSTEM_ID = "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd";
@@ -4981,8 +4940,6 @@ function getDocumentMode(token) {
 	}
 	return DOCUMENT_MODE.NO_QUIRKS;
 }
-//#endregion
-//#region node_modules/parse5/dist/common/foreign-content.js
 var MIME_TYPES = {
 	TEXT_HTML: "text/html",
 	APPLICATION_XML: "application/xhtml+xml"
@@ -5238,8 +5195,6 @@ function isHtmlIntegrationPoint(tn, ns, attrs) {
 function isIntegrationPoint(tn, ns, attrs, foreignNS) {
 	return (!foreignNS || foreignNS === NS.HTML) && isHtmlIntegrationPoint(tn, ns, attrs) || (!foreignNS || foreignNS === NS.MATHML) && isMathMLTextIntegrationPoint(tn, ns);
 }
-//#endregion
-//#region node_modules/parse5/dist/parser/index.js
 var HIDDEN_INPUT_TYPE = "hidden";
 var AA_OUTER_LOOP_ITER = 8;
 var AA_INNER_LOOP_ITER = 3;
@@ -7787,8 +7742,6 @@ new Set([
 	TAG_NAMES.TRACK,
 	TAG_NAMES.WBR
 ]);
-//#endregion
-//#region node_modules/hast-util-raw/lib/index.js
 /**
 * @import {Options} from 'hast-util-raw'
 * @import {Comment, Doctype, Element, Nodes, RootContent, Root, Text} from 'hast'
@@ -8244,5 +8197,4 @@ function cloneWithoutChildren(node) {
 		children: []
 	}) : esm_default(node);
 }
-//#endregion
 export { convert as a, pointStart as c, visitParents as i, position as l, visit as n, esm_default as o, SKIP as r, pointEnd as s, raw as t };

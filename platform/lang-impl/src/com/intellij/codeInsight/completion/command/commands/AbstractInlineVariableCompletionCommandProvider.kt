@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.refactoring.InlineActionHandler
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
@@ -85,16 +84,14 @@ abstract class AbstractInlineVariableCompletionCommandProvider : CommandProvider
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
       if (editor == null) return
-      WriteIntentReadAction.run {
-        val element = runWithModalProgressBlocking(ModalTaskOwner.project(psiFile.project), presentableName) {
-          readAction { findElementToInline(offset, psiFile, editor) }
-        } ?: return@run
+      val element = runWithModalProgressBlocking(ModalTaskOwner.project(psiFile.project), presentableName) {
+        readAction { findElementToInline(offset, psiFile, editor) }
+      } ?: return
 
-        for (extension in InlineActionHandler.EP_NAME.extensionList) {
-          if (extension.canInlineElement(element)) {
-            extension.inlineElement(psiFile.project, editor, element)
-            return@run
-          }
+      for (extension in InlineActionHandler.EP_NAME.extensionList) {
+        if (extension.canInlineElement(element)) {
+          extension.inlineElement(psiFile.project, editor, element)
+          return
         }
       }
     }

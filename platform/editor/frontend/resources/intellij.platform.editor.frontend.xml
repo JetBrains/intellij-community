@@ -8,7 +8,4 @@
     <module name="intellij.platform.ide.impl"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.platform.editor.frontend.FrontendEditorHandler"/>
-  </extensions>
 </idea-plugin>

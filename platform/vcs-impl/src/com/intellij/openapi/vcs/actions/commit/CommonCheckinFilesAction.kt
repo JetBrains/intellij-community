@@ -40,7 +40,16 @@ class CommonCheckinFilesAction : DumbAwareAction() {
     val initialChangeList = CheckinActionUtil.getInitiallySelectedChangeListFor(project, pathsToCommit)
     val actionName = Manager.getActionName(project, pathsToCommit)
 
-    CheckinActionUtil.performCommonCommitAction(e, project, initialChangeList, pathsToCommit, actionName, null, true)
+    CheckinActionUtil.performCommonCommitAction(
+      e = e,
+      project = project,
+      initialChangeList = initialChangeList,
+      pathsToCommit = pathsToCommit,
+      actionName = actionName,
+      executor = null,
+      forceUpdateCommitStateFromContext = true,
+      saveCommentOnCancel = true,
+    )
   }
 
   object Manager {

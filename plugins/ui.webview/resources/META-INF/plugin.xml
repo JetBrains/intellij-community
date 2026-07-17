@@ -36,6 +36,14 @@
                  defaultValue="true"
                  restartRequired="false"
                  description="Enable heavyweight facade for Swing overlays shown above native WebView hosts"/>
+    <registryKey key="ide.webview.windows.devtools.cpu.profiling"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Record DevTools CPU profiles for Windows WebView2 views"/>
+    <registryKey key="ide.webview.windows.asset.custom.scheme.enabled"
+                 defaultValue="true"
+                 restartRequired="true"
+                 description="Use the WebView2 custom scheme for ui.webview asset loading on Windows"/>
     <hwFacadeProvider implementation="com.intellij.ui.webview.impl.WebViewHwFacadeProvider" order="first"/>
   </extensions>
 </idea-plugin>

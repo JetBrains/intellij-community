@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.testSdkFixture
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelProjectUtils
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.platform.testFramework.junit5.eel.fixture.tempDirFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -197,7 +198,7 @@ class ProjectJdkEelTest {
   private suspend fun withAddedSdk(table: ProjectJdkTable, name: String, kind: EnvKind, block: suspend CoroutineScope.() -> Unit) {
     coroutineScope {
       val tempDir = when (kind) {
-        EnvKind.Eel -> EelPathUtils.createTemporaryDirectory(eelProject.get())
+        EnvKind.Eel -> EelProjectUtils.createTemporaryDirectory(eelProject.get())
         EnvKind.Local -> Files.createTempDirectory(name)
       }
       val sdk = testSdkGenerator.get().createTestSdk(SdkInfo(name, "1", tempDir.toString()))

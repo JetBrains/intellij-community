@@ -4,23 +4,27 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 import org.gradle.tooling.Failure;
 import org.gradle.tooling.events.problems.Problem;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblem;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class InternalFailure implements Failure, Serializable {
 
-  private final String message;
-  private final String description;
-  private final List<InternalFailure> causes;
-  private final List<Problem> problems;
+  private final @Nullable String message;
+  private final @Nullable String description;
+  private final @Nullable List<? extends Failure> causes;
+  private final @Nullable List<Problem> problems;
 
   public InternalFailure(
-    String message,
-    String description,
-    List<InternalFailure> causes,
-    List<Problem> problems
+    @Nullable String message,
+    @Nullable String description,
+    @Nullable List<? extends Failure> causes,
+    @Nullable List<Problem> problems
   ) {
     this.message = message;
     this.description = description;
@@ -28,23 +32,47 @@ public final class InternalFailure implements Failure, Serializable {
     this.problems = problems;
   }
 
+  public InternalFailure(@NotNull Failure failure) {
+    this(
+      failure.getMessage(),
+      failure.getDescription(),
+      failure.getCauses() == null ? null : toInternalFailures(failure.getCauses()),
+      failure.getProblems() == null ? null : toInternalProblem(failure.getProblems())
+    );
+  }
+
+
   @Override
-  public String getMessage() {
+  public @Nullable String getMessage() {
     return this.message;
   }
 
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return this.description;
   }
 
   @Override
-  public List<? extends Failure> getCauses() {
+  public @Nullable List<? extends Failure> getCauses() {
     return this.causes;
   }
 
   @Override
-  public List<Problem> getProblems() {
+  public @Nullable List<Problem> getProblems() {
     return problems;
+  }
+
+  private static @NotNull List<? extends Failure> toInternalFailures(@NotNull List<? extends Failure> failures) {
+    //noinspection SSBasedInspection
+    return failures.stream()
+      .map(InternalFailure::new)
+      .collect(Collectors.toList());
+  }
+
+  private static @NotNull List<Problem> toInternalProblem(@NotNull List<Problem> problems) {
+    //noinspection SSBasedInspection
+    return problems.stream()
+      .map(InternalProblem::new)
+      .collect(Collectors.toList());
   }
 }

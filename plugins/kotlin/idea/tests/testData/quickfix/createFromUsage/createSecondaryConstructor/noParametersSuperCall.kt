@@ -2,8 +2,8 @@
 // K2_ACTION: "Add primary constructor to 'Creation'" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 // ERROR: No value passed for parameter 'f'
-// K2_ERROR: No value passed for parameter 'f'.
-// K2_AFTER_ERROR: No value passed for parameter 'f'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 open class Base(val f: Int)
 
 class Creation: Base {

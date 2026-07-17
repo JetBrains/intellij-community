@@ -71,7 +71,7 @@ final class TypedAutoPopupImpl {
       if (element == null) {
         return false;
       }
-      language = getElementLanguage(file, element);
+      language = element.getLanguage();
     }
     List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject(), editor);
     if (contributors.isEmpty()) {
@@ -104,7 +104,7 @@ final class TypedAutoPopupImpl {
     if (element == null) {
       return false;
     }
-    Language language = getElementLanguage(file, element);
+    Language language = element.getLanguage();
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (definition != null) {
       TokenSet stringLiteralElements = definition.getStringLiteralElements();
@@ -116,10 +116,6 @@ final class TypedAutoPopupImpl {
       if (stringLiteralElements.contains(elementType)) {
         return true;
       }
-      if (!Elf.getElf().isPsiInteractionAllowed()) {
-        // TODO: rework for lock-free typing, element.getParent() requires RA on EDT
-        return false;
-      }
       PsiElement parent = element.getParent();
       if (parent != null) {
         ASTNode parentNode = parent.getNode();
@@ -127,13 +123,5 @@ final class TypedAutoPopupImpl {
       }
     }
     return false;
-  }
-
-  private static @NotNull Language getElementLanguage(@NotNull PsiFile file, @NotNull PsiElement element) {
-    // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT
-    if (Elf.getElf().isPsiInteractionAllowed()) {
-      return element.getLanguage();
-    }
-    return file.getLanguage();
   }
 }

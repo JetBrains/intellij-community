@@ -1,0 +1,12 @@
+<!--
+Analyzer/Language Server-only registrations, loaded explicitly from init.kt (org.jetbrains.ls.plugin.java).
+This file is NOT xi-included by intellij.java.execution.impl.xml (that would change the module visibility and break
+no-namespace dependents such as the JUnit plugin), so entries here mirror the corresponding ones in
+intellij.java.execution.impl.xml. Keep them in sync.
+-->
+<idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
+                    serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
+  </extensions>
+</idea-plugin>

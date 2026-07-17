@@ -141,7 +141,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       ImplicitlyImportedElement[] elements = psiJavaFile.getImplicitlyImportedElements();
       List<ImplicitlyImportedStaticMember> staticImports = ContainerUtil.filterIsInstance(elements, ImplicitlyImportedStaticMember.class);
       List<ImplicitlyImportedModule> moduleImports = ContainerUtil.filterIsInstance(elements, ImplicitlyImportedModule.class);
-      PsiElement replaced = createExplicitClass(implicitClass);
+      PsiElement replaced = appendExplicitClass(implicitClass);
       if (replaced == null) return;
       replaced = CodeStyleManager.getInstance(project).reformat(replaced);
       PsiJavaFile newPsiJavaFile = PsiTreeUtil.getParentOfType(replaced, PsiJavaFile.class);
@@ -176,7 +176,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       }
     }
 
-    private static @Nullable PsiClass createExplicitClass(@NotNull PsiImplicitClass implicitClass) {
+    private static @Nullable PsiClass appendExplicitClass(@NotNull PsiImplicitClass implicitClass) {
       String qualifiedName = implicitClass.getQualifiedName();
       if (qualifiedName == null) {
         return null;

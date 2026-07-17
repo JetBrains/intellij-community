@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
-import com.intellij.ide.trustedProjects.TrustedProjectsListener.Companion.onceWhenProjectTrusted
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.ide.trustedProjects.impl.UntrustedProjectEditorNotificationPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
@@ -16,7 +14,6 @@ import java.util.function.Consumer
  *
  * Consider using the helper method [onceWhenProjectTrusted] which accepts a lambda.
  */
-@ApiStatus.Experimental
 interface TrustedProjectsListener {
 
   /**

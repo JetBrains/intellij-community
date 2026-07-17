@@ -149,7 +149,8 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     if (argList != null && myTargetMethod != null) {
       PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
       myArgRequiredNullability = calcArgRequiredNullability(substitutor, parameters);
-    } else {
+    }
+    else {
       myArgRequiredNullability = EMPTY_NULLABILITY_ARRAY;
     }
 
@@ -472,7 +473,6 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
           dfType = dfType.meet(LOCAL_OBJECT);
         }
       }
-
       return dfType.meet(mutable.asDfType());
     }
     LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type, true);

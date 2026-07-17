@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` start
-
 jvm_library(
     name = "test",
     srcs = glob(

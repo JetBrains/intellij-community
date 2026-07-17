@@ -1,5 +1,5 @@
 // "Change return type of called function 'bar' to 'HashSet<Int>'" "true"
-// K2_ERROR: Return type mismatch: expected 'HashSet<Int>', actual 'Any'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun bar(): Any = java.util.LinkedHashSet<Int>()
 fun foo(): java.util.HashSet<Int> = bar(<caret>)

@@ -13,6 +13,7 @@ import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtElement
 
 @ApiStatus.Internal
@@ -32,6 +33,16 @@ fun <T> runDumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSession
     if (DumbService.isDumb(useSiteElement.project)) return@nonBlocking fallback
     try {
         analyze(useSiteElement, action)
+    } catch (_: IndexNotReadyException) {
+        fallback
+    }
+}.executeSynchronously()
+
+@ApiStatus.Internal
+fun <T> runDumbAnalyze(useSiteModule: KaModule, fallback: T, action: KaSession.() -> T): T = ReadAction.nonBlocking<T> {
+    if (DumbService.isDumb(useSiteModule.project)) return@nonBlocking fallback
+    try {
+        analyze(useSiteModule, action)
     } catch (_: IndexNotReadyException) {
         fallback
     }

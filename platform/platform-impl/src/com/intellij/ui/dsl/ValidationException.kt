@@ -6,13 +6,11 @@ import org.jetbrains.annotations.ApiStatus
 
 private val LOG = Logger.getInstance(ValidationException::class.java)
 
-@ApiStatus.Internal
 internal enum class ValidationError(internal val argsCount: Int) {
   STRING_TO_INT(1),
   INT_IN_RANGE(2),
 }
 
-@ApiStatus.Internal
 internal class ValidationException(val error: ValidationError, vararg val args: Any = emptyArray()) : Exception() {
   init {
     checkTrue(error.argsCount == args.size)

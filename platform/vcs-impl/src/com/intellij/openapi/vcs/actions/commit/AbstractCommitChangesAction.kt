@@ -15,6 +15,9 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcsUtil.VcsUtil
 
 abstract class AbstractCommitChangesAction : DumbAwareAction() {
+
+  open val saveCommentOnCancel: Boolean = true
+
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -49,9 +52,16 @@ abstract class AbstractCommitChangesAction : DumbAwareAction() {
 
     val executor = getExecutor(project)
 
-    CheckinActionUtil.performCommonCommitAction(e, project, initialChangeList, pathsToCommit,
-                                                ActionsBundle.message("action.CheckinProject.text"),
-                                                executor, false)
+    CheckinActionUtil.performCommonCommitAction(
+      e = e,
+      project = project,
+      initialChangeList = initialChangeList,
+      pathsToCommit = pathsToCommit,
+      actionName = ActionsBundle.message("action.CheckinProject.text"),
+      executor = executor,
+      forceUpdateCommitStateFromContext = false,
+      saveCommentOnCancel = saveCommentOnCancel,
+    )
   }
 
   protected abstract fun getExecutor(project: Project): CommitExecutor

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures` start
-
 create_kotlinc_options(
     name = "custom_lambda-sampleTestsWithFixtures",
     x_context_parameters = True,
@@ -139,7 +138,6 @@ exports_files(
 ### auto-generated section `iml intellij.lambda.sampleTestsWithFixtures` end
 
 ### auto-generated section `test intellij.lambda.sampleTestsWithFixtures` start
-
 jps_test(
     name = "lambda-sampleTestsWithFixtures_test",
     runtime_deps = [":lambda-sampleTestsWithFixtures_test_lib"],

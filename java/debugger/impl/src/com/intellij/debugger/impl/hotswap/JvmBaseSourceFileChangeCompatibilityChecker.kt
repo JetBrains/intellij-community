@@ -160,7 +160,13 @@ abstract class JvmBaseSourceFileChangeCompatibilityChecker(
 
     fun <T : Any> cached(element: PsiElement, token: Long, type: String, dependency: PsiElement, compute: () -> T): T {
       val key = ShapeKey(element.createSmartPointer(), type)
-      val contentHash = dependency.text.hashCode()
+      val dependencySnapshot = dependency.text
+      if (dependencySnapshot == null) {
+        LOG.error("Dependency snapshot computation failed: ${dependency.javaClass.name}. Unsupported?\n" +
+                  "at ${dependency.containingFile?.virtualFile?.path}")
+        return compute()
+      }
+      val contentHash = dependencySnapshot.hashCode()
       synchronized(shapes) {
         val existing = shapes[key]
         if (existing != null && existing.token == token && existing.contentHash == contentHash) {
@@ -270,17 +276,12 @@ private fun findHotSwapIncompatibleMethodReason(
   for ((id, oldMethod) in oldMethods) {
     val currentMethod = currentMethods[id]
     if (currentMethod == null) {
-      val currentMethodId = currentMethods.keys.firstOrNull { it.name == id.name && it.isConstructor == id.isConstructor }
-      if (currentMethodId != null) {
-        return HotSwapIncompatibilityReasons.methodSignatureChanged(
-          className,
-          id,
-          oldMethod,
-          currentMethodId,
-          currentMethods.getValue(currentMethodId),
-        )
+      if (currentMethods.count(id) < oldMethods.count(id)) {
+        return HotSwapIncompatibilityReasons.methodRemoved(className, id, oldMethod)
       }
-      return HotSwapIncompatibilityReasons.methodRemoved(className, id, oldMethod)
+      else {
+        return HotSwapIncompatibilityReasons.methodSignatureChanged(className, id)
+      }
     }
     if (oldMethod.returnType != currentMethod.returnType) {
       return HotSwapIncompatibilityReasons.methodReturnTypeChanged(className, id, oldMethod, currentMethod)
@@ -291,18 +292,16 @@ private fun findHotSwapIncompatibleMethodReason(
   }
   for (id in currentMethods.keys) {
     if (id !in oldMethods) {
-      val oldMethodId = oldMethods.keys.firstOrNull { it.name == id.name && it.isConstructor == id.isConstructor }
-      if (oldMethodId != null) {
-        return HotSwapIncompatibilityReasons.methodSignatureChanged(
-          className,
-          oldMethodId,
-          oldMethods.getValue(oldMethodId),
-          id,
-          currentMethods.getValue(id),
-        )
+      if (currentMethods.count(id) > oldMethods.count(id)) {
+        return HotSwapIncompatibilityReasons.methodAdded(className, id, currentMethods.getValue(id))
       }
-      return HotSwapIncompatibilityReasons.methodAdded(className, id, currentMethods.getValue(id))
+      else {
+        return HotSwapIncompatibilityReasons.methodSignatureChanged(className, id)
+      }
     }
   }
   return null
 }
+
+private fun Map<HotSwapMethodId, *>.count(id: HotSwapMethodId): Int =
+  keys.count { it.name == id.name && it.isConstructor == id.isConstructor }

@@ -17,6 +17,7 @@ class TestSample(<caret>)
 // EXIST: protected
 // EXIST: internal
 // EXIST: actual
+// EXIST: context
 /* TODO: keywords below should not be here*/
 // EXIST: abstract
 // EXIST: lateinit var

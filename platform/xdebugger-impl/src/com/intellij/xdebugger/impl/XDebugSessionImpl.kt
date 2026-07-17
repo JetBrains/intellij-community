@@ -47,7 +47,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.application
@@ -1011,15 +1010,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
         reportBreakpointVerified(breakpoint, delay)
       }
     }
-    val debuggerManager = debuggerManager.breakpointManager
     if (breakpoint is XLineBreakpointImpl<*>) {
       // for useFeProxy we call update directly since visual presentation is disabled on the backend
       breakpoint.fireBreakpointPresentationUpdated(this)
-    }
-    else {
-      debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint) {
-        (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
-      }
     }
   }
 
@@ -1123,7 +1116,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val added = myInactiveSlaveBreakpoints.add(breakpoint)
       if (added) {
         processAllHandlers(breakpoint, false)
-        debuggerManager.breakpointManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.ide.IdeCoreBundle
@@ -14,16 +14,20 @@ import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.Condition
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
+import kotlin.io.path.createTempFile
+import kotlin.io.path.writeText
 
 @TestFixtures
 @Timeout(value = 5, unit = TimeUnit.SECONDS)
@@ -91,6 +95,20 @@ class HttpRequestsTest {
     assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy { HttpRequests.request("").redirectLimit(0).readString(null) }
       .withMessage("Redirect limit should be positive")
+  }
+
+  @Test fun redirectToFileUrl(@TempDir tempDir: Path) {
+    val tempFile = createTempFile(tempDir, "test.", ".txt").apply {
+      writeText("secret content")
+    }
+    server.createContext("/") { ex ->
+      ex.responseHeaders.add("Location", tempFile.toUri().toString())
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_MOVED_TEMP, -1)
+      ex.close()
+    }
+    assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
+      .isThrownBy { HttpRequests.request(server.url).readString(null) }
+      .withMessageContaining("illegal redirect")
   }
 
   @Test fun readTimeout() {

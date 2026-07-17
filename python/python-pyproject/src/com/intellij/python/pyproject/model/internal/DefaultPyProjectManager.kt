@@ -2,6 +2,7 @@ package com.intellij.python.pyproject.model.internal
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectManager
@@ -18,6 +19,7 @@ import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
 import java.io.IOException
 import kotlin.io.path.createDirectories
+import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
 internal object DefaultPyProjectManager : PyProjectManager {
@@ -26,9 +28,10 @@ internal object DefaultPyProjectManager : PyProjectManager {
 
   override suspend fun createProject(
     where: Directory,
-    name: @NlsSafe String,
+    name: @NlsSafe String?,
   ): PyResult<Unit> {
-    val fileName = where.resolve(name).resolve("pyproject.toml")
+    val (dir, name) = if (name != null) Pair(where.resolve(name), name) else Pair(where, where.fileName.pathString)
+    val fileName = dir.resolve(PY_PROJECT_TOML)
     val escapedName = Toml.tomlEscape(PyPackageName.normalizeProjectName(name))
     try {
       withContext(Dispatchers.IO) {

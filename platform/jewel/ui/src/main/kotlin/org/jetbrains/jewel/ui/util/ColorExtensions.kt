@@ -6,18 +6,6 @@ import java.awt.Color as AwtColor
 import kotlin.math.roundToInt
 
 /**
- * Converts an AWT [`Color`][AwtColor] into a hex string with a `#RRGGBB(AA)` format.
- *
- * For example, a translucent white color will be converted to `#FFFFFF1A`. Note that the alpha component is only added
- * if the color is not fully opaque.
- */
-@Deprecated(
-    "Use the overload with default parameters instead.",
-    replaceWith = ReplaceWith("toRgbaHexString(omitAlphaWhenFullyOpaque = true)"),
-)
-public fun AwtColor.toRgbaHexString(): String = toRgbaHexString(omitAlphaWhenFullyOpaque = true)
-
-/**
  * Converts an AWT [`Color`][AwtColor] to a hex string in an RGBA format like `#(RR)GGBBAA`.
  *
  * For example, a 50% transparent red color is converted to `#FF000080`.
@@ -41,18 +29,6 @@ public fun AwtColor.toRgbaHexString(
 
     return formatColorRgbaHexString(r, g, b, alpha, includeHashSymbol, omitAlphaWhenFullyOpaque)
 }
-
-/**
- * Converts a [Color] to a hex string with a `#RRGGBB(AA)` format.
- *
- * For example, a translucent white color will be converted to `#FFFFFF1A`. Note that the alpha component is only added
- * if the color is not fully opaque.
- */
-@Deprecated(
-    "Use the overload with default parameters instead.",
-    replaceWith = ReplaceWith("toRgbaHexString(omitAlphaWhenFullyOpaque = true)"),
-)
-public fun Color.toRgbaHexString(): String = toRgbaHexString(omitAlphaWhenFullyOpaque = true)
 
 /**
  * Converts a [Color] to a hex string in an RGBA format like `#RRGGBB(AA)`.
@@ -164,21 +140,6 @@ private fun formatColorArgbHexString(
     append(gString.padStart(2, '0'))
     append(bString.padStart(2, '0'))
 }
-
-/**
- * Converts a hex string in RGBA format to a [Color].
- *
- * This function supports the following formats, with or without a leading `#`:
- * - `RGB` (e.g., `F00` for opaque red)
- * - `RGBA` (e.g., `F00A` for a red with ~66% alpha)
- * - `RRGGBB` (e.g., `FF0000` for opaque red)
- * - `RRGGBBAA` (e.g., `FF0000AA` for a red with ~66% alpha)
- *
- * Note that the alpha component is placed at the end of the string. Returns `null` if the hex string is not a valid
- * color representation.
- */
-@Deprecated("Use fromRgbaHexStringOrNull() instead.", replaceWith = ReplaceWith("fromRgbaHexStringOrNull(rgba)"))
-public fun Color.Companion.fromRGBAHexStringOrNull(rgba: String): Color? = fromRgbaHexStringOrNull(rgba)
 
 /**
  * Converts a hex string in RGBA format to a [Color].

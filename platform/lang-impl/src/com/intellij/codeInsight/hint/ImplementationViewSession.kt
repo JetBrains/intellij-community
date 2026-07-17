@@ -84,7 +84,7 @@ class PsiImplementationSessionViewFactory : ImplementationViewSessionFactory {
     if (element != null) {
       // if (element instanceof PsiPackage) return;
       val containingFile = element.containingFile
-      if (containingFile == null || !containingFile.viewProvider.isPhysical) return null
+      if (containingFile == null || !containingFile.viewProvider.correspondsToRealFile()) return null
 
       impls = getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(isSearchDeep))
       text = SymbolPresentationUtil.getSymbolPresentableText(element) ?: (element as? PsiNamedElement)?.name ?: element.text

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.resources` start
-
 resourcegroup(
     name = "resources_resources",
     srcs = glob(

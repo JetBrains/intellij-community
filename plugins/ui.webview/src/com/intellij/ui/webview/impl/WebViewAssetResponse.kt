@@ -11,8 +11,26 @@ class WebViewAssetResponse(
   val contentType: String,
   val bytes: ByteArray,
   val headers: Map<String, String> = emptyMap(),
+  val diagnosticSource: String = "",
+  val diagnosticPath: String = "",
+  val diagnosticScheme: String = "",
 ) {
   val mimeType: String get() = contentType.substringBefore(';').trim()
+
+  internal fun withDiagnosticSource(source: String): WebViewAssetResponse {
+    return WebViewAssetResponse(statusCode, statusText, contentType, bytes, headers, source, diagnosticPath, diagnosticScheme)
+  }
+
+  internal fun withRequestDiagnostics(path: String, scheme: String): WebViewAssetResponse {
+    return WebViewAssetResponse(statusCode, statusText, contentType, bytes, headers, diagnosticSource, path, scheme)
+  }
+
+  fun diagnosticDetails(engine: String, extra: String = ""): String {
+    val details = "engine=$engine, scheme=${diagnosticScheme.ifEmpty { "unknown" }}, " +
+                  "path=${diagnosticPath.ifEmpty { "unknown" }}, source=${diagnosticSource.ifEmpty { "unknown" }}, " +
+                  "status=$statusCode, bytes=${bytes.size}, contentType=$contentType"
+    return if (extra.isEmpty()) details else "$details, $extra"
+  }
 
   companion object {
     fun notFound(message: String): WebViewAssetResponse = error(404, "Not Found", message)

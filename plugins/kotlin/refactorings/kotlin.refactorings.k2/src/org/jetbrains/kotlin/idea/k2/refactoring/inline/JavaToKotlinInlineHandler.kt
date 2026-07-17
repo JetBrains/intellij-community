@@ -128,7 +128,6 @@ private fun JavaToKotlinConverter.convertToKotlinNamedDeclaration(
         val (j2kResults, _, j2kContext) = readAction {
             elementsToKotlin(
                 inputElements = listOf(referenced),
-                bodyFilter = { it == referenced },
                 forInlining = true
             )
         }

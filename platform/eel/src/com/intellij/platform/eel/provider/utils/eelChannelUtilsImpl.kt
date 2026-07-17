@@ -48,7 +48,7 @@ import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 
 internal class NioReadToEelAdapter(
-  private val readableByteChannel: ReadableByteChannel,
+  val readableByteChannel: ReadableByteChannel,
   private val dispatcher: CoroutineContext = unlimitedDispatcher,
   private val availableDelegate: () -> Int,
 ) : EelReceiveChannel {
@@ -129,7 +129,7 @@ internal class NioReadToEelAdapter(
 }
 
 internal class NioWriteToEelAdapter(
-  private val writableByteChannel: WritableByteChannel,
+  val writableByteChannel: WritableByteChannel,
   private val dispatcher: CoroutineContext = unlimitedDispatcher,
   private val flushable: Flushable? = null,
 ) : EelSendChannel {
@@ -219,7 +219,7 @@ internal class NioWriteToEelAdapter(
 }
 
 internal class InputStreamAdapterImpl(
-  private val receiveChannel: EelReceiveChannel,
+  val receiveChannel: EelReceiveChannel,
   private val blockingContext: CoroutineContext,
 
   ) : InputStream() {
@@ -290,7 +290,7 @@ internal class InputStreamAdapterImpl(
 }
 
 internal class OutputStreamAdapterImpl(
-  private val sendChannel: EelSendChannel,
+  val sendChannel: EelSendChannel,
   private val blockingContext: CoroutineContext,
 ) : OutputStream() {
   private val oneByte = ByteBuffer.allocate(1)

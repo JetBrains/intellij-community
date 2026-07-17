@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.statistics.devkit` start
+jps_test(
+    name = "devkit-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":devkit-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.statistics.devkit.tests`
+
+### auto-generated section `build intellij.platform.statistics.devkit` start
 jvm_library(
     name = "devkit",
     srcs = glob(
@@ -115,7 +123,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.statistics.devkit` end
 
 ### auto-generated section `build intellij.platform.statistics.devkit.tests` start
-
 jvm_library(
     name = "devkit-tests",
     srcs = glob(
@@ -175,12 +182,18 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/guava",
         "//libraries/guava:guava_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//platform/util/progress",
         "//platform/util/progress:progress_test_lib",
+        "//json",
+        "//json:json_test_lib",
         "//json/backend",
         "//json/backend:backend_test_lib",
+        "//json/networknt.wrapper",
+        "//json/networknt.wrapper:networknt.wrapper_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/statistics/uploader",
@@ -207,6 +220,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//plugins/dev/intellij.dev:dev",
+        "//plugins/dev/intellij.dev:dev_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],
@@ -221,11 +236,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.statistics.devkit.tests` end
-
-### auto-generated section `test intellij.platform.statistics.devkit.tests` start
-
-jps_test(
-    name = "devkit-tests_test",
-    runtime_deps = [":devkit-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.statistics.devkit.tests` end

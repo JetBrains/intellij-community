@@ -384,14 +384,25 @@ object PyPsiUtils {
    *
    * For instance, for the following fragment, it will return two blocks of one and two comments.
    *
-   * <pre>`# comment # comment # comment def func():     pass `</pre>
+   * ```
+   * # comment
+   *
+   * # comment
+   * # comment
+   * def func():
+   *      pass
+   * ```
    *
    *
    * Note that in the following case it will additionally return an empty list of comments as the last element
    * to distinguish between the cases when there is a blank line above the provided element and when there is not.
    *
-   * <pre>`# comment def func():     pass `</pre>
+   * ```
+   * # comment
    *
+   * def func():
+   *     pass
+   * ```
    */
   @JvmStatic
   fun getPrecedingCommentBlocks(element: PsiElement): List<List<PsiComment>> {

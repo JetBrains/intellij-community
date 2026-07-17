@@ -317,6 +317,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameter.kt");
         }
 
+        @TestMetadata("notApplicable_contextParameterFunctionValue.kt")
+        public void testNotApplicable_contextParameterFunctionValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameterFunctionValue.kt");
+        }
+
         @TestMetadata("notApplicable_contextParameterWithSubstitution.kt")
         public void testNotApplicable_contextParameterWithSubstitution() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantWith/notApplicable_contextParameterWithSubstitution.kt");
@@ -10961,6 +10966,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/similarPropNameUsedInPropertyInitializer.kt");
         }
 
+        @TestMetadata("suppressedConstructorParameter.kt")
+        public void testSuppressedConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/suppressedConstructorParameter.kt");
+        }
+
         @TestMetadata("usedActualModifier.kt")
         public void testUsedActualModifier() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canBeParameter/usedActualModifier.kt");
@@ -21436,6 +21446,94 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceWithCallWithContext")
+        public static class ReplaceWithCallWithContext extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callableReference.kt")
+            public void testCallableReference() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReference.kt");
+            }
+
+            @TestMetadata("callableReferenceWithContext.kt")
+            public void testCallableReferenceWithContext() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceWithContext.kt");
+            }
+
+            @TestMetadata("contextNotEnabled.kt")
+            public void testContextNotEnabled() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/contextNotEnabled.kt");
+            }
+
+            @TestMetadata("dispatchReceiver.kt")
+            public void testDispatchReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/dispatchReceiver.kt");
+            }
+
+            @TestMetadata("explicitThis.kt")
+            public void testExplicitThis() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/explicitThis.kt");
+            }
+
+            @TestMetadata("extensionReceiver.kt")
+            public void testExtensionReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/extensionReceiver.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/labeledReturn.kt");
+            }
+
+            @TestMetadata("lableledThis.kt")
+            public void testLableledThis() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/lableledThis.kt");
+            }
+
+            @TestMetadata("lambdaPassedToContext.kt")
+            public void testLambdaPassedToContext() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/lambdaPassedToContext.kt");
+            }
+
+            @TestMetadata("namedReceiver.kt")
+            public void testNamedReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/namedReceiver.kt");
+            }
+
+            @TestMetadata("nonTrailing.kt")
+            public void testNonTrailing() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/nonTrailing.kt");
+            }
+
+            @TestMetadata("qualifiedCall.kt")
+            public void testQualifiedCall() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/qualifiedCall.kt");
+            }
+
+            @TestMetadata("receiverNotUsed.kt")
+            public void testReceiverNotUsed() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/receiverNotUsed.kt");
+            }
+
+            @TestMetadata("replaceWithWithContext.kt")
+            public void testReplaceWithWithContext() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/replaceWithWithContext.kt");
+            }
+
+            @TestMetadata("spreadArgument.kt")
+            public void testSpreadArgument() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/spreadArgument.kt");
+            }
+
+            @TestMetadata("twoContext.kt")
+            public void testTwoContext() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/twoContext.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceWithStringBuilderAppendRange")
         public static class ReplaceWithStringBuilderAppendRange extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -24433,6 +24531,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("propertyWithTypeParameter.kt")
         public void testPropertyWithTypeParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/propertyWithTypeParameter.kt");
+        }
+
+        @TestMetadata("propertyWithTypeParameterAndReturn.kt")
+        public void testPropertyWithTypeParameterAndReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/propertyWithTypeParameterAndReturn.kt");
         }
 
         @TestMetadata("propertyWithTypeParameterInClass.kt")
@@ -29559,6 +29662,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/getterBody.kt");
         }
 
+        @TestMetadata("getterBodyInsideClass.kt")
+        public void testGetterBodyInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/getterBodyInsideClass.kt");
+        }
+
         @TestMetadata("hasAnnotation.kt")
         public void testHasAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/hasAnnotation.kt");
@@ -29687,6 +29795,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("script.kts")
         public void testScript() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/script.kts");
+        }
+
+        @TestMetadata("setterBody.kt")
+        public void testSetterBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/setterBody.kt");
+        }
+
+        @TestMetadata("setterBodyInsideClass.kt")
+        public void testSetterBodyInsideClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/setterBodyInsideClass.kt");
         }
 
         @TestMetadata("twoArguments.kt")

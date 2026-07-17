@@ -5,15 +5,21 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class PsiDocumentManager2Test extends LightPlatformTestCase {
@@ -79,5 +85,16 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
     assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
     assertEquals(expectedText, document.getText());
   }
+
+  public void testGetDocumentWithoutReadActionThrows() throws ExecutionException, InterruptedException {
+    VirtualFile file = VfsTestUtil.createFile(getSourceRoot(), "test.txt", "test");
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
+        () -> FileDocumentManager.getInstance().getDocument(file)
+      );
+      assertTrue(error.getMessage(), error.getMessage().contains(ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION));
+    }).get();
+  }
+
 
 }

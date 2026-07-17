@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Image
 import java.util.function.Supplier
 
-@Internal
 @ConsistentCopyVisibility
 internal data class DocumentationContentData internal constructor(
   val html: @Nls String,
@@ -26,7 +25,6 @@ internal data class DocumentationContentData internal constructor(
   val targetElement: PsiElement? = null
 ) : DocumentationContent
 
-@Internal
 internal data class LinkData(
   val externalUrl: String? = null,
   val linkUrls: List<String> = emptyList(),
@@ -37,29 +35,24 @@ class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult.Documentation?>
 ) : DocumentationResult
 
-@Internal
 internal class ResolvedTarget(
   val target: DocumentationTarget,
 ) : LinkResolveResult
 
-@Internal
 internal class AsyncLinkResolveResult(
   val supplier: AsyncSupplier<LinkResolveResult.Async?>,
 ) : LinkResolveResult
 
-@Internal
 internal class AsyncResolvedTarget(
   val pointer: Pointer<out DocumentationTarget>,
 ) : LinkResolveResult.Async
 
-@Internal
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
     this@asAsyncSupplier.get()
   }
 }
 
-@Internal
 internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver? {
   if (map.isEmpty()) {
     return null
@@ -67,7 +60,6 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
   return DocumentationImageResolver(map.toMap()::get)
 }
 
-@Internal
 internal fun BlockingDocumentationContentFlow.asFlow(): Flow<DocumentationContent> {
   val flow = channelFlow {
     collectBlocking { content ->

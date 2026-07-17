@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.markdown.backend` start
-
 jvm_library(
     name = "backend",
     srcs = glob(
@@ -30,6 +29,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/indexing-api:indexing",
         "//platform/util/coroutines",
+        "//platform/util-ex",
         "//platform/diagnostic",
         "//libraries/markdown",
         "//platform/kernel/backend",
@@ -37,10 +37,13 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/ide-core",
         "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
         "//platform/lang-api:lang",
         "//platform/ide-core-impl",
         "//platform/platform-impl/rpc",
         "//fleet/rhizomedb",
+        "//platform/lang-impl",
+        "//platform/editor-ui-api:editor-ui",
     ],
 )
 
@@ -68,6 +71,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
         "//libraries/markdown:markdown_test_lib",
         "//platform/backend:backend_test_lib",
@@ -76,10 +80,13 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/project/shared:project_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.backend` end

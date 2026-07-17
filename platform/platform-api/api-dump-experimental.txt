@@ -111,13 +111,11 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 *:com.intellij.openapi.diagnostic.UnhandledErrorReport
 *f:com.intellij.openapi.diagnostic.UnhandledExceptionReport
 - com.intellij.openapi.diagnostic.UnhandledErrorReport
-- <init>(java.lang.Class,java.util.List):V
-- <init>(java.lang.Throwable):V
+- f:getException():java.lang.Throwable
 - f:getExceptionClass():java.lang.Class
 - f:getStackTrace():java.util.List
 *f:com.intellij.openapi.diagnostic.UnhandledFreezeReport
 - com.intellij.openapi.diagnostic.UnhandledErrorReport
-- <init>(java.lang.String,J,java.util.Collection,java.util.Collection):V
 - f:getAttachments():java.util.Collection
 - f:getDurationMs():J
 - f:getMessage():java.lang.String

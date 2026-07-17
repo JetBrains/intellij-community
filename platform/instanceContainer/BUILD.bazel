@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.instanceContainer` start
+jps_test(
+    name = "instanceContainer-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":instanceContainer-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.instanceContainer.tests`
+
+### auto-generated section `build intellij.platform.instanceContainer` start
 jvm_library(
     name = "instanceContainer",
     srcs = glob(
@@ -57,7 +65,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.instanceContainer` end
 
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
-
 jvm_library(
     name = "instanceContainer-tests",
     srcs = glob(
@@ -108,11 +115,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.instanceContainer.tests` end
-
-### auto-generated section `test intellij.platform.instanceContainer.tests` start
-
-jps_test(
-    name = "instanceContainer-tests_test",
-    runtime_deps = [":instanceContainer-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.instanceContainer.tests` end

@@ -1,5 +1,5 @@
-// ERROR: Unresolved reference 'getX'.
-// ERROR: Unresolved reference 'setX'.
+// ERROR: Unresolved reference 'getX' on receiver of type 'AAA'.
+// ERROR: Unresolved reference 'setX' on receiver of type 'AAA'.
 package test
 
 class B {

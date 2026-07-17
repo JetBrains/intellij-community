@@ -61,6 +61,23 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Function
 
+/**
+ * @deprecated Use JUnit 5 with [com.intellij.maven.testFramework.fixtures.mavenDomFixture] instead.
+ *
+ * Example:
+ * ```kotlin
+ * @TestApplication
+ * @ParameterizedClass
+ * @ArgumentsSource(MavenVersionArguments::class)
+ * class MyTest(mavenVersion: String, modelVersion: String) {
+ *   private val maven by mavenDomFixture(mavenVersion, modelVersion)
+ *
+ *   @Test
+ *   fun myTest() = runBlocking { ... }
+ * }
+ * ```
+ */
+@Deprecated("Use JUnit 5 with mavenDomFixture() from com.intellij.maven.testFramework.fixtures instead")
 abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
   private val myConfigTimestamps: MutableMap<VirtualFile, Long> = HashMap()

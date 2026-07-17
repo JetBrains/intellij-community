@@ -1,5 +1,4 @@
 import { r as __exportAll } from "./rolldown-runtime.js";
-//#region node_modules/katex/dist/katex.mjs
 var katex_exports = /* @__PURE__ */ __exportAll({
 	ParseError: () => ParseError,
 	SETTINGS_SCHEMA: () => SETTINGS_SCHEMA,
@@ -26338,5 +26337,4 @@ var katex = {
 	*/
 	__domTree
 };
-//#endregion
 export { katex_exports as n, katex as t };

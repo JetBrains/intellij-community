@@ -92,6 +92,23 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readBytes
 
+/**
+ * @deprecated Use JUnit 5 with the Maven fixture API instead.
+ * For tests that only need a project directory with no Maven import infrastructure, use [com.intellij.maven.testFramework.fixtures.mavenFixture].
+ * For tests that import Maven projects, use [com.intellij.maven.testFramework.fixtures.mavenImportingFixture].
+ *
+ * Example:
+ * ```kotlin
+ * @TestApplication
+ * class MyTest {
+ *   private val maven by mavenFixture()
+ *
+ *   @Test
+ *   fun myTest() = runBlocking { ... }
+ * }
+ * ```
+ */
+@Deprecated("Use JUnit 5 with mavenFixture() or mavenImportingFixture() from com.intellij.maven.testFramework.fixtures instead")
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
     private set

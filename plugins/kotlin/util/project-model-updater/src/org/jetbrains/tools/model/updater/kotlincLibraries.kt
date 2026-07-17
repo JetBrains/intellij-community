@@ -11,7 +11,7 @@ import org.jetbrains.tools.model.updater.impl.MavenId
 private const val ktGroup = "org.jetbrains.kotlin"
 
 /** The version should be aligned with gradle.properties#defaultSnapshotVersion from the Kotlin repo */
-internal const val BOOTSTRAP_VERSION = "2.4.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.5.255-dev-255"
 
 // see .idea/jarRepositories.xml
 // This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
@@ -63,7 +63,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-fe10", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.syntax.scripts` start
-
 jvm_library(
     name = "scripts",
     srcs = glob(

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.projectWizard.core` start
-
 jvm_library(
     name = "core",
     srcs = glob(
@@ -31,6 +30,7 @@ jvm_library(
         "//libraries/gson",
         "//platform/lang-core",
         "//platform/core-api:core",
+        "//plugins/gradle",
         "//platform/core-impl",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -71,9 +71,11 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-test-junit",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/core-api:core_test_lib",
+        "//plugins/gradle:gradle_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
@@ -102,7 +104,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.projectWizard.core` end
 
 ### auto-generated section `build intellij.kotlin.projectWizard.core.tests` start
-
 jvm_library(
     name = "kotlin-projectWizard-core-tests",
     srcs = glob(
@@ -195,7 +196,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.projectWizard.core.tests` end
 
 ### auto-generated section `test intellij.kotlin.projectWizard.core.tests` start
-
 jps_test(
     name = "kotlin-projectWizard-core-tests_test",
     runtime_deps = [":kotlin-projectWizard-core-tests_test_lib"],

@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'foo' to 'String?'" "true"
-// K2_ERROR: Null cannot be a value of a non-null type 'String'.
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
 
 fun foo(): String {
     return <caret>null

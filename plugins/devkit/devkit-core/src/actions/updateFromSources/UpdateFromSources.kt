@@ -2,8 +2,7 @@
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
-import com.intellij.execution.ShortenCommandLine
-import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -24,25 +23,21 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
@@ -118,20 +113,11 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
 
   val deployDir = devIdeaHome.resolve("out/deploy")
   val builtDistDir = deployDir.resolve("dist")
-  val additionalVmOptionsForBuildScripts = state.additionalVmOptionsForBuildScripts
-  val params = createScriptJavaParameters(
-    project, deployDir, builtDistDir, buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude,
-    additionalVmOptionsForBuildScripts
-  ) ?: return
-  params.workingDirectory = devIdeaHome.pathString
-  val taskManager = ProjectTaskManager.getInstance(project)
-  taskManager
-    .run(taskManager.createModulesBuildTask(ModuleManager.getInstance(project).modules, true, false, false, false))
-    .onSuccess {
-      if (!it.isAborted && !it.hasErrors()) {
-        runUpdateScript(params, project, workIdeHome, deployDir, builtDistDir, restartAutomatically, beforeRestart)
-      }
-    }
+  val commandLine = createUpdateFromSourcesCommandLine(
+    devIdeaHome, deployDir, builtDistDir, buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude,
+    state.additionalVmOptionsForBuildScripts
+  )
+  runUpdateScript(commandLine, project, workIdeHome, deployDir, builtDistDir, restartAutomatically, beforeRestart)
 }
 
 private fun showError(project: Project, message: @NotificationContent String, vararg actions: NotificationAction) {
@@ -159,7 +145,7 @@ private fun checkIdeHome(workIdeHome: Path): String? {
 }
 
 private fun runUpdateScript(
-  params: JavaParameters,
+  commandLine: GeneralCommandLine,
   project: Project,
   workIdeHome: Path,
   deployDir: Path,
@@ -176,7 +162,8 @@ private fun runUpdateScript(
       builtDistDir.deleteRecursively()
 
       indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.script")
-      val commandLine = params.toCommandLine().withRedirectErrorStream(true)
+      commandLine.withRedirectErrorStream(true)
+      LOG.info("Running update from sources from '${commandLine.workingDirectory}': ${commandLine.commandLineString}")
       val scriptHandler = OSProcessHandler(commandLine)
       val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
       scriptHandler.addProcessListener(object : ProcessListener {
@@ -346,58 +333,48 @@ private fun updateNonBundledPlugin(newDescriptor: PluginNode, pluginDir: Path, o
   PluginInstaller.installAfterRestart(newDescriptor, newPluginPath, oldPluginPath, false)
 }
 
-private fun createScriptJavaParameters(
-  project: Project,
+private fun createUpdateFromSourcesCommandLine(
+  devIdeaHome: Path,
   deployDir: Path,
   builtDistPath: Path,
   buildEnabledPluginsOnly: Boolean,
   bundledPluginDirsToSkip: List<String>,
   nonBundledPluginDirsToInclude: List<String>,
   additionalVmOptionsForBuildScripts: String?,
-): JavaParameters? {
-  val sdk = ProjectRootManager.getInstance(project).projectSdk
-  if (sdk == null) {
-    showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.no.sdk"))
-    return null
-  }
-
-  val moduleManager = ModuleManager.getInstance(project)
-  val ultimate = moduleManager.findModuleByName("intellij.idea.ultimate.main") != null
-  val params = JavaParameters()
-  params.setShortenCommandLine(ShortenCommandLine.MANIFEST)
-  params.setDefaultCharset(project)
-  params.jdk = sdk
-
-  params.mainClass = if (ultimate) "UltimateUpdateFromSourcesBuildTarget" else "OpenSourceCommunityUpdateFromSourcesBuildTarget"
-  params.programParametersList.add("--classpath")
-  val buildScriptsModuleName = if (ultimate) "intellij.idea.ultimate.build" else "intellij.idea.community.build"
-  val buildScriptsModule = moduleManager.findModuleByName(buildScriptsModuleName)
-  if (buildScriptsModule == null) {
-    showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.no.module", buildScriptsModuleName))
-    return null
-  }
-  val classpath = OrderEnumerator.orderEntries(buildScriptsModule)
-    .recursively().withoutSdk().runtimeOnly().productionOnly().classes().pathsList.pathList
-
-  params.classPath.addAll(classpath)
-  ClasspathBootstrap.configureReflectionOpenPackages(params.vmParametersList::add)
-
-  params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
+): GeneralCommandLine {
+  val vmProperties = mutableListOf<String>()
+  vmProperties.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
 
   if (buildEnabledPluginsOnly) {
     if (bundledPluginDirsToSkip.isNotEmpty()) {
-      params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+      vmProperties.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
     }
     val nonBundled = if (nonBundledPluginDirsToInclude.isNotEmpty()) nonBundledPluginDirsToInclude.joinToString(",") else "none"
-    params.vmParametersList.add("-Dintellij.build.non.bundled.plugin.dirs.to.include=$nonBundled")
+    vmProperties.add("-Dintellij.build.non.bundled.plugin.dirs.to.include=$nonBundled")
   }
 
   if (!buildEnabledPluginsOnly || nonBundledPluginDirsToInclude.isNotEmpty()) {
-    params.vmParametersList.add("-Dintellij.build.local.plugins.repository=true")
+    vmProperties.add("-Dintellij.build.local.plugins.repository=true")
   }
-  params.vmParametersList.add("-Dintellij.build.output.root=${deployDir}")
-  params.vmParametersList.add("-DdistOutputRelativePath=${deployDir.relativize(builtDistPath)}")
-  params.vmParametersList.addParametersString(additionalVmOptionsForBuildScripts)
+  vmProperties.add("-Dintellij.build.output.root=${deployDir}")
+  vmProperties.add("-DdistOutputRelativePath=${deployDir.relativize(builtDistPath)}")
+  vmProperties.addAll(ParametersListUtil.parse(additionalVmOptionsForBuildScripts ?: ""))
 
-  return params
+  val commandLine = GeneralCommandLine()
+  commandLine.withExePath(bazelExecutable(devIdeaHome).pathString)
+  commandLine.withWorkingDirectory(devIdeaHome)
+  commandLine.addParameter("run")
+  for (property in vmProperties) {
+    commandLine.addParameter("--jvmopt=$property")
+  }
+  commandLine.addParameter("//build:update_from_sources")
+  return commandLine
+}
+
+private fun bazelExecutable(devIdeaHome: Path): Path {
+  val wrapper = devIdeaHome.resolve("bazel.cmd")
+  require(wrapper.isRegularFile()) {
+    "Bazel wrapper script not found at ${wrapper.toAbsolutePath()}"
+  }
+  return wrapper
 }

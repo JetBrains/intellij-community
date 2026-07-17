@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -56,7 +56,7 @@ abstract class CompletionCommand : UserDataHolderBase() {
   /**
    * Executes a specific operation based on the provided parameters.
    * Can be called on non-physical files.
-   * Will be called on EDT thread without write or read access
+   * Will be called on EDT under a write-intent read action.
    *
    * @param offset the position within the file where the operation should be performed
    * @param psiFile the PsiFile object representing the file in which the operation is executed

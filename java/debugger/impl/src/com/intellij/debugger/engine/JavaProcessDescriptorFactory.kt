@@ -5,8 +5,6 @@ import com.intellij.debugger.actions.MuteRendererUtils
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaSessionState
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import fleet.rpc.core.toRpc
@@ -24,16 +22,12 @@ internal object JavaProcessDescriptorFactory {
       val javaProcess = debuggerSession.process
       val sessionStateFlow = debuggerSession.sessionStateFlow
       val renderersFlow = MuteRendererUtils.getOrCreateFlow(session.sessionData)
-      val descriptor = JavaDebuggerSessionDto(
+      JavaDebuggerSessionDto(
         initialState = getJavaSessionState(debuggerSession, javaProcess),
         stateFlow = sessionStateFlow.map { getJavaSessionState(debuggerSession, javaProcess) }.toRpc(),
         areRenderersMutedInitial = renderersFlow.value,
         areRenderersMutedFlow = renderersFlow.toRpc(),
       )
-      // for actions to work in monolith
-      // TODO[IJPL-248436]: should we just remove this code below in comment?
-      // FrontendDescriptorStateManager.getInstance(debuggerSession.project).registerProcessDescriptor(session.id, descriptor, cs)
-      descriptor
     }
   }
 

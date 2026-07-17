@@ -29,7 +29,7 @@ import kotlinx.coroutines.withContext
 class ServerRequestDispatcher(private val connectionListener: ConnectionListener?) : RequestDispatcher {
 
   companion object {
-    private val log = logger<ServerRequestDispatcher>()
+    private val log by lazy { logger<ServerRequestDispatcher>() }
   }
 
   private val bannedEndpoints = MutableStateFlow<Set<UID>>(emptySet())

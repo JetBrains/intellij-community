@@ -10,6 +10,8 @@ import com.intellij.platform.eel.channels.peekable
 import com.intellij.platform.eel.map
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.ijent.IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER
+import com.intellij.platform.ijent.IjentChildProcessAdapter
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
@@ -78,19 +80,27 @@ class IjentSessionProcessMediator private constructor(
   @OptIn(DelicateCoroutinesApi::class)
   class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
     init {
-      require(process.javaClass.name == "java.lang.ProcessImpl") {
+      require(process is IjentChildProcessAdapter || process.javaClass.name == "java.lang.ProcessImpl") {
         "This code performs black magic with internals of java.lang.ProcessImpl, this class is not supported: ${process.javaClass.name}"
       }
     }
 
     override val stdin: EelSendChannel =
-      process.outputStream.extractRawProcessStream().asEelChannel(IjentThreadPool.coroutineContext)
+      rawSendChannel(process.outputStream)
 
     override val stdout: PeekableEelReceiveChannel =
-      process.inputStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext).peekable()
+      rawReceiveChannel(process.inputStream).peekable()
 
     override val stderr: EelReceiveChannel =
-      process.errorStream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext)
+      rawReceiveChannel(process.errorStream)
+
+    private fun rawSendChannel(stream: OutputStream): EelSendChannel =
+      if (process is IjentChildProcessAdapter) stream.asEelChannel(IjentThreadPool.coroutineContext)
+      else stream.extractRawProcessStream().asEelChannel(IjentThreadPool.coroutineContext)
+
+    private fun rawReceiveChannel(stream: InputStream): EelReceiveChannel =
+      if (process is IjentChildProcessAdapter) stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+      else stream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext)
 
     // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
     // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
@@ -106,7 +116,7 @@ class IjentSessionProcessMediator private constructor(
         process.waitFor()
       }
       process.exitValue()
-    })
+    }, IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER)
     override val isAlive: Boolean get() = process.isAlive
 
     override val destroyIsGraceful: Boolean =

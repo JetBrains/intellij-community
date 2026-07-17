@@ -56,7 +56,7 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.FileRankerMlService;
+import com.intellij.psi.search.SearchCandidateBatcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
@@ -103,6 +103,7 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,6 +117,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import kotlin.sequences.Sequence;
 
 import static com.intellij.util.indexing.DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE;
 
@@ -1006,39 +1009,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(IndexingBundle.message("psi.search.for.word.progress", concat(allWords), totalSize));
 
       int alreadyProcessedFiles = 0;
-      FileRankerMlService fileRankerService = FileRankerMlService.getInstance();
-      boolean useOldImpl = (fileRankerService == null || fileRankerService.shouldUseOldImplementation());
-      List<String> queryNames = new ArrayList<>(allWords);
       List<VirtualFile> queryFiles = ReadAction.computeBlocking(
         () -> ContainerUtil.flatMap(localProcessors.keySet(), requestInfo -> requestInfo.getSearchSession().getTargetVirtualFiles()));
-      if (useOldImpl) {
-        // This is the original implementation for processing files before introducing FileRankerMlService.
-        // It should be removed after validating that the new implementation does not cause any issues/performance degradations.
-        result = processCandidatesInChunks(progress,
-                                           localProcessors,
-                                           targetFiles,
-                                           totalSize,
-                                           alreadyProcessedFiles,
-                                           nearDirectoryFiles,
-                                           intersectionCandidateFiles,
-                                           restCandidateFiles,
-                                           fileRankerService,
-                                           queryNames,
-                                           queryFiles);
-      }
-      else {
-        result = processCandidatesInOneCall(progress,
-                                            localProcessors,
-                                            targetFiles,
-                                            totalSize,
-                                            alreadyProcessedFiles,
-                                            nearDirectoryFiles,
-                                            intersectionCandidateFiles,
-                                            restCandidateFiles,
-                                            fileRankerService,
-                                            queryNames,
-                                            queryFiles);
-      }
+      result = processCandidatesInChunks(progress,
+                                         localProcessors,
+                                         targetFiles,
+                                         totalSize,
+                                         alreadyProcessedFiles,
+                                         nearDirectoryFiles,
+                                         intersectionCandidateFiles,
+                                         restCandidateFiles,
+                                         queryFiles);
     }
     finally {
       progress.popState();
@@ -1068,56 +1049,40 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                         @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
                                                                         @NotNull Map<VirtualFile, Collection<T>> intersectionCandidateFiles,
                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
-                                                                        @Nullable FileRankerMlService fileRankerMlService,
-                                                                        @NotNull List<String> queryNames,
-                                                                        @NotNull List<? extends VirtualFile> queryFiles) {
-
-    if (fileRankerMlService != null) {
-      // Inform fileRankerMlService about this session, but discard the order, as it is not used.
-      ArrayList<VirtualFile> candidateFiles = new ArrayList<>(totalSize);
-      candidateFiles.addAll(targetFiles.keySet());
-      candidateFiles.addAll(nearDirectoryFiles.keySet());
-      candidateFiles.addAll(intersectionCandidateFiles.keySet());
-      candidateFiles.addAll(restCandidateFiles.keySet());
-
-      fileRankerMlService.getFileOrder(queryNames, queryFiles, candidateFiles);
-    }
-
-    for (Map<VirtualFile, Collection<T>> files : List.of(targetFiles, nearDirectoryFiles, intersectionCandidateFiles, restCandidateFiles)) {
-      Optional<Integer> resultProcessed = processUnsortedCandidates(localProcessors, files, progress, totalSize, alreadyProcessedFiles);
-      if (resultProcessed.isEmpty()) return false;
-      alreadyProcessedFiles = resultProcessed.get();
+                                                                        @NotNull List<VirtualFile> queryFiles) {
+    Project project = myManager.getProject();
+    for (Map<VirtualFile, Collection<T>> chunk : List.of(targetFiles, nearDirectoryFiles, intersectionCandidateFiles, restCandidateFiles)) {
+      Sequence<List<VirtualFile>> batches = batchCandidateFiles(project, queryFiles, new ArrayList<>(chunk.keySet()));
+      if (batches != null) {
+        // Iterate lazily: the organizer yields batches on demand, so processing of the first
+        // (cheapest) batch starts before later batches are computed.
+        Iterator<List<VirtualFile>> iterator = batches.iterator();
+        while (iterator.hasNext()) {
+          List<VirtualFile> batch = iterator.next();
+          if (!processCandidates(localProcessors, chunk, batch, progress, totalSize, alreadyProcessedFiles)) {
+            return false;
+          }
+          alreadyProcessedFiles += batch.size();
+        }
+      }
+      else {
+        Optional<Integer> resultProcessed = processUnsortedCandidates(localProcessors, chunk, progress, totalSize, alreadyProcessedFiles);
+        if (resultProcessed.isEmpty()) return false;
+        alreadyProcessedFiles = resultProcessed.get();
+      }
     }
     return true;
   }
 
-  private <T extends WordRequestInfo> boolean processCandidatesInOneCall(@NotNull ProgressIndicator progress,
-                                                                         @NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
-                                                                         @NotNull Map<VirtualFile, Collection<T>> targetFiles,
-                                                                         int totalSize,
-                                                                         int alreadyProcessedFiles,
-                                                                         @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
-                                                                         @NotNull Map<VirtualFile, Collection<T>> intersectionCandidateFiles,
-                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
-                                                                         @Nullable FileRankerMlService fileRankerService,
-                                                                         @NotNull List<String> queryNames,
-                                                                         @NotNull List<? extends VirtualFile> queryFiles) {
-    Map<VirtualFile, Collection<T>> allFiles = new HashMap<>(totalSize);
-    allFiles.putAll(targetFiles);
-    allFiles.putAll(nearDirectoryFiles);
-    allFiles.putAll(intersectionCandidateFiles);
-    allFiles.putAll(restCandidateFiles);
-
-    List<VirtualFile> allFilesList = new ArrayList<>(totalSize);
-    allFilesList.addAll(targetFiles.keySet());
-    allFilesList.addAll(nearDirectoryFiles.keySet());
-    allFilesList.addAll(intersectionCandidateFiles.keySet());
-    allFilesList.addAll(restCandidateFiles.keySet());
-
-    List<VirtualFile> orderedFiles = fileRankerService.getFileOrder(queryNames, queryFiles, allFilesList);
-    return processCandidates(localProcessors, allFiles, orderedFiles, progress, totalSize, alreadyProcessedFiles);
+  private static @Nullable Sequence<List<VirtualFile>> batchCandidateFiles(@NotNull Project project,
+                                                                              @NotNull List<VirtualFile> queryFiles,
+                                                                              @NotNull List<VirtualFile> candidateFiles) {
+    for (SearchCandidateBatcher organizer : SearchCandidateBatcher.EP_NAME.getExtensionList()) {
+      Sequence<List<VirtualFile>> result = organizer.batchCandidateFiles(project, queryFiles, candidateFiles);
+      if (result != null) return result;
+    }
+    return null;
   }
-
 
   private <T> boolean processCandidates(@NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
                                         @NotNull Map<VirtualFile, Collection<T>> candidateFiles,

@@ -48,6 +48,7 @@ class MinimapHoverController(
   }
 
   override fun dispose() {
+    cancelHoverComputation()
     presenter.hide()
     lastSnapshot = null
     lastMousePoint = null
@@ -172,13 +173,16 @@ class MinimapHoverController(
     }
   }
 
+  @RequiresEdt
   private fun computeHoverTargetAsync(snapshot: MinimapSnapshot, point: Point, onResult: (MinimapHoverTarget?) -> Unit) {
     hoverComputationJob?.cancel()
-    hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       // readAction dispatches its body to a background thread, so getPresentation runs off the EDT;
       // the coroutine then resumes on the EDT to apply the result.
-      val target = readAction { computeHoverTarget(snapshot, point) }
-      if (lastSnapshot !== snapshot || lastMousePoint != point || !isDocumentCommitted()) return@launch
+      val target = readAction {
+        if (panel.editor.isDisposed) null else computeHoverTarget(snapshot, point)
+      }
+      if (panel.editor.isDisposed || lastSnapshot !== snapshot || lastMousePoint != point || !isDocumentCommitted()) return@launch
       onResult(target)
     }
   }

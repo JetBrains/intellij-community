@@ -380,7 +380,6 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.rd.community")
 
-    embeddedModule("intellij.platform.ide.ui.inspector")
     embeddedModule("intellij.platform.remote.core")
     embeddedModule("intellij.platform.ide.remote")
     embeddedModule("intellij.platform.threadDumpParser")

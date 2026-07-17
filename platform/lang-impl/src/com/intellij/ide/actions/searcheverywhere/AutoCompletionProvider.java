@@ -10,6 +10,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -23,6 +24,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/// @deprecated The functionality is redundant.
+@Deprecated
+@ApiStatus.Internal
 final class AutoCompletionProvider {
 
   public static @Unmodifiable List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,

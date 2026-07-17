@@ -1,5 +1,5 @@
 // "Create annotation 'A'" "true"
-// K2_ERROR: Unresolved reference 'A'.
+// K2_ERROR: UNRESOLVED_IMPORT
 package p
 
 import p.X.<caret>A

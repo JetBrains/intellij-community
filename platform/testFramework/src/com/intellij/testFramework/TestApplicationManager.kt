@@ -41,6 +41,8 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
+import com.intellij.testFramework.common.MockitoThreadLocalCleanup
+import com.intellij.testFramework.common.TheAiSlopToPerformMockKThreadLocalCleanup
 import com.intellij.testFramework.common.assertDisposerEmpty
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.testFramework.common.cleanApplicationStateCatching
@@ -191,6 +193,13 @@ class TestApplicationManager private constructor() {
         ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS)
         return
       }
+      // MockK 1.14.5 leaks Project instances via `spyk(projectService)` — a self-referential
+      // WeakMockHandlersMap cycle (see MockK #596/#1013). Clear MockK's per-thread recorder + the
+      // ProxyMaker.handlers map once here, right before the leak scan, so LeakHunter cannot follow
+      // this chain to a disposed `ProjectImpl`. Per-test cleanup breaks unrelated MockK-using tests
+      // that recreate mocks between tests; suite-level cleanup is safe.
+      TheAiSlopToPerformMockKThreadLocalCleanup.clearMockKCallRecorder()
+      MockitoThreadLocalCleanup.clearMockitoState()
       disposeApplicationAndCheckForLeaks()
     }
 

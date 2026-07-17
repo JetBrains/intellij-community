@@ -16,6 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -55,6 +56,7 @@ import java.nio.file.Path
 import java.util.TreeMap
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePlatform) : HybridTestCase(mode) {
@@ -406,6 +408,27 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                   catch (_: FileComparisonFailedError) {
                     // ignore - it is important to just perform highlighting check
                   }
+                }
+              }
+
+              override fun checkHighlighting(
+                expectedDataFile: String,
+                checkWarnings: Boolean,
+                checkInfos: Boolean,
+                checkWeakWarnings: Boolean,
+                ignoreExtraHighlighting: Boolean,
+              ) {
+                val filePath = testDataPath + (if (dir) "/$dirName/" else "/") + expectedDataFile
+                val text = Path.of(filePath).readText()
+                val document = DocumentImpl(text)
+                val data = ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting)
+                data.init()
+                try {
+                  (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
+                }
+                catch (e: FileComparisonFailedError) {
+                  throw FileComparisonFailedError(e.message, e.expectedStringPresentation, e.actualStringPresentation,
+                                                  filePath, null)
                 }
               }
 
@@ -823,19 +846,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
       configureCodeStyleSettings = configureCodeStyleSettings,
     ) {
       signature?.let { moveToOffsetBySignature(it) }
-      if (canRenamePolySymbolAtCaret()) {
-        renamePolySymbol(newName)
-      }
-      else {
-        var targetElement = TargetElementUtil.findTargetElement(
-          editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED)
-        if (targetElement == null)
-          throw AssertionError("No Symbol or PSI Element to rename at caret position.")
-        targetElement = RenamePsiElementProcessor.forElement(targetElement)
-          .substituteElementToRename(targetElement, editor)
-        val renameProcessor = RenameProcessor(project, targetElement!!, newName, searchCommentsAndText, searchCommentsAndText)
-        renameProcessor.run()
-      }
+      renameSymbolAtCaret(newName, searchCommentsAndText)
     }
   }
 
@@ -915,6 +926,14 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
      * ignoring any FileComparisonFailedError.
      */
     fun performHighlighting()
+
+    fun checkHighlighting(
+      expectedDataFile: String,
+      checkWarnings: Boolean = true,
+      checkInfos: Boolean = false,
+      checkWeakWarnings: Boolean = true,
+      ignoreExtraHighlighting: Boolean = false,
+    )
 
     val editor: Editor
   }

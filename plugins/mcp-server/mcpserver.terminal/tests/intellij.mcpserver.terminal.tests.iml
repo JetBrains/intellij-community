@@ -34,6 +34,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mcpserver.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />

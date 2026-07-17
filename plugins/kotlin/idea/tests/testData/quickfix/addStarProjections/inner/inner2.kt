@@ -1,5 +1,5 @@
 // "Add star projections" "true"
-// K2_ERROR: One type argument expected. Use 'A<*>.B' if you do not intend to pass type arguments.
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
 class A<T> {
     inner class B
     fun test(x: Any) = x is B<caret>

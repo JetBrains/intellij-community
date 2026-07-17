@@ -8,9 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
   private val actionList = arrayListOf<AnAction>()
 

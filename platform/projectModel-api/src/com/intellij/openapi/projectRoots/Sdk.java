@@ -3,7 +3,7 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -13,10 +13,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represent a specific instance of an SDK in the IDE configuration. Use {@link ProjectJdkTable} to access configured SDKs, and
  * {@link com.intellij.openapi.projectRoots.SdkType} to define a new type of SDKs.
+ * This interface should never be implemented by plugins, see the annotation.
  * @author Eugene Zhuravlev
  */
 @ApiStatus.NonExtendable
-public interface Sdk extends UserDataHolder {
+public interface Sdk extends UserDataHolderEx {
   @NotNull SdkTypeId getSdkType();
 
   @NlsSafe @NotNull String getName();

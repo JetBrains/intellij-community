@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.decoratedWindow` start
+jps_test(
+    name = "decoratedWindow-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":decoratedWindow-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.decoratedWindow.tests`
+
+### auto-generated section `build intellij.platform.jewel.decoratedWindow` start
 create_kotlinc_options(
     name = "custom_decorated-window",
     opt_in = [
@@ -82,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow` end
 
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow.tests` start
-
 create_kotlinc_options(
     name = "custom_decoratedWindow-tests",
     opt_in = [
@@ -158,11 +165,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.decoratedWindow.tests` end
-
-### auto-generated section `test intellij.platform.jewel.decoratedWindow.tests` start
-
-jps_test(
-    name = "decoratedWindow-tests_test",
-    runtime_deps = [":decoratedWindow-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.decoratedWindow.tests` end

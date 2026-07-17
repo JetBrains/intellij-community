@@ -183,6 +183,8 @@
                  key="ide.exceptions.show.interactive"/>
     <registryKey key="ide.settings.external.change.conflict.show.notification" defaultValue="false" restartRequired="false"
                  description="Show a warning notification for external change conflicts in non-modal settings dialog"/>
+    <registryKey key="psi.assert.wl.for.exposed.light.files" defaultValue="true" restartRequired="false"
+                 description="Require the write lock to modify a non-physical (light) PSI file once it has been opened in a real editor (IJPL-249128). Disable to suppress the threading assertion for exposed light files."/>
     <registryKey defaultValue="true" description="Refresh VFS periodically while there is no user activity in the IDE instead of when window is not focused.
 The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | System Settings -> Periodically when IDE is inactive (experimental)"
                  restartRequired="true"
@@ -477,10 +479,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="true"
                  restartRequired="true"
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
-    <registryKey key="dynamic.plugins.support.new.impl"
-                 defaultValue="true"
-                 restartRequired="true"
-                 description="Enable new dynamic plugin support implementation"/>
     <registryKey key="dynamic.plugins.support.await.classloader.unload.strategy"
                  defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"
@@ -597,9 +595,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
                         serviceImplementation="com.intellij.diagnostic.EventWatcherService" headlessImplementation=""
                         open="true"/>
-    <toolWindow factoryClass="com.intellij.internal.inspector.themePicker.UiThemeColorPickerToolWindowFactory"
-                id="UI Theme Color Picker" icon="AllIcons.Toolwindows.ToolWindowPalette"
-                anchor="right" canCloseContents="false" doNotActivateOnStart="true"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileNavigator"
                         serviceImplementation="com.intellij.openapi.fileEditor.FileNavigatorImpl"/>
@@ -1513,6 +1508,9 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <registryKey key="project.view.show.file.indexability" defaultValue="false"
                  description="Shows if a file is indexable"/>
 
+    <registryKey key="ide.speed.search.tree.auto.select" defaultValue="true"
+                 description="When enabled, typing in tree speed search automatically selects the first match. When disabled, only highlights matches and navigation requires arrow keys."/>
+
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
 
     <editorFactoryListener implementation="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyEditorFactoryListener"/>
@@ -1834,6 +1832,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Maximum duration of performance watcher dumps in ms"/>
     <registryKey key="performance.watcher.unresponsive.interval.ms" defaultValue="5000"
                  description="Log UI freezes longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.unresponsive.interval.force.value" defaultValue="false"
+                 description="Set it to true to allow for values of 'performance.watcher.unresponsive.interval.ms' that are smaller than 500 ms"/>
     <registryKey key="performance.watcher.enable.smoke.and.mirrors.compensation" defaultValue="true"
                  description="Enable UI freezes reporting for long-running background tasks that may impale UI interactions without a visible impact on UI rendering"/>
 
@@ -1900,6 +1900,10 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Report UI freezes to JetBrains"/>
     <registryKey key="freeze.reporter.maxDumpDuration.ms" defaultValue="40000"
                  description="Maximum duration of the 'report.txt' performance snapshot in ms"/>
+    <registryKey key="freeze.reporter.duration.threshold.seconds" defaultValue="10"
+                 description="Report UI freezes longer than the specified duration in seconds"/>
+    <registryKey key="ide.errors.deduplicate" defaultValue="true"
+                 description="Group error reports with identical stack traces in the error dialog"/>
     <registryKey key="freeze.reporter.profiling" defaultValue="true"
                  description="Start CPU profiling when the IDE is frozen"/>
     <registryKey key="freeze.reporter.profiling.all.threads" defaultValue="true"
@@ -2173,6 +2177,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
 
     <!-- works as a fallback, after all providers -->
     <fileIconProvider implementation="com.intellij.platform.ide.impl.common.file.icons.CommonFileIconsProvider" order="last"/>
+    <projectEntitiesAttacher implementation="com.intellij.platform.JpsEntitiesProjectEntitiesAttacher"/>
+    <projectEntitiesAttacher implementation="com.intellij.platform.ProjectRootEntityAttacher"/>
   </extensions>
 
   <applicationListeners>
@@ -2253,12 +2259,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <listener class="com.intellij.ide.AppIdleMemoryCleaner$MyApplicationActivationListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
-
-    <listener class="com.intellij.openapi.editor.impl.ad.document.AdDocumentManagerImpl$AdFileDocumentBindingListener"
-              topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
-
-    <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"
-              topic="com.intellij.openapi.editor.impl.DocumentMarkupListener" />
 
     <listener class="com.intellij.ide.file.XdgTrashBinPreloader" topic="com.intellij.ide.AppLifecycleListener"
               os="unix" activeInTestMode="false" activeInHeadlessMode="false"/>

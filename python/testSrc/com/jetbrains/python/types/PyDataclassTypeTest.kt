@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type and type-checker tests for [dataclasses][https://docs.python.org/3/library/dataclasses.html]:
+ * Type and type-checker tests for [dataclasses](https://docs.python.org/3/library/dataclasses.html):
  * `@dataclass`, `dataclasses.field`, generated `__init__`/`__post_init__` signatures, `InitVar`,
  * frozen/order/slots semantics, descriptor-typed fields and the [dataclass_transform] mechanism.
  */

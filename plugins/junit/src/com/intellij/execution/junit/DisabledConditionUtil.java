@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
@@ -43,7 +43,7 @@ public final class DisabledConditionUtil {
     JUnitConfiguration.Data data = configuration.getPersistentData();
     if (data == null) return null;
 
-    final GlobalSearchScope globalSearchScope = TestObject.getScopeForJUnit(configuration);
+    final GlobalSearchScope globalSearchScope = JUnitUtil.getScope(configuration.getConfigurationModule().getModule(), configuration.getProject());
     boolean isMethodConfiguration = JUnitConfiguration.TEST_METHOD.equals(data.TEST_OBJECT);
     boolean isClassConfiguration = JUnitConfiguration.TEST_CLASS.equals(data.TEST_OBJECT);
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration

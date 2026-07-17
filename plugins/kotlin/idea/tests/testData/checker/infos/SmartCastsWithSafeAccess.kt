@@ -32,6 +32,6 @@ fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_D
 
     if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">D</symbolName>) {
         //when it's resolved, the message should be 'Smart cast to A'
-        <info descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName></info>.<error descr="[FUNCTION_CALL_EXPECTED] Function invocation 'foo()' expected" tooltip="[FUNCTION_CALL_EXPECTED] Function invocation 'foo()' expected" textAttributesKey="ERRORS_ATTRIBUTES">foo</error>
+        <info descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName></info>.<error descr="[FUNCTION_CALL_EXPECTED]" tooltip="[FUNCTION_CALL_EXPECTED] Function invocation 'foo()' expected" textAttributesKey="ERRORS_ATTRIBUTES">foo</error>
     }
 }

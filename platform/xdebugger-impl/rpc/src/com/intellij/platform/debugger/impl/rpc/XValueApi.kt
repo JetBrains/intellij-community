@@ -16,14 +16,14 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XValueApi : RemoteApi<Unit> {
-  suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation>
+  suspend fun computeTooltipPresentation(xValueId: XValueId): XValuePresentationDataDto?
 
   fun computeChildren(id: XContainerId): Flow<XValueComputeChildrenEvent>
   fun computeExpandedChildren(frameId: XStackFrameId, root: XDebuggerTreeExpandedNode): Flow<PreloadChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)
 
-  suspend fun evaluateFullValue(xValueId: XValueId): Flow<XFullValueEvaluatorResult>
+  suspend fun evaluateFullValue(evaluatorId: XFullValueEvaluatorId): Flow<XFullValueEvaluatorResult>
 
   suspend fun computeExpression(xValueId: XValueId): XExpressionDto?
 

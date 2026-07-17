@@ -45,6 +45,10 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
 
 class FileToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.file")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
   @McpTool
   @McpDescription("""

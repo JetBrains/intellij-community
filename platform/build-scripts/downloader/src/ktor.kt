@@ -34,7 +34,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -155,7 +154,7 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
 // copy from util, do not make public
 internal suspend inline fun <T> SpanBuilder.useWithScope(crossinline operation: suspend (Span) -> T): T {
   val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement()) {
+  return withContext(span.asContextElement()) {
     span.use {
       operation(span)
     }

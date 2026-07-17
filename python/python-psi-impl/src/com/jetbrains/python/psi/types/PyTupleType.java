@@ -108,10 +108,6 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return myUnpackedTupleType.getElementTypes();
   }
 
-  public @NotNull List<PyType> getElementTypes() {
-    return getTypeArguments();
-  }
-
   @Override
   public @Nullable PyType getIteratedItemType() {
     List<PyType> types = myUnpackedTupleType.getElementTypes();

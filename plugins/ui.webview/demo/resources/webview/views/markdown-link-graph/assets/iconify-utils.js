@@ -1,4 +1,3 @@
-//#region node_modules/@iconify/utils/lib/icon/defaults.js
 /** Default values for dimensions */
 var defaultIconDimensions = Object.freeze({
 	left: 0,
@@ -23,8 +22,6 @@ var defaultExtendedIconProps = Object.freeze({
 	body: "",
 	hidden: false
 });
-//#endregion
-//#region node_modules/@iconify/utils/lib/customisations/defaults.js
 /**
 * Default icon customisations values
 */
@@ -36,8 +33,6 @@ var defaultIconCustomisations = Object.freeze({
 	...defaultIconSizeCustomisations,
 	...defaultIconTransformations
 });
-//#endregion
-//#region node_modules/@iconify/utils/lib/icon/name.js
 /**
 * Convert string icon name to IconifyIconName object.
 */
@@ -87,8 +82,6 @@ var validateIconName = (icon, allowSimpleName) => {
 	if (!icon) return false;
 	return !!((allowSimpleName && icon.prefix === "" || !!icon.prefix) && !!icon.name);
 };
-//#endregion
-//#region node_modules/@iconify/utils/lib/icon/transformations.js
 /**
 * Merge transformations
 */
@@ -100,8 +93,6 @@ function mergeIconTransformations(obj1, obj2) {
 	if (rotate) result.rotate = rotate;
 	return result;
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/icon/merge.js
 /**
 * Merge icon and alias
 *
@@ -115,8 +106,6 @@ function mergeIconData(parent, child) {
 	else if (key in parent) result[key] = parent[key];
 	return result;
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/icon-set/tree.js
 /**
 * Resolve icon set icons
 *
@@ -139,8 +128,6 @@ function getIconsTree(data, names) {
 	(names || Object.keys(icons).concat(Object.keys(aliases))).forEach(resolve);
 	return resolved;
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/icon-set/get-icon.js
 /**
 * Get icon data, using prepared aliases tree
 */
@@ -163,8 +150,6 @@ function getIconData(data, name) {
 	const tree = getIconsTree(data, [name])[name];
 	return tree ? internalGetIconData(data, name, tree) : null;
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/svg/size.js
 /**
 * Regular expressions for calculating dimensions
 */
@@ -191,8 +176,6 @@ function calculateSize(size, ratio, precision) {
 		isNumber = !isNumber;
 	}
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/svg/defs.js
 function splitSVGDefs(content, tag = "defs") {
 	let defs = "";
 	const index = content.indexOf("<" + tag);
@@ -223,8 +206,6 @@ function wrapSVGContent(body, start, end) {
 	const split = splitSVGDefs(body);
 	return mergeDefsAndContent(split.defs, start + split.content + end);
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/svg/build.js
 /**
 * Check if value should be unset. Allows multiple keywords
 */
@@ -333,8 +314,6 @@ function iconToSVG(icon, customisations) {
 		body
 	};
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/svg/id.js
 /**
 * Regular expression for finding ids
 */
@@ -369,8 +348,6 @@ function replaceIDs(body) {
 	body = body.replace(new RegExp(suffix, "g"), "");
 	return body;
 }
-//#endregion
-//#region node_modules/@iconify/utils/lib/svg/html.js
 /**
 * Generate <svg>
 */
@@ -379,5 +356,4 @@ function iconToHTML(body, attributes) {
 	for (const attr in attributes) renderAttribsHTML += " " + attr + "=\"" + attributes[attr] + "\"";
 	return "<svg xmlns=\"http://www.w3.org/2000/svg\"" + renderAttribsHTML + ">" + body + "</svg>";
 }
-//#endregion
 export { stringToIcon as a, getIconData as i, replaceIDs as n, iconToSVG as r, iconToHTML as t };

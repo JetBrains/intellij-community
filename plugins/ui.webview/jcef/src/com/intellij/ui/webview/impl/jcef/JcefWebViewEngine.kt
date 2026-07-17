@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.jcef
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
@@ -11,7 +13,6 @@ import com.intellij.ui.webview.impl.ComponentBackedWebViewEngine
 import com.intellij.ui.webview.impl.WebViewAssetResolver
 import com.intellij.ui.webview.impl.WebViewAssetResponse
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
-import com.intellij.ui.webview.impl.WebViewLogger
 import com.intellij.ui.webview.impl.engine.WebViewScript
 import com.intellij.ui.webview.impl.resolveWebViewAssetUrl
 import com.intellij.ui.webview.impl.webViewAssetHttpsUrl
@@ -55,6 +56,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = logger<JcefWebViewEngine>()
 
 internal class JcefWebViewEngine(
   parentScope: CoroutineScope,
@@ -118,7 +121,7 @@ internal class JcefWebViewEngine(
       jbCefClient.cefClient.addMessageRouter(it)
     }
 
-    WebViewLogger.LOG.info("Created JCEF WebView engine; offScreenRendering=${jbCefBrowser.isOffScreenRendering}")
+    LOG.trace { "Created JCEF WebView engine; offScreenRendering=${jbCefBrowser.isOffScreenRendering}" }
     component = jbCefBrowser.component
   }
 
@@ -202,15 +205,15 @@ internal class JcefWebViewEngine(
 
     runOnEdtAndWait {
       runCatching { messageRouter.removeHandler(messageRouterHandler) }
-        .onFailure { WebViewLogger.LOG.warn("Failed to remove JCEF message router handler", it) }
+        .onFailure { LOG.warn("Failed to remove JCEF message router handler", it) }
       runCatching { jbCefClient.cefClient.removeMessageRouter(messageRouter) }
-        .onFailure { WebViewLogger.LOG.warn("Failed to remove JCEF message router", it) }
+        .onFailure { LOG.warn("Failed to remove JCEF message router", it) }
       runCatching { messageRouter.dispose() }
-        .onFailure { WebViewLogger.LOG.warn("Failed to dispose JCEF message router", it) }
+        .onFailure { LOG.warn("Failed to dispose JCEF message router", it) }
       runCatching { Disposer.dispose(jbCefBrowser) }
-        .onFailure { WebViewLogger.LOG.warn("Failed to dispose JCEF browser", it) }
+        .onFailure { LOG.warn("Failed to dispose JCEF browser", it) }
       runCatching { Disposer.dispose(jbCefClient) }
-        .onFailure { WebViewLogger.LOG.warn("Failed to dispose JCEF client", it) }
+        .onFailure { LOG.warn("Failed to dispose JCEF client", it) }
     }
   }
 
@@ -348,7 +351,7 @@ internal class JcefWebViewEngine(
         markReadyForNavigation(browser, frame)
         markPageLoaded(browser, frame)
         if (frame?.isMain == true && errorCode != CefLoadHandler.ErrorCode.ERR_ABORTED) {
-          WebViewLogger.LOG.warn("JCEF WebView load failed: url=$failedUrl, error=$errorCode, text=$errorText")
+          LOG.warn("JCEF WebView load failed: url=$failedUrl, error=$errorCode, text=$errorText")
         }
       }
     }
@@ -404,7 +407,7 @@ internal class JcefWebViewEngine(
     synchronized(deliveryLock) {
       if (pendingDeliveries.size >= MAX_PENDING_DELIVERIES) {
         pendingDeliveries.removeFirst()
-        WebViewLogger.LOG.warn("Dropping queued JCEF WebView message because the JS bridge is not ready; queueLimit=$MAX_PENDING_DELIVERIES")
+        LOG.warn("Dropping queued JCEF WebView message because the JS bridge is not ready; queueLimit=$MAX_PENDING_DELIVERIES")
       }
       pendingDeliveries.addLast(rawJson)
     }
@@ -421,7 +424,7 @@ internal class JcefWebViewEngine(
   }
 
   private fun resolveAssetUrl(url: String): WebViewAssetResponse? {
-    return resolveWebViewAssetUrl(url, activeAssetResolver.get())
+    return resolveWebViewAssetUrl(url, activeAssetResolver.get(), "jcef")
   }
 
   private fun hasPendingDeliveries(): Boolean = synchronized(deliveryLock) { pendingDeliveries.isNotEmpty() }

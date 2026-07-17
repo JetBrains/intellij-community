@@ -4,6 +4,7 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
@@ -109,6 +110,14 @@ public interface GitRepository extends Repository {
   boolean isRebaseInProgress();
 
   boolean isOnBranch();
+
+  /**
+   * The length of the revision hash in hex characters
+   * By default SHA-1 length is assumed
+   */
+  default int getFullHashLength() {
+    return 40;
+  }
 
   @NotNull
   @Override

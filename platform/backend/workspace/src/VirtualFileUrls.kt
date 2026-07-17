@@ -5,6 +5,7 @@ package com.intellij.platform.backend.workspace
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
@@ -25,4 +26,10 @@ public val VirtualFileUrl.virtualFile: VirtualFile?
  *
  * **Important Note:** method can return different instances of `VirtualFileUrl` for the same `VirtualFile`, e.g. if the file was moved.
  */
-public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.getOrCreateFromUrl(this.url)
+public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
+  return virtualFileManager.getOrCreateFromUrl(url).also {
+    if (it is VirtualFileUrlWithVirtualFile) {
+      it.cacheVirtualFile(this)
+    }
+  }
+}

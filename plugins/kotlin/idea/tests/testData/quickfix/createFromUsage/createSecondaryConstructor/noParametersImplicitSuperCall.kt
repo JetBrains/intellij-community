@@ -1,6 +1,6 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add primary constructor to 'Creation'" "true"
-// K2_ERROR: No value passed for parameter 'f'.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 open class Base()
 
 class Creation {

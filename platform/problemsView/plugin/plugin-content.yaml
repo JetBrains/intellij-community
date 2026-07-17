@@ -1,9 +1,6 @@
 - name: lib/modules/intellij.platform.problemView.backend.jar
   contentModules:
   - name: intellij.platform.problemView.backend
-- name: lib/modules/intellij.platform.problemView.buildView.jar
-  contentModules:
-  - name: intellij.platform.problemView.buildView
 - name: lib/modules/intellij.platform.problemView.collector.jar
   contentModules:
   - name: intellij.platform.problemView.collector

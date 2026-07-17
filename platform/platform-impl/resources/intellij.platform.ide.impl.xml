@@ -61,6 +61,7 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
@@ -150,17 +151,6 @@
     <registryKey
       key="ea.auto.report.forced.tag" defaultValue=""
       description="Additional tag for error reports"/>
-    <registryKey
-      key="ide.linux.ijpl43505"
-      defaultValue="true"
-      description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"
-      restartRequired="true"
-    />
-    <registryKey
-      key="ide.ui.keymap.ijpl187594"
-      defaultValue="true"
-      description="Enable the fix for IJPL-187594 Keymaps: shortcuts overlap long action names. The Classic UI is not affected"
-    />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>

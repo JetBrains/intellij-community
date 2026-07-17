@@ -8,6 +8,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.pytools.PyToolsBundle.message
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,8 +25,10 @@ data class Version(val value: String) {
   }
 }
 
-internal fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
-    val pattern = "^$toolVersionPrefix,?(?:\\s\\(?version)?\\s([^\\s)]+).*$".toRegex(RegexOption.IGNORE_CASE)
+@ApiStatus.Internal
+@PyInternalExecApi
+fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
+  val pattern = "^$toolVersionPrefix,?(?:\\s\\(?version)?\\s([^\\s)]+).*$".toRegex(RegexOption.IGNORE_CASE)
   // Tools may print extra lines around the version banner:
   //   - Black appends runtime info after the version line
   //   - Pyright prints upgrade warnings before the version line
@@ -49,6 +52,7 @@ internal fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
     PyResult.localizedError(message("selected.tool.is.wrong", toolVersionPrefix.trim(), versionPresentation))
   }
 }
+
 /**
  * Runs `<binary> --version` and verifies that the leading token matches [toolVersionPrefix],
  * returning the parsed [Version] on success or a localized error otherwise. Used to verify a
@@ -58,6 +62,7 @@ internal fun String.parseVersion(toolVersionPrefix: String): PyResult<Version> {
  * (settings, run configurations, package managers) can share the same parsing logic.
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyResult<Version> {
   val version = withContext(Dispatchers.IO) {
     ExecService().execGetStdout(this@getToolVersion, Args("--version"))
@@ -70,6 +75,7 @@ suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyResult<Ver
  * Returns a localized failure if `<path> --version` does not match.
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 suspend fun PyTool.validateCustomPath(path: Path): PyResult<Version> {
   return BinOnEel(path).getToolVersion(packageName.name)
 }

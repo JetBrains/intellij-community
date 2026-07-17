@@ -75,6 +75,17 @@ internal suspend fun JBCefBrowser.waitForPageLoad(url: String) {
   }
 }
 
+/**
+ * Reloads the current page bypassing the browser cache. Unlike re-navigating to the same URL (which may hit a stale
+ * `304` or a back-forward-cache restore), this re-fetches every resource, refreshing settings-dependent resources
+ * served from stable URLs (e.g. the mermaid theme definition).
+ */
+internal suspend fun JBCefBrowser.waitForReloadIgnoringCache() {
+  waitForLoad {
+    cefBrowser.reloadIgnoreCache()
+  }
+}
+
 internal fun queryHandler(handler: (String?) -> Unit): (String?) -> JBCefJSQuery.Response? {
   return {
     handler.invoke(it)

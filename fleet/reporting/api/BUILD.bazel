@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.reporting.api` start
-
 create_kotlinc_options(
     name = "custom_api",
     x_consistent_data_class_copy_visibility = True,
