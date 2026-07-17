@@ -465,12 +465,14 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val osTag = matchedVersion?.groupValues[2] ?: return null
 
-      LOG.warn("Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag")
+      val logMessage = "Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag"
+      LOG.debug(logMessage)
 
       return OS.fromString(osTag)
         .takeIf { it != OS.Other }
         ?.let { IdeaPluginOsRequirement.fromOs(it) }
         ?.takeIf { osReq -> !osReq.isHostOs() }
+        ?.also { LOG.warn(logMessage) }
     }
 
     return descriptor.getDependencies().asSequence()
@@ -485,12 +487,14 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val archTag = matchedVersion?.groupValues[3] ?: return null
 
-      LOG.warn("Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag")
+      val logMessage = "Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag"
+      LOG.debug(logMessage)
 
       return CpuArch.fromString(archTag)
         .takeIf { it != CpuArch.OTHER && it != CpuArch.UNKNOWN }
         ?.let { PluginCpuArchRequirement.fromArch(it) }
         ?.takeIf { osReq -> !osReq.isHostArch() }
+        ?.also { LOG.warn(logMessage) }
     }
 
     return descriptor.getDependencies().asSequence()
