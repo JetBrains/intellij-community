@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.CommandLineUtil
@@ -79,17 +79,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  @Suppress("UsagesOfObsoleteApi")
+  @Suppress("UsagesOfObsoleteApi", "IO_FILE_USAGE")
   override fun browse(file: java.io.File) {
-    val path = file.absolutePath
-    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
-    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
+    browse(file.toPath())
   }
 
   override fun browse(file: Path) {
-    val path = file.toAbsolutePath().toString()
-    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
-    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
+    browse(file.toAbsolutePath().toUri().toString(), browser = null, project = null)
   }
 
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {
