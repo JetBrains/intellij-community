@@ -107,6 +107,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
 import com.jetbrains.python.psi.types.PyTypedDictType
@@ -520,9 +521,12 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (!targetOrResolvedHasExplicitType(node)) return
       }
 
-      if (node.isQualified) {
-        val substitutions = unifyReceiver(node.qualifier, myTypeEvalContext)
-        expected = substitute(expected, substitutions, myTypeEvalContext)
+      val qualifier = node.qualifier
+      if (qualifier != null) {
+        expected = myTypeEvalContext.getType(qualifier).compositeMap {
+          val substitutions = unifyReceiver(it, myTypeEvalContext)
+          substitute(expected, substitutions, myTypeEvalContext)
+        }
       }
 
       var isDescriptor = false

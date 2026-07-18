@@ -721,7 +721,7 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun bindFunction(callableType: PyCallableType, selfType: PyType, context: TypeEvalContext): FunctionBindingResult? {
+  fun bindFunction(callableType: PyCallableType, selfType: PyInstantiableType<*>, context: TypeEvalContext): FunctionBindingResult? {
     if (callableType.getParametersType(context) == null) {
       // `typing.Callable[..., R]` - treat as `(*args, **kwargs)`.
       return FunctionBindingResult(callableType, PyAnyType.any)

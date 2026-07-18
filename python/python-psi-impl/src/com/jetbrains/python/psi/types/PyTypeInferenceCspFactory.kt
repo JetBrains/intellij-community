@@ -18,13 +18,11 @@ import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.promoteToLiteral
-import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
@@ -55,16 +53,20 @@ object PyTypeInferenceCspFactory {
     val callSite = argsMapping.callSiteOwner
     val callSiteExpression = callSite as? PyExpression
     val callableType = argsMapping.callableType
-    val receiver = callSite.getReceiver(callableType?.callable)
     val si = if (callSiteExpression == null) null else SubstitutionsIdentifier(callSiteExpression, callableType)
     val solution = enterCsp(si, context)
-    return solution ?: PyTypeChecker.unifyReceiver(receiver, context)
+    if (solution != null) return solution
+    val receiver = callSite.getReceiver(callableType?.callable)
+    if (receiver != null) {
+      val receiverType = context.getType(receiver)
+      return PyTypeChecker.unifyReceiver(receiverType, context)
+    }
+    return GenericSubstitutions()
   }
 
   @JvmStatic
   fun unifyGenericCall(
     callSite: PyCallSiteOwner?,
-    receiver: PyExpression?,
     callableType: PyCallableType?,
     mappedParameters: Map<PyExpression, PyCallableParameter>,
     context: TypeEvalContext,
@@ -72,7 +74,7 @@ object PyTypeInferenceCspFactory {
     val callSiteExpression = callSite as? PyExpression
     val si = if (callSiteExpression == null) null else SubstitutionsIdentifier(callSiteExpression, callableType)
     val solution = enterCsp(si, context)
-    return solution ?: PyTypeChecker.unifyGenericCall(receiver, mappedParameters, context)
+    return solution ?: PyTypeChecker.unifyGenericCall(mappedParameters, context)
   }
 
   /**
@@ -258,9 +260,7 @@ object PyTypeInferenceCspFactory {
     val mapping = PyCallExpressionHelper.mapArguments(callSite, callableType, context)
     if (!mapping.isComplete) throw NotSupportedException()
     val mappedParameters = mapping.mappedParameters
-    val receiverType = getReceiverType(callSite, callableType, context)
-    val cspSubstitutions = PyTypeChecker.unifyReceiver(receiverType, context)
-    if (cspSubstitutions.paramSpecs.isNotEmpty() || cspSubstitutions.typeVarTuples.isNotEmpty()) throw NotSupportedException()
+    val cspSubstitutions = GenericSubstitutions()
     val declaredReturn = callableType.getReturnType(context)
 
     builder.putSubstitutions(si, cspSubstitutions)
@@ -283,7 +283,6 @@ object PyTypeInferenceCspFactory {
         builder.addConstraint(keyIV, valueIV, PyVariance.INVARIANT, ConstraintPriority.HIGH)
       }
     }
-    ivSubstitutions.qualifierType = PyTypeChecker.substitutePlainly(ivSubstitutions.qualifierType, ivSubstitutions, context) // LOL
 
     // function arguments
     for ((argument, parameter) in mappedParameters) {
@@ -298,8 +297,7 @@ object PyTypeInferenceCspFactory {
       if (!expectedParameterType.isUnknown
           && (hasGenericsOrIVs(expectedParameterType, context) || hasGenericsOrIVs(passedArgumentType, context))
       ) {
-        val expectedParamTypeSelf = substituteSelfTypes(expectedParameterType, receiverType, context)
-        val expectedParamTypeSelfIV = PyTypeChecker.substitutePlainly(expectedParamTypeSelf, ivSubstitutions, context)
+        val expectedParamTypeSelfIV = PyTypeChecker.substitutePlainly(expectedParameterType, ivSubstitutions, context)
         val passedArgumentTypeIV = PyTypeChecker.substitutePlainly(passedArgumentType, ivSubstitutions, context)
         // semantics: Actual <: TV
         builder.addConstraint(expectedParamTypeSelfIV, passedArgumentTypeIV, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
@@ -307,19 +305,7 @@ object PyTypeInferenceCspFactory {
     }
 
     // return type
-    val declaredReturnSelf = substituteSelfTypes(declaredReturn, receiverType, context)
-    val declaredReturnSelfIV = PyTypeChecker.substitutePlainly(declaredReturnSelf, ivSubstitutions, context)
-    return declaredReturnSelfIV
-  }
-
-  private fun getReceiverType(callSite: PyCallSiteExpression, callableType: PyCallableType, context: TypeEvalContext): PyType? {
-    val receiver = callSite.getReceiver(callableType.callable)
-    val receiverType = if (receiver is PyTypedElement) context.getType(receiver) else PyAnyType.any
-    val receiverTypeNewOrInit = if (receiverType is PyClassLikeType && PyUtil.isInitOrNewMethod(callableType.callable))
-      receiverType.toInstance()
-    else receiverType
-
-    return normalizeType(receiverTypeNewOrInit, context)
+    return PyTypeChecker.substitutePlainly(declaredReturn, ivSubstitutions, context)
   }
 
   fun hasGenericsOrIVs(type: PyType?, context: TypeEvalContext): Boolean {
@@ -448,33 +434,6 @@ object PyTypeInferenceCspFactory {
 }
 
 class NotSupportedException : RuntimeException()
-
-
-fun substituteSelfTypes(typeRef: PyType?, replacement: PyType?, context: TypeEvalContext): PyType? {
-  if (typeRef == null || replacement == null) {
-    return typeRef
-  }
-
-  var referencesInfVar = false
-  PyRecursiveTypeVisitor.traverse(typeRef, context, object : PyTypeTraverser() {
-    override fun visitPySelfType(selfType: PySelfType): PyRecursiveTypeVisitor.Traversal {
-      referencesInfVar = true
-      return PyRecursiveTypeVisitor.Traversal.TERMINATE
-    }
-  })
-  if (!referencesInfVar) return typeRef
-
-  return PyCloningTypeVisitor.clone(typeRef, object : PyCloningTypeVisitor(context) {
-    override fun visitPySelfType(selfType: PySelfType): PyType {
-      if (replacement is PyInstantiableType<*> && replacement.isDefinition != selfType.isDefinition) {
-        return if (selfType.isDefinition) replacement.toClass() else replacement.toInstance()
-      }
-      else {
-        return replacement
-      }
-    }
-  })
-}
 
 fun normalizeType(type: PyType?, context: TypeEvalContext): PyType? {
   var normalizedType = type

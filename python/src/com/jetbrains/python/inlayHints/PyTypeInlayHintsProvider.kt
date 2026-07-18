@@ -240,8 +240,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val callableType = mapping.callableType ?: return null
       val typeParameters = callableType.getTypeParameters(typeEvalContext)?.takeIf { it.isNotEmpty() } ?: return null
 
-      val receiver = call.getReceiver(callableType.callable)
-      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, receiver, callableType, mapping.mappedParameters, typeEvalContext)
+      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, callableType, mapping.mappedParameters, typeEvalContext)
                           ?: return null
       return typeParameters.map { PyTypeChecker.substitute(it, substitutions, typeEvalContext) }
     }

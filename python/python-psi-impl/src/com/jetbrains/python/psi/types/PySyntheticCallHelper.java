@@ -183,8 +183,8 @@ public final class PySyntheticCallHelper {
                                                           @NotNull TypeEvalContext context) {
     PyType type = context.getType(function);
     if (!(type instanceof PyFunctionType functionType)) return null;
-    if (receiverType == null) return functionType;
-    PyTypeUtil.FunctionBindingResult bindingResult = PyTypeUtil.bindFunction(functionType, receiverType, context);
+    if (!(receiverType instanceof PyInstantiableType<?>)) return functionType;
+    PyTypeUtil.FunctionBindingResult bindingResult = PyTypeUtil.bindFunction(functionType, (PyInstantiableType<?>)receiverType, context);
     return bindingResult != null ? bindingResult.getBoundMethodType() : null;
   }
 

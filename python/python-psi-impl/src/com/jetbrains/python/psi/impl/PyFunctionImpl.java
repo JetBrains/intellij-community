@@ -78,12 +78,10 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyNeverType;
-import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
@@ -256,32 +254,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       PyType callableType = context.getType(this);
       PyCallableType callableTypeCasted = callableType instanceof PyCallableType ? (PyCallableType)callableType : null;
       final var substitutions =
-        PyTypeInferenceCspFactory.unifyGenericCall(callSiteExpression, receiver, callableTypeCasted, parameters, context);
+        PyTypeInferenceCspFactory.unifyGenericCall(callSiteExpression, callableTypeCasted, parameters, context);
       if (substitutions != null) {
-        // Special handling for __new__ constructor and factory methods of generic classes returning Self:
-        //
-        // class C[T]:
-        //     def __new__(cls, x: T) -> Self:
-        //         ...
-        //
-        // C(42)  # expected C[int], not just C
-        if (getModifier() == CLASSMETHOD || PyUtil.isNewMethod(this)) {
-          if (type instanceof PySelfType) {
-            PyClass targetClass;
-            if (substitutions.getQualifierType() instanceof PyClassType qualifierClassType) {
-              targetClass = qualifierClassType.getPyClass();
-            }
-            else {
-              targetClass = getContainingClass();
-            }
-            if (targetClass != null) {
-              PyType genericType = PyTypeChecker.findGenericDefinitionType(targetClass, context);
-              if (genericType != null) {
-                type = genericType;
-              }
-            }
-          }
-        }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(callableTypeCasted, type, substitutions, context);
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);

@@ -89,7 +89,7 @@ public final class PyDescriptorTypeUtil {
     if (qualifier != null && attributeType instanceof PyCallableType) {
       PyType qualifierType = context.getType(qualifier);
       if (qualifierType instanceof PyClassType classType && !classType.isDefinition()) {
-        objectArgumentType = qualifierType;
+        objectArgumentType = qualifierType; // TODO: Incorrect: can be union
       }
     }
     List<PyType> argumentTypes = new ArrayList<>();
