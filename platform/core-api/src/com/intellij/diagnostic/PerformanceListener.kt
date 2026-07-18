@@ -2,12 +2,10 @@
 package com.intellij.diagnostic
 
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
-@Experimental
 interface PerformanceListener {
   fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
   }
