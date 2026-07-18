@@ -64,7 +64,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.experiment" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />

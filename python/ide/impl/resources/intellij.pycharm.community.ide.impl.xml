@@ -5,7 +5,6 @@
     <plugin id="com.intellij.modules.python"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
-    <module name="intellij.platform.whatsNew"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.poetry.common"/>
@@ -127,11 +126,6 @@
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
-
-    <applicationService serviceInterface="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmWhatsNewInVisionContentProvider"
-                        overrides="true"/>
-
 
     <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PyToxExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PySitePackagesExcludeWorkspaceFileIndexContributor"/>

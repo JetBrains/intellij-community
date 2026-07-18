@@ -8,7 +8,6 @@
   <content namespace="jetbrains">
     <module name="intellij.pycharm.community.ide.impl"/>
     <module name="intellij.pycharm.community.ide.implTraining"/>
-    <module name="intellij.platform.whatsNew"/>
     <module name="intellij.python.common.frontend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
@@ -16,6 +15,12 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Use the platform's web-based What's New (the whatsnew URL rendered in an embedded JCEF editor tab)
+     and show it automatically after an update, matching IntelliJ IDEA, instead of the Vision-based page. -->
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
+                        serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
+                        overrides="true"/>
     <!-- This group redefined in 3 places
       In [plugins\jupyter\core\resources\intellij.jupyter.core.xml] to place it in 'tools' group for all IDEs
       In [community\python\ide\customization.shared\resources\META-INF\plugin.xml] and

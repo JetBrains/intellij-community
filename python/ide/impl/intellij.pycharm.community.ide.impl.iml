@@ -65,7 +65,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
-    <orderEntry type="module" module-name="intellij.platform.whatsNew" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.experiment" />
     <orderEntry type="library" name="jna" level="project" />

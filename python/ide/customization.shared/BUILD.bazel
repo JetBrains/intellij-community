@@ -18,7 +18,6 @@ jvm_library(
         # do not sort,
         "//python/ide/impl",
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
-        "//platform/whatsNew",
         "//platform/platform-impl:ide-impl",
     ],
 )
@@ -37,7 +36,6 @@ jvm_library(
         ":customization.shared",
         "//python/ide/impl:impl_test_lib",
         "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining_test_lib",
-        "//platform/whatsNew:whatsNew_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
