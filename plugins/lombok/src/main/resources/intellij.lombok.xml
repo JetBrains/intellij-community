@@ -191,6 +191,16 @@
       implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
       key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
 
+    <localInspection
+      language="JAVA"
+      groupPath="Java,Lombok"
+      groupKey="inspection.lombok.group.name.redundant.definitions"
+      groupBundle="messages.LombokBundle"
+      shortName="UnusedLogger"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.UnusedLoggerInspection"
+      key="inspection.unused.logger.display.name" bundle="messages.LombokBundle"/>
+
     <intentionAction>
       <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithValIntentionAction</className>
