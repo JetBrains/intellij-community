@@ -469,7 +469,7 @@ internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
 // common stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25
-private const val MAX_SCATTERED_DUMPS_COUNT = 20
+private const val MAX_SCATTERED_DUMPS_COUNT = 10
 
 /**
  * Set DEBUG = true to enable freeze-detection regardless of other settings.
