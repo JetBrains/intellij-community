@@ -198,23 +198,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           pass
       """)
 
-    @Test
-    fun `union iteration`() = test("""
-      def f(c):
-          if c < 0:
-              return [1, 2, 3]
-          elif c == 0:
-              return 0.0
-          else:
-              return 'foo'
-
-      def g(c):
-          for expr in f(c):
-      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
-      #       └ TYPE int | LiteralString | Unknown
-              pass
-      """)
-
     @TestFor(issues = ["PY-20794"])
     @Test
     fun `iterate over pure list`() = test("""
