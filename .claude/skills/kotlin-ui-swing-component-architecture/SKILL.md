@@ -168,6 +168,10 @@ For concurrent requests, cancel obsolete work or tag requests and ignore stale c
 
 Prefer a `CoroutineScope` tied to the feature lifetime as the primary lifecycle mechanism: take a child scope of the enclosing project or service scope, or the scope the platform hands in, rather than constructing a standalone one. Launch asynchronous work, flow subscriptions, and retries in that scope so cancelling it tears everything down in one place.
 
+For event, message-bus, RPC, or `Flow` subscriptions, use the shortest lifecycle that consumes the updates. Prefer a caller/client scope owned by the UI content, dialog, popup, tool-window panel, or explicit operation over an application- or project-level service scope. Use an app/project service scope only when the collected state is intentionally app/project-owned for that full lifecycle and retaining everything reachable from the stream for that lifetime is acceptable.
+
+Avoid API methods that both start a subscription and expose a synchronous snapshot without an explicit owner. Split them into an owner-taking subscription method, for example one accepting `CoroutineScope`, and a snapshot accessor that only reads already-collected state. Action `update` paths and menu builders should read snapshots and must not implicitly start long-lived subscriptions. If a service caches per-project mirrors keyed by `ProjectId`, remove entries when the owning client scope completes.
+
 Implement `Disposable`, `AutoCloseable`, or the lifecycle type already used by the module when a platform integration point requires it, and bridge it to the scope by cancelling the scope on disposal. Ensure teardown:
 
 - Removes listeners and subscriptions.
