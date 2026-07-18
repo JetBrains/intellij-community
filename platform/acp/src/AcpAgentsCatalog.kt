@@ -60,6 +60,50 @@ interface AcpCatalogEntry {
   suspend fun resolveStartConfig(project: Project): AcpAgentStartConfig
 }
 
+/**
+ * Project-provided replacement for a managed ACP package runner such as `npx` or `uvx`.
+ * [argsPrefix] is inserted before the package name or the entry's existing runner arguments.
+ */
+@ApiStatus.Internal
+data class AcpRuntimeCommandOverride(
+  val command: String,
+  val argsPrefix: List<String> = emptyList(),
+)
+
+@ApiStatus.Internal
+data class AcpRuntimeOverrides(
+  val commands: Map<String, AcpRuntimeCommandOverride>,
+) {
+  operator fun get(command: String): AcpRuntimeCommandOverride? = commands[command]
+
+  fun applyTo(config: AcpAgentStartConfig): AcpAgentStartConfig {
+    val override = commands[config.command] ?: return config
+    return AcpAgentStartConfig.create(
+      command = override.command,
+      baseArgs = override.argsPrefix + config.baseArgs,
+      acpArgs = config.acpArgs,
+      env = config.env,
+      workingDir = config.workingDir,
+    )
+  }
+
+  companion object {
+    val EMPTY: AcpRuntimeOverrides = AcpRuntimeOverrides(emptyMap())
+  }
+}
+
+/**
+ * Optional catalog-entry contract used when a runtime override must be considered before lazy
+ * package installation. Callers fall back to [AcpRuntimeOverrides.applyTo] for other entries.
+ */
+@ApiStatus.Internal
+interface AcpRuntimeOverrideAwareCatalogEntry : AcpCatalogEntry {
+  suspend fun resolveStartConfig(project: Project, runtimeOverrides: AcpRuntimeOverrides): AcpAgentStartConfig
+
+  override suspend fun resolveStartConfig(project: Project): AcpAgentStartConfig =
+    resolveStartConfig(project, AcpRuntimeOverrides.EMPTY)
+}
+
 enum class AcpAgentOrigin {
   /** Declared in a local `acp.json` file. */
   LOCAL,
