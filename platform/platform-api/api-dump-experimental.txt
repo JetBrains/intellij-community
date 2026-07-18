@@ -105,9 +105,12 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - a:getVendorEmail():java.lang.String
 - a:getVendorUrl():java.lang.String
 - a:getVersion():java.lang.String
-- a:isBundled():Z
+- a:isBuiltIn():Z
 - a:isEssential():Z
 - a:isImplementationDetail():Z
+*:com.intellij.openapi.diagnostic.ProblematicPluginInfoWithDescriptor
+- com.intellij.openapi.diagnostic.ProblematicPluginInfo
+- a:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 *:com.intellij.openapi.diagnostic.UnhandledErrorReport
 *f:com.intellij.openapi.diagnostic.UnhandledExceptionReport
 - com.intellij.openapi.diagnostic.UnhandledErrorReport

@@ -2,14 +2,16 @@
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.IdeErrorsDialog.Companion.hashMessage
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
-import com.intellij.openapi.diagnostic.ProblematicPluginInfoBasedOnDescriptor
+import com.intellij.openapi.diagnostic.ProblematicPluginInfoWithDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -43,11 +45,17 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
   }
 
   internal fun analyzeCause(first: AbstractMessage): PluginId? {
-    if (first.throwable.isInstance<Freeze>()) {
+    val t = first.throwable
+    if (t.isInstance<Freeze>()) {
+      if (t is RemoteSerializedThrowable) {
+        // todo freeze is from backend, cannot analyze in frontend, infer it from exception
+        return PluginUtil.getInstance().findPluginId(t)
+      }
+
       return IdeaFreezeReporter.analyzeFreeze(first)
     }
 
-    return PluginUtil.getInstance().findPluginId(first.throwable)
+    return PluginUtil.getInstance().findPluginId(t)
   }
 
   internal suspend fun createPluginInfo(pluginId: PluginId?): ProblematicPluginInfo? {
@@ -84,8 +92,8 @@ internal inline fun <reified T : Throwable> Throwable.isInstance() = this is T |
 private class ProblematicPluginInfoBasedOnModel(val plugin: PluginUiModel) : ProblematicPluginInfo {
   override val pluginId: PluginId
     get() = plugin.pluginId
-  override val isBundled: Boolean
-    get() = plugin.isBundled
+  override val isBuiltIn: Boolean
+    get() = plugin.isBundled || plugin.isBundledUpdate
   override val isImplementationDetail: Boolean
     get() = plugin.isImplementationDetail
   override val isEssential: Boolean
@@ -105,3 +113,33 @@ private class ProblematicPluginInfoBasedOnModel(val plugin: PluginUiModel) : Pro
   override val vendorEmail: String?
     get() = null
 }
+
+private class ProblematicPluginInfoBasedOnDescriptor(override val pluginDescriptor: IdeaPluginDescriptor) : ProblematicPluginInfo,
+                                                                                                            ProblematicPluginInfoWithDescriptor {
+  override val pluginId: PluginId
+    get() = pluginDescriptor.pluginId
+  override val isBuiltIn: Boolean
+    get() = pluginDescriptor.isBundled || PluginManagerCore.isUpdatedBundledPlugin(pluginDescriptor)
+  override val isImplementationDetail: Boolean
+    get() = pluginDescriptor.isImplementationDetail
+  override val isEssential: Boolean
+    get() = ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
+  override val allowsBundledUpdate: Boolean
+    get() = pluginDescriptor.allowBundledUpdate()
+  override val name: @NlsSafe String
+    get() = pluginDescriptor.name ?: pluginId.idString
+  override val version: @NlsSafe String?
+    get() = pluginDescriptor.version
+  override val organization: @NlsSafe String?
+    get() = pluginDescriptor.organization
+  override val vendor: @NlsSafe String?
+    get() = pluginDescriptor.vendor
+  override val vendorUrl: String?
+    get() = pluginDescriptor.vendorUrl
+  override val vendorEmail: String?
+    get() = pluginDescriptor.vendorEmail
+}
+
+@ApiStatus.Internal
+fun toProblematicPluginInfo(pluginDescriptor: IdeaPluginDescriptor?): ProblematicPluginInfo? =
+  pluginDescriptor?.let { ProblematicPluginInfoBasedOnDescriptor(it) }

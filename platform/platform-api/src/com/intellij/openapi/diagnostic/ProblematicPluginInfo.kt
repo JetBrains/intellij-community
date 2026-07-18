@@ -2,7 +2,6 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -14,7 +13,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface ProblematicPluginInfo {
   val pluginId: PluginId
-  val isBundled: Boolean
+  /**
+   * @return isBundled or isUpdatedBundledPlugin
+   */
+  val isBuiltIn: Boolean
   val isImplementationDetail: Boolean
   val isEssential: Boolean
   val allowsBundledUpdate: Boolean
@@ -26,28 +28,7 @@ interface ProblematicPluginInfo {
   val vendorEmail: String?
 }
 
-@ApiStatus.Internal
-class ProblematicPluginInfoBasedOnDescriptor(val pluginDescriptor: IdeaPluginDescriptor) : ProblematicPluginInfo {
-  override val pluginId: PluginId
-    get() = pluginDescriptor.pluginId
-  override val isBundled: Boolean
-    get() = pluginDescriptor.isBundled
-  override val isImplementationDetail: Boolean
-    get() = pluginDescriptor.isImplementationDetail
-  override val isEssential: Boolean
-    get() = ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
-  override val allowsBundledUpdate: Boolean
-    get() = pluginDescriptor.allowBundledUpdate()
-  override val name: @NlsSafe String
-    get() = pluginDescriptor.name ?: pluginId.idString
-  override val version: @NlsSafe String?
-    get() = pluginDescriptor.version
-  override val organization: @NlsSafe String?
-    get() = pluginDescriptor.organization
-  override val vendor: @NlsSafe String?
-    get() = pluginDescriptor.vendor
-  override val vendorUrl: String?
-    get() = pluginDescriptor.vendorUrl
-  override val vendorEmail: String?
-    get() = pluginDescriptor.vendorEmail
+@ApiStatus.Experimental
+interface ProblematicPluginInfoWithDescriptor : ProblematicPluginInfo {
+  val pluginDescriptor: IdeaPluginDescriptor
 }

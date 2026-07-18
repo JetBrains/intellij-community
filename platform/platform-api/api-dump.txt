@@ -1989,7 +1989,6 @@ a:com.intellij.openapi.diagnostic.ErrorReportSubmitter
 c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.String,java.lang.Throwable,java.lang.Object):V
-- <init>(java.lang.String,java.lang.Throwable,java.util.List,com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.Object):V
 - getAttachments():java.util.List
 - getData():java.lang.Object
 - getMessage():java.lang.String

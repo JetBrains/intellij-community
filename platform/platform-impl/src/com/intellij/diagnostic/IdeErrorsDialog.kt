@@ -479,7 +479,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
     if (pluginId != null) {
       val name = pluginInfo?.name ?: pluginId.toString()
-      if (pluginInfo != null && (!pluginInfo.isBundled || pluginInfo.allowsBundledUpdate)) {
+      if (pluginInfo != null && (!pluginInfo.isBuiltIn || pluginInfo.allowsBundledUpdate)) {
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, pluginInfo.version))
       }
       else {
