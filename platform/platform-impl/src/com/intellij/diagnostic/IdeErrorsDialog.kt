@@ -31,8 +31,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
@@ -71,10 +69,13 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -139,6 +140,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private lateinit var myCredentialLabel: JTextComponent
   private lateinit var myLoadingDecorator: LoadingDecorator
 
+  @Suppress("RAW_SCOPE_CREATION")
+  private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() +
+                                                              CoroutineName("IdeErrorsDialog") +
+                                                              DiagnosticDispatchers.Default)
+
   init {
     title = if (actionLeadToError != null)
       DiagnosticBundle.message("error.list.title.with.action", actionLeadToError)
@@ -158,7 +164,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
-    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+    withContext(DiagnosticDispatchers.Default) {
       val account = submitter.reporterAccount
       if (account != null) {
         withContext(Dispatchers.EDT) {
@@ -175,7 +181,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) {
-    withContext(serviceAsync<ITNProxyCoroutineScopeHolder>().dispatcher) {
+    withContext(DiagnosticDispatchers.Default) {
       val notice = submitter.privacyNoticeText
       if (notice != null) {
         withContext(Dispatchers.EDT) {
@@ -380,6 +386,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   override fun dispose() {
     myMessagePool.removeAdvisor(this)
     myUpdateControlsJob.cancel()
+    coroutineScope.cancel()
     super.dispose()
   }
 
@@ -415,7 +422,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     if (isModal) {
       context += ModalityState.any().asContextElement()
     }
-    myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(context) {
+    myUpdateControlsJob = coroutineScope.launch(context) {
       val cluster = selectedCluster()
       val submitter = cluster?.submitter
       // if there are no messages left, the dialog will be closed automatically, so there is no need to update controls in that case
@@ -605,7 +612,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val message = cluster.first
     message.isSubmitting = true
 
-    service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+    coroutineScope.launch {
       val notice = submitter.privacyNoticeText
       if (notice != null) {
         val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
@@ -828,7 +835,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         updateControls()
 
         val parentComponent = getParentComponentForReport(true)
-        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+        coroutineScope.launch {
           val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
           if (!autoReportEnabled) {
             if (closeDialog) {
@@ -905,7 +912,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
         SHOW_NEW_BUILD_DIALOG.set(true)
         val parentComponent = getParentComponentForReport(true)
-        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+        coroutineScope.launch {
           val reportingStarted = reportAll(myMessageClusters, parentComponent)
           if (reportingStarted) {
             withContext(Dispatchers.EDT) {
@@ -927,7 +934,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
         SHOW_NEW_BUILD_DIALOG.set(true)
         val parentComponent = getParentComponentForReport(true)
-        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+        coroutineScope.launch {
           val reportingStarted = reportAll(myMessageClusters, parentComponent)
           if (reportingStarted) {
             withContext(Dispatchers.EDT) {

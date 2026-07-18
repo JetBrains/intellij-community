@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.net.ssl.CertificateManager
@@ -28,7 +26,6 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -55,13 +52,9 @@ import javax.net.ssl.X509TrustManager
 import kotlin.io.path.Path
 import kotlin.io.path.bufferedReader
 
-@Service
-internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
+internal object DiagnosticDispatchers {
   @JvmField
-  val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
-
-  @JvmField
-  internal val coroutineScope: CoroutineScope = coroutineScope.childScope("ITNProxy call", dispatcher)
+  val Default: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 }
 
 @ApiStatus.Internal
