@@ -7,7 +7,6 @@ import {createProjectPathManager} from './project-path'
 import {
   resolveAnalysisCapabilities,
   resolveFormattingCapabilities,
-  resolveReadCapabilities,
   resolveSearchCapabilities
 } from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
@@ -15,7 +14,6 @@ import type {McpStreamTransport} from './stream-transport'
 import type {
   AnalysisCapabilities,
   FormattingCapabilities,
-  ReadCapabilities,
   SearchCapabilities,
   ToolArgs,
   ToolSpecLike
@@ -82,7 +80,6 @@ export class UpstreamConnection {
   searchCapabilities: SearchCapabilities = resolveSearchCapabilities([]).capabilities
   analysisCapabilities: AnalysisCapabilities = resolveAnalysisCapabilities([]).capabilities
   formattingCapabilities: FormattingCapabilities = resolveFormattingCapabilities([]).capabilities
-  readCapabilities: ReadCapabilities = resolveReadCapabilities([]).capabilities
   ideVersion: string | null = null
 
   /** Called when internal state (capabilities, tools) resets or refreshes. */
@@ -166,7 +163,6 @@ export class UpstreamConnection {
     this.searchCapabilities = resolveSearchCapabilities([]).capabilities
     this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities
     this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities
-    this.readCapabilities = resolveReadCapabilities([]).capabilities
     this.ideVersion = null
     this.onStateChange?.()
   }
@@ -199,7 +195,6 @@ export class UpstreamConnection {
       this.searchCapabilities = resolveSearchCapabilities(tools).capabilities
       this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities
       this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities
-      this.readCapabilities = resolveReadCapabilities(tools).capabilities
       this.onStateChange?.()
       return tools
     })
@@ -215,7 +210,7 @@ export class UpstreamConnection {
   /**
    * Call upstream tool with MINIMAL projectPath injection.
    *
-   * Container tools (`container_exec`, `container_read_file`, …) are application-scoped
+   * Container tools (`container_exec`, `container_search_text`, …) are application-scoped
    * and don't care about `project_path` as an argument. But the IDE's MCP server still
    * uses `project_path` to bind the incoming request to one of multiple open projects,
    * and without it falls back to prompting the user. So when the upstream was configured

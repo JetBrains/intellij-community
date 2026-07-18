@@ -1,26 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {handleApplyPatchTool} from './handlers/apply-patch'
 import {handleLintFilesTool} from './handlers/lint-files'
-import {handleListDirTool} from './handlers/list-dir'
-import {handleReadTool} from './handlers/read'
 import {handleReformatFileTool} from './handlers/reformat-file'
 import {handleRenameTool} from './handlers/rename'
 import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {
-  handleContainerApplyPatch,
   handleContainerBash,
-  handleContainerListDir,
-  handleContainerReadFile,
   handleContainerSearchFile,
   handleContainerSearchRegex,
   handleContainerSearchText
 } from './container-handlers'
 import {
-  createApplyPatchSchema,
   createLintFilesSchema,
-  createListDirSchema,
-  createReadSchema,
   createReformatFileSchema,
   createRenameSchema,
   createSearchFileSchema,
@@ -32,7 +23,6 @@ import type {
   AnalysisCapabilities,
   ContainerSessionConfig,
   FormattingCapabilities,
-  ReadCapabilities,
   SearchCapabilities,
   ToolAnnotationsLike,
   ToolArgs,
@@ -50,7 +40,6 @@ interface ToolContext {
   searchCapabilities: SearchCapabilities
   analysisCapabilities: AnalysisCapabilities
   formattingCapabilities: FormattingCapabilities
-  readCapabilities: ReadCapabilities
   shouldApplyWorkaround: WorkaroundChecker
   containerSession: ContainerSessionConfig | null
 }
@@ -70,18 +59,30 @@ interface ToolVariant {
   expose?: ToolExpose
 }
 
-export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command', 'execute_tool', 'skill_search'])
+export const BLOCKED_TOOL_NAMES = new Set([
+  'read_file',
+  'get_file_text_by_path',
+  'apply_patch',
+  'create_new_file',
+  'replace_text_in_file',
+  'list_dir',
+  'list_directory_tree',
+  'container_read_file',
+  'container_write_file',
+  'container_list_dir',
+  'execute_terminal_command',
+  'execute_tool',
+  'skill_search'
+])
 
 const EXTRA_REPLACED_TOOL_NAMES = [
   'search_in_files_by_text',
   'search_in_files_by_regex',
   'find_files_by_glob',
   'find_files_by_name_keyword',
-  'replace_text_in_file',
-  'search',
-  'execute_terminal_command'
+  'search'
 ]
-const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.'
+const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.'
 const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotationsLike = {readOnlyHint: true, openWorldHint: false}
 
 function resolveToolDescription(description: ToolDescription, context: ToolContext): string {
@@ -125,18 +126,6 @@ function withTimeoutDeclared(inputSchema: ToolInputSchema): ToolInputSchema {
 }
 
 const TOOL_VARIANTS: ToolVariant[] = [
-  {
-    name: 'read_file',
-    description: 'Reads a local file and returns numbered lines (1-indexed) as text. Supports optional offset and limit line controls.',
-    schemaFactory: () => createReadSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession}) => {
-      if (containerSession) return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'})
-    },
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['get_file_text_by_path'],
-    expose: ({readCapabilities, containerSession}) => containerSession != null || !readCapabilities.hasReadFile
-  },
   {
     name: 'search_text',
     description: 'Search for a text substring in project files.',
@@ -201,28 +190,6 @@ const TOOL_VARIANTS: ToolVariant[] = [
       handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
     upstreamNames: ['reformat_file'],
     expose: ({formattingCapabilities}) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
-  },
-  {
-    name: 'list_dir',
-    description: 'Lists entries in a local directory with 1-indexed entry numbers and simple type labels.',
-    schemaFactory: () => createListDirSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession}) => {
-      if (containerSession) return (args) => handleContainerListDir(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleListDirTool(args, projectPath, callUpstreamTool)
-    },
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['list_directory_tree']
-  },
-  {
-    name: 'apply_patch',
-    description: 'Apply a patch using the Codex apply_patch format or unified git diff format.',
-    schemaFactory: () => createApplyPatchSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession}) => {
-      if (containerSession) return (args) => handleContainerApplyPatch(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool)
-    },
-    upstreamNames: ['get_file_text_by_path'],
-    expose: ({readCapabilities, containerSession}) => containerSession != null || !readCapabilities.hasApplyPatch
   },
   {
     name: 'rename',

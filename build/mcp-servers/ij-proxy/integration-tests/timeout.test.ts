@@ -8,9 +8,15 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+const timeoutPassthroughTool = buildUpstreamTool('timeout_passthrough_tool', {
+  payload: {type: 'string'},
+  timeout: {type: 'number'}
+}, ['payload'])
+
 describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
   it('times out stalled upstream tool calls and ignores late responses', async () => {
     await withProxy({
+      tools: [timeoutPassthroughTool],
       proxyEnv: {JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S: '1'},
       onToolCall: async () => {
         await delay(1500)
@@ -19,8 +25,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
     }, async ({proxyClient}) => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'missing.txt', offset: 1, limit: 1}
+        name: 'timeout_passthrough_tool',
+        arguments: {payload: 'test'}
       })
 
       ok(response.result?.isError)
@@ -72,6 +78,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('arguments.timeout shortens the env default', async () => {
     await withProxy({
+      tools: [timeoutPassthroughTool],
       proxyEnv: {JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S: '10'},
       onToolCall: async () => {
         await delay(1500)
@@ -80,8 +87,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
     }, async ({proxyClient}) => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'x.txt', offset: 1, limit: 1, timeout: 200}
+        name: 'timeout_passthrough_tool',
+        arguments: {payload: 'test', timeout: 200}
       })
 
       ok(response.result?.isError)
@@ -92,6 +99,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('arguments.timeout extends beyond env default', async () => {
     await withProxy({
+      tools: [timeoutPassthroughTool],
       proxyEnv: {JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S: '1'},
       onToolCall: async () => {
         await delay(1500)
@@ -100,8 +108,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
     }, async ({proxyClient}) => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'x.txt', offset: 1, limit: 1, timeout: 5000}
+        name: 'timeout_passthrough_tool',
+        arguments: {payload: 'test', timeout: 5000}
       })
 
       ok(!response.result?.isError)
@@ -141,6 +149,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('arguments.timeout: 0 disables the timeout', async () => {
     await withProxy({
+      tools: [timeoutPassthroughTool],
       proxyEnv: {JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S: '1'},
       onToolCall: async () => {
         await delay(1500)
@@ -149,8 +158,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
     }, async ({proxyClient}) => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'x.txt', offset: 1, limit: 1, timeout: 0}
+        name: 'timeout_passthrough_tool',
+        arguments: {payload: 'test', timeout: 0}
       })
 
       ok(!response.result?.isError)
@@ -160,6 +169,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
   it('rejects invalid arguments.timeout without forwarding to upstream', async () => {
     let upstreamCalls = 0
     await withProxy({
+      tools: [timeoutPassthroughTool],
       onToolCall: async () => {
         upstreamCalls += 1
         return {text: '{}'}
@@ -169,8 +179,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
       for (const badValue of [-1, 1.5, 'abc']) {
         const response = await proxyClient.send('tools/call', {
-          name: 'read_file',
-          arguments: {file_path: 'x.txt', offset: 1, limit: 1, timeout: badValue}
+          name: 'timeout_passthrough_tool',
+          arguments: {payload: 'test', timeout: badValue}
         })
         ok(response.result?.isError, `expected error for timeout=${String(badValue)}`)
         const message = response.result?.content?.[0]?.text ?? ''

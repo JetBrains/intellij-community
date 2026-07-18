@@ -60,11 +60,6 @@ export interface FormattingCapabilities {
   supportsReformatFile: boolean
 }
 
-export interface ReadCapabilities {
-  hasReadFile: boolean
-  hasApplyPatch?: boolean
-}
-
 export interface ToolInputSchema {
   type: 'object'
   properties: Record<string, unknown>

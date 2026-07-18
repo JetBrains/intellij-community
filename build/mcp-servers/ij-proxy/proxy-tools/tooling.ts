@@ -6,7 +6,6 @@ import type {
   AnalysisCapabilities,
   ContainerSessionConfig,
   FormattingCapabilities,
-  ReadCapabilities,
   SearchCapabilities,
   ToolArgs,
   ToolSpecLike,
@@ -54,23 +53,6 @@ export function resolveSearchCapabilities(
   }
 
   return {capabilities}
-}
-
-export function resolveReadCapabilities(
-  upstreamTools: ToolSpecLike[] | undefined
-): {capabilities: ReadCapabilities} {
-  const names = new Set<string>()
-  for (const tool of upstreamTools ?? []) {
-    const name = typeof tool?.name === 'string' ? tool.name : ''
-    if (name) names.add(name)
-  }
-
-  return {
-    capabilities: {
-      hasReadFile: names.has('read_file'),
-      hasApplyPatch: names.has('apply_patch')
-    }
-  }
 }
 
 export function resolveAnalysisCapabilities(
@@ -141,7 +123,6 @@ export function createProxyTooling({
   searchCapabilities,
   analysisCapabilities,
   formattingCapabilities,
-  readCapabilities,
   ideVersion,
   containerSession
 }: {
@@ -151,7 +132,6 @@ export function createProxyTooling({
   searchCapabilities: SearchCapabilities
   analysisCapabilities: AnalysisCapabilities
   formattingCapabilities: FormattingCapabilities
-  readCapabilities: ReadCapabilities
   ideVersion?: string | null
   containerSession?: ContainerSessionConfig | null
 }): {
@@ -167,7 +147,6 @@ export function createProxyTooling({
     searchCapabilities,
     analysisCapabilities,
     formattingCapabilities,
-    readCapabilities,
     shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
     containerSession: containerSession ?? null
   })

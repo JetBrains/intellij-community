@@ -156,13 +156,6 @@ if (containerSession?.projectPath) {
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
 
-function blockedToolMessage(toolName: string): string {
-  if (toolName === 'create_new_file') {
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
-  }
-  return `Tool '${toolName}' is not exposed by ij-proxy.`
-}
-
 // --- IDE upstreams (symmetric: both nullable, discovered lazily) ---
 
 let ideaUpstream: UpstreamConnection | null = null
@@ -222,7 +215,6 @@ function updateProxyTooling(): void {
       searchCapabilities: ideaUpstream.searchCapabilities,
       analysisCapabilities: ideaUpstream.analysisCapabilities,
       formattingCapabilities: ideaUpstream.formattingCapabilities,
-      readCapabilities: ideaUpstream.readCapabilities,
       ideVersion: ideaUpstream.ideVersion,
       containerSession
     })
@@ -246,7 +238,6 @@ function updateProxyTooling(): void {
       searchCapabilities: riderUpstream.searchCapabilities,
       analysisCapabilities: riderUpstream.analysisCapabilities,
       formattingCapabilities: riderUpstream.formattingCapabilities,
-      readCapabilities: riderUpstream.readCapabilities,
       ideVersion: riderUpstream.ideVersion,
       containerSession
     })
@@ -293,7 +284,7 @@ function buildInstructions(): string | undefined {
   if (containerSession) {
     parts.push(
       `CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`,
-      `All file and search operations (read_file, apply_patch, search_text, search_regex, search_file, list_dir) are routed to the container.`,
+      `Search operations (search_text, search_regex, search_file) are routed to the container. Use the agent's native file tools for reads, writes, patches, and directory listing.`,
       `Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.`,
       `Use the "bash" tool for ALL shell commands — it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.`,
       `The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.`,
@@ -630,14 +621,14 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     if (BASE_BLOCKED_TOOL_NAMES.has(toolName)) {
-      return makeToolError(blockedToolMessage(toolName))
+      return makeToolError(`Tool '${toolName}' is not exposed by ij-proxy.`)
     }
 
     await ensureDiscovered()
 
     // Proxy-handled tools
     if (proxyToolNames.has(toolName)) {
-      // Both IDEs available: merge search tools, route file tools by path
+      // Both IDEs available: merge search tools, route path-scoped tools by path
       if (ideaProxyToolCall && riderProxyToolCall) {
         if (isMergeTool(toolName)) {
           return await callMergedProxyTool(toolName, args)

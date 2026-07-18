@@ -5655,8 +5655,8 @@ var require_utils2 = __commonJS((exports) => {
       output = `(?:^(?!${output}).*$)`;
     return output;
   };
-  exports.basename = (path6, { windows } = {}) => {
-    let segs = path6.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
+  exports.basename = (path4, { windows } = {}) => {
+    let segs = path4.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
     if (last === "")
       return segs[segs.length - 2];
     return last;
@@ -6709,7 +6709,7 @@ var require_picomatch2 = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path10 from "path";
+import path8 from "path";
 import { cwd as cwd2, env as env2 } from "process";
 import { fileURLToPath as fileURLToPath2 } from "url";
 
@@ -23307,64 +23307,12 @@ function createProjectPathManager({
   };
 }
 
-// proxy-tools/handlers/apply-patch.ts
-import { Buffer as Buffer2 } from "buffer";
-import { chmod, copyFile, mkdir, readFile, rename, rm, stat, writeFile as writeFile2 } from "fs/promises";
-import path3 from "path";
-
-// proxy-tools/git-utils.ts
-import { spawn } from "child_process";
-function toGitPath(relativePath) {
-  return relativePath.replace(/\\/g, "/");
-}
-async function runGitCommand(args, projectPath) {
-  await new Promise((resolve, reject) => {
-    let child = spawn("git", args, { cwd: projectPath }), stderr = "";
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    }), child.on("error", (error51) => {
-      reject(Error(`Failed to run git ${args[0]}: ${error51.message}`));
-    }), child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-      let message = stderr.trim() || `git ${args[0]} failed with exit code ${code}`;
-      reject(Error(message));
-    });
-  });
-}
-async function isTrackedPath(relativePath, projectPath) {
-  let gitPath = toGitPath(relativePath);
-  return await new Promise((resolve, reject) => {
-    let child = spawn("git", ["ls-files", "--error-unmatch", "--", gitPath], { cwd: projectPath }), stderr = "";
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    }), child.on("error", (error51) => {
-      reject(Error(`Failed to run git ls-files: ${error51.message}`));
-    }), child.on("close", (code) => {
-      if (code === 0) {
-        resolve(!0);
-        return;
-      }
-      if (code === 1) {
-        resolve(!1);
-        return;
-      }
-      let message = stderr.trim() || `git ls-files failed with exit code ${code}`;
-      reject(Error(message));
-    });
-  });
-}
-
 // proxy-tools/shared.ts
 import path from "path";
-var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, READ_FILE_MAX_LINE_LENGTH = 500, NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
+var nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
 }), positiveIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
   message: "must be a positive integer"
-}), nonNegativeIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value >= 0, {
-  message: "must be a non-negative integer"
 });
 function parseWithMessage(schema, value, message) {
   let parsed = schema.safeParse(value);
@@ -23597,879 +23545,6 @@ function extractFileListFromResults(results) {
       files.push(entry.filePath);
   return files;
 }
-function normalizeLineEndings(text) {
-  return text.replace(/\r\n/g, `
-`).replace(/\r/g, `
-`);
-}
-function formatReadLine(line) {
-  if (line.length <= READ_FILE_MAX_LINE_LENGTH)
-    return line;
-  let boundaryIndex = READ_FILE_MAX_LINE_LENGTH - 1, boundaryChar = line.charCodeAt(boundaryIndex);
-  if (boundaryChar >= 55296 && boundaryChar <= 56319)
-    return Array.from(line).slice(0, READ_FILE_MAX_LINE_LENGTH).join("");
-  return line.slice(0, READ_FILE_MAX_LINE_LENGTH);
-}
-async function readFileTextExact(relativePath, callUpstreamTool) {
-  try {
-    let result = await callUpstreamTool("read_file", {
-      file_path: relativePath,
-      offset: 1,
-      limit: FULL_READ_MAX_LINES
-    }), text = extractTextFromResult(result);
-    if (typeof text === "string")
-      return renderRawTextFromReadOutput(text);
-  } catch {}
-  return readFileTextLegacy(relativePath, { truncateMode: "NONE" }, callUpstreamTool);
-}
-async function readFileTextLegacy(relativePath, { maxLinesCount, truncateMode } = {}, callUpstreamTool) {
-  let args = { pathInProject: relativePath }, resolvedMaxLinesCount = maxLinesCount !== void 0 && maxLinesCount !== null ? maxLinesCount : truncateMode === "NONE" ? FULL_READ_MAX_LINES : void 0;
-  if (resolvedMaxLinesCount !== void 0 && resolvedMaxLinesCount !== null)
-    args.maxLinesCount = resolvedMaxLinesCount;
-  if (truncateMode)
-    args.truncateMode = truncateMode;
-  let result = await callUpstreamTool("get_file_text_by_path", args), text = extractTextFromResult(result);
-  if (typeof text !== "string")
-    throw Error("Failed to read file contents");
-  return text;
-}
-function renderRawTextFromReadOutput(text) {
-  let numberedLines = parseNumberedReadOutput(text);
-  if (numberedLines.length === 0)
-    throw Error("Failed to read file contents");
-  let rawLines = [];
-  for (let index = 0;index < numberedLines.length; index += 1) {
-    let { lineNumber, lineText } = numberedLines[index], expectedLineNumber = index + 1;
-    if (lineNumber !== expectedLineNumber)
-      throw Error("Failed to read file contents");
-    rawLines.push(lineText);
-  }
-  return rawLines.join(`
-`);
-}
-function parseNumberedReadOutput(text) {
-  let normalized = normalizeLineEndings(text);
-  if (normalized === "")
-    return [];
-  return normalized.split(`
-`).map((line) => {
-    let match = NUMBERED_READ_OUTPUT_REGEX.exec(line);
-    if (!match)
-      throw Error("Failed to read file contents");
-    return {
-      lineNumber: Number.parseInt(match[1], 10),
-      lineText: match[2] ?? ""
-    };
-  });
-}
-function splitLines2(text) {
-  let lines = normalizeLineEndings(text).split(`
-`);
-  if (lines.length > 0 && lines[lines.length - 1] === "")
-    lines.pop();
-  return lines;
-}
-
-// proxy-tools/search-fallback.ts
-import path2 from "path";
-
-// proxy-tools/search-in-files.ts
-async function searchInFiles(args, callUpstreamTool) {
-  let toolName = typeof args.regexPattern === "string" ? "search_in_files_by_regex" : "search_in_files_by_text", result = await callUpstreamTool(toolName, args), entries = extractEntries(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
-  return {
-    entries,
-    probablyHasMoreMatchingEntries: structuredRecord?.probablyHasMoreMatchingEntries === !0,
-    timedOut: structuredRecord?.timedOut === !0
-  };
-}
-
-// proxy-tools/search-fallback.ts
-var SEARCH_FALLBACK_REGEX = "(?m)^.*$", SEARCH_FALLBACK_MAX_LINES = 200000, SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS = 1000;
-async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
-  let cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES), directory = path2.dirname(relativePath), directoryToSearch = directory === "." ? void 0 : directory, { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
-    regexPattern: SEARCH_FALLBACK_REGEX,
-    directoryToSearch,
-    fileMask: path2.basename(relativePath),
-    caseSensitive: !0,
-    maxUsageCount: cappedMaxLine
-  }, callUpstreamTool), hasMore = probablyHasMoreMatchingEntries || maxLine > cappedMaxLine || timedOut, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0, hasTruncatedLine = !1;
-  for (let entry of entries) {
-    if (!entry || typeof entry.lineNumber !== "number")
-      continue;
-    if (normalizeEntryPath(projectPath, entry.filePath) !== absolutePath)
-      continue;
-    let lineNumber = entry.lineNumber;
-    if (lineNumber > maxLineNumber)
-      maxLineNumber = lineNumber;
-    if (!lineMap.has(lineNumber)) {
-      let normalizedLine = normalizeUsageLine(entry.lineText);
-      if (normalizedLine.length >= SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS)
-        hasTruncatedLine = !0;
-      lineMap.set(lineNumber, normalizedLine);
-    }
-  }
-  return { lineMap, maxLineNumber, hasMore, hasTruncatedLine };
-}
-function normalizeUsageLine(lineText) {
-  if (typeof lineText !== "string")
-    return "";
-  if (!lineText.startsWith("||"))
-    return lineText;
-  let tailIndex = lineText.lastIndexOf("||");
-  if (tailIndex <= 1)
-    return "";
-  return lineText.slice(2, tailIndex);
-}
-
-// proxy-tools/truncation.ts
-function isTruncatedText(text) {
-  return findTruncationMarkerSuffix(text) >= 0 || findTruncationMarkerLine(text) >= 0;
-}
-function findTruncationMarkerSuffix(text) {
-  if (text.endsWith(TRUNCATION_MARKER))
-    return text.length - TRUNCATION_MARKER.length;
-  if (text.endsWith(`${TRUNCATION_MARKER}
-`))
-    return text.length - TRUNCATION_MARKER.length - 1;
-  if (text.endsWith(`${TRUNCATION_MARKER}\r
-`))
-    return text.length - TRUNCATION_MARKER.length - 2;
-  return -1;
-}
-function findTruncationMarkerLine(text) {
-  let index = text.indexOf(TRUNCATION_MARKER);
-  while (index >= 0) {
-    let beforeIndex = index - 1, afterIndex = index + TRUNCATION_MARKER.length, beforeOk = beforeIndex < 0 || isLineBreakChar(text.charCodeAt(beforeIndex)), afterOk = afterIndex >= text.length || isLineBreakChar(text.charCodeAt(afterIndex));
-    if (beforeOk && afterOk)
-      return index;
-    index = text.indexOf(TRUNCATION_MARKER, index + TRUNCATION_MARKER.length);
-  }
-  return -1;
-}
-function isLineBreakChar(code) {
-  return code === 10 || code === 13;
-}
-
-// proxy-tools/handlers/apply-patch.ts
-var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", DIFF_GIT_PREFIX = "diff --git ", NO_NEWLINE_MARKER = "\\ No newline at end of file", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading", UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/;
-async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
-  let patchText = extractPatchText(args), operations = parsePatch(patchText), writeToDisk = await pathExists(projectPath), writeReports = [], touched = 0;
-  for (let op of operations) {
-    if (op.type === "add") {
-      let { relative: relative2, absolute: absolute2 } = resolvePathInProject(projectPath, op.path, "path");
-      if (writeToDisk) {
-        let bytes = await writeTextFile(absolute2, op.content, !1);
-        writeReports.push({ relative: relative2, bytes });
-      } else
-        await callUpstreamTool("create_new_file", {
-          pathInProject: relative2,
-          text: op.content,
-          overwrite: !1
-        });
-      touched += 1;
-      continue;
-    }
-    let { relative, absolute } = resolvePathInProject(projectPath, op.path, "path");
-    if (op.type === "delete") {
-      await runGitRm(relative, projectPath), touched += 1;
-      continue;
-    }
-    if (op.type === "update") {
-      let source = await readFileTextForPatch(relative, absolute, projectPath, writeToDisk, callUpstreamTool), updated = op.hunks.length === 0 ? source.text : applyHunks(source.text, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
-      if (moveTarget)
-        await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await writePatchedText({
-          relative: moveTarget.relative,
-          absolute: moveTarget.absolute,
-          text: updated,
-          overwrite: !0,
-          writeToDisk,
-          preferUpstreamWrite: source.preferUpstreamWrite,
-          callUpstreamTool,
-          writeReports
-        });
-      else
-        await writePatchedText({
-          relative,
-          absolute,
-          text: updated,
-          overwrite: !0,
-          writeToDisk,
-          preferUpstreamWrite: source.preferUpstreamWrite,
-          callUpstreamTool,
-          writeReports
-        });
-      touched += 1;
-    }
-  }
-  return formatApplyPatchResult(touched, writeReports);
-}
-async function readFileTextForPatch(relativePath, absolutePath, projectPath, writeToDisk, callUpstreamTool) {
-  if (writeToDisk) {
-    let diskText = await readFile(absolutePath, "utf8"), upstreamText = await readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool);
-    if (upstreamText !== null)
-      return { text: upstreamText, preferUpstreamWrite: !0 };
-    return { text: diskText, preferUpstreamWrite: !1 };
-  }
-  let original = await readFileTextExact(relativePath, callUpstreamTool);
-  if (!isTruncatedText(original))
-    return { text: original, preferUpstreamWrite: !0 };
-  try {
-    return {
-      text: await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool),
-      preferUpstreamWrite: !0
-    };
-  } catch (error51) {
-    if (error51 instanceof Error && error51.message === TRUNCATION_ERROR)
-      throw error51;
-    throw Error(TRUNCATION_ERROR);
-  }
-}
-async function readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool) {
-  try {
-    let upstreamText = await readFileTextExact(relativePath, callUpstreamTool);
-    if (isTruncatedText(upstreamText) || upstreamText === diskText)
-      return null;
-    return upstreamText;
-  } catch {
-    return null;
-  }
-}
-async function writePatchedText(options) {
-  let {
-    relative,
-    absolute,
-    text,
-    overwrite,
-    writeToDisk,
-    preferUpstreamWrite,
-    callUpstreamTool,
-    writeReports
-  } = options;
-  if (preferUpstreamWrite || !writeToDisk) {
-    if (await callUpstreamTool("create_new_file", {
-      pathInProject: relative,
-      text,
-      overwrite
-    }), !writeToDisk)
-      return;
-    let verifiedBytes = await tryVerifyTextFile(absolute, text);
-    if (verifiedBytes !== null) {
-      writeReports.push({ relative, bytes: verifiedBytes });
-      return;
-    }
-  }
-  let bytes = await writeTextFile(absolute, text, overwrite);
-  writeReports.push({ relative, bytes });
-}
-async function pathExists(filePath) {
-  try {
-    return await stat(filePath), !0;
-  } catch (error51) {
-    if (isErrorCode(error51, "ENOENT"))
-      return !1;
-    throw error51;
-  }
-}
-async function writeTextFile(absolutePath, text, overwrite) {
-  if (await ensureParentDir(absolutePath), overwrite)
-    await writeTextFileAtomically(absolutePath, text);
-  else
-    await writeFile2(absolutePath, text, { encoding: "utf8", flag: "wx" });
-  return await verifyTextFile(absolutePath, text);
-}
-async function writeTextFileAtomically(absolutePath, text) {
-  let existingMode = await getFileMode(absolutePath), tempPath = path3.join(path3.dirname(absolutePath), `.${path3.basename(absolutePath)}.ijproxy-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`);
-  try {
-    if (await writeFile2(tempPath, text, { encoding: "utf8", flag: "wx" }), existingMode !== null)
-      await chmod(tempPath, existingMode);
-    await rename(tempPath, absolutePath);
-  } catch (error51) {
-    throw await rm(tempPath, { force: !0 }).catch(() => {}), error51;
-  }
-}
-async function getFileMode(absolutePath) {
-  try {
-    return (await stat(absolutePath)).mode;
-  } catch (error51) {
-    if (isErrorCode(error51, "ENOENT"))
-      return null;
-    throw error51;
-  }
-}
-async function tryVerifyTextFile(absolutePath, expectedText) {
-  try {
-    return await verifyTextFile(absolutePath, expectedText);
-  } catch {
-    return null;
-  }
-}
-async function verifyTextFile(absolutePath, expectedText) {
-  let actualText = await readFile(absolutePath, "utf8");
-  if (actualText !== expectedText)
-    throw Error(`Failed to save patched document to disk: ${absolutePath}`);
-  return Buffer2.byteLength(actualText, "utf8");
-}
-function formatApplyPatchResult(touched, writeReports) {
-  let summary = `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
-  if (writeReports.length === 0)
-    return summary;
-  let details = writeReports.map(({ relative, bytes }) => `Wrote ${bytes} bytes to ${relative}.`);
-  return `${summary}
-${details.join(`
-`)}`;
-}
-function isErrorCode(error51, code) {
-  return Boolean(error51 && typeof error51 === "object" && "code" in error51 && error51.code === code);
-}
-async function readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool) {
-  let { lineMap, maxLineNumber, hasMore, hasTruncatedLine } = await readLinesViaSearch(projectPath, relativePath, absolutePath, SEARCH_FALLBACK_MAX_LINES, callUpstreamTool);
-  if (hasMore || maxLineNumber === 0 || hasTruncatedLine)
-    throw Error(TRUNCATION_ERROR);
-  let lines = [];
-  for (let lineNumber = 1;lineNumber <= maxLineNumber; lineNumber += 1) {
-    let line = lineMap.get(lineNumber);
-    if (line === void 0)
-      throw Error(TRUNCATION_ERROR);
-    lines.push(line);
-  }
-  return lines.join(`
-`);
-}
-function extractPatchText(args) {
-  if (typeof args === "string")
-    return args;
-  if (args && typeof args.input === "string")
-    return args.input;
-  if (args && typeof args.patch === "string")
-    return args.patch;
-  throw Error("input must be a non-empty string");
-}
-function isPatchHeaderLine(line) {
-  if (line === "" || [" ", "+", "-"].includes(line[0]))
-    return !1;
-  let trimmed = line.trimStart();
-  if (trimmed === END_OF_FILE)
-    return !1;
-  return trimmed.startsWith("*** ");
-}
-function isHunkHeaderLine(line) {
-  if (line === "" || [" ", "+", "-"].includes(line[0]))
-    return !1;
-  return line.trimStart().startsWith("@@");
-}
-function isDiffLine(line) {
-  if (line === "")
-    return !0;
-  return [" ", "+", "-"].includes(line[0]);
-}
-function unwrapHeredocLines(lines) {
-  if (lines.length < 4)
-    return lines;
-  let first = lines[0].trim(), last = lines[lines.length - 1].trim();
-  if (!HEREDOC_PREFIXES.has(first) || !last.endsWith("EOF"))
-    return lines;
-  return lines.slice(1, -1);
-}
-function stripUnifiedDiffHeader(trimmed) {
-  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed))
-    return "";
-  return trimmed.length > 2 ? trimmed.slice(2).trim() : "";
-}
-function parsePatch(text) {
-  let lines = unwrapHeredocLines(splitLines2(text.trim())), markerRange = findPatchMarkerRange(lines);
-  if (markerRange) {
-    if (looksLikeGitDiff(lines, markerRange.bodyStart, markerRange.bodyEnd))
-      return parseGitDiffPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
-    return parseCodexPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
-  }
-  if (looksLikeGitDiff(lines, 0, lines.length))
-    return parseGitDiffPatch(lines, 0, lines.length);
-  throw Error("patch must include *** Begin Patch");
-}
-function findPatchMarkerRange(lines) {
-  let startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
-  if (startIndex === -1)
-    return null;
-  let endIndexRelative = lines.slice(startIndex + 1).findIndex((line) => line.trim() === END_MARKER);
-  if (endIndexRelative === -1)
-    throw Error("patch must include *** End Patch");
-  return {
-    bodyStart: startIndex + 1,
-    bodyEnd: startIndex + 1 + endIndexRelative
-  };
-}
-function parseCodexPatch(lines, startIndex, endIndex) {
-  let operations = [], i = startIndex;
-  while (i < endIndex) {
-    let line = lines[i], headerLine = line.trimStart();
-    if (headerLine.startsWith(ADD_PREFIX)) {
-      let path4 = headerLine.slice(ADD_PREFIX.length).trim();
-      if (!path4)
-        throw Error("Add File requires a path");
-      ensureSafePatchPath(path4, "Add File"), i += 1;
-      let contentLines = [];
-      while (i < endIndex && !isPatchHeaderLine(lines[i])) {
-        if (!lines[i].startsWith("+"))
-          throw Error("Add File lines must start with +");
-        contentLines.push(lines[i].slice(1)), i += 1;
-      }
-      let content = contentLines.length === 0 ? "" : `${contentLines.join(`
-`)}
-`;
-      operations.push({ type: "add", path: path4, content });
-      continue;
-    }
-    if (headerLine.startsWith(DELETE_PREFIX)) {
-      let path4 = headerLine.slice(DELETE_PREFIX.length).trim();
-      if (!path4)
-        throw Error("Delete File requires a path");
-      ensureSafePatchPath(path4, "Delete File"), operations.push({ type: "delete", path: path4 }), i += 1;
-      continue;
-    }
-    if (headerLine.startsWith(UPDATE_PREFIX)) {
-      let path4 = headerLine.slice(UPDATE_PREFIX.length).trim();
-      if (!path4)
-        throw Error("Update File requires a path");
-      ensureSafePatchPath(path4, "Update File"), i += 1;
-      let moveTo = null;
-      if (i < endIndex && isPatchHeaderLine(lines[i])) {
-        let moveLine = lines[i].trimStart();
-        if (moveLine.startsWith(MOVE_PREFIX)) {
-          if (moveTo = moveLine.slice(MOVE_PREFIX.length).trim(), !moveTo)
-            throw Error("Move to requires a path");
-          ensureSafePatchPath(moveTo, "Move to"), i += 1;
-        }
-      }
-      let hunks = [];
-      while (i < endIndex && !isPatchHeaderLine(lines[i])) {
-        if (lines[i].trim() === "") {
-          i += 1;
-          continue;
-        }
-        let parsed = parseCodexHunk(lines, i, endIndex, hunks.length === 0);
-        hunks.push(parsed.hunk), i = parsed.nextIndex;
-      }
-      if (hunks.length === 0)
-        throw Error("Update File requires at least one hunk");
-      operations.push({ type: "update", path: path4, moveTo, hunks });
-      continue;
-    }
-    if (line.trim() === "") {
-      i += 1;
-      continue;
-    }
-    throw Error(`Unexpected patch line: ${line}`);
-  }
-  if (operations.length === 0)
-    throw Error("patch did not contain any operations");
-  return operations;
-}
-function parseCodexHunk(lines, startIndex, endIndex, isFirstHunk) {
-  let i = startIndex, header = null, allowsStrictPair = !1;
-  if (isHunkHeaderLine(lines[i])) {
-    let trimmed = lines[i].trim(), headerText = stripUnifiedDiffHeader(trimmed);
-    header = headerText === "" ? null : headerText, allowsStrictPair = trimmed === "@@", i += 1;
-  } else if (isFirstHunk) {
-    if (!isDiffLine(lines[i]))
-      throw Error("Expected @@ hunk header");
-  } else
-    throw Error("Expected @@ hunk header");
-  if (allowsStrictPair && i < endIndex && isStrictPairBlockStart(lines[i]))
-    return parseStrictPairHunk(lines, i, endIndex);
-  let hunkLines = [], isEndOfFile = !1;
-  while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
-    let hunkLine = lines[i];
-    if (hunkLine === END_OF_FILE) {
-      isEndOfFile = !0, i += 1;
-      break;
-    }
-    if (hunkLine === "") {
-      hunkLines.push({ prefix: " ", text: "" }), i += 1;
-      continue;
-    }
-    if (![" ", "+", "-"].includes(hunkLine[0])) {
-      if (hunkLines.length === 0)
-        throw Error("Hunk lines must start with space, +, or -");
-      break;
-    }
-    hunkLines.push({
-      prefix: hunkLine[0],
-      text: hunkLine.slice(1)
-    }), i += 1;
-  }
-  if (hunkLines.length === 0)
-    throw Error("Empty hunk in Update File");
-  return {
-    hunk: { header, lines: hunkLines, isEndOfFile },
-    nextIndex: i
-  };
-}
-function parseStrictPairHunk(lines, startIndex, endIndex) {
-  let i = startIndex, oldLines = [], hasSecondDelimiter = !1;
-  while (i < endIndex && !isPatchHeaderLine(lines[i])) {
-    let line = lines[i];
-    if (line.trim() === "@@") {
-      hasSecondDelimiter = !0, i += 1;
-      break;
-    }
-    oldLines.push(line), i += 1;
-  }
-  if (!hasSecondDelimiter)
-    throw Error("Strict @@ pair hunk requires second @@ delimiter");
-  let newLines = [];
-  while (i < endIndex && !isPatchHeaderLine(lines[i]) && !isHunkHeaderLine(lines[i])) {
-    let line = lines[i];
-    newLines.push(line), i += 1;
-  }
-  if (oldLines.length === 0 && newLines.length === 0)
-    throw Error("Empty hunk in Update File");
-  return {
-    hunk: {
-      header: null,
-      lines: [
-        ...oldLines.map((text) => ({ prefix: "-", text })),
-        ...newLines.map((text) => ({ prefix: "+", text }))
-      ],
-      isEndOfFile: !1
-    },
-    nextIndex: i
-  };
-}
-function parseGitDiffPatch(lines, startIndex, endIndex) {
-  let operations = [], i = startIndex;
-  while (i < endIndex) {
-    while (i < endIndex && lines[i].trim() === "")
-      i += 1;
-    if (i >= endIndex)
-      break;
-    let parsed = parseGitOperation(lines, i, endIndex);
-    operations.push(parsed.operation), i = parsed.nextIndex;
-  }
-  if (operations.length === 0)
-    throw Error("patch did not contain any operations");
-  return operations;
-}
-function parseGitOperation(lines, startIndex, endIndex) {
-  let i = startIndex, oldPath = null, newPath = null, renameFrom = null, renameTo = null, hunks = [], sawGitSignal = !1;
-  while (i < endIndex) {
-    let line = lines[i], trimmed = line.trimStart();
-    if (trimmed === "") {
-      i += 1;
-      continue;
-    }
-    if (trimmed.startsWith(DIFF_GIT_PREFIX)) {
-      if (sawGitSignal)
-        break;
-      sawGitSignal = !0;
-      let parsedPaths = parseDiffGitHeaderPaths(trimmed);
-      if (parsedPaths)
-        oldPath = parsedPaths.oldPath, newPath = parsedPaths.newPath;
-      i += 1;
-      continue;
-    }
-    if (line.startsWith("--- ")) {
-      oldPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
-      continue;
-    }
-    if (line.startsWith("+++ ")) {
-      newPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
-      continue;
-    }
-    if (trimmed.startsWith("rename from ")) {
-      renameFrom = parseGitRenamePath(trimmed.slice(12)), sawGitSignal = !0, i += 1;
-      continue;
-    }
-    if (trimmed.startsWith("rename to ")) {
-      renameTo = parseGitRenamePath(trimmed.slice(10)), sawGitSignal = !0, i += 1;
-      continue;
-    }
-    if (trimmed === NO_NEWLINE_MARKER) {
-      i += 1;
-      continue;
-    }
-    if (trimmed.startsWith("Binary files ") || trimmed === "GIT binary patch")
-      throw Error("Binary git patch is not supported");
-    if (isGitMetadataLine(trimmed)) {
-      sawGitSignal = !0, i += 1;
-      continue;
-    }
-    if (isHunkHeaderLine(line)) {
-      sawGitSignal = !0;
-      let parsedHunk = parseUnifiedHunk(lines, i, endIndex);
-      hunks.push(parsedHunk.hunk), i = parsedHunk.nextIndex;
-      continue;
-    }
-    if (!sawGitSignal)
-      throw Error(`Unexpected patch line: ${line}`);
-    break;
-  }
-  if (!sawGitSignal)
-    throw Error("patch did not contain any operations");
-  return {
-    operation: buildGitOperation(renameFrom ?? oldPath, renameTo ?? newPath, hunks),
-    nextIndex: i
-  };
-}
-function parseUnifiedHunk(lines, startIndex, endIndex) {
-  let i = startIndex, headerText = stripUnifiedDiffHeader(lines[i].trim()), header = headerText === "" ? null : headerText;
-  i += 1;
-  let hunkLines = [], isEndOfFile = !1;
-  while (i < endIndex) {
-    let line = lines[i], trimmed = line.trimStart();
-    if (trimmed.startsWith(DIFF_GIT_PREFIX) || line.startsWith("--- ") || line.startsWith("+++ ") || isHunkHeaderLine(line))
-      break;
-    if (trimmed === NO_NEWLINE_MARKER) {
-      i += 1;
-      continue;
-    }
-    if (line === END_OF_FILE) {
-      isEndOfFile = !0, i += 1;
-      break;
-    }
-    if (line === "") {
-      hunkLines.push({ prefix: " ", text: "" }), i += 1;
-      continue;
-    }
-    if (![" ", "+", "-"].includes(line[0])) {
-      if (hunkLines.length === 0)
-        throw Error("Hunk lines must start with space, +, or -");
-      break;
-    }
-    hunkLines.push({
-      prefix: line[0],
-      text: line.slice(1)
-    }), i += 1;
-  }
-  if (hunkLines.length === 0)
-    throw Error("Empty hunk in Update File");
-  return {
-    hunk: { header, lines: hunkLines, isEndOfFile },
-    nextIndex: i
-  };
-}
-function buildGitOperation(sourcePath, targetPath, hunks) {
-  if (!sourcePath && !targetPath)
-    throw Error("Could not determine file path from git diff");
-  if (!sourcePath) {
-    if (!targetPath)
-      throw Error("Could not determine file path from git diff");
-    ensureSafePatchPath(targetPath, "Add File");
-    let content = hunks.length === 0 ? "" : applyHunks("", hunks);
-    return { type: "add", path: targetPath, content };
-  }
-  if (!targetPath)
-    return ensureSafePatchPath(sourcePath, "Delete File"), { type: "delete", path: sourcePath };
-  return ensureSafePatchPath(sourcePath, "Update File"), ensureSafePatchPath(targetPath, "Move to"), {
-    type: "update",
-    path: sourcePath,
-    moveTo: sourcePath === targetPath ? null : targetPath,
-    hunks
-  };
-}
-function looksLikeGitDiff(lines, startIndex, endIndex) {
-  let hasFileMarkers = !1;
-  for (let i = startIndex;i < endIndex; i += 1) {
-    let line = lines[i], trimmed = line.trimStart();
-    if (trimmed.startsWith(DIFF_GIT_PREFIX))
-      return !0;
-    if (line.startsWith("--- ") || line.startsWith("+++ ")) {
-      hasFileMarkers = !0;
-      continue;
-    }
-    if (trimmed.startsWith("rename from ") || trimmed.startsWith("rename to "))
-      return !0;
-  }
-  return hasFileMarkers;
-}
-function parseDiffGitHeaderPaths(trimmed) {
-  let payload = trimmed.slice(DIFF_GIT_PREFIX.length).trim();
-  if (!payload)
-    return null;
-  let tokens = payload.split(/\s+/, 3);
-  if (tokens.length < 2)
-    return null;
-  return {
-    oldPath: normalizeGitMarkerPath(tokens[0]),
-    newPath: normalizeGitMarkerPath(tokens[1])
-  };
-}
-function parseGitMarkerPath(rawValue) {
-  let marker = rawValue.split("\t", 1)[0].trim();
-  return normalizeGitMarkerPath(marker);
-}
-function parseGitRenamePath(rawValue) {
-  let value = unquoteGitPath(rawValue.trim());
-  if (!value)
-    throw Error("Could not determine file path from git diff");
-  return value;
-}
-function normalizeGitMarkerPath(rawValue) {
-  let value = unquoteGitPath(rawValue.trim());
-  if (value === "/dev/null")
-    return null;
-  if (value.startsWith("a/") || value.startsWith("b/"))
-    return value.slice(2);
-  return value;
-}
-function unquoteGitPath(rawValue) {
-  if (rawValue.length < 2 || rawValue[0] !== '"' || rawValue[rawValue.length - 1] !== '"')
-    return rawValue;
-  return rawValue.slice(1, -1).replace(/\\\\/g, "\\").replace(/\\"/g, '"');
-}
-function isGitMetadataLine(trimmed) {
-  return trimmed.startsWith("index ") || trimmed.startsWith("old mode ") || trimmed.startsWith("new mode ") || trimmed.startsWith("new file mode ") || trimmed.startsWith("deleted file mode ") || trimmed.startsWith("similarity index ") || trimmed.startsWith("dissimilarity index ");
-}
-function isPrefixedDiffLine(line) {
-  return line !== "" && [" ", "+", "-"].includes(line[0]);
-}
-function isStrictPairBlockStart(line) {
-  if (isPatchHeaderLine(line) || isHunkHeaderLine(line))
-    return !1;
-  return !isPrefixedDiffLine(line);
-}
-function ensureSafePatchPath(rawPath, label) {
-  if (/[\u0000-\u001F\u007F]/.test(rawPath))
-    throw Error(`${label} path contains control characters or escape sequences`);
-  if (/\\[nrt]/.test(rawPath))
-    throw Error(`${label} path contains control characters or escape sequences`);
-}
-async function ensureParentDir(absolutePath) {
-  let parentDir = path3.dirname(absolutePath);
-  await mkdir(parentDir, { recursive: !0 });
-}
-async function runGitRm(relativePath, projectPath) {
-  if (!await isTrackedPath(relativePath, projectPath)) {
-    await rm(path3.resolve(projectPath, relativePath));
-    return;
-  }
-  await runGitCommand(["rm", "--", toGitPath(relativePath)], projectPath);
-}
-async function runGitMv(fromRelative, toRelative, projectPath) {
-  if (!await isTrackedPath(fromRelative, projectPath)) {
-    let fromAbsolute = path3.resolve(projectPath, fromRelative), toAbsolute = path3.resolve(projectPath, toRelative);
-    await moveFile(fromAbsolute, toAbsolute);
-    return;
-  }
-  await runGitCommand(["mv", "--", toGitPath(fromRelative), toGitPath(toRelative)], projectPath);
-}
-async function moveFile(fromAbsolute, toAbsolute) {
-  try {
-    await rename(fromAbsolute, toAbsolute);
-  } catch (error51) {
-    if ((error51 && typeof error51 === "object" && "code" in error51 ? error51.code : null) === "EXDEV") {
-      await copyFile(fromAbsolute, toAbsolute), await rm(fromAbsolute);
-      return;
-    }
-    throw error51;
-  }
-}
-function applyHunks(originalText, hunks) {
-  let hadTrailingNewline = originalText.endsWith(`
-`) || originalText.endsWith(`\r
-`), content = splitLines2(originalText), searchStart = 0;
-  for (let hunk of hunks) {
-    if (hunk.header) {
-      let headerIndex = findSequence(content, [hunk.header], searchStart, !1);
-      if (headerIndex < 0)
-        throw Error("Hunk context not found");
-      searchStart = headerIndex + 1;
-    }
-    let { oldLines, newLines } = buildHunkLines(hunk.lines);
-    if (oldLines.length === 0) {
-      let insertionIndex = content.length;
-      content.splice(insertionIndex, 0, ...newLines), searchStart = insertionIndex + newLines.length;
-      continue;
-    }
-    let index = findSequence(content, oldLines, searchStart, hunk.isEndOfFile);
-    if (index < 0 && searchStart > 0 && !hunk.isEndOfFile)
-      index = findSequence(content, oldLines, 0, !1);
-    if (index < 0)
-      throw Error("Hunk context not found");
-    content.splice(index, oldLines.length, ...newLines), searchStart = index + newLines.length;
-  }
-  if (hadTrailingNewline && content.length > 0 && content[content.length - 1] !== "")
-    content = [...content, ""];
-  return content.join(`
-`);
-}
-function buildHunkLines(lines) {
-  let oldLines = [], newLines = [];
-  for (let line of lines)
-    if (line.prefix === " ")
-      oldLines.push(line.text), newLines.push(line.text);
-    else if (line.prefix === "-")
-      oldLines.push(line.text);
-    else if (line.prefix === "+")
-      newLines.push(line.text);
-  return { oldLines, newLines };
-}
-function normalizeForMatch(text) {
-  return text.trim().split("").map((char) => {
-    switch (char) {
-      case "\u2010":
-      case "\u2011":
-      case "\u2012":
-      case "\u2013":
-      case "\u2014":
-      case "\u2015":
-      case "\u2212":
-        return "-";
-      case "\u2018":
-      case "\u2019":
-      case "\u201A":
-      case "\u201B":
-        return "'";
-      case "\u201C":
-      case "\u201D":
-      case "\u201E":
-      case "\u201F":
-        return '"';
-      case "\xA0":
-      case "\u2002":
-      case "\u2003":
-      case "\u2004":
-      case "\u2005":
-      case "\u2006":
-      case "\u2007":
-      case "\u2008":
-      case "\u2009":
-      case "\u200A":
-      case "\u202F":
-      case "\u205F":
-      case "\u3000":
-        return " ";
-      default:
-        return char;
-    }
-  }).join("");
-}
-function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
-  if (needle.length === 0)
-    return startIndex;
-  if (needle.length > haystack.length)
-    return -1;
-  let maxStart = haystack.length - needle.length, searchStart = preferEnd ? maxStart : Math.max(0, startIndex);
-  if (searchStart > maxStart)
-    return -1;
-  let matchesAt = (index2, comparator) => {
-    for (let j = 0;j < needle.length; j += 1)
-      if (!comparator(haystack[index2 + j], needle[j]))
-        return !1;
-    return !0;
-  }, searchWith = (comparator) => {
-    for (let i = searchStart;i <= maxStart; i += 1)
-      if (matchesAt(i, comparator))
-        return i;
-    return -1;
-  }, index = searchWith((a, b) => a === b);
-  if (index >= 0)
-    return index;
-  if (index = searchWith((a, b) => a.trimEnd() === b.trimEnd()), index >= 0)
-    return index;
-  if (index = searchWith((a, b) => a.trim() === b.trim()), index >= 0)
-    return index;
-  return searchWith((a, b) => normalizeForMatch(a) === normalizeForMatch(b));
-}
 
 // proxy-tools/handlers/lint-files.ts
 async function handleLintFilesTool(args, callUpstreamTool, capabilities) {
@@ -24576,212 +23651,6 @@ function isRecord2(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-// proxy-tools/handlers/list-dir.ts
-var DEFAULT_OFFSET = 1, DEFAULT_LIMIT = 25, DEFAULT_DEPTH = 2, BRANCH_MARKER = "\u251C\u2500\u2500 ", LAST_MARKER = "\u2514\u2500\u2500 ", MARKER_LENGTH = BRANCH_MARKER.length;
-async function handleListDirTool(args, projectPath, callUpstreamTool) {
-  let dirPath = requireString(args.dir_path, "dir_path"), offset = args.offset === void 0 || args.offset === null ? DEFAULT_OFFSET : Number(args.offset), limit = args.limit === void 0 || args.limit === null ? DEFAULT_LIMIT : Number(args.limit), depth = args.depth === void 0 || args.depth === null ? DEFAULT_DEPTH : Number(args.depth);
-  if (!Number.isInteger(offset) || offset <= 0)
-    throw Error("offset must be a 1-indexed entry number");
-  if (!Number.isInteger(limit) || limit <= 0)
-    throw Error("limit must be greater than zero");
-  if (!Number.isInteger(depth) || depth <= 0)
-    throw Error("depth must be greater than zero");
-  let { absolute, relative } = resolvePathInProject(projectPath, dirPath, "dir_path"), result = await callUpstreamTool("list_directory_tree", {
-    directoryPath: relative,
-    maxDepth: depth + 1
-  }), tree = extractTree(result), { entries, total, hasMore } = selectEntriesFromTree(tree, offset, limit), output = [`Absolute path: ${absolute}`];
-  if (total === 0)
-    return output.join(`
-`);
-  if (offset > total)
-    throw Error("offset exceeds directory entry count");
-  for (let entry of entries)
-    output.push(formatEntry(entry));
-  if (hasMore)
-    output.push(`More than ${entries.length} entries found`);
-  return output.join(`
-`);
-}
-function extractTree(result) {
-  let structured = extractStructuredContent(result);
-  if (structured) {
-    let treeValue = structured.tree;
-    if (typeof treeValue === "string")
-      return treeValue;
-  }
-  let text = extractTextFromResult(result);
-  if (!text)
-    return "";
-  try {
-    let parsed = JSON.parse(text);
-    if (parsed) {
-      let treeValue = parsed.tree;
-      if (typeof treeValue === "string")
-        return treeValue;
-    }
-  } catch {
-    return text;
-  }
-  return text;
-}
-function selectEntriesFromTree(treeText, offset, limit) {
-  if (!treeText)
-    return { entries: [], total: 0, hasMore: !1 };
-  let lines = splitLines2(treeText);
-  if (lines.length <= 1)
-    return { entries: [], total: 0, hasMore: !1 };
-  let entries = [], total = 0, endIndex = offset + limit - 1;
-  for (let i = 1;i < lines.length; i += 1) {
-    let parsed = parseTreeLine(lines[i]);
-    if (!parsed)
-      continue;
-    if (total += 1, total >= offset && entries.length < limit)
-      entries.push(parsed);
-    if (total > endIndex)
-      return { entries, total, hasMore: !0 };
-  }
-  return { entries, total, hasMore: !1 };
-}
-function parseTreeLine(line) {
-  let branchIndex = line.indexOf(BRANCH_MARKER), lastIndex = line.indexOf(LAST_MARKER), index = branchIndex >= 0 ? branchIndex : lastIndex;
-  if (index < 0)
-    return null;
-  let indentPart = line.slice(0, index), depth = Math.floor(indentPart.length / 4), rawName = line.slice(index + MARKER_LENGTH);
-  if (!rawName)
-    return null;
-  let isDir = rawName.endsWith("/"), name = isDir ? rawName.slice(0, -1) : rawName;
-  return { depth, name, isDir };
-}
-function formatEntry(entry) {
-  let indent = " ".repeat(entry.depth * 2), suffix = entry.isDir ? "/" : "";
-  return `${indent}${entry.name}${suffix}`;
-}
-
-// proxy-tools/handlers/read.ts
-var DEFAULT_READ_LIMIT = 2000, TRUNCATION_ERROR2 = "file content truncated while reading";
-async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format = "numbered" } = {}) {
-  let normalizedArgs = normalizeReadArgs(args), includeLineNumbers = format !== "raw", { relative, absolute } = resolvePathInProject(projectPath, normalizedArgs.filePath, "file_path");
-  if (format !== "raw" && readCapabilities.hasReadFile)
-    return callNativeReadTool(normalizedArgs, relative, callUpstreamTool);
-  if (!readCapabilities.hasReadFile && format !== "raw")
-    try {
-      return await readSliceMode(relative, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
-    } catch (error51) {
-      if (!isTruncationError(error51))
-        throw error51;
-      try {
-        return await readSliceModeFromSearch(projectPath, relative, absolute, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
-      } catch {
-        throw error51;
-      }
-    }
-  let text = await readFileTextExact(relative, callUpstreamTool);
-  if (!readCapabilities.hasReadFile && (findTruncationMarkerLine(text) >= 0 || findTruncationMarkerSuffix(text) >= 0))
-    throw Error(TRUNCATION_ERROR2);
-  return renderReadFromText(normalizeLineEndings(text), normalizedArgs, includeLineNumbers);
-}
-function normalizeReadArgs(args) {
-  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset") ?? 1, limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit") ?? DEFAULT_READ_LIMIT;
-  return {
-    filePath,
-    offset,
-    limit
-  };
-}
-async function callNativeReadTool(args, relativePath, callUpstreamTool) {
-  let upstreamArgs = {
-    file_path: relativePath,
-    offset: args.offset,
-    limit: args.limit
-  }, result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
-  if (typeof text === "string")
-    return text;
-  if (typeof result === "string")
-    return result;
-  throw Error("Failed to read file contents");
-}
-function renderReadFromText(text, args, includeLineNumbers) {
-  let lines = splitLines2(text);
-  if (args.offset > lines.length)
-    throw Error("offset exceeds file length");
-  return sliceLines(lines, args.offset, args.limit, includeLineNumbers);
-}
-function sliceLines(lines, offset, limit, includeLineNumbers) {
-  let endLine = Math.min(offset - 1 + limit, lines.length), output = [];
-  for (let index = offset - 1;index < endLine; index += 1) {
-    let rawLine = lines[index], display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
-    output.push(formatOutputLine(index + 1, display, includeLineNumbers));
-  }
-  return output.join(`
-`);
-}
-function formatOutputLine(lineNumber, lineText, includeLineNumbers) {
-  if (!includeLineNumbers)
-    return lineText;
-  return `L${lineNumber}: ${lineText}`;
-}
-async function readSliceMode(relativePath, offset, limit, includeLineNumbers, callUpstreamTool) {
-  let requestedLines = offset + limit - 1;
-  if (requestedLines <= 0)
-    throw Error("limit must be greater than zero");
-  let maxLinesCount = Math.max(3, requestedLines), text = await readFileTextLegacy(relativePath, {
-    maxLinesCount,
-    truncateMode: "START"
-  }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text), lines = splitLines2(trimmedText), truncated = wasTruncated;
-  if (truncated && requestedLines > lines.length) {
-    let refreshed = await readFileTextLegacy(relativePath, {
-      maxLinesCount: Math.max(3, requestedLines),
-      truncateMode: "NONE"
-    }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed);
-    lines = splitLines2(refreshedText), truncated = refreshedTruncated;
-  }
-  if (truncated && requestedLines > lines.length)
-    throw Error(TRUNCATION_ERROR2);
-  if (offset > lines.length)
-    throw Error("offset exceeds file length");
-  return sliceLines(lines, offset, limit, includeLineNumbers);
-}
-async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, includeLineNumbers, callUpstreamTool) {
-  let requestedLines = offset + limit - 1;
-  if (requestedLines <= 0)
-    throw Error("limit must be greater than zero");
-  let { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
-  if (maxLineNumber < offset) {
-    if (hasMore)
-      throw Error(TRUNCATION_ERROR2);
-    throw Error("offset exceeds file length");
-  }
-  let endLine = Math.min(offset + limit - 1, maxLineNumber), output = [];
-  for (let lineNumber = offset;lineNumber <= endLine; lineNumber += 1) {
-    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
-    output.push(formatOutputLine(lineNumber, display, includeLineNumbers));
-  }
-  return output.join(`
-`);
-}
-function trimTruncation(text) {
-  let markerIndex = findTruncationMarkerLine(text);
-  if (markerIndex < 0) {
-    let suffixIndex = findTruncationMarkerSuffix(text);
-    if (suffixIndex < 0)
-      return { text, wasTruncated: !1 };
-    return { text: stripTrailingLineBreak(text.slice(0, suffixIndex)), wasTruncated: !0 };
-  }
-  return { text: stripTrailingLineBreak(text.slice(0, markerIndex)), wasTruncated: !0 };
-}
-function stripTrailingLineBreak(text) {
-  if (text.endsWith(`\r
-`))
-    return text.slice(0, -2);
-  if (text.endsWith(`
-`) || text.endsWith("\r"))
-    return text.slice(0, -1);
-  return text;
-}
-function isTruncationError(error51) {
-  return error51 instanceof Error && error51.message === TRUNCATION_ERROR2;
-}
-
 // proxy-tools/handlers/reformat-file.ts
 async function handleReformatFileTool(args, callUpstreamTool, capabilities) {
   if (!capabilities.supportsReformatFile)
@@ -24815,12 +23684,12 @@ function normalizeReformatFileFiles(args) {
   return result;
 }
 function addFile(value, result, seen) {
-  let path4 = requireString(value, "files").trim();
-  if (path4.length === 0)
+  let path2 = requireString(value, "files").trim();
+  if (path2.length === 0)
     throw Error("files must contain non-empty strings");
-  if (seen.has(path4))
+  if (seen.has(path2))
     return;
-  seen.add(path4), result.push(path4);
+  seen.add(path2), result.push(path2);
 }
 async function callNativeFilesReformat(files, callUpstreamTool) {
   let result = await callUpstreamTool("reformat_file", { files });
@@ -24840,7 +23709,7 @@ async function callLegacyReformat(files, callUpstreamTool) {
 }
 
 // proxy-tools/handlers/rename.ts
-import path4 from "path";
+import path2 from "path";
 async function handleRenameTool(args, projectPath, callUpstreamTool) {
   let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
     pathInProject: relative,
@@ -24849,7 +23718,17 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   }), message = extractTextFromResult(result);
   if (message)
     return message;
-  return `Renamed ${symbolName} to ${newName} in ${path4.resolve(projectPath, relative)}`;
+  return `Renamed ${symbolName} to ${newName} in ${path2.resolve(projectPath, relative)}`;
+}
+
+// proxy-tools/search-in-files.ts
+async function searchInFiles(args, callUpstreamTool) {
+  let toolName = typeof args.regexPattern === "string" ? "search_in_files_by_regex" : "search_in_files_by_text", result = await callUpstreamTool(toolName, args), entries = extractEntries(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
+  return {
+    entries,
+    probablyHasMoreMatchingEntries: structuredRecord?.probablyHasMoreMatchingEntries === !0,
+    timedOut: structuredRecord?.timedOut === !0
+  };
 }
 
 // workarounds.ts
@@ -24956,7 +23835,7 @@ function compareVersionParts(left, right) {
 }
 
 // proxy-tools/handlers/search-shared.ts
-import path5 from "path";
+import path3 from "path";
 
 // proxy-tools/handlers/search-constants.ts
 var DEFAULT_MAX_RESULTS = 1000, MAX_RESULTS_UPPER_BOUND = 5000, SEARCH_SCOPE_MULTIPLIER = 5;
@@ -25045,13 +23924,13 @@ function resolveMoreFlag(result, itemCount, maxResults) {
 function normalizeProjectRelativePath(projectPath, filePath) {
   if (!filePath)
     return "";
-  if (path5.isAbsolute(filePath)) {
-    let relative = path5.relative(projectPath, filePath);
-    if (!relative.startsWith("..") && !path5.isAbsolute(relative))
+  if (path3.isAbsolute(filePath)) {
+    let relative = path3.relative(projectPath, filePath);
+    if (!relative.startsWith("..") && !path3.isAbsolute(relative))
       return toPosixPath(relative);
-    return path5.normalize(filePath);
+    return path3.normalize(filePath);
   }
-  return toPosixPath(path5.normalize(filePath));
+  return toPosixPath(path3.normalize(filePath));
 }
 function toPosixPath(value) {
   return value.replace(/\\/g, "/");
@@ -25059,7 +23938,7 @@ function toPosixPath(value) {
 
 // proxy-tools/handlers/search-scope.ts
 var import_picomatch = __toESM(require_picomatch2(), 1);
-import path6 from "path";
+import path4 from "path";
 import { statSync } from "fs";
 function buildPathScope(projectPath, rawPaths) {
   if (rawPaths === void 0 || rawPaths === null)
@@ -25116,7 +23995,7 @@ function resolveSearchRoot(projectPath, scope, globPattern) {
   for (let candidate of candidates) {
     if (!candidate)
       continue;
-    let absolute = path6.resolve(projectPath, candidate);
+    let absolute = path4.resolve(projectPath, candidate);
     if (isDirectory(absolute))
       return candidate;
   }
@@ -25131,7 +24010,7 @@ function filterEntriesByScope(entries, projectPath, scope) {
   });
 }
 function filterEntriesByDirectory(entries, projectPath, directoryToSearch) {
-  let absoluteDir = path6.resolve(projectPath, directoryToSearch);
+  let absoluteDir = path4.resolve(projectPath, directoryToSearch);
   return entries.filter((entry) => {
     let absolutePath = resolveAbsolutePath(projectPath, entry.filePath);
     return absolutePath ? isWithinDirectory(absolutePath, absoluteDir) : !1;
@@ -25168,10 +24047,10 @@ function normalizePathPattern(pattern, projectPath, originalPattern) {
       throw Error(`Specified path '${originalPattern}' points outside the project directory`);
     return pattern;
   }
-  let absolutePrefix = path6.isAbsolute(prefixTrimmed) ? path6.normalize(prefixTrimmed) : path6.resolve(projectPath, prefixTrimmed);
+  let absolutePrefix = path4.isAbsolute(prefixTrimmed) ? path4.normalize(prefixTrimmed) : path4.resolve(projectPath, prefixTrimmed);
   if (!isWithinProject(projectPath, absolutePrefix))
     throw Error(`Specified path '${originalPattern}' points outside the project directory`);
-  let relativePrefix = toPosixPath2(path6.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
+  let relativePrefix = toPosixPath2(path4.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
   if (relativePrefix === "")
     return suffix;
   if (suffix === "")
@@ -25206,7 +24085,7 @@ function computeCommonDirectory(patterns) {
   }
   if (common.length === 0)
     return null;
-  return path6.normalize(common.join("/"));
+  return path4.normalize(common.join("/"));
 }
 function extractDirectoryPrefix(pattern) {
   let globIndex = indexOfGlobChar(pattern), trimmed = (globIndex < 0 ? pattern : pattern.slice(0, globIndex)).replace(/\/+$/, "");
@@ -25222,7 +24101,7 @@ function extractDirectoryPrefix(pattern) {
   return trimmed;
 }
 function createMatcher(pattern) {
-  let nocase = path6.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
+  let nocase = path4.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
   return (candidate) => matcher(candidate);
 }
 function isDirectory(candidatePath) {
@@ -25236,8 +24115,8 @@ function resolveRelativePath(projectPath, filePath) {
   let absolute = resolveAbsolutePath(projectPath, filePath);
   if (!absolute)
     return null;
-  let relative = path6.relative(projectPath, absolute);
-  if (relative.startsWith("..") || path6.isAbsolute(relative))
+  let relative = path4.relative(projectPath, absolute);
+  if (relative.startsWith("..") || path4.isAbsolute(relative))
     return null;
   return toPosixPath2(relative);
 }
@@ -25245,7 +24124,7 @@ function resolveAbsolutePath(projectPath, filePath) {
   let resolved = normalizeEntryPath(projectPath, filePath);
   if (typeof resolved !== "string" || resolved === "")
     return null;
-  return path6.normalize(resolved);
+  return path4.normalize(resolved);
 }
 function matchesScope(scope, relativePosix) {
   if (!scope.includeMatchers.some((matcher) => matcher(relativePosix)))
@@ -25253,12 +24132,12 @@ function matchesScope(scope, relativePosix) {
   return scope.excludeMatchers.every((matcher) => !matcher(relativePosix));
 }
 function isWithinProject(projectPath, candidatePath) {
-  let relative = path6.relative(projectPath, candidatePath);
-  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
+  let relative = path4.relative(projectPath, candidatePath);
+  return relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative);
 }
 function isWithinDirectory(filePath, directoryPath) {
-  let relative = path6.relative(directoryPath, filePath);
-  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
+  let relative = path4.relative(directoryPath, filePath);
+  return relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative);
 }
 function toPosixPath2(value) {
   return value.replace(/\\/g, "/");
@@ -25375,17 +24254,17 @@ async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capab
   throw Error("symbol search is not supported by this IDE version");
 }
 // proxy-tools/container-handlers.ts
-import path8 from "path";
+import path6 from "path";
 
 // container-session.ts
 import { readFileSync } from "fs";
-import path7 from "path";
+import path5 from "path";
 import { cwd, env } from "process";
 import { fileURLToPath } from "url";
 var CONTAINER_SESSION_FILE = ".container-sessions.jsonl";
 function scriptDir() {
   try {
-    return path7.dirname(fileURLToPath(import.meta.url));
+    return path5.dirname(fileURLToPath(import.meta.url));
   } catch {
     return cwd();
   }
@@ -25401,7 +24280,7 @@ function detectContainerSession(projectPath) {
   return null;
 }
 function readSessionFromFile(dir, targetSessionId) {
-  let filePath = path7.join(dir, CONTAINER_SESSION_FILE);
+  let filePath = path5.join(dir, CONTAINER_SESSION_FILE);
   try {
     let lines = readFileSync(filePath, "utf-8").split(`
 `).filter((l) => l.trim()), lastConfig = null;
@@ -25436,7 +24315,6 @@ function toContainerPath(workspacePath, relativePath) {
 }
 
 // proxy-tools/container-handlers.ts
-var DEFAULT_READ_LIMIT2 = 2000;
 function toPosix(p) {
   return p.replace(/\\/g, "/");
 }
@@ -25448,16 +24326,12 @@ function resolveContainerFilePath(filePath, session, projectPath) {
     return session.workspacePath + "/" + posixFilePath.substring(posixProjectPath.length + 1);
   if (posixFilePath === posixProjectPath)
     return session.workspacePath;
-  if (!path8.isAbsolute(filePath))
+  if (!path6.isAbsolute(filePath))
     return toContainerPath(session.workspacePath, posixFilePath);
-  throw Error(`Refusing to resolve absolute path '${filePath}' \u2014 not under session workspace '${session.workspacePath}' or project path '${projectPath}'. In container mode all writes must land inside the overlayfs mount.`);
+  throw Error(`Refusing to resolve absolute path '${filePath}' \u2014 not under session workspace '${session.workspacePath}' or project path '${projectPath}'. In container mode paths must remain inside the workspace mount.`);
 }
 function tagContainer(session, text) {
   return `[container:${session.sessionId}] ${text}`;
-}
-function parseExitCode(text) {
-  let match = text.match(/^exit_code:\s*(\d+)/m);
-  return match ? parseInt(match[1], 10) : null;
 }
 function extractText(result) {
   if (typeof result === "string")
@@ -25473,167 +24347,6 @@ function extractText(result) {
     }
   }
   return "";
-}
-async function handleContainerReadFile(args, projectPath, callUpstreamTool, session) {
-  let filePath = requireString(args.file_path, "file_path"), containerPath = resolveContainerFilePath(filePath, session, projectPath), result = await callUpstreamTool("container_read_file", {
-    sessionId: session.sessionId,
-    path: containerPath
-  }), text = extractText(result);
-  if (!text)
-    throw Error(`[container:${session.sessionId}] File not found: ${containerPath}`);
-  let lines = text.split(`
-`), offset = toPositiveInt(args.offset, 1, "offset") ?? 1, limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT2, "limit") ?? DEFAULT_READ_LIMIT2;
-  if (offset > lines.length)
-    throw Error(`[container:${session.sessionId}] offset exceeds file length`);
-  let numbered = lines.slice(offset - 1, offset - 1 + limit).map((line, i) => {
-    return `L${offset + i}: ${formatReadLine(line)}`;
-  }).join(`
-`);
-  return tagContainer(session, numbered);
-}
-async function handleContainerApplyPatch(args, projectPath, callUpstreamTool, session) {
-  if (!projectPath)
-    throw Error(`[container:${session.sessionId}] apply_patch requires a project path. Ensure '.container-sessions.jsonl' includes 'projectPath'.`);
-  let patch = requireString(args.input ?? args.patch, "input");
-  patch = patch.replaceAll(projectPath, session.workspacePath);
-  let posixProjectPath = toPosix(projectPath);
-  if (posixProjectPath !== projectPath)
-    patch = patch.replaceAll(posixProjectPath, session.workspacePath);
-  await callUpstreamTool("container_write_file", {
-    sessionId: session.sessionId,
-    path: `${session.workspacePath}/.agent-patch.diff`,
-    content: patch
-  });
-  let gitResult = extractText(await callUpstreamTool("container_exec", {
-    sessionId: session.sessionId,
-    command: ["bash", "-c", `cd ${session.workspacePath} && git apply .agent-patch.diff 2>&1; EXIT=$?; rm -f .agent-patch.diff; exit $EXIT`]
-  }));
-  if (parseExitCode(gitResult) === 0)
-    return tagContainer(session, "Patch applied successfully.");
-  await callUpstreamTool("container_write_file", {
-    sessionId: session.sessionId,
-    path: `${session.workspacePath}/.agent-patch.diff`,
-    content: patch
-  });
-  let patchResult = extractText(await callUpstreamTool("container_exec", {
-    sessionId: session.sessionId,
-    command: ["bash", "-c", `cd ${session.workspacePath} && patch -p1 --no-backup-if-mismatch < .agent-patch.diff 2>&1; EXIT=$?; rm -f .agent-patch.diff; exit $EXIT`]
-  }));
-  if (parseExitCode(patchResult) === 0)
-    return tagContainer(session, "Patch applied successfully.");
-  if (await callUpstreamTool("container_exec", {
-    sessionId: session.sessionId,
-    command: ["rm", "-f", `${session.workspacePath}/.agent-patch.diff`]
-  }), patch.includes("*** Update File:") || patch.includes("*** Add File:"))
-    return tagContainer(session, await applyPatchByWritingFiles(patch, projectPath, callUpstreamTool, session));
-  if (patch.startsWith("---") || patch.startsWith("diff "))
-    return tagContainer(session, await applyUnifiedDiffDirectly(patch, projectPath, callUpstreamTool, session));
-  throw Error(`[container:${session.sessionId}] Failed to apply patch: ${gitResult}`);
-}
-async function readContainerFile(callUpstreamTool, session, containerPath) {
-  let result = await callUpstreamTool("container_read_file", {
-    sessionId: session.sessionId,
-    path: containerPath
-  });
-  return extractText(result);
-}
-async function writeContainerFile(callUpstreamTool, session, containerPath, content) {
-  await callUpstreamTool("container_write_file", {
-    sessionId: session.sessionId,
-    path: containerPath,
-    content
-  });
-}
-async function applyPatchByWritingFiles(patch, projectPath, callUpstreamTool, session) {
-  let fileBlocks = patch.split(/^\*\*\* (?:Update|Add) File: /m).slice(1);
-  if (fileBlocks.length === 0)
-    throw Error("Failed to apply patch in container (git apply failed and no file blocks found)");
-  let touchedFiles = 0;
-  for (let block of fileBlocks) {
-    let newlineIdx = block.indexOf(`
-`);
-    if (newlineIdx === -1)
-      continue;
-    let filePath = block.substring(0, newlineIdx).trim(), containerPath = resolveContainerFilePath(filePath, session, projectPath), currentContent = await readContainerFile(callUpstreamTool, session, containerPath), newContent = applyHunksToContent(currentContent, block.substring(newlineIdx + 1));
-    await writeContainerFile(callUpstreamTool, session, containerPath, newContent), touchedFiles++;
-  }
-  return `Applied patch to ${touchedFiles} file(s) in container.`;
-}
-async function applyUnifiedDiffDirectly(patch, projectPath, callUpstreamTool, session) {
-  let files = parseUnifiedDiff(patch);
-  if (files.length === 0)
-    throw Error("Failed to apply patch: could not parse unified diff");
-  let touchedFiles = 0;
-  for (let file2 of files) {
-    let containerPath = resolveContainerFilePath(file2.path, session, projectPath), currentContent = await readContainerFile(callUpstreamTool, session, containerPath), newContent = applyUnifiedHunks(currentContent, file2.hunks);
-    await writeContainerFile(callUpstreamTool, session, containerPath, newContent), touchedFiles++;
-  }
-  return `Applied patch to ${touchedFiles} file(s) in container.`;
-}
-function parseUnifiedDiff(patch) {
-  let files = [], lines = patch.split(`
-`), currentFile = null;
-  for (let line of lines)
-    if (line.startsWith("+++ b/") || line.startsWith("+++ "))
-      currentFile = { path: line.replace(/^\+\+\+ [ab]\//, "").replace(/^\+\+\+ /, "").trim(), hunks: [] }, files.push(currentFile);
-    else if (line.startsWith("--- "))
-      ;
-    else if (line.startsWith("diff "))
-      ;
-    else if (currentFile)
-      currentFile.hunks.push(line);
-  return files;
-}
-function applyUnifiedHunks(original, hunkLines) {
-  let origLines = original.split(`
-`), result = [], origIdx = 0, inHunk = !1;
-  for (let line of hunkLines) {
-    if (line.startsWith("@@")) {
-      let match = line.match(/@@ -(\d+)/);
-      if (match) {
-        let startLine = parseInt(match[1], 10) - 1;
-        while (origIdx < startLine && origIdx < origLines.length)
-          result.push(origLines[origIdx]), origIdx++;
-      }
-      inHunk = !0;
-      continue;
-    }
-    if (!inHunk)
-      continue;
-    if (line.startsWith("-"))
-      origIdx++;
-    else if (line.startsWith("+"))
-      result.push(line.substring(1));
-    else
-      result.push(origLines[origIdx] ?? line.substring(1)), origIdx++;
-  }
-  while (origIdx < origLines.length)
-    result.push(origLines[origIdx]), origIdx++;
-  return result.join(`
-`);
-}
-function applyHunksToContent(original, hunkBlock) {
-  let lines = original.split(`
-`), result = [], hunkLines = hunkBlock.split(`
-`), origIdx = 0, inHunk = !1;
-  for (let hLine of hunkLines) {
-    if (hLine.startsWith("@@") || hLine === "*** End Patch") {
-      inHunk = !0;
-      continue;
-    }
-    if (!inHunk)
-      continue;
-    if (hLine.startsWith("-"))
-      origIdx++;
-    else if (hLine.startsWith("+"))
-      result.push(hLine.substring(1));
-    else if (hLine.startsWith(" "))
-      result.push(lines[origIdx] ?? hLine.substring(1)), origIdx++;
-  }
-  while (origIdx < lines.length)
-    result.push(lines[origIdx]), origIdx++;
-  return result.join(`
-`);
 }
 function resolveSearchPath(args, session, projectPath) {
   let rawPath = typeof args.searchPath === "string" ? args.searchPath : typeof args.path === "string" ? args.path : void 0;
@@ -25668,13 +24381,6 @@ async function handleContainerSearchFile(args, projectPath, callUpstreamTool, se
     limit
   })));
 }
-async function handleContainerListDir(args, projectPath, callUpstreamTool, session) {
-  let dirPath = typeof args.dir_path === "string" ? args.dir_path : typeof args.path === "string" ? args.path : ".", containerPath = resolveContainerFilePath(dirPath, session, projectPath);
-  return tagContainer(session, extractText(await callUpstreamTool("container_list_dir", {
-    sessionId: session.sessionId,
-    path: containerPath
-  })));
-}
 async function handleContainerBash(args, projectPath, callUpstreamTool, session) {
   let command = requireString(args.command, "command");
   if (projectPath) {
@@ -25699,42 +24405,6 @@ function objectSchema(properties, required2) {
     required: required2 && required2.length > 0 ? required2 : void 0,
     additionalProperties: !1
   };
-}
-function createReadSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Path relative to the project root."
-    },
-    offset: {
-      type: "number",
-      description: "1-based line number to start reading from."
-    },
-    limit: {
-      type: "number",
-      description: "Maximum number of lines to return."
-    }
-  }, ["file_path"]);
-}
-function createListDirSchema() {
-  return objectSchema({
-    dir_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the directory to list."
-    },
-    offset: {
-      type: "number",
-      description: "The entry number to start listing from. Must be 1 or greater."
-    },
-    limit: {
-      type: "number",
-      description: "The maximum number of entries to return."
-    },
-    depth: {
-      type: "number",
-      description: "The maximum directory depth to traverse. Must be 1 or greater."
-    }
-  }, ["dir_path"]);
 }
 function createSearchSchema(qDescription) {
   return objectSchema({
@@ -25804,14 +24474,6 @@ function createReformatFileSchema() {
     }
   }, ["files"]);
 }
-function createApplyPatchSchema() {
-  return objectSchema({
-    input: {
-      type: "string",
-      description: "Patch text in the apply_patch format or unified git diff format."
-    }
-  }, ["input"]);
-}
 function createRenameSchema() {
   return objectSchema({
     pathInProject: {
@@ -25830,15 +24492,27 @@ function createRenameSchema() {
 }
 
 // proxy-tools/registry.ts
-var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "execute_tool", "skill_search"]), EXTRA_REPLACED_TOOL_NAMES = [
+var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([
+  "read_file",
+  "get_file_text_by_path",
+  "apply_patch",
+  "create_new_file",
+  "replace_text_in_file",
+  "list_dir",
+  "list_directory_tree",
+  "container_read_file",
+  "container_write_file",
+  "container_list_dir",
+  "execute_terminal_command",
+  "execute_tool",
+  "skill_search"
+]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
   "find_files_by_name_keyword",
-  "replace_text_in_file",
-  "search",
-  "execute_terminal_command"
-], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.", READ_ONLY_TOOL_ANNOTATIONS = { readOnlyHint: !0, openWorldHint: !1 };
+  "search"
+], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.", READ_ONLY_TOOL_ANNOTATIONS = { readOnlyHint: !0, openWorldHint: !1 };
 function resolveToolDescription(description, context) {
   return typeof description === "function" ? description(context) : description;
 }
@@ -25870,19 +24544,6 @@ function withTimeoutDeclared(inputSchema) {
   };
 }
 var TOOL_VARIANTS = [
-  {
-    name: "read_file",
-    description: "Reads a local file and returns numbered lines (1-indexed) as text. Supports optional offset and limit line controls.",
-    schemaFactory: () => createReadSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "numbered" });
-    },
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["get_file_text_by_path"],
-    expose: ({ readCapabilities, containerSession }) => containerSession != null || !readCapabilities.hasReadFile
-  },
   {
     name: "search_text",
     description: "Search for a text substring in project files.",
@@ -25947,30 +24608,6 @@ var TOOL_VARIANTS = [
     handlerFactory: ({ callUpstreamTool, formattingCapabilities }) => (args) => handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
     upstreamNames: ["reformat_file"],
     expose: ({ formattingCapabilities }) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
-  },
-  {
-    name: "list_dir",
-    description: "Lists entries in a local directory with 1-indexed entry numbers and simple type labels.",
-    schemaFactory: () => createListDirSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerListDir(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleListDirTool(args, projectPath, callUpstreamTool);
-    },
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["list_directory_tree"]
-  },
-  {
-    name: "apply_patch",
-    description: "Apply a patch using the Codex apply_patch format or unified git diff format.",
-    schemaFactory: () => createApplyPatchSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerApplyPatch(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool);
-    },
-    upstreamNames: ["get_file_text_by_path"],
-    expose: ({ readCapabilities, containerSession }) => containerSession != null || !readCapabilities.hasApplyPatch
   },
   {
     name: "rename",
@@ -26053,20 +24690,6 @@ function resolveSearchCapabilities(upstreamTools) {
     supportsFile
   } };
 }
-function resolveReadCapabilities(upstreamTools) {
-  let names = /* @__PURE__ */ new Set;
-  for (let tool of upstreamTools ?? []) {
-    let name = typeof tool?.name === "string" ? tool.name : "";
-    if (name)
-      names.add(name);
-  }
-  return {
-    capabilities: {
-      hasReadFile: names.has("read_file"),
-      hasApplyPatch: names.has("apply_patch")
-    }
-  };
-}
 function resolveAnalysisCapabilities(upstreamTools) {
   let names = /* @__PURE__ */ new Set, hasLintFiles = !1, hasLintFilesFiles = !1, hasLintFilesFilePaths = !1;
   for (let tool of upstreamTools ?? []) {
@@ -26117,7 +24740,6 @@ function createProxyTooling({
   searchCapabilities,
   analysisCapabilities,
   formattingCapabilities,
-  readCapabilities,
   ideVersion,
   containerSession
 }) {
@@ -26128,7 +24750,6 @@ function createProxyTooling({
     searchCapabilities,
     analysisCapabilities,
     formattingCapabilities,
-    readCapabilities,
     shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
     containerSession: containerSession ?? null
   });
@@ -26170,7 +24791,6 @@ class UpstreamConnection {
   searchCapabilities = resolveSearchCapabilities([]).capabilities;
   analysisCapabilities = resolveAnalysisCapabilities([]).capabilities;
   formattingCapabilities = resolveFormattingCapabilities([]).capabilities;
-  readCapabilities = resolveReadCapabilities([]).capabilities;
   ideVersion = null;
   onStateChange;
   constructor(options) {
@@ -26215,7 +24835,7 @@ class UpstreamConnection {
     }), this._connectedPromise;
   }
   reset() {
-    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities, this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
+    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities, this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
   }
   async withReconnect(label, fn) {
     try {
@@ -26236,7 +24856,7 @@ class UpstreamConnection {
     return await this.withReconnect("tools/list", async () => {
       await this.connect();
       let response = await this.client.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities, this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities, this.readCapabilities = resolveReadCapabilities(tools).capabilities, this.onStateChange?.(), tools;
+      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities, this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities, this.onStateChange?.(), tools;
     });
   }
   async getTools() {
@@ -26348,7 +24968,7 @@ async function findReachablePorts(options) {
 }
 
 // routing.ts
-import path9 from "path";
+import path7 from "path";
 var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
   "search_text",
   "search_regex",
@@ -26402,10 +25022,10 @@ function resolveIdeForPath(args, projectRoot) {
 function isRiderPath(filePath, projectRoot) {
   if (!filePath)
     return !1;
-  let absolute = path9.isAbsolute(filePath) ? path9.normalize(filePath) : path9.resolve(projectRoot, filePath), relative = path9.relative(projectRoot, absolute);
-  if (relative.startsWith("..") || path9.isAbsolute(relative))
+  let absolute = path7.isAbsolute(filePath) ? path7.normalize(filePath) : path7.resolve(projectRoot, filePath), relative = path7.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path7.isAbsolute(relative))
     return !1;
-  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path9.sep);
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path7.sep);
 }
 function splitPathListArgsByIde(args, projectRoot, argName = "files") {
   let rawPaths = args[argName];
@@ -26429,7 +25049,7 @@ function splitPathListArgsByIde(args, projectRoot, argName = "files") {
     riderArgs: riderPaths.length > 0 ? { ...args, [argName]: riderPaths } : void 0
   };
 }
-var PATH_ARG_KEYS = ["pathInProject", "file_path", "dir_path", "directoryPath", "filePath"];
+var PATH_ARG_KEYS = ["pathInProject", "directoryPath", "filePath"];
 function extractPathArg(args) {
   for (let key of PATH_ARG_KEYS) {
     let value = args[key];
@@ -26471,31 +25091,25 @@ function buildStreamUrl(port) {
 }
 function resolveProjectPath(rawValue) {
   if (!rawValue)
-    return { projectPath: path10.resolve(cwd2()) };
+    return { projectPath: path8.resolve(cwd2()) };
   if (rawValue.startsWith("file://"))
     try {
-      return { projectPath: path10.resolve(fileURLToPath2(new URL(rawValue))) };
+      return { projectPath: path8.resolve(fileURLToPath2(new URL(rawValue))) };
     } catch (error51) {
       let message = error51 instanceof Error ? error51.message : String(error51);
       return {
-        projectPath: path10.resolve(rawValue),
+        projectPath: path8.resolve(rawValue),
         warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
       };
     }
-  return { projectPath: path10.resolve(rawValue) };
+  return { projectPath: path8.resolve(rawValue) };
 }
 var explicitProjectPath = env2.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "projectPath", containerSession = detectContainerSession(projectPath), explicitMcpUrlOverride;
 if (containerSession?.mcpStreamUrl)
   explicitMcpUrlOverride = containerSession.mcpStreamUrl;
 if (containerSession?.projectPath)
   projectPath = containerSession.projectPath;
-var REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
-function blockedToolMessage(toolName) {
-  if (toolName === "create_new_file")
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
-  return `Tool '${toolName}' is not exposed by ij-proxy.`;
-}
-var ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolNames = /* @__PURE__ */ new Set, riderProxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+var REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolNames = /* @__PURE__ */ new Set, riderProxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
 function primaryUpstream() {
   let upstream = ideaUpstream ?? riderUpstream;
   if (!upstream)
@@ -26510,7 +25124,7 @@ function updateProxyTooling() {
       if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride)
         explicitMcpUrlOverride = containerSession.mcpStreamUrl, note(`MCP stream URL override: ${explicitMcpUrlOverride} \u2014 reconnecting upstream`), ideaUpstream = null, riderUpstream = null, discoveryPromise = null;
       if (ideaUpstream?.setForceInjectProjectPath(projectPath, !0), riderUpstream)
-        riderUpstream.setForceInjectProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH), !0);
+        riderUpstream.setForceInjectProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH), !0);
     }
   }
   let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
@@ -26522,7 +25136,6 @@ function updateProxyTooling() {
       searchCapabilities: ideaUpstream.searchCapabilities,
       analysisCapabilities: ideaUpstream.analysisCapabilities,
       formattingCapabilities: ideaUpstream.formattingCapabilities,
-      readCapabilities: ideaUpstream.readCapabilities,
       ideVersion: ideaUpstream.ideVersion,
       containerSession
     });
@@ -26531,14 +25144,13 @@ function updateProxyTooling() {
     ideaProxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null;
   let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
   if (riderUpstream) {
-    let riderProjectPath = path10.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+    let riderProjectPath = path8.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
       projectPath: riderProjectPath,
       callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
       callUpstreamToolRaw: (name, args) => riderUpstream.callToolRaw(name, args),
       searchCapabilities: riderUpstream.searchCapabilities,
       analysisCapabilities: riderUpstream.analysisCapabilities,
       formattingCapabilities: riderUpstream.formattingCapabilities,
-      readCapabilities: riderUpstream.readCapabilities,
       ideVersion: riderUpstream.ideVersion,
       containerSession
     });
@@ -26569,7 +25181,7 @@ function buildInstructions() {
   if (ides.length > 0)
     parts.push(`Connected IDEs: ${ides.join(", ")}.`);
   if (containerSession)
-    parts.push(`CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`, "All file and search operations (read_file, apply_patch, search_text, search_regex, search_file, list_dir) are routed to the container.", "Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.", 'Use the "bash" tool for ALL shell commands \u2014 it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.', "The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.", `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ""}. Fix any compilation errors before finishing.`);
+    parts.push(`CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`, "Search operations (search_text, search_regex, search_file) are routed to the container. Use the agent's native file tools for reads, writes, patches, and directory listing.", "Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.", 'Use the "bash" tool for ALL shell commands \u2014 it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.', "The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.", `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ""}. Fix any compilation errors before finishing.`);
   return parts.join(`
 `);
 }
@@ -26695,7 +25307,7 @@ async function performDiscovery() {
       await conn.connect();
       let name = conn.client.getServerVersion()?.name ?? "";
       if (isRiderServerName(name))
-        conn.updateProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+        conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
       else
         ideaUpstream = conn;
       setupUpstreamClientHandlers(conn), updateProxyTooling();
@@ -26715,7 +25327,7 @@ async function performDiscovery() {
         await conn.connect();
         let name = conn.client.getServerVersion()?.name ?? "", candidate = { conn, url: url2, name };
         if (isRiderServerName(name))
-          conn.updateProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH)), riderCandidates.push(candidate);
+          conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderCandidates.push(candidate);
         else
           ideaCandidates.push(candidate);
       } catch (error51) {
@@ -26723,7 +25335,7 @@ async function performDiscovery() {
         warn(`Failed to connect to ${url2}: ${message}`);
       }
     }
-    let selectedIdea = await chooseUpstreamForProject(ideaCandidates, "IDEA", projectPath), selectedRider = await chooseUpstreamForProject(riderCandidates, "Rider", path10.join(projectPath, RIDER_PROJECT_SUBPATH));
+    let selectedIdea = await chooseUpstreamForProject(ideaCandidates, "IDEA", projectPath), selectedRider = await chooseUpstreamForProject(riderCandidates, "Rider", path8.join(projectPath, RIDER_PROJECT_SUBPATH));
     if (await closeUnusedUpstreams(ideaCandidates, selectedIdea), await closeUnusedUpstreams(riderCandidates, selectedRider), selectedIdea)
       ideaUpstream = selectedIdea.conn, setupUpstreamClientHandlers(selectedIdea.conn), note(`IDEA upstream: ${formatUpstream(selectedIdea)}`);
     if (selectedRider)
@@ -26778,7 +25390,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (!toolName)
       return makeToolError("Tool name is required");
     if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
-      return makeToolError(blockedToolMessage(toolName));
+      return makeToolError(`Tool '${toolName}' is not exposed by ij-proxy.`);
     if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
       if (ideaProxyToolCall && riderProxyToolCall) {
         if (isMergeTool(toolName))
@@ -27054,7 +25666,7 @@ function parseLintFilesToolResult(result) {
 }
 function lintItemPathKey(filePath) {
   let normalized = normalizeProjectRelativePath(projectPath, filePath);
-  return path10.sep === "\\" ? normalized.toLowerCase() : normalized;
+  return path8.sep === "\\" ? normalized.toLowerCase() : normalized;
 }
 function orderLintItems(filePaths, items) {
   let itemsByPath = /* @__PURE__ */ new Map;

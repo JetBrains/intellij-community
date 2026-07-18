@@ -1,50 +1,41 @@
-# Claude Code vs Codex vs JetBrains MCP (file tools)
+# Agent-native file tools and JetBrains MCP proxy
 
-## Scope
+## File-operation ownership
 
-This note compares the file read/search/edit tool surfaces for:
-- Claude Code (cc-tools.json capture)
-- Codex (open-source CLI + apply_patch tool)
-- JetBrains MCP server (SSE, official)
-- JetBrains MCP proxy (stdio)
+Claude Code, Codex, and other agent harnesses provide native tools for reading,
+editing, writing, patching, and listing local files. ij-proxy does not duplicate
+those operations. It remains responsible for IDE-backed search, analysis,
+formatting, refactoring, and execution tools.
 
-Note: The Claude Code tool list was captured on January 21, 2026 (see cc-tools.json). It can drift from current Claude Code builds.
-Note: The proxy tool list is fixed.
-Note: The proxy exposes search shims only when upstream does not provide the same `search_*` tools; otherwise it passes the upstream tools through.
+The Claude Code tool list in `cc-tools.json` is a point-in-time capture from
+January 21, 2026 and may differ from current builds.
 
-## Comparison table
+## Blocked JetBrains MCP tools
 
-- Tool naming: Claude Code uses TitleCase (`Read`/`Edit`/`Write`), Codex uses snake_case (`read_file`/`grep`/`find`), JetBrains MCP uses snake_case tool names such as `read_file`, and ij-proxy uses snake_case.
-- Read: Claude Code `Read` supports absolute path + offset/limit; Codex uses `read_file`; JetBrains MCP uses `read_file`; ij-proxy exposes `read_file` with the JetBrains MCP shape when it needs to shim older upstream IDEs.
-- Indentation: Codex has a native indentation mode, but JetBrains MCP and ij-proxy expose the simpler offset/limit read shape.
-- Directory listing: Codex has `list_dir`; JetBrains MCP has `list_directory_tree`; Claude Code capture had none; ij-proxy exposes `list_dir`.
-- File discovery: Claude Code uses glob; JetBrains MCP uses `search_file`; Codex relies on directory listing; ij-proxy exposes `list_dir` and `search_file`.
-- Search output: Claude Code uses Grep; Codex uses grep/find; JetBrains MCP uses structured `search_*`; ij-proxy normalizes to `search_text`/`search_regex`/`search_file`/`search_symbol` when shims are active.
-- Edit/write: Claude Code uses `Edit`/`Write`; Codex uses `apply_patch`; JetBrains MCP uses `replace_text_in_file` + `create_new_file`; ij-proxy uses `apply_patch`.
-- Path model: Claude Code and Codex read tools use absolute paths; JetBrains MCP tools are project-relative; ij-proxy accepts absolute or project-relative paths.
-- `apply_patch`: supported in Codex and ij-proxy; not supported in native Claude Code or native JetBrains MCP.
-- Tool list scope: Claude Code table is a point-in-time capture, Codex is from tool specs, JetBrains MCP is upstream tool list, and ij-proxy combines proxy tools with non-conflicting upstream tools.
+JetBrains MCP still exposes file-operation tools that overlap the native agent
+surface. ij-proxy filters their current, legacy, and container variants:
 
-## Key differences
+- Reads: `read_file`, `get_file_text_by_path`, `container_read_file`.
+- Writes and patches: `apply_patch`, `create_new_file`,
+  `replace_text_in_file`, `container_write_file`.
+- Directory listing: `list_dir`, `list_directory_tree`,
+  `container_list_dir`.
 
-- The proxy is not a pure pass-through: it exposes a fixed proxy tool set unless the upstream already provides the same tool name, hides upstream tools replaced by proxy tools, and keeps the remaining upstream tools that do not collide with proxy tool names (blocked tools are filtered).
-- Upstream JetBrains MCP uses project-relative paths and structured search entries; the proxy returns plain text outputs.
-- The proxy exposes `search_*` shims only when upstream does not provide the same tools; otherwise it passes upstream search tools through unchanged.
-- Codex relies on apply_patch for edits; Claude Code uses string replacement, and the proxy follows Codex-style edit flows.
-- JetBrains MCP and ij-proxy intentionally keep `read_file` to a simple offset/limit line reader.
+These names are rejected for direct `tools/call` requests as well as omitted
+from `tools/list`. The filtering can be removed after the overlapping
+JetBrains MCP tools are removed upstream.
+
+## Remaining proxy behavior
+
+- Search tools are passed through when the upstream has the current
+  `search_*` interface and adapted from legacy tools otherwise.
+- Multi-IDE search results are merged; path-scoped analysis, formatting, and
+  refactoring calls are routed between IDEA and Rider.
+- Container mode routes search through container tools and retains the
+  container `bash` adapter. File operations still belong to native agent tools.
 
 ## References
 
-- Claude Code capture: `community/build/mcp-servers/ij-proxy/cc-tools.json`
-- JetBrains MCP server: `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt`,
-  `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/FileToolset.kt`
-- JetBrains MCP proxy: `community/build/mcp-servers/ij-proxy/README.md`,
-  `community/build/mcp-servers/ij-proxy/project-path.ts`,
-  `community/build/mcp-servers/ij-proxy/stream-transport.ts`,
-  `community/build/mcp-servers/ij-proxy/proxy-tools/tooling.ts`,
-  `community/build/mcp-servers/ij-proxy/ij-mcp-proxy.ts`
-- Codex CLI (local checkout): `~/Downloads/codex-main/codex-rs/core/src/tools/spec.rs`,
-  `~/Downloads/codex-main/codex-rs/core/src/tools/handlers/apply_patch.rs`
-- OpenAI docs:
-  - https://developers.openai.com/codex/cli
-  - https://platform.openai.com/docs/guides/tools-apply-patch
+- Proxy behavior: `README.md`, `search.md`, `proxy-tools/registry.ts`.
+- Claude Code capture: `cc-tools.json`.
+- JetBrains MCP server: `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/`.

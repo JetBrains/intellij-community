@@ -31,9 +31,21 @@ function assertReformatFilesSchema(tool) {
   ok(!('paths' in properties))
 }
 
+const FORBIDDEN_FILE_TOOL_CALLS = [
+  ['read_file', {file_path: 'example.txt'}],
+  ['get_file_text_by_path', {pathInProject: 'example.txt'}],
+  ['apply_patch', {patch: '*** Begin Patch\n*** End Patch'}],
+  ['create_new_file', {pathInProject: 'example.txt', text: 'hello'}],
+  ['replace_text_in_file', {pathInProject: 'example.txt', oldText: 'a', newText: 'b'}],
+  ['list_dir', {dir_path: '.'}],
+  ['list_directory_tree', {directoryPath: '.'}],
+  ['container_read_file', {sessionId: 'test', path: '/workspace/example.txt'}],
+  ['container_write_file', {sessionId: 'test', path: '/workspace/example.txt', content: 'hello'}],
+  ['container_list_dir', {sessionId: 'test', path: '/workspace'}]
+]
+
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   const defaultHasSearchSymbol = defaultUpstreamTools.some((tool) => tool.name === 'search_symbol')
-  const readOnlyAnnotations = {readOnlyHint: true, openWorldHint: false}
   const upstreamToolsWithLegacySearch = [
     buildUpstreamTool('search_in_files_by_text', {project_path: {type: 'string'}}, ['project_path']),
     buildUpstreamTool('search_in_files_by_regex', {project_path: {type: 'string'}}, ['project_path']),
@@ -42,16 +54,6 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   ]
   const upstreamToolsWithSearchText = [
     buildUpstreamTool('search_text', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path'])
-  ]
-  const upstreamToolsWithReadFile = [
-    buildUpstreamTool('read_file', {
-      file_path: {type: 'string'},
-      offset: {type: 'number'},
-      limit: {type: 'number'}
-    }, ['file_path'], readOnlyAnnotations)
-  ]
-  const upstreamToolsWithApplyPatch = [
-    buildUpstreamTool('apply_patch', {patch: {type: 'string'}}, ['patch'])
   ]
   const upstreamToolsWithLegacyLint = [
     buildUpstreamTool('get_file_problems', {
@@ -154,10 +156,10 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
-  it('exposes read-only annotations for proxy shims', async () => {
+  it('exposes read-only annotations for proxy tools', async () => {
     await withProxy({}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
-      const expectedReadOnlyTools = ['read_file', 'search_text', 'search_regex', 'search_file', 'lint_files', 'list_dir']
+      const expectedReadOnlyTools = ['search_text', 'search_regex', 'search_file', 'lint_files']
 
       for (const name of expectedReadOnlyTools) {
         const tool = listResponse.result.tools.find((candidate) => candidate.name === name)
@@ -184,31 +186,6 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const properties = searchTool.inputSchema?.properties ?? {}
       ok('query' in properties)
       ok(!('q' in properties))
-    })
-  })
-
-  it('passes through upstream read_file schema when read_file is available', async () => {
-    await withProxy({tools: upstreamToolsWithReadFile}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const readTool = listResponse.result.tools.find((tool) => tool.name === 'read_file')
-      ok(readTool)
-      const properties = readTool.inputSchema?.properties ?? {}
-      ok('file_path' in properties)
-      ok('offset' in properties)
-      ok('limit' in properties)
-      ok(readTool.annotations?.readOnlyHint === true)
-      ok(readTool.annotations?.openWorldHint === false)
-    })
-  })
-
-  it('passes through upstream apply_patch schema when apply_patch is available', async () => {
-    await withProxy({tools: upstreamToolsWithApplyPatch}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const applyPatchTool = listResponse.result.tools.find((tool) => tool.name === 'apply_patch')
-      ok(applyPatchTool)
-      const properties = applyPatchTool.inputSchema?.properties ?? {}
-      ok('patch' in properties)
-      ok(!('input' in properties))
     })
   })
 
@@ -265,22 +242,19 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      ok(names.includes('read_file'))
-      ok(names.includes('list_dir'))
-      ok(names.includes('apply_patch'))
+      ok(names.includes('search_text'))
+      ok(names.includes('rename'))
     })
   })
 
-  it('rejects direct create_new_file calls', async () => {
+  it('rejects direct file-operation calls', async () => {
     await withProxy({}, async ({proxyClient}) => {
-      const response = await proxyClient.send('tools/call', {
-        name: 'create_new_file',
-        arguments: {pathInProject: 'example.txt', text: 'hello', overwrite: true}
-      })
-
-      ok(response.result?.isError)
-      const message = response.result?.content?.[0]?.text ?? ''
-      ok(message.includes('apply_patch'))
+      for (const [name, args] of FORBIDDEN_FILE_TOOL_CALLS) {
+        const response = await proxyClient.send('tools/call', {name, arguments: args})
+        ok(response.result?.isError, `Expected ${name} to be rejected`)
+        const message = response.result?.content?.[0]?.text ?? ''
+        ok(message.includes(`Tool '${name}' is not exposed by ij-proxy`))
+      }
     })
   })
 

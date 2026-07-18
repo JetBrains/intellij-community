@@ -13,90 +13,6 @@ function objectSchema(properties: Record<string, JsonSchemaProperty>, required?:
   }
 }
 
-export function createReadSchema(): ToolInputSchema {
-  const properties: Record<string, JsonSchemaProperty> = {
-    file_path: {
-      type: 'string',
-      description: 'Path relative to the project root.'
-    },
-    offset: {
-      type: 'number',
-      description: '1-based line number to start reading from.'
-    },
-    limit: {
-      type: 'number',
-      description: 'Maximum number of lines to return.'
-    }
-  }
-
-  return objectSchema(properties, ['file_path'])
-}
-
-export function createWriteSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      file_path: {
-        type: 'string',
-        description: 'Absolute or project-relative path to the file.'
-      },
-      content: {
-        type: 'string',
-        description: 'The contents to write to the file.'
-      }
-    },
-    ['file_path', 'content']
-  )
-}
-
-export function createEditSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      file_path: {
-        type: 'string',
-        description: 'Absolute or project-relative path to the file.'
-      },
-      old_string: {
-        type: 'string',
-        description: 'Text to replace.'
-      },
-      new_string: {
-        type: 'string',
-        description: 'Replacement text.'
-      },
-      replace_all: {
-        type: 'boolean',
-        description: 'When true, replace all occurrences. Otherwise replace only the first.'
-      }
-    },
-    ['file_path', 'old_string', 'new_string']
-  )
-}
-
-
-export function createListDirSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      dir_path: {
-        type: 'string',
-        description: 'Absolute or project-relative path to the directory to list.'
-      },
-      offset: {
-        type: 'number',
-        description: 'The entry number to start listing from. Must be 1 or greater.'
-      },
-      limit: {
-        type: 'number',
-        description: 'The maximum number of entries to return.'
-      },
-      depth: {
-        type: 'number',
-        description: 'The maximum directory depth to traverse. Must be 1 or greater.'
-      }
-    },
-    ['dir_path']
-  )
-}
-
 function createSearchSchema(qDescription: string): ToolInputSchema {
   return objectSchema(
     {
@@ -181,18 +97,6 @@ export function createReformatFileSchema(): ToolInputSchema {
       }
     },
     ['files']
-  )
-}
-
-export function createApplyPatchSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      input: {
-        type: 'string',
-        description: 'Patch text in the apply_patch format or unified git diff format.'
-      }
-    },
-    ['input']
   )
 }
 

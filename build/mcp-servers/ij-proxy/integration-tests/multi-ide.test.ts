@@ -94,7 +94,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
     await withDualProxy(async ({proxyClient}) => {
       const response = await proxyClient.send('tools/list')
       const names = response.result.tools.map((t) => t.name)
-      ok(names.includes('read_file'))
+      ok(names.includes('rename'))
       ok(names.includes('search_text'))
     })
   })
@@ -122,40 +122,6 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       // Both upstreams should have been called
       ok(ideaCalls.length > 0, 'IDEA should have been called')
       ok(riderCalls.length > 0, 'Rider should have been called')
-    })
-  })
-
-  it('routes dotnet/ file reads to Rider', async () => {
-    await withDualProxy(async ({proxyClient, ideaCalls, riderCalls}) => {
-      await proxyClient.send('tools/list')
-      await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'dotnet/Psi/Foo.cs'}
-      })
-
-      // Rider should receive the call with stripped dotnet/ prefix
-      const riderReadCalls = riderCalls.filter((c) => c.name === 'get_file_text_by_path')
-      ok(riderReadCalls.length > 0, 'Rider should have received read call')
-
-      const riderArgs = riderReadCalls[0].args
-      // Path separators may be normalized to OS convention
-      ok(
-        riderArgs.pathInProject === 'Psi/Foo.cs' || riderArgs.pathInProject === 'Psi\\Foo.cs',
-        `Expected Psi/Foo.cs, got ${riderArgs.pathInProject}`
-      )
-    })
-  })
-
-  it('routes non-dotnet file reads to IDEA', async () => {
-    await withDualProxy(async ({proxyClient, ideaCalls, riderCalls}) => {
-      await proxyClient.send('tools/list')
-      await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'src/Main.kt'}
-      })
-
-      const ideaReadCalls = ideaCalls.filter((c) => c.name === 'get_file_text_by_path')
-      ok(ideaReadCalls.length > 0, 'IDEA should have received read call')
     })
   })
 
