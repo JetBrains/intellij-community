@@ -1,0 +1,14 @@
+diff --git private/artifact_utilities.bzl private/artifact_utilities.bzl
+--- private/artifact_utilities.bzl
++++ private/artifact_utilities.bzl
+@@ -33,7 +33,9 @@
+     deduped_artifacts = {}
+     null_artifacts = []
+     for artifact in dep_tree["dependencies"]:
+-        if artifact["file"] == None:
++        # Newer coursier (v2.1.25-M20+) omits the "file" key entirely for file-less (pom-only/BOM)
++        # entries instead of emitting file=null, so use .get() to avoid a KeyError here.
++        if artifact.get("file") == None:
+             null_artifacts.append(artifact)
+             continue
+         if artifact["coord"] in artifacts_with_exclusions:
