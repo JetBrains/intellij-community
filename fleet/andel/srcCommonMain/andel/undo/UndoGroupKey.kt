@@ -11,25 +11,6 @@ interface UndoGroupKey {
     this.toAttributes().map[attribute]
 }
 
-data class UndoUndoGroupKey(val reverted: List<UndoGroupReference>, val description: String?) : UndoGroupKey {
-  override fun toAttributes(): UndoGroupAttributes {
-    return UndoGroupAttributes
-      .with(UndoGroupAttributes.undo, reverted)
-      .with(UndoGroupAttributes.includeIntoLog, true)
-      .withNotNull(UndoGroupAttributes.description, description)
-  }
-}
-
-data class RedoUndoGroupKey(val reverted: List<UndoGroupReference>, val description: String?) : UndoGroupKey {
-  override fun toAttributes(): UndoGroupAttributes {
-    return UndoGroupAttributes
-      .with(UndoGroupAttributes.redo, reverted)
-      .with(UndoGroupAttributes.includeIntoLog, true)
-      .withNotNull(UndoGroupAttributes.description, description)
-  }
-
-}
-
 object TypeUndoGroupKey : UndoGroupKey {
   override fun toAttributes(): UndoGroupAttributes {
     return UndoGroupAttributes.with(UndoGroupAttributes.mergeKey, "undoGroup.type").with(UndoGroupAttributes.includeIntoLog, true)

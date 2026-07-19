@@ -25,14 +25,13 @@ import andel.text.charSequence
 import andel.undo.CachedComposition
 import andel.undo.CompositionCache
 import andel.undo.EditGroup
-import andel.undo.DocumentUndoGroup
 import andel.undo.UndoGroupKey
 import andel.undo.UndoOperationType
 import andel.undo.UndoScope
 import andel.undo.UndoStack
-import andel.undo.editorUndo
 import andel.undo.amendDocumentEdit
 import andel.undo.computeCompositionWithCache
+import andel.undo.editorUndo
 import fleet.openmap.BoundedOpenMap
 import fleet.openmap.MutableBoundedOpenMap
 import fleet.openmap.MutableOpenMap
@@ -494,13 +493,6 @@ class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDo
     return command.invoke().also {
       val caretsAfter = carets.invoke()
       val idAfter = state.edits.timestamp
-      val undoGroup = DocumentUndoGroup(
-        entryIndices = (idBefore until idAfter).toList(),
-        entryIndexFrom = idBefore,
-        caretStateBefore = caretsBefore,
-        caretStateAfter = caretsAfter,
-        attributes = groupKey.toAttributes()
-      )
       val editGroup = EditGroup(
         entryIndices = (idBefore until idAfter).toList(),
         entryIndexFrom = idBefore,

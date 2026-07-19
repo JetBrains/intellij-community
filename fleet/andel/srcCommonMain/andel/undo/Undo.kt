@@ -36,49 +36,6 @@ interface UndoScope {
   fun <T> recordUndoData(operationType: UndoOperationType, data: T)
 }
 
-// sorted from oldest to newest
-fun AbstractUndoGroup.revertedGroups(isRedo: Boolean): List<UndoGroupReference>? =
-  if (isRedo)
-    attributes.map[UndoGroupAttributes.redo]
-  else
-    attributes.map[UndoGroupAttributes.undo]
-
-/**
- * Builds the logical undo or redo stack from the raw append-only undo log.
- *
- * The underlying log records every command, including commands produced by undo and redo themselves.
- * This means the latest log entry is not necessarily the next entry that should be undone.
- *
- * To recover the user-visible stack, this function walks the log backwards and interprets group attributes:
- * normal groups are yielded as available stack entries, while groups marked with
- * [UndoGroupAttributes.undo] or [UndoGroupAttributes.redo] are treated as inversions of earlier groups.
- * Those inversion groups are not yielded for the same direction. Instead, traversal jumps to the group
- * preceding the first reverted group, effectively removing the reverted range from the projected stack.
- *
- * Example for undo:
- * raw log = edit1, edit2, edit3, undo(edit3)
- * projected undo stack = edit2, edit1
- * projected redo stack = undo(edit3)
- *
- * When [isRedo] is true, traversal stops as soon as it reaches a suffix that contains no undo-produced
- * groups, because redo is only available for operations that were previously undone.
- */
-fun UndoLog.asUndoStack(isRedo: Boolean): Sequence<CustomIndexedValue<UndoGroupReference, AbstractUndoGroup>> =
-  sequence {
-    var idx = last()
-    while (idx != null) {
-      val revertedGroups = idx.value.revertedGroups(isRedo)
-      idx = if (revertedGroups == null) {
-        if (isRedo && idx.value.attributes.map[UndoGroupAttributes.undo] == null) break
-        yield(idx)
-        previous(idx.index)
-      }
-      else {
-        previous(revertedGroups.first())
-      }
-    }
-  }
-
 /**
  * It's a "spread invert" — selectively undo only certain edits from a range,
  * correctly rebasing around the ones being skipped. This is the core of
