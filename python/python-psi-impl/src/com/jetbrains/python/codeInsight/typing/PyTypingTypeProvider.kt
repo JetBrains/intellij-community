@@ -1432,7 +1432,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (noneType != null) {
           return noneType
         }
-        val newType = PyTypingNewTypeTypeProvider.getNewTypeForResolvedElement(resolved, context.typeContext)
+        val newType = PyTypingNewTypeTypeProvider.Helper.getNewTypeForResolvedElement(resolved, context.typeContext)
         if (newType != null) {
           return Ref(newType.toInstance())
         }
