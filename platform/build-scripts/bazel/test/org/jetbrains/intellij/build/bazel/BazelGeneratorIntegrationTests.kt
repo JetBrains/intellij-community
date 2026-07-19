@@ -151,9 +151,9 @@ class BazelGeneratorIntegrationTests {
         
         http_file(
             name = "org_jetbrains_intellij_deps-debugger-agent-1_161_http",
-            url = "$url",
-            sha256 = "$sha256",
             downloaded_file_path = "debugger-agent-1.161.jar",
+            sha256 = "$sha256",
+            url = "$url",
         )
       """.trimIndent() + "\n"
     )
