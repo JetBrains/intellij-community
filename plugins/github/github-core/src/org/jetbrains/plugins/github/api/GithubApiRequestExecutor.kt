@@ -2,10 +2,6 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
-import com.intellij.collaboration.ui.SimpleEventListener
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -14,7 +10,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -44,9 +39,6 @@ import java.util.zip.GZIPInputStream
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
  */
 sealed class GithubApiRequestExecutor {
-
-  open fun addListener(disposable: Disposable, listener: () -> Unit) = Unit
-
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
@@ -82,12 +74,6 @@ sealed class GithubApiRequestExecutor {
         }
         .useProxy(useProxy)
         .execute(request, indicator)
-    }
-
-    override fun addListener(disposable: Disposable, listener: () -> Unit) {
-      if (tokenSupplier is MutableTokenSupplier) {
-        tokenSupplier.addListener(disposable, listener)
-      }
     }
   }
 
@@ -322,22 +308,8 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
-  internal class MutableTokenSupplier(private val serverPath: GithubServerPath, token: String) : (URL) -> String? {
-    private val authDataChangedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-    @Volatile
-    var token: String = token
-      set(value) {
-        field = value
-        runInEdt(ModalityState.any()) {
-          authDataChangedEventDispatcher.multicaster.eventOccurred()
-        }
-      }
-
+  internal class MutableTokenSupplier(private val serverPath: GithubServerPath, @Volatile var token: String) : (URL) -> String? {
     override fun invoke(url: URL): String? = if (isAuthorizedUrl(serverPath, url)) token else null
-
-    fun addListener(disposable: Disposable, listener: () -> Unit) =
-      SimpleEventListener.addDisposableListener(authDataChangedEventDispatcher, disposable, listener)
   }
 }
 

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.BatchesLoader
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
@@ -47,12 +46,6 @@ class GHPRRepositoryDataServiceImpl internal constructor(
 
   private val _dataReloadSignal = MutableSharedFlow<Unit>(replay = 1)
   override val dataReloadSignal: SharedFlow<Unit> = _dataReloadSignal.asSharedFlow()
-
-  init {
-    requestExecutor.addListener(cs.nestedDisposable()) {
-      resetData()
-    }
-  }
 
   private val collaboratorsLoader by lazy {
     BatchesLoader(cs, batchesFlow(requestExecutor, GithubApiRequests.Repos.Collaborators.pages(serverPath,

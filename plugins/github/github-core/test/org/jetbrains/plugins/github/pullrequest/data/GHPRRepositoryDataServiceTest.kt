@@ -23,9 +23,7 @@ import org.junit.jupiter.api.Test
 
 class GHPRRepositoryDataServiceTest {
   private val testTeam = GHTeam("", "", "", "", "", "")
-  private val requestExecutor = mockk<GithubApiRequestExecutor> {
-    every { addListener(any(), any()) } returns Unit
-  }
+  private val requestExecutor = mockk<GithubApiRequestExecutor>()
   private val remoteCoordinates = mockk<GitRemoteUrlCoordinates>(relaxed = true)
   private val repositoryCoordinates = GHRepositoryCoordinates(
     GithubServerPath.DEFAULT_SERVER,
