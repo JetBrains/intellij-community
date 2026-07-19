@@ -77,6 +77,8 @@
                  description="ISO Formatted date of first WSL usage such as 2026-07-15 (for testing the WSL satisfaction survey)"/>
     <registryKey key="wsl.survey.days.with.wsl" defaultValue="-1"
                  description="Overrides the number of days a WSL project was open (for testing the WSL satisfaction survey); -1 disables the override"/>
+    <registryKey key="wsl.survey.ignore.audience.conditions" defaultValue="false"
+                 description="Ignores the target IDE version and 'existing users only' checks for the WSL satisfaction survey, so it can be triggered on any build and profile for testing (the WSL-project and usage-duration conditions still apply)"/>
 
     <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
     <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
