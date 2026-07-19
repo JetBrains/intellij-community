@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSuppor
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -75,45 +76,46 @@ private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfi
     val dependenciesToAdd = processorDependencyMatches
         .distinctBy { it.kaptConfiguration to it.notation }
         .filterNot { KaptDependency(it.kaptConfiguration, it.notation) in kaptDependencies }
-    if (dependenciesToAdd.isEmpty()) return
+    val dependenciesToRemove = processorDependencyMatches
+        .filter { it.dropOriginal }
 
-    if (document == null) {
-        changedFiles.storeOriginalFileContent(this)
-        addKaptDependenciesToPsi(dependenciesToAdd)
-        return
-    }
+    if (dependenciesToAdd.isEmpty() && dependenciesToRemove.isEmpty()) return
 
-    val lastProcessorMatch = dependenciesToAdd.last().match
-    val insertOffset = fileText.indexOf('\n', lastProcessorMatch.range.last + 1).takeIf { it >= 0 } ?: fileText.length
-    val indent = lastProcessorMatch.groupValues[1]
-    val dependencyLines = dependenciesToAdd.joinToString(separator = "") { dependency ->
-        "\n$indent${kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)}"
-    }
+    val dependenciesBlock = findTopLevelBlock("dependencies") ?: return
+
     changedFiles.storeOriginalFileContent(this)
-    document.insertString(insertOffset, dependencyLines)
-    psiDocumentManager.commitDocument(document)
+    dependenciesBlock.addDependencies(dependenciesToAdd)
+    dependenciesBlock.removeDependencies(dependenciesToRemove)
+
+    val codeStyleManager = CodeStyleManager.getInstance(project)
+    codeStyleManager.reformat(dependenciesBlock, true)
 }
 
-private fun KtFile.addKaptDependenciesToPsi(dependenciesToAdd: List<KaptProcessorDependency>) {
-    val dependenciesBlock = findTopLevelBlock("dependencies") ?: return
+private fun KtBlockExpression.removeDependencies(removedDependencies: List<KaptProcessorDependency>) {
+    val existingDependencies = statements.associateBy { it.text }
+    removedDependencies.forEach { dependency: KaptProcessorDependency ->
+        val dependencyText = kaptDependencyNotation(dependency.dependencyConfiguration, dependency.notation)
+        val expression = existingDependencies[dependencyText]
+        expression?.delete()
+    }
+}
+
+private fun KtBlockExpression.addDependencies(dependenciesToAdd: List<KaptProcessorDependency>) {
     val sourceDependencyTexts = dependenciesToAdd.map { it.match.value.trim() }
-    val lastSourceDependency = dependenciesBlock.statements.lastOrNull { statement ->
+    val lastSourceDependency = this.statements.lastOrNull<KtExpression> { statement ->
         sourceDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(statement.text, it) }
     } ?: return
     val psiFactory = KtPsiFactory(project)
     var anchor: PsiElement = lastSourceDependency
-    val existingDependencyTexts = dependenciesBlock.statements.map { it.text }
+    val existingDependencyTexts = statements.map { it.text }
 
-    for ((_, kaptConfiguration, notation) in dependenciesToAdd) {
-        val kaptDependencyText = kaptDependencyNotation(kaptConfiguration, notation)
-        if (existingDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(it, kaptDependencyText) }) continue
+    for (dependency in dependenciesToAdd) {
+        val dependencyText = kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)
+        if (existingDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(it, dependencyText) }) continue
 
-        anchor = dependenciesBlock.addAfter(psiFactory.createExpression(kaptDependencyText), anchor)
+        anchor = addAfter(psiFactory.createExpression(dependencyText), anchor)
             .apply { addNewLinesIfNeeded() }
     }
-
-    val codeStyleManager = CodeStyleManager.getInstance(project)
-    codeStyleManager.reformat(dependenciesBlock, true)
 }
 
 private fun KtFile.findTopLevelBlock(name: String): KtBlockExpression? =
@@ -218,18 +220,20 @@ private fun String.isLombokDependencyNotation(): Boolean =
   split(':').getOrNull(1) == "lombok" || contains("lombok", ignoreCase = true)
 
 private fun MatchResult.toKaptProcessorDependency(): KaptProcessorDependency? {
-  val sourceConfiguration = GradleProcessorDependencyConfiguration.byName(groupValues[2]) ?: return null
-  val notation = groupValues[3]
-  if (notation.isLombokDependencyNotation()) return null
-  if (!sourceConfiguration.acceptsAnyProcessor) {
-    val processorPath = GradleProcessorPath.of(notation) ?: return null
-    if (processorPath !in KNOWN_PROCESSOR_ARTIFACTS) return null
-  }
-  return KaptProcessorDependency(
-    match = this,
-    kaptConfiguration = sourceConfiguration.kaptConfiguration,
-    notation = notation,
-  )
+    val sourceConfiguration = GradleProcessorDependencyConfiguration.byName(groupValues[2]) ?: return null
+    val notation = groupValues[3]
+    if (notation.isLombokDependencyNotation()) return null
+    if (!sourceConfiguration.acceptsAnyProcessor) {
+        val processorPath = GradleProcessorPath.of(notation) ?: return null
+        if (processorPath !in KNOWN_PROCESSOR_ARTIFACTS) return null
+    }
+    return KaptProcessorDependency(
+        match = this,
+        dependencyConfiguration = sourceConfiguration.dependencyConfiguration,
+        kaptConfiguration = sourceConfiguration.kaptConfiguration,
+        notation = notation,
+        dropOriginal = sourceConfiguration.dropOriginal
+    )
 }
 
 private fun kaptPluginExpression(forKotlinDsl: Boolean): String =
@@ -238,16 +242,23 @@ private fun kaptPluginExpression(forKotlinDsl: Boolean): String =
 private fun kaptDependencyNotation(configuration: String, dependency: String): String =
   "$configuration(\"$dependency\")"
 
-private data class KaptProcessorDependency(val match: MatchResult, val kaptConfiguration: String, val notation: String)
+private data class KaptProcessorDependency(
+    val match: MatchResult,
+    val dependencyConfiguration: String,
+    val kaptConfiguration: String,
+    val notation: String,
+    val dropOriginal: Boolean
+)
 
 private data class KaptDependency(val configuration: String, val notation: String)
 
 private enum class GradleProcessorDependencyConfiguration(
   val dependencyConfiguration: String,
   val kaptConfiguration: String,
+  val dropOriginal: Boolean = false,
   val acceptsAnyProcessor: Boolean,
 ) {
-  ANNOTATION_PROCESSOR("annotationProcessor", "kapt", acceptsAnyProcessor = true),
+  ANNOTATION_PROCESSOR("annotationProcessor", "kapt", dropOriginal = true, acceptsAnyProcessor = true),
   TEST_ANNOTATION_PROCESSOR("testAnnotationProcessor", "kaptTest", acceptsAnyProcessor = true),
   IMPLEMENTATION("implementation", "kapt", acceptsAnyProcessor = false),
   TEST_IMPLEMENTATION("testImplementation", "kaptTest", acceptsAnyProcessor = false);
