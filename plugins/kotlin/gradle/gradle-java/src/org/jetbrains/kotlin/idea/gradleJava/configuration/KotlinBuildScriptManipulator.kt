@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSuppor
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_IMPLEMENTATION
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_LIB_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleVersionProvider
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsRepositoriesMode
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.assertApplicableInMultiplatform
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.canBeConfigured
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.fetchGradleVersion
@@ -222,22 +223,28 @@ class KotlinBuildScriptManipulator(
         scriptFile.apply {
             if (useNewSyntax) {
                 createPluginInPluginsGroupIfMissing(kotlinPluginExpression, addVersion, version)
-                getRepositoriesBlock()?.apply {
-                    val repository = getRepositoryForVersion(version)
-                    if (repository != null) {
-                        scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
-                            changedFiles.storeOriginalFileContent(it)
-                            with(GradleBuildScriptSupport.getManipulator(it)) {
-                                addPluginRepository(repository)
-                                addMavenCentralPluginRepository()
-                                addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
-                            }
+                val repository = getRepositoryForVersion(version)
+                if (repository != null) {
+                    scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
+                        changedFiles.storeOriginalFileContent(it)
+                        with(GradleBuildScriptSupport.getManipulator(it)) {
+                            addPluginRepository(repository)
+                            addMavenCentralPluginRepository()
+                            addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
                         }
                     }
                 }
             } else {
                 script?.blockExpression?.addDeclarationIfMissing("val $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra", true)
                 getApplyBlock()?.createPluginIfMissing(kotlinPluginName)
+            }
+
+            val settingsFile = scriptFile.module?.getTopLevelBuildScriptSettingsPsiFile()
+            val settingsManipulator = settingsFile?.let(GradleBuildScriptSupport::findManipulator)
+            val repositoriesMode = settingsManipulator?.getSettingsRepositoriesMode()
+            val projectRepositoriesBlock = when (repositoriesMode) {
+                SettingsRepositoriesMode.PREFER_SETTINGS, SettingsRepositoriesMode.FAIL_ON_PROJECT_REPOS -> null
+                else -> getRepositoriesBlock()
             }
 
             // Add test dependency - for KMP projects, add to commonTest source set; otherwise to top-level dependencies
@@ -249,9 +256,21 @@ class KotlinBuildScriptManipulator(
                 getDependenciesBlock()?.addKotlinTestDependencyIfMissing()
             }
 
-            getRepositoriesBlock()?.apply {
-                addRepositoryIfMissing(version)
-                addMavenCentralIfMissing()
+            // Repositories declared in dependencyResolutionManagement take precedence only when
+            // repositoriesMode is PREFER_SETTINGS or FAIL_ON_PROJECT_REPOS.
+            if (
+                repositoriesMode == SettingsRepositoriesMode.PREFER_SETTINGS ||
+                repositoriesMode == SettingsRepositoriesMode.FAIL_ON_PROJECT_REPOS
+            ) {
+                // Add dependency repositories to settings.gradle(.kts).
+                changedFiles.storeOriginalFileContent(settingsFile)
+                settingsManipulator.addDependencyRepositories(version)
+            } else {
+                // Otherwise, add dependency repositories to the project build script.
+                projectRepositoriesBlock?.apply {
+                    addRepositoryIfMissing(version)
+                    addMavenCentralIfMissing()
+                }
             }
 
             configureToolchainOrKotlinCompilerOptions(jvmTarget, version, gradleVersion, changedFiles)
@@ -438,6 +457,32 @@ class KotlinBuildScriptManipulator(
 
     override fun addMavenCentralPluginRepository() {
         addPluginRepositoryExpression("mavenCentral()")
+    }
+
+    override fun getSettingsRepositoriesMode(): SettingsRepositoriesMode {
+        return scriptFile.findScriptInitializer("dependencyResolutionManagement")
+            ?.getBlock()
+            ?.getSettingsRepositoriesMode()
+            ?: SettingsRepositoriesMode.PREFER_PROJECT
+    }
+
+    override fun addMavenCentralDependencyRepository() {
+        addDependencyRepositoryExpression(MAVEN_CENTRAL)
+    }
+
+    override fun addDependencyRepository(repository: RepositoryDescription) {
+        addDependencyRepositoryExpression(repository.toKotlinRepositorySnippet())
+    }
+
+    private fun addDependencyRepositoryExpression(expression: String) {
+        val dependencyResolutionManagementBlock =
+            requireNotNull(scriptFile.findScriptInitializer("dependencyResolutionManagement")?.getBlock()) {
+                "Expected dependencyResolutionManagement block"
+            }
+
+        dependencyResolutionManagementBlock
+            .findOrCreateBlock("repositories")
+            ?.addExpressionIfMissing(expression)
     }
 
     override fun addPluginRepository(repository: RepositoryDescription) {

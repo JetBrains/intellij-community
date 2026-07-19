@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
+import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
@@ -37,6 +38,28 @@ class DefinedKotlinPluginManagementVersion(
 )
 
 const val COMPILER_OPTIONS: String = "compilerOptions"
+
+/**
+ * Repository resolution strategy configured by `dependencyResolutionManagement.repositoriesMode`.
+ */
+enum class SettingsRepositoriesMode {
+    /**
+     * Repositories should be added to project build scripts.
+     */
+    PREFER_PROJECT,
+
+    /**
+     * Repositories declared in project build scripts are ignored.
+     * Repositories should be added to the settings script.
+     */
+    PREFER_SETTINGS,
+
+    /**
+     * Declaring repositories in project build scripts causes the build to fail.
+     * Repositories should be added to the settings script.
+     */
+    FAIL_ON_PROJECT_REPOS,
+}
 
 interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun isApplicable(file: PsiFile): Boolean
@@ -215,7 +238,47 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     // For settings.gradle/settings.gradle.kts
 
+    /**
+     * Returns the repository mode configured in `dependencyResolutionManagement.repositoriesMode`,
+     * or [SettingsRepositoriesMode.PREFER_PROJECT] if it is not configured.
+     */
+    fun getSettingsRepositoriesMode(): SettingsRepositoriesMode
+
+    /**
+     * Adds all dependency repositories required for the given Kotlin version.
+     *
+     * This always adds Maven Central and, for EAP or dev Kotlin versions,
+     * also adds the corresponding Kotlin repository.
+     */
+    fun addDependencyRepositories(version: IdeKotlinVersion) {
+        getRepositoryForVersion(version)?.let(::addDependencyRepository)
+        addMavenCentralDependencyRepository()
+    }
+
+    /**
+     * Adds Maven Central to `dependencyResolutionManagement.repositories`
+     * if it is not already present.
+     */
+    fun addMavenCentralDependencyRepository()
+
+    /**
+     * Adds the specified repository to `dependencyResolutionManagement.repositories`
+     * if it is not already present.
+     *
+     * Requires `dependencyResolutionManagement` to exist.
+     */
+    fun addDependencyRepository(repository: RepositoryDescription)
+
+    /**
+     * Adds Maven Central to `pluginManagement.repositories`
+     * if it is not already present.
+     */
     fun addMavenCentralPluginRepository()
+
+    /**
+     * Adds the specified repository to `pluginManagement.repositories`
+     * if it is not already present.
+     */
     fun addPluginRepository(repository: RepositoryDescription)
 
     fun addResolutionStrategy(pluginId: String)
