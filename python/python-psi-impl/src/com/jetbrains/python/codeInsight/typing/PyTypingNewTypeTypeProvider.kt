@@ -5,8 +5,6 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getStringBasedType
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyCallSiteExpression
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl.Companion.create
@@ -23,20 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
-  override fun getCallType(
-    function: PyFunction,
-    callSite: PyCallSiteExpression,
-    context: TypeEvalContext,
-  ): Ref<PyType?>? {
-    if (callSite is PyCallExpression && PyTypingTypeProvider.NEW_TYPE == function.qualifiedName) {
-      val newType = createNewType(callSite, context)
-      if (newType != null) {
-        return Ref.create(newType)
-      }
-    }
-    return null
-  }
-
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType?>? {
     val newType = getNewTypeForResolvedElement(referenceTarget, context)
     return if (newType != null) Ref.create(PyTypingNewTypeFactoryType(newType)) else null
