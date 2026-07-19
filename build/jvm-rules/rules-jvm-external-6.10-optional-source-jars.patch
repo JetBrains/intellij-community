@@ -1,0 +1,128 @@
+diff --git private/rules/coursier.bzl private/rules/coursier.bzl
+--- private/rules/coursier.bzl
++++ private/rules/coursier.bzl
+@@ -960,6 +960,81 @@
+         timeout,
+         additional_coursier_options,
+         report_progress_prefix = ""):
++    # when strict checksums are requested together with optional source/javadoc JARs,
++    # split the coursier invocation in two:
++    #   1. Strict fetch of the main dependency tree (no --sources/--javadoc).
++    #   2. Best-effort fetch of source/javadoc JARs with lenient checksums,
++    #      so artifacts missing source JARs or their SHA-1/MD5 checksums do
++    #      not fail the pin step.
++    # The merged dep tree keeps source/javadoc entries only when they were
++    # actually resolved.
++    if fail_on_missing_checksum and (fetch_sources or fetch_javadoc):
++        main_tree = _run_coursier_fetch(
++            repository_ctx,
++            artifacts,
++            boms,
++            excluded_artifacts,
++            repositories,
++            version_conflict_policy,
++            fail_on_missing_checksum = True,
++            fetch_sources = False,
++            fetch_javadoc = False,
++            timeout = timeout,
++            additional_coursier_options = additional_coursier_options,
++            report_progress_prefix = report_progress_prefix,
++            dep_tree_file = "dep-tree.json",
++        )
++        extras_tree = _run_coursier_fetch(
++            repository_ctx,
++            artifacts,
++            boms,
++            excluded_artifacts,
++            repositories,
++            version_conflict_policy,
++            fail_on_missing_checksum = False,
++            fetch_sources = fetch_sources,
++            fetch_javadoc = fetch_javadoc,
++            timeout = timeout,
++            additional_coursier_options = additional_coursier_options,
++            report_progress_prefix = report_progress_prefix + "Optional source/javadoc: ",
++            dep_tree_file = "dep-tree-extras.json",
++        )
++        return filter_dependencies_if_necessary(
++            repository_ctx,
++            _merge_source_javadoc_entries(main_tree, extras_tree),
++        )
++
++    dep_tree = _run_coursier_fetch(
++        repository_ctx,
++        artifacts,
++        boms,
++        excluded_artifacts,
++        repositories,
++        version_conflict_policy,
++        fail_on_missing_checksum,
++        fetch_sources,
++        fetch_javadoc,
++        timeout,
++        additional_coursier_options,
++        report_progress_prefix,
++        dep_tree_file = "dep-tree.json",
++    )
++    return filter_dependencies_if_necessary(repository_ctx, dep_tree)
++
++def _run_coursier_fetch(
++        repository_ctx,
++        artifacts,
++        boms,
++        excluded_artifacts,
++        repositories,
++        version_conflict_policy,
++        fail_on_missing_checksum,
++        fetch_sources,
++        fetch_javadoc,
++        timeout,
++        additional_coursier_options,
++        report_progress_prefix,
++        dep_tree_file):
+     if not repositories:
+         fail("repositories cannot be empty")
+ 
+@@ -1012,7 +1087,7 @@
+     cmd.extend(["--artifact-type", ",".join(SUPPORTED_PACKAGING_TYPES + ["src", "doc"])])
+     cmd.append("--verbose" if _is_verbose(repository_ctx) else "--quiet")
+     cmd.append("--no-default")
+-    cmd.extend(["--json-output-file", "dep-tree.json"])
++    cmd.extend(["--json-output-file", dep_tree_file])
+ 
+     for bom in boms:
+         cmd.extend(["--bom", utils.artifact_coordinate(bom)])
+@@ -1089,13 +1164,30 @@
+     if (exec_result.return_code != 0):
+         fail("Error while fetching artifact with coursier: " + exec_result.stderr)
+ 
+-    dep_tree = deduplicate_and_sort_artifacts(
+-        json.decode(repository_ctx.read(repository_ctx.path("dep-tree.json"))),
++    return deduplicate_and_sort_artifacts(
++        json.decode(repository_ctx.read(repository_ctx.path(dep_tree_file))),
+         artifacts,
+         excluded_artifacts,
+         _is_verbose(repository_ctx),
+     )
+-    return filter_dependencies_if_necessary(repository_ctx, dep_tree)
++
++def _merge_source_javadoc_entries(main_tree, extras_tree):
++    # Keep the strictly fetched main tree; append only source/javadoc
++    # classified dependencies discovered by the lenient second fetch.
++    # Skip entries without a resolved file - including those would cause
++    # the lock-file converter to record a synthetic `jar: null` shasum for
++    # POM-only coordinates whose javadoc/source was requested but missing,
++    # which in turn breaks BUILD file generation.
++    extras = []
++    for dep in extras_tree.get("dependencies", []):
++        if get_classifier(dep.get("coord", "")) not in ("sources", "javadoc"):
++            continue
++        if not dep.get("file", None):
++            continue
++        extras.append(dep)
++    merged = dict(main_tree)
++    merged["dependencies"] = list(main_tree.get("dependencies", [])) + extras
++    return merged
+ 
+ def filter_dependencies_if_necessary(repository_ctx, dep_tree):
+     # This loops check for two things:
