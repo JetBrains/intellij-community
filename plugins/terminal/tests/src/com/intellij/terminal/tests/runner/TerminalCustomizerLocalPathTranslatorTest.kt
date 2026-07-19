@@ -358,7 +358,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
       it.remove(JEDITERM_SOURCE)
     }
     Assertions.assertThat(result.getEnvVarValue(JEDITERM_SOURCE))
-      .isEqualTo(fileToSource.asEelPath(dir.descriptor).toString())
+      .isEqualTo(fileToSource.asEelPath().toString())
   }
 
   private fun customizer(handler: (envs: MutableMap<String, String>) -> Unit): LocalTerminalCustomizer {
@@ -403,7 +403,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
     val nioDir = this
     Assertions.assertThat(nioDir.getEelDescriptor()).isEqualTo(descriptor)
     Assertions.assertThat(nioDir).isDirectory()
-    val eelDir = nioDir.asEelPath(descriptor)
+    val eelDir = nioDir.asEelPath()
     Assertions.assertThat(eelDir.descriptor).isEqualTo(descriptor)
     return Directory(nioDir, eelDir, descriptor)
   }

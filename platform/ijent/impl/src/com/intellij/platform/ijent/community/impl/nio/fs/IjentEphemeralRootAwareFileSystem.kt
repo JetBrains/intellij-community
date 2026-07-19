@@ -10,13 +10,13 @@ import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
-import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
+import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
+import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
@@ -177,11 +177,7 @@ class IjentEphemeralRootAwarePath(
 
     val other = other.unwrap()
 
-    if (other !is IjentEphemeralRootAwarePath) {
-      return false
-    }
-
-    return this pathEqual other
+    return other is IjentEphemeralRootAwarePath && this pathEqual other
   }
 
   override fun hashCode(): Int {
@@ -312,8 +308,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
     }
 
     if (path2 !is IjentEphemeralRootAwarePath) {
-      return if (path.actualPath.fileSystem.provider() == path2.fileSystem.provider()) Files.isSameFile(path.actualPath, path2)
-      else false
+      return path.actualPath.fileSystem.provider() == path2.fileSystem.provider() && Files.isSameFile(path.actualPath, path2)
     }
 
     if (path.actualPath == path.originalPath && path2.actualPath == path2.originalPath) {
@@ -377,7 +372,8 @@ class IjentEphemeralRootAwareFileSystem(
     if (isPathUnderRoot(first)) {
       val parts = more.flatMap { it.split(root.fileSystem.separator) }.filter(String::isNotEmpty).toTypedArray()
       val relativized = relativizeToRoot(first, parts, eelDescriptor)
-      val ijentNioPath = ijentFs.getPath(localToIjent(relativized.first ()), *relativized.drop(1).map { localToIjent(it) }.toTypedArray()) as IjentNioPath
+      val ijentNioPath =
+        ijentFs.getPath(localToIjent(relativized.first()), *relativized.drop(1).map { localToIjent(it) }.toTypedArray()) as IjentNioPath
       return IjentEphemeralRootAwarePath(this, root, ijentNioPath)
     }
 
