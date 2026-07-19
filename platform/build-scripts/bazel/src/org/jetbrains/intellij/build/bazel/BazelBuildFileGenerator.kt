@@ -1181,6 +1181,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("warn", "error")
     }
   }
+  //x_warning_level: -Xwarning-level=DIAGNOSTIC:severity per-diagnostic overrides (e.g. DEPRECATION:warning).
+  handleArgument(K2JVMCompilerArguments::warningLevels) { warningLevels ->
+    if (!warningLevels.isNullOrEmpty()) {
+      options.put("x_warning_level", warningLevels.asList())
+    }
+  }
   //x_allow_kotlin_package
   handleArgument(K2JVMCompilerArguments::allowKotlinPackage) {
     if (it) {
