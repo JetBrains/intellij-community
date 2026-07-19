@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -41,6 +42,12 @@ internal class WslSatisfactionSurveyState : BaseState() {
   // Unix time seconds; [daysWithWslProject] is incremented at most once after this moment.
   var nextCountedDay: Long by property(0L)
   var userSawSurvey: Boolean by property(false)
+
+  // Whether the IDE was first launched as a new user. Captured once on the first run, because
+  // InitialConfigImportState.isNewUser() is only meaningful during the very first session and is always
+  // false afterwards (when the survey can actually be shown).
+  var newUserStatusRecorded: Boolean by property(false)
+  var startedAsNewUser: Boolean by property(false)
 }
 
 @State(name = "WslSatisfactionSurveyStore", storages = [Storage(value = "wsl-survey.xml", roamingType = RoamingType.DISABLED)])
@@ -57,6 +64,20 @@ internal class WslSatisfactionSurveyStore : PersistentStateComponent<WslSatisfac
   internal fun recordSurveyShown() {
     currentState.userSawSurvey = true
   }
+
+  /**
+   * Captures, once, whether the IDE was first launched as a new user. Must be called early (e.g. from a
+   * startup activity) so the value reflects the first session, where [InitialConfigImportState.isNewUser]
+   * is meaningful.
+   */
+  internal fun recordNewUserStatusIfNeeded() {
+    if (!currentState.newUserStatusRecorded) {
+      currentState.newUserStatusRecorded = true
+      currentState.startedAsNewUser = InitialConfigImportState.isNewUser()
+    }
+  }
+
+  internal fun startedAsNewUser(): Boolean = currentState.startedAsNewUser
 
   /**
    * Records that a WSL project was open now. Increments [WslSatisfactionSurveyState.daysWithWslProject]

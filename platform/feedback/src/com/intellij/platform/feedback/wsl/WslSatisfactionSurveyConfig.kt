@@ -2,11 +2,11 @@
 package com.intellij.platform.feedback.wsl
 
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -35,11 +35,15 @@ internal class WslSatisfactionSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    if (!isTargetVersion()) return false
-    // Don't show for new users - only for existing users who upgraded to the new version.
-    if (InitialConfigImportState.isNewUser()) return false
     if (!project.isWslProject()) return false
-    return WslSatisfactionSurveyStore.getInstance().shouldShowDialog()
+    val store = WslSatisfactionSurveyStore.getInstance()
+    if (!store.shouldShowDialog()) return false
+    // Testing shortcut: ignore the version and "existing users only" audience gates.
+    if (Registry.`is`(REGISTRY_IGNORE_AUDIENCE_CONDITIONS, false)) return true
+    // Show only for the target version and existing (non-new) users.
+    // The new-user status is captured on the first run (see WslSatisfactionSurveyStore.recordNewUserStatusIfNeeded),
+    // because InitialConfigImportState.isNewUser() is only meaningful during the very first session.
+    return isTargetVersion() && !store.startedAsNewUser()
   }
 
   private fun isTargetVersion(): Boolean {
@@ -68,5 +72,6 @@ internal class WslSatisfactionSurveyConfig : InIdeFeedbackSurveyConfig {
 
   companion object {
     private const val TARGET_VERSION: String = "2026.2"
+    private const val REGISTRY_IGNORE_AUDIENCE_CONDITIONS: String = "wsl.survey.ignore.audience.conditions"
   }
 }

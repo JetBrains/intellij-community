@@ -10,7 +10,10 @@ import com.intellij.openapi.startup.ProjectActivity
  */
 internal class WslSatisfactionSurveyProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
+    val store = WslSatisfactionSurveyStore.getInstance()
+    // Capture the new-user status on the first run, regardless of whether the project is on WSL.
+    store.recordNewUserStatusIfNeeded()
     if (!project.isWslProject()) return
-    WslSatisfactionSurveyStore.getInstance().recordWslProjectOpened()
+    store.recordWslProjectOpened()
   }
 }
