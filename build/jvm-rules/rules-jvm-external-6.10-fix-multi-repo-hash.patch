@@ -1,0 +1,17 @@
+diff --git private/rules/v3_lock_file.bzl private/rules/v3_lock_file.bzl
+--- private/rules/v3_lock_file.bzl
++++ private/rules/v3_lock_file.bzl
+@@ -149,7 +149,12 @@ def _compute_lock_file_hash_v3(lock_file_contents):
+             type_info["sha"] = sha
+             all_infos[dep + suffix] = type_info
+
+-    for repo, artifacts in lock_file_contents["repositories"].items():
++    # Sort repositories to match the order used by the Java pin binary (AbstractMain.calculateArtifactHash
++    # uses sortMapRecursively which sorts alphabetically). Without sorting, artifacts present in
++    # multiple repositories get different "repository" values depending on iteration order, causing
++    # hash mismatches between the stored value (written by Java) and the value computed here.
++    for repo in sorted(lock_file_contents["repositories"].keys()):
++        artifacts = lock_file_contents["repositories"][repo]
+         for artifact in artifacts:
+             all_infos[artifact]["repository"] = repo
+
