@@ -349,34 +349,6 @@ object GithubApiRequests {
           .withOperationName("get diff between refs")
     }
 
-    object Forks : Entity("/forks") {
-
-      @JvmStatic
-      fun create(server: GithubServerPath, username: String, repoName: String): GithubApiRequest<GithubRepo> =
-        Post.json<GithubRepo>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix), Any())
-          .withOperation(GithubApiRequestOperation.RestCreateFork)
-          .withOperationName("fork repository $username/$repoName for current user")
-
-      @JvmStatic
-      fun pages(server: GithubServerPath, username: String, repoName: String): GithubApiPagesLoader.Request<GithubRepo> =
-        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
-
-      @JvmOverloads
-      @JvmStatic
-      fun get(
-        server: GithubServerPath,
-        username: String,
-        repoName: String,
-        pagination: GithubRequestPagination? = null,
-      ): GithubApiRequest<GithubResponsePage<GithubRepo>> =
-        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, paginationQuery(pagination)))
-
-      @JvmStatic
-      fun get(url: String): GithubApiRequest<GithubResponsePage<GithubRepo>> = Get.jsonPage<GithubRepo>(url)
-        .withOperation(GithubApiRequestOperation.RestGetForks)
-        .withOperationName("get forks")
-    }
-
     object Assignees : Entity("/assignees") {
 
       @JvmStatic

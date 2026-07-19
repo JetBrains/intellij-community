@@ -22,7 +22,6 @@ import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -51,11 +50,6 @@ sealed class GithubApiRequestExecutor {
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
-
-  @TestOnly
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  @Throws(IOException::class, ProcessCanceledException::class)
-  fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
   internal class WithTokenAuth(
     githubSettings: GithubSettings,
