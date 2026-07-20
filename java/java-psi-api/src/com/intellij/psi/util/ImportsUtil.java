@@ -7,6 +7,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,13 +67,67 @@ public final class ImportsUtil {
     PsiClass targetClass = staticImport.resolveTargetClass();
     assert targetClass != null;
 
-    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> !(e.getParent() instanceof PsiAnnotation))) {
-      if (PsiTreeUtil.isAncestor(staticImport, expression, false)) continue;
-      expand(expression, targetClass);
+    PsiJavaFile file = (PsiJavaFile)staticImport.getContainingFile();
+    protectTrailingComment(file, () -> {
+      for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> !(e.getParent() instanceof PsiAnnotation))) {
+        if (PsiTreeUtil.isAncestor(staticImport, expression, false)) continue;
+        expand(expression, targetClass);
+      }
+      staticImport.delete();
+      for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> e.getParent() instanceof PsiAnnotation)) {
+        expand(expression, targetClass);
+      }
+    });
+  }
+
+  /**
+   * Runs {@code action}, which is expected to delete and/or re-add an import (see {@link #expand}), with
+   * the comment directly following the import list protected: re-adding an import can otherwise glue it
+   * onto that comment with no separating whitespace, which then misparses as part of the import list on
+   * the next reparse.
+   */
+  public static void protectTrailingComment(@NotNull PsiJavaFile file, @NotNull Runnable action) {
+    final List<PsiElement> trailingComment = detachTrailingComment(file);
+    action.run();
+    restoreTrailingComment(file, trailingComment);
+  }
+
+  private static @NotNull List<PsiElement> detachTrailingComment(@NotNull PsiJavaFile file) {
+    final PsiImportList importList = file.getImportList();
+    if (importList == null) {
+      return Collections.emptyList();
     }
-    staticImport.delete();
-    for (PsiJavaCodeReferenceElement expression : ContainerUtil.filter(expressionsToExpand, e -> e.getParent() instanceof PsiAnnotation)) {
-      expand(expression, targetClass);
+    final List<PsiElement> elements = new ArrayList<>();
+    boolean hasComment = false;
+    for (PsiElement e = importList.getNextSibling(); e instanceof PsiWhiteSpace || e instanceof PsiComment; e = e.getNextSibling()) {
+      hasComment |= e instanceof PsiComment;
+      elements.add(e);
+    }
+    if (!hasComment) {
+      return Collections.emptyList();
+    }
+    final List<PsiElement> copies = ContainerUtil.map(elements, PsiElement::copy);
+    importList.getParent().deleteChildRange(elements.get(0), elements.get(elements.size() - 1));
+    return copies;
+  }
+
+  private static void restoreTrailingComment(@NotNull PsiJavaFile file, @NotNull List<PsiElement> elements) {
+    if (elements.isEmpty()) {
+      return;
+    }
+    PsiElement anchor = file.getImportList();
+    if (anchor == null) {
+      anchor = file.getPackageStatement();
+    }
+    if (anchor == null) {
+      anchor = file.getFirstChild();
+    }
+    if (anchor == null) {
+      return;
+    }
+    final PsiElement parent = anchor.getParent();
+    for (PsiElement element : elements) {
+      anchor = parent.addAfter(element, anchor);
     }
   }
 
