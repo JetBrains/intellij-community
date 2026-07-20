@@ -235,15 +235,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
         service.navigateViaBackend(relativePath, 0)
-        waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
-                getter = {
-                  if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-                  else service<FileEditorManager>(project).getCurrentFile()
-                },
-                checker = { virtualFile ->
-                  virtualFile != null &&
-                  Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath))
-                })!!
+        findOpenFileInEditor(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
       }
     }
     if (waitForCodeAnalysis) {
@@ -252,12 +244,19 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
   }
 }
 
-fun Driver.findOpenFile(relativePath: String, project: Project = singleProject(), timeout: Duration = 30.seconds): VirtualFile? =
+fun Driver.findOpenFileInEditor(relativePath: String, project: Project, isTextEditor: Boolean = true): VirtualFile? {
+  return waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
+                 getter = {
+                   if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                   else service<FileEditorManager>(project).getCurrentFile()
+                 },
+                 checker = { virtualFile -> virtualFile != null && Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath)) })
+}
+
+fun Driver.findOpenFile(relativePath: String, project: Project = singleProject(), isTextEditor: Boolean = true): VirtualFile? =
   if (!isRemDevMode) {
     findFile(relativePath = relativePath, project = project)
   }
   else {
-    waitFor(message = "File is opened: $relativePath", timeout = timeout,
-            getter = { service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile() },
-            checker = { virtualFile -> virtualFile != null && Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath)) })
+    findOpenFileInEditor(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
   }

@@ -14,6 +14,8 @@ private const val PROBLEMS_VIEW_UI_MODULE: String = "intellij.problemView.plugin
 private const val PROBLEMS_VIEW_FRONTEND_MODULE: String = "intellij.problemView.plugin/intellij.platform.problemView.frontend"
 private const val PROBLEMS_VIEW_BACKEND_MODULE: String = "intellij.problemView.plugin/intellij.platform.problemView.backend"
 
+const val HIGHLIGHTING_PANEL_ID: String = "CurrentFile"
+
 @Remote("com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils", plugin = PROBLEMS_VIEW_UI_MODULE, rdTarget = RdTarget.FRONTEND)
 interface ProblemsViewToolWindowUtils {
   fun getToolWindow(project: Project): ToolWindow?
@@ -29,7 +31,6 @@ interface ProblemsViewTab {
 @Remote("com.intellij.analysis.problemsView.toolWindow.HighlightingPanel", plugin = PROBLEMS_VIEW_UI_MODULE, rdTarget = RdTarget.FRONTEND)
 interface HighlightingPanel : ProblemsViewTab {
   fun getCurrentRoot(): HighlightingFileRoot?
-  fun getCurrentFile(): VirtualFile?
 }
 
 @Remote("com.intellij.analysis.problemsView.toolWindow.splitApi.HighlightingFileRoot", plugin = PROBLEMS_VIEW_UI_MODULE, rdTarget = RdTarget.FRONTEND)
@@ -38,14 +39,12 @@ interface HighlightingFileRoot {
 }
 
 @Remote("com.intellij.platform.problemsView.frontend.FrontendProblemsViewHighlightingFileRoot", plugin = PROBLEMS_VIEW_FRONTEND_MODULE, rdTarget = RdTarget.FRONTEND)
-interface ProblemsViewHighlightingFileRoot {
-  fun getFile(): VirtualFile
-  fun getProblemCount(): Int
-  fun getFileProblems(file: VirtualFile): List<HighlightingProblem>
+interface ProblemsViewHighlightingFileRoot : HighlightingFileRoot {
+  fun getFileProblems(file: VirtualFile): List<FrontendHighlightingProblem>
 }
 
 @Remote("com.intellij.platform.problemsView.frontend.FrontendHighlightingProblem", plugin = PROBLEMS_VIEW_FRONTEND_MODULE, rdTarget = RdTarget.FRONTEND)
-interface HighlightingProblem {
+interface FrontendHighlightingProblem {
   fun getId(): String
   fun getText(): String
   fun getLine(): Int
@@ -87,7 +86,7 @@ fun Driver.waitForProblemsViewFile(expectedFile: VirtualFile, project: Project? 
   }
 }
 
-fun Driver.getProblemsViewProblems(file: VirtualFile, project: Project? = null): List<HighlightingProblem> {
+fun Driver.getProblemsViewProblems(file: VirtualFile, project: Project? = null): List<FrontendHighlightingProblem> {
   val forProject = project ?: singleProject()
   return withContext(OnDispatcher.EDT) {
     val panel = getHighlightingPanel(forProject) ?: return@withContext emptyList()
@@ -95,8 +94,6 @@ fun Driver.getProblemsViewProblems(file: VirtualFile, project: Project? = null):
     cast(root, ProblemsViewHighlightingFileRoot::class).getFileProblems(file)
   }
 }
-
-const val HIGHLIGHTING_PANEL_ID: String = "CurrentFile"
 
 /** Shown-problem ids that do NOT resolve in the backend id store (empty == every shown problem has an id). */
 fun Driver.unresolvedProblemIds(file: VirtualFile, project: Project? = null): List<String> {
