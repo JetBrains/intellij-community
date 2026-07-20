@@ -7,6 +7,7 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils.getIdString
+import com.intellij.ide.plugins.PluginUtils.findEnabledOrInstalledPlugin
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
@@ -938,8 +939,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun findPlugin(id: PluginId): IdeaPluginDescriptorImpl? {
-    val pluginSet = pluginsState.nullablePluginSet ?: return null
-    return pluginSet.findEnabledPlugin(id) ?: pluginSet.findInstalledPlugin(id)
+    return pluginsState.nullablePluginSet?.findEnabledOrInstalledPlugin(id)
   }
 
   @JvmStatic

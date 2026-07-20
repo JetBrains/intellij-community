@@ -92,9 +92,10 @@ public final class PluginManager {
    */
   @ApiStatus.Internal
   public static @Nullable PluginId getPluginByClassNameAsNoAccessToClass(@NotNull String className) {
-    PluginDescriptor result = PluginUtils.getPluginDescriptorOrPlatformByClassName(className);
-    PluginId id = result == null ? null : result.getPluginId();
-    return (id == null || CORE_ID.equals(id)) ? null : id;
+    PluginSet pluginSet = PluginManagerCore.getPluginSetOrNull();
+    IdeaPluginDescriptorImpl plugin = pluginSet == null ? null : PluginUtils.getPluginByClassNameAsNoAccessToClass(className, pluginSet);
+    PluginId id = plugin == null ? null : plugin.getPluginId();
+    return id == null || CORE_ID.equals(id) ? null : id;
   }
 
   /**
