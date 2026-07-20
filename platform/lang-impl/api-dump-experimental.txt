@@ -954,6 +954,9 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 *f:com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil
 - s:findReferenceOfClass(com.intellij.psi.PsiReference,java.lang.Class):com.intellij.psi.PsiReference
 - s:unwrapMultiReference(com.intellij.psi.PsiReference):java.util.List
+c:com.intellij.refactoring.memberPushDown.PushDownProcessor
+- com.intellij.refactoring.BaseRefactoringProcessor
+- *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
 *a:com.intellij.refactoring.rename.api.FileOperation
 - *sf:Companion:com.intellij.refactoring.rename.api.FileOperation$Companion
 - *sf:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation

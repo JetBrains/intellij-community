@@ -5194,6 +5194,20 @@ a:com.intellij.refactoring.memberPullUp.PullUpDialogBase
 - com.intellij.refactoring.ui.RefactoringDialog
 - getSelectedMemberInfos():java.util.List
 - getSuperClass():com.intellij.psi.PsiElement
+c:com.intellij.refactoring.memberPushDown.PushDownProcessor
+- com.intellij.refactoring.BaseRefactoringProcessor
+- <init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy):V
+- p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
+- p:findUsages():com.intellij.usageView.UsageInfo[]
+- p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
+- p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
+- p:getCommandName():java.lang.String
+- p:getElementsToWrite(com.intellij.usageView.UsageViewDescriptor):java.util.Collection
+- p:getRefactoringId():java.lang.String
+- p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
+- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
+- pushDownToClasses(com.intellij.usageView.UsageInfo[]):V
+- p:refreshElements(com.intellij.psi.PsiElement[]):V
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
 f:com.intellij.refactoring.move.MoveHandler
