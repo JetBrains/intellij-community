@@ -190,6 +190,9 @@
 - name: lib/modules/intellij.java.indexing.jar
   contentModules:
   - name: intellij.java.indexing
+- name: lib/modules/intellij.java.indexing.serializers.jar
+  contentModules:
+  - name: intellij.java.indexing.serializers
 - name: lib/modules/intellij.java.jam.impl.jar
   contentModules:
   - name: intellij.java.jam.impl
