@@ -63,7 +63,6 @@
   <extensions defaultExtensionNs="com.intellij">
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
 
       <!--suppress LightServiceMigrationXML -->
 
@@ -204,6 +203,7 @@
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines"/>
     <module name="intellij.kotlin.jvm.debugger.core" loading="embedded"/>
+    <module name="intellij.kotlin.plugin.updater" loading="embedded"/>
     <module name="intellij.kotlin.base.compilerConfiguration" loading="embedded"/>
     <module name="intellij.kotlin.base.psi" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>

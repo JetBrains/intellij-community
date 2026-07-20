@@ -3,10 +3,6 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
             interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
             dynamic="true"/>
@@ -64,8 +60,6 @@
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
-      <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
-
     <lang.floatingToolbar language="kotlin"/>
 
     <stacktrace.fold substring="at kotlinx.coroutines."/>
@@ -88,11 +82,6 @@
   </extensions>
 
   <!-- Templates -->
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
-
-    </extensions>
 
   <!-- Line markers -->
 

@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.kotlin.plugin.updater"/>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="intellij.gradle.java"/>
