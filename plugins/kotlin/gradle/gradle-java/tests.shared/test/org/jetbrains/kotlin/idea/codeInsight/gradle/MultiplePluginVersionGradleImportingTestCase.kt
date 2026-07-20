@@ -119,13 +119,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             }
 
             addVersions(
-                "7.6.3", KotlinGradlePluginVersions.latest,
-                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
+                "7.6.3", KotlinGradlePluginVersions.latestBootstrap,
+                "${KotlinGradlePluginVersions.latestBootstrap.major}.${KotlinGradlePluginVersions.latestBootstrap.minor}"
             )
 
             addVersions(
-                "8.14.4", KotlinGradlePluginVersions.latest,
-                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
+                "8.14.4", KotlinGradlePluginVersions.latestBootstrap,
+                "${KotlinGradlePluginVersions.latestBootstrap.major}.${KotlinGradlePluginVersions.latestBootstrap.minor}"
             )
 
             return parameters

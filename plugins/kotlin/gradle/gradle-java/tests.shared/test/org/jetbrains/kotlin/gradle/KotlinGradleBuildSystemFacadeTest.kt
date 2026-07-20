@@ -30,8 +30,8 @@ abstract class KotlinGradleBuildSystemFacadeTest : KotlinGradleImportingTestCase
         @Test
         fun testJvmAndNative() {
             configureByFiles(
-                SimpleProperties(currentGradleVersion, KotlinGradlePluginVersions.latest) +
-                        ("kgp_version" to KotlinGradlePluginVersions.latest.toString())
+                SimpleProperties(currentGradleVersion, KotlinGradlePluginVersions.latestBootstrap) +
+                        ("kgp_version" to KotlinGradlePluginVersions.latestBootstrap.toString())
             )
 
             importProject()
