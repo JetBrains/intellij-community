@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
@@ -14,7 +13,7 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEllipsisType;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
@@ -37,14 +36,16 @@ import java.util.Iterator;
 import java.util.List;
 
 class ParameterObjectBuilder {
+  private final PsiElement myContext;
   private String className;
   private String packageName;
   private final List<ParameterSpec> fields = new ArrayList<>(5);
   private final List<PsiTypeParameter> typeParams = new ArrayList<>();
-  private Project myProject;
-  private PsiFile myFile;
-  private JavaCodeStyleManager myJavaCodeStyleManager;
   private String myVisibility;
+
+  ParameterObjectBuilder(@NotNull PsiElement context) {
+    myContext = context;
+  }
 
   public void setClassName(String className) {
     this.className = className;
@@ -55,9 +56,10 @@ class ParameterObjectBuilder {
   }
 
   public void addField(PsiParameter variable, String name, PsiType type, boolean setterRequired) {
-    final String propertyName = myJavaCodeStyleManager.variableNameToPropertyName(name, VariableKind.PARAMETER);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myContext.getProject());
+    final String propertyName = codeStyleManager.variableNameToPropertyName(name, VariableKind.PARAMETER);
     final ParameterSpec field =
-      new ParameterSpec(variable, myJavaCodeStyleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD),
+      new ParameterSpec(variable, codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD),
                         type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type, setterRequired);
     fields.add(field);
   }
@@ -67,18 +69,9 @@ class ParameterObjectBuilder {
     this.typeParams.addAll(typeParams);
   }
 
-  public void setProject(final Project project) {
-    myProject = project;
-    myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-  }
-
-  public void setFile(@NotNull PsiFile file) {
-    myFile = file;
-  }
-
-  public String buildBeanClass() {
-    boolean recordsAvailable = PsiUtil.isAvailable(JavaFeature.RECORDS, myFile) &&
-                               !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
+  public String buildText() {
+    boolean recordsAvailable =
+      PsiUtil.isAvailable(JavaFeature.RECORDS, myContext) && !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
     final @NonNls StringBuilder out = new StringBuilder(1024);
     if (!packageName.isEmpty()) out.append("package ").append(packageName).append(';');
     out.append('\n');
@@ -142,13 +135,12 @@ class ParameterObjectBuilder {
     }
   }
 
-  private void outputSetter(ParameterSpec field, @NonNls StringBuilder out) {
-    if (!field.isSetterRequired()) {
+  private void outputSetter(ParameterSpec spec, @NonNls StringBuilder out) {
+    if (!spec.isSetterRequired()) {
       return;
     }
-    out.append(
-      GenerateMembersUtil.generateSetterPrototype(JavaPsiFacade.getElementFactory(myProject).createField(field.getName(), field.getType()))
-        .getText());
+    PsiField field = JavaPsiFacade.getElementFactory(myContext.getProject()).createField(spec.getName(), spec.getType());
+    out.append(GenerateMembersUtil.generateSetterPrototype(field).getText());
   }
 
   private static void generateFieldAssignment(final @NonNls StringBuilder out, final String parameterName, final String fieldName) {
@@ -160,14 +152,9 @@ class ParameterObjectBuilder {
     }
   }
 
-  private void outputGetter(ParameterSpec field, @NonNls StringBuilder out) {
-    out.append(
-      GenerateMembersUtil.generateGetterPrototype(JavaPsiFacade.getElementFactory(myProject).createField(field.getName(), field.getType()))
-        .getText());
-  }
-
-  private @NotNull CodeStyleSettings getSettings() {
-    return myFile != null ? CodeStyle.getSettings(myFile) : CodeStyle.getProjectOrDefaultSettings(myProject);
+  private void outputGetter(ParameterSpec spec, @NonNls StringBuilder out) {
+    PsiField field = JavaPsiFacade.getElementFactory(myContext.getProject()).createField(spec.getName(), spec.getType());
+    out.append(GenerateMembersUtil.generateGetterPrototype(field).getText());
   }
 
   private void outputConstructor(@NonNls StringBuilder out) {
@@ -176,7 +163,8 @@ class ParameterObjectBuilder {
       final ParameterSpec field = iterator.next();
       final PsiParameter parameter = field.getParameter();
       outputAnnotationString(parameter, out);
-      out.append(getSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
+      CodeStyleSettings settings = CodeStyle.getSettings(myContext.getContainingFile());
+      out.append(settings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
                  " final " : "");
       final String parameterName = parameter.getName();
       final PsiType type = field.getType();

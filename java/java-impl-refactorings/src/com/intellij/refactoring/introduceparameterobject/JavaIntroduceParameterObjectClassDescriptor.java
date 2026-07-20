@@ -269,40 +269,37 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
 
     final PsiClass containingClass = method.getContainingClass();
-    final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
+    final ParameterObjectBuilder builder = new ParameterObjectBuilder(method);
     if (containingClass != null && containingClass.isInterface() && isCreateInnerClass()) {
       // nested class in interface is public by default and is not allowed to be anything else
-      beanClassBuilder.setVisibility("");
+      builder.setVisibility("");
     }
     else if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
-      beanClassBuilder.setVisibility(PsiModifier.PUBLIC);
+      builder.setVisibility(PsiModifier.PUBLIC);
     }
     else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
-      beanClassBuilder.setVisibility(PsiModifier.PROTECTED);
+      builder.setVisibility(PsiModifier.PROTECTED);
     }
     else if (method.hasModifierProperty(PsiModifier.PRIVATE) && isCreateInnerClass()) {
       // top-level class cannot be private
-      beanClassBuilder.setVisibility(PsiModifier.PRIVATE);
+      builder.setVisibility(PsiModifier.PRIVATE);
     }
     else {
-      beanClassBuilder.setVisibility("");
+      builder.setVisibility("");
     }
-    beanClassBuilder.setProject(method.getProject());
-    beanClassBuilder.setFile(method.getContainingFile());
-    beanClassBuilder.setTypeArguments(getTypeParameters());
-    beanClassBuilder.setClassName(getClassName());
-    beanClassBuilder.setPackageName(getPackageName());
+    builder.setTypeArguments(getTypeParameters());
+    builder.setClassName(getClassName());
+    builder.setPackageName(getPackageName());
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final ParameterInfoImpl[] parameterInfos = getParamsToMerge();
     for (int i = 0; i < parameterInfos.length; i++) {
       PsiParameter parameter = parameters[parameterInfos[i].getOldIndex()];
       final boolean setterRequired = accessors[i] == ReadWriteAccessDetector.Access.Write;
       final String newName = parameterInfos[i].getName();
-      beanClassBuilder
-        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
+      builder.addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
     }
 
-    final String classString = beanClassBuilder.buildBeanClass();
+    final String classString = builder.buildText();
 
     try {
       final PsiFileFactory factory = PsiFileFactory.getInstance(method.getProject());
