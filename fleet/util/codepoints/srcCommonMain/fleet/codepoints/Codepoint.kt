@@ -77,6 +77,12 @@ value class Codepoint(val codepoint: Int) {
   fun getUnicodeScript(): UnicodeScript = getUnicodeScript(codepoint)
 
   /**
+   * Returns the Unicode general category of this codepoint (e.g. [Category.UPPERCASE_LETTER]).
+   * Unassigned codepoints and values outside the Unicode range return [Category.UNASSIGNED].
+   */
+  fun getCategory(): Category = getCategory(codepoint)
+
+  /**
    * Returns true if this codepoint should be ignored in identifiers.
    * This includes format characters (Cf) and zero-width characters.
    */

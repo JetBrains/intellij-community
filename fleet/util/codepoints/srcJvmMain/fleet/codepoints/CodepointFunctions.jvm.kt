@@ -25,6 +25,43 @@ import fleet.util.multiplatform.Actual
 @Actual internal fun isPrivateUseJvm(codepoint: Int): Boolean = Character.getType(codepoint).toByte() == Character.PRIVATE_USE
 @Actual internal fun isDefinedJvm(codepoint: Int): Boolean = Character.isDefined(codepoint)
 
+// Indexed by the java.lang.Character.getType() codes 0..30; 17 is unused by the JVM.
+private val JVM_TYPE_TO_CATEGORY = arrayOf(
+  Category.UNASSIGNED,              // 0  UNASSIGNED
+  Category.UPPERCASE_LETTER,        // 1  UPPERCASE_LETTER
+  Category.LOWERCASE_LETTER,        // 2  LOWERCASE_LETTER
+  Category.TITLECASE_LETTER,        // 3  TITLECASE_LETTER
+  Category.MODIFIER_LETTER,         // 4  MODIFIER_LETTER
+  Category.OTHER_LETTER,            // 5  OTHER_LETTER
+  Category.NON_SPACING_MARK,        // 6  NON_SPACING_MARK
+  Category.ENCLOSING_MARK,          // 7  ENCLOSING_MARK
+  Category.COMBINING_SPACING_MARK,  // 8  COMBINING_SPACING_MARK
+  Category.DECIMAL_DIGIT_NUMBER,    // 9  DECIMAL_DIGIT_NUMBER
+  Category.LETTER_NUMBER,           // 10 LETTER_NUMBER
+  Category.OTHER_NUMBER,            // 11 OTHER_NUMBER
+  Category.SPACE_SEPARATOR,         // 12 SPACE_SEPARATOR
+  Category.LINE_SEPARATOR,          // 13 LINE_SEPARATOR
+  Category.PARAGRAPH_SEPARATOR,     // 14 PARAGRAPH_SEPARATOR
+  Category.CONTROL,                 // 15 CONTROL
+  Category.FORMAT,                  // 16 FORMAT
+  Category.UNASSIGNED,              // 17 (unused)
+  Category.PRIVATE_USE,             // 18 PRIVATE_USE
+  Category.SURROGATE,               // 19 SURROGATE
+  Category.DASH_PUNCTUATION,        // 20 DASH_PUNCTUATION
+  Category.START_PUNCTUATION,       // 21 START_PUNCTUATION
+  Category.END_PUNCTUATION,         // 22 END_PUNCTUATION
+  Category.CONNECTOR_PUNCTUATION,   // 23 CONNECTOR_PUNCTUATION
+  Category.OTHER_PUNCTUATION,       // 24 OTHER_PUNCTUATION
+  Category.MATH_SYMBOL,             // 25 MATH_SYMBOL
+  Category.CURRENCY_SYMBOL,         // 26 CURRENCY_SYMBOL
+  Category.MODIFIER_SYMBOL,         // 27 MODIFIER_SYMBOL
+  Category.OTHER_SYMBOL,            // 28 OTHER_SYMBOL
+  Category.INITIAL_QUOTE_PUNCTUATION, // 29 INITIAL_QUOTE_PUNCTUATION
+  Category.FINAL_QUOTE_PUNCTUATION  // 30 FINAL_QUOTE_PUNCTUATION
+)
+
+@Actual internal fun getCategoryJvm(codepoint: Int): Category = JVM_TYPE_TO_CATEGORY[Character.getType(codepoint)]
+
 private fun jvmScriptToUnicodeScript(jvmScript: Character.UnicodeScript): UnicodeScript = when (jvmScript) {
   Character.UnicodeScript.UNKNOWN -> UnicodeScript.UNKNOWN
   Character.UnicodeScript.COMMON -> UnicodeScript.COMMON
