@@ -100,7 +100,7 @@ def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], 
             srcs = analyzed_sources,
             deps = deps + exports,
         )
-        wasmjs_main_sources = wasmjs_main_sources + [":%s" % service_accessors_target_name]
+        wasmjs_main_sources = wasmjs_main_sources + [service_accessors_target_name]
 
     wasmjs_main_sourceset_target_name = "%s_wasmJsMain" % name
     native.filegroup(
