@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.util
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.PythonFileType
@@ -14,7 +17,12 @@ import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
+import java.nio.file.Path
 
 private val LOG = logger<CodeInsightTestFixture>()
 
@@ -30,6 +38,33 @@ fun CodeInsightTestFixture.doTestByText(text: String) {
   this.doHighlighting()
   this.checkHighlighting(true, false, true)
   this.assertSdkRootsNotParsed(this.file)
+}
+
+/** Opens an existing project file without copying it into the code-insight fixture's scratch directory. */
+@ApiStatus.Experimental
+@TestOnly
+fun CodeInsightTestFixture.configureFromProjectFile(relativePath: String): PsiFile {
+  val projectPath = Path.of(requireNotNull(project.basePath) { "Project has no base path" }).normalize()
+  val filePath = projectPath.resolve(relativePath).normalize()
+  require(filePath.startsWith(projectPath)) { "Project-relative path escapes the project: $relativePath" }
+  val virtualFile = requireNotNull(filePath.refreshAndFindVirtualFile()) { "Project file not found: $relativePath" }
+  configureFromExistingVirtualFile(virtualFile)
+  return file
+}
+
+/** Opens a project file at its caret and runs basic completion on EDT. */
+@ApiStatus.Experimental
+@TestOnly
+suspend fun CodeInsightTestFixture.completeBasicAtProjectFile(
+  relativePath: String,
+  expectedModuleName: String? = null,
+): List<String> = withContext(Dispatchers.EDT) {
+  val file = configureFromProjectFile(relativePath)
+  expectedModuleName?.let {
+    val actualModuleName = ProjectFileIndex.getInstance(project).getModuleForFile(file.virtualFile)?.name
+    Assertions.assertEquals(it, actualModuleName, "Unexpected module for $relativePath")
+  }
+  completeBasic().orEmpty().map { it.lookupString }
 }
 
 /**
