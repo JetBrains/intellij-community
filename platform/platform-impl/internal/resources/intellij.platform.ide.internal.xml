@@ -136,15 +136,14 @@
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
 
-    <action class="com.intellij.internal.ExceptionShowCaseAction" internal="true" description="Show exception" text="Show Exception">
+    <action id="ExceptionShowCaseAction" class="com.intellij.internal.ExceptionShowCaseAction" internal="true">
       <add-to-group group-id="Internal.Errors"/>
     </action>
     <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction">
       <add-to-group group-id="Internal"/>
     </action>
     <action id="PrintModulesAndEntitySources" internal="true"
-            class="com.intellij.internal.PrintModulesAndEntitySources"
-            text="Print Modules and Entity Sources to Log">
+            class="com.intellij.internal.PrintModulesAndEntitySources">
       <add-to-group group-id="Internal.WorkspaceModel"/>
     </action>
 
@@ -153,15 +152,13 @@
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action id="ClearIDEStatistics"
               class="com.intellij.internal.ClearIDEStatisticsAction"
-              text="Clear IDE Statistics"
-              description="Clear all IDE statistics"
               internal="true"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction">
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
-      <action id="ShortDumbMode" internal="true" class="com.intellij.internal.RunShortDumbModeAction" text="Run Short Dumb Action"/>
+      <action id="ShortDumbMode" internal="true" class="com.intellij.internal.RunShortDumbModeAction"/>
       <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
         <synonym text="Exit Incomplete Dependencies Mode"/>
       </action>
@@ -174,8 +171,7 @@
         <synonym text="Start IO Flooding"/>
       </action>
       <action id="ShowPoweredProgress" internal="true"
-              class="com.intellij.internal.ShowPoweredProgressAction"
-              text="Show Powered Progress"/>
+              class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
         <synonym text="Disable ProcessCanceledException"/>
       </action>
@@ -231,8 +227,7 @@
         <action id="IconScaleTestAction" internal="true" class="com.intellij.internal.ui.ShowIconScaleTestAction"/>
       </group>
       <group id="Internal.UI.KotlinUiDsl" popup="true">
-        <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"
-                text="Show GridLayout Test"/>
+        <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
       </group>
       <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
       <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
