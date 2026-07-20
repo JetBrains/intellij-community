@@ -6,15 +6,14 @@ import com.intellij.openapi.util.NlsSafe
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.config.ApiVersion
@@ -49,7 +48,7 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
          * Returns the fully qualified names of the symbol and its expanded symbol as well
          * as any alias used for Kotlin <-> Java interop(example `java.lang.Exception` <-> `kotlin.Exception`).
          */
-        @OptIn(KaContextParameterApi::class, KaIdeApi::class)
+        @OptIn(KaIdeApi::class)
         context(_: KaSession)
         private fun KaType.getFqNamesWithJavaImportAlias(apiVersion: ApiVersion): Set<String> = buildSet {
             val ownSymbol = symbol
