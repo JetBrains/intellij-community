@@ -121,6 +121,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
             model("${idea}/inspectionsLocal/collections/redundantAsSequence")
             model("${idea}/inspectionsLocal/collections/simplifiableCall")
+            model("${idea}/inspectionsLocal/collections/concatenationToBuildCollection", pattern = pattern)
             model("${idea}/inspectionsLocal/canSimplifyDollarLiteral")
             model("${idea}/inspectionsLocal/canConvertToMultiDollarString")
             model("${idea}/inspectionsLocal/floatingPointLiteralPrecision")

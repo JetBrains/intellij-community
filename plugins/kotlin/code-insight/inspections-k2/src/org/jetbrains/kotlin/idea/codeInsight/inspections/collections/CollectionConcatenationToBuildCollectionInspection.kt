@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsight.intentions
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.collections
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
@@ -43,8 +43,8 @@ import org.jetbrains.kotlin.psi.psiUtil.addTypeArgument
 /**
  * Applicable to a topmost [KtBinaryExpression] possibly wrapped into `()`
  */
-class CollectionConcatenationToBuildCollectionIntention :
-    KotlinApplicableModCommandAction<KtExpression, CollectionConcatenationToBuildCollectionIntention.Context>(KtExpression::class) {
+class CollectionConcatenationToBuildCollectionInspection :
+    KotlinApplicableModCommandAction<KtExpression, CollectionConcatenationToBuildCollectionInspection.Context>(KtExpression::class) {
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
         if (element.parent is KtParenthesizedExpression) {
