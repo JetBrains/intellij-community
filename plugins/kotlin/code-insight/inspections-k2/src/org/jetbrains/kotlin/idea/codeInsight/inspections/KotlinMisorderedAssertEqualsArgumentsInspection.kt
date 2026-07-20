@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import java.util.regex.Pattern
 
 private val ASSERT_METHOD_NAMES = setOf(
     "assertEquals",
@@ -85,9 +86,9 @@ private val EXPECTED_LIKE_FACTORY_CALLS = setOf(
     "kotlin.shortArrayOf",
 )
 
-private val EXPECTED_LIKE_CONVERSIONS_PREFIXES = listOf(
-    "to",
-    "from",
+private val EXPECTED_LIKE_CONVERSIONS_PREFIX_PATTERNS = listOf(
+    Pattern.compile("^to[A-Z]"),
+    Pattern.compile("^from[A-Z]"),
 )
 
 internal class KotlinMisorderedAssertEqualsArgumentsInspection :
@@ -258,7 +259,7 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
             functionSymbol.valueParameters.isEmpty() &&
             receiverLooksExpected) {
             val functionName = functionSymbol.name.asString()
-            if (EXPECTED_LIKE_CONVERSIONS_PREFIXES.any { functionName.startsWith(it) }) {
+            if (EXPECTED_LIKE_CONVERSIONS_PREFIX_PATTERNS.any { it.matcher(functionName).find() }) {
                 return true
             }
         }
