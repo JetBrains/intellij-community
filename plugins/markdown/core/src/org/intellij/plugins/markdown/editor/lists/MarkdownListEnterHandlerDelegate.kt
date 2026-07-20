@@ -180,7 +180,10 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     val document = editor.document
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
-    val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
+    val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document) ?: run {
+      this.emptyItem = null
+      return EnterHandlerDelegate.Result.Continue
+    }
     val listNumberingType = codeInsightSettings.listNumberingType
     if (codeInsightSettings.renumberListsOnType && listNumberingType != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER) {
       // Will fix numbering in a whole list

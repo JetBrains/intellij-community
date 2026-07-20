@@ -2,6 +2,8 @@
 package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
@@ -42,6 +44,23 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
     configureByFile("splitLineInsideItem.md")
     executeAction(IdeActions.ACTION_EDITOR_SPLIT)
     checkResultByFile("splitLineInsideItem-after.md")
+  }
+
+  @Test
+  fun testPostProcessWithoutListItem() {
+    configureFromFileText("some.md", "- list item<caret>\n\n# heading")
+    var markerInserted = false
+    editor.caretModel.addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        if (!markerInserted && editor.document.text.contains("\n- ")) {
+          markerInserted = true
+          editor.caretModel.moveToOffset(editor.document.text.indexOf("# heading") + 2)
+        }
+      }
+    }, testRootDisposable)
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    check(markerInserted)
+    checkResultByText("- list item\n- \n\n# heading")
   }
 
   private fun doTest() {
