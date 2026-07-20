@@ -79,7 +79,7 @@ public final class SetupProjectSdkUtil {
   private static @NotNull Sdk setup(String mySdkName, String mySdkType, String mySdkHome) {
     Sdk oldSdk = ProjectJdkTable.getInstance().findJdk(mySdkName);
     if (oldSdk != null) {
-      if (Objects.equals(oldSdk.getSdkType().getName(), mySdkName) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {
+      if (Objects.equals(oldSdk.getSdkType().getName(), mySdkType) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {
         LOG.info("Existing SDK is already configured the expected way");
         return oldSdk;
       }

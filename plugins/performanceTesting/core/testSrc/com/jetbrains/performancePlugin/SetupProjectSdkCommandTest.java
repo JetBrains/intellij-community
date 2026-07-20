@@ -26,6 +26,20 @@ public class SetupProjectSdkCommandTest extends HeavyPlatformTestCase {
     Assert.assertTrue(FileUtil.pathsEqual(sdk.getHomePath(), home));
   }
 
+  public void testSetupJavaHomeIsIdempotent() {
+    String home = computeJavaHome();
+    String sdkName = "mock-jdk-6" + System.currentTimeMillis();
+
+    doCommand(sdkName, SimpleJavaSdkType.getInstance(), home);
+    Sdk firstSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
+    Assert.assertNotNull(firstSdk);
+
+    doCommand(sdkName, SimpleJavaSdkType.getInstance(), home);
+    Sdk secondSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
+
+    Assert.assertSame(firstSdk, secondSdk);
+  }
+
   private void doCommand(@NotNull String sdkName, @NotNull SdkType type, @NotNull String home) {
     new SetupProjectSdkCommand("command-name " + sdkName + " " + type.getName() + " \"" + home + "\"", 1) {
       @Override
