@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedSuggestVariableN
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) :
     AbstractKotlinForPostfixTemplate(
@@ -138,7 +139,10 @@ private fun destructuringComponentNames(type: KaType): List<String>? {
         classId == StandardKotlinNames.Triple -> listOf("first", "second", "third")
         classId == StandardKotlinNames.Collections.IndexedValue -> listOf("index", "value")
         isMapEntry(classType) -> listOf("key", "value")
-        else -> session.extractDataClassParameters(classType)?.map { it.name.asString() }
+        else -> session.extractDataClassParameters(classType)?.map {
+            // to keep backticks
+            (it.psi as? KtParameter)?.nameIdentifier?.text ?: it.name.asString()
+        }
     }
 }
 
