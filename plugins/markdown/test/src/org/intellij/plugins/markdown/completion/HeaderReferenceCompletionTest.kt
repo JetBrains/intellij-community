@@ -18,6 +18,19 @@ class HeaderReferenceCompletionTest : BasePlatformTestCase() {
     doTest()
   }
 
+  fun testInTable() {
+    myFixture.configureByText("test.md", """
+      # Header One
+      ## Header Two
+
+      | column |
+      |--------|
+      | [link](#<caret>) |
+    """.trimIndent())
+    val variants = myFixture.completeBasic().orEmpty().map { it.lookupString }
+    assertContainsElements(variants, "header-one", "header-two")
+  }
+
   fun testMultipleHeaders() {
     myFixture.testCompletionVariants(getBeforeFileName(),
                                      "environment-variables",

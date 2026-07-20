@@ -174,7 +174,7 @@
     <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownFenceLangCompletionContributor"/>
 
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridCustomizer"/>
