@@ -42,7 +42,7 @@ class Options(Generic[_M]):
     FORWARD_PROPERTIES: set[str]
     REVERSE_PROPERTIES: set[str]
     default_apps: Any
-    local_fields: list[Field]
+    local_fields: list[Field[Any, Any]]
     local_many_to_many: list[ManyToManyField]
     private_fields: list[Any]
     local_managers: list[Manager]
@@ -67,15 +67,15 @@ class Options(Generic[_M]):
     required_db_features: _ListOrTuple[str]
     required_db_vendor: str | None
     meta: type | None
-    pk: Field
-    auto_field: AutoField | None
+    pk: Field[Any, Any]
+    auto_field: AutoField[Any, Any] | None
     abstract: bool
     managed: bool
     proxy: bool
     proxy_for_model: type[Model] | None
     concrete_model: type[Model] | None
     swappable: str | None
-    parents: dict[type[Model], Field | None]
+    parents: dict[type[Model], Field[Any, Any] | None]
     auto_created: bool
     related_fkey_lookups: list[Any]
     apps: Apps

@@ -16,7 +16,7 @@ from django.utils.deconstruct import _Deconstructible
 from django.utils.functional import cached_property
 from typing_extensions import Never, Self, TypeVar, override
 
-_OutputField = TypeVar("_OutputField", bound=Field, default=Field)
+_OutputField = TypeVar("_OutputField", bound=Field[Any, Any], default=Field[Any, Any])
 _Numeric: TypeAlias = float | Decimal
 _AddOperand: TypeAlias = datetime.datetime | datetime.timedelta | _Numeric | Combinable | str | None
 _SubOperand: TypeAlias = datetime.datetime | datetime.timedelta | _Numeric | Combinable | None
@@ -74,7 +74,7 @@ class BaseExpression:
     constraint_validation_compatible: bool
     set_returning: bool
     allows_composite_expressions: bool
-    def __init__(self, output_field: Field | None = None) -> None: ...
+    def __init__(self, output_field: Field[Any, Any] | None = None) -> None: ...
     def get_db_converters(self, connection: BaseDatabaseWrapper) -> list[Callable]: ...
     def get_source_expressions(self) -> list[Any]: ...
     def set_source_expressions(self, exprs: Sequence[Combinable | Expression]) -> None: ...
@@ -98,9 +98,9 @@ class BaseExpression:
     @property
     def conditional(self) -> bool: ...
     @property
-    def field(self) -> Field: ...
+    def field(self) -> Field[Any, Any]: ...
     @cached_property
-    def output_field(self) -> Field: ...
+    def output_field(self) -> Field[Any, Any]: ...
     @cached_property
     def convert_value(self) -> Callable: ...
     def get_lookup(self, lookup: str) -> type[Lookup] | None: ...
@@ -111,7 +111,7 @@ class BaseExpression:
     def copy(self) -> Self: ...
     def prefix_references(self, prefix: str) -> Self: ...
     def get_group_by_cols(self) -> list[BaseExpression]: ...
-    def get_source_fields(self) -> list[Field | None]: ...
+    def get_source_fields(self) -> list[Field[Any, Any] | None]: ...
     def asc(self, **kwargs: Any) -> OrderBy: ...
     def desc(self, **kwargs: Any) -> OrderBy: ...
     def reverse_ordering(self) -> BaseExpression: ...
@@ -124,10 +124,10 @@ class Expression(_Deconstructible, BaseExpression, Combinable):
     def identity(self) -> tuple[Any, ...]: ...
 
 def register_combinable_fields(
-    lhs: type[Field],
+    lhs: type[Field[Any, Any]],
     connector: str,
-    rhs: type[Field],
-    result: type[Field],
+    rhs: type[Field[Any, Any]],
+    result: type[Field[Any, Any]],
 ) -> None: ...
 
 class CombinedExpression(SQLiteNumericMixin, Expression):
@@ -137,7 +137,9 @@ class CombinedExpression(SQLiteNumericMixin, Expression):
     connector: str
     lhs: Combinable
     rhs: Combinable
-    def __init__(self, lhs: Combinable, connector: str, rhs: Combinable, output_field: Field | None = None) -> None: ...
+    def __init__(
+        self, lhs: Combinable, connector: str, rhs: Combinable, output_field: Field[Any, Any] | None = None
+    ) -> None: ...
 
 class DurationExpression(CombinedExpression):
     def compile(self, side: Combinable, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
@@ -214,7 +216,7 @@ class Func(SQLiteNumericMixin, Expression, Generic[_OutputField]):
 class Value(Expression):
     value: Any
     for_save: bool
-    def __init__(self, value: Any, output_field: Field | None = None) -> None: ...
+    def __init__(self, value: Any, output_field: Field[Any, Any] | None = None) -> None: ...
     @property
     @override
     def empty_result_set_value(self) -> Any: ...
@@ -222,28 +224,32 @@ class Value(Expression):
 class RawSQL(Expression):
     params: list[Any]
     sql: str
-    def __init__(self, sql: str, params: Sequence[Any], output_field: Field | None = None) -> None: ...
+    def __init__(self, sql: str, params: Sequence[Any], output_field: Field[Any, Any] | None = None) -> None: ...
 
 class Star(Expression): ...
 
 class DatabaseDefault(Expression):
-    def __init__(self, expression: Expression, output_field: Field | None = None) -> None: ...
+    def __init__(self, expression: Expression, output_field: Field[Any, Any] | None = None) -> None: ...
 
 class Col(Expression):
-    target: Field
+    target: Field[Any, Any]
     alias: str
     contains_column_references: Literal[True]
     possibly_multivalued: Literal[False]
-    def __init__(self, alias: str, target: Field, output_field: Field | None = None) -> None: ...
+    def __init__(self, alias: str, target: Field[Any, Any], output_field: Field[Any, Any] | None = None) -> None: ...
     @override
     def relabeled_clone(self, relabels: Mapping[str, str]) -> Self: ...
 
 class ColPairs(Expression):
     alias: str
-    targets: Sequence[Field]
-    sources: Sequence[Field]
+    targets: Sequence[Field[Any, Any]]
+    sources: Sequence[Field[Any, Any]]
     def __init__(
-        self, alias: str, targets: Sequence[Field], sources: Sequence[Field], output_field: Field | None
+        self,
+        alias: str,
+        targets: Sequence[Field[Any, Any]],
+        sources: Sequence[Field[Any, Any]],
+        output_field: Field[Any, Any] | None,
     ) -> None: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[Col]: ...
@@ -258,7 +264,7 @@ class Ref(Expression):
 
 class ExpressionList(Func):
     def __init__(
-        self, *expressions: BaseExpression | Combinable, output_field: Field | None = None, **extra: Any
+        self, *expressions: BaseExpression | Combinable, output_field: Field[Any, Any] | None = None, **extra: Any
     ) -> None: ...
 
 class OrderByList(ExpressionList):
@@ -271,7 +277,7 @@ class ExpressionWrapper(Expression, Generic[_E]):
     @property
     @override
     def allowed_default(self) -> bool: ...  # type: ignore[override]
-    def __init__(self, expression: _E, output_field: Field) -> None: ...
+    def __init__(self, expression: _E, output_field: Field[Any, Any]) -> None: ...
     expression: _E
 
 class NegatedExpression(ExpressionWrapper[_E]):
@@ -302,7 +308,7 @@ class Case(Expression):
     default: Any
     extra: Any
     def __init__(
-        self, *cases: Any, default: Any | None = None, output_field: Field | None = None, **extra: Any
+        self, *cases: Any, default: Any | None = None, output_field: Field[Any, Any] | None = None, **extra: Any
     ) -> None: ...
     @override
     def as_sql(
@@ -370,7 +376,7 @@ class Window(SQLiteNumericMixin, Expression):
         partition_by: _ExprListCompatible | None = None,
         order_by: _ExprListCompatible | None = None,
         frame: WindowFrame | None = None,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
     ) -> None: ...
     @override
     def as_sql(

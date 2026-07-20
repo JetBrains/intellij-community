@@ -15,6 +15,7 @@ from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.db.models.query import _OrderByFieldName
 from django.db.models.query_utils import Q, RegisterLookupMixin
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType, _ParamsT
+from django.forms.widgets import Widget
 from django.utils.choices import BlankChoiceIterator, _Choice, _ChoiceNamedGroup, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import DictWrapper
 from django.utils.functional import _Getter, _StrOrPromise, cached_property
@@ -29,7 +30,7 @@ _ChoicesList: TypeAlias = Sequence[_Choice] | Sequence[_ChoiceNamedGroup]
 _LimitChoicesTo: TypeAlias = Q | dict[str, Any]
 _LimitChoicesToCallable: TypeAlias = Callable[[], _LimitChoicesTo]
 
-_F = TypeVar("_F", bound=Field, covariant=True)
+_F = TypeVar("_F", bound=Field[Any, Any], covariant=True)
 
 @type_check_only
 class _FieldDescriptor(Protocol[_F]):
@@ -250,9 +251,22 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
     def save_form_data(self, instance: Model, data: Any) -> None: ...
     def formfield(
         self,
-        form_class: type[forms.Field] | None = None,
-        choices_form_class: type[forms.ChoiceField] | None = None,
+        *,
+        form_class: type[forms.Field] | None = ...,
+        choices_form_class: type[forms.ChoiceField] | None = ...,
+        required: bool = ...,
+        widget: Widget | type[Widget] | None = ...,
+        label: _StrOrPromise | None = ...,
+        initial: Any | None = ...,
+        help_text: _StrOrPromise = ...,
+        error_messages: _ErrorMessagesMapping | None = ...,
+        show_hidden_initial: bool = ...,
+        validators: Iterable[_ValidatorCallable] = ...,
+        localize: bool = ...,
+        disabled: bool = ...,
+        label_suffix: str | None = ...,
         **kwargs: Any,
+        # Subclasses are allowed to return None
     ) -> forms.Field | None: ...
     def value_from_object(self, obj: Model) -> _GT: ...
     def slice_expression(self, expression: Expression, start: int, length: int | None) -> Func: ...
@@ -261,8 +275,6 @@ class IntegerField(Field[_ST, _GT]):
     _pyi_private_set_type: float | int | str | Combinable
     _pyi_private_get_type: int
     _pyi_lookup_exact_type: str | int
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class PositiveIntegerRelDbTypeMixin:
     def rel_db_type(self, connection: BaseDatabaseWrapper) -> str: ...
@@ -271,30 +283,20 @@ class SmallIntegerField(IntegerField[_ST, _GT]): ...
 
 class BigIntegerField(IntegerField[_ST, _GT]):
     MAX_BIGINT: ClassVar[int]
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class PositiveIntegerField(PositiveIntegerRelDbTypeMixin, IntegerField[_ST, _GT]):
     integer_field_class: type[IntegerField]
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class PositiveSmallIntegerField(PositiveIntegerRelDbTypeMixin, SmallIntegerField[_ST, _GT]):
     integer_field_class: type[SmallIntegerField]
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class PositiveBigIntegerField(PositiveIntegerRelDbTypeMixin, BigIntegerField[_ST, _GT]):
     integer_field_class: type[BigIntegerField]
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class FloatField(Field[_ST, _GT]):
     _pyi_private_set_type: float | int | str | Combinable
     _pyi_private_get_type: float
     _pyi_lookup_exact_type: float
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class DecimalField(Field[_ST, _GT]):
     _pyi_private_set_type: str | float | decimal.Decimal | Combinable
@@ -330,8 +332,6 @@ class DecimalField(Field[_ST, _GT]):
     ) -> None: ...
     @cached_property
     def context(self) -> decimal.Context: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class CharField(Field[_ST, _GT]):
     _pyi_private_set_type: str | int | Combinable
@@ -366,8 +366,6 @@ class CharField(Field[_ST, _GT]):
         *,
         db_collation: str | None = None,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class CommaSeparatedIntegerField(CharField[_ST, _GT]): ...
 
@@ -400,13 +398,9 @@ class SlugField(CharField[_ST, _GT]):
         db_index: bool = True,
         allow_unicode: bool = False,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class EmailField(CharField[_ST, _GT]):
     _pyi_private_set_type: str | Combinable
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class URLField(CharField[_ST, _GT]):
     def __init__(
@@ -437,8 +431,6 @@ class URLField(CharField[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class TextField(Field[_ST, _GT]):
     _pyi_private_set_type: str | Combinable
@@ -473,15 +465,11 @@ class TextField(Field[_ST, _GT]):
         *,
         db_collation: str | None = None,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class BooleanField(Field[_ST, _GT]):
     _pyi_private_set_type: bool | Combinable
     _pyi_private_get_type: bool
     _pyi_lookup_exact_type: bool
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class NullBooleanField(BooleanField[_ST, _GT]):
     _pyi_private_set_type: bool | Combinable | None  # type: ignore[assignment]
@@ -523,8 +511,6 @@ class GenericIPAddressField(Field[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class DateTimeCheckMixin:
     def check(self, **kwargs: Any) -> list[CheckMessage]: ...
@@ -563,8 +549,6 @@ class DateField(DateTimeCheckMixin, Field[_ST, _GT]):
     ) -> None: ...
     @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class TimeField(DateTimeCheckMixin, Field[_ST, _GT]):
     _pyi_private_set_type: str | time | real_datetime | Combinable
@@ -596,15 +580,11 @@ class TimeField(DateTimeCheckMixin, Field[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class DateTimeField(DateField[_ST, _GT]):
     _pyi_private_set_type: str | real_datetime | date | Combinable
     _pyi_private_get_type: real_datetime
     _pyi_lookup_exact_type: str | real_datetime
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class UUIDField(Field[_ST, _GT]):
     _pyi_private_set_type: str | uuid.UUID
@@ -638,8 +618,6 @@ class UUIDField(Field[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class FilePathField(Field[_ST, _GT]):
     path: Any
@@ -676,8 +654,6 @@ class FilePathField(Field[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class BinaryField(Field[_ST, _GT]):
     _pyi_private_get_type: bytes | memoryview
@@ -685,8 +661,6 @@ class BinaryField(Field[_ST, _GT]):
 
 class DurationField(Field[_ST, _GT]):
     _pyi_private_get_type: timedelta
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
 
 class AutoFieldMixin:
     db_returning: bool
