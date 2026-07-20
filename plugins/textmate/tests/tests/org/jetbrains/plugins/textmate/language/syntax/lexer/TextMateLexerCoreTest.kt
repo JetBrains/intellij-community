@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.language.syntax.textmateTokenize
+import org.jetbrains.plugins.textmate.language.syntax.assertTokenize
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class TextMateLexerCoreTest {
   @Test
@@ -21,11 +20,11 @@ class TextMateLexerCoreTest {
         ]
       }
     """.trimIndent()
-    assertEquals(listOf(
-      "a" to "source.test block.test begin.a",
-      "x" to "source.test block.test",
-      "-b" to "source.test block.test"
-    ), textmateTokenize("ax-b", grammar).toList())
+    assertTokenize(grammar, "ax-b", """
+      source.test block.test begin.a: [0, 1], {a}
+      source.test block.test: [1, 2], {x}
+      source.test block.test: [2, 4], {-b}
+    """.trimIndent())
   }
 
   @Test
@@ -43,11 +42,11 @@ class TextMateLexerCoreTest {
         ]
       }
     """.trimIndent()
-    assertEquals(listOf(
-      "a" to "source.test block.test common.char",
-      "-" to "source.test block.test",
-      "b" to "source.test block.test common.char"
-    ), textmateTokenize("a-b", grammar).toList())
+    assertTokenize(grammar, "a-b", """
+      source.test block.test common.char: [0, 1], {a}
+      source.test block.test: [1, 2], {-}
+      source.test block.test common.char: [2, 3], {b}
+    """.trimIndent())
   }
 
   @Test
@@ -67,10 +66,10 @@ class TextMateLexerCoreTest {
         ]
       }
     """.trimIndent()
-    assertEquals(listOf(
-      "a" to "source.test match.a cap.a",
-      "-b" to "source.test"
-    ), textmateTokenize("a-b", grammar).toList())
+    assertTokenize(grammar, "a-b", """
+      source.test match.a cap.a: [0, 1], {a}
+      source.test: [1, 3], {-b}
+    """.trimIndent())
   }
 
   @Test
@@ -88,10 +87,69 @@ class TextMateLexerCoreTest {
         ]
       }
     """.trimIndent()
-    assertEquals(listOf(
-      "a\n" to "source.test block.test",
-      "x" to "source.test block.test anchored.x",
-      "b" to "source.test block.test"
-    ), textmateTokenize("a\nxb", grammar).toList())
+    assertTokenize(grammar, "a\nxb",
+                   """
+                     source.test block.test: [0, 2], {a
+                     }
+                     source.test block.test anchored.x: [2, 3], {x}
+                     source.test block.test: [3, 4], {b}
+                   """.trimIndent())
+  }
+
+  /**
+   * Verifies the `applyEndPatternLast` grammar option of begin/end rules.
+   *
+   * By default, when the `end` pattern and a nested pattern both match at the same offset,
+   * the `end` pattern wins and closes the scope. With `applyEndPatternLast` enabled, the nested
+   * patterns are applied first and the `end` pattern is applied only when it matches strictly earlier.
+   */
+  // the same input is tokenized differently depending on the `applyEndPatternLast` option
+  private val applyEndPatternLastInput = "{a}}b}"
+
+  /**
+   * The `block` rule is delimited by `{`..`}` and contains a nested rule that matches a double brace `}}`.
+   * The nested match and the `end` match both start at the first `}` of `}}`, so the tie-break decides
+   * whether the block ends prematurely (default) or the `}}` is consumed as a nested token (applyEndPatternLast).
+   */
+  private fun applyEndPatternLastGrammar(applyEndPatternLast: Boolean): String {
+    val option = if (applyEndPatternLast) "\"applyEndPatternLast\": 1," else ""
+    return """
+      {
+        "scopeName": "source.aeptest",
+        "patterns": [{ "include": "#block" }],
+        "repository": {
+          "block": {
+            "name": "meta.block",
+            "begin": "\\{",
+            "end": "\\}",
+            $option
+            "patterns": [
+              { "name": "constant.double-brace", "match": "\\}\\}" }
+            ]
+          }
+        }
+      }
+    """.trimIndent()
+  }
+
+  @Test
+  fun `end pattern wins over nested pattern by default`() {
+    // the block ends at the very first `}`, so `}}` is never recognized and the tail stays outside the block
+    assertTokenize(applyEndPatternLastGrammar(applyEndPatternLast = false), applyEndPatternLastInput, """
+      source.aeptest meta.block: [0, 1], {{}
+      source.aeptest meta.block: [1, 3], {a}}
+      source.aeptest: [3, 6], {}b}}
+    """.trimIndent())
+  }
+
+  @Test
+  fun `nested pattern wins over end pattern with applyEndPatternLast`() {
+    // the nested `}}` is consumed as constant.double-brace, and the block is only closed by the trailing `}`
+    assertTokenize(applyEndPatternLastGrammar(applyEndPatternLast = true), applyEndPatternLastInput, """
+      source.aeptest meta.block: [0, 1], {{}
+      source.aeptest meta.block: [1, 2], {a}
+      source.aeptest meta.block constant.double-brace: [2, 4], {}}}
+      source.aeptest meta.block: [4, 6], {b}}
+    """.trimIndent())
   }
 }
