@@ -19,9 +19,9 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <properties.implicitPropertyUsageProvider implementation="com.intellij.execution.junit2.properties.JUnitImplicitPropertyUsageProvider"/>
-    <completion.contributor language="Properties" implementationClass="com.intellij.execution.junit2.properties.JUnitPropertiesCompletionContributor"/>
-    <psi.referenceContributor language="Properties" implementation="com.intellij.execution.junit2.properties.JUnitPropertiesReferenceContributor"/>
-    <platform.backend.documentation.psiTargetProvider implementation="com.intellij.execution.junit2.properties.JUnitPlatformPropertyDocumentationTargetProvider"/>
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.junit.properties.JUnitImplicitPropertyUsageProvider"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.junit.properties.JUnitPropertiesCompletionContributor"/>
+    <psi.referenceContributor language="Properties" implementation="com.intellij.junit.properties.JUnitPropertiesReferenceContributor"/>
+    <platform.backend.documentation.psiTargetProvider implementation="com.intellij.junit.properties.JUnitPlatformPropertyDocumentationTargetProvider"/>
   </extensions>
 </idea-plugin>

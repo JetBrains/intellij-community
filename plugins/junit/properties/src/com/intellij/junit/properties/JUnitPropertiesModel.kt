@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.junit2.properties
+package com.intellij.junit.properties
 
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.java.library.JavaLibraryModificationTracker
