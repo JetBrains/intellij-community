@@ -76,6 +76,9 @@
 - name: lib/intellij.kotlin.refactorings.base.jar
   contentModules:
   - name: intellij.kotlin.refactorings.base
+- name: lib/intellij.kotlin.references.jar
+  contentModules:
+  - name: intellij.kotlin.references
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
@@ -159,7 +162,6 @@
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.native
   - name: kotlin.scripting
-  - name: intellij.kotlin.references
   - name: intellij.kotlin.jvm.debugger.eval4j
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils

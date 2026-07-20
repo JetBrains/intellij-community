@@ -1,13 +1,14 @@
 <idea-plugin>
-  <dependencies>
-    <plugin id="org.jetbrains.kotlin"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.java.psi"/>
-    <!-- endregion -->
-  </dependencies>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+<dependencies>
+<plugin id="org.jetbrains.kotlin"/>
+<module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.references"/>
+</dependencies>
+  <!-- endregion -->
 
-  <extensions defaultExtensionNs="com.intellij.cce">
-    <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
+<extensions defaultExtensionNs="com.intellij.cce">
+<!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinMultiLineEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinTextCompletionEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCompletionContextEvaluationVisitor"/>

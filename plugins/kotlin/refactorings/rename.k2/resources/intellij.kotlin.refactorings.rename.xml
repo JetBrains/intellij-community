@@ -3,12 +3,13 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
-    <module name="intellij.kotlin.base.psi"/>
-    <module name="intellij.kotlin.refactorings"/>
-    <module name="intellij.kotlin.refactorings.base"/>
-    <module name="intellij.kotlin.searching"/>
-  </dependencies>
-  <!-- endregion -->
+<module name="intellij.kotlin.base.psi"/>
+<module name="intellij.kotlin.refactorings"/>
+<module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
+<module name="intellij.kotlin.searching"/>
+</dependencies>
+<!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>

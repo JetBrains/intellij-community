@@ -12,12 +12,13 @@
     <module name="intellij.kotlin.base.platforms"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.projectStructure"/>
-    <module name="intellij.kotlin.base.psi"/>
-    <module name="intellij.kotlin.base.resources"/>
-    <module name="intellij.kotlin.formatter"/>
-  </dependencies>
-  <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
+<module name="intellij.kotlin.base.psi"/>
+<module name="intellij.kotlin.base.resources"/>
+<module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.references"/>
+</dependencies>
+<!-- endregion -->
+<extensions defaultExtensionNs="com.intellij">
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
             handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>

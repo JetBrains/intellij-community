@@ -2,12 +2,13 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
-    <module name="intellij.kotlin.base.analysis"/>
-    <module name="intellij.kotlin.base.facet"/>
-    <module name="intellij.kotlin.base.projectStructure"/>
-  </dependencies>
-  <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
+<module name="intellij.kotlin.base.analysis"/>
+<module name="intellij.kotlin.base.facet"/>
+<module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.references"/>
+</dependencies>
+<!-- endregion -->
+<extensions defaultExtensionNs="com.intellij">
     <registryKey
             defaultValue="true"
             description="Enables support for Analysis API-based resolution during dumb mode."
