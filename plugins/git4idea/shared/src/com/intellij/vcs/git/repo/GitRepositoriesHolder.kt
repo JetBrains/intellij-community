@@ -24,11 +24,13 @@ import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -38,8 +40,10 @@ import java.util.concurrent.ConcurrentHashMap
 @Service(Service.Level.PROJECT)
 class GitRepositoriesHolder(
   private val project: Project,
-  private val cs: CoroutineScope,
+  providedScope: CoroutineScope,
 ) {
+  private val cs: CoroutineScope = providedScope.plus(Dispatchers.IO)
+
   private val repositories: MutableMap<RepositoryId, GitRepositoryModelImpl> = ConcurrentHashMap()
   private val initJob = cs.launch(start = CoroutineStart.LAZY) { subscribeToRepoEvents() }
   private val _updates = MutableSharedFlow<UpdateType>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
