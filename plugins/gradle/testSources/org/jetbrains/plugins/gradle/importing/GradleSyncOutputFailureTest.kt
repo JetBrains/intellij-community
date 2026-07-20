@@ -117,6 +117,9 @@ class GradleSyncOutputFailureTest(
             }
           }
         }
+        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.7")) {
+          assertNode("Task initialization failure")
+        }
       }
     }
   }
