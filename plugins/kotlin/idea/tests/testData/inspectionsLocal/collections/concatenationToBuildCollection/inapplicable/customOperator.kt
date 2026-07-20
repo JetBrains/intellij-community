@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun main() {
     val a = listOf(1) +<caret> listOf(2)

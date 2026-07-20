@@ -1,3 +1,5 @@
+// FIX: Convert to collection builder
+
 val x = buildSet<Boolean> {
     add(true)
     addAll(

@@ -1,3 +1,5 @@
+// FIX: Convert to collection builder
+
 class AAAA : List<Int> {
     override fun get(index: Int): Int {
         return buildList {

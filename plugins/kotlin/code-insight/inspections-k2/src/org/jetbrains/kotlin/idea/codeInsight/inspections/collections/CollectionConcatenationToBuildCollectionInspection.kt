@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.collections
 
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
@@ -19,7 +20,8 @@ import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ThisRebinderForAddingNewReceiver
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -38,13 +40,27 @@ import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.addTypeArgument
 
 /**
  * Applicable to a topmost [KtBinaryExpression] possibly wrapped into `()`
  */
 class CollectionConcatenationToBuildCollectionInspection :
-    KotlinApplicableModCommandAction<KtExpression, CollectionConcatenationToBuildCollectionInspection.Context>(KtExpression::class) {
+    KotlinApplicableInspectionBase.Simple<KtExpression, CollectionConcatenationToBuildCollectionInspection.Context>() {
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitorVoid = object : KtVisitorVoid() {
+
+        override fun visitExpression(expression: KtExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
+
+    override fun getProblemDescription(element: KtExpression, context: Context): String =
+        KotlinBundle.message("collection.concatenation.can.be.converted.to.build.collection")
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
         if (element.parent is KtParenthesizedExpression) {
@@ -206,19 +222,42 @@ class CollectionConcatenationToBuildCollectionInspection :
         return resolvedTo.callableId?.packageName == StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
     }
 
-    override fun invoke(
-        actionContext: ActionContext,
+    override fun createQuickFix(
+        element: KtExpression,
+        context: Context,
+    ): KotlinModCommandQuickFix<KtExpression> = object : KotlinModCommandQuickFix<KtExpression>() {
+        override fun getFamilyName(): @IntentionFamilyName String =
+            KotlinBundle.message("collection.concatenation.to.build.collection.call.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtExpression,
+            updater: ModPsiUpdater,
+        ) {
+            this@CollectionConcatenationToBuildCollectionInspection.applyFix(project, element, context, updater)
+        }
+    }
+
+    private fun applyFix(
+        project: Project,
         element: KtExpression,
         elementContext: Context,
         updater: ModPsiUpdater,
     ) {
-        val expression = element.safeDeparenthesize()
+        if (!elementContext.isValid()) return
+
+        val writableElement = updater.getWritable(element)
+        val writableOperations = elementContext.operations.map { operation ->
+            operation.toWritable(updater) ?: return
+        }
+        val writableRebinderContext = elementContext.rebinderContext.toWritable(updater) ?: return
+
+        val expression = writableElement.safeDeparenthesize()
         val expressionToConvert = expression.expressionToConvert()
         val replacementTarget = expressionToConvert.getTopmostParenthesizedExpressionOrSelf()
-        if (!elementContext.isValid()) return
-        val replacements = ThisRebinderForAddingNewReceiver.apply(elementContext.rebinderContext)
+        val replacements = ThisRebinderForAddingNewReceiver.apply(writableRebinderContext)
 
-        val ktPsiFactory = KtPsiFactory(actionContext.project)
+        val ktPsiFactory = KtPsiFactory(project)
         val buildCall = createBuildCallExpression(ktPsiFactory, expressionToConvert, elementContext)
         val bodyExpression = getSingleLambdaArgumentBody(buildCall)
 
@@ -229,7 +268,7 @@ class CollectionConcatenationToBuildCollectionInspection :
             replacements[this] ?: this
 
         val collectionType = elementContext.collectionType
-        for (operation in elementContext.operations) {
+        for (operation in writableOperations) {
             when (operation) {
                 is Context.Operation.AddRemoveOperation -> {
                     val expression = operation.expression.element?.elementOrReplacement()
@@ -272,6 +311,34 @@ class CollectionConcatenationToBuildCollectionInspection :
             }
         }
         replacementTarget.replace(buildCall) as KtExpression
+    }
+
+    private fun Context.Operation.toWritable(updater: ModPsiUpdater): Context.Operation? {
+        val writableExpression = updater.getWritable(expression.element ?: return null).createSmartPointer()
+        return when (this) {
+            is Context.Operation.AddRemoveOperation -> Context.Operation.AddRemoveOperation(writableExpression, kind)
+            is Context.Operation.TransformingOperation -> Context.Operation.TransformingOperation(writableExpression, kind)
+        }
+    }
+
+    private fun ThisRebinderForAddingNewReceiver.Context.toWritable(
+        updater: ModPsiUpdater,
+    ): ThisRebinderForAddingNewReceiver.Context? {
+        val callsToAddImplicitReceiver = callsToAddImplicitReceiver.map { call ->
+            val element = call.call.element ?: return null
+            ThisRebinderForAddingNewReceiver.Context.CallToAddImplicitReceiver(
+                updater.getWritable(element).createSmartPointer(),
+                call.labelToAdd,
+            )
+        }
+        val thisExpressionsToAddLabels = thisExpressionsToAddLabels.map { thisExpression ->
+            val element = thisExpression.thisExpression.element ?: return null
+            ThisRebinderForAddingNewReceiver.Context.ThisExpressionToAddLabel(
+                updater.getWritable(element).createSmartPointer(),
+                thisExpression.labelToAdd,
+            )
+        }
+        return ThisRebinderForAddingNewReceiver.Context(callsToAddImplicitReceiver, thisExpressionsToAddLabels, project)
     }
 
     private fun getSingleLambdaArgumentBody(buildCall: KtCallExpression): KtBlockExpression {
@@ -321,7 +388,7 @@ class CollectionConcatenationToBuildCollectionInspection :
 
     private fun KtExpression.expressionToConvert(): KtExpression {
         var currentExpression: KtExpression = this
-        var topmostBinaryExpression: KtBinaryExpression? = null
+        var topmostBinaryExpression: KtBinaryExpression? = currentExpression as? KtBinaryExpression
         while (true) {
             val parent = currentExpression.parent
             currentExpression = when {
@@ -357,10 +424,6 @@ class CollectionConcatenationToBuildCollectionInspection :
     private fun KtBlockExpression.addStatement(ktPsiFactory: KtPsiFactory, statement: KtExpression) {
         addBefore(statement, rBrace)
         addBefore(ktPsiFactory.createNewLine(), rBrace)
-    }
-
-    override fun getFamilyName(): @IntentionFamilyName String {
-        return KotlinBundle.message("intention.collection.concatenation.to.build.collection.call.family.name")
     }
 
     class Context(

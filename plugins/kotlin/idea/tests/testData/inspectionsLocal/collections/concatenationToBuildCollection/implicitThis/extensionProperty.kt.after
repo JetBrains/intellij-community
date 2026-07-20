@@ -1,3 +1,5 @@
+// FIX: Convert to collection builder
+
 val MutableList<Int>.bbb: Int
     get() {
         fun List<String>.aaa() {
