@@ -54,7 +54,6 @@ abstract class TextMateLexerTestCase {
           val endIndex = lexer.getTokenEnd()
           val tokenType: IElementType = lexer.getTokenType()!!
           val str = "${getTokenTypePresentation(tokenType)}: [$startIndex, $endIndex], {${text.substring(startIndex, endIndex)}}\n"
-          println(str)
           append(str)
           lexer.advance()
         }
