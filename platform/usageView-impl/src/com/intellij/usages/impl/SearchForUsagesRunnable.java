@@ -61,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.ArrayList;
@@ -338,7 +339,7 @@ final class SearchForUsagesRunnable implements Runnable {
         openView(usageView);
       }
       else if (myListener != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
           if (!myProject.isDisposed()) {
             UsageViewEx uv = myUsageViewRef.get();
             if (uv != null) {
@@ -362,7 +363,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private void openView(@NotNull UsageViewEx usageView) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    SwingUtilities.invokeLater(() -> {
       if (myProject.isDisposed()) {
         return;
       }
