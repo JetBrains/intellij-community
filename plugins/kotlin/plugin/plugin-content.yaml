@@ -138,7 +138,6 @@
   - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: intellij.kotlin.compilerPlugins.support
   - name: intellij.kotlin.completion.api
-  - name: kotlin.completion.impl.shared
   - name: intellij.kotlin.native
   - name: kotlin.scripting
   - name: intellij.kotlin.plugin.updater

@@ -40,7 +40,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.base.compilerConfiguration.ui",
       "intellij.kotlin.compilerPlugins.support",
       "intellij.kotlin.completion.api",
-      "kotlin.completion.impl.shared",
       "intellij.kotlin.native",
       "kotlin.scripting",
       "intellij.kotlin.plugin.updater",

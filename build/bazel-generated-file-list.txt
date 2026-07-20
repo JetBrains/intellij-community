@@ -1303,7 +1303,6 @@ plugins/kotlin/compiler-reference-index
 plugins/kotlin/compiler-reference-index/tests.k2
 plugins/kotlin/completion/api
 plugins/kotlin/completion/impl-k2
-plugins/kotlin/completion/impl-shared
 plugins/kotlin/completion/tests-shared
 plugins/kotlin/copyright
 plugins/kotlin/copyright/fir-tests

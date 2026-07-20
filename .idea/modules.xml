@@ -2096,7 +2096,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/base/kotlin.base.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/base/kotlin.base.injection.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/base/tests/kotlin.base.injection.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/base/tests/kotlin.base.injection.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/android-extensions-stubs/kotlin.compiler-plugins.android-extensions-stubs.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/android-extensions-stubs/kotlin.compiler-plugins.android-extensions-stubs.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/completion/impl-shared/kotlin.completion.impl.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/completion/impl-shared/kotlin.completion.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/completion/tests-shared/kotlin.completion.tests.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/completion/tests-shared/kotlin.completion.tests.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/all-tests-compose/kotlin.compose-all-tests.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/all-tests-compose/kotlin.compose-all-tests.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />
