@@ -631,7 +631,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
-    <registryKey defaultValue="true" key="vfs.windows.use.buffered.directory.stream"
+    <registryKey defaultValue="false" key="vfs.windows.use.buffered.directory.stream"
                  description="Use the native buffered WindowsBufferedDirectoryStream for directory enumeration on Windows. When disabled, falls back to the standard java.nio directory stream."/>
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
 
