@@ -259,9 +259,10 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     if (isRDFrontend) {
       //noinspection deprecation
       contributors = ContainerUtil.filter(INSTANCE.forKey(language), c -> c instanceof FrontendCompletionContributor);
-      if (contributors.size() > 1) {
-        LOG.error("FrontendCompletionContributors are not allowed to be used by plugins yet: " + contributors);
-      }
+      // TODO forbid wild FrontendCompletionContributors
+      //if (contributors.size() > 1) {
+      //  LOG.error("FrontendCompletionContributors are not allowed to be used by plugins yet: " + contributors);
+      //}
     }
     else {
       contributors = INSTANCE.forKey(language);
