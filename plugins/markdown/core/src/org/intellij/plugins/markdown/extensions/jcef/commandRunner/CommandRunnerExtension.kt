@@ -334,7 +334,7 @@ class CommandRunnerExtension(
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
                 command: String,
                 allowRunConfigurations: Boolean = false): Boolean {
-      val trimmedCmd = command.trim()
+      val trimmedCmd = trimPrompt(command).trim()
       if (trimmedCmd.isEmpty()) return false
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
@@ -355,7 +355,7 @@ class CommandRunnerExtension(
       place: RunnerPlace
     ): Boolean {
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
-      val trimmedCmd = command.trim()
+      val trimmedCmd = trimPrompt(command).trim()
       return runReadAction {
         for (provider in RunAnythingProvider.EP_NAME.extensionList) {
           val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
@@ -397,10 +397,27 @@ class CommandRunnerExtension(
     @ApiStatus.Internal
     fun trimPrompt(cmd: String): String {
       return cmd.lines()
-        .filter { line -> line.isNotEmpty() }
-        .joinToString("\n") { line ->
-          if (line.startsWith("$")) line.substringAfter("$") else line
+        .map { line ->
+          val withoutPrompt = if (line.startsWith("$")) line.substringAfter("$") else line
+          stripTrailingShellComment(withoutPrompt)
         }
+        .filter { line -> line.isNotEmpty() }
+        .joinToString("\n")
+    }
+
+    private fun stripTrailingShellComment(line: String): String {
+      var inSingle = false
+      var inDouble = false
+      for (i in line.indices) {
+        when (line[i]) {
+          '\'' -> if (!inDouble) inSingle = !inSingle
+          '"' -> if (!inSingle) inDouble = !inDouble
+          '#' -> if (!inSingle && !inDouble && (i == 0 || line[i - 1].isWhitespace())) {
+            return line.substring(0, i).trimEnd()
+          }
+        }
+      }
+      return line
     }
   }
 }
