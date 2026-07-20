@@ -7,6 +7,8 @@ import com.github.ajalt.clikt.parameters.options.multiple as multipleOptions
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.devtools.ksp.processing.KSPJvmConfig
+import fleet.buildtool.cli.FleetKspConfig
+import fleet.buildtool.cli.applyCommonKSPConfig
 import fleet.buildtool.cli.executeKsp
 import fleet.buildtool.cli.findSourceRoot
 import org.slf4j.Logger
@@ -56,50 +58,36 @@ class GenerateFleetPluginServicesResourcesCommand : CliktCommand(
 
   @OptIn(ExperimentalPathApi::class)
   override fun run() {
-    val projectBaseDirPath = Path.of("").toAbsolutePath().normalize()
-    val workDir = Files.createTempDirectory(projectBaseDirPath, "fleet-plugin-services-resources-generator")
+    val config = FleetKspConfig.fromCommandArguments(
+      this@GenerateFleetPluginServicesResourcesCommand.commandName,
+      moduleName,
+      languageVersion,
+      apiVersion,
+      sources,
+      classpath,
+    )
     try {
-      val normalizedSources = sources.map { it.toAbsolutePath().normalize() }
-      val normalizedClasspath = classpath.map { it.toAbsolutePath().normalize() }
-      val normalizedProcessorClasspath = processorClasspath.map { it.toAbsolutePath().normalize() }
-      val classesOutputDirPath = Files.createDirectories(workDir.resolve("classes"))
-      val javaOutputDirPath = Files.createDirectories(workDir.resolve("java"))
-      val kotlinOutputDirPath = Files.createDirectories(workDir.resolve("kotlin"))
-      val resourceOutputDirPath = Files.createDirectories(workDir.resolve("resources"))
-      val cachesDirPath = Files.createDirectories(workDir.resolve("caches"))
-      val sourceRootPaths = normalizedSources.map { findSourceRoot(it) }.distinct()
-      val commonSourceRootPaths = sourceRootPaths.filter { it.fileName.toString().contains("Common", ignoreCase = true) }
-      val jvmSourceRootPaths = sourceRootPaths - commonSourceRootPaths.toSet()
-      val javaSourceRootPaths = jvmSourceRootPaths.filter { root ->
-        normalizedSources.any { it.startsWith(root) && it.toString().endsWith(".java") }
+      val javaOutputDirPath = Files.createDirectories(config.workDir.resolve("java"))
+      val javaSourceRootPaths = config.platformSourceRootPaths.filter { root ->
+        config.sources.any { it.startsWith(root) && it.toString().endsWith(".java") }
       }
       @Suppress("IO_FILE_USAGE") val kspConfig = KSPJvmConfig.Builder().apply {
-        moduleName = this@GenerateFleetPluginServicesResourcesCommand.moduleName
+        applyCommonKSPConfig(config)
         javaSourceRoots = javaSourceRootPaths.map { it.toFile() }
         javaOutputDir = javaOutputDirPath.toFile()
         jvmTarget = this@GenerateFleetPluginServicesResourcesCommand.jvmTarget
-        sourceRoots = jvmSourceRootPaths.map { it.toFile() }
-        commonSourceRoots = commonSourceRootPaths.map { it.toFile() }
-        libraries = normalizedClasspath.map { it.toFile() }
-        projectBaseDir = projectBaseDirPath.toFile()
-        outputBaseDir = workDir.toFile()
-        cachesDir = cachesDirPath.toFile()
-        classOutputDir = classesOutputDirPath.toFile()
-        kotlinOutputDir = kotlinOutputDirPath.toFile()
-        resourceOutputDir = resourceOutputDirPath.toFile()
-        languageVersion = this@GenerateFleetPluginServicesResourcesCommand.languageVersion
-        apiVersion = this@GenerateFleetPluginServicesResourcesCommand.apiVersion
       }.build()
 
+      val normalizedProcessorClasspath = processorClasspath.map { it.toAbsolutePath().normalize() }
       val kspExitCode = executeKsp(kspConfig, normalizedProcessorClasspath)
       check(kspExitCode == 0) {
         "KSP failed with exit code $kspExitCode"
       }
-      copyGeneratedResources(resourceOutputDirPath, outputDir)
+      copyGeneratedResources(config.resourceOutputDirPath, outputDir)
       createResourcesJar(outputDir, outputJar)
     }
     finally {
-      workDir.deleteRecursively()
+      config.workDir.deleteRecursively()
     }
   }
 
