@@ -347,6 +347,7 @@ object CommunityModuleSets {
     // Packaging of those modules to the all IDEs is required to load a JetBrains Client from the big IDE distribution.
     module("intellij.rd.client")
     module("intellij.rd.client.base")
+    module("intellij.rd.client.internal")
   }
 
   /**
