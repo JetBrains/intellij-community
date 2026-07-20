@@ -29,7 +29,8 @@ import kotlin.reflect.KClass
  */
 class CachedConfigurationClient(
   private val delegate: ConfigurationClient,
-  private val cacheTimeoutMs: Long
+  private val cacheTimeoutMs: Long,
+  private val maxUpdateAttempts: Int = DEFAULT_MAX_UPDATE_ATTEMPTS
 ) {
   @Volatile
   private var lastUpdateTime: Long = 0L
@@ -39,11 +40,15 @@ class CachedConfigurationClient(
   private fun <T> checkAndUpdate(block: () -> T): T {
     val currentTime = System.currentTimeMillis()
     if (currentTime - lastUpdateTime >= cacheTimeoutMs) {
-      // delegate.update() is thread-safe - we use CAS inside
-      if (delegate.update()) {
-        // Out of order writing of lastUpdateTime is acceptable.
-        // If lastUpdateTime is off by a few millisecond it doesn't really matter because config is almost never updated.
-        lastUpdateTime = currentTime
+      var attempt = 0
+      while (attempt < maxUpdateAttempts) {
+        attempt++
+        if (delegate.update()) {
+          // Out of order writing of lastUpdateTime is acceptable.
+          // If lastUpdateTime is off by a few millisecond it doesn't really matter because config is almost never updated.
+          lastUpdateTime = currentTime
+          break
+        }
       }
     }
     return block()
@@ -122,6 +127,10 @@ class CachedConfigurationClient(
    */
   fun provideReleaseFilters(releaseType: String?): List<ConfigurationReleaseFilter> = checkAndUpdate {
     delegate.provideReleaseFilters(releaseType)
+  }
+
+  companion object {
+    private const val DEFAULT_MAX_UPDATE_ATTEMPTS: Int = 3
   }
 }
 
