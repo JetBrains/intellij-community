@@ -27,7 +27,9 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.util.SlowOperations
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SuggestedRefactoringChangeListener(
   private val project: Project,
   private val watcher: SuggestedRefactoringSignatureWatcher,
@@ -350,6 +352,7 @@ class SuggestedRefactoringChangeListener(
   }
 }
 
+@ApiStatus.Internal
 interface SuggestedRefactoringSignatureWatcher {
   fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport)
   fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport)

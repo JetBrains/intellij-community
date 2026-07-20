@@ -9,27 +9,32 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use TextRange(offset, offset + DocumentEvent.oldLength) directly")
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use TextRange(offset, offset + DocumentEvent.oldLength) directly")
 val DocumentEvent.oldRange: TextRange
   get() = TextRange(offset, offset + oldLength)
 
-@Deprecated("Use range from com.intellij.openapi.editor",
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use range from com.intellij.openapi.editor",
             replaceWith = ReplaceWith("this.asTextRange", "com.intellij.openapi.editor.range.asTextRange"))
 val RangeMarker.range: TextRange?
   get() = this.asTextRange
 
-@Deprecated("Use PsiElement.startOffset from com.intellij.psi",
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use PsiElement.startOffset from com.intellij.psi",
             replaceWith = ReplaceWith("this.startOffset", "com.intellij.psi.util.startOffset"))
 val PsiElement.startOffset: Int
   get() = textRange.startOffset
 
-@Deprecated("Use PsiElement.endOffset from com.intellij.psi",
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use PsiElement.endOffset from com.intellij.psi",
             replaceWith = ReplaceWith("this.endOffset", "com.intellij.psi.util.endOffset"))
 val PsiElement.endOffset: Int
   get() = textRange.endOffset
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use alternative method from com.intellij.psi package",
             ReplaceWith("this.createSmartPointer()", "com.intellij.psi.createSmartPointer"))
 fun <E : PsiElement> E.createSmartPointer(): SmartPsiElementPointer<E> =
