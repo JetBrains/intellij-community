@@ -53,11 +53,7 @@ internal class IjentWslNioPath(
 
   override fun relativize(other: Path): IjentWslNioPath {
     if (isAbsolute != other.isAbsolute) {
-      throw IllegalArgumentException(
-        "Tried to relativize a relative and an absolute path: `$this` and `$other`." +
-        " Check for possible confusion." +
-        " Maybe some code up the call stack tried to use a path from the Linux machine as a WSL path for Windows."
-      )
+      throw IllegalArgumentException("Tried to relativize a relative and an absolute path: `$this` and `$other`." + " Check for possible confusion." + " Maybe some code up the call stack tried to use a path from the Linux machine as a WSL path for Windows.")
     }
     return presentablePath.relativize(other.toOriginalPath()).toIjentWslPath()
   }
@@ -78,14 +74,13 @@ internal class IjentWslNioPath(
     }
 
     val ijentNioPath = fileSystem.provider().toIjentNioPath(this)
-    val ijentNioRealPath =
-      if (presentablePath != actualPath) {
-        // `presentablePath` looks like `\\wsl$\distro\mnt\c`, any access to it from inside WSL throws permission denied errors.
-        ijentNioPath.normalize()
-      }
-      else {
-        ijentNioPath.toRealPath(*options)
-      }
+    val ijentNioRealPath = if (presentablePath != actualPath) {
+      // `presentablePath` looks like `\\wsl$\distro\mnt\c`, any access to it from inside WSL throws permission denied errors.
+      ijentNioPath.normalize()
+    }
+    else {
+      ijentNioPath.toRealPath(*options)
+    }
     val originalPath = fileSystem.provider().toOriginalPath(
       path = ijentNioRealPath,
       notation = root.toString().removePrefix("\\\\").substringBefore('\\'),
@@ -95,22 +90,15 @@ internal class IjentWslNioPath(
 
   override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>>, vararg modifiers: WatchEvent.Modifier?): WatchKey {
     val ijentPath: Path = fileSystem.provider().toIjentNioPath(this)
-    @Suppress("UNCHECKED_CAST")
-    return ijentPath.register(
-      watcher,
-      events,
-      *modifiers.filterNotNull().toTypedArray()
-    )
+    @Suppress("UNCHECKED_CAST") return ijentPath.register(watcher, events, *modifiers.filterNotNull().toTypedArray())
   }
 
   override fun compareTo(other: Path): Int = presentablePath.compareTo(other.toOriginalPath())
 
-  private fun Path.toIjentWslPath(): IjentWslNioPath =
-    IjentWslNioPath(this@IjentWslNioPath.fileSystem, this, null)
+  private fun Path.toIjentWslPath(): IjentWslNioPath = IjentWslNioPath(this@IjentWslNioPath.fileSystem, this, null)
 
-  private fun Path.toOriginalPath(): Path =
-    if (this is IjentWslNioPath) this.presentablePath
-    else this
+  private fun Path.toOriginalPath(): Path = if (this is IjentWslNioPath) this.presentablePath
+  else this
 
   override fun toString(): String = presentablePath.toString()
 
@@ -120,8 +108,7 @@ internal class IjentWslNioPath(
     else -> this wslPathEqual other
   }
 
-  override fun hashCode(): Int =
-    fileSystem.hashCode() + 31 * presentablePath.hashCode()
+  override fun hashCode(): Int = fileSystem.hashCode() + 31 * presentablePath.hashCode()
 }
 
 private infix fun IjentWslNioPath.wslPathEqual(other: IjentWslNioPath): Boolean {
@@ -129,10 +116,7 @@ private infix fun IjentWslNioPath.wslPathEqual(other: IjentWslNioPath): Boolean 
     return false
   }
 
-  if (
-    (presentablePath != actualPath || other.presentablePath != other.actualPath)
-    && actualPath == other.actualPath
-  ) {
+  if ((presentablePath != actualPath || other.presentablePath != other.actualPath) && actualPath == other.actualPath) {
     return false
   }
 

@@ -72,21 +72,19 @@ internal class IjentWslNioFileSystemProvider(
 
   internal fun toIjentNioPath(path: Path): IjentNioPath = path.toIjentPath()
 
-  private fun Path.toIjentPath(): IjentNioPath =
-    when {
-      this is IjentNioPath -> this
-      this is IjentWslNioPath -> presentablePath.toIjentPath()
+  private fun Path.toIjentPath(): IjentNioPath = when {
+    this is IjentNioPath -> this
+    this is IjentWslNioPath -> presentablePath.toIjentPath()
 
-      isAbsolute ->
-        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath) { nioPath, newPart ->
-          nioPath.resolve(localToIjent(newPart.toString()))
-        }
-
-      else -> {
-        val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
-        ijentNioFs.getPath(localToIjent(toString().replace("\\", ijentNioFs.separator))) as IjentNioPath
-      }
+    isAbsolute -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath) { nioPath, newPart ->
+      nioPath.resolve(localToIjent(newPart.toString()))
     }
+
+    else -> {
+      val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
+      ijentNioFs.getPath(localToIjent(toString().replace("\\", ijentNioFs.separator))) as IjentNioPath
+    }
+  }
 
   internal fun toOriginalPath(path: Path, notation: String): Path = path.toOriginalPath(notation)
 
@@ -108,22 +106,18 @@ internal class IjentWslNioFileSystemProvider(
     }
   }
 
-  override fun getScheme(): String =
-    originalFsProvider.scheme
+  override fun getScheme(): String = originalFsProvider.scheme
 
-  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentWslNioFileSystem =
-    getFileSystem(path.toUri())
+  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentWslNioFileSystem = getFileSystem(path.toUri())
 
   override fun getFileSystem(uri: URI): IjentWslNioFileSystem {
     require(uri.scheme == scheme) { "Wrong scheme in `$uri` (expected `$scheme`)" }
     val wslId = wslIdFromPath(originalFsProvider.getPath(uri))
-                ?: throw FileSystemNotFoundException(
-                  "Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")
+                ?: throw FileSystemNotFoundException("Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")
     return getFileSystem(wslId)
   }
 
-  override fun newFileSystem(uri: URI, env: MutableMap<String, *>?): IjentWslNioFileSystem =
-    getFileSystem(uri)
+  override fun newFileSystem(uri: URI, env: MutableMap<String, *>?): IjentWslNioFileSystem = getFileSystem(uri)
 
   private fun getFileSystem(wslId: String): IjentWslNioFileSystem {
     return createdFileSystems.computeIfAbsent(wslId.lowercase()) { _ ->
@@ -145,8 +139,7 @@ internal class IjentWslNioFileSystemProvider(
     return wslId.ifEmpty { null }
   }
 
-  override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
-    ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
+  override fun checkAccess(path: Path, vararg modes: AccessMode): Unit = ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
 
   override fun newInputStream(path: Path, vararg options: OpenOption?): InputStream =
     ijentFsProvider.newInputStream(path.toIjentPath(), *options)
@@ -175,28 +168,21 @@ internal class IjentWslNioFileSystemProvider(
     originalFsProvider.createLink(link.toOriginalPathWithSameNotation(), existing.toOriginalPathWithSameNotation())
   }
 
-  override fun deleteIfExists(path: Path): Boolean =
-    ijentFsProvider.deleteIfExists(path.toIjentPath())
+  override fun deleteIfExists(path: Path): Boolean = ijentFsProvider.deleteIfExists(path.toIjentPath())
 
-  override fun readSymbolicLink(link: Path): IjentWslNioPath =
-    IjentWslNioPath(
-      getFileSystem(
-        wslIdFromPath(link)
-        ?: throw IOException("Cannot find WSL distribution for $link. The URL is incorrect or the distribution does not exist.")
-      ),
-      ijentFsProvider.readSymbolicLink(link.toIjentPath()),
-      null,
-    )
+  override fun readSymbolicLink(link: Path): IjentWslNioPath = IjentWslNioPath(
+    getFileSystem(wslIdFromPath(link)
+                  ?: throw IOException("Cannot find WSL distribution for $link. The URL is incorrect or the distribution does not exist.")),
+    ijentFsProvider.readSymbolicLink(link.toIjentPath()),
+    null,
+  )
 
-  override fun getPath(uri: URI): Path =
-    IjentWslNioPath(
-      getFileSystem(
-        wslIdFromPath(originalFsProvider.getPath(uri))
-        ?: throw IllegalArgumentException("Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")
-      ),
-      originalFsProvider.getPath(uri),
-      null,
-    )
+  override fun getPath(uri: URI): Path = IjentWslNioPath(
+    getFileSystem(wslIdFromPath(originalFsProvider.getPath(uri))
+                  ?: throw IllegalArgumentException("Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")),
+    originalFsProvider.getPath(uri),
+    null,
+  )
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
     ijentFsProvider.newByteChannel(path.toIjentPath(), options, *attrs)
@@ -204,31 +190,28 @@ internal class IjentWslNioFileSystemProvider(
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     object : DirectoryStream<Path> {
       val delegate = ijentFsProvider.newDirectoryStream(dir.toIjentPath(), filter)
-      val wslId =
-        wslIdFromPath(dir)
-        ?: throw FileSystemException("Cannot find WSL distribution for $dir. The URL is incorrect or the distribution does not exist.")
+      val wslId = wslIdFromPath(dir)
+                  ?: throw FileSystemException("Cannot find WSL distribution for $dir. The URL is incorrect or the distribution does not exist.")
 
-      override fun iterator(): MutableIterator<Path> =
-        object : MutableIterator<Path> {
-          val delegateIterator = delegate.iterator()
+      override fun iterator(): MutableIterator<Path> = object : MutableIterator<Path> {
+        val delegateIterator = delegate.iterator()
 
-          override fun hasNext(): Boolean =
-            delegateIterator.hasNext()
+        override fun hasNext(): Boolean = delegateIterator.hasNext()
 
-          override fun next(): Path {
-            // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
-            val ijentPath = delegateIterator.next().toIjentPath()
-            val originalPath = dir.resolve(ijentPath.fileName.toString())
+        override fun next(): Path {
+          // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
+          val ijentPath = delegateIterator.next().toIjentPath()
+          val originalPath = dir.resolve(ijentPath.fileName.toString())
 
-            return IjentWslNioPath(getFileSystem(wslId),
-                                   originalPath.toOriginalPathWithSameNotation(),
-                                   ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
-          }
-
-          override fun remove() {
-            delegateIterator.remove()
-          }
+          return IjentWslNioPath(getFileSystem(wslId),
+                                 originalPath.toOriginalPathWithSameNotation(),
+                                 ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
         }
+
+        override fun remove() {
+          delegateIterator.remove()
+        }
+      }
 
       override fun close() {
         delegate.close()
@@ -287,9 +270,7 @@ internal class IjentWslNioFileSystemProvider(
   override fun isSameFile(path: Path, path2: Path): Boolean {
     if (path !is IjentWslNioPath) {
       if (path2 !is IjentWslNioPath) {
-        throw ProviderMismatchException(
-          "Neither $path (${path::class}) nor $path2 (${path2::class}) are ${IjentWslNioPath::class.java.name}"
-        )
+        throw ProviderMismatchException("Neither $path (${path::class}) nor $path2 (${path2::class}) are ${IjentWslNioPath::class.java.name}")
       }
       return isSameFile(path2, path)
     }
@@ -309,11 +290,9 @@ internal class IjentWslNioFileSystemProvider(
     return false
   }
 
-  override fun isHidden(path: Path): Boolean =
-    originalFsProvider.isHidden(path.toOriginalPathWithSameNotation())
+  override fun isHidden(path: Path): Boolean = originalFsProvider.isHidden(path.toOriginalPathWithSameNotation())
 
-  override fun getFileStore(path: Path): FileStore =
-    ijentFsProvider.getFileStore(path.toIjentPath())
+  override fun getFileStore(path: Path): FileStore = ijentFsProvider.getFileStore(path.toIjentPath())
 
   override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
     ijentFsProvider.getFileAttributeViewUsingDosAttributesAdapter(path.toIjentPath(), type, *options)
@@ -329,10 +308,7 @@ internal class IjentWslNioFileSystemProvider(
     ijentFsProvider.setAttribute(path.toIjentPath(), attribute, value, *options)
   }
 
-  override fun equals(other: Any?): Boolean =
-    this === other ||
-    other is IjentWslNioFileSystemProvider &&
-    wslId == other.wslId
+  override fun equals(other: Any?): Boolean = this === other || other is IjentWslNioFileSystemProvider && wslId == other.wslId
 
   override fun hashCode(): Int {
     return wslId.hashCode()
