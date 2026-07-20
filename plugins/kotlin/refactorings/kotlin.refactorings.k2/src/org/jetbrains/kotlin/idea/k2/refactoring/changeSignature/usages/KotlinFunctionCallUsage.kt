@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
@@ -56,11 +58,13 @@ import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParenthes
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
@@ -91,6 +95,9 @@ import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
+
+private val contextNames = setOf("with", "context")
+private val contextFQNames = contextNames.map { FqName("kotlin.$it") }
 
 internal class KotlinFunctionCallUsage(
     element: KtCallElement,
@@ -324,6 +331,7 @@ internal class KotlinFunctionCallUsage(
                         element == null -> null
                         element is KtThisExpression -> null
                         (element.mainReference?.resolve() as? KtParameter)?.isContextParameter == true -> null
+                        allowAnalysisFromWriteActionInEdt(element) { isProvidedByEnclosingContext(element) } -> null
                         else -> element.text
                     }
                 }
@@ -507,6 +515,23 @@ internal class KotlinFunctionCallUsage(
         //}
         //
         return newElement
+    }
+
+    private fun KaSession.isProvidedByEnclosingContext(expression: KtExpression): Boolean {
+        val containingLambda = PsiTreeUtil.getParentOfType(expression, KtLambdaArgument::class.java, true, KtClassLikeDeclaration::class.java) ?: return false
+        val referencedDeclaration = expression.mainReference?.resolve() ?: return false
+        return generateSequence(containingLambda) {
+            PsiTreeUtil.getParentOfType(it, KtLambdaArgument::class.java, true, KtClassLikeDeclaration::class.java)
+        }.any { lambdaArgument ->
+            val call = lambdaArgument.parent as? KtCallExpression ?: return@any false
+            val text = call.calleeExpression?.text ?: return@any false
+            if (text !in contextNames) return@any false
+            val callableId = call.resolveToCall()?.successfulFunctionCallOrNull()?.signature?.callableId?.asSingleFqName()
+            if (callableId !in contextFQNames) return@any false
+            call.valueArguments.any {
+                it.getArgumentExpression()?.mainReference?.resolve() == referencedDeclaration
+            }
+        }
     }
 
     private fun getLabeledThisReceiverArgument(
