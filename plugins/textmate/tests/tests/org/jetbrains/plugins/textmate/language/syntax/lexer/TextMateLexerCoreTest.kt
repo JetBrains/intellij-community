@@ -73,4 +73,25 @@ class TextMateLexerCoreTest {
     ), textmateTokenize("a-b", grammar).toList())
   }
 
+  @Test
+  fun `anchor matches at line start when begin consumed the line end`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "block.test",
+            "begin": "a\\n",
+            "end": "b",
+            "patterns": [ { "match": "\\Gx", "name": "anchored.x" } ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertEquals(listOf(
+      "a\n" to "source.test block.test",
+      "x" to "source.test block.test anchored.x",
+      "b" to "source.test block.test"
+    ), textmateTokenize("a\nxb", grammar).toList())
+  }
 }

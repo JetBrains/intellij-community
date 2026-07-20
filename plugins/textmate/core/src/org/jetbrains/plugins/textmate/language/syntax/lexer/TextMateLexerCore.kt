@@ -113,7 +113,10 @@ class TextMateLexerCore(
     var lastMovedOffset = lineStartOffset
 
     val matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
-    var anchorByteOffset = (-1).byteOffset() // makes sense only for a line, cannot be used across lines
+    // makes sense only for a line, cannot be used across lines;
+    // when the topmost begin match consumed the trailing newline of the previous line,
+    // \G matches at the beginning of this line.
+    var anchorByteOffset = if (checkWhileConditions && states.last().matchedEOL) 0.byteOffset() else (-1).byteOffset()
 
     return mySyntaxMatcher.matchingString(line) { string ->
       if (checkWhileConditions) {
