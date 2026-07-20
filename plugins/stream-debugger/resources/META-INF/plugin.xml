@@ -36,18 +36,4 @@
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="debugger.streams.use.breakpoint.based.tracing" defaultValue="true" description="Use new breakpoint based engine for stream tracing" />
-    <advancedSetting id="stream.debugger.show.inlays" default="true"
-                     bundle="messages.StreamDebuggerBundle"/>
-  </extensions>
-
-  <actions resource-bundle="messages.StreamDebuggerBundle">
-    <group id="StreamDebuggerInlayPopup" popup="true"/>
-    <action id="DisableStreamDebuggerInlay"
-            class="com.intellij.debugger.streams.inlay.DisableStreamDebuggerInlay">
-      <add-to-group group-id="StreamDebuggerInlayPopup"/>
-    </action>
-  </actions>
 </idea-plugin>
