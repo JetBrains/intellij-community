@@ -10271,11 +10271,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/implementInterfaceFinalSupertype.kt");
             }
 
-            @TestMetadata("inlineSuperType.kt")
-            public void testInlineSuperType() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/inlineSuperType.kt");
-            }
-
             @TestMetadata("nestedFinalClass.kt")
             public void testNestedFinalClass() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/nestedFinalClass.kt");
