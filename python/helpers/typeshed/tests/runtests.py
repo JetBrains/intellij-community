@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,6 +20,19 @@ _NPX_ERROR_MESSAGE = colored("\nSkipping Pyright tests: npx is not installed or 
 _SUCCESS = colored("Success", "green")
 _SKIPPED = colored("Skipped", "yellow")
 _FAILED = colored("Failed", "red")
+
+
+def _pythonpath_env() -> dict[str, str]:
+    pythonpath = os.environ.get("PYTHONPATH")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = "lib" if not pythonpath else os.pathsep.join(("lib", pythonpath))
+    return env
+
+
+def _ty_platform() -> str:
+    if sys.platform.startswith("win"):
+        return "win32"
+    return sys.platform
 
 
 def _parse_jsonc(json_text: str) -> str:
@@ -100,6 +114,23 @@ def main() -> None:
         pyright_returncode = pyright_result.returncode
         pyright_skipped = False
 
+    print(f"\nRunning ty for Python {python_version}...")
+    ty_result = subprocess.run(
+        [
+            sys.executable,
+            "tests/ty_test.py",
+            path,
+            "--python-version",
+            python_version,
+            "--platform",
+            _ty_platform(),
+            "--python",
+            sys.executable,
+        ],
+        env=_pythonpath_env(),
+        check=False,
+    )
+
     print(f"\nRunning mypy for Python {python_version}...")
     mypy_result = subprocess.run([sys.executable, "tests/mypy_test.py", path, "--python-version", python_version], check=False)
     # If mypy failed, stubtest will fail without any helpful error
@@ -171,6 +202,7 @@ def main() -> None:
             pre_commit_result.returncode,
             check_structure_result.returncode,
             pyright_returncode,
+            ty_result.returncode,
             mypy_result.returncode,
             getattr(stubtest_result, "returncode", 0),
             pyright_testcases_returncode,
@@ -197,6 +229,7 @@ def main() -> None:
         print("Pyright:", _SKIPPED)
     else:
         print("Pyright:", _SUCCESS if pyright_returncode == 0 else _FAILED)
+    print("ty:", _SUCCESS if ty_result.returncode == 0 else _FAILED)
     print("mypy:", _SUCCESS if mypy_result.returncode == 0 else _FAILED)
     if stubtest_result is None:
         print("stubtest:", _SKIPPED)

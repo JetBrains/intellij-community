@@ -57,6 +57,7 @@ class tqdm_asyncio(std_tqdm[_T]):
         loop: bool | None = None,
         timeout: float | None = None,
         total: int | None = None,
+        return_exceptions: bool = False,
         iterable: Iterable[_T] = ...,
         desc: str | None = ...,
         leave: bool | None = ...,

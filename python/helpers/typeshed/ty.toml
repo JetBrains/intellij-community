@@ -1,0 +1,20 @@
+[analysis]
+respect-type-ignore-comments = false
+# These imports are intentionally optional and are also ignored by mypy and pyright.
+allowed-unresolved-imports = [
+    "branca",
+    "folium",
+    "pydot",
+    "pygraphviz.**",
+    "scipy.**",
+    "twisted.**",
+    "xyzservices",
+]
+
+[rules]
+# Incompatible overrides and deprecations are inherited from the implementation
+# and are not actionable in typeshed. Keep in sync with pyrightconfig.json.
+deprecated = "ignore"
+invalid-attribute-override = "ignore"
+invalid-method-override = "ignore"
+override-of-final-method = "ignore"

@@ -1,3 +1,4 @@
+import builtins
 import sys
 from datetime import datetime
 from typing_extensions import Self
@@ -25,7 +26,7 @@ if sys.platform == "win32":
         hasdst: bool
         def __eq__(self, other: tzwinbase) -> bool: ...  # type: ignore[override]
         @staticmethod
-        def list() -> list[str]: ...
+        def list() -> builtins.list[str]: ...
         def display(self) -> str | None: ...
         def transitions(self, year: int) -> tuple[datetime, datetime] | None: ...
 

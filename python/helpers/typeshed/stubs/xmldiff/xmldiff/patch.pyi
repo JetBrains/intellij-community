@@ -1,5 +1,9 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
+from re import Pattern
+from typing import Final
+
+DIFF_SPLIT: Final[Pattern[str]]
 
 class Patcher:
     @property

@@ -130,7 +130,7 @@ def check_no_symlinks() -> None:
 
 def check_versions_file() -> None:
     """Check that the stdlib/VERSIONS file has the correct format."""
-    version_map = parse_stdlib_versions_file()
+    version_map = parse_stdlib_versions_file().module_versions
     versions = list(version_map.keys())
 
     sorted_versions = sorted(versions)

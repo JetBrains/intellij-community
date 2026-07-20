@@ -3,7 +3,7 @@ from contextlib import AbstractContextManager
 from typing import Any, Literal, TypedDict, overload, type_check_only
 
 import numpy as np
-import pyarrow as pa  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+import pyarrow as pa  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]  # ty:ignore[unresolved-import]
 import shapely as shp
 
 from ._typing import Array1D, ArrayLikeInt, ReadPathOrBuffer, SupportsArrowCStream, WritePathOrBuffer

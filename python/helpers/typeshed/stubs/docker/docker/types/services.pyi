@@ -70,6 +70,7 @@ class Mount(dict[str, Any]):
         driver_config: DriverConfig | None = None,
         tmpfs_size: int | str | None = None,
         tmpfs_mode: int | None = None,
+        subpath: str | None = None,
     ) -> None: ...
     @classmethod
     def parse_mount_string(cls, string: str) -> Mount: ...
