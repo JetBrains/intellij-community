@@ -25,6 +25,8 @@ class JUnit5EditorFixtureTest {
     val module = project.moduleFixture()
     val sourceRoot = module.sourceRootFixture()
     val file = sourceRoot.psiFileFixture("file.txt", "abcde")
+
+    val sharedEditor = file.editorFixture()
   }
 
   private val localEditor = file.editorFixture()
@@ -33,6 +35,7 @@ class JUnit5EditorFixtureTest {
   @Test
   fun `content of editors`() {
     Assertions.assertEquals("abcde", localEditor.get().document.text)
+    Assertions.assertEquals("abcde", sharedEditor.get().document.text)
   }
 
   @Test

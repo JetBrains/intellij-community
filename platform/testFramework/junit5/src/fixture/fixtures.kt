@@ -51,9 +51,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
+import com.intellij.testFramework.common.checkEditorsReleased
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
+import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
@@ -212,6 +214,7 @@ fun projectFixture(
   RunManager.getInstanceAsync(project)
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
+    application.checkEditorsReleased()
   }
 }
 
