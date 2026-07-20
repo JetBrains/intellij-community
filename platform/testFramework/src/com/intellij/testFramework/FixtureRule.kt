@@ -91,7 +91,7 @@ open class ApplicationRule : TestRule {
  *   @Rule stressTestRule = new StressTestRule();
  * }
  * ```
- * For JUnit5, use [com.intellij.testFramework.junit5.impl.StressTestApplicationExtension] extension instead.
+ * For JUnit5, use the `com.intellij.testFramework.junit5.StressTestApplication` annotation instead.
  *
  * @param forceIsStressTest if specified, all tests are run with this flag regardless of their name.
  *        E.g.:
