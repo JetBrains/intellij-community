@@ -19,7 +19,7 @@ from .explore import _explore_geoseries
 from .io._geoarrow import GeoArrowArray
 from .plotting import plot_series
 
-class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-var,misc]  # pyright: ignore[reportInvalidTypeArguments]
+class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-var,misc]  # pyright: ignore[reportInvalidTypeArguments]  # ty:ignore[invalid-type-arguments]
     # Override the weird annotation of Series.__new__ in pandas-stubs
     def __new__(
         self,

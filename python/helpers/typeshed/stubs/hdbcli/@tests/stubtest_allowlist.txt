@@ -8,3 +8,16 @@ hdbcli.dbapi.ExecuteManyErrorEntry.rownumber
 hdbcli.dbapi.buffer
 hdbcli.dbapi.long
 hdbcli.dbapi.unicode
+
+# async_connect is an alias for AsyncConnection, but at runtime its a function
+hdbcli.dbapi.async_connect
+
+# *args/**kwargs are not added by purpose but are part of the python wrapper
+hdbcli.dbapi.AsyncLob.close
+hdbcli.dbapi.AsyncCursor.nextset
+hdbcli.dbapi.AsyncCursor.fetchall
+hdbcli.dbapi.AsyncCursor.close
+hdbcli.dbapi.AsyncConnection.rollback
+hdbcli.dbapi.AsyncConnection.commit
+hdbcli.dbapi.AsyncConnection.close
+hdbcli.dbapi.AsyncConnection.cancel

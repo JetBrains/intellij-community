@@ -169,6 +169,10 @@ supported:
   be listed here, for security reasons. See
   [this issue](https://github.com/typeshed-internal/stub_uploader/issues/90)
   for more information about what external dependencies are allowed.
+* `optional-dependencies` (optional): A list of other stub packages or packages
+  with type information that are imported by some stubs in this package. This
+  is often used for packages that provide optional features that require extra
+  dependencies. The same limitations apply to this field as to `dependencies`.
 * `extra-description` (optional): Can be used to add a custom description to
   the package's long description. It should be a multi-line string in
   Markdown format.
@@ -204,7 +208,8 @@ This has the following keys:
   this field should be identical to `partial-stub`.
 * `stubtest-dependencies` (default: `[]`): A list of Python packages that need
   to be installed for stubtest to run successfully. These packages are installed
-  in addition to the dependencies in the `dependencies` field.
+  in addition to the dependencies in the `dependencies` and
+  `optional-dependencies` fields.
 * `apt-dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully.
 * `brew-dependencies` (default: `[]`): A list of MacOS Homebrew packages

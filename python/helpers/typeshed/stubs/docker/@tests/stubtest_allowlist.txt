@@ -9,5 +9,9 @@ docker.models.resource.Collection.model
 # keyword arguments are now unsupported
 docker.api.container.ContainerApiMixin.start
 
+# implementation has *args and **kwargs params that can't be used
+docker.client.DockerClient.info
+docker.client.DockerClient.ping
+
 # Internal-use module for types shared by multiple modules.
 docker._types

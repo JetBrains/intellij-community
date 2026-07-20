@@ -21,10 +21,12 @@ class MoveNode(NamedTuple):
 class UpdateTextIn(NamedTuple):
     node: str
     text: Incomplete
+    oldtext: Incomplete | None = None
 
 class UpdateTextAfter(NamedTuple):
     node: str
     text: Incomplete
+    oldtext: Incomplete | None = None
 
 class UpdateAttrib(NamedTuple):
     node: str

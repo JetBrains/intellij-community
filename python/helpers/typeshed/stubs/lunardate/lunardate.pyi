@@ -1,6 +1,6 @@
 import datetime
-from _typeshed import ConvertibleToInt
 from typing import Final, SupportsIndex, overload
+from typing_extensions import deprecated
 
 __version__: Final[str]
 __all__ = ["LunarDate"]
@@ -9,13 +9,24 @@ class LunarDate:
     year: int
     month: int
     day: int
-    isLeapMonth: bool
-    def __init__(self, year: int, month: int, day: int, isLeapMonth: bool | None = False) -> None: ...
+    is_leap_month: bool
+    def __init__(self, year: int, month: int, day: int, is_leap_month: bool | None = False) -> None: ...
+    @property
+    @deprecated("The `isLeapMonth` is deprecated since v0.3.0. Use `is_leap_month` instead.")
+    def isLeapMonth(self) -> bool: ...
     @staticmethod
+    @deprecated("The `leapMonthForYear` is deprecated since v0.3.0. Use `leap_month_for_year` instead.")
     def leapMonthForYear(year: int) -> int | None: ...
     @staticmethod
+    def leap_month_for_year(year: int) -> int | None: ...
+    @staticmethod
+    @deprecated("The `fromSolarDate` is deprecated since v0.3.0. Use `from_solar_date` instead.")
     def fromSolarDate(year: SupportsIndex, month: SupportsIndex, day: SupportsIndex) -> LunarDate: ...
+    @staticmethod
+    def from_solar_date(year: SupportsIndex, month: SupportsIndex, day: SupportsIndex) -> LunarDate: ...
+    @deprecated("The `toSolarDate` is deprecated since v0.3.0. Use `to_solar_date` instead.")
     def toSolarDate(self) -> datetime.date: ...
+    def to_solar_date(self) -> datetime.date: ...
 
     @overload
     def __sub__(self, other: LunarDate | datetime.date) -> datetime.timedelta: ...
@@ -33,10 +44,10 @@ class LunarDate:
     @classmethod
     def today(cls) -> LunarDate: ...
 
-yearInfos: Final[list[int]]
+YEAR_INFOS: Final[list[int]]
 
-def yearInfo2yearDay(yearInfo: ConvertibleToInt) -> int: ...
+def year_info_to_year_day(year_info: int) -> int: ...
 
-yearDays: Final[list[int]]
+YEAR_DAYS: Final[list[int]]
 
-def day2LunarDate(offset: ConvertibleToInt) -> None: ...
+def day_to_lunar_date(offset: int) -> None: ...

@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 # This is not a real subclassing. Just ensuring type-checkers sees this type as compatible with _CDataBase
 # pyright has no error code for subclassing final
 @type_check_only
-class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
+class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]  # ty:ignore[subclass-of-final-class]
     audio_frames_per_video_frame: float
     bar: int
     bar_start_tick: float

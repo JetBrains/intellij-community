@@ -155,7 +155,7 @@ def setup(
     install_requires: str | Iterable[str] = [],
     extras_require: _DictLike[Incomplete, Incomplete] = {},
     # kwargs used directly in distutils.core.setup
-    distclass: type[_DistributionT] = Distribution,  # type: ignore[assignment] # noqa: Y011
+    distclass: type[_DistributionT] = Distribution,  # type: ignore[assignment] # noqa: Y011  # ty:ignore[invalid-parameter-default]
     # Custom Distributions could accept more params
     **attrs: Any,
 ) -> _DistributionT: ...
