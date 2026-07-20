@@ -39,7 +39,7 @@ interface HighlightingFileRoot {
 }
 
 @Remote("com.intellij.platform.problemsView.frontend.FrontendProblemsViewHighlightingFileRoot", plugin = PROBLEMS_VIEW_FRONTEND_MODULE, rdTarget = RdTarget.FRONTEND)
-interface ProblemsViewHighlightingFileRoot : HighlightingFileRoot {
+interface FrontendProblemsViewHighlightingFileRoot : HighlightingFileRoot {
   fun getFileProblems(file: VirtualFile): List<FrontendHighlightingProblem>
 }
 
@@ -91,7 +91,7 @@ fun Driver.getProblemsViewProblems(file: VirtualFile, project: Project? = null):
   return withContext(OnDispatcher.EDT) {
     val panel = getHighlightingPanel(forProject) ?: return@withContext emptyList()
     val root = panel.getCurrentRoot() ?: return@withContext emptyList()
-    cast(root, ProblemsViewHighlightingFileRoot::class).getFileProblems(file)
+    cast(root, FrontendProblemsViewHighlightingFileRoot::class).getFileProblems(file)
   }
 }
 

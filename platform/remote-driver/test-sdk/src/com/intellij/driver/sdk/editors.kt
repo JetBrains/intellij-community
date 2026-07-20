@@ -10,7 +10,6 @@ import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
 import java.nio.file.Path
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.editor.Editor")
@@ -235,7 +234,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
         service.navigateViaBackend(relativePath, 0)
-        findOpenFileInEditor(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
+        findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
       }
     }
     if (waitForCodeAnalysis) {
@@ -244,7 +243,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
   }
 }
 
-fun Driver.findOpenFileInEditor(relativePath: String, project: Project, isTextEditor: Boolean = true): VirtualFile? {
+fun Driver.findCurrentEditorFile(relativePath: String, project: Project, isTextEditor: Boolean = true): VirtualFile? {
   return waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
                  getter = {
                    if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
@@ -258,5 +257,5 @@ fun Driver.findOpenFile(relativePath: String, project: Project = singleProject()
     findFile(relativePath = relativePath, project = project)
   }
   else {
-    findOpenFileInEditor(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
+    findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
   }
