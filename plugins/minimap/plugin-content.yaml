@@ -1,0 +1,3 @@
+- name: lib/intellij.platform.ide.minimap.jar
+  contentModules:
+  - name: intellij.platform.ide.minimap

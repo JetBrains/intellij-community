@@ -383,7 +383,6 @@ object CommunityModuleSets {
     module("intellij.platform.buildView.backend")
     module("intellij.platform.buildView.frontend")
     module("intellij.emojipicker")
-    module("intellij.platform.ide.minimap")
     module("intellij.platform.ide.impl.wsl")
     module("intellij.platform.diagnostic.telemetry.agent.extension")
     // todo: move to essential modules when not embedded
