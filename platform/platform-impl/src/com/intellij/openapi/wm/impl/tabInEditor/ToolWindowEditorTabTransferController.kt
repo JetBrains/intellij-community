@@ -156,6 +156,10 @@ internal class ToolWindowEditorTabTransferController(
       val manager = targetContentManager ?: toolWindow.contentManager
       manager.addContent(content)
       manager.setSelectedContent(content, true)
+
+      content.manager?.let {
+        contentManager -> Disposer.register(contentManager, content)
+      }
     }
   }
 }
