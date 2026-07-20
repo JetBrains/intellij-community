@@ -9,6 +9,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -310,7 +311,7 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
       printVersion()
       exitProcess(0)
     }
-    firstArg != null && firstArg.startsWith('-') && firstArg !in setOf("--temp-project", "--wait", "--line", "--column") -> {
+    firstArg != null && firstArg.startsWith('-') && !CommandLineProcessor.isSupportedOption(firstArg) -> {
       println("unrecognized option: ${firstArg}")
       exitProcess(1)
     }
