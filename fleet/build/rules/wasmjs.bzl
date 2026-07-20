@@ -1,6 +1,6 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_jvm//:wasmjs.bzl", "KtWasmJsInfo", "wasmjs_binary", "wasmjs_library")
-load("@rules_kotlin//kotlin/internal:defs.bzl", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KOTLIN_TOOLCHAIN = "TOOLCHAIN_TYPE")
+load("@rules_kotlin//kotlin/internal:defs.bzl", _KOTLIN_TOOLCHAIN = "TOOLCHAIN_TYPE", _KtCompilerPluginInfo = "KtCompilerPluginInfo")
 load("//fleet/build/rules:haven_cli.bzl", "HAVEN_CLI_ATTR", "run_haven_cli")
 
 def _fleet_wasmjs_service_accessors_impl(ctx):
