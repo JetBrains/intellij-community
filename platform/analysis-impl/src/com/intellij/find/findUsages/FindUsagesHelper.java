@@ -81,26 +81,35 @@ public final class FindUsagesHelper {
                                                @NotNull Processor<? super UsageInfo> processor) {
     Project project = element.getProject();
     var psiSearchHelper = PsiSearchHelper.getInstance(project);
-    return psiSearchHelper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
-      try {
-        UsageInfo usageInfo = ReadAction.nonBlocking(() -> {
-            if (!psiFile.isValid()) return null;
+    try {
+      return psiSearchHelper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
+        try {
+          UsageInfo usageInfo = ReadAction.nonBlocking(() -> {
+              if (!psiFile.isValid()) return null;
 
-            return factory.createUsageInfo(psiFile, startOffset, endOffset);
-          })
-          .expireWith(project)
-          .executeSynchronously();
+              return factory.createUsageInfo(psiFile, startOffset, endOffset);
+            })
+            .expireWith(project)
+            .executeSynchronously();
 
-        return usageInfo == null || processor.process(usageInfo);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        return true;
-      }
-    }, searchScope);
+          return usageInfo == null || processor.process(usageInfo);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return true;
+        }
+      }, searchScope);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return true;
+    }
   }
 
   @ApiStatus.Internal
