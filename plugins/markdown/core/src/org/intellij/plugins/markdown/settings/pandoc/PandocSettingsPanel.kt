@@ -70,12 +70,12 @@ internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBa
     }
     setupFileChooser(
       browser = executablePathSelector,
-      descriptor = FileChooserDescriptor(true, false, true, true, false, false),
+      descriptor = FileChooserDescriptor(true, false, true, true, false, false).withEnvironmentRestricted(true),
       defaultValue = { settings.pathToPandoc }
     )
     setupFileChooser(
       browser = imagesPathSelector,
-      descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+      descriptor = FileChooserDescriptorFactory.singleDir().withEnvironmentRestricted(true),
       defaultValue = { settings.pathToImages }
     )
     reset()
