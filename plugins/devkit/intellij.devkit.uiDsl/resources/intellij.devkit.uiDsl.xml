@@ -4,6 +4,7 @@
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.platform.ide.internal"/>
   </dependencies>
   <!-- endregion -->
 

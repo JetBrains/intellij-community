@@ -15,6 +15,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->
