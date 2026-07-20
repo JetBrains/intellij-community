@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
+import com.intellij.pom.Navigatable;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-class UsageTargetNode extends Node {
+class UsageTargetNode extends Node implements Navigatable {
   UsageTargetNode(@NotNull UsageTarget target) {
     setUserObject(target);
   }
@@ -27,7 +28,12 @@ class UsageTargetNode extends Node {
 
   @Override
   protected boolean canDataNavigate() {
-    return false;
+    return getTarget().canNavigate();
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    getTarget().navigate(requestFocus);
   }
 
   @Override

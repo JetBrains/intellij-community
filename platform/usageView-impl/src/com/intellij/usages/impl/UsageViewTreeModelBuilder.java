@@ -3,7 +3,9 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,13 +13,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final GroupNode.Root myRootNode;
 
   private final @Nullable TargetsRootNode myTargetsNode;
   private final UsageTarget[] myTargets;
-  private UsageTargetNode[] myTargetNodes;
+  private final List<UsageTargetNode> myTargetNodes = new CopyOnWriteArrayList<>();
 
   UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
     super(GroupNode.createRoot());
@@ -69,13 +73,12 @@ final class UsageViewTreeModelBuilder extends DefaultTreeModel {
       return;
     }
     ThreadingAssertions.assertEventDispatchThread();
-    myTargetNodes = new UsageTargetNode[myTargets.length];
+    myTargetNodes.clear();
     myTargetsNode.removeAllChildren();
-    for (int i = 0; i < myTargets.length; i++) {
-      UsageTarget target = myTargets[i];
+    for (UsageTarget target : myTargets) {
       UsageTargetNode targetNode = new UsageTargetNode(target);
       myTargetsNode.add(targetNode);
-      myTargetNodes[i] = targetNode;
+      myTargetNodes.add(targetNode);
     }
     myRootNode.addTargetsNode(myTargetsNode, this);
     reload(myTargetsNode);
@@ -94,11 +97,17 @@ final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   boolean areTargetsValid() {
-    if (myTargetNodes == null) return true;
     for (UsageTargetNode targetNode : myTargetNodes) {
       if (!targetNode.isValid()) return false;
     }
     return true;
+  }
+
+  @RequiresBackgroundThread
+  void updateTargetNodes(@NotNull Consumer<Node> callback) {
+    for (UsageTargetNode node : myTargetNodes) {
+      node.update(callback);
+    }
   }
 
   void reset() {
