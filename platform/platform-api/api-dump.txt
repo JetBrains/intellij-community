@@ -8575,6 +8575,52 @@ com.intellij.ui.docking.DockableContent
 - a:getPreviewImage():java.awt.Image
 com.intellij.ui.docking.DockableContentContainer
 - a:add(com.intellij.ui.awt.RelativePoint):V
+com.intellij.ui.dsl.builder.Align
+- sf:CENTER:com.intellij.ui.dsl.builder.Align
+- sf:Companion:com.intellij.ui.dsl.builder.Align$Companion
+- sf:FILL:com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.Align$Companion
+f:com.intellij.ui.dsl.builder.AlignKt
+- sf:plus(com.intellij.ui.dsl.builder.AlignX,com.intellij.ui.dsl.builder.AlignY):com.intellij.ui.dsl.builder.Align
+- sf:plus(com.intellij.ui.dsl.builder.AlignY,com.intellij.ui.dsl.builder.AlignX):com.intellij.ui.dsl.builder.Align
+com.intellij.ui.dsl.builder.AlignX
+- com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.AlignX$CENTER
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$CENTER
+f:com.intellij.ui.dsl.builder.AlignX$FILL
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$FILL
+f:com.intellij.ui.dsl.builder.AlignX$LEFT
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$LEFT
+f:com.intellij.ui.dsl.builder.AlignX$RIGHT
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$RIGHT
+com.intellij.ui.dsl.builder.AlignY
+- com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.AlignY$BOTTOM
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$BOTTOM
+f:com.intellij.ui.dsl.builder.AlignY$CENTER
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$CENTER
+f:com.intellij.ui.dsl.builder.AlignY$FILL
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$FILL
+f:com.intellij.ui.dsl.builder.AlignY$TOP
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$TOP
+e:com.intellij.ui.dsl.builder.BottomGap
+- java.lang.Enum
+- sf:MEDIUM:com.intellij.ui.dsl.builder.BottomGap
+- sf:NONE:com.intellij.ui.dsl.builder.BottomGap
+- sf:SMALL:com.intellij.ui.dsl.builder.BottomGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.BottomGap
+- s:values():com.intellij.ui.dsl.builder.BottomGap[]
+f:com.intellij.ui.dsl.builder.BuilderKt
+- sf:panel(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
 com.intellij.ui.dsl.builder.ButtonsGroup
 - com.intellij.ui.dsl.builder.RowsRange
 - a:bind(com.intellij.ui.dsl.builder.MutableProperty,java.lang.Class):com.intellij.ui.dsl.builder.ButtonsGroup
@@ -8582,6 +8628,75 @@ com.intellij.ui.dsl.builder.ButtonsGroup
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visible(Z):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
+com.intellij.ui.dsl.builder.Cell
+- com.intellij.ui.dsl.builder.CellBase
+- a:accessibleDescription(java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:accessibleName(java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:addValidationRule(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.Cell
+- a:applyIfEnabled():com.intellij.ui.dsl.builder.Cell
+- a:applyToComponent(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:bind(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- a:bold():com.intellij.ui.dsl.builder.Cell
+- a:comment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
+- bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:commentRight(java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
+- bs:commentRight$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:contextHelp(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- bs:contextHelp$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Cell
+- a:enabled(Z):com.intellij.ui.dsl.builder.Cell
+- a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
+- a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Cell
+- a:errorOnApply(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:focused():com.intellij.ui.dsl.builder.Cell
+- a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.Cell
+- a:getComment():javax.swing.JEditorPane
+- a:getCommentRight():javax.swing.JEditorPane
+- a:getComponent():javax.swing.JComponent
+- a:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.Cell
+- a:label(java.lang.String,com.intellij.ui.dsl.builder.LabelPosition):com.intellij.ui.dsl.builder.Cell
+- a:label(javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
+- a:onChanged(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:onChangedContext(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+- a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
+- a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
+- a:resizableColumn():com.intellij.ui.dsl.builder.Cell
+- a:validation(com.intellij.openapi.ui.validation.DialogValidation[]):com.intellij.ui.dsl.builder.Cell
+- a:validationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+- a:validationOnApply(com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- a:validationOnApply(com.intellij.openapi.ui.validation.DialogValidation[]):com.intellij.ui.dsl.builder.Cell
+- a:validationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+- a:validationOnInput(com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- a:validationOnInput(com.intellij.openapi.ui.validation.DialogValidation[]):com.intellij.ui.dsl.builder.Cell
+- a:validationRequestor(com.intellij.openapi.ui.validation.DialogValidationRequestor$WithParameter):com.intellij.ui.dsl.builder.Cell
+- a:validationRequestor(com.intellij.openapi.ui.validation.DialogValidationRequestor):com.intellij.ui.dsl.builder.Cell
+- a:validationRequestor(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Cell
+- a:visible(Z):com.intellij.ui.dsl.builder.Cell
+- a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
+- a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Cell
+- a:widthGroup(java.lang.String):com.intellij.ui.dsl.builder.Cell
+Ff:com.intellij.ui.dsl.builder.Cell$DefaultImpls
+- bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:commentRight$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:contextHelp$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+com.intellij.ui.dsl.builder.CellBase
+- a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.CellBase
+- a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.CellBase
+- a:enabled(Z):com.intellij.ui.dsl.builder.CellBase
+- a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
+- a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
+- a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.CellBase
+- a:resizableColumn():com.intellij.ui.dsl.builder.CellBase
+- a:visible(Z):com.intellij.ui.dsl.builder.CellBase
+- a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
+- a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
 f:com.intellij.ui.dsl.builder.ChangeContext
 - <init>(java.lang.Object,Z):V
 - f:component1():java.lang.Object
@@ -8592,6 +8707,15 @@ f:com.intellij.ui.dsl.builder.ChangeContext
 - f:getBinding():Z
 - f:getEvent():java.lang.Object
 - hashCode():I
+com.intellij.ui.dsl.builder.CollapsibleRow
+- com.intellij.ui.dsl.builder.Row
+- a:addExpandedListener(kotlin.jvm.functions.Function1):V
+- a:getExpanded():Z
+- a:getPackWindowHeight():Z
+- a:setExpanded(Z):V
+- a:setPackWindowHeight(Z):V
+- a:setTitle(java.lang.String):V
+- a:setTitleFont(java.awt.Font):V
 e:com.intellij.ui.dsl.builder.DslComponentProperty
 - java.lang.Enum
 - sf:ICONS_PROVIDER:com.intellij.ui.dsl.builder.DslComponentProperty
@@ -8646,6 +8770,13 @@ c:com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 - getVerticalComponentGap():I
 - getVerticalMediumGap():I
 - getVerticalSmallGap():I
+e:com.intellij.ui.dsl.builder.LabelPosition
+- java.lang.Enum
+- sf:LEFT:com.intellij.ui.dsl.builder.LabelPosition
+- sf:TOP:com.intellij.ui.dsl.builder.LabelPosition
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.LabelPosition
+- s:values():com.intellij.ui.dsl.builder.LabelPosition[]
 com.intellij.ui.dsl.builder.MutableProperty
 - a:get():java.lang.Object
 - a:set(java.lang.Object):V
@@ -8658,6 +8789,142 @@ f:com.intellij.ui.dsl.builder.MutablePropertyKt
 - sf:toNullableProperty(com.intellij.ui.dsl.builder.MutableProperty,java.lang.Object):com.intellij.ui.dsl.builder.MutableProperty
 - sf:toNullableProperty(kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.MutableProperty
 - sf:toNullableProperty(kotlin.reflect.KMutableProperty0,java.lang.Object):com.intellij.ui.dsl.builder.MutableProperty
+com.intellij.ui.dsl.builder.Panel
+- com.intellij.ui.dsl.builder.CellBase
+- a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.Panel
+- a:buttonsGroup(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.ButtonsGroup
+- bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
+- a:collapsibleGroup(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.CollapsibleRow
+- bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
+- a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Panel
+- a:customizeSpacingConfiguration(com.intellij.ui.dsl.builder.SpacingConfiguration,kotlin.jvm.functions.Function1):V
+- a:enabled(Z):com.intellij.ui.dsl.builder.Panel
+- a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Panel
+- a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.Panel
+- a:group(com.intellij.ui.components.JBLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- a:group(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,com.intellij.ui.components.JBLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:groupRowsRange(java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.RowsRange
+- bs:groupRowsRange$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.RowsRange
+- a:indent(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.RowsRange
+- a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Panel
+- a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Panel
+- a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Panel
+- a:panel(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Panel
+- a:resizableColumn():com.intellij.ui.dsl.builder.Panel
+- a:row(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- a:row(javax.swing.JLabel,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- bs:row$default(com.intellij.ui.dsl.builder.Panel,javax.swing.JLabel,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:rowsRange(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.RowsRange
+- a:separator(java.awt.Color):com.intellij.ui.dsl.builder.Row
+- bs:separator$default(com.intellij.ui.dsl.builder.Panel,java.awt.Color,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:threeColumnsRow(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- bs:threeColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:twoColumnsRow(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
+- bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:visible(Z):com.intellij.ui.dsl.builder.Panel
+- a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Panel
+Ff:com.intellij.ui.dsl.builder.Panel$DefaultImpls
+- bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
+- bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,com.intellij.ui.components.JBLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:groupRowsRange$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.RowsRange
+- bs:row$default(com.intellij.ui.dsl.builder.Panel,javax.swing.JLabel,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:separator$default(com.intellij.ui.dsl.builder.Panel,java.awt.Color,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:threeColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+e:com.intellij.ui.dsl.builder.RightGap
+- java.lang.Enum
+- sf:COLUMNS:com.intellij.ui.dsl.builder.RightGap
+- sf:SMALL:com.intellij.ui.dsl.builder.RightGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RightGap
+- s:values():com.intellij.ui.dsl.builder.RightGap[]
+com.intellij.ui.dsl.builder.Row
+- a:bottomGap(com.intellij.ui.dsl.builder.BottomGap):com.intellij.ui.dsl.builder.Row
+- a:browserLink(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:button(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:button(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:button$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:cell():V
+- a:cell(javax.swing.JComponent):com.intellij.ui.dsl.builder.Cell
+- a:checkBox(java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:comboBox(java.util.Collection,javax.swing.ListCellRenderer):com.intellij.ui.dsl.builder.Cell
+- a:comboBox(javax.swing.ComboBoxModel,javax.swing.ListCellRenderer):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,javax.swing.ComboBoxModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:comment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
+- bs:comment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:contextHelp(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGapsY):com.intellij.ui.dsl.builder.Row
+- a:dropDownLink(java.lang.Object,java.util.List):com.intellij.ui.dsl.builder.Cell
+- a:enabled(Z):com.intellij.ui.dsl.builder.Row
+- a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
+- a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
+- a:expandableTextField(com.intellij.util.Function,com.intellij.util.Function):com.intellij.ui.dsl.builder.Cell
+- bs:expandableTextField$default(com.intellij.ui.dsl.builder.Row,com.intellij.util.Function,com.intellij.util.Function,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:extendableTextField():com.intellij.ui.dsl.builder.Cell
+- a:icon(javax.swing.Icon):com.intellij.ui.dsl.builder.Cell
+- a:intTextField(kotlin.ranges.IntRange,java.lang.Integer):com.intellij.ui.dsl.builder.Cell
+- bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:label(java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:layout(com.intellij.ui.dsl.builder.RowLayout):com.intellij.ui.dsl.builder.Row
+- a:link(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:panel(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Panel
+- a:passwordField():com.intellij.ui.dsl.builder.Cell
+- a:placeholder():com.intellij.ui.dsl.builder.Placeholder
+- a:radioButton(java.lang.String,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:radioButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:resizableRow():com.intellij.ui.dsl.builder.Row
+- a:rowComment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Row
+- bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- a:scrollCell(javax.swing.JComponent):com.intellij.ui.dsl.builder.Cell
+- a:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
+- a:slider(I,I,I,I):com.intellij.ui.dsl.builder.Cell
+- a:spinner(kotlin.ranges.ClosedRange,D):com.intellij.ui.dsl.builder.Cell
+- a:spinner(kotlin.ranges.IntRange,I):com.intellij.ui.dsl.builder.Cell
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:text(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
+- bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:textArea():com.intellij.ui.dsl.builder.Cell
+- a:textField():com.intellij.ui.dsl.builder.Cell
+- textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:threeStateCheckBox(java.lang.String):com.intellij.ui.dsl.builder.Cell
+- a:topGap(com.intellij.ui.dsl.builder.TopGap):com.intellij.ui.dsl.builder.Row
+- a:visible(Z):com.intellij.ui.dsl.builder.Row
+- a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
+- a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
+Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
+- bs:button$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,javax.swing.ComboBoxModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:expandableTextField$default(com.intellij.ui.dsl.builder.Row,com.intellij.util.Function,com.intellij.util.Function,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.scale.IconScale,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:radioButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+e:com.intellij.ui.dsl.builder.RowLayout
+- java.lang.Enum
+- sf:INDEPENDENT:com.intellij.ui.dsl.builder.RowLayout
+- sf:LABEL_ALIGNED:com.intellij.ui.dsl.builder.RowLayout
+- sf:PARENT_GRID:com.intellij.ui.dsl.builder.RowLayout
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RowLayout
+- s:values():com.intellij.ui.dsl.builder.RowLayout[]
 com.intellij.ui.dsl.builder.RowsRange
 - a:enabled(Z):com.intellij.ui.dsl.builder.RowsRange
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.RowsRange
@@ -8665,6 +8932,38 @@ com.intellij.ui.dsl.builder.RowsRange
 - a:visible(Z):com.intellij.ui.dsl.builder.RowsRange
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.RowsRange
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.RowsRange
+com.intellij.ui.dsl.builder.SegmentedButton
+- com.intellij.ui.dsl.builder.CellBase
+- sf:Companion:com.intellij.ui.dsl.builder.SegmentedButton$Companion
+- sf:DEFAULT_MAX_BUTTONS_COUNT:I
+- a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.SegmentedButton
+- a:bind(com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.SegmentedButton
+- a:bind(com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.SegmentedButton
+- a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.SegmentedButton
+- a:enabled(Z):com.intellij.ui.dsl.builder.SegmentedButton
+- a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.SegmentedButton
+- a:getItems():java.util.Collection
+- a:getSelectedItem():java.lang.Object
+- a:maxButtonsCount(I):com.intellij.ui.dsl.builder.SegmentedButton
+- a:resizableColumn():com.intellij.ui.dsl.builder.SegmentedButton
+- a:setItems(java.util.Collection):V
+- a:setSelectedItem(java.lang.Object):V
+- a:update(java.lang.Object[]):V
+- a:validation(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
+- a:visible(Z):com.intellij.ui.dsl.builder.SegmentedButton
+f:com.intellij.ui.dsl.builder.SegmentedButton$Companion
+- sf:DEFAULT_MAX_BUTTONS_COUNT:I
+- f:createPresentation(java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+- bs:createPresentation$default(com.intellij.ui.dsl.builder.SegmentedButton$Companion,java.lang.String,java.lang.String,javax.swing.Icon,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+- a:getEnabled():Z
+- a:getIcon():javax.swing.Icon
+- a:getText():java.lang.String
+- a:getToolTipText():java.lang.String
+- a:setEnabled(Z):V
+- a:setIcon(javax.swing.Icon):V
+- a:setText(java.lang.String):V
+- a:setToolTipText(java.lang.String):V
 com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getButtonGroupHeaderBottomGap():I
 - getDialogUnscaledGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -8680,6 +8979,14 @@ com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getVerticalComponentGap():I
 - a:getVerticalMediumGap():I
 - a:getVerticalSmallGap():I
+e:com.intellij.ui.dsl.builder.TopGap
+- java.lang.Enum
+- sf:MEDIUM:com.intellij.ui.dsl.builder.TopGap
+- sf:NONE:com.intellij.ui.dsl.builder.TopGap
+- sf:SMALL:com.intellij.ui.dsl.builder.TopGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.TopGap
+- s:values():com.intellij.ui.dsl.builder.TopGap[]
 f:com.intellij.ui.dsl.builder.UtilsKt
 - sf:DEFAULT_COMMENT_WIDTH:I
 - sf:MAX_LINE_LENGTH_NO_WRAP:I
@@ -8768,6 +9075,24 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(java.lang.String,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
+com.intellij.ui.dsl.validation.CellValidation
+- a:addApplyRule(java.lang.String,com.intellij.ui.dsl.validation.Level,kotlin.jvm.functions.Function0):V
+- a:addApplyRule(kotlin.jvm.functions.Function0):V
+- bs:addApplyRule$default(com.intellij.ui.dsl.validation.CellValidation,java.lang.String,com.intellij.ui.dsl.validation.Level,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- a:addInputRule(java.lang.String,com.intellij.ui.dsl.validation.Level,kotlin.jvm.functions.Function0):V
+- a:addInputRule(kotlin.jvm.functions.Function0):V
+- bs:addInputRule$default(com.intellij.ui.dsl.validation.CellValidation,java.lang.String,com.intellij.ui.dsl.validation.Level,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):V
+- a:enabledIf(com.intellij.ui.layout.ComponentPredicate):V
+- a:getEnabled():Z
+- a:setEnabled(Z):V
+e:com.intellij.ui.dsl.validation.Level
+- java.lang.Enum
+- sf:ERROR:com.intellij.ui.dsl.validation.Level
+- sf:WARNING:com.intellij.ui.dsl.validation.Level
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.validation.Level
+- s:values():com.intellij.ui.dsl.validation.Level[]
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
@@ -8862,6 +9187,11 @@ f:com.intellij.ui.layout.ComponentPredicateKt
 - sf:or(com.intellij.ui.layout.ComponentPredicate,com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueIs(javax.swing.JComboBox,java.lang.Object):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueMatches(javax.swing.JComboBox,kotlin.jvm.functions.Function1):com.intellij.ui.layout.ComponentPredicate
+f:com.intellij.ui.layout.ValidationInfoBuilder
+- <init>(javax.swing.JComponent):V
+- f:error(java.lang.String):com.intellij.openapi.ui.ValidationInfo
+- f:getComponent():javax.swing.JComponent
+- f:warning(java.lang.String):com.intellij.openapi.ui.ValidationInfo
 f:com.intellij.ui.layout.ValueComponentPredicate
 - com.intellij.ui.layout.ComponentPredicate
 - <init>(Z):V

@@ -169,6 +169,8 @@
                         serviceImplementation="com.intellij.ide.plugins.DefaultPluginManagementPolicy"/>
     <applicationService serviceInterface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" open="true"
                         serviceImplementation="com.intellij.ui.dsl.listCellRenderer.impl.DefaultUiDslRendererProvider"/>
+    <applicationService serviceInterface="com.intellij.ui.dsl.builder.KotlinUiDslService"
+                        serviceImplementation="com.intellij.ui.dsl.builder.impl.KotlinUiDslServiceImpl"/>
 
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>

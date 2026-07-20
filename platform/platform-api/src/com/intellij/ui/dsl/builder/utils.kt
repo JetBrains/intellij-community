@@ -178,3 +178,6 @@ fun classIconProvider(iconClass: Class<*>): IconsProvider {
     else null
   }
 }
+
+@DslMarker
+internal annotation class LayoutDslMarker

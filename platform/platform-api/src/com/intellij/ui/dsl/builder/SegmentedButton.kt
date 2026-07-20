@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.ui.dsl.builder.SegmentedButton.Companion.DEFAULT_MAX_BUTTONS_COUNT
-import com.intellij.ui.dsl.builder.impl.ItemPresentationImpl
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
@@ -23,8 +21,13 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   companion object {
     const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
 
-    fun createPresentation(text: @Nls String? = null, toolTipText: @Nls String? = null, icon: Icon? = null, enabled: Boolean = true): ItemPresentation {
-      return ItemPresentationImpl(text, toolTipText, icon, enabled)
+    fun createPresentation(
+      text: @Nls String? = null,
+      toolTipText: @Nls String? = null,
+      icon: Icon? = null,
+      enabled: Boolean = true,
+    ): ItemPresentation {
+      return KotlinUiDslService.getInstance().createPresentation(text, toolTipText, icon, enabled)
     }
   }
 

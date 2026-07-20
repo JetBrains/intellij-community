@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.TooltipTitle
@@ -15,7 +15,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.components.*
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBPasswordField
+import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -30,7 +38,17 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.ButtonGroup
+import javax.swing.ComboBoxModel
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JLabel
+import javax.swing.JSlider
+import javax.swing.JSpinner
+import javax.swing.ListCellRenderer
 
 /**
  * Determines relation between row grid and parent's grid
