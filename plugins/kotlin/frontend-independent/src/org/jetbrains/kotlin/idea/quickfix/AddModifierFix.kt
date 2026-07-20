@@ -9,7 +9,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -53,14 +55,14 @@ open class AddModifierFix(
         element: KtModifierListOwner,
         updater: ModPsiUpdater,
     ) {
-        element.addModifier(modifier)
+        element.addModifierKeyword(modifier)
 
         when (modifier) {
             KtTokens.ABSTRACT_KEYWORD -> {
                 if (element is KtProperty || element is KtNamedFunction) {
                     element.containingClass()?.let { klass ->
                         if (!klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) && !klass.hasModifier(KtTokens.SEALED_KEYWORD)) {
-                            klass.addModifier(KtTokens.ABSTRACT_KEYWORD)
+                            klass.addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
                         }
                     }
                 }
@@ -68,11 +70,11 @@ open class AddModifierFix(
 
             KtTokens.OVERRIDE_KEYWORD -> {
                 val visibility = element.visibilityModifierType()?.takeIf { it != KtTokens.PUBLIC_KEYWORD }
-                visibility?.let { element.removeModifier(it) }
+                visibility?.let { element.removeModifierKeyword(it) }
             }
 
             KtTokens.NOINLINE_KEYWORD ->
-                element.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+                element.removeModifierKeyword(KtTokens.CROSSINLINE_KEYWORD)
         }
     }
 
@@ -106,23 +108,22 @@ open class AddModifierFix(
                         && modifierListOwner is KtClass
                         && modifierListOwner.isInlineOrValue()
                     ) return null
+                    if ((modifierListOwner is KtClass && modifierListOwner.isEffectivelyFinal())) return null
                 }
                 KtTokens.INNER_KEYWORD -> {
                     if (modifierListOwner is KtObjectDeclaration) return null
-                    if (modifierListOwner is KtClass) {
-                        if (modifierListOwner.isInterface() ||
-                            modifierListOwner.isSealed() ||
-                            modifierListOwner.isEnum() ||
-                            modifierListOwner.isData() ||
-                            modifierListOwner.isAnnotation()
-                        ) return null
-                    }
+                    if (modifierListOwner is KtClass &&
+                        (modifierListOwner.isInterface() || modifierListOwner.isSealed() || modifierListOwner.isEffectivelyFinal())
+                    ) return null
                 }
             }
             return createModifierFix(modifierListOwner, modifier)
         }
 
         fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): T
+
+        private fun KtClass.isEffectivelyFinal(): Boolean = hasModifier(KtTokens.DATA_KEYWORD) || hasModifier(KtTokens.ENUM_KEYWORD) ||
+                hasModifier(KtTokens.VALUE_KEYWORD) || hasModifier(KtTokens.ANNOTATION_KEYWORD)
     }
 
     companion object : Factory<AddModifierFix> {
