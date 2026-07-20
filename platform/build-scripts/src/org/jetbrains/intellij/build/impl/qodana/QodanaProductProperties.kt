@@ -18,6 +18,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dsdk.download.consent=true",
   "-Dide.activity.tracking.enable.debug=true",
   "-Deslint.service.expiration.timeout.ms=5000",
+  "-Dtypescript.service.node.defaultMemoryLimit=1024",
   "-Djetbrains.security.package-checker.requestTimeoutSeconds=15",
   "-Dphp.additional.library.manager.new.updater=true",
   "-Dide.region.url.mapping.expiration.timeout=7200",
