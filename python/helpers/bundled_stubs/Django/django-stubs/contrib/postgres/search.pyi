@@ -31,8 +31,8 @@ class SearchVectorExact(Lookup):
     @override
     def as_sql(self, qn: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
-class SearchVectorField(CheckPostgresInstalledMixin, Field): ...
-class SearchQueryField(CheckPostgresInstalledMixin, Field): ...
+class SearchVectorField(CheckPostgresInstalledMixin, Field[Any, Any]): ...
+class SearchQueryField(CheckPostgresInstalledMixin, Field[Any, Any]): ...
 
 class SearchConfig(Expression):
     config: _Expression | None
@@ -67,7 +67,7 @@ class CombinedSearchVector(SearchVectorCombinable, CombinedExpression):
         connector: str,
         rhs: Combinable,
         config: _Expression | None,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
     ) -> None: ...
 
 class SearchQueryCombinable:
@@ -84,7 +84,7 @@ class SearchQuery(SearchQueryCombinable, Func):  # type: ignore[misc]
     def __init__(
         self,
         value: _Expression,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
         *,
         config: _Expression | None = None,
         invert: bool = False,
@@ -108,7 +108,7 @@ class CombinedSearchQuery(SearchQueryCombinable, CombinedExpression):  # type: i
         connector: str,
         rhs: Combinable,
         config: _Expression | None,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
     ) -> None: ...
 
 class SearchRank(Func):

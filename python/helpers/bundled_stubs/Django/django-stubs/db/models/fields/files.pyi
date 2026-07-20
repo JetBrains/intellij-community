@@ -108,8 +108,6 @@ class FileField(Field[Any, Any]):
     @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
     def generate_filename(self, instance: Model | None, filename: _PathCompatible) -> str: ...
-    @override
-    def formfield(self, **kwargs: Any) -> Any: ...  # type: ignore[override]
 
 class ImageFileDescriptor(FileDescriptor):
     field: ImageField
@@ -145,5 +143,3 @@ class ImageField(FileField):
     @override
     def __get__(self, instance: Any, owner: Any) -> Self: ...
     def update_dimension_fields(self, instance: Model, force: bool = False, *args: Any, **kwargs: Any) -> None: ...
-    @override
-    def formfield(self, **kwargs: Any) -> Any: ...  # type: ignore[override]
