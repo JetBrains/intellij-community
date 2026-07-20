@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.compatibility.MavenCompatibilityVersions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
+@ArgumentsSource(MavenCompatibilityVersions::class)
 class RealProjectsImportingTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
