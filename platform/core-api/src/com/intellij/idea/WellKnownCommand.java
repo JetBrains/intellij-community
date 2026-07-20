@@ -74,6 +74,7 @@ public final class WellKnownCommand {
     put("appcodeClangModulesPrinter", HEADLESS);
     put("buildAppcodeCache", HEADLESS);
     put("dataSources", HEADLESS);
+    put("dumpArtifacts", HEADLESS);
     put("ml-evaluate", HEADLESS);
     put("ml-process", HEADLESS);
     put("project-with-shared-caches", HEADLESS);
