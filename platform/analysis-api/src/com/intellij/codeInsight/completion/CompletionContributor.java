@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * {@link PsiElement}s, or better {@link LookupElement}s.<p>
  *
  * <b>Q: OK, but what to do with CompletionContributor?</b><br>
- * A: There are two ways. The easier and preferred one is to provide constructor in your contributor and register completion providers there:
+ * A: There are two ways. The easier and preferred one is to provide a constructor in your contributor and register completion providers there:
  * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
  * and provide your own.
@@ -56,20 +56,20 @@ import java.util.stream.Stream;
  *
  * <b>Q: How do I get an automatic lookup element filtering by prefix?</b><br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
- * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
+ * automatically, with the prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
  * the caret position.
  * In {@link CompletionContributor} you will be given a {@link CompletionResultSet}
  * which will match {@link LookupElement}s against its prefix matcher {@link CompletionResultSet#getPrefixMatcher()}.
  * If the default prefix calculated by the IDE doesn't satisfy you, you can get another result set via
  * {@link CompletionResultSet#withPrefixMatcher(PrefixMatcher)} and feed your lookup elements to the latter.
- * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against prefix matcher.<p>
+ * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against the prefix matcher.<p>
  *
  * <b>Q: How do I plug into those funny texts below the items in shown lookup?</b><br>
  * A: Use {@link CompletionResultSet#addLookupAdvertisement(String)}.<p>
  *
  * <b>Q: How do I change the text that gets shown when there are no suitable variants at all?</b><br>
  * A: Use {@link CompletionContributor#handleEmptyLookup(CompletionParameters, Editor)}.
- * Remember to check whether you are in correct place (see {@link CompletionParameters}).<p>
+ * Remember to check whether you are in the correct place (see {@link CompletionParameters}).<p>
  *
  * <b>Q: How do I affect a lookup element's appearance (icon, text attributes, etc.)?</b><br>
  * A: See {@link LookupElement#renderElement(LookupElementPresentation)}.<p>
@@ -80,7 +80,7 @@ import java.util.stream.Stream;
  * <b>Q: What if I select an item with a TAB key?</b><br>
  * A: Semantics is that the identifier that you're standing inside gets removed completely, and then the lookup string is inserted. You can change
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
- * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
+ * by putting a new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
  * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests to me in some places aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?</b><br>
@@ -95,7 +95,7 @@ import java.util.stream.Stream;
  *
  * <b>Q: How are lookup elements sorted?</b><br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
- * Also, there are a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
+ * Also, there are a number of "weigher" extensions under the "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
  * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
  * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
@@ -106,12 +106,12 @@ import java.util.stream.Stream;
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
  * Therefore, you should try to create the most relevant items as early as possible. If you can't reliably produce
- * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
+ *  the most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
  * that this batch is all sorted and displayed together.<p>
  *
  * <b>Q: My completion is not working! How do I debug it?</b><br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
- * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
+ * may be incorrect. To debug this problem, you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
  * your contributor, make it only call its super method, and put a breakpoint there.<br>
  * If you want to know which contributor added a particular lookup element, the best place for a breakpoint will be
  * {@link CompletionService#performCompletion(CompletionParameters, Consumer)}. The consumer passed there
@@ -136,7 +136,6 @@ import java.util.stream.Stream;
  * but I want completion to keep going, matching against the typed character.</b><br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
-@SuppressWarnings("JavadocReference")
 public abstract class CompletionContributor implements PossiblyDumbAware {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
@@ -241,7 +240,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   /**
-   * @deprecated Use {@link forLanguage(Language, Editor)} direcly
+   * @deprecated Use {@link forLanguage(Language, Editor)} directly
    */
   @ApiStatus.Internal
   @Deprecated
@@ -268,7 +267,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     List<ModCompletionItemFilter> filters = ModCompletionItemFilter.EP_NAME.allForLanguage(language);
 
     Map<Class<? extends CompletionContributor>, Integer> order = IntStream.range(0, contributors.size())
-      .boxed().collect(Collectors.toMap(idx -> contributors.get(idx).getClass(), Function.identity(), (a, b) -> a));
+      .boxed().collect(Collectors.toMap(idx -> contributors.get(idx).getClass(), Function.identity(), (a, _) -> a));
 
     Stream<Map.Entry<Integer, CompletionContributor>> modContributors = providers
       .stream()
