@@ -210,7 +210,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
                            @Nullable InputValidator extraValidator) {
-      myTemplatesList.add(new TemplatePresentation(kind, icon, templateName));
+      return addKind(kind, icon, templateName, null, extraValidator);
+    }
+
+    @Override
+    public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                           @NonNls @Nullable String targetName, @Nullable InputValidator extraValidator) {
+      myTemplatesList.add(new TemplatePresentation(kind, icon, templateName, targetName));
       if (extraValidator != null) {
         myExtraValidators.put(templateName, extraValidator);
       }
@@ -333,13 +339,27 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     Builder setDialogOwner(@Nullable Component owner);
 
     default Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName) {
-      return addKind(kind, icon, templateName, null);
+      return addKind(kind, icon, templateName, (InputValidator) null);
     }
 
-    Builder addKind(@NlsContexts.ListItem @NotNull String kind,
-                    @Nullable Icon icon,
-                    @NonNls @NotNull String templateName,
-                    @Nullable InputValidator extraValidator);
+    Builder addKind(
+      @NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon,
+      @NonNls @NotNull String templateName, @Nullable InputValidator extraValidator
+    );
+
+    default Builder addKind(
+      @NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon,
+      @NonNls @NotNull String templateName, @NonNls @Nullable String targetName
+    ) {
+      return addKind(kind, icon, templateName, targetName, null);
+    }
+
+    default Builder addKind(
+      @NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName,
+      @NonNls @Nullable String targetName, @Nullable InputValidator extraValidator
+    ) {
+      throw new UnsupportedOperationException("Method requires implementation");
+    }
 
     @Nullable
     <T extends PsiElement> T show(@DialogTitle @NotNull String errorTitle,

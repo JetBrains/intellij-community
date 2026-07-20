@@ -28,7 +28,11 @@ import java.util.function.BiFunction;
 import static com.intellij.ide.actions.newclass.TemplateListCellRendererKt.createTemplateListCellRenderer;
 
 public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPanel<CreateWithTemplatesDialogPanel.TemplatePresentation> {
-  public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {}
+  public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName, @Nullable String targetName) {
+    public TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+      this(kind, icon, templateName, null);
+    }
+  }
 
   private boolean templateExplicitlySelected = false;
 
@@ -61,16 +65,16 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
 
   public void setNameFieldToTemplateNameOnSelection() {
     myTemplatesList.addListSelectionListener(e -> {
-      if (!e.getValueIsAdjusting() && isNameFieldEmptyOrTemplateName()) {
+      if (!e.getValueIsAdjusting() && isNameFieldEmptyOrTargetName()) {
         TemplatePresentation selectedTemplate = myTemplatesList.getSelectedValue();
         if (selectedTemplate != null) {
-          myTextField.setText(selectedTemplate.templateName());
+          myTextField.setText(selectedTemplate.targetName() == null ? "" : selectedTemplate.targetName());
         }
       }
     });
   }
 
-  private boolean isNameFieldEmptyOrTemplateName() {
+  private boolean isNameFieldEmptyOrTargetName() {
     String enteredName = getEnteredName();
     if (enteredName.isEmpty()) {
       return true;
@@ -78,7 +82,7 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
 
     ListModel<TemplatePresentation> model = myTemplatesList.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      if (StringUtil.equals(enteredName, model.getElementAt(i).templateName())) {
+      if (StringUtil.equals(enteredName, model.getElementAt(i).targetName())) {
         return true;
       }
     }

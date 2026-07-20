@@ -59,6 +59,12 @@ public final class TestDialogBuilder implements CreateFileFromTemplateDialog.Bui
   }
 
   @Override
+  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                                                      @Nullable String targetName, @Nullable InputValidator extraValidator) {
+    return this;
+  }
+
+  @Override
   public @Nullable Map<String, String> getCustomProperties() {
     return null;
   }

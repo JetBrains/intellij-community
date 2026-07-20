@@ -209,6 +209,14 @@ internal class NewKotlinScriptDialogBuilder(
         extraValidator: InputValidator?
     ): CreateFileFromTemplateDialog.Builder = this
 
+    override fun addKind(
+        kind: String,
+        icon: Icon?,
+        templateName: String,
+        targetName: String?,
+        extraValidator: InputValidator?
+    ): CreateFileFromTemplateDialog.Builder = this
+
     override fun <T : PsiElement?> show(
         errorTitle: String,
         selectedItem: String?,

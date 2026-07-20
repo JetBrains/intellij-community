@@ -2555,6 +2555,8 @@ c:com.intellij.ide.actions.CreateFileFromTemplateDialog
 com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - addKind(java.lang.String,javax.swing.Icon,java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:addKind(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
+- addKind(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
+- addKind(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.openapi.ui.InputValidator):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:getCustomProperties():java.util.Map
 - a:setDefaultText(java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:setDialogOwner(java.awt.Component):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
@@ -2670,6 +2672,8 @@ c:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 - setTemplateSelectorMatcher(java.util.function.BiFunction):V
 f:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel$TemplatePresentation
 - java.lang.Record
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String):V
+- targetName():java.lang.String
 c:com.intellij.ide.actions.runAnything.RunAnythingAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction

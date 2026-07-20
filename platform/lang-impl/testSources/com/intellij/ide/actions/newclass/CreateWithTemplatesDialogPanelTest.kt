@@ -14,7 +14,7 @@ class CreateWithTemplatesDialogPanelTest {
     panel.setNameFieldToTemplateNameOnSelection()
 
     panel.selectTemplate(1)
-    assertEquals("XYZ", panel.enteredName)
+    assertEquals("Actual", panel.enteredName)
   }
 
   @Test
@@ -30,8 +30,9 @@ class CreateWithTemplatesDialogPanelTest {
   private class TestDialogPanel : CreateWithTemplatesDialogPanel(
     null,
     listOf(
-      TemplatePresentation("Default", null, "Default"),
-      TemplatePresentation("XYZ", null, "XYZ"),
+      TemplatePresentation("Default", null, "Default", "Default"),
+      TemplatePresentation("Test", null, "Test", "Actual"
+      ),
     ),
   ) {
     fun selectTemplate(index: Int) {
