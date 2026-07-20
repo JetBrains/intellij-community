@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.annotations.NonNls
@@ -30,15 +29,17 @@ internal class HttpDebugListener : HttpRequestHandler() {
     return request.method() == HttpMethod.POST && request.uri().startsWith(PREFIX)
   }
 
-  override fun isAccessible(request: HttpRequest): Boolean {
-    return true
-  }
-
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     val content = request.content().toString(Charset.defaultCharset())
     val contentLines = StringUtil.splitByLines(content)
 
-    val port = contentLines[0]
+    val portString = contentLines[0]
+    val port = portString.toIntOrNull()
+    if (port == null) {
+      LOG.info("Incorrect port value: $portString")
+      HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
+      return true
+    }
     val name = contentLines.getOrNull(1)
     LOG.info("Debugger attach request to a test process by port '$port' as '$name'")
 
@@ -51,7 +52,7 @@ internal class HttpDebugListener : HttpRequestHandler() {
     }
     
     ApplicationManager.getApplication().invokeAndWait {
-      JavaAttachDebuggerProvider.attach("dt_socket", port, name, project) // NON-NLS
+      JavaAttachDebuggerProvider.attach("dt_socket", port.toString(), name, project) // NON-NLS
     }
     HttpResponseStatus.OK.send(context.channel(), request)
     return true
