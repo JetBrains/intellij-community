@@ -2,17 +2,18 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.ExperimentalForeignApi
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.cInteropPackage
-import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
 
 private val LOG = logger<KotlinForwardDeclarationsFileGenerator>()
 
@@ -32,35 +33,45 @@ private val LOG = logger<KotlinForwardDeclarationsFileGenerator>()
  * [KotlinForwardDeclarationsModelChangeService] service responsible for launching the generation.
  */
 internal object KotlinForwardDeclarationsFileGenerator {
-    suspend fun generateForwardDeclarationFiles(library: KLibRoot): Path? {
+    fun generateForwardDeclarationFiles(library: KLibRoot): Path? {
         val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedForwardDeclarations(library).ifEmpty { return null }
         return generateForwardDeclarationsForFqNames(groupedClasses, library.libraryRoot)
     }
 
-    private suspend fun generateForwardDeclarationsForFqNames(
-        groupedFqNames: Map<FqName, List<FqName>>,
-        libraryPath: String,
-    ): Path {
+    private fun generateForwardDeclarationsForFqNames(groupedFqNames: Map<FqName, List<FqName>>, libraryPath: String): Path {
         val root = KotlinForwardDeclarationsFileSystem.storageRootPath
         val libraryLocation = root.resolve(libraryPath.removePrefix("/"))
 
-        val filesToGenerate = groupedFqNames.mapNotNull { (pkg, classes) ->
+        groupedFqNames.mapNotNull { (pkg, classes) ->
             val kind = NativeForwardDeclarationKind.packageFqNameToKind[pkg] ?: run {
                 LOG.warn("Skipping request to generate K/N forward declarations with an unsupported package $pkg")
                 return@mapNotNull null
             }
-            "${pkg.asString()}.kt" to createText(pkg, kind, classes)
-        }
-        if (filesToGenerate.isEmpty()) return libraryLocation
 
-        edtWriteAction {
-            val baseDir = VfsUtil.createDirectoryIfMissing(libraryLocation.absolutePathString()) ?: return@edtWriteAction
-            for ((fileName, text) in filesToGenerate) {
-                val file = baseDir.findChild(fileName) ?: baseDir.createChildData(this, fileName)
-                VfsUtil.saveText(file, text)
-            }
+            generateFile(libraryLocation, pkg, kind, classes)
         }
+        refreshVfs(root)
         return libraryLocation
+    }
+
+    private fun refreshVfs(root: Path) {
+        // Both the refresh on findFile and the explicit refresh on markDirty are necessary for a correct clean first start
+        VfsUtil.findFile(root, /* refreshIfNeeded = */ true)?.let {
+            VfsUtil.markDirtyAndRefresh(/* async = */ true, /* recursive = */ true, /* reloadChildren = */ true, /* ...files = */ it)
+        }
+    }
+
+    private fun generateFile(parentDir: Path, pkg: FqName, kind: NativeForwardDeclarationKind, classes: List<FqName>): Path {
+        val text = createText(pkg, kind, classes)
+        return with(parentDir.resolve("${pkg.asString()}.kt")) {
+            Files.createDirectories(parent)
+            if (!exists()) {
+                Files.createFile(this)
+            }
+
+            Files.writeString(this, text)
+            this
+        }
     }
 
     private fun createText(pkg: FqName, kind: NativeForwardDeclarationKind, classes: List<FqName>): String {
@@ -90,18 +101,17 @@ internal object KotlinForwardDeclarationsFileGenerator {
         return packageWithImports + generatedDeclarations
     }
 
-    suspend fun cleanUp(filesToDelete: List<VirtualFile>) {
-        if (filesToDelete.isEmpty()) return
-        edtWriteAction {
-            for (file in filesToDelete) {
-                if (file.isValid) {
-                    try {
-                        file.delete(this)
-                    } catch (e: IOException) {
-                        LOG.warn(e)
-                    }
-                }
+    @OptIn(ExperimentalPathApi::class)
+    fun cleanUp(roots: List<Path>) {
+        val storageRoot = KotlinForwardDeclarationsFileSystem.storageRootPath
+
+        for (root in roots) {
+            if (!root.absolutePathString().startsWith(storageRoot.absolutePathString())) {
+                LOG.error("Attempt to delete ${root.absolutePathString()} which is not under ${storageRoot.absolutePathString()}")
+                continue
             }
+
+            root.deleteRecursively()
         }
     }
 }
