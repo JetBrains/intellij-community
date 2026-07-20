@@ -39,7 +39,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.compilerPlugins.support",
       "intellij.kotlin.native",
       "kotlin.scripting",
-      "intellij.kotlin.preferences",
       "intellij.kotlin.references",
       "intellij.kotlin.jvm.debugger.eval4j",
       "kotlin.inspections",

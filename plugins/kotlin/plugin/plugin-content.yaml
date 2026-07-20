@@ -58,6 +58,9 @@
 - name: lib/intellij.kotlin.plugin.updater.jar
   contentModules:
   - name: intellij.kotlin.plugin.updater
+- name: lib/intellij.kotlin.preferences.jar
+  contentModules:
+  - name: intellij.kotlin.preferences
 - name: lib/intellij.kotlin.projectConfiguration.jar
   contentModules:
   - name: intellij.kotlin.projectConfiguration
@@ -149,7 +152,6 @@
   - name: intellij.kotlin.compilerPlugins.support
   - name: intellij.kotlin.native
   - name: kotlin.scripting
-  - name: intellij.kotlin.preferences
   - name: intellij.kotlin.references
   - name: intellij.kotlin.jvm.debugger.eval4j
   - name: kotlin.inspections

@@ -10,11 +10,6 @@
             qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
             interface="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinFacetValidatorCreator"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.experimentalFeature"
-            interface="org.jetbrains.kotlin.idea.configuration.ExperimentalFeature"
-            dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
             dynamic="true"/>
@@ -44,12 +39,6 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
-    <applicationConfigurable
-            groupId="language"
-            bundle="messages.KotlinPreferencesBundle"
-            key="kotlin.language.configurable"
-            id="preferences.language.Kotlin"
-            instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
