@@ -16,15 +16,9 @@ private const val PROBLEMS_VIEW_BACKEND_MODULE: String = "intellij.problemView.p
 
 @Remote("com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils", plugin = PROBLEMS_VIEW_UI_MODULE, rdTarget = RdTarget.FRONTEND)
 interface ProblemsViewToolWindowUtils {
-  fun getToolWindow(project: Project): ToolWindowRef?
+  fun getToolWindow(project: Project): ToolWindow?
   fun getTabById(project: Project, id: String): ProblemsViewTab?
   fun selectTab(project: Project, id: String)
-}
-
-@Remote("com.intellij.openapi.wm.ToolWindow", rdTarget = RdTarget.FRONTEND)
-interface ToolWindowRef {
-  fun isVisible(): Boolean
-  fun isActive(): Boolean
 }
 
 @Remote("com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab", plugin = PROBLEMS_VIEW_UI_MODULE, rdTarget = RdTarget.FRONTEND)
@@ -126,7 +120,3 @@ fun Driver.closeProblemsViewFile(file: VirtualFile, project: Project? = null) {
     service<FileEditorManager>(forProject).closeFile(file)
   }
 }
-
-fun Driver.findTestFile(relativePath: String): VirtualFile? =
-  if (!isRemDevMode) { findFile(relativePath = relativePath) }
-  else { service<FileEditorManager>(singleProject()).getSelectedTextEditor()?.getVirtualFile() }
