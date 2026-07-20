@@ -26,7 +26,7 @@ fun getGradleScriptInputsStamp(
     project: Project,
     file: VirtualFile,
     givenKtFile: KtFile? = null,
-): GradleKotlinScriptConfigurationInputs? {
+): String? {
     if (!isGradleKotlinScript(file)) return null
 
     return runReadActionBlocking {
@@ -56,7 +56,7 @@ fun getGradleScriptInputsStamp(
                 }
             }
 
-        GradleKotlinScriptConfigurationInputs(result.toString())
+        result.toString()
     }
 }
 

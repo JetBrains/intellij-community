@@ -3,12 +3,11 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.importing
 
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 
 data class KotlinDslScriptModel(
     val file: String,
-    val inputs: GradleKotlinScriptConfigurationInputs,
+    val inputs: String,
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,
