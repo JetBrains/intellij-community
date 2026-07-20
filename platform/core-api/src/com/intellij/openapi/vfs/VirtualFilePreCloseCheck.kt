@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
@@ -21,4 +22,13 @@ interface VirtualFilePreCloseCheck {
    * @return true if all files can be closed, otherwise false.
    */
   fun canCloseFiles(files: Collection<VirtualFile>): Boolean = files.all(::canCloseFile)
+
+  /**
+   * Returns the files that can be closed after running the check.
+   * The default implementation preserves the legacy all-or-nothing behavior of [canCloseFiles].
+   */
+  @Internal
+  fun filterFilesToClose(files: Collection<VirtualFile>): Collection<VirtualFile> {
+    return if (canCloseFiles(files)) files else emptyList()
+  }
 }

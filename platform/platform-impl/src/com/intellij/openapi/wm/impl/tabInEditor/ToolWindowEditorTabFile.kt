@@ -30,6 +30,7 @@ class ToolWindowEditorTabFile(
   val component: JComponent,
   internal val preferredFocusedComponent: JComponent,
   internal val content: Content,
+  internal val project: Project,
   private val persistInEditorHistory: Boolean,
   tabIcon: Icon? = null,
 ) : LightVirtualFile(editorTitle, ToolWindowEditorTabFileType, ""), OptionallyIncluded {

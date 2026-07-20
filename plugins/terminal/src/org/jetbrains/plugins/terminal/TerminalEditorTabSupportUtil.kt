@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 interface TerminalEditorTabInfo {
   @NlsSafe
   fun getEditorTabTitle(): String
+
+  suspend fun shouldConfirmClosing(): Boolean
 }
 
 @ApiStatus.Internal

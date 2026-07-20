@@ -3,7 +3,10 @@ package org.jetbrains.plugins.terminal.classic
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
@@ -15,7 +18,7 @@ internal class ClassicTerminalTabCloseListener private constructor(
   override fun shouldConfirmClosing(content: Content): CloseCheckResult {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return CloseCheckResult.CAN_CLOSE_SILENTLY
     return runCloseCheckBlocking {
-      widget.isCommandRunning()
+      shouldConfirmClosing(widget)
     }
   }
 
@@ -23,6 +26,10 @@ internal class ClassicTerminalTabCloseListener private constructor(
     @JvmStatic
     fun install(content: Content, project: Project, parentDisposable: Disposable) {
       ClassicTerminalTabCloseListener(content, project, parentDisposable)
+    }
+
+    suspend fun shouldConfirmClosing(widget: TerminalWidget): Boolean = withContext(Dispatchers.IO) {
+      widget.isCommandRunning()
     }
   }
 }

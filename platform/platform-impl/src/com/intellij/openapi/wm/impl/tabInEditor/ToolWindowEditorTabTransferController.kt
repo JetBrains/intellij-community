@@ -140,6 +140,7 @@ internal class ToolWindowEditorTabTransferController(
       preferredFocusedComponent = content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
       persistInEditorHistory = descriptor.persistInEditorHistory,
       content = content,
+      project = project,
       tabIcon = descriptor.icon,
     )
   }

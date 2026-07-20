@@ -1153,6 +1153,7 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.options.newEditor.settings.SettingsFileSystem" key="settings" physical="false"/>
     <navbar implementation="com.intellij.openapi.options.newEditor.settings.SettingsNavBarModelExtension"/>
     <editorAutoClosingHandler implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabAutoClosingHandler"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPreCloseCheck"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.BidiContentNotificationProvider"/>

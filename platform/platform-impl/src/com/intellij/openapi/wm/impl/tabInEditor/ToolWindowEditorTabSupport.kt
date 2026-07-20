@@ -32,6 +32,8 @@ interface ToolWindowEditorTabSupport {
         updateEditorTabPresentation(project, toolWindow, content)
       }
   }
+
+  fun canCloseFile(project: Project, content: Content): Boolean = true
 }
 
 @ApiStatus.Experimental

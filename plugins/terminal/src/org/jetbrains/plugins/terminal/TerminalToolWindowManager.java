@@ -342,9 +342,7 @@ public final class TerminalToolWindowManager implements Disposable {
     setupTerminalWidget(widget, content);
 
     content.setCloseable(true);
-    TerminalWidget finalWidgetForEditorTab = widget;
-    content.putUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY,
-                        () -> TerminalTitleUtils.buildSettingsAwareTitle(finalWidgetForEditorTab.getTerminalTitle(), false));
+    content.putUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY, new ClassicTerminalEditorTabInfo(widget));
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
     content.putUserData(RUNNER_KEY, terminalRunner);
 
