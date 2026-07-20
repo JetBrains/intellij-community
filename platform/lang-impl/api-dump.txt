@@ -3992,6 +3992,15 @@ f:com.intellij.navigation.ProtocolOpenProjectResult$Success
 c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - com.intellij.openapi.Disposable
 - s:getInstance():com.intellij.openapi.editor.EditorMouseHoverPopupManager
+f:com.intellij.openapi.editor.actions.FlipCommaIntention
+- com.intellij.modcommand.PsiUpdateModCommandAction
+- com.intellij.openapi.project.DumbAware
+com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper
+- sf:EXTENSION:com.intellij.lang.LanguageExtension
+- canFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- a:flip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- s:isCanFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- s:tryFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 c:com.intellij.openapi.editor.actions.IncrementalFindAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 f:com.intellij.openapi.editor.actions.ReplaceAction
