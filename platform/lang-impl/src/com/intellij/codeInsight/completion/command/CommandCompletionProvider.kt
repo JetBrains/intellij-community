@@ -34,8 +34,8 @@ import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.FoldRegion
@@ -134,7 +134,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     var isReadOnly = false
     var isInjected = false
     var offset = parameters.editor.caretModel.offset
-    val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
+    val targetEditor = NonWriteAccessCommandCompletionSupport.originalEditor(editor)
     var originalFile = parameters.originalFile
     if (targetEditor != null) {
       isReadOnly = true
@@ -447,12 +447,9 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         ProgressManager.checkCanceled()
       }
       catch (e: Exception) {
-        if (e is ControlFlowException) {
-          throw e
-        }
+        rethrowControlFlowException(e)
         if (e !is CommandCompletionUnsupportedOperationException) {
           //it was rethrown before
-          @Suppress("IncorrectCancellationExceptionHandling")
           LOG.error(e)
         }
       }

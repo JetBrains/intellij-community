@@ -100,11 +100,27 @@ internal class CommandCompletionService : Disposable.Default {
         return
       }
     }
-    if (installed == true) return
+    installFilters(lookup, completionFactory.supportFiltersWithDoublePrefix())
+  }
+
+  internal fun addRemoteReadOnlyFilters(lookup: LookupImpl) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return
+    lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
+    lookup.showIfMeaningless()
+    // in read-only editors only the plain single-suffix mode is supported, so no double-prefix filters here
+    lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(false)
+    lookup.arranger.prefixChanged(lookup)
+    lookup.requestResize()
+    lookup.refreshUi(false, true)
+    lookup.ensureSelectionVisible(true)
+  }
+
+  private fun installFilters(lookup: LookupImpl, filtersWithDoublePrefix: Boolean) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.showIfMeaningless() // stop hiding
     val showPostfixAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup
-    if (completionFactory.supportFiltersWithDoublePrefix()) {
+    if (filtersWithDoublePrefix) {
       lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(showPostfixAsSeparateGroup)
     }
     else if (!showPostfixAsSeparateGroup) {
@@ -218,13 +234,17 @@ internal class CommandCompletionListener : LookupManagerListener {
 
     val project = newLookup.project
 
-    val originalEditor = newLookup.editor.getUserData(ORIGINAL_EDITOR)
+    val originalEditor = NonWriteAccessCommandCompletionSupport.originalEditor(newLookup.editor)
 
     val nonWrittenFiles: Boolean
     val editor: Editor
     val psiFile: PsiFile
     if (originalEditor != null) {
       editor = originalEditor.first
+      if (NonWriteAccessCommandCompletionSupport.Frontend.isRemoteFrontendEditor(newLookup.editor)) {
+        project.service<CommandCompletionService>().addRemoteReadOnlyFilters(newLookup)
+        return
+      }
       psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
       nonWrittenFiles = true
     }
@@ -396,7 +416,7 @@ internal class CommandCompletionCharFilter : CharFilter() {
       Disposer.dispose(installedHint)
     }
 
-    val originalEditor = lookup.editor.getUserData(ORIGINAL_EDITOR)
+    val originalEditor = NonWriteAccessCommandCompletionSupport.originalEditor(lookup.editor)
     if (originalEditor != null) {
       // we are in command inlay, accept all chars
       return Result.ADD_TO_PREFIX
