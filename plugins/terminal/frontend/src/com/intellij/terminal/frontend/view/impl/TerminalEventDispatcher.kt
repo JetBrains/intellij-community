@@ -285,7 +285,9 @@ private class TerminalKeyListener(
   }
 }
 
-internal fun setupKeyEventsHandling(
+@ApiStatus.Internal
+@VisibleForTesting
+fun setupKeyEventsHandling(
   editor: EditorEx,
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalKeyEventsHandler,

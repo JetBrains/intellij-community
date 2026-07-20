@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
-import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -43,11 +42,13 @@ internal open class TerminalKeyEventsHandlerImpl(
 ) : TerminalKeyEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private val bufferedEvents: ArrayDeque<TimedKeyEvent> = ArrayDeque()
+  private var readySession: TerminalSession? = null
 
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      val readySession = sessionDeferred.await()
-      drainBufferedEvents(readySession)
+      val session = sessionDeferred.await()
+      drainBufferedEvents(session)
+      readySession = session
     }
   }
 
@@ -67,7 +68,7 @@ internal open class TerminalKeyEventsHandlerImpl(
       return
     }
     try {
-      val session = sessionDeferred.getNow()
+      val session = readySession
       if (session == null) {
         bufferedEvents.addLast(e)
         e.original.consume()
@@ -99,7 +100,7 @@ internal open class TerminalKeyEventsHandlerImpl(
       return
     }
     try {
-      val session = sessionDeferred.getNow()
+      val session = readySession
       if (session == null) {
         bufferedEvents.addLast(e)
         e.original.consume()
