@@ -22,7 +22,11 @@ public class TablePositionWidgetHelper implements GridWidget.GridWidgetHelper {
   public TablePositionWidgetHelper(@NotNull TableResultView table, @NotNull DataGrid grid) {
     myTable = table;
     myGrid = grid;
-    table.putClientProperty(POSITION_WIDGET_HELPER_KEY, this);
+  }
+
+  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+    TablePositionWidgetHelper tablePositionWidgetHelper = new TablePositionWidgetHelper(table, grid);
+    table.putClientProperty(POSITION_WIDGET_HELPER_KEY, tablePositionWidgetHelper);
   }
 
   @Override

@@ -16,7 +16,11 @@ public class TableScrollPositionManager implements GridScrollPositionManager {
   TableScrollPositionManager(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
     myResultView = resultView;
     myGrid = grid;
-    myResultView.putClientProperty(SCROLL_POSITION_MANAGER_KEY, this);
+  }
+
+  public static void install(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
+    TableScrollPositionManager tableScrollPositionManager = new TableScrollPositionManager(resultView, grid);
+    resultView.putClientProperty(SCROLL_POSITION_MANAGER_KEY, tableScrollPositionManager);
   }
 
   @Override

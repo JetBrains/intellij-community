@@ -24,7 +24,11 @@ public class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
   TableGoToRowHelper(@NotNull TableResultView table, @NotNull DataGrid grid) {
     myTable = table;
     myDataGrid = grid;
-    table.putClientProperty(GO_TO_ROW_EXECUTOR_KEY, this);
+  }
+
+  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+    TableGoToRowHelper tableGoToRowHelper = new TableGoToRowHelper(table, grid);
+    table.putClientProperty(GO_TO_ROW_EXECUTOR_KEY, tableGoToRowHelper);
   }
 
   @Override

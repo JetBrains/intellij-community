@@ -53,8 +53,11 @@ public class ResizableCellEditorsSupport implements PropertyChangeListener, Tabl
 
     myGrid.addPropertyChangeListener(this);
     addColumnModelListener(myGrid.getColumnModel());
+  }
 
-    grid.putClientProperty(CLIENT_PROPERTY_KEY, this);
+  public static void install(@NotNull JBTable grid) {
+    ResizableCellEditorsSupport resizableCellEditorsSupport = new ResizableCellEditorsSupport(grid);
+    grid.putClientProperty(CLIENT_PROPERTY_KEY, resizableCellEditorsSupport);
   }
 
   @Override
