@@ -29,18 +29,19 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
 
-
-@ApiStatus.Internal
 public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
+  @ApiStatus.Internal
   public FlipCommaIntention() {
     super(PsiElement.class);
   }
-  
+
+  @ApiStatus.Internal
   @Override
   public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("intention.family.name.flip");
   }
 
+  @ApiStatus.Internal
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiElement comma = currentCommaElement(context);
@@ -53,6 +54,7 @@ public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiEleme
     return Presentation.of(CodeInsightBundle.message("intention.name.flip"));
   }
 
+  @ApiStatus.Internal
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiElement comma = updater.getWritable(currentCommaElement(context));
