@@ -11,7 +11,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle.AlertType
-import org.intellij.plugins.markdown.highlighting.alertTitleColorKey
+import org.intellij.plugins.markdown.lang.psi.util.alertTitleColorKey
 import java.awt.Color
 
 class PreviewStyleScheme(

@@ -8,8 +8,10 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.jetbrains.annotations.ApiStatus
 
-internal class MarkdownViewNode(
+@ApiStatus.Internal
+class MarkdownViewNode(
   project: Project?,
   value: MarkdownFileNode,
   viewSettings: ViewSettings?,

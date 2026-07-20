@@ -40,6 +40,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//libraries/miglayout-swing",
         "//fleet/rhizomedb",
+        "//platform/lang-impl",
     ],
 )
 
@@ -79,6 +80,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.frontend` end

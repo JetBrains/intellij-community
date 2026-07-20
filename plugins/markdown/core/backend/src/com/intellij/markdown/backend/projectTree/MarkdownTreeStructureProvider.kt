@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.projectTree
+package com.intellij.markdown.backend.projectTree
 
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.projectTree.MarkdownFileNode
+import org.intellij.plugins.markdown.ui.projectTree.MarkdownViewNode
 
 private val extensionsToFold = listOf("pdf", "docx", "html", "md")
 

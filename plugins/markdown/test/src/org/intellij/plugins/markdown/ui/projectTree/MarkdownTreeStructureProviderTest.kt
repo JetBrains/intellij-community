@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.projectTree
 
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider
 import com.intellij.mock.MockPsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile

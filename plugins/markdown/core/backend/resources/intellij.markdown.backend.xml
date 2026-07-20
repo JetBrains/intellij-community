@@ -89,5 +89,8 @@
       <codeInsight.lineMarkerProvider
         language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
 
+      <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
+
+      <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
     </extensions>
 </idea-plugin>

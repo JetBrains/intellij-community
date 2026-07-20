@@ -171,8 +171,6 @@
 
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
 
-    <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
-
     <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
 
     <completion.contributor language="Markdown"
@@ -186,8 +184,6 @@
 
     <breadcrumbsInfoProvider id="MarkdownDefaultBreadcrumbs"
                              implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
-
-    <treeStructureProvider implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownTreeStructureProvider"/>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
@@ -203,8 +199,6 @@
 
     <editorSmartKeysConfigurable instance="org.intellij.plugins.markdown.settings.MarkdownSmartKeysConfigurable"
                                  id="editor.preferences.markdownOptions"/>
-
-    <codeFoldingOptionsProvider instance="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingOptionsProvider" id="Markdown" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after ObjectiveC"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings" />

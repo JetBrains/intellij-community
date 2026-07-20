@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.highlighting
+package com.intellij.markdown.backend.highlighting
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -13,24 +13,19 @@ import com.intellij.psi.tree.OuterLanguageElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.util.alertTitleColorKey
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parentOfType
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 @Suppress("RegExpRedundantEscape")
 private val FOOTNOTE_REF_IN_TEXT = Regex("""\[\^[^\]\n\t ]+]""")
-
-internal fun alertTitleColorKey(type: MarkdownAlertTitle.AlertType): TextAttributesKey = when (type) {
-  MarkdownAlertTitle.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
-  MarkdownAlertTitle.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
-  MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
-  MarkdownAlertTitle.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
-  MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
-}
 
 /**
  * Style keys to be applied to [PsiElement] with the following semantics:

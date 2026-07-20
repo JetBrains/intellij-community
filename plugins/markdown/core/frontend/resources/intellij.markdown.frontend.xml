@@ -10,6 +10,8 @@
     <registryKey key="markdown.open.link.fallback"
                  defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>
+
+    <codeFoldingOptionsProvider instance="com.intellij.markdown.frontend.settings.provider.MarkdownCodeFoldingOptionsProvider" id="Markdown" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after ObjectiveC"/>
   </extensions>
 
   <actions resource-bundle="messages.MarkdownBundle">

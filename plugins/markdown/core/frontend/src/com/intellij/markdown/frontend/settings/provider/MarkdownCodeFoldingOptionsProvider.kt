@@ -1,9 +1,10 @@
-package org.intellij.plugins.markdown.settings
+package com.intellij.markdown.frontend.settings.provider
 
 import com.intellij.application.options.editor.CodeFoldingOptionsProvider
 import com.intellij.openapi.options.BeanConfigurable
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 
 internal class MarkdownCodeFoldingOptionsProvider: BeanConfigurable<MarkdownCodeFoldingSettings>(
   MarkdownCodeFoldingSettings.getInstance(),
