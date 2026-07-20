@@ -1,0 +1,89 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.ide.minimap` start
+jvm_library(
+    name = "minimap",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.minimap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/monolith"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-api:lang",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/statistics",
+        "//platform/util",
+        "//platform/util-ex",
+        "//platform/util:util-ui",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "minimap_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.minimap",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":minimap",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/monolith:monolith_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.minimap` end
+
+### auto-generated section `iml intellij.platform.ide.minimap` start
+exports_files(
+    [
+        "intellij.platform.ide.minimap.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.minimap` end

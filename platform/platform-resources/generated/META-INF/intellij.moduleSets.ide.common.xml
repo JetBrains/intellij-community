@@ -408,6 +408,7 @@
     <module name="intellij.platform.buildView.backend"/>
     <module name="intellij.platform.buildView.frontend"/>
     <module name="intellij.emojipicker"/>
+    <module name="intellij.platform.ide.minimap"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
     <module name="intellij.platform.polySymbols.backend"/>
