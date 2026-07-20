@@ -43,7 +43,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.inspections",
       "intellij.kotlin.codeInsight.utils",
       "intellij.kotlin.codeInsight.descriptions",
-      "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
       "intellij.kotlin.base.serialization"
     )

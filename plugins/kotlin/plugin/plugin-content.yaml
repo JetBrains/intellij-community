@@ -40,6 +40,9 @@
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
+- name: lib/intellij.kotlin.compilerPlugins.support.bundled.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.support.bundled
 - name: lib/intellij.kotlin.completion.api.jar
   contentModules:
   - name: intellij.kotlin.completion.api
@@ -159,7 +162,6 @@
   - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
-  - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
   - name: intellij.kotlin.base.serialization
   - name: kotlin-ultimate.common-native
