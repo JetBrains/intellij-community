@@ -315,6 +315,14 @@ public class UsageViewManagerImpl extends UsageViewManagerWithUsageViewFactoryCa
 
   void showToolWindow(boolean activateWindow) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+    if (toolWindow == null) {
+      LOG.warn(String.format("Uninitialized %s tool window, which is unexpected. Attempting initializing ad hoc", ToolWindowId.FIND));
+      UsageViewContentManager.getInstance(project);
+      toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+      if (toolWindow == null) {
+        throw new RuntimeException(String.format("Uninitialized %s tool window, which is unexpected. Ad hoc initialization attempt failed", ToolWindowId.FIND));
+      }
+    }
     toolWindow.show(null);
     if (activateWindow && !toolWindow.isActive()) {
       toolWindow.activate(null);
