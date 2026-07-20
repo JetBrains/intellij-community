@@ -1,10 +1,8 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.maven"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
-    <module name="intellij.kotlin.compilerPlugins.support"/>
-    <module name="intellij.kotlin.maven"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>
