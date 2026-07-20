@@ -157,13 +157,6 @@
     />
   </extensions>
 
-  <!-- Declaration search and Find Usages -->
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService
-      serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
-      serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
-    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl$LibraryKindScanner"/>
-  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- test frameworks integration -->

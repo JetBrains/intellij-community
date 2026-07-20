@@ -53,12 +53,6 @@
 
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
-    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
-    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
-  </extensions>
-
 
   <extensions defaultExtensionNs="com.intellij">
 
@@ -205,6 +199,7 @@
     <module name="intellij.kotlin.jvm.debugger.core" loading="embedded"/>
     <module name="intellij.kotlin.plugin.updater" loading="embedded"/>
     <module name="intellij.kotlin.base.compilerConfiguration" loading="embedded"/>
+    <module name="intellij.kotlin.base.platforms" loading="embedded"/>
     <module name="intellij.kotlin.base.psi" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
     <module name="intellij.kotlin.base.facet" loading="embedded"/>
