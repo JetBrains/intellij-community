@@ -5799,9 +5799,6 @@ f:com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider$Companion
 f:com.intellij.internal.ImageDuplicateResultsDialog
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.util.Map):V
 - getPreferredFocusedComponent():javax.swing.JComponent
-com.intellij.internal.retype.RetypeFileAssistant
-- a:acceptLookupElement(com.intellij.codeInsight.lookup.LookupElement):Z
-- retypeDone(com.intellij.openapi.editor.Editor):V
 a:com.intellij.lang.SmartEnterProcessorWithFixers
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - psf:MAX_ATTEMPTS:I

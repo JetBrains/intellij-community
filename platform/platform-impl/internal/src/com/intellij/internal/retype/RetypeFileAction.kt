@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -22,8 +22,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import java.util.Random
 import org.jetbrains.annotations.ApiStatus
+import java.util.Random
 
 
 internal class RetypeFileAction : AnAction() {

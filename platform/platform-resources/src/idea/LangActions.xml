@@ -1101,7 +1101,7 @@
       <add-to-group group-id="MaintenanceGroup"/>
     </action>
 
-    <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
+    <action id="TypingLatencyReport" class="com.intellij.internal.retype.TypingLatencyReportAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
     <action id="RetypeFile" class="com.intellij.internal.retype.RetypeFileAction" internal="true">

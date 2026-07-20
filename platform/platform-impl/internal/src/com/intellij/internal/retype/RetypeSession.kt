@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -12,10 +12,9 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
-import com.intellij.internal.performance.LatencyDistributionRecordKey
-import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
 import com.intellij.internal.performance.latencyRecorderProperties
+import com.intellij.internal.statistic.collectors.fus.LatencyDistributionRecordKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
