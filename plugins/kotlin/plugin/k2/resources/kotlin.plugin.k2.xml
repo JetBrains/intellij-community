@@ -202,26 +202,26 @@
     <module name="intellij.kotlin.base.codeInsight.minimal" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
-    <module name="intellij.kotlin.codeInsight.overrideImplement" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement"/>
     <module name="intellij.kotlin.projectConfiguration" loading="embedded"/>
-    <module name="intellij.kotlin.compilerPlugins.parcelize" loading="embedded"/>
-    <module name="intellij.kotlin.spellchecker" loading="embedded"/>
-    <module name="intellij.kotlin.uast.base" loading="embedded"/>
-    <module name="intellij.kotlin.uast.idea.base" loading="embedded"/>
-    <module name="intellij.kotlin.uast" loading="embedded"/>
-    <module name="intellij.kotlin.uast.idea" loading="embedded"/>
+    <module name="intellij.kotlin.compilerPlugins.parcelize"/>
+    <module name="intellij.kotlin.spellchecker"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.kotlin.uast.idea.base"/>
+    <module name="intellij.kotlin.uast"/>
+    <module name="intellij.kotlin.uast.idea"/>
     <module name="kotlin.fir"/>
     <module name="kotlin.fir.frontend-independent" loading="embedded"/>
     <module name="intellij.kotlin.searching.base" loading="embedded"/>
     <module name="intellij.kotlin.refactorings.base" loading="embedded"/>
     <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
-    <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines"/>
     <module name="intellij.kotlin.jvm.debugger.core" loading="embedded"/>
     <module name="intellij.kotlin.base.psi" loading="embedded"/>
     <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
     <module name="intellij.kotlin.base.facet" loading="embedded"/>
     <module name="intellij.kotlin.ide" loading="embedded"/>
-    <module name="intellij.kotlin.migration" loading="embedded"/>
+    <module name="intellij.kotlin.migration"/>
     <module name="intellij.kotlin.base.statistics" loading="embedded"/>
     <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea" loading="required"/>

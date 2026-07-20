@@ -28,15 +28,9 @@
 - name: lib/intellij.kotlin.codeInsight.api.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.api
-- name: lib/intellij.kotlin.codeInsight.overrideImplement.jar
-  contentModules:
-  - name: intellij.kotlin.codeInsight.overrideImplement
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
-- name: lib/intellij.kotlin.compilerPlugins.parcelize.jar
-  contentModules:
-  - name: intellij.kotlin.compilerPlugins.parcelize
 - name: lib/intellij.kotlin.formatter.jar
   contentModules:
   - name: intellij.kotlin.formatter
@@ -52,12 +46,6 @@
 - name: lib/intellij.kotlin.jvm.debugger.core.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.core
-- name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
-  contentModules:
-  - name: intellij.kotlin.jvm.debugger.coroutines
-- name: lib/intellij.kotlin.migration.jar
-  contentModules:
-  - name: intellij.kotlin.migration
 - name: lib/intellij.kotlin.projectConfiguration.jar
   contentModules:
   - name: intellij.kotlin.projectConfiguration
@@ -67,21 +55,6 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
-- name: lib/intellij.kotlin.spellchecker.jar
-  contentModules:
-  - name: intellij.kotlin.spellchecker
-- name: lib/intellij.kotlin.uast.base.jar
-  contentModules:
-  - name: intellij.kotlin.uast.base
-- name: lib/intellij.kotlin.uast.idea.base.jar
-  contentModules:
-  - name: intellij.kotlin.uast.idea.base
-- name: lib/intellij.kotlin.uast.idea.jar
-  contentModules:
-  - name: intellij.kotlin.uast.idea
-- name: lib/intellij.kotlin.uast.jar
-  contentModules:
-  - name: intellij.kotlin.uast
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -313,6 +286,9 @@
 - name: lib/modules/intellij.kotlin.codeInsight.liveTemplates.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.liveTemplates
+- name: lib/modules/intellij.kotlin.codeInsight.overrideImplement.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.overrideImplement
 - name: lib/modules/intellij.kotlin.codeInsight.postfixTemplates.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.postfixTemplates
@@ -352,6 +328,9 @@
 - name: lib/modules/intellij.kotlin.compilerPlugins.noarg.maven.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.noarg.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.parcelize.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.parcelize
 - name: lib/modules/intellij.kotlin.compilerPlugins.powerAssert.gradle.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.powerAssert.gradle
@@ -442,6 +421,9 @@
 - name: lib/modules/intellij.kotlin.j2k.jar
   contentModules:
   - name: intellij.kotlin.j2k
+- name: lib/modules/intellij.kotlin.jvm.debugger.coroutines.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.coroutines
 - name: lib/modules/intellij.kotlin.jvm.debugger.evaluation.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.evaluation
@@ -457,6 +439,9 @@
 - name: lib/modules/intellij.kotlin.maven.jar
   contentModules:
   - name: intellij.kotlin.maven
+- name: lib/modules/intellij.kotlin.migration.jar
+  contentModules:
+  - name: intellij.kotlin.migration
 - name: lib/modules/intellij.kotlin.navigation.jar
   contentModules:
   - name: intellij.kotlin.navigation
@@ -517,6 +502,21 @@
 - name: lib/modules/intellij.kotlin.searching.jar
   contentModules:
   - name: intellij.kotlin.searching
+- name: lib/modules/intellij.kotlin.spellchecker.jar
+  contentModules:
+  - name: intellij.kotlin.spellchecker
+- name: lib/modules/intellij.kotlin.uast.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.base
+- name: lib/modules/intellij.kotlin.uast.idea.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea.base
+- name: lib/modules/intellij.kotlin.uast.idea.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea
+- name: lib/modules/intellij.kotlin.uast.jar
+  contentModules:
+  - name: intellij.kotlin.uast
 - name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.jar
   contentModules:
   - name: intellij.libraries.kotlin.gradle.plugin.idea
