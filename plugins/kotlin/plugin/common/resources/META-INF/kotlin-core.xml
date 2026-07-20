@@ -75,57 +75,15 @@
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
-
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
             default="true"
             groupKey="advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
-    <registryKey
-            key="kotlin.disable.auto.completion.inside.expression"
-            description="Disables auto-completion inside expressions"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.prefer.vararg.to.noargs"
-            description="For functions show vararg variant before no argruments variant"
-            defaultValue="true"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.insert.constructor.parenthesis"
-            description="Insert constructor parenthesis on class autocompletion"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
-            description="Use PSI based completion when indexing"
-            defaultValue="true"
-            restartRequired="false"/>
-    <completion.contributor
-            language="kotlin"
-            id="KotlinDumbCompletionContributor"
-            order="first, after KotlinCompletionContributor"
-            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
-
-    <completion.plainTextSymbol
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
-
-    <codeInsight.wordCompletionFilter language="kotlin"
-                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
                  description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
-
-    <completion.confidence
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
-    <completion.confidence
-            language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
-            id="kotlinSkipAutopopupInStrings"
-            order="after propertyKeys"/>
 
   </extensions>
 

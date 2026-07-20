@@ -51,19 +51,6 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
-    <!-- shared completion -->
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
-
-    <registryKey key="kotlin.k2.dot.add.enabled"
-                 description="Allow adding '.' to completion lookup"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
-    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
-             id="kotlin.preferKotlinx"
-             order="after sameModule, before knownElement"/>
-
-    <!-- -->
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
