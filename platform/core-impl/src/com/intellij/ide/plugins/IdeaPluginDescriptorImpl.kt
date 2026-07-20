@@ -52,8 +52,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   abstract val ownClassPath: List<Path>?
 
-  /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
-  var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
 
   abstract val isIndependentFromCoreClassLoader: Boolean
