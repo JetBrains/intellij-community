@@ -9,6 +9,7 @@ import com.intellij.lang.LanguageExtensionWithAny;
 import com.intellij.modcompletion.ModCompletionItemFilter;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
@@ -137,6 +138,8 @@ import java.util.stream.Stream;
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
 public abstract class CompletionContributor implements PossiblyDumbAware {
+  private static final Logger LOG = Logger.getInstance(CompletionContributor.class);
+
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
   private final MultiMap<CompletionType, ProviderWithPattern> myMap = new MultiMap<>();
@@ -254,7 +257,11 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
     List<CompletionContributor> contributors;
     if (isRDFrontend) {
+      //noinspection deprecation
       contributors = ContainerUtil.filter(INSTANCE.forKey(language), c -> c instanceof FrontendCompletionContributor);
+      if (contributors.size() > 1) {
+        LOG.error("FrontendCompletionContributors are not allowed to be used by plugins yet: " + contributors);
+      }
     }
     else {
       contributors = INSTANCE.forKey(language);
