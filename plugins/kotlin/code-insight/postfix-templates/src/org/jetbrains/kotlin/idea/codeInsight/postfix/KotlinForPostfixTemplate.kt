@@ -8,16 +8,21 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
@@ -29,6 +34,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.iterationElementType
 import org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedSuggestVariableNameMacro
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
@@ -115,10 +121,27 @@ private fun destructuringComponentNames(element: PsiElement): List<String>? {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun destructuringComponentNamesForIteration(type: KaType): List<String>? {
     val classType = type.lowerBoundIfFlexible() as? KaClassType ?: return null
     if (classType.isMarkedNullable) return null
+    val symbol = classType.symbol as? KaClassSymbol ?: return null
+
+    val iteratorMethodSymbol =
+        symbol.memberScope.declarations(Name.identifier("iterator"))
+            .firstOrNull {
+                val functionSymbol = it as? KaFunctionSymbol ?: return@firstOrNull false
+                functionSymbol.valueParameters.isEmpty()
+            } as? KaFunctionSymbol
+
+    val iteratorTypeArgument =
+        (iteratorMethodSymbol?.returnType as? KaClassType)?.typeArguments?.singleOrNull()?.type
+    // in case more specific iterator is provided
+    if (iteratorTypeArgument is KaUsualClassType) {
+        return destructuringComponentNames(iteratorTypeArgument)
+    }
+
     if (isInheritorOf(classType, StandardClassIds.Map)) return listOf("key", "value")
 
     val elementType = iterationElementType(classType) ?: return null

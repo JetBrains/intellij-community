@@ -172,6 +172,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("mapWithCustomIterator.kt")
+        public void testMapWithCustomIterator() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("nestedList.kt")
         public void testNestedList() throws Exception {
             performTest();
