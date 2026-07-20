@@ -22,6 +22,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -50,15 +51,27 @@ private val MAVEN_VERSIONS = listOf(
 
 internal class MavenCompatibilityVersions : ArgumentsProvider {
   override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<out Arguments?> {
-    return MAVEN_VERSIONS.map { Arguments.of(it) }.stream()
+    return MAVEN_VERSIONS.flatMap { version ->
+      if (version.startsWith("4.")) {
+        listOf(
+          Arguments.of(version, MavenConstants.MODEL_VERSION_4_0_0),
+          Arguments.of(version, MavenConstants.MODEL_VERSION_4_1_0)
+        )
+      }
+      else {
+        listOf(
+          Arguments.of(version, MavenConstants.MODEL_VERSION_4_0_0)
+        )
+      }
+    }.stream()
   }
 }
 
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenCompatibilityVersions::class)
-class MavenCompatibilityProjectImportingTest(private val myMavenVersion: String) {
-  private val maven by mavenImportingFixture(mavenVersion = myMavenVersion, skipPluginResolution = false)
+class MavenCompatibilityProjectImportingTest(private val myMavenVersion: String, private val myModelVersion: String) {
+  private val maven by mavenImportingFixture(mavenVersion = myMavenVersion, modelVersion = myModelVersion, skipPluginResolution = false)
 
   @BeforeEach
   fun before() {
