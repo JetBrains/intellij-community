@@ -131,12 +131,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
         new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
       )
-    ) {
-      @Override
-      public boolean shouldCount() {
-        return false;
-      }
-    },
+    ),
 
     new SkipIndividuallyFilter(
       Set.of(
