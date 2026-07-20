@@ -4,14 +4,44 @@ package com.intellij.testFramework.junit5.showcase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.testFramework.junit5.StressTestApplication
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @StressTestApplication
 class JUnit5StressTest {
+
+  // Lifecycle methods must observe stress mode too (guards against regressions where only test-method invocations are wrapped,
+  // leaving @BeforeAll/@BeforeEach/@AfterEach/@AfterAll with isInStressTest()=false).
+  companion object {
+    @JvmStatic
+    @BeforeAll
+    fun ensureStressInBeforeAll() {
+      assertTrue(ApplicationManagerEx.isInStressTest(), "@BeforeAll should run in stress mode")
+    }
+
+    @JvmStatic
+    @AfterAll
+    fun ensureStressInAfterAll() {
+      assertTrue(ApplicationManagerEx.isInStressTest(), "@AfterAll should run in stress mode")
+    }
+  }
+
+  @BeforeEach
+  fun ensureStressInBeforeEach() {
+    assertTrue(ApplicationManagerEx.isInStressTest(), "@BeforeEach should run in stress mode")
+  }
+
+  @AfterEach
+  fun ensureStressInAfterEach() {
+    assertTrue(ApplicationManagerEx.isInStressTest(), "@AfterEach should run in stress mode")
+  }
 
   @Test
   fun ensureStress() {

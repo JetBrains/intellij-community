@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import kotlin.jvm.optionals.getOrNull
 
@@ -26,6 +27,65 @@ import kotlin.jvm.optionals.getOrNull
  */
 @TestOnly
 class StressTestApplicationExtension : InvocationInterceptor {
+  /**
+   * The lifecycle methods below ([interceptTestClassConstructor], `@BeforeAll`/`@BeforeEach`/`@AfterEach`/`@AfterAll`) are run in
+   * stress mode too. Setup and teardown of a stress test must observe the same [ApplicationManagerEx.isInStressTest]`=true` state as
+   * the test body, otherwise fixtures behave differently from the code under test (e.g. the test framework's permanent debug log level
+   * is only lifted while in stress mode). This restores the class-scoped coverage the previous `BeforeAllCallback`-based implementation
+   * provided, but safely via [ApplicationManagerEx.runInStressTest]'s save/restore instead of the leaky `setInStressTest`.
+   */
+  override fun <T> interceptTestClassConstructor(
+    invocation: InvocationInterceptor.Invocation<T?>,
+    invocationContext: ReflectiveInvocationContext<Constructor<T>>,
+    extensionContext: ExtensionContext?,
+  ): T? {
+    var r: T? = null
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      r = super.interceptTestClassConstructor(invocation, invocationContext, extensionContext)
+    }
+    return r
+  }
+
+  override fun interceptBeforeAllMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      super.interceptBeforeAllMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+
+  override fun interceptBeforeEachMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      super.interceptBeforeEachMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+
+  override fun interceptAfterEachMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      super.interceptAfterEachMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+
+  override fun interceptAfterAllMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      super.interceptAfterAllMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+
   override fun interceptTestMethod(
     invocation: InvocationInterceptor.Invocation<Void>,
     invocationContext: ReflectiveInvocationContext<Method>,
