@@ -10,6 +10,9 @@
 - name: lib/intellij.kotlin.base.compilerConfiguration.jar
   contentModules:
   - name: intellij.kotlin.base.compilerConfiguration
+- name: lib/intellij.kotlin.base.compilerConfiguration.ui.jar
+  contentModules:
+  - name: intellij.kotlin.base.compilerConfiguration.ui
 - name: lib/intellij.kotlin.base.facet.jar
   contentModules:
   - name: intellij.kotlin.base.facet
@@ -148,7 +151,6 @@
   - name: intellij.kotlin.base.plugin
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.analysis.utils
-  - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: intellij.kotlin.compilerPlugins.support
   - name: intellij.kotlin.native
   - name: kotlin.scripting

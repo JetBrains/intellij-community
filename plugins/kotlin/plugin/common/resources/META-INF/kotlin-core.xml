@@ -6,9 +6,7 @@
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
             interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
-            interface="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinFacetValidatorCreator"/>
+
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
@@ -35,17 +33,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
-
-    <projectConfigurable
-            instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
-            id="project.kotlinCompiler"
-            bundle="messages.KotlinBundle"
-            key="kotlin.compiler.configurable"
-            parentId="project.propCompiler"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 

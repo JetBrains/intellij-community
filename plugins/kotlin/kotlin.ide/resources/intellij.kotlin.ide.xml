@@ -18,9 +18,6 @@
     <module name="intellij.platform.structureView"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
-  </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <createFromTemplateHandler implementation="org.jetbrains.kotlin.idea.actions.KotlinCreateFromTemplateHandler"/>
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.kotlin.idea.editor.KotlinStripTrailingSpacesFilterFactory"/>

@@ -8,6 +8,7 @@
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.compilerConfiguration.ui"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.platforms"/>
     <module name="intellij.kotlin.base.projectModel"/>
@@ -90,7 +91,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider
             implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
-    <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
