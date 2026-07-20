@@ -20,6 +20,8 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
         @JvmStatic
         protected val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
         @JvmStatic
+        protected val GRADLE_DSL_SUPPORT_DELEGATES_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl.support.delegates")
+        @JvmStatic
         protected val KGP_PACKAGE: FqName = FqName("org.jetbrains.kotlin.gradle.plugin")
     }
 
