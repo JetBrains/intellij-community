@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-ir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.5.0-dev-498">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.0-dev-498/kotlin-compiler-ir-for-ide-2.5.0-dev-498.jar">
-          <sha256sum>e46b2d544628970aa32a99ac25ee32a29d047725012160de4db21c36a10bf1d2</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-compiler-ir">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.0-dev-498/kotlin-compiler-ir-for-ide-2.5.0-dev-498.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.255-dev-255/kotlin-compiler-ir-for-ide-2.5.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.0-dev-498/kotlin-compiler-ir-for-ide-2.5.0-dev-498-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.255-dev-255/kotlin-compiler-ir-for-ide-2.5.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

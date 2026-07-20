@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
 open class Base {
     fun baseMember() {}
 }

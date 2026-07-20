@@ -803,7 +803,12 @@ interface BaseKotlinConverter {
                 is KtCallExpression -> expr<UCallExpression>(build(::KotlinUFunctionCallExpression))
 
                 is KtBinaryExpression -> {
-                    if (expression.operationToken == KtTokens.ELVIS) {
+                    val operationToken = if (ApplicationManager.getApplication().isInternal) {
+                        expression.operationToken
+                    } else {
+                        expression.operationTokenOrNull
+                    }
+                    if (operationToken == KtTokens.ELVIS) {
                         expr<UExpressionList>(build(::createElvisExpression))
                     } else {
                         expr<UBinaryExpression>(build(::KotlinUBinaryExpression))

@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.5.0-dev-498">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-dev-498/kotlin-scripting-dependencies-2.5.0-dev-498.jar">
-          <sha256sum>1328ecca27cf9bdc38e116693f56dcbf389b3a91802d2b217adc9be4ad7b0fd8</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-scripting-dependencies">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-dev-498/kotlin-scripting-dependencies-2.5.0-dev-498.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.255-dev-255/kotlin-scripting-dependencies-2.5.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-dev-498/kotlin-scripting-dependencies-2.5.0-dev-498-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.255-dev-255/kotlin-scripting-dependencies-2.5.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
