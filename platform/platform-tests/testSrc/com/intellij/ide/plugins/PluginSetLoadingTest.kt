@@ -606,7 +606,7 @@ class PluginSetLoadingTest {
     }
     val descriptor = pluginSet.getPlugin("disabled")
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    assertThat(descriptor).isNotMarkedEnabled()
+    assertThat(descriptor.isLoaded).isFalse()
   }
 
   @Test

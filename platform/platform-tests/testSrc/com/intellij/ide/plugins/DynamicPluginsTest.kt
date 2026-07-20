@@ -447,12 +447,12 @@ class DynamicPluginsTest {
         val fooBarClass = foo.loadClassInsideSelf<FooBarService>()!! // loaded because packed into the same jar with the main descriptor
         if (isNewSupportEnabled()) {
           assertThat(application.getService(fooBarClass)).isNotNull()
-          assertThat(foo.dependencies.first().subDescriptor!!.isMarkedForLoading).isTrue
+          assertThat(foo.dependencies.first().subDescriptor!!.isLoaded).isTrue
           assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNotNull()
         } else {
           // why was it like that...?
           assertThat(application.getService(fooBarClass)).isNull()
-          assertThat(foo.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
+          assertThat(foo.dependencies.first().subDescriptor!!.isLoaded).isFalse
           assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
         }
       }

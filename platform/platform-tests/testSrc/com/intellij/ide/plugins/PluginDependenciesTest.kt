@@ -93,8 +93,8 @@ internal class PluginDependenciesTest {
     val bar = pluginSet.findEnabledPlugin(PluginId.getId("bar")) as PluginMainDescriptor
     val fooDescriptor = bar.dependencies.first { it.pluginId == PluginId.getId("foo") }.subDescriptor!!
     val bazDescriptor = bar.dependencies.first { it.pluginId == PluginId.getId("baz") }.subDescriptor!!
-    assertThat(fooDescriptor.isMarkedForLoading).isTrue
-    assertThat(bazDescriptor.isMarkedForLoading).isFalse
+    assertThat(fooDescriptor.isLoaded).isTrue
+    assertThat(bazDescriptor.isLoaded).isFalse
   }
 
   @Test
