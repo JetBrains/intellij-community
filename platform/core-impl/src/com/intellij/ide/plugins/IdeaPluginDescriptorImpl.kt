@@ -75,7 +75,7 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   @Deprecated("Deprecated in Java")
-  override fun isEnabled(): Boolean = isMarkedForLoading
+  override fun isEnabled(): Boolean = isLoaded
 
   internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
