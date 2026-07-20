@@ -3,9 +3,11 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
 
 class AddChangeListAction : AbstractChangeListAction() {
@@ -22,7 +24,15 @@ class AddChangeListAction : AbstractChangeListAction() {
       }
       dialog.panel.changelistCreatedOrChanged(changeList)
       if (Registry.`is`("vcs.changelist.move.changes.on.create")) {
-        MoveChangesToAnotherListAction.moveSelectedChangesTo(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), changeList)
+        // Use the exactly selected nodes only: selecting a changelist (or a group node) must not
+        // move its whole content, only the files the user explicitly selected.
+        val unversionedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)
+          ?.filter { changeListManager.getStatus(it) == FileStatus.UNKNOWN }
+          .orEmpty()
+        MoveChangesToAnotherListAction.moveSelectedChangesTo(project,
+                                                             e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION),
+                                                             unversionedFiles,
+                                                             changeList)
       }
     }
   }
