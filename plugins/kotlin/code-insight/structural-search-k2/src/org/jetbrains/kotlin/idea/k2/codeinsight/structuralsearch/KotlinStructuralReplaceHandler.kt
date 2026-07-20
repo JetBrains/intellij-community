@@ -88,7 +88,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
             ReadAction.nonBlocking(Callable{
                 analyze(affectedElement) { collectPossibleReferenceShorteningsInElementForIde(affectedElement) }
             }).finishOnUiThread(ModalityState.nonModal()) {
-                WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening() })
+                WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening(results = null) })
             }.submit(AppExecutorUtil.getAppExecutorService())
         }
     }

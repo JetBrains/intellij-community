@@ -85,7 +85,7 @@ abstract class KtGenerateMembersHandler(
             }
 
         runWriteAction {
-            commands.forEach { it.invokeShortening() }
+            commands.forEach { it.invokeShortening(results = null) }
             val project = classOrObject.project
             val codeStyleManager = CodeStyleManager.getInstance(project)
             insertedBlocks.forEach { block ->

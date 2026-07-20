@@ -122,9 +122,14 @@ fun shortenReferencesInRange(
     shortenOptions: ShortenOptionsForIde = ShortenOptionsForIde.DEFAULT,
     classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(file),
     callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(file),
-): List<SmartPsiElementPointer<KtElement>> = allowAnalysisFromWriteActionInEdt(file) {
-    collectPossibleReferenceShorteningsForIde(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
-}.invokeShortening()
+): List<SmartPsiElementPointer<KtElement>> {
+    val shortenCommand = allowAnalysisFromWriteActionInEdt(file) {
+        collectPossibleReferenceShorteningsForIde(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
+    }
+    return mutableListOf<SmartPsiElementPointer<KtElement>>().apply {
+        shortenCommand.invokeShortening(this)
+    }
+}
 
 @Suppress("unused")
 @JvmName("shortenReferencesInRange")
@@ -143,11 +148,14 @@ fun deprecatedShortenReferencesInRange(
     .firstNotNullOfOrNull { it.element }
 
 /**
- * Shortens the references specified in [ShortenCommandForIde] and inserts needed imports
+ * Shortens the references specified in [ShortenCommandForIde] and inserts needed imports.
+ *
+ * For each shortened element, a smart pointer is appended to [results]. Pass `null` when the result is not needed: creating a smart pointer
+ * per shortened element rebuilds the file's stubbed spine after every PSI edit, which is quadratic when shortening a large range
  */
-fun ShortenCommandForIde.invokeShortening(): List<SmartPsiElementPointer<KtElement>> {
+fun ShortenCommandForIde.invokeShortening(results: MutableList<SmartPsiElementPointer<KtElement>>?) {
     // if the file has been invalidated, there's nothing we can shorten
-    val targetFile = targetFile.element ?: return emptyList()
+    val targetFile = targetFile.element ?: return
     val psiFactory = KtPsiFactory(targetFile.project)
 
     for (fqName in importsToAdd) {
@@ -158,9 +166,7 @@ fun ShortenCommandForIde.invokeShortening(): List<SmartPsiElementPointer<KtEleme
         targetFile.addImport(fqName, allUnder = true)
     }
 
-    val shorteningResults = mutableListOf<SmartPsiElementPointer<KtElement>>()
-    //todo
-    //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
+    // TODO PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
 
@@ -168,7 +174,7 @@ fun ShortenCommandForIde.invokeShortening(): List<SmartPsiElementPointer<KtEleme
         if (shortenedRef != null) {
             type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
         }
-        shorteningResults += type.createSmartPointer()
+        results?.add(type.createSmartPointer())
     }
 
     for ((qualifierToShorten, shortenedReference) in listOfQualifierToShortenInfo) {
@@ -183,21 +189,21 @@ fun ShortenCommandForIde.invokeShortening(): List<SmartPsiElementPointer<KtEleme
 
         val selectorExpression = call.selectorExpression ?: continue
         val expression = call.replace(selectorExpression) as KtExpression
-        shorteningResults += expression.createSmartPointer()
+        results?.add(expression.createSmartPointer())
     }
 
     for ((labelToShorten) in thisLabelsToShorten) {
         val thisWithLabel = labelToShorten.element ?: continue
 
         thisWithLabel.labelQualifier?.delete()
-        shorteningResults += thisWithLabel.createSmartPointer()
+        results?.add(thisWithLabel.createSmartPointer())
     }
 
     for (kDocNamePointer in kDocQualifiersToShorten) {
         val kDocName = kDocNamePointer.element ?: continue
 
         kDocName.deleteQualifier()
-        shorteningResults += kDocName.createSmartPointer()
+        results?.add(kDocName.createSmartPointer())
     }
 
     for ((companionReference) in companionReferencesToShorten) {
@@ -210,10 +216,8 @@ fun ShortenCommandForIde.invokeShortening(): List<SmartPsiElementPointer<KtEleme
         }
 
         companionReferenceElement.deleteReferenceFromQualifiedExpression()
-        // N.B. `shorteningResults` are not updated for now
+        // N.B. `results` are not updated for now
     }
-
-    return shorteningResults
 }
 
 private fun KDocName.deleteQualifier() {

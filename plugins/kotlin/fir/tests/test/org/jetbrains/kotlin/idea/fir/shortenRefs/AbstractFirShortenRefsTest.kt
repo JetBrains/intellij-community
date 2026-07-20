@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.shortenRefs
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.AbstractImportsTest
@@ -79,11 +80,9 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
             }
 
             project.executeWriteCommand("") {
-                val shorteningResultAsString = shortenings.invokeShortening()
-                    .asSequence()
-                    .mapNotNull { it.element }
-                    .map { it.text }
-                    .joinToString(System.lineSeparator())
+                val shorteningResultAsString = mutableListOf<SmartPsiElementPointer<KtElement>>().apply {
+                    shortenings.invokeShortening(this)
+                }.mapNotNull { it.element?.text }.joinToString(System.lineSeparator())
 
                 KotlinTestUtils.assertEqualsToFile(getShorteningResultFile(), shorteningResultAsString)
             }

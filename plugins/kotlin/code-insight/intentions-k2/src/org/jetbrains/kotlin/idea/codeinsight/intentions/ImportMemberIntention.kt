@@ -76,7 +76,7 @@ internal class ImportMemberIntention :
         elementContext: Context,
         updater: ModPsiUpdater,
     ) {
-        elementContext.shortenCommand.invokeShortening()
+        elementContext.shortenCommand.invokeShortening(results = null)
     }
 }
 

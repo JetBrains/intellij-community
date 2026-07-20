@@ -135,7 +135,7 @@ internal class ImportAllMembersIntention :
         val shortenCommand = elementContext.shortenCommand
         val file = shortenCommand.targetFile.element ?: return
         removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
-        shortenCommand.invokeShortening()
+        shortenCommand.invokeShortening(results = null)
     }
 
     private fun removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(

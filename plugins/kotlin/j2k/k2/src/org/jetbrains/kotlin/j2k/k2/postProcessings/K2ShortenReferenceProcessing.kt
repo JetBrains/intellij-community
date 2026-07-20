@@ -43,7 +43,7 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
     private class Applier(private val shortenCommand: ShortenCommandForIde, private val project: Project) : PostProcessingApplier {
         override fun apply() {
             CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
-                shortenCommand.invokeShortening()
+                shortenCommand.invokeShortening(results = null)
             }
         }
     }
