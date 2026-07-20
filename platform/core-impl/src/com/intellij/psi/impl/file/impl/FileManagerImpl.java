@@ -12,12 +12,15 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -97,13 +100,32 @@ public final class FileManagerImpl implements FileManagerEx {
     myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
+        analyzeInvalidations(true);
         processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
+        analyzeInvalidations(false);
         processFileTypesChanged(false);
       }
+    });
+  }
+
+  void analyzeInvalidations(boolean entered) {
+    myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
+      FileViewProvider viewProvider = entry.getProvider();
+      if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
+        return;
+      }
+      boolean isStillValid = myVFileToViewProviderMap.evaluateValidity((AbstractFileViewProvider)viewProvider);
+      if (isStillValid) {
+        return;
+      }
+      Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
+      Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
+      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProvider + " got invalid as part of dumb mode!\n" +
+                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode"), attachment));
     });
   }
 
