@@ -11,12 +11,14 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.terminal.TerminalExecutorServiceManager
+import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyBasedArrayDataStream
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import fleet.util.convertGlobToRegEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
@@ -117,6 +119,7 @@ private fun createJediTermServices(
   val textBuffer = TerminalTextBuffer(initialSize.columns, initialSize.rows, styleState, maxHistoryLinesCount)
   val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
+  controller.setModeEnabled(TerminalMode.AltSendsEscape, settings.altSendsEscape())
 
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
