@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class QualifyStaticConstantFix extends StaticImportConstantFix {
-  QualifyStaticConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+  public QualifyStaticConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(psiFile, referenceElement);
   }
 

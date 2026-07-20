@@ -53,12 +53,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
-    PsiElement refParent = ref.getParent();
-    if (!(refParent instanceof PsiMethodCallExpression)) {
-      registrar.register(new StaticImportConstantFix(containingFile, ref));
-      registrar.register(new QualifyStaticConstantFix(containingFile, ref));
-    }
-
     MoveClassToModuleFix.registerFixes(registrar, ref);
 
     if (ref instanceof PsiReferenceExpression refExpr) {

@@ -27,7 +27,7 @@ import java.util.Collections;
 
 @ApiStatus.Internal
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
-  StaticImportConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+  public StaticImportConstantFix(@NotNull PsiFile psiFile, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(psiFile, referenceElement);
   }
 

@@ -9,7 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyStaticConstantFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -23,8 +25,10 @@ import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSwitchBlock;
@@ -85,6 +89,8 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
         registerReferenceFixes(element, sink);
       }
     });
+    fixes(JavaErrorKinds.REFERENCE_AMBIGUOUS, (error, sink) -> registerReferenceFixes(error.psi(), sink));
+    fixes(JavaErrorKinds.EXPRESSION_EXPECTED, (error, sink) -> registerReferenceFixes(error.psi(), sink));
     JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
       if (error.psi() instanceof PsiJavaCodeReferenceElement ref) {
         registerReferenceFixes(ref, sink);
@@ -124,6 +130,12 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     sink.accept(new ImportClassFix(ref));
     if (ref instanceof PsiReferenceExpression refExpr) {
       createVariableActions(refExpr).forEach(sink);
+    }
+    PsiElement refParent = ref.getParent();
+    if (!(refParent instanceof PsiMethodCallExpression)) {
+      PsiFile file = refParent.getContainingFile();
+      sink.accept(new StaticImportConstantFix(file, ref));
+      sink.accept(new QualifyStaticConstantFix(file, ref));
     }
   }
 

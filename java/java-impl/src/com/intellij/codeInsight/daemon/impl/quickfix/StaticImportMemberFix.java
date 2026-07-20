@@ -6,11 +6,18 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +35,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -40,10 +48,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 // will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
 @ApiStatus.Internal
-public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> implements HintAction {
+public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement>
+  implements HintAction, IntentionActionWithModCommandFallback {
   private final List<T> candidates;
   final SmartPsiElementPointer<R> myReferencePointer;
   private final long myPsiModificationCount;
@@ -173,7 +183,6 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     });
   }
 
-
   @Override
   public boolean startInWriteAction() {
     return false;
@@ -214,5 +223,58 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     }
 
     return false;
+  }
+
+  @Override
+  public @NotNull ModCommandAction getFallbackModCommandAction() {
+    return new StaticImportMemberModCommandAction();
+  }
+
+  private class StaticImportMemberModCommandAction implements ModCommandAction {
+    @Override
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (isPsiModificationStampChanged(context.project()) || candidates.isEmpty()) return null;
+      return Presentation.of(getText());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      R ref = myReferencePointer.getElement();
+      return ModCommand.chooseAction(
+        getSelectorTitle(),
+        ContainerUtil.map(candidates, c -> new StaticImportMemberSingleAction(ref, c)));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return StaticImportMemberFix.this.getFamilyName();
+    }
+  }
+
+  private class StaticImportMemberSingleAction extends PsiUpdateModCommandAction<R> {
+    private final T myMember;
+
+    private StaticImportMemberSingleAction(R ref, T member) {
+      super(ref);
+      myMember = member;
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull R element) {
+      if (!myMember.isValid()) return null;
+      PsiClass aClass = Objects.requireNonNull(myMember.getContainingClass());
+      String presentation = ClassPresentationUtil.getNameForClass(aClass, false) + "." + myMember.getName();
+      return Presentation.of(presentation);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull R element, @NotNull ModPsiUpdater updater) {
+      performImport(myMember, element);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return StaticImportMemberFix.this.getFamilyName();
+    }
   }
 }
