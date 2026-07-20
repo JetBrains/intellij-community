@@ -63,6 +63,7 @@ import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyNeverType.Companion.convertNoReturnToNever
 import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PySelfType
@@ -557,7 +558,7 @@ object PyCallExpressionHelper {
       }
     }
     val resolveContext = PyResolveContext.defaultContext(context)
-    return getCallType(expression.multiResolveCallee(resolveContext), expression, context)
+    return getCallType(getCalleeType(expression, resolveContext), expression, context).type
   }
 
   /**
@@ -570,6 +571,7 @@ object PyCallExpressionHelper {
     return getCallType(multiResolveOperator(expression, resolveContext), expression, context)
   }
 
+  @Deprecated(message = "Use `getCallType(PyType?, PyCallSiteOwner, TypeEvalContext)` overload")
   private fun getCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
     return types.filter { it.isCallable }
       .groupBy {
@@ -626,7 +628,7 @@ object PyCallExpressionHelper {
   ): List<PyType?> {
     val firstCallable = types[0].callable
     if (firstCallable != null && PyiUtil.isOverload(firstCallable, context)) {
-      return listOf(resolveOverloadsCallType(types, callSite, context))
+      return listOf(resolveOverloadsCallType(types, callSite, context).type)
     }
     return types.map { it.getCallType(context, callSite) }
   }
@@ -684,27 +686,59 @@ object PyCallExpressionHelper {
     }
   }
 
-  private fun resolveOverloadsCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
+  private fun getCallType(type: PyType?, callSite: PyCallSiteOwner, context: TypeEvalContext): CallType {
+    return when (type) {
+      is PyIntersectionType -> {
+        val allMembers = type.members.map { getCallType(it, callSite, context) }
+        val members = allMembers.filter { it.matched }.ifEmpty { allMembers }
+        CallType(
+          PyIntersectionType.intersection(members.map { it.type }),
+          members.isNotEmpty()
+        )
+      }
+      is PyUnsafeUnionType -> {
+        val members = type.members.map { getCallType(it, callSite, context) }
+        CallType(
+          PyUnsafeUnionType.unsafeUnion(members.map { it.type }),
+          members.any { it.matched }
+        )
+      }
+      is PyUnionType -> {
+        val members = type.members.map { getCallType(it, callSite, context) }
+        CallType(
+          PyUnionType.union(members.map { it.type }),
+          members.all { it.matched }
+        )
+      }
+      is PyOverloadType -> resolveOverloadsCallType(type.items, callSite, context)
+      is PyCallableType -> resolveOverloadsCallType(listOf(type), callSite, context)
+      else -> CallType(PyAnyType.unknown, false)
+    }
+  }
+
+  private fun resolveOverloadsCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): CallType {
     val arguments = callSite.getArguments(types[0].callable)
     val matchingOverloads = types.filter { matchesByArgumentTypes(it, callSite, context) }
     if (matchingOverloads.isEmpty()) {
       return types
-        .map { it.getCallType(context, callSite) }
-        .let { PyUnsafeUnionType.unsafeUnion(it) }
+        .map { it.getCallType(context, callSite).convertNoReturnToNever() }
+        .let { CallType(PyUnsafeUnionType.unsafeUnion(it), false) }
     }
     if (matchingOverloads.size == 1) {
-      return matchingOverloads[0].getCallType(context, callSite)
+      return CallType(matchingOverloads[0].getCallType(context, callSite).convertNoReturnToNever(), true)
     }
     val someArgumentsHaveUnknownType = arguments.any {
       context.getType(it).isAnyOrUnknown
     }
     if (someArgumentsHaveUnknownType) {
       return matchingOverloads
-        .map { it.getCallType(context, callSite) }
-        .let { PyUnsafeUnionType.unsafeUnion(it) }
+        .map { it.getCallType(context, callSite).convertNoReturnToNever() }
+        .let { CallType(PyUnsafeUnionType.unsafeUnion(it), true) }
     }
-    return matchingOverloads.firstOrNull()?.getCallType(context, callSite) ?: PyAnyType.unknown
+    return CallType(matchingOverloads.first().getCallType(context, callSite).convertNoReturnToNever() ?: PyAnyType.unknown, true)
   }
+
+  private class CallType(val type: PyType?, val matched: Boolean)
 
   private fun getSuperCallType(expression: PyCallExpression, context: TypeEvalContext): Maybe<PyType?> {
     val callee = expression.callee

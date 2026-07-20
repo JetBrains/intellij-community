@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import org.jetbrains.annotations.ApiStatus
 
 class PyNeverType private constructor(override val name: String) : PyType {
   companion object {
@@ -15,6 +16,10 @@ class PyNeverType private constructor(override val name: String) : PyType {
 
     @JvmStatic
     fun PyType?.toNoReturnIfNeeded(): PyType? = if (this === NEVER) NO_RETURN else this
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun PyType?.convertNoReturnToNever(): PyType? = if (this === NO_RETURN) NEVER else this
   }
 
   override val isBuiltin: Boolean = true
