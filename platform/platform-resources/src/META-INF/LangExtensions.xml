@@ -1142,8 +1142,6 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule"/>
-    <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator"/>

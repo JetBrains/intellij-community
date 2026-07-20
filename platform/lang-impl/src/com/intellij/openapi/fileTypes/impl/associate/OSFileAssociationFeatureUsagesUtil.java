@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate;
 
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
@@ -9,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ final class OSFileAssociationFeatureUsagesUtil extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("os.file.type.association", 3);
   private static final EventId1<String> ASSOCIATION_CREATED =
     GROUP.registerEvent("os.association.created", EventFields.StringValidatedByCustomRule("file_type",
-                                                                                          FileTypeUsagesCollector.ValidationRule.class));
+                                                                                          FileTypeValidationRule.class));
   private static final String OTHER_FILE_TYPE = "Other";
 
   @Override
