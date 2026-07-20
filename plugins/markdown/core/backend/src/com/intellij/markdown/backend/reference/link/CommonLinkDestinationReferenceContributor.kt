@@ -16,7 +16,7 @@ internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributo
 
   private class CommonLinkDestinationReferenceProvider: PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-      return PathReferenceManager.getInstance().createReferences(element, false, true, true)
+      return PathReferenceManager.getInstance().createReferences(element, false, false, true)
     }
   }
 }
