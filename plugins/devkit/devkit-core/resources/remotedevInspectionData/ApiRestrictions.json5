@@ -75,6 +75,9 @@
   // backend generic apis
   {"apiName": "com.intellij.openapi.vfs.VirtualFileManager", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.openapi.vfs.VfsUtil", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.openapi.roots.FileIndex", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.openapi.roots.ModuleFileIndex", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.openapi.roots.ProjectFileIndex", "extensionPointNames": [], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.stubs.StubIndex", "extensionPointNames": ["com.intellij.stubIndex"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.stubs.StubIndexExtension", "extensionPointNames": ["com.intellij.stubIndex"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.util.indexing.IndexExtension", "extensionPointNames": ["com.intellij.fileBasedIndex"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
