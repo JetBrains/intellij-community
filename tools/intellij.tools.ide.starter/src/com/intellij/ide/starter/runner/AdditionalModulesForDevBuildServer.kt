@@ -11,6 +11,13 @@ object AdditionalModulesForDevBuildServer {
   private val additionalBackendModules: MutableSet<String> = mutableSetOf()
   private val additionalMonolithModules: MutableSet<String> = mutableSetOf()
 
+  class State internal constructor(
+    internal val additionalModules: Set<String>,
+    internal val additionalFrontendModules: Set<String>,
+    internal val additionalBackendModules: Set<String>,
+    internal val additionalMonolithModules: Set<String>,
+  )
+
   enum class IdeTarget {
     FRONTEND, BACKEND, ANY, MONOLITH
   }
@@ -41,6 +48,22 @@ object AdditionalModulesForDevBuildServer {
     return targetAdditionalModules(target).isNotEmpty()
   }
 
+  fun saveState(): State {
+    return State(
+      additionalModules = additionalModules.toSet(),
+      additionalFrontendModules = additionalFrontendModules.toSet(),
+      additionalBackendModules = additionalBackendModules.toSet(),
+      additionalMonolithModules = additionalMonolithModules.toSet(),
+    )
+  }
+
+  fun restoreState(state: State) {
+    additionalModules.replaceWith(state.additionalModules)
+    additionalFrontendModules.replaceWith(state.additionalFrontendModules)
+    additionalBackendModules.replaceWith(state.additionalBackendModules)
+    additionalMonolithModules.replaceWith(state.additionalMonolithModules)
+  }
+
   internal fun getAdditionalModules(ideInfo: IdeInfo): List<String> {
     val result = additionalModules +
                  if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
@@ -53,5 +76,10 @@ object AdditionalModulesForDevBuildServer {
                    additionalMonolithModules
                  }
     return result.toList()
+  }
+
+  private fun MutableSet<String>.replaceWith(modules: Set<String>) {
+    clear()
+    addAll(modules)
   }
 }
