@@ -4539,6 +4539,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/listFactory.kt");
         }
 
+        @TestMetadata("listFactory2.kt")
+        public void testListFactory2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/listFactory2.kt");
+        }
+
         @TestMetadata("noInspection.kt")
         public void testNoInspection() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/noInspection.kt");

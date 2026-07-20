@@ -211,15 +211,19 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         val expression = unwrapParentheses()
         if (!visited.add(expression)) return false
 
-        val constant = expression.evaluate()
-        return when {
-            constant != null && constant !is KaConstantValue.ErrorValue -> true
-            expression is KtConstantExpression -> true
-            expression is KtStringTemplateExpression -> !expression.hasInterpolation()
-            expression is KtNameReferenceExpression -> expression.looksLikeExpectedReference(parameterPosition, visited)
-            expression is KtDotQualifiedExpression -> expression.looksLikeExpectedQualifiedExpression(parameterPosition, visited)
-            expression is KtCallExpression -> expression.looksLikeExpectedCall(receiverExpression = null, parameterPosition, visited)
-            else -> false
+        try {
+            val constant = expression.evaluate()
+            return when {
+                constant != null && constant !is KaConstantValue.ErrorValue -> true
+                expression is KtConstantExpression -> true
+                expression is KtStringTemplateExpression -> !expression.hasInterpolation()
+                expression is KtNameReferenceExpression -> expression.looksLikeExpectedReference(parameterPosition, visited)
+                expression is KtDotQualifiedExpression -> expression.looksLikeExpectedQualifiedExpression(parameterPosition, visited)
+                expression is KtCallExpression -> expression.looksLikeExpectedCall(receiverExpression = null, parameterPosition, visited)
+                else -> false
+            }
+        } finally {
+            visited.remove(expression)
         }
     }
 
