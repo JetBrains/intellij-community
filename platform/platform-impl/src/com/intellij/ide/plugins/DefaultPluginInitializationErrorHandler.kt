@@ -31,7 +31,6 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
   private fun findDescriptors(data: List<PluginStateChangeData>, markedForLoading: Boolean): List<IdeaPluginDescriptorImpl> {
     val ids = data.mapTo(HashSet()) { it.pluginId }
     return PluginManagerCore.getPluginSet().allPlugins.filter { it.getPluginId() in ids }
-      .onEach { it.isMarkedForLoading = markedForLoading }
   }
 
   override suspend fun enableDeferredPlugins() {

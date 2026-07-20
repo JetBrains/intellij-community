@@ -571,9 +571,6 @@ object PluginManagerCore {
     for (pluginList in discoveredPlugins.pluginLists) {
       for (plugin in pluginList.plugins) {
         val exclusionReason = excludedFromLoading[plugin]
-        if (exclusionReason != null) {
-          plugin.isMarkedForLoading = false
-        }
         if (pluginsToLoad.resolvePluginId(plugin.pluginId) == null && exclusionReason != null && exclusionReason !is PluginVersionIsSuperseded) {
           val existing = incompletePlugins[plugin.pluginId]
           if (existing == null || VersionComparatorUtil.compare(plugin.version, existing.version) > 0) {
@@ -669,9 +666,7 @@ object PluginManagerCore {
     val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
-        val isResolved = resolvedPluginSet.isResolved(descriptor)
-        descriptor.isMarkedForLoading = isResolved
-        if (!isResolved) {
+        if (!resolvedPluginSet.isResolved(descriptor)) {
           adaptExclusionReasonAsCycleError(resolvedPluginSet, descriptor, cycleErrors)
         }
       }
