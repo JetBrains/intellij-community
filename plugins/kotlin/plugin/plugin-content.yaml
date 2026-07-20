@@ -37,6 +37,9 @@
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
+- name: lib/intellij.kotlin.completion.api.jar
+  contentModules:
+  - name: intellij.kotlin.completion.api
 - name: lib/intellij.kotlin.formatter.jar
   contentModules:
   - name: intellij.kotlin.formatter
@@ -144,7 +147,6 @@
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: intellij.kotlin.compilerPlugins.support
-  - name: intellij.kotlin.completion.api
   - name: intellij.kotlin.native
   - name: kotlin.scripting
   - name: intellij.kotlin.preferences
