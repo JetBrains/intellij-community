@@ -128,6 +128,13 @@ class McpToolFilterTest {
   }
 
   @Test
+  fun `MaskBased fromMaskList returns allow-all filter for null`() {
+    val filter = McpToolFilter.MaskBased.fromMaskList(null)
+
+    assertThat(filter).isInstanceOf(McpToolFilter.AllowAll::class.java)
+  }
+
+  @Test
   fun `MaskBased fromMaskList returns prohibit-all filter for empty string`() {
     val filter = McpToolFilter.MaskBased.fromMaskList("")
 
