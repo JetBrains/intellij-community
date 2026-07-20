@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -41,12 +40,10 @@ object PySdkFromEnvironmentVariable {
     return findByPath(path)?.let { PyResult.success(it) } ?: createLocalSdkGuessingTypeByPath(path, moduleOrProject)
   }
 
-  suspend fun setModuleSdk(module: Module, projectSdk: Sdk?, sdk: Sdk, pythonPath: String) {
+  fun setModuleSdk(module: Module, projectSdk: Sdk?, sdk: Sdk, pythonPath: String) {
     val moduleSdk = PythonSdkUtil.findPythonSdk(module)
     if (pythonPath != projectSdk?.homePath || pythonPath != moduleSdk?.homePath) {
-      writeAction {
-        module.pythonSdk = sdk
-      }
+      module.pythonSdk = sdk
     }
   }
 }
