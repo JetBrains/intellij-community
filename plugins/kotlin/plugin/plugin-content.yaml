@@ -7,6 +7,9 @@
 - name: lib/intellij.kotlin.base.codeInsight.jar
   contentModules:
   - name: intellij.kotlin.base.codeInsight
+- name: lib/intellij.kotlin.base.compilerConfiguration.jar
+  contentModules:
+  - name: intellij.kotlin.base.compilerConfiguration
 - name: lib/intellij.kotlin.base.facet.jar
   contentModules:
   - name: intellij.kotlin.base.facet
@@ -130,7 +133,6 @@
   - name: kotlin.plugin.k2
   - name: intellij.kotlin.base.util
   - name: intellij.kotlin.base.indices
-  - name: intellij.kotlin.base.compilerConfiguration
   - name: intellij.kotlin.base.plugin
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.platforms
