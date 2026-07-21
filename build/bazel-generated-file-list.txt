@@ -1660,6 +1660,7 @@ plugins/xpath
 plugins/xpath/xslt-rt
 plugins/yaml
 plugins/yaml/backend
+plugins/yaml/syntax
 python
 python/IntelliLang-python
 python/aliasProvider
