@@ -84,6 +84,7 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//python/services/shared",
         "//python/python-exec-service/execService.python",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -145,6 +146,7 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//python/services/shared:shared_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.sdk` end
