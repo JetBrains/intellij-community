@@ -1,0 +1,26 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_warningLevel_multiple-a.kotlin_module
+  test/Client.class
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/warningLevel/multiple/a/client.kt
+  kotlin/warningLevel/multiple/a/util.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Compiling files:
+  kotlin/warningLevel/multiple/a/client.kt
+  kotlin/warningLevel/multiple/a/util.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #3 =================
+Compiling files:
+  kotlin/warningLevel/multiple/a/client.kt
+  kotlin/warningLevel/multiple/a/util.kt
+End of files
+------------------------------------------
+Exit code: ERROR

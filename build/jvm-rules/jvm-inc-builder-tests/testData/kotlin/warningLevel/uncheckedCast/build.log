@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_warningLevel_uncheckedCast-a.kotlin_module
+  test/Client.class
+End of files
+Compiling files:
+  kotlin/warningLevel/uncheckedCast/a/client.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_warningLevel_uncheckedCast-a.kotlin_module
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/warningLevel/uncheckedCast/a/client.kt
+  kotlin/warningLevel/uncheckedCast/a/util.kt
+End of files
+------------------------------------------
+Exit code: OK
