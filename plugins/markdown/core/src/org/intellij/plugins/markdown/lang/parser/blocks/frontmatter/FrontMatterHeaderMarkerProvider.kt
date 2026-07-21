@@ -58,7 +58,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     return listOf(FrontMatterHeaderBlock(position, stateInfo.currentConstraints, productionHolder, possibleDelimiter))
   }
 
-  private fun hasClosingDelimiter(startPosition: LookaheadText.Position, openingDelimiter: String): Boolean {
+  private fun hasClosingDelimiter(startPosition: LookaheadText.Position, openingDelimiter: CharSequence): Boolean {
     var current = startPosition.nextLinePosition() ?: return false
     while (true) {
       val line = current.currentLine
@@ -83,31 +83,31 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     @JvmField
     val FRONT_MATTER_HEADER_CONTENT = MarkdownElementType("FRONT_MATTER_HEADER_CONTENT", isToken = true)
 
-    internal fun isOpeningDelimiterLine(line: String): Boolean {
+    internal fun isOpeningDelimiterLine(line: CharSequence): Boolean {
       return isYamlDashedDelimiterLine(line) || isTomlDelimiterLine(line)
     }
 
-    private fun isYamlDashedDelimiterLine(line: String): Boolean {
+    private fun isYamlDashedDelimiterLine(line: CharSequence): Boolean {
       return line.length >= 3 && line.all { it == '-' }
     }
 
-    internal fun canBePairedWithClosingDots(opening: String): Boolean {
+    internal fun canBePairedWithClosingDots(opening: CharSequence): Boolean {
       return isYamlDashedDelimiterLine(opening)
     }
 
-    private fun isYamlDottedDelimiterLine(line: String): Boolean {
+    private fun isYamlDottedDelimiterLine(line: CharSequence): Boolean {
       return line.length >= 3 && line.all { it == '.' }
     }
 
-    internal fun isYamlDelimiters(opening: String, closing: String): Boolean {
+    internal fun isYamlDelimiters(opening: CharSequence, closing: CharSequence): Boolean {
       return isYamlDashedDelimiterLine(opening) && (isYamlDashedDelimiterLine(closing) || isYamlDottedDelimiterLine(closing))
     }
 
-    private fun isTomlDelimiterLine(line: String): Boolean {
+    private fun isTomlDelimiterLine(line: CharSequence): Boolean {
       return line.length >= 3 && line.all { it == '+' }
     }
 
-    internal fun isTomlDelimiters(opening: String, closing: String): Boolean {
+    internal fun isTomlDelimiters(opening: CharSequence, closing: CharSequence): Boolean {
       return isTomlDelimiterLine(opening) && isTomlDelimiterLine(closing)
     }
   }
