@@ -111,9 +111,7 @@ internal suspend fun setupPipEnv(
 
   when {
     installPackages -> {
-      val pythonArgs = if (basePythonBinaryPath != null) listOf("--python", basePythonBinaryPath.pathString) else emptyList()
-      val command = pythonArgs + listOf("install", "--dev")
-      runPipEnv(projectPath, *command.toTypedArray()).getOr { return it }
+      runPipEnv(projectPath, *pipenvSetupCommand(projectPath, basePythonBinaryPath).toTypedArray()).getOr { return it }
     }
     basePythonBinaryPath != null ->
       runPipEnv(projectPath, "--python", basePythonBinaryPath.pathString).getOr { return it }
@@ -121,6 +119,12 @@ internal suspend fun setupPipEnv(
       runPipEnv(projectPath, "run", "python", "-V").getOr { return it }
   }
   return runPipEnv(projectPath, "--venv")
+}
+
+internal fun pipenvSetupCommand(projectPath: Path, basePythonBinaryPath: PythonBinary?): List<String> {
+  val pythonArgs = if (basePythonBinaryPath != null) listOf("--python", basePythonBinaryPath.pathString) else emptyList()
+  val command = if (projectPath.resolve(PIP_FILE_LOCK).exists()) listOf("sync", "--dev") else listOf("install", "--dev")
+  return pythonArgs + command
 }
 
 private suspend fun setUpPipEnv(moduleBasePath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Path> {
