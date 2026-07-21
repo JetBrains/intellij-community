@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.newui.PluginLogo.endBatchMode
 import com.intellij.ide.plugins.newui.PluginLogo.startBatchMode
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
+import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 abstract class SearchResultPanel(
@@ -42,6 +44,8 @@ abstract class SearchResultPanel(
   private var myQueryJob: Job? = null
   private var isLoading = false
   private var myAnnounceSearchResultsAlarm: SingleAlarm? = null
+
+  protected val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
     myPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("title.search.results"))
@@ -108,7 +112,9 @@ abstract class SearchResultPanel(
     val group = this.group
 
     myQueryJob = coroutineScope.launch(Dispatchers.IO) {
+      val searchStart = TimeSource.Monotonic.markNow()
       handleQuery(query, group)
+      tracker.measure(if (isMarketplace) "search.marketplace.latency" else "search.installed.latency", searchStart)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         loading(false)
       }

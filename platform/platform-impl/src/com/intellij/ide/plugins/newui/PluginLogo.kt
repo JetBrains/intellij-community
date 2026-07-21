@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.ui.LafManagerListener
@@ -46,6 +47,7 @@ import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.swing.Icon
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.TimeSource
 import com.intellij.util.lang.ZipFile as IntelliJZipFile
 
 private val iconCache = CollectionFactory.createConcurrentWeakValueMap<String, Pair<PluginLogoIconProvider?, PluginLogoIconProvider?>>()
@@ -386,6 +388,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
   @JvmField
   var prepareToLoad: MutableList<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = null
   private val dispatcher = Dispatchers.IO.limitedParallelism(4)
+  private val tracker = PluginManagerUiTracker()
 
   fun startBatchMode() {
     assert(prepareToLoad == null)
@@ -408,6 +411,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
     coroutineScope.launch(dispatcher) {
       for (info in loadInfo) {
         launch {
+          val loadStart = TimeSource.Monotonic.markNow()
           val idPlugin = getIdForKey(descriptor = info.first)
           val path = info.first.pluginPath
           if (path == null) {
@@ -420,6 +424,8 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
           else {
             loadPluginIconsFromFile(path = path, idPlugin = idPlugin, lazyIcon = info.second)
           }
+          // path == null means the icon is downloaded from the marketplace, otherwise it is read from local plugin files
+          tracker.measure(if (path == null) "icon.load.remote" else "icon.load.local", loadStart)
         }
       }
     }

@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
+import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
@@ -119,6 +120,7 @@ import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
 import kotlin.coroutines.coroutineContext
+import kotlin.time.TimeSource
 
 @Internal
 class PluginDetailsPageComponent @JvmOverloads constructor(
@@ -215,6 +217,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val coroutineScope = pluginModel.getModel().coroutineScope
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var buttonsLoadedDeferred: Deferred<Unit>? = null
+
+  private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
     nameAndButtons = BaselinePanel(12, false)
@@ -928,6 +932,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun doLoad(component: ListPluginComponent, task: suspend () -> Unit) {
     startLoading()
+    val loadStart = TimeSource.Monotonic.markNow()
     val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     coroutineScope.launch(limitedDispatcher) {
       task()
@@ -937,6 +942,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           showPluginImpl(component.getPluginModel(), component.getUpdatePluginDescriptor())
           pluginCardOpened(component.getPluginModel().getDescriptor(), component.getGroup())
         }
+        tracker.measure("plugin.card.load", loadStart)
       }
     }
   }

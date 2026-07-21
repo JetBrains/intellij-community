@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState.any
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
@@ -59,6 +60,7 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 class InstalledPluginsTab @RequiresEdt constructor(
@@ -92,6 +94,8 @@ class InstalledPluginsTab @RequiresEdt constructor(
   private val installedPanel = createInstalledPanel(eventHandler)
 
   private var pluginUpdateSubscription: PluginUpdateSubscription? = null
+
+  private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
     updateAllLink.isVisible = false
@@ -127,29 +131,50 @@ class InstalledPluginsTab @RequiresEdt constructor(
   private fun computeAndApplyInstalledPanelModel() {
     val myPluginModel = pluginModelFacade.getModel()
     coroutineScope.launch(Dispatchers.IO) {
-      myPluginModel.waitForSessionInitialization()
-      val pluginManager = UiPluginManager.getInstance()
-      val installedPlugins = pluginManager.getInstalledPlugins()
-      val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
-      val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
-      val visiblePluginsRequiresUltimate = pluginManager.getPluginsRequiresUltimateMap(visiblePlugins.map { it.pluginId })
-      val errors = MyPluginModel.getErrors(errorCheckResults)
-      val installationStates = pluginManager.getInstallationStates()
-      withContext(Dispatchers.EDT + any().asContextElement()) {
-        try {
-          PluginLogo.startBatchMode()
-          val model = CreateInstalledPanelModel(
-            installedPlugins,
-            visiblePlugins,
-            errors,
-            visiblePluginsRequiresUltimate,
-            installationStates
-          )
-          applyInstalledPanelModel(model)
-        }
-        finally {
-          PluginLogo.endBatchMode()
-        }
+      val totalStart = TimeSource.Monotonic.markNow()
+      try {
+        val model = fetchInstalledPanelModel(myPluginModel)
+        tracker.measure("installed.tab.fetch", totalStart)
+
+        renderInstalledPanelModel(model)
+        tracker.measure("installed.tab.total", totalStart)
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        tracker.logEvent("installed.tab.load.error")
+        throw e
+      }
+    }
+  }
+
+  private suspend fun fetchInstalledPanelModel(myPluginModel: MyPluginModel): CreateInstalledPanelModel {
+    myPluginModel.waitForSessionInitialization()
+    val pluginManager = UiPluginManager.getInstance()
+    val installedPlugins = pluginManager.getInstalledPlugins()
+    val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
+    val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
+    val visiblePluginsRequiresUltimate = pluginManager.getPluginsRequiresUltimateMap(visiblePlugins.map { it.pluginId })
+    val errors = MyPluginModel.getErrors(errorCheckResults)
+    val installationStates = pluginManager.getInstallationStates()
+    return CreateInstalledPanelModel(
+      installedPlugins,
+      visiblePlugins,
+      errors,
+      visiblePluginsRequiresUltimate,
+      installationStates,
+    )
+  }
+
+  private suspend fun renderInstalledPanelModel(model: CreateInstalledPanelModel) {
+    withContext(Dispatchers.EDT + any().asContextElement()) {
+      val renderStart = TimeSource.Monotonic.markNow()
+      try {
+        PluginLogo.startBatchMode()
+        applyInstalledPanelModel(model)
+      }
+      finally {
+        PluginLogo.endBatchMode()
+        tracker.measure("installed.tab.render", renderStart)
       }
     }
   }
