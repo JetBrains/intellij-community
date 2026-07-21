@@ -395,7 +395,7 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun `core plugin has implicit host and product mode plugin aliases`() {
+  fun `core plugin has implicit host and arch plugin aliases`() {
     val path = plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.installAt(pluginDirPath)
     val descriptor = loadDescriptorInTest(path)
     assertThat(descriptor).isNotNull
@@ -403,31 +403,13 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
     }
-    val productAliases = productModeAliasesForCorePlugin()
-    if (productAliases.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    val archIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
+    if (archIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No cpu arch plugin aliases")
     }
     assertThat(descriptor.pluginAliases)
       .containsAll(hostIds)
-      .containsAll(productAliases)
-  }
-
-  @Test
-  fun `core plugin has implicit CPU arch mode plugin alias`() {
-    val path = plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.installAt(pluginDirPath)
-    val descriptor = loadDescriptorInTest(path)
-    assertThat(descriptor).isNotNull
-    val hostIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
-    if (hostIds.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
-    }
-    val productAliases = productModeAliasesForCorePlugin()
-    if (productAliases.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
-    }
-    assertThat(descriptor.pluginAliases)
-      .containsAll(hostIds)
-      .containsAll(productAliases)
+      .containsAll(archIds)
   }
 
   @Test

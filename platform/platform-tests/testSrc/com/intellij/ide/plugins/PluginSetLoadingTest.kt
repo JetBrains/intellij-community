@@ -487,7 +487,7 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     val core = pluginSet.getEnabledPlugin("com.intellij")
-    for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()) {
+    for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + PluginCpuArchRequirement.getHostCpuArchModuleIds()) {
       assertThat(pluginSet.findEnabledPlugin(alias)).isSameAs(core)
     }
   }

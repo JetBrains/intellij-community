@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
-import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
@@ -13,9 +12,7 @@ import com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst
 import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -189,8 +186,7 @@ class PluginMainDescriptor(
     }
     return pluginAliases +
            IdeaPluginOsRequirement.getHostOsModuleIds() +
-           PluginCpuArchRequirement.getHostCpuArchModuleIds() +
-           productModeAliasesForCorePlugin()
+           PluginCpuArchRequirement.getHostCpuArchModuleIds()
   }
 
   private fun convertContentModules(contentElements: List<ContentModuleElement>): PluginContentDescriptor {
@@ -245,36 +241,6 @@ class PluginMainDescriptor(
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
     }
-  }
-}
-
-/**
- * This method returns plugin aliases, which are added to the core module.
- * This is done to support running without the module-based loader (from sources and in dev mode),
- * where all modules are available, but only some of them need to be loaded.
- *
- * This method is left for compatibility only.
- * Now dependencies on 'intellij.platform.frontend' and 'intellij.platform.backend' should be used instead.
- * These modules are automatically disabled if they aren't relevant to the product mode, see [moduleIncompatibleWithCurrentProductMode].
- */
-@VisibleForTesting
-@Obsolete
-@Internal
-fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
-  if (!AppMode.isRemoteDevHost()) {
-    // This alias is available in monolith and frontend.
-    // Modules, which depend on it, will not be loaded in a split backend.
-    add(PluginId.getId("com.intellij.platform.experimental.frontend"))
-  }
-  if (!PlatformUtils.isJetBrainsClient()) {
-    // This alias is available in monolith and backend.
-    // Modules, which depend on it, will not be loaded in a split frontend.
-    add(PluginId.getId("com.intellij.platform.experimental.backend"))
-  }
-  if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient()) {
-    // This alias is available in monolith only.
-    // Modules, which depend on it, will not be loaded in split mode.
-    add(PluginId.getId("com.intellij.platform.experimental.monolith"))
   }
 }
 
