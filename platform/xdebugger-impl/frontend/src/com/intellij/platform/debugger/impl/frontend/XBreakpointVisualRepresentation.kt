@@ -101,7 +101,7 @@ class XBreakpointVisualRepresentation(
   private suspend fun internalUpdateUI(callOnUpdate: Runnable) {
     val file = myBreakpoint.getFile() ?: return
 
-    val document = readAction { findDocument(file, mayDecompile = false) }
+    val document = findDocument(file, mayDecompile = false)
     if (document == null) {
       // currently LazyRangeMarkerFactory creates document for non binary files
       if (readAction { file.fileType.isBinary() }) {
@@ -195,31 +195,22 @@ class XBreakpointVisualRepresentation(
     redrawInlineInlays()
   }
 
-  private fun findDocument(file: VirtualFile, mayDecompile: Boolean): Document? {
+  private suspend fun findDocument(file: VirtualFile, mayDecompile: Boolean): Document? {
     var document = FileDocumentManager.getInstance().getCachedDocument(file)
     if (document == null) {
       if (!mayDecompile && file.fileType.isBinary()) {
         return null
       }
-      document = getDocumentOrNull(file) ?: return null
+      file.ensureContentLoaded()
+      document = readAction { FileDocumentManager.getInstance().getDocument(file) } ?: return null
     }
 
+    val type = myBreakpoint.type
     // TODO IJPL-185322 support XBreakpointTypeWithDocumentDelegation
-    if (myBreakpoint.type is XBreakpointTypeWithDocumentDelegation) {
-      document = (myBreakpoint.type as XBreakpointTypeWithDocumentDelegation).getDocumentForHighlighting(document)
+    if (type is XBreakpointTypeWithDocumentDelegation) {
+      document = readAction { type.getDocumentForHighlighting(document!!) }
     }
     return document
-  }
-
-  private fun getDocumentOrNull(file: VirtualFile): Document? {
-    return try {
-      FileDocumentManager.getInstance().getDocument(file)
-    }
-    catch (e: Exception) {
-      // See IJPL-202734 for the reason why we handle the exception here
-      LOG.warn("Failed to load document for breakpoint file: ${file.url}", e)
-      null
-    }
   }
 
   fun removeHighlighter() {
@@ -245,7 +236,7 @@ class XBreakpointVisualRepresentation(
 
     val service = RedrawInlaysService.getInstance(myProject)
     service.launch {
-      val document = readAction { findDocument(file, mayDecompile = true) } ?: return@launch
+      val document = findDocument(file, mayDecompile = true) ?: return@launch
       InlineBreakpointInlayManager.getInstance(myProject).redrawLine(document, line)
     }
   }
