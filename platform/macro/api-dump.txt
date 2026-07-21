@@ -12,12 +12,18 @@ f:com.intellij.ide.macro.MacroManager
 - s:getInstance():com.intellij.ide.macro.MacroManager
 - getMacros():java.util.Collection
 com.intellij.ide.macro.MacroWithParams
+f:com.intellij.ide.macro.ModulePathMacro
+- com.intellij.ide.macro.PathListMacro
 com.intellij.ide.macro.PathMacro
 f:com.intellij.ide.macro.ProjectFileDirMacro
 - com.intellij.ide.macro.Macro
 - com.intellij.ide.macro.PathMacro
 - <init>():V
+f:com.intellij.ide.macro.ProjectPathMacro
+- com.intellij.ide.macro.PathListMacro
 a:com.intellij.ide.macro.PromptingMacro
 - com.intellij.ide.macro.Macro
 - <init>():V
 com.intellij.ide.macro.SecondQueueExpandMacro
+f:com.intellij.ide.macro.SourcepathMacro
+- com.intellij.ide.macro.PathListMacro

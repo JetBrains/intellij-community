@@ -34,6 +34,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.eel.EelOsFamily;
+import com.intellij.platform.eel.fs.EelFileSystemApiKt;
+import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,9 +44,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -451,7 +456,17 @@ public class Tool implements SchemeElement {
     @Override
     public @NotNull String convertPath(@NotNull String path) {
       if (!path.isEmpty()) {
-        var eelPath = JEelUtils.toEelPath(Path.of(path));
+        Path nioPath;
+        try {
+          nioPath = Path.of(path);
+        }
+        catch (InvalidPathException e) {
+          // Guard against macros that return a path list (e.g. ";"-joined on Windows) but are
+          // misclassified as PathMacro instead of PathListMacro. Return the value unchanged so
+          // the External Tool run does not crash.
+          return path;
+        }
+        var eelPath = JEelUtils.toEelPath(nioPath);
         if (eelPath != null) return eelPath.toString();
       }
       return path;
@@ -460,8 +475,18 @@ public class Tool implements SchemeElement {
     @Override
     public @NotNull String convertPathList(@NotNull String pathList) {
       List<String> paths = StringUtil.split(pathList, File.pathSeparator);
-      return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), ":");
+      if (paths.isEmpty()) return pathList;
+      var eelPath = JEelUtils.toEelPath(Path.of(paths.getFirst()));
+      if (eelPath == null) return pathList;
+      var separator =  eelPath.getDescriptor().getOsFamily() == EelOsFamily.Windows ? ";" : ":";
+      return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), separator);
     }
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public static MacroPathConverter createMacroConverter() {
+    return new EelMacroPathConverter();
   }
 
   private static @Nullable Path getContextPath(@NotNull Path cmd, @Nullable Path workDir) {
