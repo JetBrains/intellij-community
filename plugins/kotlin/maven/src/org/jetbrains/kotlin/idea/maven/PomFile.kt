@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.build
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.KOTLIN_VERSION_PROPERTY
+import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.javacMavenId
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
@@ -299,20 +300,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String): Boolean =
         plugin == null || plugin.executions.none { it.executionId != excludedExecutionId && goal in it.goals }
 
-    fun hasJavacPlugin(): Boolean {
-        return findPlugin(
-            MavenId(
-                "org.apache.maven.plugins",
-                "maven-compiler-plugin",
-                null
-            )
-        ) != null
-    }
+    fun hasJavacPlugin(): Boolean =
+        findPlugin(javacMavenId) != null
 
     fun addJavacExecutions(module: Module, kotlinPlugin: MavenDomPlugin) {
         val javacPlugin =
             ensurePluginAfter(
-                addPlugin(MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)),
+                addPlugin(javacMavenId),
                 kotlinPlugin
             )
 
@@ -353,7 +347,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
                 error("Can't find maven project for $module")
             }
 
-        val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+        val plugin = project.findPlugin(javacMavenId.groupId, javacMavenId.artifactId)
 
         if (isPluginExecutionMissing(plugin, "default-compile", "compile")) {
             addExecution(javacPlugin, "compile", DefaultPhases.Compile, listOf("compile"))
