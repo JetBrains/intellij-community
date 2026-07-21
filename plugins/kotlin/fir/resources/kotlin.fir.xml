@@ -12,6 +12,7 @@
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
@@ -27,8 +28,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
+
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelArrayAccessParameterInfoHandler"/>

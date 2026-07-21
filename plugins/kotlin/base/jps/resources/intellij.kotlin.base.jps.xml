@@ -4,6 +4,7 @@
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
   </dependencies>
   <!-- endregion -->
 

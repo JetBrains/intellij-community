@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.formatter"/>

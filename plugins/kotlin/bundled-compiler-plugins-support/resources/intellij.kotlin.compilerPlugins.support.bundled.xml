@@ -1,4 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.plugin"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"

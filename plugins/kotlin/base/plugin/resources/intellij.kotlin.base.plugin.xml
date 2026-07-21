@@ -1,0 +1,37 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
+            interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
+            interface="org.jetbrains.kotlin.idea.compiler.configuration.FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
+
+    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducerCacheInvalidator"/>
+    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.DefaultKotlinCompilerVersionProvider"
+                                   order="last"/>
+  </extensions>
+</idea-plugin>

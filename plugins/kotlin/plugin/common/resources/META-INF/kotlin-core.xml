@@ -2,19 +2,10 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
-            interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
-            dynamic="true"/>
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
-            interface="org.jetbrains.kotlin.idea.compiler.configuration.FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
-            area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
@@ -24,7 +15,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
@@ -46,15 +36,6 @@
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
                  description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
-
-  </extensions>
-
-  <!-- Templates -->
-
-  <!-- Line markers -->
-
-  <!-- Editing -->
-  <extensions defaultExtensionNs="com.intellij">
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"

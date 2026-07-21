@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.compiler"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.projectConfiguration"/>
   </dependencies>

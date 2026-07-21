@@ -8,15 +8,16 @@
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.statistics"/>
-<module name="intellij.kotlin.formatter"/>
-<module name="intellij.kotlin.migration"/>
-<module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.migration"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.references"/>
-<module name="intellij.xml.analysis"/>
-</dependencies>
-<!-- endregion -->
+    <module name="intellij.xml.analysis"/>
+  </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator id="kotlinJavaMavenConfigurator" implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>

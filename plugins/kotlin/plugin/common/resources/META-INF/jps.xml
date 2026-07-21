@@ -6,8 +6,4 @@
                  description="KTIJ-29020 - cache info about external system id for evaluating the final Kotlin JPS compiler version.
                  It is necessary when the workspace has two projects with different build systems and different versions of the Kotlin compiler"  />
   </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.DefaultKotlinCompilerVersionProvider"
-                                   order="last"/>
-  </extensions>
 </idea-plugin>

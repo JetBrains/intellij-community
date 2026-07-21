@@ -3,12 +3,13 @@
   <dependencies>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
-<module name="intellij.kotlin.base.compilerConfiguration"/>
-<module name="intellij.kotlin.base.facet"/>
-<module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.references"/>
-</dependencies>
-<!-- endregion -->
+  </dependencies>
+  <!-- endregion -->
 <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>

@@ -25,6 +25,9 @@
 - name: lib/intellij.kotlin.base.platforms.jar
   contentModules:
   - name: intellij.kotlin.base.platforms
+- name: lib/intellij.kotlin.base.plugin.jar
+  contentModules:
+  - name: intellij.kotlin.base.plugin
 - name: lib/intellij.kotlin.base.projectStructure.jar
   contentModules:
   - name: intellij.kotlin.base.projectStructure
@@ -159,7 +162,6 @@
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2
   - name: intellij.kotlin.base.util
-  - name: intellij.kotlin.base.plugin
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.native

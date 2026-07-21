@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.maven"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.compilerPlugins.support"/>
     <module name="intellij.kotlin.maven"/>
   </dependencies>
