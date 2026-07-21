@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 
 /**
+ * For a comprehensive authoring guide, see the [MCP Server README](../../../../README.md).
+ *
  * Marker interface for MCP toolset
  *
  * You may inherit it and define your tools as ordinary Kotlin methods.

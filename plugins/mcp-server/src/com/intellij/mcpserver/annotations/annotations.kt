@@ -3,6 +3,9 @@ package com.intellij.mcpserver.annotations
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
 
+/**
+ * For a comprehensive authoring guide, see the [MCP Server README](../../../../../README.md).
+ */
 @Target(AnnotationTarget.FUNCTION)
 annotation class McpTool(
   /**

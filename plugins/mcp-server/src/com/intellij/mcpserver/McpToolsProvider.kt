@@ -6,6 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
  * Extension point to provide custom MCP tools.
  *
  * Better to use [McpToolset] extension point instead for easier definition of MCP tools.
+ *
+ * For a comprehensive authoring guide, see the [MCP Server README](../../../../README.md).
  */
 interface McpToolsProvider {
   companion object {
