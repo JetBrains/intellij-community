@@ -423,6 +423,9 @@ abstract class KotlinMavenConfigurator protected constructor(
         val kotlinPluginId: MavenId
             get() = kotlinPluginId(version = null)
 
+        val javacMavenId: MavenId
+            get() = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)
+
         fun kotlinPluginId(version: String? = null): MavenId =
             MavenId(GROUP_ID, MAVEN_PLUGIN_ID, version)
 
