@@ -49,8 +49,8 @@ class TerminalBlocksModelImpl(
         trimBlocksBefore(outputModel.startOffset)
         trimBlocksAfter(outputModel.endOffset)
         if (!event.isTrimming) {
-          trimBlocksAfter(event.offset)
-          adjustActiveBlockOffsets(event)
+          val overwrittenBlock = trimBlocksAfter(event.offset)
+          adjustActiveBlockOffsets(event, overwrittenBlock)
         }
       }
     })
@@ -121,9 +121,14 @@ class TerminalBlocksModelImpl(
 
   /**
    * Removes all blocks that start after [offset].
+   *
+   * @return the first removed block (the newest one, since removal goes from the end), or null if nothing was removed.
+   * It is the block that held the currently running command right before it was overwritten, so the caller can
+   * carry its command metadata over to the surviving block.
    */
-  private fun trimBlocksAfter(offset: TerminalOffset) {
+  private fun trimBlocksAfter(offset: TerminalOffset): TerminalBlockBase? {
     val firstBlockToRemoveIndex = blocks.indexOfFirst { it.startOffset > offset }
+    val firstRemovedBlock = if (firstBlockToRemoveIndex != -1) activeBlock else null
     if (firstBlockToRemoveIndex != -1) {
       repeat(blocks.size - firstBlockToRemoveIndex) {
         val block = blocks.removeLast()
@@ -134,10 +139,23 @@ class TerminalBlocksModelImpl(
     if (blocks.isEmpty()) {
       addNewBlock(outputModel.startOffset)
     }
+
+    return firstRemovedBlock
   }
 
-  private fun adjustActiveBlockOffsets(event: TerminalContentChangeEvent) {
+  private fun adjustActiveBlockOffsets(event: TerminalContentChangeEvent, overwrittenBlock: TerminalBlockBase?) {
     var block = activeBlock as TerminalCommandBlockImpl
+
+    // A newer block was overwritten by a change that started before it.
+    // That block is gone, but the currently active block now holds its content,
+    // so it must report that command instead of the stale one it had before.
+    val overwrittenCommandBlock = overwrittenBlock as? TerminalCommandBlock
+    if (overwrittenCommandBlock?.executedCommand != null) {
+      block = block.copy(
+        executedCommand = overwrittenCommandBlock.executedCommand,
+        exitCode = overwrittenCommandBlock.exitCode,
+      )
+    }
 
     val delta = event.newText.length.toLong() - event.oldText.length
     if (block.commandStartOffset != null
