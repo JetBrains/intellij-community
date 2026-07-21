@@ -792,6 +792,9 @@ class PyDevdAPI(object):
         int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression)
         py_db.post_internal_command(int_cmd, thread_id)
 
+    def request_interrupt_console(self, py_db):
+        return py_db.interrupt_console_evaluation()
+
     def request_load_source(self, py_db, seq, filename):
         """
         :param str filename:

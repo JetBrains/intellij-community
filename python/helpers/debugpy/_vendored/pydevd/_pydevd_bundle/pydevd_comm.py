@@ -129,7 +129,9 @@ from _pydev_bundle import _pydev_completer
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
+from _pydevd_bundle import pydevd_timeout
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from contextlib import contextmanager
 from io import StringIO
 
 # CMD_XXX constants imported for backward compatibility
@@ -1174,6 +1176,24 @@ def _evaluate_response(py_db, request, result, error_message=""):
 _global_frame = None
 
 
+@contextmanager
+def _console_interrupt_scope(py_db, context):
+    """
+    While a repl evaluation runs, registers a callback that allows interrupting it on request
+    (e.g. Ctrl+C in the debug console) by raising a KeyboardInterrupt in this thread. The
+    callback must be created here so it targets the thread that actually runs the evaluation.
+    """
+    if context != "repl":
+        yield
+        return
+
+    py_db.set_console_interrupt_callback(pydevd_timeout.create_interrupt_this_thread_callback())
+    try:
+        yield
+    finally:
+        py_db.set_console_interrupt_callback(None)
+
+
 def internal_evaluate_expression_json(py_db, request, thread_id):
     """
     :param EvaluateRequest request:
@@ -1197,7 +1217,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         # If we're not in a repl (watch, hover, ...) don't show warnings.
         ctx = filter_all_warnings()
 
-    with ctx:
+    with ctx, _console_interrupt_scope(py_db, context):
         try_exec = False
         if frame_id is None:
             if _global_frame is None:
