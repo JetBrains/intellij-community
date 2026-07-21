@@ -35,5 +35,7 @@
             implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
     <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
   </extensions>
 </idea-plugin>

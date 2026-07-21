@@ -33,7 +33,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.base.indices",
       "intellij.kotlin.base.plugin",
       "intellij.kotlin.base.kdoc",
-      "intellij.kotlin.base.jps",
       "intellij.kotlin.base.analysis.utils",
       "intellij.kotlin.native",
       "kotlin.scripting",

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.jps"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

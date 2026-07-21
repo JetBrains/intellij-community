@@ -15,8 +15,4 @@
                                    implementationClass="org.jetbrains.kotlin.ide.konan.NativeDefinitionsSyntaxHighlighterFactory"/>
     <languageInjector implementation="org.jetbrains.kotlin.ide.konan.CLanguageInjector"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind"/>
-  </extensions>
 </idea-plugin>

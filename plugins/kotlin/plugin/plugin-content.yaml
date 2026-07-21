@@ -16,6 +16,9 @@
 - name: lib/intellij.kotlin.base.facet.jar
   contentModules:
   - name: intellij.kotlin.base.facet
+- name: lib/intellij.kotlin.base.jps.jar
+  contentModules:
+  - name: intellij.kotlin.base.jps
 - name: lib/intellij.kotlin.base.platforms.jar
   contentModules:
   - name: intellij.kotlin.base.platforms
@@ -92,9 +95,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
   reason: withProjectLibrary
-- name: lib/kotlin-base-jps.jar
-  modules:
-  - name: intellij.kotlin.base.jps
 - name: lib/kotlin-plugin-shared.jar
   modules:
   - name: intellij.kotlin.base.codeInsight.minimal
