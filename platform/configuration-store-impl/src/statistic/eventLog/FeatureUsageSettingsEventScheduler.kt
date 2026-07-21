@@ -15,9 +15,11 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,10 +30,16 @@ private val PERIOD_DELAY = 1.days
 
 internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
   override fun initialize() {
-    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
       delay(PERIOD_DELAY)
       while (true) {
-        logConfigStateEvents()
+        try {
+          logConfigStateEvents()
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          logger<FeatureUsageSettingsEventScheduler>().error(e)
+        }
         delay(PERIOD_DELAY)
       }
     }
@@ -43,7 +51,7 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
 }
 
 private suspend fun logConfigStateEvents() {
-  if (!FeatureUsageLogger.getInstance().isEnabled()) {
+  if (!FeatureUsageLogger.getInstanceAsync().isEnabled()) {
     return
   }
 

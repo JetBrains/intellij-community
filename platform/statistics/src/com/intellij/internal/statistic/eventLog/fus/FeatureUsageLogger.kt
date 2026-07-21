@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -26,6 +27,11 @@ class FeatureUsageLogger {
     @JvmStatic
     fun getInstance(): FeatureUsageLogger {
       return service()
+    }
+
+    @JvmStatic
+    suspend fun getInstanceAsync(): FeatureUsageLogger {
+      return serviceAsync()
     }
   }
 
