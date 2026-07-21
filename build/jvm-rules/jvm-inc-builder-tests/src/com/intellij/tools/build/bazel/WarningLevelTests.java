@@ -31,24 +31,15 @@ public class WarningLevelTests extends BazelIncBuildTest {
   }
 
   /**
-   * Uses TWO warning levels at once. The module has both a DEPRECATION and an UNCHECKED_CAST warning
-   * under {@code -Werror}:
+   * Two warning levels at once, and proof each entry is needed. The module has both a DEPRECATION and an
+   * UNCHECKED_CAST warning under {@code -Werror}:
    * <ul>
-   *   <li>step 1: both warnings present, no override -> build red ({@code Exit code: ERROR});</li>
-   *   <li>step 2: {@code x_warning_level = ["DEPRECATION:warning"]} -> still red (UNCHECKED_CAST remains);</li>
-   *   <li>step 3: {@code x_warning_level = ["DEPRECATION:warning", "UNCHECKED_CAST:warning"]}.</li>
+   *   <li>step 1: both warnings, no override -> build red ({@code Exit code: ERROR});</li>
+   *   <li>step 2: {@code x_warning_level = ["DEPRECATION:warning"]} -> still red, UNCHECKED_CAST remains
+   *       an error (so the second level is not a no-op);</li>
+   *   <li>step 3: {@code x_warning_level = ["DEPRECATION:warning", "UNCHECKED_CAST:warning"]} -> both
+   *       downgraded, the same code compiles, build green ({@code Exit code: OK}).</li>
    * </ul>
-   * FINDING (MRI-4701 follow-up): step 3 is still <b>red</b>. The worker emits two repeated
-   * {@code -Xwarning-level=} flags, and kotlinc does NOT honor them both under {@code -Werror} — the raw
-   * output shows both diagnostics remaining warnings and {@code -Werror} escalating the batch:
-   * <pre>
-   *   Warning: 'fun foo(param: String): Int' is deprecated. message.
-   *   Warning: Unchecked cast of 'Any' to 'List&lt;String&gt;'.
-   *   Error: warnings found and -Werror specified
-   * </pre>
-   * A single level works (see the two tests above); two do not. This asserts the INTENDED behavior
-   * (both suppressed -> green), so it is a RED repro of the multi-level bug until the worker's
-   * -Xwarning-level emission is fixed.
    */
   @Test
   public void testTwoWarningLevelsSuppressBothUnderWerror() throws Exception {

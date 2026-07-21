@@ -259,8 +259,11 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
       options.add("-Xstrict-java-nullability-assertions");
     }
-    for (String level : CLFlags.X_WARNING_LEVEL.getValue(flags)) {
-      options.add("-Xwarning-level=" + level);
+    // One comma-joined flag, not repeated: kotlinc parses with overrideArguments=true, where a repeated
+    // array arg overwrites (last wins); warningLevels' default ',' delimiter splits it back into an array.
+    Iterable<String> warningLevels = CLFlags.X_WARNING_LEVEL.getValue(flags);
+    if (warningLevels.iterator().hasNext()) {
+      options.add("-Xwarning-level=" + String.join(",", warningLevels));
     }
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
