@@ -141,6 +141,7 @@ object CommunityModuleSets {
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
     module("intellij.platform.pluginManager.frontend")
+    embeddedModule("intellij.platform.ide.updateChecker")
     module("intellij.platform.ide.updateChecker.backend")
 
     module("intellij.platform.execution.impl.frontend")
