@@ -11,6 +11,8 @@
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
       <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
+      <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>
+
       <localInspection language="Markdown"
                        shortName="MarkdownIncorrectTableFormatting"
                        bundle="messages.MarkdownBundle"
