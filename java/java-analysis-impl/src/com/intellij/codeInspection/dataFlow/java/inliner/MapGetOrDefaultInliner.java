@@ -23,7 +23,6 @@ public class MapGetOrDefaultInliner implements CallInliner {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return false;
     PsiExpression[] arguments = call.getArgumentList().getExpressions();
-    if (arguments.length != 2) return false;
     PsiExpression key = arguments[0];
     PsiExpression defaultValue = arguments[1];
     PsiType type = call.getType();

@@ -33,4 +33,9 @@ class MapGetOrDefaultNullability {
     Map.<String, String>of().getOrDefault("key", null)
       .<warning descr="Method invocation 'toString' will produce 'NullPointerException'">toString</warning>();
   }
+
+  static void throwNPE() {
+    Map<Integer, Integer> map = null;
+    map.<warning descr="Method invocation 'getOrDefault' will produce 'NullPointerException'">getOrDefault</warning>(1, 2);
+  }
 }
