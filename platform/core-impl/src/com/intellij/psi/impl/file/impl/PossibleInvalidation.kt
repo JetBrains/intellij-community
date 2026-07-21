@@ -6,10 +6,25 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.FreeThreadedFileViewProvider
+import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 private val IN_COMA = Key.create<Boolean>("IN_COMA")
 private val LOG = fileLogger()
+
+private val invalidationAfterPropertyPush: AtomicBoolean = AtomicBoolean(false)
+
+@ApiStatus.Internal
+fun signalInvalidationAfterPropertyPush() {
+  invalidationAfterPropertyPush.set(true)
+}
+
+internal fun pollInvalidationAfterPropertyPush(): Boolean {
+  ThreadingAssertions.assertWriteAccess()
+  return invalidationAfterPropertyPush.getAndSet(false)
+}
 
 internal fun FileViewProvider.markPossiblyInvalidated() {
   LOG.assertTrue(this !is FreeThreadedFileViewProvider)

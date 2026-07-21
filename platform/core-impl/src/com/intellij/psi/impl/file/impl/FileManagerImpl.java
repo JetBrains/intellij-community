@@ -113,6 +113,10 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   private void analyzeInvalidations(boolean entered) {
+    boolean toBeInvalidated = PossibleInvalidationKt.pollInvalidationAfterPropertyPush();
+    if (toBeInvalidated) {
+      return;
+    }
     myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
       FileViewProvider viewProvider = entry.getProvider();
       if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
