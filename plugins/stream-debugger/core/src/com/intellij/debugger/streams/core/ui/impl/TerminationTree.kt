@@ -15,61 +15,58 @@ import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 
 class TerminationTree(
   streamResult : Value,
   traceElements: List<TraceElement>,
   launcher: DebuggerCommandLauncher,
   context: GenericEvaluationContext,
-  private val myBuilder: CollectionTreeBuilder,
+  builder: CollectionTreeBuilder,
   @Suppress("CanBeParameter") private val debugName: String,
-) : CollectionTree(traceElements, context, myBuilder, debugName) {
+) : CollectionTree(traceElements, context, builder, debugName) {
 
   private val NULL_MARKER: Any = ObjectUtils.sentinel("CollectionTree.NULL_MARKER")
+
+  // Trace elements grouped by the value key, in trace order (groupBy preserves ordering).
+  // Computed once and reused on every bind.
+  // getKey(TraceElement) does not touch the debugger thread, so it is safe to build here.
+  private val myKey2TraceElements: Map<Any, List<TraceElement>> =
+    traceElements.groupBy { collectionTreeBuilder.getKey(it, NULL_MARKER) }
+
+  // Running per-key counter, persisted across childrenLoaded batches so incremental binding continues in order.
+  private val key2Index: MutableMap<Any, Int> = HashMap()
 
   init {
     val root = XValueNodeImpl(this, null, "root", MyValueRoot(streamResult, context))
     setRoot(root, false)
     root.isLeaf = false
 
-    val key2TraceElements = traceElements.groupBy { myBuilder.getKey(it, NULL_MARKER) }
-    val key2Index: MutableMap<Any, Int> = HashMap(key2TraceElements.size + 1)
-
-    addTreeListener(object : XDebuggerTreeListener {
-      override fun nodeLoaded(node: RestorableStateNode, name: String) {
-        val listener: XDebuggerTreeListener = this
-        if (node is XValueContainerNode<*>) {
-          val container = (node as XValueContainerNode<*>).valueContainer
-          if (myBuilder.isSupported(container)) {
-            launcher.executeDebuggerCommand {
-              val key = myBuilder.getKey(container, NULL_MARKER)
-              withContext(Dispatchers.EDT) {
-                val elements = key2TraceElements[key]
-                val nextIndex = key2Index.getOrDefault(key, -1) + 1
-                if (elements != null && nextIndex < elements.size) {
-                  val element = elements[nextIndex]
-                  value2Path[element] = node.path
-                  path2Value[node.path] = element
-                  key2Index[key] = nextIndex
-                }
-                if (path2Value.size == traceElements.size) {
-                  //NOTE(Korovin): This will not be called if we have a big list of items and it's loaded partially
-                  //If missing repaints, we need to replace this logic to some flow/debounce coroutine and repaint after a batch of nodes
-                  removeTreeListener(listener)
-                  yield()
-                  repaint()
-                }
-              }
+    // Unlike IntermediateTree, the values here are the real result collection's children.
+    // We map each tree node to a trace element by the value's JVM key.
+    // And since several elements may share one JVM object (e.g. cached Integers),
+    // duplicates within a key are disambiguated by their position in the collection order provided by childrenLoaded.
+    collectValueNodesOnLoad({ it.parent === root }) { newNodes, onBound ->
+      launcher.executeDebuggerCommand {
+        // getKey(container) must run on the debugger thread
+        val nodesWithKeys = newNodes.map { it to collectionTreeBuilder.getKey(it.valueContainer, NULL_MARKER) }
+        withContext(Dispatchers.EDT) {
+          for ((node, key) in nodesWithKeys) {
+            val elements = myKey2TraceElements[key]
+            val nextIndex = key2Index.getOrDefault(key, -1) + 1
+            if (elements != null && nextIndex < elements.size) {
+              val element = elements[nextIndex]
+              value2Path[element] = node.path
+              path2Value[node.path] = element
+              key2Index[key] = nextIndex
             }
           }
+          onBound()
         }
       }
-    })
+    }
 
     addTreeListener(object : XDebuggerTreeListener {
       override fun nodeLoaded(node: RestorableStateNode, name: String) {
@@ -85,7 +82,7 @@ class TerminationTree(
   private inner class MyValueRoot(private val myValue: Value, private val myContext: GenericEvaluationContext) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       val children = XValueChildrenList()
-      children.add(myBuilder.createXNamedValue(myValue, myContext))
+      children.add(collectionTreeBuilder.createXNamedValue(myValue, myContext))
       node.addChildren(children, true)
     }
 

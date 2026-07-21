@@ -9,6 +9,7 @@ import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.core.ui.PaintingListener
 import com.intellij.debugger.streams.core.ui.TraceContainer
 import com.intellij.debugger.streams.core.ui.ValuesSelectionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.EventDispatcher
@@ -16,6 +17,9 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -25,15 +29,17 @@ import javax.swing.tree.TreePath
  * @author Vitaliy.Bibaev
  */
 abstract class CollectionTree protected constructor(
-  @Suppress("unused") traceElements: List<TraceElement>,
+  traceElements: List<TraceElement>,
   context: GenericEvaluationContext,
-  collectionTreeBuilder: CollectionTreeBuilder,
+  protected val collectionTreeBuilder: CollectionTreeBuilder,
   @Suppress("unused") private val debugName: String,
 ) : XDebuggerTree(context.project, collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null),
     TraceContainer {
 
   protected val value2Path: MutableMap<TraceElement, TreePath> = HashMap()
   protected val path2Value: MutableMap<TreePath, TraceElement> = HashMap()
+
+  private val expectedValueCount: Int = traceElements.size
 
   private var highlighted: Set<TreePath> = emptySet()
   private val selectionDispatcher = EventDispatcher.create(ValuesSelectionListener::class.java)
@@ -220,6 +226,59 @@ abstract class CollectionTree protected constructor(
     }
 
     return current ?: path
+  }
+
+  /**
+   * `childrenLoaded` is used because unlike `nodeLoaded` it keeps the collection order.
+   * `nodeLoaded` fires in presentation-completion order, which is non-deterministic and breaks the
+   * value-to-row mapping when several values share one JVM object (e.g. cached `Integer`s).
+   *
+   * Children may arrive one by one, so they are accumulated and passed to [bind] only once the batch is complete.
+   * [bind] fills [value2Path]/[path2Value] and must call `onBound` when done.
+   * `onBound` repaints and, once all expected children are loaded, unsubscribes the listener.
+   */
+  protected fun collectValueNodesOnLoad(
+    isValuesHolder: (XDebuggerTreeNode) -> Boolean,
+    bind: (newNodes: List<XValueContainerNode<*>>, onBound: () -> Unit) -> Unit,
+  ) {
+    addTreeListener(object : XDebuggerTreeListener {
+      private var batch = ArrayList<XValueContainerNode<*>>()
+      private var loadedCount = 0
+
+      // Invoked on EDT so all the calls are serialized
+      override fun childrenLoaded(node: XDebuggerTreeNode, children: List<XValueContainerNode<*>>, last: Boolean) {
+        if (!isValuesHolder(node)) {
+          return
+        }
+        children
+          .filter { collectionTreeBuilder.isSupported(it.valueContainer) }
+          .toCollection(batch)
+
+        if (!last || batch.isEmpty()) {
+          return
+        }
+
+        val newNodes = batch
+        batch = ArrayList()
+        loadedCount += newNodes.size
+        val allChildrenLoaded = loadedCount >= expectedValueCount
+
+        bind(newNodes) {
+          scheduleRepaint()
+          if (allChildrenLoaded) {
+            removeTreeListener(this)
+          }
+        }
+      }
+    })
+  }
+
+  /**
+   * Repaints on the next EDT tick so the tree can finish laying out newly inserted/updated rows before the
+   * mapping lines (which read row bounds via [getRectByValue]) are drawn.
+   */
+  private fun scheduleRepaint() {
+    ApplicationManager.getApplication().invokeLater { repaint() }
   }
 
   companion object {
