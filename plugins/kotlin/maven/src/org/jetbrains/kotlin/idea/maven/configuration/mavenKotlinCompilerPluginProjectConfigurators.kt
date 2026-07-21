@@ -4,12 +4,17 @@ package org.jetbrains.kotlin.idea.maven.configuration
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.xml.XmlFile
+import com.intellij.util.CommonProcessors
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
@@ -25,7 +30,6 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Com
 import org.jetbrains.kotlin.idea.maven.createChildTag
 import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import java.nio.file.Files
 import kotlin.io.path.relativeTo
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
@@ -182,15 +186,20 @@ private fun Module.findLombokConfigPath(): String? {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val mavenProject = mavenProjectsManager.findProject(this) ?: return null
     val projectPath = mavenProject.directoryPath
-    val configName = "lombok.config"
-    val moduleConfig = projectPath.resolve(configName)
-    val lombokConfig = moduleConfig.takeIf(Files::exists) ?: mavenProject.parentId
-        ?.let(mavenProjectsManager::findProject)
-        ?.directoryPath
-        ?.resolve(configName)
-        ?.takeIf(Files::exists)
-    val relativeTo = lombokConfig?.relativeTo(projectPath)
-    return relativeTo?.toString()
+    val processor = CommonProcessors.FindFirstProcessor<VirtualFile>()
+    for (scope in arrayOf(GlobalSearchScopes.directoryScope(project, mavenProject.file.parent, true), project.projectScope())) {
+        FilenameIndex.processFilesByNames(
+            setOf("lombok.config"),
+            false,
+            scope,
+            null,
+            processor
+        )
+        processor.foundValue?.let {
+            return it.toNioPath().relativeTo(projectPath).toString()
+        }
+    }
+    return null
 }
 
 internal fun PomFile.addAllOpenKotlinCompilerPluginPreset(kotlinPlugin: MavenDomPlugin, kotlinCompilerPluginId: String) {
