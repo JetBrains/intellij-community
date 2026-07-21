@@ -16,10 +16,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.components.TwoSideComponent
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.requirements.RequirementsFileType
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
@@ -60,7 +62,7 @@ internal class PyPackageManagerEditorBanner : EditorNotificationProvider, DumbAw
       setReservePlaceAutoPopupIcon(false)
       component.isOpaque = false
     }
-    val rightGroup = DefaultActionGroup(OpenExternalToolsSettingsAction())
+    val rightGroup = DefaultActionGroup(OpenPackagingToolWindowAction(), OpenExternalToolsSettingsAction())
     val rightToolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, rightGroup, true).apply {
       targetComponent = fileEditor.component
       setReservePlaceAutoPopupIcon(false)
@@ -98,10 +100,33 @@ internal class PyPackageManagerEditorBanner : EditorNotificationProvider, DumbAw
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
+  /**
+   * Right-edge action shown after [OpenExternalToolsSettingsAction]. Opens the Python Packages tool
+   * window so the user can jump straight from the dependency file to the package list.
+   */
+  private class OpenPackagingToolWindowAction : DumbAwareAction(
+    PyBundle.messagePointer("action.OpenPackagingToolWindow.text"),
+    PyBundle.messagePointer("action.OpenPackagingToolWindow.description"),
+    PythonIcons.Python.PythonPackages,
+  ) {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = e.project != null
+      e.presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
+      ToolWindowManager.getInstance(project).getToolWindow(PACKAGING_TOOL_WINDOW_ID)?.activate(null)
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  }
+
   companion object {
     private const val ACTION_GROUP_ID: String = "PythonPackageManagerActions"
     private const val PLACE: String = "PyPackageManagerEditorBanner"
     private const val EXTERNAL_TOOLS_CONFIGURABLE_ID: String = "python.external.tools.group.settings"
+    private const val PACKAGING_TOOL_WINDOW_ID: String = "Python Packages"
     private val WATCHED_NAMES: Set<String> = setOf(
       PY_PROJECT_TOML,
       "hatch.toml",

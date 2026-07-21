@@ -18,6 +18,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -137,12 +139,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): PyResult<List<PythonPackage>> {
     if (sdk.isReadOnly) {
       return PyResult.localizedError(sdk.readOnlyErrorMessage)
     }
     waitForInit()
-    installPackageCommand(installRequest, options, module).getOr { return it }
+    installPackageCommand(installRequest, options, module, dependencyGroup).getOr { return it }
 
     return reloadPackages()
   }
@@ -159,7 +162,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 
   @ApiStatus.Internal
-  suspend fun uninstallPackage(vararg packages: String, workspaceMember: PyWorkspaceMember? = null): PyResult<List<PythonPackage>> {
+  suspend fun uninstallPackage(vararg packages: String, workspaceMember: PyWorkspaceMember? = null, dependencyGroup: PyDependencyGroup? = null): PyResult<List<PythonPackage>> {
     if (sdk.isReadOnly) {
       return PyResult.localizedError(sdk.readOnlyErrorMessage)
     }
@@ -170,7 +173,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     waitForInit()
 
     val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
-    uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(), workspaceMember = workspaceMember).getOr { return it }
+    uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup).getOr { return it }
     return reloadPackages()
   }
 
@@ -327,6 +330,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): PyResult<Unit>
 
   @ApiStatus.Internal
@@ -346,6 +350,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   protected abstract suspend fun uninstallPackageCommand(
     vararg pythonPackages: String,
     workspaceMember: PyWorkspaceMember? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): PyResult<Unit>
 
   @ApiStatus.Internal
@@ -368,6 +373,19 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Internal
   open suspend fun getPackageTree(): PackageStructureNode = FlatPackageStructureNode
+
+  /**
+   * Returns workspace support if this manager supports multi-project workspaces or dependency groups,
+   * `null` otherwise.
+   */
+  @get:ApiStatus.Internal
+  open val workspaceSupport: PythonWorkspaceSupport? get() = null
+
+  /**
+   * CLI tools exposed by this manager, used for command-mode completion and dispatch in the install dialog.
+   */
+  @get:ApiStatus.Internal
+  open val cliSpecs: List<PythonManagerCliSpec> get() = emptyList()
 
   /**
    * Lists project top-level (declared) dependencies with caching based on dependency file modification time.
@@ -603,4 +621,31 @@ value class PyWorkspaceMember(val name: String)
 interface DependenciesExporter {
   @RequiresEdt
   fun export(file: PsiFile)
+}
+
+/**
+ * Workspace support for package managers that handle multi-project workspaces (e.g. uv)
+ * or dependency groups (e.g. Poetry).
+ *
+ * Obtain via [PythonPackageManager.workspaceSupport]; `null` for managers without workspace support.
+ */
+@ApiStatus.Internal
+interface PythonWorkspaceSupport {
+  /**
+   * Returns workspace members for multi-project workspaces.
+   * Single-project managers with dependency group support return a list with just [projectName].
+   */
+  suspend fun getWorkspaceMembers(projectName: ProjectName): List<PyWorkspaceMember>
+
+  /**
+   * Returns dependency groups per workspace member.
+   * Each key is a workspace member, each value is the list of dependency groups from that member's pyproject.toml.
+  */
+ suspend fun getDependencyGroups(projectName: ProjectName): Map<PyWorkspaceMember, List<PyDependencyGroup>> = emptyMap()
+
+  /**
+   * Resolves the IntelliJ [Module] that corresponds to the given workspace member.
+   * Returns null if the mapping cannot be determined (e.g. single-project managers).
+   */
+  suspend fun resolveModule(member: PyWorkspaceMember): Module? = null
 }

@@ -18,6 +18,9 @@ import org.jetbrains.annotations.ApiStatus
 internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk) : PythonRepositoryManagerBase() {
   private val pipRepositoryManger = PipRepositoryManager.getInstance(project)
 
+  override val builtInRepositories: List<PyPackageRepository>
+    get() = listOf(CondaPackageRepository) + pipRepositoryManger.builtInRepositories
+
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + pipRepositoryManger.repositories
 

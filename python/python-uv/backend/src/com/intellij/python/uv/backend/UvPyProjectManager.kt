@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.uv.backend
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -8,14 +8,16 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
-import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PyProjectManager
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,6 +26,7 @@ import org.apache.tuweni.toml.TomlTable
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
+import kotlin.collections.iterator
 import kotlin.io.path.relativeTo
 
 
@@ -32,6 +35,10 @@ internal class UvPyProjectManager : PyProjectManager {
   override val id: ToolId = UV_TOOL_ID
 
   override val ui: PyToolUIInfo = UV_UI_INFO
+
+  override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
+
+  override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
@@ -93,7 +100,8 @@ internal class UvPyProjectManager : PyProjectManager {
       // names in their normalized form so a member published under its normalized name (e.g. abc-rag)
       // still matches a dependency spelled with '.'/'_' (e.g. abc.rag) (PY-89677).
       val siblingsByNormalizedName = siblings.associateBy { PyPackageName.normalizeProjectName(it.name.substringBefore('@')) }
-      val resolvedWorkspaceDeps = workspaceDeps.mapNotNull { siblingsByNormalizedName[PyPackageName.normalizeProjectName(it.name)] }.toSet()
+      val resolvedWorkspaceDeps =
+        workspaceDeps.mapNotNull { siblingsByNormalizedName[PyPackageName.normalizeProjectName(it.name)] }.toSet()
       val brokenDeps = workspaceDeps.filter { PyPackageName.normalizeProjectName(it.name) !in siblingsByNormalizedName }.toSet()
       if (brokenDeps.isNotEmpty()) {
         logger.info("Deps are broken: ${brokenDeps.joinToString(", ")}")
@@ -131,11 +139,11 @@ internal class UvPyProjectManager : PyProjectManager {
 // but sufficient here since dependency names are already validated by uv.
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
-private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String>? =
-  toml.project?.dependencies?.let { it.project + it.allDepsFromGroups }?.mapNotNull {
+private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String> =
+  toml.project.dependencies.let { it.project + it.allDepsFromGroups }.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
-  }?.toSet()
+  }.toSet()
 
 private data class WorkspaceInfo(val members: List<PathMatcher>, val exclude: List<PathMatcher>) {
   fun match(path: Path): Boolean =
@@ -182,7 +190,7 @@ private fun getUvDependencies(
   if (sourcesTablesWithRoots.isEmpty()) {
     return null
   }
-  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
+  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml)
   // Dependency names indexed by their normalized form; a `tool.uv.sources` entry applies to a
   // dependency when their normalized names match, regardless of `-`/`_`/`.` spelling (PY-90207).
   val depByNormalizedName = deps.associateByTo(HashMap()) { PyPackageName.normalizeProjectName(it) }

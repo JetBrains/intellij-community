@@ -9,6 +9,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -34,7 +35,7 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     return runPipEnv(modulePath, "lock").mapSuccess { }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     return when (installRequest) {
       is PythonPackageInstallRequest.ByLocation -> TODO("Not yet implemented")
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
@@ -50,7 +51,7 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
     return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val args = listOf("uninstall") + pythonPackages.toList()
     return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
 

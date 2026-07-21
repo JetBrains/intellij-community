@@ -2,19 +2,15 @@
 package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
-import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
+import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.awt.event.MouseEvent
 
 internal class InstallPackageAction : ModifyPackagesActionBase() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -26,22 +22,12 @@ internal class InstallPackageAction : ModifyPackagesActionBase() {
           pkg.repository.findPackageSpecification(pyRequirement(pkg.name))
         }
         val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
-        project.service<PyPackagingToolWindowService>().installPackage(installRequest)
+        PyPackagingToolWindowService.getInstance(project).installPackage(installRequest)
       }
       return
     }
     val pkg = e.selectedPackage as? InstallablePackage ?: return
-
-
-
-    PyPackageCoroutine.launch(project, Dispatchers.Default) {
-      val service = PyPackagingToolWindowService.getInstance(project)
-      val details = service.detailsForPackage(pkg) ?: return@launch
-      withContext(Dispatchers.Main) {
-        val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project)
-        popup.show(RelativePoint(e.inputEvent as MouseEvent))
-      }
-    }
+    PyInstallPackageDialog(project).show(pkg.name)
   }
 
   override fun update(e: AnActionEvent) {

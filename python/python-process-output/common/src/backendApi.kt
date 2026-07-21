@@ -80,6 +80,11 @@ sealed class ProcessOutputQuery<TResponse : QueryResponsePayload> {
   data class OpenToolWindowWithError(
     val processId: Int,
   ) : ProcessOutputQuery<QueryResponsePayload.BooleanPayload>()
+
+  @Serializable
+  data class OpenToolWindowByTraceUuid(
+    val traceUuid: String,
+  ) : ProcessOutputQuery<QueryResponsePayload.BooleanPayload>()
 }
 
 @ApiStatus.Internal

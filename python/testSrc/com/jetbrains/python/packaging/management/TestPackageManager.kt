@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -61,6 +62,7 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module?,
+    dependencyGroup: PyDependencyGroup?,
   ): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
       return PyResult.localizedError("Test Manager supports only simple repository package specification")
@@ -81,7 +83,7 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
     return PyResult.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     pythonPackages.forEach { pyPackage ->
       val packageToRemove = findPackageByName(pyPackage)
                             ?: return PyResult.localizedError(PACKAGE_UNINSTALL_FAILURE_MESSAGE)

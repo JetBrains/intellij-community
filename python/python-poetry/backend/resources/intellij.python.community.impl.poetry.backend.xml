@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.toml.core"/>
@@ -9,6 +9,10 @@
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.pytools"/>
   </dependencies>
+  <extensions defaultExtensionNs="Pythonid">
+    <pySdkProvider implementation="com.intellij.python.community.impl.poetry.backend.sdk.PoetrySdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+  </extensions>
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <pyprojectmanager implementation="com.intellij.python.community.impl.poetry.backend.PoetryPyProjectManager"/>
   </extensions>

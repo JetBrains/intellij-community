@@ -43,6 +43,10 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
     }
   }
 
+  override suspend fun awaitReady() {
+    waitForInit()
+  }
+
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? {
     waitForInit()
     val versions = getVersions(packageName, repository) ?: return null

@@ -38,6 +38,7 @@ import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -302,6 +303,23 @@ internal fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List
     }
 
   return Pair(pyPackages.distinct().toList(), pyRequirements.distinct().toList())
+}
+
+/**
+ * Parses `poetry.lock` and returns a map of editable package names to their source URLs.
+ * A package is editable when `develop = true` in its `[[package]]` entry.
+ */
+internal fun parsePoetryLockEditablePackages(lockContent: String): Map<String, String?> {
+  val packages = Toml.parse(lockContent).getArray("package") ?: return emptyMap()
+  return buildMap {
+    for (i in 0 until packages.size()) {
+      val pkg = packages.getTable(i)
+      if (pkg.getBoolean("develop") == true) {
+        val name = pkg.getString("name") ?: continue
+        put(name, pkg.getTable("source")?.getString("url"))
+      }
+    }
+  }
 }
 
 /**

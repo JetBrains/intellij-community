@@ -9,6 +9,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus
@@ -21,6 +22,8 @@ internal class HatchPyProjectManager : PyProjectManager {
 
   override val id: ToolId = HATCH_TOOL_ID
   override val ui: PyToolUIInfo = HATCH_UI_INFO
+
+  override val additionalDataType: Class<HatchSdkAdditionalData> = HatchSdkAdditionalData::class.java
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 

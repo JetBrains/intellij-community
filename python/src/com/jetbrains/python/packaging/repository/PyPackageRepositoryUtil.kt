@@ -27,7 +27,7 @@ import java.util.Base64
 internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository?): RequestBuilder {
   if (repository == null) return this
   val login = repository.login ?: return this
-  val password = repository.getPassword() ?: return this
+  val password = repository.getPassword().ifEmpty { return this }
   val credentials = Base64.getEncoder().encode("${login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)
   this.tuner { connection -> connection.setRequestProperty("Authorization", "Basic $credentials") }
   return this
@@ -35,8 +35,9 @@ internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageReposito
 
 @ApiStatus.Experimental
 internal fun PyPackageRepository.checkValid(): Boolean {
+  val url = repositoryUrl.ifEmpty { return false }
   return HttpRequests
-    .request(repositoryUrl!!)
+    .request(url)
     .withBasicAuthorization(this)
     .connectTimeout(3000)
     .throwStatusCodeException(false)
@@ -45,6 +46,10 @@ internal fun PyPackageRepository.checkValid(): Boolean {
 
 @ApiStatus.Experimental
 object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
+  override var enabled: Boolean
+    get() = service<PyPackageRepositories>().isDefaultRepoEnabled(name)
+    set(value) { service<PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+
   @RequiresBackgroundThread
   override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<PyPiPackageCache>().search(needle, pageSize)
@@ -64,7 +69,7 @@ object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_
       return PyResult.success(it)
     }
 
-    val repositoryUrl = repositoryUrl ?: return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name))
+    val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name)) }
 
     val versions = runCatching {
       PyPIPackageUtil.parsePackageVersionsFromRepository(repositoryUrl, packageName)

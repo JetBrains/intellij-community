@@ -479,6 +479,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
       {"shift control K",          "HippieCompletion", "Vcs.Push"},
       {"shift control M",          "RInsertPipeAction", "ShowBookmarks"},
+      {"shift ctrl alt O",         "GotoSymbol", "PyInstallPackageAction"},
       {"shift ctrl BACK_SLASH",    "GotoUrlAction", "SmartTypeCompletion"},
       {"shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
       {"shift ctrl S",             "SaveAll", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},

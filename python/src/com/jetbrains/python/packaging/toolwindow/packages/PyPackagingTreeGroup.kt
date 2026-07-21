@@ -2,26 +2,35 @@
 package com.jetbrains.python.packaging.toolwindow.packages
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTree
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeListener
-import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 internal class PyPackagingTreeGroup(
-  repository: PyPackageRepository,
-  val tree: PyPackagesTreeTable,
+  val repository: PyPackageRepository,
+  val tree: PyPackagesTree,
   private val container: JPanel,
+  private val showHeader: Boolean = true,
+  private val useTreeNodeHeader: Boolean = false,
+  private val headerIcon: javax.swing.Icon = PyPackageIcons.Repository,
+  private val collapsible: Boolean = true,
 ) {
 
   private data class HeaderProperties(
@@ -44,17 +53,64 @@ internal class PyPackagingTreeGroup(
 
   init {
     setupTreeListener()
+
+    tree.emptyText.text = ""
+
+    if (useTreeNodeHeader && showHeader && collapsible) {
+      headerProperties.panel.addMouseListener(object : java.awt.event.MouseAdapter() {
+        override fun mouseClicked(e: java.awt.event.MouseEvent) {
+          if (tree.isVisible) collapse() else expand()
+        }
+      })
+    }
   }
 
   private fun createHeaderProperties(): HeaderProperties {
-    val label = JBLabel(repositoryName).apply {
-      border = JBUI.Borders.empty(5, 0)
-      icon = AllIcons.General.ArrowDown
-      horizontalAlignment = SwingConstants.LEFT
-      verticalAlignment = SwingConstants.CENTER
+    if (useTreeNodeHeader) {
+      val repoIcon = JBLabel(headerIcon)
+      val displayName = if (collapsible) repositoryName
+                        else PyBundle.message("python.toolwindow.packages.custom.repo.invalid", repositoryName)
+      val nameLabel = JBLabel(displayName).apply {
+        if (!collapsible) foreground = JBColor.RED
+      }
+      
+      val contentPanel = JPanel().apply {
+        layout = javax.swing.BoxLayout(this, javax.swing.BoxLayout.X_AXIS)
+        background = UIUtil.getListBackground()
+        isOpaque = false
+        
+        val chevronIcon = if (collapsible) AllIcons.General.ArrowDown
+                          else IconLoader.getDisabledIcon(AllIcons.General.ArrowRight)
+        val chevron = JBLabel(chevronIcon)
+        add(chevron)
+        add(javax.swing.Box.createHorizontalStrut(2))
+        add(repoIcon)
+        add(javax.swing.Box.createHorizontalStrut(6))
+        add(nameLabel)
+      }
+      
+      val panel = JPanel(BorderLayout()).apply {
+        background = UIUtil.getListBackground()
+        val hPad = UIUtil.getListCellHPadding()
+        val vPad = UIUtil.getListCellVPadding()
+        border = JBUI.Borders.empty(vPad, hPad * 2, vPad, hPad + JBUI.scale(4))
+        alignmentX = java.awt.Component.LEFT_ALIGNMENT
+        maximumSize = Dimension(Integer.MAX_VALUE, JBUI.CurrentTheme.List.rowHeight()) // Will be updated by updatePreferredSize()
+        
+        add(contentPanel, BorderLayout.WEST)
+      }
+      
+      return HeaderProperties(nameLabel, panel)
+    } else {
+      val label = JBLabel(repositoryName).apply {
+        border = JBUI.Borders.empty(5, 0)
+        icon = AllIcons.General.ArrowDown
+        horizontalAlignment = SwingConstants.LEFT
+        verticalAlignment = SwingConstants.CENTER
+      }
+      val panel = PyPackagesUiComponents.headerPanel(label, tree)
+      return HeaderProperties(label, panel)
     }
-    val panel = PyPackagesUiComponents.headerPanel(label, tree)
-    return HeaderProperties(label, panel)
   }
 
   private fun setupTreeListener() {
@@ -69,30 +125,51 @@ internal class PyPackagingTreeGroup(
   }
 
   fun updatePreferredSize() {
-    val totalHeight = tree.tree.rowCount * tree.tree.rowHeight
     val width = container.width
 
+    val insets = tree.insets
+    val insetsHeight = insets.top + insets.bottom
+    val rowsHeight = tree.rowCount * tree.rowHeight
+    val totalHeight = if (rowsHeight == 0) 0 else rowsHeight + insetsHeight
     tree.preferredSize = Dimension(width, totalHeight)
     tree.minimumSize = Dimension(width, totalHeight)
     tree.maximumSize = Dimension(width, totalHeight)
+    
+    if (useTreeNodeHeader && showHeader) {
+      headerProperties.panel.maximumSize = Dimension(width, headerProperties.panel.preferredSize.height)
+    }
   }
 
   fun collapse() {
     tree.isVisible = false
-    updateExpandStateIcon()
+    if (useTreeNodeHeader) {
+      val panel = headerProperties.panel
+      val contentPanel = (panel.layout as BorderLayout).getLayoutComponent(BorderLayout.WEST) as JPanel
+      val chevron = contentPanel.getComponent(0) as JBLabel
+      chevron.icon = AllIcons.General.ArrowRight
+    } else {
+      updateExpandStateIcon()
+    }
     repaint()
   }
 
   fun collapseAll() {
-    for (i in 0 until tree.tree.rowCount) {
-      tree.tree.collapseRow(i)
+    for (i in 0 until tree.rowCount) {
+      tree.collapseRow(i)
     }
     collapse()
   }
 
   fun expand() {
     tree.isVisible = true
-    updateExpandStateIcon()
+    if (useTreeNodeHeader) {
+      val panel = headerProperties.panel
+      val contentPanel = (panel.layout as BorderLayout).getLayoutComponent(BorderLayout.WEST) as JPanel
+      val chevron = contentPanel.getComponent(0) as JBLabel
+      chevron.icon = AllIcons.General.ArrowDown
+    } else {
+      updateExpandStateIcon()
+    }
     repaint()
   }
 
@@ -105,10 +182,21 @@ internal class PyPackagingTreeGroup(
 
   fun updateHeaderText(newItemCount: Int?) {
     itemsCount = newItemCount
-    headerProperties.label.text = if (itemsCount == null)
+    
+    if (useTreeNodeHeader) {
+      val panel = headerProperties.panel
+      val contentPanel = (panel.layout as BorderLayout).getLayoutComponent(BorderLayout.WEST) as JPanel
+      val nameLabel = contentPanel.getComponent(4) as JBLabel
+      nameLabel.text = if (itemsCount == null)
+        repositoryName
+      else
+        PyBundle.message("python.toolwindow.packages.custom.repo.searched", repositoryName, itemsCount)
+    } else {
+      headerProperties.label.text = if (itemsCount == null)
       repositoryName
     else
       PyBundle.message("python.toolwindow.packages.custom.repo.searched", repositoryName, itemsCount)
+    }
   }
 
   fun setSdkToHeader(@Nls sdkName: String?) {
@@ -127,13 +215,13 @@ internal class PyPackagingTreeGroup(
   }
 
   fun addTo(panel: JPanel) {
-    panel.add(headerProperties.panel)
-    panel.add(tree)
+    if (showHeader) panel.add(headerProperties.panel)
+    if (collapsible) panel.add(tree)
   }
 
   fun removeFrom(panel: JPanel) {
-    panel.remove(headerProperties.panel)
-    panel.remove(tree)
+    if (showHeader) panel.remove(headerProperties.panel)
+    if (collapsible) panel.remove(tree)
   }
 
   fun repaint() {
