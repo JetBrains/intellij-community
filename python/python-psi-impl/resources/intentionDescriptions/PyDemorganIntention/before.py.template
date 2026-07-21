@@ -1,2 +1,2 @@
-if <spot>a or b</spot>:
+if <spot>not (foo or not bar)</spot>:
   pass
