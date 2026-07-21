@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowLeftToolbar
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.ColorUtil
@@ -37,7 +38,9 @@ import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -48,7 +51,6 @@ import java.awt.Dimension
 import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
@@ -61,7 +63,7 @@ abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
   minimumSize: Supplier<Dimension>? = null
 ) :
-  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { getStripeToolbarButtonSize() }) {
 
   protected fun doInit(popupBuilder: () -> ActionGroup) {
     setLook(SquareStripeButtonLook(this))
@@ -167,7 +169,7 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     if (myShowName != value) {
       myShowName = value
 
-      setLook(if (value) SquareStripeButtonLookHorizontalText(this) else SquareStripeButtonLook(this))
+      setLook(createSquareStripeButtonLook())
       revalidate()
       repaint()
     }
@@ -179,6 +181,16 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
 
     return if (look is SquareStripeButtonLookExtension) look.getPreferredSize(size)
     else size
+  }
+
+  private fun createSquareStripeButtonLook(): SquareStripeButtonLook {
+    val extension = ToolWindowExtension.getInstance()
+
+    return if (extension == null) {
+      if (myShowName) SquareStripeButtonLookHorizontalText(this) else SquareStripeButtonLook(this)
+    } else {
+      extension.createSquareStripeButtonLook(this)
+    }
   }
 }
 
@@ -239,18 +251,10 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
       override fun getInsets() = actionButton!!.insets
     }
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
-    val iconPosition: Point
-    if (!toolWindow.isActive || color == null) {
-      super.paintIcon(g, buttonWrapper, icon)
-      iconPosition = getIconPosition(buttonWrapper, icon)
-      iconPosition.y += icon.iconHeight
-    }
-    else {
-      val strokeIcon = toStrokeIcon(icon, color)
-      super.paintIcon(g, buttonWrapper, strokeIcon)
-      iconPosition = getIconPosition(buttonWrapper, strokeIcon)
-      iconPosition.y += strokeIcon.iconHeight
-    }
+    val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
+    super.paintIcon(g, buttonWrapper, renderedIcon)
+    val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
+    iconPosition.y += renderedIcon.iconHeight
 
     val f = getTextFont()
     val fm = button.getFontMetrics(f)
@@ -348,8 +352,19 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
   return presentation
 }
 
+internal fun getStripeToolbarButtonIconSize(): Int {
+  val extension = ToolWindowExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+  return JBUIScale.scale(extension.getStripeIconUnscaledSize())
+}
+
+internal fun getStripeToolbarButtonSize(): Dimension {
+  val extension = ToolWindowExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize()
+  val size = extension.getStripeButtonUnscaledSize()
+  return JBDimension(size, size)
+}
+
 private fun scaleIcon(icon: ScalableIcon): Icon {
-  val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+  val iconSize = getStripeToolbarButtonIconSize()
   return if (icon is HoledIcon && icon.icon is ScalableIcon) {
     icon.replaceBy(object : IconReplacer {
       override fun replaceIcon(icon: Icon): Icon {
@@ -418,4 +433,24 @@ private class SquareAnActionButton(private val window: ToolWindowImpl)
 internal fun Component.isOnTheLeftStripe(): Boolean {
   val stripe = ComponentUtil.getParentOfType(ToolWindowToolbar::class.java, this)
   return stripe is ToolWindowLeftToolbar
+}
+
+@ApiStatus.Internal
+enum class ToolWindowAnchorEnum {
+  TOP,
+  LEFT,
+  BOTTOM,
+  RIGHT,
+}
+
+@ApiStatus.Internal
+fun ToolWindowImpl.getAnchorEnum(): ToolWindowAnchorEnum {
+  when (anchor) {
+    ToolWindowAnchor.LEFT -> return ToolWindowAnchorEnum.LEFT
+    ToolWindowAnchor.RIGHT -> return ToolWindowAnchorEnum.RIGHT
+    ToolWindowAnchor.TOP -> return ToolWindowAnchorEnum.TOP
+    ToolWindowAnchor.BOTTOM -> return ToolWindowAnchorEnum.BOTTOM
+  }
+
+  throw IllegalStateException("Unknown anchor: $anchor")
 }

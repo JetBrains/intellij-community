@@ -222,6 +222,7 @@
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
     <extensionPoint name="toolWindowLayoutProfileProvider" interface="com.intellij.toolWindow.ToolWindowLayoutProfileProvider" dynamic="true"/>
+    <extensionPoint name="toolWindowExtension" interface="com.intellij.toolWindow.ToolWindowExtension" dynamic="true"/>
     <extensionPoint name="projectFrameToolWindowLayout" beanClass="com.intellij.toolWindow.ProjectFrameToolWindowLayoutBean" dynamic="true"/>
     <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>

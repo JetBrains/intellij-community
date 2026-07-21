@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.toolWindow.ResizeStripeManager
+import com.intellij.toolWindow.ToolWindowExtension
 
 internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
   init {
@@ -20,5 +21,11 @@ internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     UISettings.getInstance().showToolWindowsNames = state
     ResizeStripeManager.applyShowNames()
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    e.presentation.isEnabledAndVisible = ToolWindowExtension.getInstance() == null
   }
 }

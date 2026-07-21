@@ -12,4 +12,7 @@
         Provides toolwindows features, like tool window layout, vertical toolwindow labels, etc.
     ]]></description>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindowExtension implementation="com.intellij.extendedToolWindowsUi.ToolWindowExtensionImpl"/>
+  </extensions>
 </idea-plugin>
