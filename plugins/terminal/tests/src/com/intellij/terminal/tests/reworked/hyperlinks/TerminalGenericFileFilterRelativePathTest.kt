@@ -319,4 +319,52 @@ internal class TerminalGenericFileFilterRelativePathTest {
     val result = applyFilter("cp -r ./lib/ src/")
     assertLinks(result, ExpectedLink(libDir, 6, 12), ExpectedLink(srcDir, 13, 17))
   }
+
+  @Test
+  fun `recognize relative path with line range`() {
+    val result = applyFilter("src/Main.kt:10-14")
+    assertSingleLink(result, mainKt, 0, 17, 10)
+  }
+
+  @Test
+  fun `recognize relative path with single digit line range`() {
+    val result = applyFilter("src/Main.kt:1-5")
+    assertSingleLink(result, mainKt, 0, 15, 1)
+  }
+
+  @Test
+  fun `recognize relative path with line range at end of sentence`() {
+    val result = applyFilter("error in src/Main.kt:10-20.")
+    assertSingleLink(result, mainKt, 9, 26, 10)
+  }
+
+  @Test
+  fun `recognize relative path with line range in middle of text`() {
+    val result = applyFilter("see lib/Util.kt:5-10 for details")
+    assertSingleLink(result, utilKt, 4, 20, 5)
+  }
+
+  @Test
+  fun `recognize multiple relative paths with line ranges`() {
+    val result = applyFilter("Compare src/Main.kt:1-5 with test/Test.kt:10-20")
+    assertLinks(result, ExpectedLink(mainKt, 8, 23, 1), ExpectedLink(testKt, 29, 47, 10))
+  }
+
+  @Test
+  fun `recognize mixed formats with line ranges and line column`() {
+    val result = applyFilter("src/Main.kt:10-20 and lib/Util.kt:5:10")
+    assertLinks(result, ExpectedLink(mainKt, 0, 17, 10), ExpectedLink(utilKt, 22, 38, 5, 10))
+  }
+
+  @Test
+  fun `recognize relative path with line range inside brackets`() {
+    val result = applyFilter("[./src/Main.kt:10-14]")
+    assertSingleLink(result, mainKt, 1, 20, 10)
+  }
+
+  @Test
+  fun `recognize relative path with line range in real world test output`() {
+    val result = applyFilter("AssertionError at test/Test.kt:20-25")
+    assertSingleLink(result, testKt, 18, 36, 20)
+  }
 }

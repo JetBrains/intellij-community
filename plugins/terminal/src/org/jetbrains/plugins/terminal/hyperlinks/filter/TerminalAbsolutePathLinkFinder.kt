@@ -84,30 +84,12 @@ internal class TerminalAbsolutePathLinkFinder(
   }
 
   private fun findValidResultWithNumbers(pathEndIndex: Int): Filter.ResultItem? {
-    val lineNumber: Int
-    var columnNumber = 1
-    // Try to parse as "path: (line, column):"
-    if (line.startsWith(" (", i + 1)) {
-      i += 3
-      lineNumber = line.takeWhileFromIndex(i) { it.isDigit() }?.also { i += it.length }.safeToIntOrDefault(1)
-      if (line.startsWith(", ", i)) {
-        i += 2
-        columnNumber = line.takeWhileFromIndex(i) { it.isDigit() }?.also { i += it.length }.safeToIntOrDefault(1)
-        if (line.startsWith("):", i)) {
-          i += 2
-        }
-      }
+    val position = parsePosition(line, i)
+    if (position == null) {
+      return findValidResult(pathEndIndex, 0, 0)
     }
-    else {
-      // Try to parse as path:line:column:
-      lineNumber = line.takeWhileFromIndex(i + 1) { it.isDigit() }?.also { i += it.length }.safeToIntOrDefault(1)
-      columnNumber =
-        if (line.getOrNull(++i) == ':')
-          line.takeWhileFromIndex(++i) { it.isDigit() }?.also { i += it.length }.safeToIntOrDefault(1)
-        else
-          1
-    }
-    return findValidResult(pathEndIndex, lineNumber - 1, columnNumber - 1)
+    i = position.linkEndExclusiveIndex
+    return findValidResult(pathEndIndex, position.oneBasedLine - 1, position.oneBasedColumn - 1)
   }
 
   fun find() {
@@ -190,15 +172,6 @@ internal class TerminalAbsolutePathLinkFinder(
     candidateItem?.let {
       foundLinkSink(it)
     }
-  }
-
-  private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean): String? {
-    for (i in index until length) {
-      if (!predicate(get(i))) {
-        return if (i == index) null else substring(index, i)
-      }
-    }
-    return null
   }
 
   private fun findFileByPathIfCached(path: @NativePath String): VirtualFile? {
