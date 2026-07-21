@@ -95,7 +95,7 @@ public class IntroduceParameterObjectDialog
     {
       final PsiFile file = mySourceMethod.getContainingFile();
       packageTextField =
-        new PackageNameReferenceEditorCombo(file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "", myProject, RECENTS_KEY,
+        new PackageNameReferenceEditorCombo(file instanceof PsiJavaFile f ? f.getPackageName() : "", myProject, RECENTS_KEY,
                                             RefactoringBundle.message("choose.destination.package"));
       final Document document = packageTextField.getChildComponent().getDocument();
       final com.intellij.openapi.editor.event.DocumentListener adapter = new com.intellij.openapi.editor.event.DocumentListener() {
@@ -265,7 +265,7 @@ public class IntroduceParameterObjectDialog
     }
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final @NotNull DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateButtons();
       }
     };
@@ -283,7 +283,7 @@ public class IntroduceParameterObjectDialog
     }
     init();
 
-    final ActionListener listener = actionEvent -> {
+    final ActionListener listener = _ -> {
       toggleRadioEnablement();
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
       if (useExistingClass()) {
