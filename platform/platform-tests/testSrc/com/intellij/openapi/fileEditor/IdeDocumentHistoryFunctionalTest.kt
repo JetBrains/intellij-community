@@ -397,40 +397,23 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
     }
   }
 
-  fun testLegacyNavigateRequestIsDeferredFromWriteAction() {
+  fun testNavigateRequestIsDeferredFromWriteAction() {
     withNavigationRequests(isAsync = false) {
-      myFixture.configureByText("${getTestName(false)}.txt", "target\n\nsource<caret>")
-      val file = myFixture.file.virtualFile
-      val sourceOffset = editor.caretModel.offset
-      val targetOffset = editor.document.text.indexOf("target")
-      val request = createNavigationRequest(file, targetOffset)
+      withWriteLockFreeNavigation {
+        myFixture.configureByText("${getTestName(false)}.txt", "target\n\nsource<caret>")
+        val file = myFixture.file.virtualFile
+        val sourceOffset = editor.caretModel.offset
+        val targetOffset = editor.document.text.indexOf("target")
+        val request = createNavigationRequest(file, targetOffset)
 
-      ApplicationManager.getApplication().runWriteAction {
-        navigateRequest(project, request)
-        assertThat(editor.caretModel.offset).isEqualTo(sourceOffset)
-      }
+        ApplicationManager.getApplication().runWriteAction {
+          navigateRequest(project, request)
+          assertThat(editor.caretModel.offset).isEqualTo(sourceOffset)
+        }
 
-      waitUntil("Registry fallback did not navigate after leaving the write action") {
-        editor.caretModel.offset == targetOffset
-      }
-    }
-  }
-
-  fun testOpenSourceUtilFallbackIsDeferredFromWriteAction() {
-    withNavigationRequests(isAsync = false) {
-      myFixture.configureByText("${getTestName(false)}.txt", "target\n\nsource<caret>")
-      val file = myFixture.file.virtualFile
-      val sourceOffset = editor.caretModel.offset
-      val targetOffset = editor.document.text.indexOf("target")
-      val descriptor = OpenFileDescriptor(project, file, targetOffset)
-
-      ApplicationManager.getApplication().runWriteAction {
-        OpenSourceUtil.navigate(true, false, descriptor)
-        assertThat(editor.caretModel.offset).isEqualTo(sourceOffset)
-      }
-
-      waitUntil("OpenSourceUtil fallback did not navigate after leaving the write action") {
-        editor.caretModel.offset == targetOffset
+        waitUntil("Registry fallback did not navigate after leaving the write action") {
+          editor.caretModel.offset == targetOffset
+        }
       }
     }
   }
@@ -484,6 +467,18 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
     val registryValue = Registry.get("ide.navigation.requests")
     val oldValue = registryValue.asBoolean()
     registryValue.setValue(isAsync)
+    try {
+      action()
+    }
+    finally {
+      registryValue.setValue(oldValue)
+    }
+  }
+
+  private inline fun withWriteLockFreeNavigation(crossinline action: () -> Unit) {
+    val registryValue = Registry.get("ide.navigation.write.lock.free")
+    val oldValue = registryValue.asBoolean()
+    registryValue.setValue(true)
     try {
       action()
     }

@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +22,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+
+private val shouldRescheduleNavigationFromWriteLock: Boolean
+  get() = Registry.`is`("ide.navigation.write.lock.free")
 
 /**
  * Tracks navigation tasks of a project so that tests can explicitly await their completion
@@ -75,38 +80,33 @@ class NavigationTaskCoordinator(
 
   /**
    * The returned [Job] completes when the navigation task finishes (including cancellation).
+   *
+   * Migration step: if [shouldRescheduleNavigationFromWriteLock] == 'true', the task is rescheduled
+   * after the Write Action. In cases otherwise, for callsites using WA, an error would be logged.
    */
   fun dispatchNavigation(
     coroutineScope: CoroutineScope? = null,
     navigateContext: NavigationTaskContext,
     action: suspend () -> Unit,
   ): Job {
-    val application = ApplicationManager.getApplication()
     val scope = coroutineScope.orServiceScope()
     val task = createTask(scope, navigateContext.coroutineContext, action)
-    if (application.isWriteAccessAllowed) {
-      application.invokeLater({ task.start() }, navigateContext.modalityState)
-    } else {
-      task.start()
-    }
+    startNavigationTask(task, navigateContext.modalityState)
     return task
   }
 
   /**
    * Dispatches [action] with [ModalityState.defaultModalityState] on the calling thread.
    * Prefer [dispatchNavigation] with [NavigationTaskContext] when UI context must be captured on the EDT.
+   *
+   * @see [shouldRescheduleNavigationFromWriteLock]
    */
   fun dispatchNavigation(coroutineScope: CoroutineScope? = null, action: suspend () -> Unit): Job {
-    val application = ApplicationManager.getApplication()
     val modalityState = ModalityState.defaultModalityState()
     val scope = coroutineScope.orServiceScope()
     val context = ClientId.coroutineContext() + modalityState.asContextElement()
     val task = createTask(scope, context, action)
-    if (application.isWriteAccessAllowed) {
-      application.invokeLater({ task.start() }, modalityState)
-    } else {
-      task.start()
-    }
+    startNavigationTask(task, modalityState)
     return task
   }
 
@@ -151,7 +151,33 @@ class NavigationTaskCoordinator(
 
   private fun CoroutineScope?.orServiceScope(): CoroutineScope = this ?: navigationScope
 
+  private fun startNavigationTask(task: Job, modalityState: ModalityState) {
+    val application = ApplicationManager.getApplication()
+    if (application.isWriteAccessAllowed) {
+      if (shouldRescheduleNavigationFromWriteLock) {
+        application.invokeLater({ task.start() }, modalityState)
+        return
+      }
+      else {
+        reportNavigationUnderWriteAction()
+      }
+    }
+    task.start()
+  }
+
+  private fun reportNavigationUnderWriteAction() {
+    LOG.error(Throwable(
+      """
+        Navigation must not be submitted under the Write Action.
+        Move the call site out of the Write Action OR
+        set 'ide.navigation.write.lock.free=true' to make it rescheduled.
+      """.trimIndent()
+    ))
+  }
+
   companion object {
+    private val LOG = thisLogger()
+
     @JvmStatic
     fun getInstance(project: Project): NavigationTaskCoordinator = project.service()
   }
