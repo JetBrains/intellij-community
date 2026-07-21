@@ -1,0 +1,17 @@
+UFile (package = ) [public final class WhenElseKt {...]
+    UClass (name = WhenElseKt) [public final class WhenElseKt {...}]
+        UMethod (name = foo) [public static final fun foo() : java.lang.String {...}]
+            UBlockExpression [{...}]
+                UReturnExpression [return switch  {...]
+                    USwitchExpression [switch  {...] : @org.jetbrains.annotations.NotNull() java.lang.String
+                        UExpressionList (when) [     -> {...    ] : @org.jetbrains.annotations.NotNull() java.lang.String
+                            USwitchClauseExpressionWithBody [ -> {...]
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield switch  {...]
+                                        USwitchExpression [switch  {...] : @org.jetbrains.annotations.NotNull() java.lang.String
+                                            UExpressionList (when) [     -> {...    ] : @org.jetbrains.annotations.NotNull() java.lang.String
+                                                USwitchClauseExpressionWithBody [ -> {...]
+                                                    UExpressionList (when_entry) [{...]
+                                                        UYieldExpression [yield ""]
+                                                            UPolyadicExpression (operator = +) [""] : @org.jetbrains.annotations.NotNull() java.lang.String
+                                                                ULiteralExpression (value = "") [""] : java.lang.String
