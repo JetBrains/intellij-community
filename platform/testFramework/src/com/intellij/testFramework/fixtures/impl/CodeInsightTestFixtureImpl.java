@@ -2528,6 +2528,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Disposer.register(getTestRootDisposable(), usageView);
     Ref<String> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       usageView.expandAll();
       ref.set(TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation());
     });
