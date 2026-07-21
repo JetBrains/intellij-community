@@ -11,6 +11,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.KeyboardAwareContainer
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.ActionManager
@@ -84,8 +85,11 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
@@ -435,9 +439,74 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     }
   }
 
+  /**
+   * The [KeyboardAwareContainer]s above [cachedContainerOwner], innermost first; empty when there are none. This is needed
+   * for nearly every key event, but the chain only changes when focus moves or something above the owner is reparented,
+   * so it is resolved once per focus owner. Without the cache, the common case of no container anywhere would walk to the
+   * root on every keystroke. Weak references, so the cache never keeps a component alive.
+   */
+  private var cachedContainerOwner: WeakReference<Component>? = null
+  private var cachedContainers: List<WeakReference<KeyboardAwareContainer>> = emptyList()
+
+  /**
+   * Drops the cache when the owner or any of its ancestors is reparented. Swing sends this event synchronously from `add`
+   * and `remove`, so the cache is never stale.
+   */
+  private val containerCacheInvalidator = object : HierarchyListener {
+    override fun hierarchyChanged(e: HierarchyEvent) {
+      if (e.changeFlags and HierarchyEvent.PARENT_CHANGED.toLong() != 0L) {
+        e.component.removeHierarchyListener(this)
+        cachedContainerOwner = null
+        cachedContainers = emptyList()
+      }
+    }
+  }
+
+  /**
+   * Asks the [KeyboardAwareContainer]s above the focus owner, innermost first, whether to skip keymap matching for this
+   * event. Called from [inInitState] only, so the IDE keeps priority while it completes a multi-stroke shortcut or swallows
+   * the typed event of a shortcut it just performed, and only after the focus owner itself declined as a
+   * [KeyboardAwareFocusOwner]. It runs before the Windows AltGr check, so a claimed Ctrl+Alt press is not held back as a
+   * possible AltGr stroke. Like the other guards that return before the state machine, a claim is not passed to
+   * [keyGestureProcessor].
+   */
+  private fun skipByKeyboardAwareContainer(focusOwner: Component, e: KeyEvent): Boolean {
+    for (reference in resolveContainersFor(focusOwner)) {
+      val container = reference.get() ?: continue
+      if (container.skipKeyEventDispatcher(focusOwner, e)) {
+        LOG.debug {
+          "Key event not processed because ${container}, an ancestor of the focus owner ${focusOwner}, " +
+          "implements ${KeyboardAwareContainer::class.java}"
+        }
+        return true
+      }
+    }
+    return false
+  }
+
+  private fun resolveContainersFor(focusOwner: Component): List<WeakReference<KeyboardAwareContainer>> {
+    val cachedOwner = cachedContainerOwner?.get()
+    if (cachedOwner === focusOwner) {
+      return cachedContainers
+    }
+    // A collected owner took its listener with it; an owner that only lost focus did not.
+    cachedOwner?.removeHierarchyListener(containerCacheInvalidator)
+    val containers = generateSequence(focusOwner.parent) { it.parent }
+      .filterIsInstance<KeyboardAwareContainer>()
+      .map { WeakReference(it) }
+      .toList()
+    focusOwner.addHierarchyListener(containerCacheInvalidator)
+    cachedContainerOwner = WeakReference(focusOwner)
+    cachedContainers = containers
+    return containers
+  }
+
   private fun inInitState(): Boolean {
     val focusOwner = context.focusOwner
     val e = context.inputEvent
+    if (focusOwner != null && skipByKeyboardAwareContainer(focusOwner, e)) {
+      return false
+    }
     if (SystemInfoRt.isWindows && KeyEvent.KEY_PRESSED == e.id && removeAltGraph(e) && e.isControlDown) {
       firstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e)
       if (firstKeyStroke == null) {
