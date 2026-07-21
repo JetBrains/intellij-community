@@ -1,6 +1,5 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
@@ -10,27 +9,37 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 internal class DisallowListBasedMcpToolFilterProvider : UserConfigurableMcpToolFilterProvider {
-  override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
+  override fun applyFilters(
+    context: McpToolFilterContext,
+    clientInfo: Implementation?,
+    sessionOptions: McpServerService.McpSessionOptions?,
+    invocationMode: McpToolInvocationMode,
+  ) {
     val settings = McpToolDisallowListSettings.getInstance()
 
     context.updateState(enabled = true) {
-      settings.toolStateFor(it).enabled
+      it.isUserConfigurable && settings.toolStateFor(it).enabled
     }
 
     context.updateState(enabled = false) {
-      !settings.toolStateFor(it).enabled
+      it.isUserConfigurable && !settings.toolStateFor(it).enabled
     }
 
     context.updateState(routerOnly = true) {
-      settings.toolStateFor(it).routerOnly
+      it.isUserConfigurable && settings.toolStateFor(it).routerOnly
     }
 
     context.updateState(routerOnly = false) {
-      !settings.toolStateFor(it).routerOnly
+      it.isUserConfigurable && !settings.toolStateFor(it).routerOnly
     }
   }
 
-  override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {
+  override fun getUpdates(
+    clientInfo: Implementation?,
+    scope: CoroutineScope,
+    sessionOptions: McpServerService.McpSessionOptions?,
+    invocationMode: McpToolInvocationMode,
+  ): Flow<Unit> {
     val settings = McpToolDisallowListSettings.getInstance()
     return settings.toolStatesFlow.map { }
   }

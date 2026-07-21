@@ -115,8 +115,26 @@ class DisallowListBasedMcpToolFilterProviderTest {
     assertThat(context.routerOnlyTools).doesNotContain(tool)
   }
 
-  private fun fakeTool(name: String, fullName: String): McpTool {
+  @Test
+  fun `applyFilters ignores stored state for non-user-configurable tool`() {
+    val tool = fakeTool(
+      name = "managed_tool",
+      fullName = "com.example.toolset.managed_tool",
+      userConfigurable = false,
+    )
+    val context = McpToolFilterContext(listOf(tool))
+    settings.toolStates = mapOf(
+      tool.descriptor.fullyQualifiedName to ToolState(enabled = false, routerOnly = false),
+    )
+
+    provider.applyFilters(context, null, null, McpToolInvocationMode.DIRECT)
+
+    assertThat(context.routerOnlyTools).containsExactly(tool)
+  }
+
+  private fun fakeTool(name: String, fullName: String, userConfigurable: Boolean = true): McpTool {
     return object : McpTool {
+      override val isUserConfigurable: Boolean = userConfigurable
       override val descriptor = McpToolDescriptor(
         name = name,
         description = name,
@@ -124,6 +142,7 @@ class DisallowListBasedMcpToolFilterProviderTest {
         category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false),
         inputSchema = McpToolSchema.ofPropertiesSchema(JsonObject(emptyMap()), emptySet(), emptyMap()),
       )
+
       override suspend fun call(args: JsonObject): McpToolCallResult = error("not needed")
       override fun toString(): String = "McpTool $fullName"
     }

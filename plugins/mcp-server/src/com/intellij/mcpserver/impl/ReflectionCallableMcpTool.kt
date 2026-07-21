@@ -8,7 +8,13 @@ import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.impl.util.CallableBridge
 import kotlinx.serialization.json.JsonObject
 
-class ReflectionCallableMcpTool(override val descriptor: McpToolDescriptor, private val callableBridge: CallableBridge) : McpTool {
+class ReflectionCallableMcpTool(
+  override val descriptor: McpToolDescriptor,
+  private val callableBridge: CallableBridge,
+  override val isUserConfigurable: Boolean,
+) : McpTool {
+  constructor(descriptor: McpToolDescriptor, callableBridge: CallableBridge) : this(descriptor, callableBridge, true)
+
   override suspend fun call(args: JsonObject): McpToolCallResult {
     val result = callableBridge.call(args)
     return when (result.result) {

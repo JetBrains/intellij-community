@@ -9,15 +9,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 fun applyMaskFilter(context: McpToolFilterContext, maskList: String) {
+  applyMaskFilter(context, maskList) { true }
+}
+
+internal fun applyMaskFilter(context: McpToolFilterContext, maskList: String, isApplicable: (McpTool) -> Boolean) {
   if (maskList.isBlank()) return
   val masks = MaskList(maskList)
-  context.updateState(enabled = false) { tool -> !masks.matches(tool.descriptor.fullyQualifiedName) }
+  context.updateState(enabled = false) { tool ->
+    isApplicable(tool) && !masks.matches(tool.descriptor.fullyQualifiedName)
+  }
 }
 
 interface McpToolFilterProvider {
   data class McpToolState(
     val enabled: Boolean = true,
-    val routerOnly: Boolean = true
+    val routerOnly: Boolean = true,
   )
 
   class McpToolFilterContext(tools: Collection<McpTool>) {
@@ -50,7 +56,17 @@ interface McpToolFilterProvider {
     val EP: ExtensionPointName<McpToolFilterProvider> = ExtensionPointName.create("com.intellij.mcpServer.mcpToolFilterProvider")
   }
 
-  fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT)
+  fun applyFilters(
+    context: McpToolFilterContext,
+    clientInfo: Implementation?,
+    sessionOptions: McpServerService.McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  )
 
-  fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT): Flow<Unit>
+  fun getUpdates(
+    clientInfo: Implementation?,
+    scope: CoroutineScope,
+    sessionOptions: McpServerService.McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): Flow<Unit>
 }

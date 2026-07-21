@@ -85,6 +85,8 @@ internal fun buildCategoryGroups(tools: List<McpTool>): List<ToolCategoryGroup> 
     }
 }
 
+internal fun userConfigurableTools(tools: List<McpTool>): List<McpTool> = tools.filter { it.isUserConfigurable }
+
 internal fun buildDescriptionRenderModel(
   description: String,
   collapsedTextWidth: Int,
@@ -453,7 +455,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
 
     allTools = McpServerService.getInstance().getMcpToolsFiltered(
       excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java),
-    )
+    ).let(::userConfigurableTools)
     initialToolStates = normalizeToolStateKeys(initialToolStates)
     val normalizedToolStates = normalizeToolStateKeys(allToolStates)
     allToolStates.clear()

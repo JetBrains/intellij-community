@@ -33,6 +33,13 @@ class ToolsetReflectionTest {
     assertEquals("Expected tool conversion failure", error.message)
   }
 
+  @Test
+  fun `toolset user configurability is propagated to reflected tools`() {
+    val tools = LaunchManagedToolset().asTools()
+
+    assertTrue(tools.none { it.isUserConfigurable })
+  }
+
   private class ParallelToolset : McpToolset {
     val conversionThreadNames: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val firstConversion = AtomicBoolean(true)
@@ -65,6 +72,14 @@ class ToolsetReflectionTest {
 
     @McpTool
     fun failingTool() {
+    }
+  }
+
+  private class LaunchManagedToolset : McpToolset {
+    override fun isUserConfigurable(): Boolean = false
+
+    @McpTool
+    fun managedTool() {
     }
   }
 }

@@ -21,6 +21,7 @@ interface PortCandidate {
 
 export interface StreamTransportOptions {
   explicitUrl?: string
+  requestHeaders?: HeadersInit
   preferredPorts?: number[]
   portScanStart: number
   portScanLimit: number
@@ -376,7 +377,10 @@ class StreamTransportImpl implements McpStreamTransport {
         }
 
         if (note) note(`Connecting to MCP stream ${targetUrl}`)
-        const transport = new StreamableHTTPClientTransport(targetUrl, {fetch: createNodeHttpFetch()})
+        const transport = new StreamableHTTPClientTransport(targetUrl, {
+          fetch: createNodeHttpFetch(),
+          requestInit: {headers: this._options.requestHeaders}
+        })
         transport.onmessage = (message, extra) => {
           if (this.onmessage) this.onmessage(message, extra)
         }
@@ -465,6 +469,7 @@ class StreamTransportImpl implements McpStreamTransport {
 
 export function createStreamTransport({
   explicitUrl,
+  requestHeaders,
   preferredPorts,
   portScanStart,
   portScanLimit,
@@ -481,6 +486,7 @@ export function createStreamTransport({
 }: StreamTransportOptions): McpStreamTransport {
   return new StreamTransportImpl({
     explicitUrl,
+    requestHeaders,
     preferredPorts,
     portScanStart,
     portScanLimit,

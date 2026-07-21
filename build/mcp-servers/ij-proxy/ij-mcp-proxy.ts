@@ -59,6 +59,8 @@ const queueWaitTimeoutMs = parseEnvSeconds(
 )
 const STREAM_RETRY_ATTEMPTS = 3
 const STREAM_RETRY_BASE_DELAY_MS = 200
+const IJ_MCP_CLIENT_TAGS = 'IJ_MCP_CLIENT_TAGS'
+const AIR_CONTAINER_CLIENT_TAG_PREFIX = 'air-container:'
 
 type ToolOutput = {
   content: Array<{type: 'text'; text: string}>
@@ -179,32 +181,6 @@ function primaryUpstream(): UpstreamConnection {
 }
 
 function updateProxyTooling(): void {
-  // Re-detect container session — the file may appear after ij-proxy starts
-  if (!containerSession) {
-    containerSession = detectContainerSession(projectPath)
-    if (containerSession) {
-      note(`Container session detected (lazy): id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`)
-      if (containerSession.projectPath) projectPath = containerSession.projectPath
-      if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride) {
-        explicitMcpUrlOverride = containerSession.mcpStreamUrl
-        note(`MCP stream URL override: ${explicitMcpUrlOverride} — reconnecting upstream`)
-        // Drop stale upstream connected to the wrong IDE instance (e.g., main IDE instead of dev-run).
-        // performDiscovery() will reconnect using the correct URL.
-        ideaUpstream = null
-        riderUpstream = null
-        discoveryPromise = null
-      }
-      // In container mode, `.container-sessions.jsonl` is the source of truth for
-      // routing. Make every upstream tool call carry project_path so the IDE can pin
-      // the request to the correct open project (otherwise its dispatcher falls back
-      // to prompting when multiple projects are open).
-      ideaUpstream?.setForceInjectProjectPath(projectPath, true)
-      if (riderUpstream) {
-        riderUpstream.setForceInjectProjectPath(path.join(projectPath, RIDER_PROJECT_SUBPATH), true)
-      }
-    }
-  }
-
   let ideaSpecs: ToolSpecLike[] = []
   let ideaNames: Set<string> = new Set()
   if (ideaUpstream) {
@@ -252,6 +228,29 @@ function updateProxyTooling(): void {
 
   proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, new Set())
   proxyToolNames = new Set([...ideaNames, ...riderNames])
+}
+
+async function activateDetectedContainerSession(): Promise<boolean> {
+  if (containerSession) return false
+  const detected = detectContainerSession(projectPath)
+  if (!detected) return false
+
+  containerSession = detected
+  note(`Container session detected (lazy): id=${detected.sessionId}, workspace=${detected.workspacePath}`)
+  if (detected.projectPath) projectPath = detected.projectPath
+  if (detected.mcpStreamUrl) {
+    explicitMcpUrlOverride = detected.mcpStreamUrl
+  }
+
+  // Connection tags are fixed by the initial MCP request. Recreate every upstream even
+  // when its URL is unchanged so the IDE sees this connection as container-scoped.
+  const staleUpstreams = [ideaUpstream, riderUpstream].filter((upstream): upstream is UpstreamConnection => upstream != null)
+  ideaUpstream = null
+  riderUpstream = null
+  discoveryPromise = null
+  await Promise.allSettled(staleUpstreams.map(async (upstream) => upstream.client.close()))
+  updateProxyTooling()
+  return true
 }
 
 function note(message: string): void {
@@ -309,6 +308,9 @@ if (containerSession) {
 function createUpstreamForUrl(url: string): UpstreamConnection {
   const transport = createStreamTransport({
     explicitUrl: url,
+    requestHeaders: containerSession
+      ? {[IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}`}
+      : undefined,
     preferredPorts: [],
     portScanStart: 0,
     portScanLimit: 0,
@@ -551,6 +553,7 @@ const proxyServer = new Server(serverInfo, {capabilities: serverCapabilities})
 
 proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
   // Discover IDEs eagerly — no IDE means no reason to run
+  await activateDetectedContainerSession()
   await performDiscovery()
 
   // Negotiate the protocol version instead of forcing LATEST_PROTOCOL_VERSION:
@@ -575,6 +578,7 @@ proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
 })
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
+  await activateDetectedContainerSession()
   await ensureDiscovered()
   const ideaTools = ideaUpstream ? await ideaUpstream.getTools() : []
   const riderTools = riderUpstream ? await riderUpstream.getTools() : []
@@ -586,16 +590,9 @@ proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
 
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   // Lazy container session detection — file may appear after startup
-  if (!containerSession) {
-    const detected = detectContainerSession(projectPath)
-    if (detected) {
-      containerSession = detected
-      note(`Container session detected on tool call: id=${detected.sessionId}`)
-      updateProxyTooling()
-      // If updateProxyTooling dropped the upstream (URL changed), reconnect now
-      await ensureDiscovered()
-      await proxyServer.sendToolListChanged()
-    }
+  if (await activateDetectedContainerSession()) {
+    await ensureDiscovered()
+    await proxyServer.sendToolListChanged()
   }
 
   const toolName = typeof request.params?.name === 'string' ? request.params.name : ''

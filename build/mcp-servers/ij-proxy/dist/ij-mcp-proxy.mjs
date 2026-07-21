@@ -22643,7 +22643,10 @@ class StreamTransportImpl {
       }
       if (note)
         note(`Connecting to MCP stream ${targetUrl}`);
-      let transport = new StreamableHTTPClientTransport(targetUrl, { fetch: createNodeHttpFetch() });
+      let transport = new StreamableHTTPClientTransport(targetUrl, {
+        fetch: createNodeHttpFetch(),
+        requestInit: { headers: this._options.requestHeaders }
+      });
       if (transport.onmessage = (message, extra) => {
         if (this.onmessage)
           this.onmessage(message, extra);
@@ -22706,6 +22709,7 @@ class StreamTransportImpl {
 }
 function createStreamTransport({
   explicitUrl,
+  requestHeaders,
   preferredPorts,
   portScanStart,
   portScanLimit,
@@ -22722,6 +22726,7 @@ function createStreamTransport({
 }) {
   return new StreamTransportImpl({
     explicitUrl,
+    requestHeaders,
     preferredPorts,
     portScanStart,
     portScanLimit,
@@ -25060,7 +25065,7 @@ function extractPathArg(args) {
 }
 
 // ij-mcp-proxy.ts
-var explicitMcpUrl = env2.JETBRAINS_MCP_STREAM_URL || env2.MCP_STREAM_URL || env2.JETBRAINS_MCP_URL || env2.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env2.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200, PROJECT_MATCH_PROBE_TOOLS = [
+var explicitMcpUrl = env2.JETBRAINS_MCP_STREAM_URL || env2.MCP_STREAM_URL || env2.JETBRAINS_MCP_URL || env2.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env2.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200, IJ_MCP_CLIENT_TAGS = "IJ_MCP_CLIENT_TAGS", AIR_CONTAINER_CLIENT_TAG_PREFIX = "air-container:", PROJECT_MATCH_PROBE_TOOLS = [
   { toolName: "get_all_open_file_paths", args: {} },
   { toolName: "get_project_dependencies", args: {} },
   { toolName: "get_project_modules", args: {} }
@@ -25117,16 +25122,6 @@ function primaryUpstream() {
   return upstream;
 }
 function updateProxyTooling() {
-  if (!containerSession) {
-    if (containerSession = detectContainerSession(projectPath), containerSession) {
-      if (note(`Container session detected (lazy): id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`), containerSession.projectPath)
-        projectPath = containerSession.projectPath;
-      if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride)
-        explicitMcpUrlOverride = containerSession.mcpStreamUrl, note(`MCP stream URL override: ${explicitMcpUrlOverride} \u2014 reconnecting upstream`), ideaUpstream = null, riderUpstream = null, discoveryPromise = null;
-      if (ideaUpstream?.setForceInjectProjectPath(projectPath, !0), riderUpstream)
-        riderUpstream.setForceInjectProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH), !0);
-    }
-  }
   let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
   if (ideaUpstream) {
     let tooling = createProxyTooling({
@@ -25158,6 +25153,19 @@ function updateProxyTooling() {
   } else
     riderProxyToolNames = /* @__PURE__ */ new Set, riderProxyToolCall = null;
   proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
+}
+async function activateDetectedContainerSession() {
+  if (containerSession)
+    return !1;
+  let detected = detectContainerSession(projectPath);
+  if (!detected)
+    return !1;
+  if (containerSession = detected, note(`Container session detected (lazy): id=${detected.sessionId}, workspace=${detected.workspacePath}`), detected.projectPath)
+    projectPath = detected.projectPath;
+  if (detected.mcpStreamUrl)
+    explicitMcpUrlOverride = detected.mcpStreamUrl;
+  let staleUpstreams = [ideaUpstream, riderUpstream].filter((upstream) => upstream != null);
+  return ideaUpstream = null, riderUpstream = null, discoveryPromise = null, await Promise.allSettled(staleUpstreams.map(async (upstream) => upstream.client.close())), updateProxyTooling(), !0;
 }
 function note(message) {
   logToFile(message), logProgress(message);
@@ -25193,6 +25201,7 @@ if (containerSession)
 function createUpstreamForUrl(url2) {
   let transport = createStreamTransport({
     explicitUrl: url2,
+    requestHeaders: containerSession ? { [IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}` } : void 0,
     preferredPorts: [],
     portScanStart: 0,
     portScanLimit: 0,
@@ -25356,7 +25365,7 @@ var serverInfo = { name: "ij-mcp-proxy", version: "1.0.0" }, serverCapabilities 
   logging: {}
 }, proxyServer = new Server(serverInfo, { capabilities: serverCapabilities });
 proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
-  await performDiscovery();
+  await activateDetectedContainerSession(), await performDiscovery();
   let requestedVersion = request.params.protocolVersion, protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion) ? requestedVersion : LATEST_PROTOCOL_VERSION, instructions = buildInstructions(), effectiveServerInfo = containerSession ? { name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: "1.0.0" } : serverInfo;
   return {
     protocolVersion,
@@ -25366,18 +25375,15 @@ proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
   };
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  await ensureDiscovered();
+  await activateDetectedContainerSession(), await ensureDiscovered();
   let ideaTools = ideaUpstream ? await ideaUpstream.getTools() : [], riderTools = riderUpstream ? await riderUpstream.getTools() : [], allUpstreamTools = mergeToolLists(ideaTools, riderTools, /* @__PURE__ */ new Set);
   return {
     tools: mergeToolLists(proxyToolSpecs, allUpstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (!containerSession) {
-    let detected = detectContainerSession(projectPath);
-    if (detected)
-      containerSession = detected, note(`Container session detected on tool call: id=${detected.sessionId}`), updateProxyTooling(), await ensureDiscovered(), await proxyServer.sendToolListChanged();
-  }
+  if (await activateDetectedContainerSession())
+    await ensureDiscovered(), await proxyServer.sendToolListChanged();
   let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {}, clientTimeoutMs;
   try {
     clientTimeoutMs = extractClientTimeoutMs(args);

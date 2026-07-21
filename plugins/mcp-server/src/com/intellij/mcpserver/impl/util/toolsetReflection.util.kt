@@ -84,12 +84,15 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
     this@asTools.functions.map {
       async(Dispatchers.Default) {
         if (it.getPreferredToolAnnotation() == null) return@async null
-        it.asTool(json = json,
-                  thisRef = thisRef,
-                  category = category,
-                  fullyQualifiedName = this@asTools.qualifiedName + "." + it.name,
-                  presentableDescriptionProvider = presentableDescriptionProvider,
-                  additionalImplicitParameters = arrayOf(projectPathParameter))
+        it.asToolWithUserConfigurability(
+          json = json,
+          thisRef = thisRef,
+          category = category,
+          fullyQualifiedName = this@asTools.qualifiedName + "." + it.name,
+          presentableDescriptionProvider = presentableDescriptionProvider,
+          isUserConfigurable = thisRef?.isUserConfigurable() ?: true,
+          additionalImplicitParameters = arrayOf(projectPathParameter),
+        )
       }
     }.awaitAll().filterNotNull()
   }.apply {
@@ -158,11 +161,44 @@ fun KFunction<*>.asTool(
   presentableDescriptionProvider: ((toolName: String) -> @Nls String?)? = null,
   vararg additionalImplicitParameters: KParameter,
 ): ReflectionCallableMcpTool {
+  return asToolWithUserConfigurability(
+    json = json,
+    thisRef = thisRef,
+    name = name,
+    description = description,
+    category = category,
+    fullyQualifiedName = fullyQualifiedName,
+    presentableDescriptionProvider = presentableDescriptionProvider,
+    isUserConfigurable = true,
+    additionalImplicitParameters = additionalImplicitParameters,
+  )
+}
+
+private fun KFunction<*>.asToolWithUserConfigurability(
+  json: Json,
+  thisRef: Any?,
+  name: String? = null,
+  description: String? = null,
+  category: McpToolCategory?,
+  fullyQualifiedName: String?,
+  presentableDescriptionProvider: ((toolName: String) -> @Nls String?)?,
+  isUserConfigurable: Boolean,
+  vararg additionalImplicitParameters: KParameter,
+): ReflectionCallableMcpTool {
   val toolDescriptor =
-    this.asToolDescriptor(name = name, description = description, category, fullyQualifiedName, presentableDescriptionProvider, *additionalImplicitParameters)
+    this.asToolDescriptor(name = name,
+                          description = description,
+                          category,
+                          fullyQualifiedName,
+                          presentableDescriptionProvider,
+                          *additionalImplicitParameters)
   if (instanceParameter != null && thisRef == null) error("Instance parameter is not null, but no 'this' object is provided")
   val callableBridge = CallableBridge(callable = this, thisRef = thisRef, json = json)
-  return ReflectionCallableMcpTool(descriptor = toolDescriptor, callableBridge = callableBridge)
+  return ReflectionCallableMcpTool(
+    descriptor = toolDescriptor,
+    callableBridge = callableBridge,
+    isUserConfigurable = isUserConfigurable,
+  )
 }
 
 

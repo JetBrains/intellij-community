@@ -208,6 +208,14 @@ class McpToolFilterConfigurableTest {
   }
 
   @Test
+  fun `launch-managed tools are excluded from user configuration`() {
+    val userTool = testTool(name = "user", fullyQualifiedName = "test.user")
+    val managedTool = testTool(name = "managed", fullyQualifiedName = "test.managed", userConfigurable = false)
+
+    assertThat(userConfigurableTools(listOf(userTool, managedTool))).containsExactly(userTool)
+  }
+
+  @Test
   fun `description render model rewraps when width shrinks`() {
     val description = "Alpha beta gamma delta epsilon zeta eta theta iota kappa"
 
@@ -275,8 +283,9 @@ class McpToolFilterConfigurableTest {
     return field.get(configurable) as List<McpTool>
   }
 
-  private fun testTool(name: String, fullyQualifiedName: String): McpTool {
+  private fun testTool(name: String, fullyQualifiedName: String, userConfigurable: Boolean = true): McpTool {
     return object : McpTool {
+      override val isUserConfigurable: Boolean = userConfigurable
       override val descriptor: McpToolDescriptor = McpToolDescriptor(
         name = name,
         description = name,
