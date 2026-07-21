@@ -159,9 +159,11 @@
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.MarimoSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.PythonDapPluginSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowDefaultAnchorMigration"/>
+    <postStartupActivity implementation="com.jetbrains.python.debugger.PyDebuggerBackendToolWindowSetup"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
@@ -201,6 +203,9 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     <listener class="com.jetbrains.python.sdk.AvailableSdkNotifier"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="com.jetbrains.python.debugger.PyDapPluginInstallGotItListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"
+              activeInHeadlessMode="false"/>
   </projectListeners>
 
   <applicationListeners>
@@ -867,6 +872,9 @@
     <extensionPoint qualifiedName="Pythonid.breakpointHandler"
                     interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.backendSwitchHandler"
+                    interface="com.jetbrains.python.debugger.PyDebuggerBackendSwitchHandler"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider"
                     interface="com.jetbrains.python.console.PyConsoleOptionsProvider"
                     dynamic="true"/>
@@ -1114,6 +1122,8 @@
   </actions>
 
   <actions>
+    <action id="Python.DebuggerBackendSwitcher"
+            class="com.jetbrains.python.debugger.PyDebuggerBackendSwitcherAction"/>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
             icon="AllIcons.Debugger.ForceStepInto"/>
 

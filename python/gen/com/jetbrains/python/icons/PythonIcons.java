@@ -22,6 +22,10 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/pythonCore/cython/cythonFile.svg", -1709759022, 0);
   }
 
+  public static final class Debugger {
+    /** 16x16 */ public static final @NotNull Icon Youtrack = load("icons/com/jetbrains/pythonCore/debugger/youtrack.svg", -1690197275, 0);
+  }
+
   public static final class Python {
     /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/pythonCore/python/expui/commandQueue.svg", "icons/com/jetbrains/pythonCore/python/commandQueue.svg", -183748339, 2);
     /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/pythonCore/python/expui/condaEnv.svg", "icons/com/jetbrains/pythonCore/python/condaenv.svg", -1473092825, 0);
