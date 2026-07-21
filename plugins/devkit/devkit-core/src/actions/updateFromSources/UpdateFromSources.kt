@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalPathApi::class)
+@file:OptIn(ExperimentalPathApi::class, LowLevelLocalMachineAccess::class)
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -287,9 +288,9 @@ private fun generateUpdateCommand(builtDistDir: Path, workIdeHome: Path): Array<
 private fun restartWithCommand(command: Array<String>, deployDirPath: Path, beforeRestart: () -> Unit) {
   val pluginsDir = deployDirPath.resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
 
-  val nonBundledPluginsPaths = lazy { nonBundledPluginsPaths() }
+  val nonBundledPluginsPaths by lazy { nonBundledPluginsPaths() }
   readPluginsDir(pluginsDir).forEach { newPluginNode ->
-    updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths.value[it] }
+    updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths[it] }
   }
 
   Restarter.setCopyRestarterFiles()
