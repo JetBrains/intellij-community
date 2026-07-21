@@ -904,8 +904,17 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
+    <editorActionHandler action="EditorDelete"
+                         implementationClass="com.intellij.internal.statistic.collectors.fus.DeleteSelectionLoggingHandler"
+                         id="delete.selection.logging"
+                         order="before delete.for.selection"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace"
+                         implementationClass="com.intellij.internal.statistic.collectors.fus.BackspaceSelectionLoggingHandler"
+                         id="backspace.selection.logging"
+                         order="after backspace.lookup, before backspace.for.selection"/>
+
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"

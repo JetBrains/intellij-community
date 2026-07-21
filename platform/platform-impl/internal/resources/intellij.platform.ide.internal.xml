@@ -60,15 +60,6 @@
     <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
                         serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
 
-    <editorActionHandler action="EditorDelete"
-                         implementationClass="com.intellij.internal.statistic.collectors.fus.DeleteSelectionLoggingHandler"
-                         id="delete.selection.logging"
-                         order="before delete.for.selection"/>
-    <editorActionHandler action="EditorBackSpace"
-                         implementationClass="com.intellij.internal.statistic.collectors.fus.BackspaceSelectionLoggingHandler"
-                         id="backspace.selection.logging"
-                         order="after backspace.lookup, before backspace.for.selection"/>
-
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
                         serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
 
