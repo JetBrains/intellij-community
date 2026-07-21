@@ -29,6 +29,8 @@ class UpdateFromSourcesSettingsState : BaseState() {
   var restartAutomatically: Boolean by property(false)
   @get:XCollection(style = XCollection.Style.v2)
   val workIdePathsHistory: MutableList<String> by list()
+  @get:XCollection(style = XCollection.Style.v2)
+  val additionalVmOptionsHistory: MutableList<String> by list()
 }
 
 internal val UpdateFromSourcesSettingsState.actualIdePath: String
