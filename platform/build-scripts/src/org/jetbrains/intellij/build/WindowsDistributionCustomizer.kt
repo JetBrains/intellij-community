@@ -102,6 +102,11 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
    */
   var customNsiConfigurationFiles: List<String> = emptyList()
 
+  /**
+   * When `true`, builds the installer with NSISBI instead of stock NSIS, lifting the ~2 GB size limit.
+   */
+  var useBigNsisInstaller: Boolean = false
+
   // Method override handlers (stored as lambdas)
   private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
   private var fullNameHandler: ((ApplicationInfoProperties) -> String)? = null
@@ -196,6 +201,9 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
     override val customNsiConfigurationFiles: List<Path>
       get() = builder.customNsiConfigurationFiles.map { projectHome.resolve(it) }
 
+    override val useBigNsisInstaller: Boolean
+      get() = builder.useBigNsisInstaller
+
     override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
       super.copyAdditionalFiles(targetDir, arch, context)
       context.productProperties.copyAdditionalOsSpecificFiles(targetDir, OsFamily.WINDOWS, arch, context)
@@ -281,6 +289,12 @@ abstract class WindowsDistributionCustomizer {
    * Set to `false` for products that are not updated with patches.
    */
   var publishUninstaller: Boolean = true
+
+  /**
+   * When `true`, the installer is built with NSISBI instead of stock NSIS, lifting the ~2 GB size limit.
+   */
+  open val useBigNsisInstaller: Boolean
+    get() = false
 
   /**
    * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.

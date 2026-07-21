@@ -413,6 +413,11 @@ data class BuildOptions(
   var useLocalNSIS: String? = null
 
   /**
+   * When set, overrides [WindowsDistributionCustomizer.useBigNsisInstaller] for all products.
+   */
+  var useNsisBigInstaller: Boolean? = System.getProperty("intellij.build.nsis.big")?.toBooleanStrictOrNull()
+
+  /**
    * When `true`, builds and uses a local version of `jetbraind`.
    */
   var useLocalJetbrainsDaemon: Boolean = getBooleanProperty("intellij.build.local.jetbrainsd", false)
