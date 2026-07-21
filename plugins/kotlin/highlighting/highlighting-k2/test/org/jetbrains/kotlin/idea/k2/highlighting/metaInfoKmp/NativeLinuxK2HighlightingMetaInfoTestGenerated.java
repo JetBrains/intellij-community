@@ -320,6 +320,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
             runTest("../../idea/tests/testData/highlighterMetaInfo/KDocWithCodeBlocks.kt");
         }
 
+        @TestMetadata("KDocWithNonKotlinCodeSnippets.kt")
+        public void testKDocWithNonKotlinCodeSnippets() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/KDocWithNonKotlinCodeSnippets.kt");
+        }
+
         @TestMetadata("Labels.kt")
         public void testLabels() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");

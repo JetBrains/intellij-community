@@ -1,0 +1,38 @@
+// FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+// ALLOW_ERRORS
+// HIGHLIGHT_WARNINGS
+// TOOL: com.siyeh.ig.classlayout.FinalMethodInFinalClassInspection
+/**
+ * Broken block with warnings and errors:
+ * ```java
+ * private static final class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>Foo<!>() {}
+ *   private static <!HIGHLIGHTING("severity='WARNING'; descr='Method declared 'final' in 'final' class'; highlightingTextAttributesKey='WARNING_ATTRIBUTES'")!>final<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CONSTRUCTOR_DECLARATION_ATTRIBUTES'")!>bar<!>();
+ *
+ *   <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='ANNOTATION_NAME_ATTRIBUTES'")!>@<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>kotlin.<!><!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>jvm.<!>JvmOverloads<!>()
+ *   private static <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CONSTRUCTOR_DECLARATION_ATTRIBUTES'")!>bar<!>(int<!HIGHLIGHTING("severity='ERROR'; descr='Identifier expected'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>)<!><!HIGHLIGHTING("severity='ERROR'; descr=''{' or ';' expected'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!><!>
+ * <!HIGHLIGHTING("severity='ERROR'; descr=''class' or 'interface' expected'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>}<!>
+ * ```
+ *
+ * Valid block:
+ * ```java
+ * private static final class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>Foo<!> {}
+ * ```
+ *
+ * Broken block:
+ * ```xml
+ * <!HIGHLIGHTING("severity='ERROR'; descr='Unexpected tokens'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>Nothing<!> <!HIGHLIGHTING("severity='ERROR'; descr='Unexpected tokens'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>here<!>
+<!HIGHLIGHTING("severity='ERROR'; descr='Valid XML document must have a root tag'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!> <!>* ```
+ *
+ * Broken block:
+ * ```python
+ * I love Kotlin
+ * ```
+ *
+ * Broken block:
+ * ```json
+ * I love kotlin
+ * ```
+ */
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(){}

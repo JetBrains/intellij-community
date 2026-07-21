@@ -320,6 +320,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/KDocWithCodeBlocks.kt");
         }
 
+        @TestMetadata("KDocWithNonKotlinCodeSnippets.kt")
+        public void testKDocWithNonKotlinCodeSnippets() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/KDocWithNonKotlinCodeSnippets.kt");
+        }
+
         @TestMetadata("Labels.kt")
         public void testLabels() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");
