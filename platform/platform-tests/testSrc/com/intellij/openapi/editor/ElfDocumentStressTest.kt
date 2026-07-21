@@ -150,12 +150,8 @@ class ElfDocumentStressTest {
     var revertedEventCount = 0
       private set
 
-    override fun elfDocumentChanged(event: DocumentEvent) {
-      elfChangedEventCount++
-    }
-
-    override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-      revertedEventCount++
+    override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+      if (revertedEvent != null) revertedEventCount++ else elfChangedEventCount++
     }
   }
 

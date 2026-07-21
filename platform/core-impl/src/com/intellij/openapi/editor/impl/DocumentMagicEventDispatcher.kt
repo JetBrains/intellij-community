@@ -46,14 +46,14 @@ internal abstract class DocumentMagicEventDispatcher(
   ): T {
     firingElfTextChangeOutsideElfScope = true
     try {
-      return textElf.withFiringTextUpdate(revertedEvent, changeEvent, action)
+      return textElf.withFiringTextUpdate(changeEvent, revertedEvent, action)
     } finally {
       firingElfTextChangeOutsideElfScope = false
     }
   }
 
   fun <T> withFiringBothTextUpdate(changeEvent: DocumentEvent, action: () -> T): T {
-    return textBoth.withFiringTextUpdate(null, changeEvent, action)
+    return textBoth.withFiringTextUpdate(changeEvent, null, action)
   }
 
   /**
@@ -200,15 +200,11 @@ internal abstract class DocumentMagicEventDispatcher(
   }
 
   private open class ElfRouter(val origin: DocumentListener) : DocumentListener {
-    override fun beforeElfDocumentChange(event: DocumentEvent) {
+    override fun beforeElfDocumentChange(event: DocumentEvent, revertingEvent: DocumentEvent?) {
       origin.beforeDocumentChange(event)
     }
 
-    override fun elfDocumentChanged(event: DocumentEvent) {
-      origin.documentChanged(event)
-    }
-
-    override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
+    override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
       origin.documentChanged(event)
     }
 

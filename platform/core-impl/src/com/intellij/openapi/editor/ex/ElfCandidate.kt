@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
  * `DocumentListener` annotated with this marker will be notified of elf events:
  * - beforeElfDocumentChange -> beforeDocumentChange
  * - elfDocumentChanged -> documentChanged
- * - elfDocumentReverted -> documentChanged
  *
  * This annotation should be removed once all candidates can properly opt in by implementing methods from `ElfDocumentListener`.
  *

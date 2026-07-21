@@ -399,13 +399,14 @@ class ElfDocumentTest {
       val document = DocumentImpl("abc")
       val eventHandlingLog = mutableListOf<String>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          eventHandlingLog.add("changed:${(event.document as DocumentEx).isInEventsHandling}")
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          val revertedInEventHandling = (revertedEvent.document as DocumentEx).isInEventsHandling
-          val changeInEventHandling = (event.document as DocumentEx).isInEventsHandling
-          eventHandlingLog.add("reverted:$revertedInEventHandling:$changeInEventHandling")
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            val revertedInEventHandling = (revertedEvent.document as DocumentEx).isInEventsHandling
+            val changeInEventHandling = (event.document as DocumentEx).isInEventsHandling
+            eventHandlingLog.add("reverted:$revertedInEventHandling:$changeInEventHandling")
+          } else {
+            eventHandlingLog.add("changed:${(event.document as DocumentEx).isInEventsHandling}")
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -436,8 +437,10 @@ class ElfDocumentTest {
       val elfDocument = getElfDocument(document)
       val bulkModeLog = mutableListOf<Boolean>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          bulkModeLog.add(event.document.isInBulkUpdate)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent == null) {
+            bulkModeLog.add(event.document.isInBulkUpdate)
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -487,8 +490,10 @@ class ElfDocumentTest {
         override fun documentChanged(event: DocumentEvent) {
           realBulkModeLog.add(event.document.isInBulkUpdate)
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          elfBulkModeLog.add(event.document.isInBulkUpdate)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent == null) {
+            elfBulkModeLog.add(event.document.isInBulkUpdate)
+          }
         }
       }, testRootDisposable)
       runWriteCommandAction {
@@ -634,10 +639,7 @@ class ElfDocumentTest {
         override fun documentChanged(event: DocumentEvent) {
           realTextBulkModeLog.add(event.newFragment.toString() to event.document.isInBulkUpdate)
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          elfTextBulkModeLog.add(event.newFragment.toString() to event.document.isInBulkUpdate)
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
           elfTextBulkModeLog.add(event.newFragment.toString() to event.document.isInBulkUpdate)
         }
       }, testRootDisposable)
@@ -670,11 +672,12 @@ class ElfDocumentTest {
       val revertedEvents = mutableListOf<Pair<DocumentEvent, DocumentEvent>>()
       val changedEvents = mutableListOf<Pair<String, String>>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          changedEvents.add(event.oldFragment.toString() to event.newFragment.toString())
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          revertedEvents.add(revertedEvent to event)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            revertedEvents.add(revertedEvent to event)
+          } else {
+            changedEvents.add(event.oldFragment.toString() to event.newFragment.toString())
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -711,11 +714,12 @@ class ElfDocumentTest {
       val revertedEvents = mutableListOf<Pair<DocumentEvent, DocumentEvent>>()
       val changedEvents = mutableListOf<Pair<Int, Pair<String, String>>>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          changedEvents.add(event.offset to (event.oldFragment.toString() to event.newFragment.toString()))
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          revertedEvents.add(revertedEvent to event)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            revertedEvents.add(revertedEvent to event)
+          } else {
+            changedEvents.add(event.offset to (event.oldFragment.toString() to event.newFragment.toString()))
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -744,11 +748,12 @@ class ElfDocumentTest {
         override fun documentChanged(event: DocumentEvent) {
           eventLog.add("real:${event.offset}:${event.oldFragment}->${event.newFragment}")
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          eventLog.add("elf:${event.offset}:${event.oldFragment}->${event.newFragment}")
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          eventLog.add("revert:${event.offset}:${event.oldFragment}->${event.newFragment}")
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            eventLog.add("revert:${event.offset}:${event.oldFragment}->${event.newFragment}")
+          } else {
+            eventLog.add("elf:${event.offset}:${event.oldFragment}->${event.newFragment}")
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -816,11 +821,12 @@ class ElfDocumentTest {
         override fun documentChanged(event: DocumentEvent) {
           eventLog.add(formatEvent("real", event))
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          eventLog.add(formatEvent("elf", event))
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          eventLog.add(formatEvent("revert", event))
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            eventLog.add(formatEvent("revert", event))
+          } else {
+            eventLog.add(formatEvent("elf", event))
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -896,11 +902,12 @@ class ElfDocumentTest {
       val revertedEvents = mutableListOf<Pair<DocumentEvent, DocumentEvent>>()
       val changedEvents = mutableListOf<Pair<String, String>>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          changedEvents.add(event.oldFragment.toString() to event.newFragment.toString())
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-          revertedEvents.add(revertedEvent to event)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent != null) {
+            revertedEvents.add(revertedEvent to event)
+          } else {
+            changedEvents.add(event.oldFragment.toString() to event.newFragment.toString())
+          }
         }
       }, testRootDisposable)
       withElfScope {
@@ -938,18 +945,17 @@ class ElfDocumentTest {
         override fun documentChanged(event: DocumentEvent) {
           candidateDocumentEvents.add(event.oldFragment.toString() to event.newFragment.toString())
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          candidateElfEvents.add(event.oldFragment.toString() to event.newFragment.toString())
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          if (revertedEvent == null) {
+            candidateElfEvents.add(event.oldFragment.toString() to event.newFragment.toString())
+          }
         }
       }
       document.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
           regularDocumentEvents.add(event.oldFragment.toString() to event.newFragment.toString())
         }
-        override fun elfDocumentChanged(event: DocumentEvent) {
-          regularElfEvents.add(event.oldFragment.toString() to event.newFragment.toString())
-        }
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
           regularElfEvents.add(event.oldFragment.toString() to event.newFragment.toString())
         }
       }, testRootDisposable)
@@ -1048,8 +1054,9 @@ class ElfDocumentTest {
       val elfDocument = getElfDocument(document)
       val routedEvents = mutableListOf<Triple<String, String, Int>>()
       document.addDocumentListener(object : DocumentListener {
-        override fun elfDocumentChanged(event: DocumentEvent) = addEvent(event)
-        override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) = addEvent(event)
+        override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+          addEvent(event)
+        }
         private fun addEvent(event: DocumentEvent) {
           routedEvents.add(Triple(event.oldFragment.toString(), event.newFragment.toString(), event.moveOffset))
         }

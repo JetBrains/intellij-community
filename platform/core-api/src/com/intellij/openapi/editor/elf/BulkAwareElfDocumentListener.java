@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.elf;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Convenience interface for {@link ElfDocumentListener}-s which only process ELF text-change notifications outside
@@ -15,33 +16,23 @@ import org.jetbrains.annotations.NotNull;
 public interface BulkAwareElfDocumentListener extends ElfDocumentListener {
 
   @Override
-  default void beforeElfDocumentChange(@NotNull DocumentEvent event) {
+  default void beforeElfDocumentChange(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
     if (!event.getDocument().isInBulkUpdate()) {
-      beforeElfDocumentChangeNonBulk(event);
+      beforeElfDocumentChangeNonBulk(event, revertingEvent);
     }
   }
 
   @Override
-  default void elfDocumentChanged(@NotNull DocumentEvent event) {
+  default void elfDocumentChanged(@NotNull DocumentEvent event, @Nullable DocumentEvent revertedEvent) {
     if (!event.getDocument().isInBulkUpdate()) {
-      elfDocumentChangedNonBulk(event);
+      elfDocumentChangedNonBulk(event, revertedEvent);
     }
   }
 
-  @Override
-  default void elfDocumentReverted(@NotNull DocumentEvent revertedEvent, @NotNull DocumentEvent event) {
-    if (!revertedEvent.getDocument().isInBulkUpdate()) {
-      elfDocumentRevertedNonBulk(revertedEvent, event);
-    }
+  default void beforeElfDocumentChangeNonBulk(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
   }
 
-  default void beforeElfDocumentChangeNonBulk(@NotNull DocumentEvent event) {
-  }
-
-  default void elfDocumentChangedNonBulk(@NotNull DocumentEvent event) {
-  }
-
-  default void elfDocumentRevertedNonBulk(@NotNull DocumentEvent revertedEvent, @NotNull DocumentEvent event) {
+  default void elfDocumentChangedNonBulk(@NotNull DocumentEvent event, @Nullable DocumentEvent revertedEvent) {
   }
 
   /**
@@ -49,19 +40,15 @@ public interface BulkAwareElfDocumentListener extends ElfDocumentListener {
    * of the changes (offsets and changed text), and is fine with receiving only one notification for changes done in bulk mode.
    */
   interface Simple extends BulkAwareElfDocumentListener {
+
     @Override
-    default void beforeElfDocumentChangeNonBulk(@NotNull DocumentEvent event) {
+    default void beforeElfDocumentChangeNonBulk(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
       beforeElfDocumentChange(event.getDocument());
     }
 
     @Override
-    default void elfDocumentChangedNonBulk(@NotNull DocumentEvent event) {
+    default void elfDocumentChangedNonBulk(@NotNull DocumentEvent event, @Nullable DocumentEvent revertedEvent) {
       afterElfDocumentChange(event.getDocument());
-    }
-
-    @Override
-    default void elfDocumentRevertedNonBulk(@NotNull DocumentEvent revertedEvent, @NotNull DocumentEvent event) {
-      afterElfDocumentRevert(revertedEvent.getDocument());
     }
 
     @Override
@@ -80,10 +67,6 @@ public interface BulkAwareElfDocumentListener extends ElfDocumentListener {
 
     @SuppressWarnings("unused")
     default void afterElfDocumentChange(@NotNull Document document) {
-    }
-
-    @SuppressWarnings("unused")
-    default void afterElfDocumentRevert(@NotNull Document document) {
     }
   }
 }
