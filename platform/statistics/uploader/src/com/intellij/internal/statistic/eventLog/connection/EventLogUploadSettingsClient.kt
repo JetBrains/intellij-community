@@ -30,7 +30,8 @@ import kotlin.reflect.KClass
 class CachedConfigurationClient(
   private val delegate: ConfigurationClient,
   private val cacheTimeoutMs: Long,
-  private val maxUpdateAttempts: Int = DEFAULT_MAX_UPDATE_ATTEMPTS
+  private val maxUpdateAttempts: Int = DEFAULT_MAX_UPDATE_ATTEMPTS,
+  private val updateRetryDelayMs: Long = DEFAULT_UPDATE_RETRY_DELAY_MS
 ) {
   @Volatile
   private var lastUpdateTime: Long = 0L
@@ -48,6 +49,15 @@ class CachedConfigurationClient(
           // If lastUpdateTime is off by a few millisecond it doesn't really matter because config is almost never updated.
           lastUpdateTime = currentTime
           break
+        }
+        if (attempt < maxUpdateAttempts) {
+          try {
+            Thread.sleep(updateRetryDelayMs)
+          }
+          catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            break
+          }
         }
       }
     }
@@ -131,6 +141,7 @@ class CachedConfigurationClient(
 
   companion object {
     private const val DEFAULT_MAX_UPDATE_ATTEMPTS: Int = 3
+    private const val DEFAULT_UPDATE_RETRY_DELAY_MS: Long = 500L
   }
 }
 
