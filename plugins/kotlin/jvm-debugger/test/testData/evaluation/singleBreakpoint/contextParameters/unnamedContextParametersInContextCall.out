@@ -1,0 +1,8 @@
+LineBreakpoint created at unnamedContextParametersInContextCall.kt:13
+Run Java
+Connected to the target VM
+unnamedContextParametersInContextCall.kt:13
+Compile bytecode for foo(5)
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
 class C {
     companion {
         fun bar() {}

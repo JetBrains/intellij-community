@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.noarg-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.5.0-dev-498">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.5.0-dev-1493">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-498/noarg-compiler-plugin-for-ide-2.5.0-dev-498.jar">
-          <sha256sum>a71081add4561c6937927f383d0e34e86f025a72e69ae6782307c7e3095f86ba</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-1493/noarg-compiler-plugin-for-ide-2.5.0-dev-1493.jar">
+          <sha256sum>a9151bf3cba23caf98ff09f1fd9ed6e8cc2585625a297352e56e221d96887e7d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-498/noarg-compiler-plugin-for-ide-2.5.0-dev-498.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-1493/noarg-compiler-plugin-for-ide-2.5.0-dev-1493.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-498/noarg-compiler-plugin-for-ide-2.5.0-dev-498-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-1493/noarg-compiler-plugin-for-ide-2.5.0-dev-1493-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

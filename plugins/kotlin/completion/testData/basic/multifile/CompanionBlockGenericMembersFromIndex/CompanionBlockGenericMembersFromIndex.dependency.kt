@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks
 package dependency
 
 class C<T> {

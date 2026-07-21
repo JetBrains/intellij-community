@@ -24,7 +24,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -40,7 +39,6 @@ import org.intellij.plugins.intelliLang.inject.java.InjectionCache
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -242,7 +240,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
 
     private fun injectWithMutation(host: KtElement, configuration: Configuration): InjectionInfo? {
-        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.safeOperationToken() in stringMutationOperators } ?: return null
+        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationTokenOrNull in stringMutationOperators } ?: return null
         if (parent.right != host) return null
 
         if (isAnalyzeOff(configuration)) return null
@@ -270,7 +268,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpression? = when (expression) {
             is KtReturnExpression -> expression
-            is KtBinaryExpression -> findReturnExpression(expression.takeIf { it.safeOperationToken() == KtTokens.ELVIS }?.parent)
+            is KtBinaryExpression -> findReturnExpression(expression.takeIf { it.operationTokenOrNull == KtTokens.ELVIS }?.parent)
             is KtContainerNodeForControlStructureBody, is KtIfExpression -> findReturnExpression(expression.parent)
             else -> null
         }
@@ -738,18 +736,12 @@ private fun KtExpression?.isSimpleConcatenationSubexpression(): Boolean =
             (this as? KtBinaryExpression)?.isSimpleStandardConcatenationExpression() == true
 
 private fun KtBinaryExpression.isSimpleStandardConcatenationExpression(): Boolean =
-    this.safeOperationToken() == KtTokens.PLUS &&
+    this.operationTokenOrNull == KtTokens.PLUS &&
             left.isSimpleConcatenationSubexpression() && right.isSimpleConcatenationSubexpression()
-
-private fun KtBinaryExpression.safeOperationToken(): IElementType? {
-    // this.operationToken can throw NPE
-    val operationReference = node.findChildByType(KtNodeTypes.OPERATION_REFERENCE)?.psi as? KtOperationReferenceExpression
-    return operationReference?.getReferencedNameElementType()
-}
 
 @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 private fun PsiElement.isStandardConcatenationExpression(): Boolean {
-    if (this !is KtBinaryExpression || this.safeOperationToken() != KtTokens.PLUS) return false
+    if (this !is KtBinaryExpression || this.operationTokenOrNull != KtTokens.PLUS) return false
     if (isSimpleStandardConcatenationExpression()) return true
 
     val referenceExpression = this.operationReference
