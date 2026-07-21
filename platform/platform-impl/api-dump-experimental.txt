@@ -87,6 +87,8 @@ f:com.intellij.ide.IdeTooltipManager
 - com.intellij.openapi.Disposable
 - *f:isProcessing(java.awt.Component):Z
 - *f:updateShownTooltip(java.awt.Component):V
+*:com.intellij.ide.KeyboardAwareContainer
+- a:skipKeyEventDispatcher(java.awt.Component,java.awt.event.KeyEvent):Z
 f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 - *f:awaitPendingActions(kotlin.coroutines.Continuation):java.lang.Object
 - *f:hasPendingActions():Z
