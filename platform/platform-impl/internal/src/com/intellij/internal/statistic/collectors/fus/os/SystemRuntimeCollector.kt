@@ -110,7 +110,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     result += OS_VM.metric(getOsVirtualization())
 
-    result += MACBOOK_NEO.metric(MacHardwareInfo.isMacbookNeo)
+    MacHardwareInfo.isMacbookNeo?.let {
+      result += MACBOOK_NEO.metric(it)
+    }
 
     return result
   }

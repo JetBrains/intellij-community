@@ -3,10 +3,13 @@ package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
+  @OptIn(LowLevelLocalMachineAccess::class)
   @Test
   fun smoke() {
     val metrics = SystemRuntimeCollector().getMetrics().map { it.eventId to it.data.build() }
@@ -35,7 +38,9 @@ class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
       assertThat(osVm["name"]).isNotNull.isNotIn("other", "unknown")
     }
 
-    val neo = metric("hardware.macbook.neo")
-    assertThat(neo["value"]).isIn(true, false)
+    if (OS.CURRENT == OS.macOS) {
+      val neo = metric("hardware.macbook.neo")
+      assertThat(neo["value"]).isIn(true, false)
+    }
   }
 }
