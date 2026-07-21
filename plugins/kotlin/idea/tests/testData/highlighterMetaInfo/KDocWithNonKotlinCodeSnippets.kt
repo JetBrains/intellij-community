@@ -1,7 +1,6 @@
 // FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
-// ALLOW_ERRORS
 // HIGHLIGHT_WARNINGS
 // TOOL: com.siyeh.ig.classlayout.FinalMethodInFinalClassInspection
 /**
