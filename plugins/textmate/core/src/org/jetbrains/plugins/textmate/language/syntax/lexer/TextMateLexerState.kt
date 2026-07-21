@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
+import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
@@ -18,18 +19,37 @@ class TextMateLexerState(
   line: TextMateString?,
 ) {
 
+  /**
+   * Identity of the line the rule was matched against; distinguishes equal matches on different lines.
+   * Only the identity is retained: the state outlives the [line], which may be disposed
+   * as soon as the line is processed, see [TextMateString.close].
+   */
+  private val stringId: Any? = if (matchData.matched) line?.id else null
+
+  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end.offset == line.bytesLength
+
+  /**
+   * Texts of the groups captured by the rule's begin/while match, extracted eagerly because
+   * the state outlives the [line] they are matched on. Non-null only when the rule's end/while patterns
+   * contain back-references to substitute, see [SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex].
+   */
+  val capturedTexts: List<CharSequence>? =
+    if (matchData.matched && line != null &&
+        (syntaxRule.hasBackReference(Constants.StringKey.END) || syntaxRule.hasBackReference(Constants.StringKey.WHILE))) {
+      SyntaxMatchUtils.capturedTexts(line, matchData)
+    }
+    else {
+      null
+    }
+
   private val hashcode: Int = run {
     var result = 1
     result = 31 * result + syntaxRule.hashCode()
     result = 31 * result + matchData.hashCode()
     result = 31 * result + priorityMatch.hashCode()
-    result = 31 * result + stringId().hashCode()
+    result = 31 * result + stringId.hashCode()
     result
   }
-
-  val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteRange().end.offset == line.bytesLength
-
-  val string: TextMateString? = if (matchData.matched) line else null
 
   override fun toString(): String {
     return "TextMateLexerState{" +
@@ -45,15 +65,11 @@ class TextMateLexerState(
     return syntaxRule == state.syntaxRule &&
            matchData == state.matchData &&
            priorityMatch == state.priorityMatch &&
-           stringId() === state.stringId()
+           stringId === state.stringId
   }
 
   override fun hashCode(): Int {
     return hashcode
-  }
-
-  private fun stringId(): Any? {
-    return string?.id
   }
 
   companion object {

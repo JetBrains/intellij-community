@@ -98,7 +98,7 @@ class TextMateSyntaxMatcherImpl(
     val regex = lexerState.syntaxRule.getStringAttribute(keyName)
     if (regex.isNullOrEmpty()) return MatchData.NOT_MATCHED
     val regexString = if (lexerState.syntaxRule.hasBackReference(keyName)) {
-      SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex(regex, lexerState.string, lexerState.matchData)
+      SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex(regex, lexerState.capturedTexts)
     }
     else {
       regex

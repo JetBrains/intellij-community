@@ -6,23 +6,36 @@ import org.jetbrains.plugins.textmate.regex.TextMateString
 object SyntaxMatchUtils {
 
   /**
-   * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
+   * Extracts the texts of all groups captured by [matchData] from [matchingString].
+   * Unlike [matchingString], the returned texts can be retained after the string is disposed.
+   *
+   * Groups that didn't match anything are represented by empty strings, and so are the groups
+   * captured beyond the string: [matchData] may capture more than [matchingString] covers
+   * when a rule inside a capture is matched against the line cut at the end of the capture.
+   */
+  fun capturedTexts(matchingString: TextMateString, matchData: MatchData): List<CharSequence> {
+    return (0..<matchData.count()).map { group ->
+      val byteRange = matchData.byteRange(group)
+      if (byteRange.isEmpty || byteRange.end.offset > matchingString.bytesLength) "" else matchingString.subSequenceByByteRange(byteRange)
+    }
+  }
+
+  /**
+   * Replaces parts like \1 or \20 in string parameter with the captured group texts.
    *
    *
-   * E.g., given string "\1-\2" and matchData consists of two groups: "first" and "second"
+   * E.g., given string "\1-\2" and capturedTexts consisting of a full match and two groups: "first" and "second",
    * then string "first-second" will be returned.
    *
-   * @param string         string pattern
-   * @param matchingString matched matchingString
-   * @param matchData      matched data with captured groups for replacement
+   * @param string        string pattern
+   * @param capturedTexts texts of the captured groups to replace the group-references with, see [capturedTexts]
    * @return string with replaced group-references
    */
   fun replaceGroupsWithMatchDataInRegex(
     string: CharSequence,
-    matchingString: TextMateString?,
-    matchData: MatchData
+    capturedTexts: List<CharSequence>?,
   ): String {
-    if (matchingString == null || !matchData.matched) {
+    if (capturedTexts == null) {
       return string.toString()
     }
     return buildString {
@@ -45,10 +58,8 @@ object SyntaxMatchUtils {
           }
           if (hasGroupIndex) {
             // references to non-existing groups are replaced with an empty string
-            if (matchData.count() > groupIndex) {
-              val byteRange = matchData.byteRange(groupIndex)
-              val replacement = if (byteRange.isEmpty) "" else matchingString.subSequenceByByteRange(byteRange).toString()
-              append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
+            if (capturedTexts.size > groupIndex) {
+              append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(capturedTexts[groupIndex], "\\\\$0"))
             }
             charIndex = digitIndex
             continue

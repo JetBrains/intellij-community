@@ -10,14 +10,14 @@ class SyntaxMatchUtilsTest {
   fun testReplaceGroupWithMatchData() {
     val string = TextMateStringImpl.Companion.fromString("first-second")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, 6, 12))
-    assertEquals("first+second+first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
+    assertEquals("first+second+first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", SyntaxMatchUtils.capturedTexts(string, data)))
   }
 
   @Test
   fun testReplaceGroupWithUnmatchedMatchData() {
     val string = TextMateStringImpl.Companion.fromString("first-second")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, -1, -1))
-    assertEquals("first++first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
+    assertEquals("first++first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", SyntaxMatchUtils.capturedTexts(string, data)))
   }
 
   @Test
@@ -26,14 +26,14 @@ class SyntaxMatchUtilsTest {
     // instead of keeping them as back-references in the resulting regex
     val string = TextMateStringImpl.Companion.fromString("first-second")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 12, 0, 5, 6, 12))
-    assertEquals("first++", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\3+\\4", string, data))
+    assertEquals("first++", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\3+\\4", SyntaxMatchUtils.capturedTexts(string, data)))
   }
 
   @Test
   fun testReplaceWithDollarSign() {
     val string = TextMateStringImpl.Companion.fromString("first-$")
     val data = MatchData(matched = true, byteOffsets = intArrayOf(0, 7, 0, 5, 6, 7))
-    assertEquals("first+\\$+first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", string, data))
+    assertEquals("first+\\$+first", SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex("\\1+\\2+\\1", SyntaxMatchUtils.capturedTexts(string, data)))
   }
 
   @Test
