@@ -33,6 +33,7 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
     @Suppress("NAME_SHADOWING")
     val element = references.first().element as? MarkdownLinkDestination ?: return
     val text = element.text
+    if (MarkdownLinkDestination.isPointEnclosedLink(text)) return
     val ranges = references.map { it.rangeInElement }.filterNot { it.isEmpty || it.endOffset > text.length }
     if (!text.contains(' ') || ranges.none()) return
     val range = TextRange(ranges.first().startOffset, ranges.last().endOffset)

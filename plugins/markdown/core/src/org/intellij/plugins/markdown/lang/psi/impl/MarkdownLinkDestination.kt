@@ -19,6 +19,11 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 
 class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), PsiExternalReferenceHost, NavigationTarget, MarkdownPsiElement {
+  companion object {
+    @JvmStatic
+    fun isPointEnclosedLink(text: String): Boolean = text.startsWith("<") && text.endsWith(">")
+  }
+
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitLinkDestination(this)
@@ -43,7 +48,7 @@ class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), PsiExt
     override fun getRangeInElement(element: MarkdownLinkDestination): TextRange {
       val text = element.text
       return when {
-        text.startsWith("<") && text.endsWith(">") -> TextRange(1, text.length - 1)
+        isPointEnclosedLink(text) -> TextRange(1, text.length - 1)
         else -> TextRange.allOf(text)
       }
     }

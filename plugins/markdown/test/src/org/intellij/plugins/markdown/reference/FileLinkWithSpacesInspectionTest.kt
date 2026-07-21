@@ -38,6 +38,12 @@ class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase
     doTest(content)
   }
 
+  @Test
+  fun `test file link with spaces enclosed in angle brackets`() {
+    val content = "[Target](<markdowns/Target File.md>)"
+    doTest(content)
+  }
+
   private fun doTest(expected: String) {
     myFixture.configureByText("some.md", expected)
     myFixture.enableInspections(MarkdownLinkDestinationWithSpacesInspection())
