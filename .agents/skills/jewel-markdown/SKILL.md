@@ -1,6 +1,6 @@
 ---
 name: jewel-markdown
-description:
+description: >-
   Use when building, modifying, troubleshooting, or extending JetBrains Jewel Markdown rendering in Compose Desktop or IntelliJ-plugin UI: Markdown previews, Markdown chat output, GFM tables/alerts/strikethrough/autolinks/images, custom Markdown syntax, custom renderers, or MarkdownStyling.
 ---
 
