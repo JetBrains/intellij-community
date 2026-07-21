@@ -19,4 +19,8 @@ public class RedundantSlf4jDefinitionInspectionTest extends LombokInspectionTest
     checkQuickFix("Replace logger field with @Slf4j annotation");
   }
 
+  public void testRedundantSlf4jDefinitionInPackage() {
+    doTest();
+    checkQuickFix("Replace logger field with @Slf4j annotation");
+  }
 }
