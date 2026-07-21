@@ -201,10 +201,10 @@ class HighlightingTest : BaseTestCase() {
       public class A {
           /**
            * This is the first sentence.
-           * 1. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">re</STYLE_SUGGESTION>ad all enabled bundles
-           * 2. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">pr</STYLE_SUGGESTION>epare a syntax table of supported languages
-           * 3. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">pr</STYLE_SUGGESTION>epare a preference table of enabled bundles
-           * 4. <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.SENTENCE_CAPITALIZATION">fi</STYLE_SUGGESTION>ll the extensions mapping for {@link A}
+           * 1. read all enabled bundles
+           * 2. prepare a syntax table of supported languages
+           * 3. prepare a preference table of enabled bundles
+           * 4. fill the extension map for {@link A}
            */
           public void reloadEnabledBundles() {
           }
@@ -226,6 +226,57 @@ class HighlightingTest : BaseTestCase() {
                        """
 // could be a misattached nested conj
     """)
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test list items in KDoc are not treated as new sentences`() {
+    myFixture.configureByText("A.kt", """
+      class A {
+          /**
+           * This is the first sentence.
+           * 1. read all enabled bundles
+           * 2. prepare a syntax table of supported languages
+           * 3. prepare a preference table of enabled bundles
+           * 4. fill the extension map
+           */
+          fun reloadEnabledBundles() {}
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test list items in Python docstring are not treated as new sentences`() {
+    myFixture.configureByText("a.py", """
+      def reload_enabled_bundles():
+          '''
+          This is the first sentence.
+          1. read all enabled bundles
+          2. prepare a syntax table of supported languages
+          3. prepare a preference table of enabled bundles
+          4. fill the extension map
+          '''
+          pass
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test bullet list items in line comments are not treated as new sentences`() {
+    myFixture.configureByText("A.java", """
+      public class A {
+          // This is the first sentence.
+          // - read all enabled bundles
+          // - prepare a syntax table of supported languages
+          // - prepare a preference table of enabled bundles
+          // - fill the extension map
+          public void reloadEnabledBundles() {}
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
   }
 
   private fun checkCloudAndLocal(fileName: String, text: String) {
