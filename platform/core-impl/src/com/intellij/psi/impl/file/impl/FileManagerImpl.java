@@ -112,16 +112,23 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  void analyzeInvalidations(boolean entered) {
+  private void analyzeInvalidations(boolean entered) {
     myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
       FileViewProvider viewProvider = entry.getProvider();
       if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
         return;
       }
-      boolean isStillValid = myVFileToViewProviderMap.evaluateValidity((AbstractFileViewProvider)viewProvider);
+      AbstractFileViewProvider abstractProvider = (AbstractFileViewProvider)viewProvider;
+      boolean isStillValid;
+      if (abstractProvider.getVirtualFile() instanceof LightVirtualFile) {
+        isStillValid = myLightViewProviderCache.canViewProviderBeResurrected(abstractProvider);
+      } else {
+        isStillValid = myVFileToViewProviderMap.canViewProviderBeResurrected(abstractProvider);
+      }
       if (isStillValid) {
         return;
       }
+
       Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
       Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
       LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProvider + " got invalid as part of dumb mode!\n" +

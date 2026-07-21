@@ -123,6 +123,10 @@ internal class LightFileViewProviderCache(
     return cacheOrGet(vFile, context, viewProvider)
   }
 
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    return evaluator.canViewProviderBeResurrected(viewProvider)
+  }
+
   private fun checkLightFileHasNoOtherPsi(vFile: VirtualFile) {
     val viewProvider = FileDocumentManager.getInstance().findCachedPsiInAnyProject(vFile) ?: return
     val otherProject = viewProvider.getManager().getProject()
