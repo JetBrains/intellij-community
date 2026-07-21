@@ -181,6 +181,7 @@
     <module name="intellij.kotlin.plugin.updater" loading="embedded"/>
     <module name="intellij.kotlin.preferences" loading="embedded"/>
     <module name="intellij.kotlin.references" loading="embedded"/>
+    <module name="intellij.kotlin.base.util" loading="embedded"/>
     <module name="intellij.kotlin.base.compilerConfiguration" loading="embedded"/>
     <module name="intellij.kotlin.base.plugin" loading="embedded"/>
     <module name="intellij.kotlin.base.compilerConfiguration.ui" loading="embedded"/>

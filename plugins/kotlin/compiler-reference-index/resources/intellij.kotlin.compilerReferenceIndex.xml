@@ -7,6 +7,7 @@
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.maven"/>
     <module name="intellij.platform.jps.build"/>

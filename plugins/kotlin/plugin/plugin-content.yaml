@@ -43,6 +43,9 @@
 - name: lib/intellij.kotlin.base.statistics.jar
   contentModules:
   - name: intellij.kotlin.base.statistics
+- name: lib/intellij.kotlin.base.util.jar
+  contentModules:
+  - name: intellij.kotlin.base.util
 - name: lib/intellij.kotlin.codeInsight.api.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.api
@@ -164,7 +167,6 @@
   modules:
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2
-  - name: intellij.kotlin.base.util
   - name: intellij.kotlin.base.kdoc
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.native

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.projectConfiguration"/>
   </dependencies>
   <!-- endregion -->

@@ -15,6 +15,7 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@Suppress("SplitModeApiUsage")
 class KotlinGenerationSettingsProvider : CodeStyleSettingsProvider() {
     override fun createConfigurable(settings: CodeStyleSettings, modelSettings: CodeStyleSettings): CodeStyleConfigurable {
         return KotlinCodeStyleGenerationConfigurable(settings)

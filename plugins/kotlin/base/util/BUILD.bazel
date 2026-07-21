@@ -26,6 +26,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_util",
     module_name = "intellij.kotlin.base.util",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -86,7 +90,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
         "@lib//:kotlin-test-junit",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//java/java-analysis-impl:analysis-impl_test_lib",

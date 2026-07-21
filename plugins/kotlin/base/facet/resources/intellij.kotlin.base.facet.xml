@@ -10,6 +10,7 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

@@ -3,13 +3,14 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
-<module name="intellij.kotlin.base.codeInsight"/>
-<module name="intellij.kotlin.base.facet"/>
-<module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.references"/>
-<module name="intellij.kotlin.uast.base"/>
-<module name="intellij.platform.uast"/>
-<module name="intellij.platform.uast.ide"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.uast.ide"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

@@ -5,6 +5,7 @@
     <module name="intellij.platform.ide.internal"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.preferences"/>
   </dependencies>
   <!-- endregion -->

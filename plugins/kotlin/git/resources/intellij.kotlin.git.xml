@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="Git4Idea"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.vcs.git.backend"/>
   </dependencies>
   <!-- endregion -->
