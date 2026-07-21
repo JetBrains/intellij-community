@@ -182,8 +182,12 @@ public final class EnvironmentUtil {
   private static final Pattern pattern = Pattern.compile("\\$(.*?)\\$");
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
+    inlineParentOccurrences(envs, parentEnv, OS.CURRENT == OS.Windows);
+  }
+
+  public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv, boolean isWindows) {
     // On Windows, names of environment variables are case-insensitive. On UNIX, names are case-sensitive.
-    Comparator<String> keyComparator = OS.CURRENT == OS.Windows ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+    Comparator<String> keyComparator = isWindows ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
     Map<String, String> lookup = new TreeMap<>(keyComparator);
     lookup.putAll(envs);
     lookup.putAll(parentEnv);

@@ -1040,6 +1040,7 @@ f:com.intellij.util.EnvironmentUtil
 - s:getValue(java.lang.String):java.lang.String
 - s:inlineParentOccurrences(java.util.Map):V
 - s:inlineParentOccurrences(java.util.Map,java.util.Map):V
+- s:inlineParentOccurrences(java.util.Map,java.util.Map,Z):V
 - s:isValidName(java.lang.String):Z
 - s:isValidValue(java.lang.String):Z
 - s:parseEnv(java.lang.String[]):java.util.Map
