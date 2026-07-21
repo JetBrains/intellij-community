@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommandWithContext
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
@@ -115,20 +113,15 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticW
 
     context(session: KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val addExclExclCallFix =
-            with(fixFactory) {
-                session.createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix }
-            } ?: return null
+        val addExclExclCallFix = with(fixFactory) {
+            session.createQuickFixes(diagnostic).filterIsInstance<AddExclExclCallFix>().firstOrNull()
+        } ?: return null
+
+        val inPlaceFix = addExclExclCallFix.prepareInPlaceFix()
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
-                val context = context(element)
-                val perform = addExclExclCallFix.perform(context)
-                val commandWithContext = ModCommandWithContext(context, perform)
-                commandWithContext.executeInBatch()
+                inPlaceFix()
             }
-
-            private fun context(element: PsiElement): ActionContext =
-                ActionContext(element.project, element.containingFile, element.textRange.startOffset, element.textRange, element)
         }
     }
 }
