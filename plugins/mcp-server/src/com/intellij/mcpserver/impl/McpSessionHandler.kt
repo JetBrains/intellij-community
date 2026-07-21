@@ -104,7 +104,7 @@ internal class McpSessionHandler(
    * - In VIA_ROUTER mode: provides tools with McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
    *   (the router tool itself and exception tools that should be exposed directly)
    */
-  private val toolsProvider = McpFilteredToolsListProvider(
+  val toolsProvider = McpFilteredToolsListProvider(
     sessionScope,
     sessionOptions,
     mcpServerService,
