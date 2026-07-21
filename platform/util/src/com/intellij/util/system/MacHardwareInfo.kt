@@ -18,8 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 object MacHardwareInfo {
   private const val MACBOOK_NEO_MODEL_ID = "Mac17,5"
 
-  /** `true` when running on a MacBook Neo (`hw.model` == `Mac17,5`); `false` on any other machine or OS. */
-  val isMacbookNeo: Boolean by lazy { modelIdentifier == MACBOOK_NEO_MODEL_ID }
+  /** `true` when running on a MacBook Neo (`hw.model` == `Mac17,5`); `null` on non-macOS machines. */
+  val isMacbookNeo: Boolean? by lazy { modelIdentifier?.let { it == MACBOOK_NEO_MODEL_ID } }
 
   /** Hardware model identifier on macOS, e.g. `Mac17,5` or `MacBookPro14,3`; `null` on other OSes or when unavailable. */
   private val modelIdentifier: String? by lazy {
