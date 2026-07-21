@@ -187,4 +187,27 @@ class TextMateLexerCoreTest {
       }
     """.trimIndent())
   }
+
+  @Test
+  fun `injections match inside nested include containers`() {
+    // injections are matched once per scan at the top level; the result must not depend
+    // on how deeply the regular rules are nested in include containers
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "injections": {
+          "L:source.test": { "patterns": [ { "match": "i", "name": "inj.i" } ] }
+        },
+        "patterns": [ { "include": "#container" } ],
+        "repository": {
+          "container": { "patterns": [ { "match": "a", "name": "m.a" } ] }
+        }
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "ai", """
+      source.test m.a: [0, 1], {a}
+      source.test inj.i: [1, 2], {i}
+    """.trimIndent())
+  }
+
 }

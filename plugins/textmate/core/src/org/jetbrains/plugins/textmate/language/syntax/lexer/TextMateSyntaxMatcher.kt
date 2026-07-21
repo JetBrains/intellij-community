@@ -69,7 +69,6 @@ class TextMateSyntaxMatcherImpl(
                                                        matchBeginPosition = matchBeginPosition,
                                                        matchBeginString = matchBeginString,
                                                        priority = priority,
-                                                       injections = injections,
                                                        currentScope = currentScope))
       if (resultState.matchData.matched && resultState.matchData.byteRange().start == byteOffset) {
         // Optimization. There cannot be anything more `important` than the current state matched from the very beginning
@@ -123,7 +122,6 @@ class TextMateSyntaxMatcherImpl(
     matchBeginPosition: Boolean,
     matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
-    injections: List<InjectionNodeDescriptor>,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable? = null,
   ): TextMateLexerState {
@@ -154,8 +152,10 @@ class TextMateSyntaxMatcherImpl(
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor)
     }
+    // container nodes only group their children; injections are matched once per scan
+    // at the top level, not on every nesting level
     return matchRule(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope,
-                     injections, checkCancelledCallback)
+                     emptyList(), checkCancelledCallback)
   }
 
   private fun hasBeginKey(lexerState: TextMateLexerState): Boolean {
