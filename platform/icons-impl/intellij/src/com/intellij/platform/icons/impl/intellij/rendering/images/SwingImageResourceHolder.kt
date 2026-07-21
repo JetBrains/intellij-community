@@ -7,8 +7,8 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.platform.icons.impl.intellij.rendering.toAwtFilter
 import com.intellij.platform.icons.impl.intellij.rendering.toIJPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
+import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
-import com.intellij.platform.icons.patchers.svgPatcher
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
 import java.awt.Image
@@ -26,18 +26,22 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
     filters.add(colorFilter.toAwtFilter())
   }
   val knownModifiers = this as? DefaultImageModifiers
-  val strokePatcher = knownModifiers?.stroke?.let { stroke ->
-    svgPatcher {
-      replace("fill", "transparent")
-      add("stroke", stroke.toHex())
-    }
-  }
+  val strokePatcher = knownModifiers?.stroke?.let { strokeSvgPatcher(it) }
   val ijModifiers = this as? IntelliJImageModifiers
-  val colorPatcher = ((this?.svgPatcher?.combineWith(strokePatcher)) as? DefaultSvgPatcher)?.toIJPatcher(ijModifiers?.legacyPatcherProvider)
+  // The icon's own patcher runs first and the stroke substitution after it, so an icon that explicitly recolors a
+  // palette color keeps that color: the stroke operation no longer matches what the explicit one already replaced.
+  // The elvis is what keeps a stroke-only icon patched at all — `svgPatcher` is null whenever an icon carries no
+  // explicit patcher, and combining outwards from null would discard the stroke patcher entirely.
+  val combinedPatcher = this?.svgPatcher?.combineWith(strokePatcher) ?: strokePatcher
+  val colorPatcher = (combinedPatcher as? DefaultSvgPatcher)?.toIJPatcher(ijModifiers?.legacyPatcherProvider)
+  val isStroke = knownModifiers?.stroke != null
   return LoadIconParameters(
     filters = filters,
-    isDark = knownModifiers?.isDark ?: false,
+    // A stroked icon loads its light artwork even in a dark theme. The palette describes the light variants, so
+    // resolving `_dark` first would hand the patcher colors it does not know and the icon would keep its authored
+    // ones — and the artwork is about to be recolored wholesale anyway, so which variant it started from is moot.
+    isDark = !isStroke && knownModifiers?.isDark == true,
     colorPatcher = colorPatcher,
-    isStroke = knownModifiers?.stroke != null
+    isStroke = isStroke
   )
 }

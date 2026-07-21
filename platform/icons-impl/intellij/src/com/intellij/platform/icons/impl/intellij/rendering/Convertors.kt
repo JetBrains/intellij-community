@@ -55,8 +55,7 @@ private class ProxySvgAttributePatcher(
         }
         SvgPatchOperation.Operation.Replace -> {
           if (operation.conditional) {
-            val matches = attributes[operation.attributeName] == operation.expectedValue
-            if (matches == !operation.negatedCondition) {
+            if (operation.matches(attributes[operation.attributeName]) != operation.negatedCondition) {
               attributes.replace(operation.attributeName, operation.value!!)
             }
           } else {
@@ -65,8 +64,7 @@ private class ProxySvgAttributePatcher(
         }
         SvgPatchOperation.Operation.Remove -> {
           if (operation.conditional) {
-            val matches = attributes[operation.attributeName] == operation.expectedValue
-            if (matches == !operation.negatedCondition) {
+            if (operation.matches(attributes[operation.attributeName]) != operation.negatedCondition) {
               attributes.remove(operation.attributeName)
             }
           } else {
