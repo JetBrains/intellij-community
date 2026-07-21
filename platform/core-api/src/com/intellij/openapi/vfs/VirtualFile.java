@@ -322,6 +322,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   ///
   /// Performance notice: this method can be slow. See [FileTypeRegistry] Javadoc for the details.
   ///
+  /// Prefer [FileTypeRegistry#isFileOfType(VirtualFile, FileType)] when possible, as it is cheaper when the file type is not yet known.
+  ///
   /// @see FileTypeRegistry
   public @NotNull FileType getFileType() {
     return FileTypeRegistry.getInstance().getFileTypeByFile(this);
