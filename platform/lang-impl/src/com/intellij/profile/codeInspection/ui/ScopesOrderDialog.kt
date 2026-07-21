@@ -1,125 +1,90 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.profile.codeInspection.ui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.profile.codeInspection.ui
 
-import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.profile.codeInspection.ui.table.ScopesOrderTable;
-import com.intellij.psi.search.scope.NonProjectFilesScope;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.analysis.AnalysisBundle
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.icons.AllIcons
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder.Companion.createCommentComponent
+import com.intellij.profile.codeInspection.ui.table.ScopesOrderTable
+import com.intellij.psi.search.scope.NonProjectFilesScope
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.ui.ToolbarDecorator
+import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
+import java.awt.Component
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+internal class ScopesOrderDialog(
+  parent: Component,
+  private val myInspectionProfile: InspectionProfileImpl,
+  private val myProject: Project,
+) : DialogWrapper(parent, true) {
 
-@ApiStatus.Internal
-public final class ScopesOrderDialog extends DialogWrapper {
-  private final ScopesOrderTable myOptionsTable;
-  private final InspectionProfileImpl myInspectionProfile;
-  private final @NotNull Project myProject;
-  private final JPanel myPanel;
+  private val myOptionsTable = ScopesOrderTable()
+  private val myPanel = JPanel()
 
-  ScopesOrderDialog(final @NotNull Component parent,
-                    @NotNull InspectionProfileImpl inspectionProfile,
-                    @NotNull Project project) {
-    super(parent, true);
-    myInspectionProfile = inspectionProfile;
-    myOptionsTable = new ScopesOrderTable();
-    myProject = project;
-    reloadScopeList();
+  init {
+    reloadScopeList()
 
-    final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsTable)
-      .setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton anActionButton) {
-          myOptionsTable.moveDown();
-        }
-      })
-      .setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton anActionButton) {
-          myOptionsTable.moveUp();
-        }
-      })
-      .addExtraAction(new AnAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
-          reloadScopeList();
+    val listPanel = ToolbarDecorator.createDecorator(myOptionsTable)
+      .setMoveDownAction { myOptionsTable.moveDown() }
+      .setMoveUpAction { myOptionsTable.moveUp() }
+      .addExtraAction(object : AnAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
+        override fun actionPerformed(e: AnActionEvent) {
+          ShowSettingsUtil.getInstance().editConfigurable(myProject, ScopeChooserConfigurable(myProject))
+          reloadScopeList()
         }
 
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
+        override fun getActionUpdateThread(): ActionUpdateThread {
+          return ActionUpdateThread.EDT
         }
       })
       .disableRemoveAction()
       .disableAddAction()
-      .createPanel();
-    final JLabel descr = ComponentPanelBuilder.createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true, 110);
-    descr.setBorder(JBUI.Borders.emptyTop(5));
-    myPanel = new JPanel();
-    myPanel.setLayout(new BorderLayout());
-    myPanel.add(listPanel, BorderLayout.CENTER);
-    myPanel.add(descr, BorderLayout.SOUTH);
-    init();
-    setTitle(AnalysisBundle.message("inspections.settings.scopes.order.title"));
+      .createPanel()
+    val descr = createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true, 110)
+    descr.setBorder(JBUI.Borders.emptyTop(5))
+    myPanel.setLayout(BorderLayout())
+    myPanel.add(listPanel, BorderLayout.CENTER)
+    myPanel.add(descr, BorderLayout.SOUTH)
+    init()
+    title = AnalysisBundle.message("inspections.settings.scopes.order.title")
   }
 
-  private void reloadScopeList() {
-    final List<NamedScope> scopes = new ArrayList<>();
-    for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
-      for (final NamedScope scope : holder.getScopes()) {
-        if (!(scope instanceof NonProjectFilesScope)) {
-          scopes.add(scope);
-        }
-      }
-    }
-    scopes.remove(CustomScopesProviderEx.getAllScope());
-    scopes.sort(Comparator.comparing(namedScope -> namedScope.getScopeId(), new ScopeOrderComparator(myInspectionProfile)));
-    myOptionsTable.updateItems(scopes);
+  private fun reloadScopeList() {
+    val allScope = CustomScopesProviderEx.getAllScope()
+    val scopes = NamedScopesHolder.getAllNamedScopeHolders(myProject)
+      .flatMap { it.scopes.asIterable() }
+      .filter { it !is NonProjectFilesScope && it != allScope }
+      .sortedWith(compareBy(ScopeOrderComparator(myInspectionProfile)) { it.scopeId })
+
+    myOptionsTable.updateItems(scopes)
   }
 
-  @Override
-  protected @Nullable JComponent createCenterPanel() {
-    return myPanel;
+  override fun createCenterPanel(): JComponent {
+    return myPanel
   }
 
-  @Override
-  protected void doOKAction() {
-    final int size = myOptionsTable.getModel().getRowCount();
-    final List<String> newScopeOrder = new ArrayList<>();
-    for (int i = 0; i < size; i++) {
-      final NamedScope namedScope = myOptionsTable.getScopeAt(i);
-      assert namedScope != null;
-      newScopeOrder.add(namedScope.getScopeId());
+  override fun doOKAction() {
+    val size = myOptionsTable.model.rowCount
+    val newScopeOrder = mutableListOf<String>()
+    for (i in 0..<size) {
+      val namedScope = checkNotNull(myOptionsTable.getScopeAt(i))
+      newScopeOrder.add(namedScope.scopeId)
     }
-    if (!newScopeOrder.equals(myInspectionProfile.getScopesOrder())) {
-      myInspectionProfile.setScopesOrder(newScopeOrder);
+    if (newScopeOrder != myInspectionProfile.scopesOrder) {
+      myInspectionProfile.setScopesOrder(newScopeOrder)
     }
-    super.doOKAction();
+    super.doOKAction()
   }
 }
