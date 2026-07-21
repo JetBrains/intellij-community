@@ -44,6 +44,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomManager
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
@@ -191,12 +192,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     val contentTag = existingContentTag ?: domElement.addContent()
     val moduleTag = contentTag.addModuleEntry()
     moduleTag.name.stringValue = contentModuleName
-    val elementToReformat = (if (existingContentTag != null) moduleTag else contentTag).xmlElement
-    if (elementToReformat != null) {
-      CodeStyleManager.getInstance(project).reformat(elementToReformat)
-      //needed to add a new line after the module tag
-      CodeStyleManager.getInstance(project).reformatNewlyAddedElement(elementToReformat.parent.node, elementToReformat.node)
-    }
+    reformatAddedTag(elementToReformat = if (existingContentTag != null) moduleTag else contentTag)
 
     if (dependsTarget != null) {
       val extractedDescriptorPsiFile = configFileDescriptor.findPsiFile(project) as? XmlFile ?: return
@@ -208,12 +204,15 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       val extractedDescriptorElement = DomManager.getDomManager(project).getFileElement(extractedDescriptorPsiFile, IdeaPlugin::class.java)?.rootElement ?: return
       val dependencies = extractedDescriptorElement.dependencies
       dependencies.addPlugin().id.stringValue = dependsTarget
-      val dependenciesXmlTag = dependencies.xmlTag
-      if (dependenciesXmlTag != null) {
-        CodeStyleManager.getInstance(project).reformat(dependenciesXmlTag)
-        CodeStyleManager.getInstance(project).reformatNewlyAddedElement(dependenciesXmlTag.parent.node, dependenciesXmlTag.node)
-      }
+      reformatAddedTag(elementToReformat = dependencies)
     }
+  }
+
+  private fun reformatAddedTag(elementToReformat: DomElement) {
+    val xmlElement = elementToReformat.xmlElement ?: return
+    CodeStyleManager.getInstance(project).reformat(xmlElement)
+    //needed to add a new line after the added tag
+    CodeStyleManager.getInstance(project).reformatNewlyAddedElement(xmlElement.parent.node, xmlElement.node)
   }
 
   private fun updateReferencesToContentModuleInDependenciesTags(
