@@ -140,9 +140,9 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
     .checkFileLinks("/path/to/file.c")
 
   @Test
-  fun `a huge line number will not break it`() = getFilterResultAndCheckHighlightPositions("""
+  fun `a huge line number is not a part of link`() = getFilterResultAndCheckHighlightPositions("""
     | /path/to/file.c:99999999999999999
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      ^^^^^^^^^^^^^^^
   """.trimIndent(), listOf("/path/to/file.c"))
     .checkFileLinks("/path/to/file.c")
 
@@ -173,7 +173,7 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   @Test
   fun `recognize path with line number and column in parenthesis`() = getFilterResultAndCheckHighlightPositions("""
     | /path/to/file.kt: (3, 7): No value passed for parameter 'silent'
-      ^^^^^^^^^^^^^^^^^^^^^^^^^
+      ^^^^^^^^^^^^^^^^^^^^^^^^
   """.trimIndent(), listOf("/path/to/file.kt"))
     .checkFileLinks("/path/to/file.kt")
 
@@ -194,7 +194,7 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   @Test
   fun `recognize path with space and numbers parenthesis Windows`() = getFilterResultAndCheckHighlightPositions("""
     | blah blah C:\path\to\file\with space.kt: (3, 7): blah blah
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   """.trimIndent(), listOf("""C:\path\to\file\with space.kt"""))
     .checkFileLinks("""C:\path\to\file\with space.kt""")
 
@@ -230,9 +230,9 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   @Test
   fun `take longest path when prefix with spaces exists`() = getFilterResultAndCheckHighlightPositions("""
     | blah blah C:\path\to\file\with space\and no more.kt: (5, 71): blah blah
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     | blah blah C:\path\to\file\with space and more.kt: (3, 7): blah blah
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     """.trimIndent(), listOf("""C:\path\to\file\with space\and no more.kt""", """C:\path\to\file\with space and more.kt"""))
       .checkFileLinks(
         """C:\path\to\file\with space\and no more.kt""",
@@ -295,6 +295,65 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
         "/Users/jomof/projects/GunBox/GunBox/Sources/Engine/CMakeLists.txt"
       )
   }
+
+  @Test
+  fun `recognize path with line range`() = getFilterResultAndCheckHighlightPositions("""
+    | /path/to/file.c:10-20
+      ^^^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file.c"))
+    .checkFileLinks("/path/to/file.c")
+
+  @Test
+  fun `recognize path with single digit line range`() = getFilterResultAndCheckHighlightPositions("""
+    | /path/to/file.c:1-5
+      ^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file.c"))
+    .checkFileLinks("/path/to/file.c")
+
+  @Test
+  fun `recognize path with line range at end of sentence`() = getFilterResultAndCheckHighlightPositions("""
+    | error in /path/to/file.c:10-20.
+               ^^^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file.c"))
+    .checkFileLinks("/path/to/file.c")
+
+  @Test
+  fun `recognize path with line range in middle of text`() = getFilterResultAndCheckHighlightPositions("""
+    | see /path/to/file:5-10 for details
+          ^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file"))
+    .checkFileLinks("/path/to/file")
+
+  @Test
+  fun `recognize Windows path with line range`() = getFilterResultAndCheckHighlightPositions("""
+    | C:\path\to\file.txt:10-14
+      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("""C:\path\to\file.txt"""))
+    .checkFileLinks("""C:\path\to\file.txt""")
+
+  @Test
+  fun `recognize multiple paths with line ranges`() = getFilterResultAndCheckHighlightPositions("""
+    | Compare /path/to/file1:1-5 with /path/to/file2:10-20
+              ^^^^^^^^^^^^^^^^^^      ^^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file1", "/path/to/file2"))
+    .checkFileLinks("/path/to/file1", "/path/to/file2")
+
+  @Test
+  fun `recognize mixed formats with line ranges and line column`() = getFilterResultAndCheckHighlightPositions("""
+    | /path/to/file1:10-20 and /path/to/file2:5:10
+      ^^^^^^^^^^^^^^^^^^^^     ^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/file1", "/path/to/file2"))
+    .checkFileLinks("/path/to/file1", "/path/to/file2")
+
+  @Test
+  fun `malformed line range without end line falls back to start line`() =
+    getFilterResultAndCheckHighlightPositions("error in /path/to/file:10- see details\n", listOf("/path/to/file"), checkHighlights = false)
+      .checkFileLinks("/path/to/file")
+
+  @Test
+  fun `malformed line range with non-numeric end falls back to start line`() =
+    getFilterResultAndCheckHighlightPositions("error in /path/to/file:10-abc see details\n", listOf("/path/to/file"), checkHighlights = false)
+      .checkFileLinks("/path/to/file")
 
   @Test
   fun `real world case for bug 167701951`() =getFilterResultAndCheckHighlightPositions("""
