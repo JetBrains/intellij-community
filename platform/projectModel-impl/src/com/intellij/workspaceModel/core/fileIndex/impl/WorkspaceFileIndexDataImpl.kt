@@ -12,10 +12,8 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.virtualFile
@@ -798,7 +796,7 @@ private class StoreFileSetsRegistrarImpl(
     customData: WorkspaceFileSetData?,
     recursive: Boolean,
   ) {
-    val rootFile = if (root is VirtualFilePointer) root.file else VirtualFileManager.getInstance().findFileByUrl(root.url)
+    val rootFile = root.virtualFile
     if (rootFile != null) {
       registerFileSet(rootFile, kind, entity, customData, recursive)
     }

@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -170,7 +170,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         val libraryRoots = libraryEntity?.roots ?: return false
         if (libraryRoots.isEmpty()) return false
         val jarsWithClasses = libraryRoots.filter { it.type == LibraryRootTypeId.COMPILED }
-        return jarsWithClasses.all { jar -> VirtualFileManager.getInstance().findFileByUrl(jar.url.url)?.exists() == true }
+        return jarsWithClasses.all { jar -> jar.url.virtualFile?.exists() == true }
     }
 
     companion object {

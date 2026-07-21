@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -88,7 +89,7 @@ internal class NonExistingWorkspaceRootsRegistry(
     for (event in events) {
       when (event) {
         is VFileDeleteEvent ->
-          calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUrl(event.file.url), event.file, entityChanges, entityStorage, true, indexData)
+          calculateEntityChangesIfNeeded(event.file.toVirtualFileUrl(virtualFileManager), event.file, entityChanges, entityStorage, true, indexData)
         is VFileCreateEvent -> {
           val parentUrl = event.parent.url
           val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
