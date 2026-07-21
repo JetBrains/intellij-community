@@ -39,10 +39,10 @@ class IntermediateTree(
             ApplicationManager.getApplication().invokeLater {
               val element = myXValue2TraceElement[container]
               if (element != null) {
-                myValue2Path[element] = node.path
-                myPath2Value[node.path] = element
+                value2Path[element] = node.path
+                path2Value[node.path] = element
               }
-              if (myPath2Value.size == traceElements.size) {
+              if (path2Value.size == traceElements.size) {
                 myXValue2TraceElement.clear()
                 removeTreeListener(listener)
                 ApplicationManager.getApplication().invokeLater { repaint() }

@@ -53,11 +53,11 @@ class TerminationTree(
                 val nextIndex = key2Index.getOrDefault(key, -1) + 1
                 if (elements != null && nextIndex < elements.size) {
                   val element = elements[nextIndex]
-                  myValue2Path[element] = node.path
-                  myPath2Value[node.path] = element
+                  value2Path[element] = node.path
+                  path2Value[node.path] = element
                   key2Index[key] = nextIndex
                 }
-                if (myPath2Value.size == traceElements.size) {
+                if (path2Value.size == traceElements.size) {
                   //NOTE(Korovin): This will not be called if we have a big list of items and it's loaded partially
                   //If missing repaints, we need to replace this logic to some flow/debounce coroutine and repaint after a batch of nodes
                   removeTreeListener(listener)
