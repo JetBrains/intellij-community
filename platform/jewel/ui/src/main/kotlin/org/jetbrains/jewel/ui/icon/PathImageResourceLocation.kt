@@ -38,7 +38,10 @@ public class PathImageResourceLocation(public val path: String, public val class
             append(path.substringBeforeLast('/', ""))
             append('/')
             append(path.substringBeforeLast('.').substringAfterLast('/'))
-            if (modifiers.isDark) {
+            // A stroked icon loads its light artwork even in a dark theme, matching the Swing frontend: the stroke
+            // palette describes the light variants, so a `_dark` variant would come back with colors it does not know
+            // and would be left in its authored color instead of being recolored.
+            if (modifiers.isDark && modifiers.stroke == null) {
                 append("_dark")
             }
             append('.')
