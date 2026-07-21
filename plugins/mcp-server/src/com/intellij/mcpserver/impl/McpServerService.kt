@@ -145,6 +145,11 @@ open class McpServerService(val cs: CoroutineScope) {
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
 
     internal val callId = AtomicInteger(0)
+
+    @ApiStatus.Internal
+    fun useRouterByDefault() {
+      McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    }
   }
 
   private val toolsStateProviderDelegate = lazy {
