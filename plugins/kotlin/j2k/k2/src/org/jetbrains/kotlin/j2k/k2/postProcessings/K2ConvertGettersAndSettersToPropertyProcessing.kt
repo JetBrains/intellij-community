@@ -6,6 +6,8 @@ package org.jetbrains.kotlin.j2k.k2.postProcessings
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -122,6 +124,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
+import kotlin.collections.mutableMapOf
 
 /**
  * This processing tries to convert functions that look like getters and setters
@@ -165,7 +168,6 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         val collector = PropertiesDataCollector(searcher)
         val filter = PropertiesDataFilter(ktElements, searcher, psiFactory)
         val externalProcessingUpdater = ExternalProcessingUpdater(converterContext.externalCodeProcessor)
-        val converter = ClassConverter(searcher, psiFactory)
 
         val classes = ktElements
             .descendantsOfType<KtClassOrObject>()
@@ -180,17 +182,41 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
             }
 
         val classesWithPropertiesData = collector.collectPropertiesData(classes).ifEmpty { return Applier.EMPTY }
-        val infos = mutableSetOf<ApplicationInfo>()
+        val classesWithAccessors = mutableMapOf<KtClassOrObject, List<PropertyWithAccessors>>()
 
         for ((klass, propertiesData) in classesWithPropertiesData) {
             analyze(klass) {
                 val propertiesWithAccessors = filter.filter(klass, propertiesData)
-                infos.add(ApplicationInfo(converter, klass, propertiesWithAccessors))
+                classesWithAccessors += klass to propertiesWithAccessors
                 externalProcessingUpdater.update(klass, propertiesWithAccessors)
             }
         }
 
+        val precomputedUsages = calculateUsages(searcher, classesWithAccessors.flatMap { it.value })
+        val converter = ClassConverter(searcher, psiFactory, precomputedUsages)
+        val infos = classesWithAccessors.map { (klass, propertiesWithAccessors) ->
+            ApplicationInfo(converter, klass, propertiesWithAccessors)
+        }.toSet()
+
         return Applier(infos)
+    }
+
+    private fun calculateUsages(
+        searcher: JKInMemoryFilesSearcher,
+        propertyWithAccessors: List<PropertyWithAccessors>
+    ): Map<KtElement, List<SmartPsiElementPointer<KtElement>>> {
+        val precomputedUsages = mutableMapOf<KtElement, List<SmartPsiElementPointer<KtElement>>>()
+
+        fun put(element: KtElement) {
+            precomputedUsages[element] = element.usages(searcher).mapNotNull { (it.element as? KtElement)?.createSmartPointer() }
+        }
+
+        for ((_, getter, setter) in propertyWithAccessors) {
+            (getter as? RealGetter)?.let { put(it.function) }
+            (setter as? RealSetter)?.let { put(it.function) }
+        }
+
+        return precomputedUsages
     }
 
     context(_: KaSession)
@@ -661,7 +687,8 @@ private class ExternalProcessingUpdater(private val processing: NewExternalCodeP
  */
 private class ClassConverter(
     private val searcher: JKInMemoryFilesSearcher,
-    private val psiFactory: KtPsiFactory
+    private val psiFactory: KtPsiFactory,
+    private val precomputedUsages: Map<KtElement, List<SmartPsiElementPointer<KtElement>>>
 ) {
     fun convertClass(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
         for (propertyWithAccessors in propertiesWithAccessors) {
@@ -775,8 +802,8 @@ private class ClassConverter(
             saveSurroundingComments(getter, ktGetter)
 
             // update original function references to property references
-            getter.function.forAllUsages { usage ->
-                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+            getter.function.forEachUsage { usage ->
+                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forEachUsage
                 val qualifier = callExpression.getQualifiedExpressionForSelector()
                 if (qualifier != null) {
                     qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
@@ -831,8 +858,9 @@ private class ClassConverter(
         }
     }
 
-    private fun KtElement.forAllUsages(action: (KtElement) -> Unit) {
-        usages(searcher).forEach { action(it.element as KtElement) }
+    private fun KtElement.forEachUsage(action: (KtElement) -> Unit) {
+        val usages = precomputedUsages[this] ?: emptyList()
+        usages.mapNotNull { it.element }.forEach(action)
     }
 
     private fun addSetter(setter: Setter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
@@ -863,8 +891,8 @@ private class ClassConverter(
             val propertyName = ktProperty.name
 
             // update original function references to property references
-            setter.function.forAllUsages { usage ->
-                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+            setter.function.forEachUsage { usage ->
+                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forEachUsage
                 val qualifier = callExpression.getQualifiedExpressionForSelector()
                 val newValue = callExpression.valueArguments.single()
                 if (qualifier != null) {
