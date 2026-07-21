@@ -2506,7 +2506,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   public void startDumb() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || !myEditorComponent.isShowing()) return;
-    if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     if (rect.isEmpty()) return;
@@ -2558,7 +2557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    BufferedImage buffer = Registry.is("editor.dumb.mode.available", true) ? getUserData(BUFFER) : null;
+    BufferedImage buffer = getUserData(BUFFER);
     if (buffer != null) {
       Rectangle rect = getContentComponent().getVisibleRect();
       StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
