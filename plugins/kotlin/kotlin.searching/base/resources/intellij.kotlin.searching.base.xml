@@ -10,12 +10,13 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.facet"/>
-<module name="intellij.kotlin.base.projectStructure"/>
-<module name="intellij.kotlin.base.psi"/>
-<module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.references"/>
-</dependencies>
-<!-- endregion -->
+  </dependencies>
+  <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">
     <fileStructureGroupRuleProvider implementation="org.jetbrains.kotlin.idea.base.searching.usages.KotlinDeclarationGroupRuleProvider"/>
     <fileStructureGroupRuleProvider

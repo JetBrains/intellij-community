@@ -10,13 +10,14 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
-<module name="intellij.kotlin.base.facet"/>
-<module name="intellij.kotlin.base.projectStructure"/>
-<module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.references"/>
-<module name="intellij.platform.problemView.shared"/>
-<module name="intellij.platform.problemView.ui"/>
-</dependencies>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
+  </dependencies>
   <!-- endregion -->
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>

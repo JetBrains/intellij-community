@@ -3,9 +3,10 @@
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.java.ui"/>
-    <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.formatter"/>

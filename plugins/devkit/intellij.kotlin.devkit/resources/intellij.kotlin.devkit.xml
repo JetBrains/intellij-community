@@ -5,15 +5,16 @@
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.codeInsight.api"/>
-<module name="intellij.kotlin.codeInsight.fixes"/>
-<module name="intellij.kotlin.codeInsight.shared"/>
-<module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.codeInsight.fixes"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
-<module name="intellij.kotlin.uast.base"/>
-<module name="intellij.xml.analysis"/>
-<module name="intellij.xml.dom"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>

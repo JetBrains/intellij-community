@@ -6,19 +6,20 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.base.statistics"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
-<module name="intellij.kotlin.projectConfiguration"/>
-<module name="intellij.kotlin.refactorings"/>
-<module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
-<module name="kotlin.fir.frontend-independent"/>
-</dependencies>
-<!-- endregion -->
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 

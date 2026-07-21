@@ -3,12 +3,13 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.facet"/>
-<module name="intellij.kotlin.base.psi"/>
-<module name="intellij.kotlin.codeInsight.api"/>
-<module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.refactorings.base"/>
     <module name="intellij.kotlin.references"/>
-</dependencies>
-<!-- endregion -->
+  </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint
