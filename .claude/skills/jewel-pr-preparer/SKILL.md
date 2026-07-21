@@ -382,7 +382,7 @@ adjust the selection accordingly.
 ### Update YouTrack ticket state
 
 After the PR is created, set the YouTrack ticket state to "In Review" for each `JEWEL-xxx` issue referenced in the commit message/PR title.
-Use the `managing-youtrack` skill to do this. The user may have to do some manual setup if they have never run it.
+Use the `youtrack-cli` skill to do this. The user may have to do some manual setup if they have never run it.
 
 ## 10. Subsequent PR updates
 
