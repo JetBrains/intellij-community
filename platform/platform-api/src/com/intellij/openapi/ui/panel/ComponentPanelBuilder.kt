@@ -544,6 +544,7 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
       return createCommentComponent(commentText, isCommentBelow, MAX_COMMENT_WIDTH, true)
     }
 
+    @Deprecated("Use Kotlin UI DSL", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     fun createCommentComponent(
       commentText: @NlsContexts.DetailedDescription String?,

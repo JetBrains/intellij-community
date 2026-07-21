@@ -11,18 +11,17 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder.Companion.createCommentComponent
 import com.intellij.profile.codeInspection.ui.table.ScopesOrderTable
 import com.intellij.psi.search.scope.NonProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import java.awt.Component
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class ScopesOrderDialog(
   parent: Component,
@@ -31,7 +30,7 @@ internal class ScopesOrderDialog(
 ) : DialogWrapper(parent, true) {
 
   private val myOptionsTable = ScopesOrderTable()
-  private val myPanel = JPanel()
+  private val myPanel: DialogPanel
 
   init {
     reloadScopeList()
@@ -52,11 +51,15 @@ internal class ScopesOrderDialog(
       .disableRemoveAction()
       .disableAddAction()
       .createPanel()
-    val descr = createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true, 110)
-    descr.setBorder(JBUI.Borders.emptyTop(5))
-    myPanel.setLayout(BorderLayout())
-    myPanel.add(listPanel, BorderLayout.CENTER)
-    myPanel.add(descr, BorderLayout.SOUTH)
+
+    myPanel = panel {
+      row {
+        cell(listPanel)
+          .align(Align.FILL)
+          .comment(AnalysisBundle.message("inspections.settings.scopes.order.help.label"))
+      }.resizableRow()
+    }
+
     init()
     title = AnalysisBundle.message("inspections.settings.scopes.order.title")
   }

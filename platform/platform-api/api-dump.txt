@@ -4447,7 +4447,7 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - sf:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - constrainsValid():Z
 - sf:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- sf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- bsf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
 - sf:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
 - sf:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - createPanel():javax.swing.JPanel
@@ -4467,7 +4467,7 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 f:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
 - f:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - f:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- f:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- bf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
 - f:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
 - f:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - f:getCommentFont(java.awt.Font):java.awt.Font
