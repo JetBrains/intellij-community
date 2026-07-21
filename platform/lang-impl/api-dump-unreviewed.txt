@@ -408,7 +408,6 @@ f:com.intellij.build.BuildTreeConsoleView
 - hasDeferredOutput():Z
 - hasNextOccurence():Z
 - hasPreviousOccurence():Z
-- hideRootNode():V
 - isDisposed():Z
 - isFilteringEnabled():Z
 - isOutputPaused():Z
@@ -481,7 +480,6 @@ c:com.intellij.build.ExecutionNode
 - getElement():com.intellij.build.ExecutionNode
 - getEndTime():J
 - s:getEventResultIcon(com.intellij.build.events.EventResult):javax.swing.Icon
-- getFilter():java.util.function.Predicate
 - getNavigatables():java.util.List
 - getTitle():java.lang.String
 - hasInfos():Z
@@ -489,7 +487,6 @@ c:com.intellij.build.ExecutionNode
 - s:isFailed(com.intellij.build.events.EventResult):Z
 - s:isSkipped(com.intellij.build.events.EventResult):Z
 - reportChildMessageKind(com.intellij.build.events.MessageEvent$Kind):com.intellij.build.ExecutionNode
-- setFilter(java.util.function.Predicate):V
 - setNavigatable(com.intellij.pom.Navigatable):V
 - p:update(com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.build.FileNavigatable

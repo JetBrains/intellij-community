@@ -2,7 +2,6 @@
 package com.intellij.build.console;
 
 import com.intellij.build.BuildTextConsoleView;
-import com.intellij.build.BuildView;
 import com.intellij.build.CompositeView;
 import com.intellij.build.ExecutionNode;
 import com.intellij.build.events.BuildEventPresentationData;
@@ -29,7 +28,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.progress.ProgressUIUtil;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -40,8 +38,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.BorderLayout;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,7 +56,6 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
   private final ActionToolbar myToolbar;
 
   public BuildConsoleViewHandler(@NotNull Project project,
-                                 @Nullable Tree tree,
                                  @NotNull ExecutionNode buildProgressRootNode,
                                  @NotNull Disposable parentDisposable,
                                  @Nullable ExecutionConsole executionConsole,
@@ -95,18 +90,6 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
 
     if (ExperimentalUI.isNewUI()) {
       UIUtil.setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
-    }
-
-    if (tree != null) {
-      tree.addTreeSelectionListener(e -> {
-        if (Disposer.isDisposed(myView)) return;
-        TreePath path = e.getPath();
-        if (path == null) {
-          return;
-        }
-        TreePath selectionPath = tree.getSelectionPath();
-        setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
-      });
     }
   }
 
@@ -234,24 +217,6 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
 
   private static @NotNull String getNodeConsoleViewName(@NotNull ExecutionNode node) {
     return String.valueOf(System.identityHashCode(node));
-  }
-
-  private void setNode(@Nullable DefaultMutableTreeNode node) {
-    if (myProject.isDisposed()) return;
-    if (node == null || node.getUserObject() == myExecutionNode) return;
-    if (node.getUserObject() instanceof ExecutionNode executionNode) {
-      setExecutionNode(executionNode);
-      return;
-    }
-
-    myExecutionNode = null;
-    if (myView.getView(BuildView.CONSOLE_VIEW_NAME) != null/* && myViewSettingsProvider.isSideBySideView()*/) {
-      myView.showView(BuildView.CONSOLE_VIEW_NAME, false);
-      myPanel.setVisible(true);
-    }
-    else {
-      myPanel.setVisible(false);
-    }
   }
 
   public void clear() {
