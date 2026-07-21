@@ -732,6 +732,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testNoOuterClassTypeReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassTypeReference.kt");
         }
+
+        @TestMetadata("outerClassHasExtensionFunction.kt")
+        public void testOuterClassHasExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/outerClassHasExtensionFunction.kt");
+        }
+
+        @TestMetadata("outerClassHasExtensionFunction2.kt")
+        public void testOuterClassHasExtensionFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantInnerClassModifier/outerClassHasExtensionFunction2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
