@@ -46,6 +46,7 @@ import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -356,8 +357,8 @@ private fun createUpdateFromSourcesCommandLine(
   if (!buildEnabledPluginsOnly || nonBundledPluginDirsToInclude.isNotEmpty()) {
     vmProperties.add("-Dintellij.build.local.plugins.repository=true")
   }
-  vmProperties.add("-Dintellij.build.output.root=${deployDir}")
-  vmProperties.add("-DdistOutputRelativePath=${deployDir.relativize(builtDistPath)}")
+  vmProperties.add("-Dintellij.build.output.root=${deployDir.invariantSeparatorsPathString}")
+  vmProperties.add("-DdistOutputRelativePath=${deployDir.relativize(builtDistPath).invariantSeparatorsPathString}")
   vmProperties.addAll(ParametersListUtil.parse(additionalVmOptionsForBuildScripts ?: ""))
 
   val commandLine = GeneralCommandLine()
