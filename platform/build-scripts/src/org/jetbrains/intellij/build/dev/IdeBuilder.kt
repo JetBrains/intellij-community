@@ -192,8 +192,13 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     request.scrambleTool != null -> "-scrambled"
     else -> ""
   }
-  val productDirName = request.devRunDirPrefix + (productDirNameWithoutClassifier + productDirSuffix + classifier)
-    .takeLast(maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend - request.devRunDirPrefix.length)
+  // Keep the product-identifying head (dev-run prefix + product name + suffix) intact, and spend the remaining
+  // path-length budget on the classifier, truncating it from the front so its discriminative xxh3 hash tail survives.
+  // Truncating the whole string with `takeLast` used to drop the product prefix from the front whenever
+  // `prefix + classifier` exceeded the limit, so different products could collide into the same `out/dev-run` directory.
+  val productDirNameHead = request.devRunDirPrefix + productDirNameWithoutClassifier + productDirSuffix
+  val classifierBudget = (maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend - productDirNameHead.length).coerceAtLeast(0)
+  val productDirName = productDirNameHead + classifier.takeLast(classifierBudget)
 
   val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
     val buildDir = rootDir.resolve(productDirName)
