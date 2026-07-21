@@ -1,8 +1,8 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.ide.minimap` start
+### auto-generated section `build intellij.minimap.core` start
 jvm_library(
-    name = "minimap",
+    name = "core",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -11,7 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.ide.minimap",
+    module_name = "intellij.minimap.core",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -44,17 +44,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "minimap_test_lib",
+    name = "core_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.ide.minimap",
+    module_name = "intellij.minimap.core",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":minimap",
+        ":core",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -77,13 +77,13 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.ide.minimap` end
+### auto-generated section `build intellij.minimap.core` end
 
-### auto-generated section `iml intellij.platform.ide.minimap` start
+### auto-generated section `iml intellij.minimap.core` start
 exports_files(
     [
-        "intellij.platform.ide.minimap.iml",
+        "intellij.minimap.core.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.ide.minimap` end
+### auto-generated section `iml intellij.minimap.core` end

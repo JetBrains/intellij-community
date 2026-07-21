@@ -2,7 +2,7 @@
   <id>com.intellij.minimap</id>
   <name>Minimap</name>
   <vendor>JetBrains</vendor>
-  <category>Editor</category>
+  <category>Other Tools</category>
 
   <description><![CDATA[
     <p>Adds an editor <b>Minimap</b>: a zoomed-out overview of the whole file rendered next to the editor.</p>
@@ -15,12 +15,10 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.platform.monolith"/>
-    <!-- endregion -->
   </dependencies>
 
+  <!--suppress AllContentModulesOptionalLoadingRule -->
   <content namespace="jetbrains">
-    <module name="intellij.platform.ide.minimap" loading="embedded"/>
+    <module name="intellij.minimap.core"/>
   </content>
 </idea-plugin>

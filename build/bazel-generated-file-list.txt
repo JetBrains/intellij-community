@@ -1494,7 +1494,8 @@ plugins/mermaid
 plugins/mermaid/json
 plugins/mermaid/markdown
 plugins/mermaid/spellchecker
-plugins/minimap
+plugins/minimap/core
+plugins/minimap/plugin
 plugins/ml-local-models
 plugins/ml-local-models/java
 plugins/performanceTesting/backend

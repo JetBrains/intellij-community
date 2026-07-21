@@ -1231,6 +1231,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" filepath="$PROJECT_DIR$/plugins/mermaid/markdown/intellij.mermaid.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/mermaid/spellchecker/intellij.mermaid.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.tests.iml" filepath="$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/minimap/core/intellij.minimap.core.iml" filepath="$PROJECT_DIR$/plugins/minimap/core/intellij.minimap.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/minimap/plugin/intellij.minimap.plugin.iml" filepath="$PROJECT_DIR$/plugins/minimap/plugin/intellij.minimap.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.main/intellij.moduleSet.plugin.main.iml" filepath="$PROJECT_DIR$/module-set-plugins/generated/intellij.moduleSet.plugin.main/intellij.moduleSet.plugin.main.iml" />
@@ -1432,7 +1434,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/eel/intellij.platform.ide.impl.wsl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/eel/intellij.platform.ide.impl.wsl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/initial-config-import/intellij.platform.ide.initialConfigImport.iml" filepath="$PROJECT_DIR$/platform/platform-impl/initial-config-import/intellij.platform.ide.initialConfigImport.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" filepath="$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/minimap/intellij.platform.ide.minimap.iml" filepath="$PROJECT_DIR$/plugins/minimap/intellij.platform.ide.minimap.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/jcef/intellij.platform.ide.newUiOnboarding.jcef.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/jcef/intellij.platform.ide.newUiOnboarding.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" />

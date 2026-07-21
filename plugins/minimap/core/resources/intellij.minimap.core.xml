@@ -67,7 +67,7 @@
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
     <action id="ToggleMinimapScaleMode" class="com.intellij.ide.minimap.actions.ToggleMinimapScaleModeAction"/>
 
-    <group id="MinimapActionsGroup">
+    <group id="MinimapActionsGroup" searchable="false">
       <reference ref="OpenMinimapSettings"/>
       <reference ref="MoveMinimap"/>
       <reference ref="ToggleMinimapScaleMode"/>

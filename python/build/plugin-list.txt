@@ -9,7 +9,7 @@ intellij.featuresTrainer
 intellij.grazie
 intellij.markdown
 intellij.mermaid
-intellij.platform.ide.minimap
+intellij.minimap.plugin
 intellij.properties
 intellij.restructuredtext
 intellij.searchEverywhereMl
