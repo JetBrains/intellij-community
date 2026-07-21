@@ -1648,6 +1648,7 @@ python/python-hatch
 python/python-lsp-core
 python/python-lsp-impl
 python/python-markdown
+python/python-minimap
 python/python-packaging
 python/python-parser
 python/python-poetry/backend

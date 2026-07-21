@@ -1853,6 +1853,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-markdown/intellij.python.markdown.tests.iml" filepath="$PROJECT_DIR$/python/python-markdown/intellij.python.markdown.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/mcp/intellij.python.mcp.iml" filepath="$PROJECT_DIR$/python/mcp/intellij.python.mcp.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/mcp/intellij.python.mcp.tests.iml" filepath="$PROJECT_DIR$/python/mcp/intellij.python.mcp.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-minimap/intellij.python.minimap.iml" filepath="$PROJECT_DIR$/python/python-minimap/intellij.python.minimap.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.ml.features/intellij.python.ml.features.iml" filepath="$PROJECT_DIR$/python/intellij.python.ml.features/intellij.python.ml.features.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-packaging/intellij.python.packaging.iml" filepath="$PROJECT_DIR$/python/python-packaging/intellij.python.packaging.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-parser/intellij.python.parser.iml" filepath="$PROJECT_DIR$/python/python-parser/intellij.python.parser.iml" />
