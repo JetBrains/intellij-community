@@ -22,7 +22,7 @@ import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.ListNu
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Items in ordered lists are expected to have straight numeration starting from 1.
+ * In sequential numbering mode, items in ordered lists are expected to have straight numeration starting from 0 or 1.
  */
 @ApiStatus.Internal
 class IncorrectListNumberingInspection: LocalInspectionTool() {
@@ -38,7 +38,11 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
           return
         }
         val listNumberingIsSequential = settings.state.listNumberingType == ListNumberingType.SEQUENTIAL
-        val startNumber = list.continuationStartNumber()?.takeIf { listNumberingIsSequential } ?: 1
+        val startNumber = when {
+          !listNumberingIsSequential -> 1
+          list.items.firstOrNull()?.obtainMarkerNumber() == 0 -> 0
+          else -> list.continuationStartNumber() ?: 1
+        }
         val quickFix by lazy { ListNumberingFix(list, listNumberingIsSequential) }
         for ((index, item) in list.items.withIndex()) {
           val actualNumber = item.obtainMarkerNumber() ?: continue
