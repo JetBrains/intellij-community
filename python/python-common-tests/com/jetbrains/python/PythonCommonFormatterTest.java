@@ -1678,6 +1678,12 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   }
 
   @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultilineLhsBreaksGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
   public void testAlignConsecutiveAssignmentsMultilineRhsContinuesGroup() {
     getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTest();
@@ -1697,6 +1703,24 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
 
   @TestFor(issues = "PY-34006")
   public void testAlignConsecutiveAssignmentsMultipleAugmentedOperators() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsKeywordArgumentInValue() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsTupleUnpacking() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsSemicolonNotAligned() {
     getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTest();
   }

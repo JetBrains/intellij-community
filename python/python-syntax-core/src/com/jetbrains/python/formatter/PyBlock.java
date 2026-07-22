@@ -533,6 +533,7 @@ public class PyBlock implements ASTBlock {
     }
 
     if (settings.ALIGN_CONSECUTIVE_ASSIGNMENTS &&
+        (childType == PyTokenTypes.EQ || PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(childType)) &&
         (parentType == PyElementTypes.ASSIGNMENT_STATEMENT || parentType == PyElementTypes.AUG_ASSIGNMENT_STATEMENT) &&
         myParent != null &&
         child == findAssignmentOperator(myNode)) {
@@ -842,6 +843,20 @@ public class PyBlock implements ASTBlock {
     return lastChild.getParent() instanceof PyAstStatementList;
   }
 
+  private static boolean startsOwnLine(@NotNull ASTNode node) {
+    return findPrevNonSpaceNode(node) == null || hasLineBreaksBeforeInSameParent(node, 1);
+  }
+
+  // The operator must sit on the first line of the statement; a multi-line left-hand side breaks alignment.
+  private static boolean operatorOnFirstLine(@NotNull ASTNode statement, @NotNull ASTNode operator) {
+    for (ASTNode child = statement.getFirstChildNode(); child != null && child != operator; child = child.getTreeNext()) {
+      if (child.textContains('\n')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static boolean isAlignableAssignmentStatement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     return type == PyElementTypes.ASSIGNMENT_STATEMENT || type == PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
@@ -875,12 +890,20 @@ public class PyBlock implements ASTBlock {
       if (child.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT && !hasLineBreaksBeforeInSameParent(child, 1)) {
         continue;
       }
-      if (isAlignableAssignmentStatement(child) && findAssignmentOperator(child) != null) {
-        // A blank line before the statement starts a new run.
-        if (!run.isEmpty() && hasLineBreaksBeforeInSameParent(child, 2)) {
+      final ASTNode operator = isAlignableAssignmentStatement(child) ? findAssignmentOperator(child) : null;
+      if (operator != null) {
+        // A statement sharing a line with a previous one (e.g. after a semicolon), or whose left-hand
+        // side spans multiple lines so the operator isn't on the statement's first line, must not join a column.
+        if (!startsOwnLine(child) || !operatorOnFirstLine(child, operator)) {
           flushAssignmentRun(run, result);
         }
-        run.add(child);
+        else {
+          // A blank line before the statement starts a new run.
+          if (!run.isEmpty() && hasLineBreaksBeforeInSameParent(child, 2)) {
+            flushAssignmentRun(run, result);
+          }
+          run.add(child);
+        }
       }
       else {
         flushAssignmentRun(run, result);
