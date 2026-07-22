@@ -69,6 +69,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -915,8 +916,7 @@ final class PsiUpdateImpl {
         return error(AnalysisBundle.message("modcommand.executor.modification.of.guarded.region"));
       }
       return ModCommand.showConflicts(myConflictMap)
-        .andThen(myChangedFiles.values().stream()
-          .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen))
+        .andThen(getChangedFilesCommand())
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myActionContext.project()))
                    .reduce(nop(), ModCommand::andThen))
@@ -926,6 +926,17 @@ final class PsiUpdateImpl {
         .andThen(myTabOutCommands.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myLaunchEditorActions.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
+    }
+
+    private @NotNull ModCommand getChangedFilesCommand() {
+      List<ModCommand> commands = ContainerUtil.map(myChangedFiles.values(), FileTracker::getUpdateCommand);
+      boolean shouldSort = ContainerUtil.all(commands, command -> command instanceof ModUpdateFileText);
+
+      Stream<ModCommand> result = shouldSort ?
+                                        commands.stream().sorted(Comparator.comparing(command -> ((ModUpdateFileText)command).file().getUrl())) :
+                                        commands.stream();
+
+      return result.reduce(nop(), ModCommand::andThen);
     }
 
     private @NotNull ModCommand getNavigateCommand() {
