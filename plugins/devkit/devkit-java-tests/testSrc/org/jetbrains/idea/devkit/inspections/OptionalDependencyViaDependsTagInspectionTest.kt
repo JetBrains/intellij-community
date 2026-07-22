@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.inspections.extractModule.getExtractToJpsModuleCoroutineScope
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class OptionalDependencyViaDependsTagInspectionTest {
@@ -43,7 +44,7 @@ internal class OptionalDependencyViaDependsTagInspectionTest {
   }
 
   @Test
-  fun `quick fix to extract optional dependency`(): Unit = timeoutRunBlocking {
+  fun `quick fix to extract optional dependency`(): Unit = timeoutRunBlocking(20.seconds) {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(projectFixture.get(), true)
 
     withContext(Dispatchers.EDT) {
