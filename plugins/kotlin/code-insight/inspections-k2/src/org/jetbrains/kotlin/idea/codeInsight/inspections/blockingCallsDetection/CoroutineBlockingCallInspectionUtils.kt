@@ -7,9 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -18,6 +17,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
@@ -31,17 +32,17 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import kotlin.collections.get
 
 internal object CoroutineBlockingCallInspectionUtils {
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
         val lambdaArgument = ktElement.parentOfType<KtLambdaArgument>()
         if (lambdaArgument != null) {
             val callExpression = lambdaArgument.getStrictParentOfType<KtCallExpression>() ?: return false
             val call = callExpression.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>() ?: return false
-            val parameterForArgument = call.argumentMapping[lambdaArgument.getArgumentExpression()] ?: return false
+            val parameterForArgument = call.valueArgumentMapping[lambdaArgument.getArgumentExpression()] ?: return false
             return parameterForArgument.returnType.isSuspendFunctionType
         }
 
@@ -128,6 +129,6 @@ internal object CoroutineBlockingCallInspectionUtils {
 context(_: KaSession)
 internal fun KaCall.getFirstArgumentExpression(): KtExpression? {
     if (this !is KaFunctionCall<*>) return null
-    val firstValueParameter = partiallyAppliedSymbol.signature.valueParameters.firstOrNull() ?: return null
-    return argumentMapping.entries.find { (_, valueParameter) -> valueParameter == firstValueParameter }?.key
+    val firstValueParameter = signature.valueParameters.firstOrNull() ?: return null
+    return valueArgumentMapping.entries.find { (_, valueParameter) -> valueParameter == firstValueParameter }?.key
 }
