@@ -886,6 +886,14 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                         serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
+    <applicationService serviceInterface="com.intellij.notification.DoNotAskAppManager"
+                        serviceImplementation="com.intellij.notification.impl.DoNotAskAppManagerImpl"/>
+    <projectService serviceInterface="com.intellij.notification.DoNotAskProjectManager"
+                    serviceImplementation="com.intellij.notification.impl.DoNotAskProjectManagerImpl"/>
+
+    <applicationSettings service="com.intellij.notification.impl.DoNotAskAppManagerImpl"/>
+
+    <projectSettings service="com.intellij.notification.impl.DoNotAskProjectManagerImpl"/>
 
     <applicationSettings service="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
