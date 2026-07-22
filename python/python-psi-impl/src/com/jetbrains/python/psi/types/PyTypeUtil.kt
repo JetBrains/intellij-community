@@ -528,11 +528,12 @@ object PyTypeUtil {
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>? = null,
+    selfType: PyInstantiableType<*> = classType,
   ): PyType? {
     val memberType = getTypeOfMember(memberResolveResults, context)
-    val specializedMemberType = specializeMemberType(classType, classType, memberType, context)
+    val specializedMemberType = specializeMemberType(classType, selfType, memberType, context)
     val memberOwner = getContainingClass(memberResolveResults)
-    return bindFunction(classType, specializedMemberType, memberOwner, context, errors)
+    return bindFunction(selfType, specializedMemberType, memberOwner, context, errors)
   }
 
   @ApiStatus.Internal

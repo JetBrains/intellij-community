@@ -77,7 +77,7 @@ import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyAnyType;
-import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -491,27 +491,25 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     if (!isAsync) {
       if (!isUnknown(iterableType) && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
-        final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
-        if (iterateMethod != null) {
-          final PyType iterateReturnType = PySyntheticCallHelper.getCallType(iterateMethod, iterableType, List.of(), context);
-          return getIteratedItemType(iterateReturnType, anchor, context, false);
+        final Ref<PyType> iterateCallType = getSpecialMethodCallType(iterableType, PyNames.ITER, context);
+        if (iterateCallType != null) {
+          return getIteratedItemType(iterateCallType.get(), anchor, context, false);
         }
         final Ref<PyType> nextMethodCallType = getNextMethodCallType(iterableType, anchor, context, false);
         if (nextMethodCallType != null) {
           return nextMethodCallType.get();
         }
-        final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
-        if (getItem != null) {
-          return PySyntheticCallHelper.getCallType(getItem, iterableType, List.of(), context);
+        final Ref<PyType> getItemCallType = getSpecialMethodCallType(iterableType, PyNames.GETITEM, context);
+        if (getItemCallType != null) {
+          return getItemCallType.get();
         }
       }
     }
     else {
       if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
-        final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
-        if (iterateMethod != null) {
-          final PyType iterateReturnType = PySyntheticCallHelper.getCallType(iterateMethod, iterableType, List.of(), context);
-          return getIteratedItemType(iterateReturnType, anchor, context, true);
+        final Ref<PyType> iterateCallType = getSpecialMethodCallType(iterableType, PyNames.AITER, context);
+        if (iterateCallType != null) {
+          return getIteratedItemType(iterateCallType.get(), anchor, context, true);
         }
       }
     }
@@ -546,52 +544,31 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                   : !LanguageLevel.forElement(anchor).isPython2()
                                     ? PyNames.DUNDER_NEXT
                                     : PyNames.NEXT;
-    final PyFunction next = findMethodByName(type, nextMethodName, context);
-    if (next != null) {
-      return Ref.create(PySyntheticCallHelper.getCallType(next, type, List.of(), context));
-    }
-    return null;
+    return getSpecialMethodCallType(type, nextMethodName, context);
   }
 
-  private static @Nullable PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final PyType actualType;
-    if (type instanceof PyClassType classType && classType.isDefinition()) {
-      PyClassLikeType metaclassType = classType.getMetaClassType(resolveContext.getTypeEvalContext(), true);
-      if (metaclassType == null) return null;
+  private static @Nullable Ref<PyType> getSpecialMethodCallType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    if (!(type instanceof PyClassType classType)) return null;
+    final PyClassType actualType;
+    if (classType.isDefinition()) {
+      if (!(classType.getMetaClassType(context, true) instanceof PyClassType metaclassType)) {
+        return null;
+      }
       actualType = metaclassType;
     }
     else {
-      actualType = type;
+      actualType = classType;
     }
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = actualType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-    if (results != null) {
-      List<PyFunction> allMethods = StreamEx.of(results)
-        .map(RatedResolveResult::getElement)
-        .select(PyFunction.class)
-        .toList();
-      // TODO Migrate this ad-hoc logic to the normal process of resolving overloads in PyCallExpressionHelper
-      PyFunction matchingBySelf = ContainerUtil.find(allMethods, method -> selfParameterMatchesReceiver(method, actualType, context));
-      return matchingBySelf != null ? matchingBySelf : ContainerUtil.getFirstItem(allMethods);
+    if (!ContainerUtil.isEmpty(results)) {
+      final PyType boundMemberType = PyTypeUtil.getTypeOfBoundMember(actualType, results, context, null, classType);
+      final PyCallableType callableType = ContainerUtil.getFirstItem(PyTypeUtil.getCallableItems(boundMemberType));
+      if (callableType != null) {
+        return Ref.create(PySyntheticCallHelper.getCallTypeOnTypesOnly(callableType, null, List.of(), context));
+      }
     }
     return null;
-  }
-
-  private static boolean selfParameterMatchesReceiver(@NotNull PyFunction method,
-                                                      @NotNull PyType receiverType,
-                                                      @NotNull TypeEvalContext context) {
-    List<PyCallableParameter> parameters = method.getParameters(context);
-    if (parameters.isEmpty()) return false;
-    PyCallableParameter firstParameter = parameters.get(0);
-    if (!firstParameter.isSelf()) return false;
-    PyType selfParameterType = firstParameter.getType(context);
-    // See 
-    //  - PyTypingTest.testForLoopTargetTypeComesFromCorrectDunderIterOverload
-    //  - PyTypingTest.testIterationOverRegularStrEmitsStrNotLiteralString
-    // If `self` in an overload was annotated with an explicit type hint (e.g. a subclass), leave it as-is, 
-    // otherwise replace Self type with an actual instance type.
-    PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(receiverType, context);
-    return PyTypeChecker.match(PyTypeChecker.substitute(selfParameterType, substitutions, context), receiverType, context);
   }
 
   private @Nullable PyType getTypeFromExcept() {
