@@ -2,8 +2,14 @@
 package org.jetbrains.yaml.parser;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.testFramework.ParsingTestCase;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLParserDefinition;
+import org.jetbrains.yaml.YamlElementTypeConverterFactory;
+import org.jetbrains.yaml.YamlFileElementTypeConverterFactory;
+import org.jetbrains.yaml.syntax.YamlSyntaxDefinitionExtension;
 
 import java.io.IOException;
 
@@ -11,6 +17,14 @@ public class YAMLParserTest extends ParsingTestCase {
 
   public YAMLParserTest() {
     super("", "yml", new YAMLParserDefinition());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addExplicitExtension(ElementTypeConverters.getInstance(), YAMLLanguage.INSTANCE, new YamlElementTypeConverterFactory());
+    addExplicitExtension(ElementTypeConverters.getInstance(), YAMLLanguage.INSTANCE, new YamlFileElementTypeConverterFactory());
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), YAMLLanguage.INSTANCE, new YamlSyntaxDefinitionExtension());
   }
 
   @Override

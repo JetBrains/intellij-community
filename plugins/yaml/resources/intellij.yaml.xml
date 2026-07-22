@@ -64,5 +64,8 @@
                                  key="yaml.smartkeys.option.title"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
     <applicationSettings service="org.jetbrains.yaml.folding.YAMLFoldingSettings"/>
+    <syntax.elementTypeConverter language="yaml" implementationClass="org.jetbrains.yaml.YamlElementTypeConverterFactory" />
+    <syntax.elementTypeConverter language="yaml" implementationClass="org.jetbrains.yaml.YamlFileElementTypeConverterFactory" />
+    <syntax.syntaxDefinition language="yaml" implementationClass="org.jetbrains.yaml.syntax.YamlSyntaxDefinitionExtension" />
   </extensions>
 </idea-plugin>  

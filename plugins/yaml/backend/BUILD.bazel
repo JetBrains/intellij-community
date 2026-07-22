@@ -293,6 +293,10 @@ jvm_library(
         "//json/networknt.wrapper:networknt.wrapper_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/yaml/syntax",
+        "//plugins/yaml/syntax:syntax_test_lib",
+        "//platform/syntax/syntax-psi:psi",
+        "//platform/syntax/syntax-psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.yaml.backend.tests` end

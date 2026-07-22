@@ -1,4 +1,7 @@
-package org.jetbrains.yaml.syntax.lexer
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("YamlGrammarCharUtil")
+
+package org.jetbrains.yaml.lexer
 
 private const val NS_INDICATORS = "-?:,\\[\\]\\{\\}#&*!|>'\\\"%@`"
 private const val NS_FLOW_INDICATORS = ",[]{}"

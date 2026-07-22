@@ -8,12 +8,11 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import kotlin.jvm.JvmField
 
 object YamlSyntaxElementTypes {
-    @JvmField val FILE = SyntaxElementType("YAML_FILE")
+    @JvmField val FILE: SyntaxElementType = SyntaxElementType("YAML_FILE")
     @JvmField val DOCUMENT: SyntaxElementType = SyntaxElementType("Document ---")
 
     @JvmField val KEY_VALUE_PAIR: SyntaxElementType = SyntaxElementType("Key value pair")
 
-    //@JvmField val VALUE: SyntaxElementType = SyntaxElementType("Value")
     @JvmField val HASH: SyntaxElementType = SyntaxElementType("Hash")
     @JvmField val ARRAY: SyntaxElementType = SyntaxElementType("Array")
     @JvmField val SEQUENCE_ITEM: SyntaxElementType = SyntaxElementType("Sequence item")

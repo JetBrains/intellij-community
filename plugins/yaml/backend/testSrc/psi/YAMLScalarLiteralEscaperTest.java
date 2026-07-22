@@ -13,7 +13,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import org.jetbrains.yaml.YAMLParserDefinition;
 
 import java.util.Arrays;
 
@@ -21,12 +20,6 @@ public class YAMLScalarLiteralEscaperTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/psi/data/";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    new YAMLParserDefinition();
   }
 
   public void testPlainScalar1() {

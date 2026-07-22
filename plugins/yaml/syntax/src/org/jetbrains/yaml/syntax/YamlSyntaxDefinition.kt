@@ -8,12 +8,12 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.yaml.syntax.lexer.YamlLexer
 
 object YamlSyntaxDefinition : LanguageSyntaxDefinition {
-    override fun parse(builder: SyntaxTreeBuilder) {
-        YamlParser(builder).parse()
-    }
+  override fun parse(builder: SyntaxTreeBuilder) {
+    YamlParser(builder).parse()
+  }
 
-    override fun createLexer(): Lexer = YamlLexer()
+  override fun createLexer(): Lexer = YamlLexer()
 
-    override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(YamlSyntaxTokenTypes.COMMENT)
-    override val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(YamlSyntaxTokenTypes.WHITESPACE)
+  override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(YamlSyntaxTokenTypes.COMMENT)
+  override val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(YamlSyntaxTokenTypes.WHITESPACE)
 }

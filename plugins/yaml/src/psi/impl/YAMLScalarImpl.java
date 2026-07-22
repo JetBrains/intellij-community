@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.lexer.YamlGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
@@ -93,8 +93,9 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   }
 
   protected static boolean isSurroundedByNoSpace(CharSequence text, int pos) {
-    return (pos - 1 < 0 || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos - 1)))
-           && (pos + 1 >= text.length() || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos + 1)));
+    if ((pos - 1 >= 0) && YamlGrammarCharUtil.isSpaceLike(text.charAt(pos - 1))) return false;
+    if (pos + 1 >= text.length()) return true;
+    return !YamlGrammarCharUtil.isSpaceLike(text.charAt(pos + 1));
   }
 
   protected final @Nullable ASTNode getFirstContentNode() {
