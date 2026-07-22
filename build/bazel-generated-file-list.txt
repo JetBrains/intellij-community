@@ -1069,6 +1069,7 @@ plugins/devkit/intellij.devkit.gradle.tooling
 plugins/devkit/intellij.devkit.i18n
 plugins/devkit/intellij.devkit.intelliLang
 plugins/devkit/intellij.devkit.mcp
+plugins/devkit/intellij.devkit.mcp.inspections
 plugins/devkit/intellij.devkit.modules
 plugins/devkit/intellij.devkit.scaffolding
 plugins/devkit/intellij.devkit.smartupdate

@@ -172,6 +172,8 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_test_lib",
         "//java/codeserver/highlighting",
         "//java/codeserver/highlighting:highlighting_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",

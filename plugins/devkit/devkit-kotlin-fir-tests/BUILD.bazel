@@ -76,6 +76,8 @@ jvm_library(
         "//plugins/devkit:devkit_test_lib",
         "//plugins/devkit/devkit-core:core",
         "//plugins/devkit/devkit-core:core_test_lib",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
         "//plugins/devkit/devkit-tests:testFramework",
