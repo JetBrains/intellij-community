@@ -31,7 +31,8 @@ interface Constants {
   enum class CaptureKey(val value: String) {
     CAPTURES("captures"),
     BEGIN_CAPTURES("beginCaptures"),
-    END_CAPTURES("endCaptures");
+    END_CAPTURES("endCaptures"),
+    WHILE_CAPTURES("whileCaptures");
 
     companion object {
       fun fromName(name: String): CaptureKey? {

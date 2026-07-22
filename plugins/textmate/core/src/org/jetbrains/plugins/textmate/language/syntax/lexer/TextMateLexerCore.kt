@@ -130,10 +130,16 @@ class TextMateLexerCore(
                                                               lexerState = frame.state,
                                                               checkCancelledCallback = checkCancelledCallback)
             if (matchWhile.matched) {
-              // todo: support whileCaptures (parse them upon `frame.scopes.pop()`, the stack with the rule's
-              //  name selector but without its content-name selector, the same way beginCaptures are parsed)
-              anchorByteOffset = matchWhile.byteRange().end
               newStackFrames.add(frame)
+              if (frame.state.syntaxRule.getCaptureRules(Constants.CaptureKey.WHILE_CAPTURES) != null ||
+                  frame.state.syntaxRule.getCaptureRules(Constants.CaptureKey.CAPTURES) != null) {
+                val framesWithWhileRule = newStackFrames.build()
+                parseCaptures(output, frame.scopes, Constants.CaptureKey.WHILE_CAPTURES, frame.state.syntaxRule, matchWhile, string, line,
+                              lineStartOffset, framesWithWhileRule, checkCancelledCallback) ||
+                  parseCaptures(output, frame.scopes, Constants.CaptureKey.CAPTURES, frame.state.syntaxRule, matchWhile, string, line,
+                                lineStartOffset, framesWithWhileRule, checkCancelledCallback)
+              }
+              anchorByteOffset = matchWhile.byteRange().end
             }
             else {
               break

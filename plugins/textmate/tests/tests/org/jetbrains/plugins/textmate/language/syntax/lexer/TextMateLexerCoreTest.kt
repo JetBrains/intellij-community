@@ -210,4 +210,69 @@ class TextMateLexerCoreTest {
     """.trimIndent())
   }
 
+  @Test
+  fun `while captures are emitted and the position advances past the while match`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "quote.block",
+            "begin": "(>) ",
+            "beginCaptures": { "1": { "name": "punct.quote" } },
+            "while": "(>) ",
+            "whileCaptures": { "1": { "name": "punct.quote.continued" } },
+            "patterns": [ { "match": "x+", "name": "content.x" } ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "> x\n> x\n", """
+      source.test quote.block punct.quote: [0, 1], {>}
+      source.test quote.block: [1, 2], { }
+      source.test quote.block content.x: [2, 3], {x}
+      source.test quote.block: [3, 4], {
+      }
+      source.test quote.block punct.quote.continued: [4, 5], {>}
+      source.test quote.block: [5, 6], { }
+      source.test quote.block content.x: [6, 7], {x}
+      source.test quote.block: [7, 8], {
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `while captures of an outer rule are emitted without the scopes of nested rules`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "outer.block",
+            "begin": "(A)",
+            "while": "(a)",
+            "whileCaptures": { "1": { "name": "wc.outer" } },
+            "patterns": [
+              {
+                "name": "inner.block",
+                "begin": "(B)",
+                "while": "(b)",
+                "whileCaptures": { "1": { "name": "wc.inner" } }
+              }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "AB\nab\n", """
+      source.test outer.block: [0, 1], {A}
+      source.test outer.block inner.block: [1, 2], {B}
+      source.test outer.block inner.block: [2, 3], {
+      }
+      source.test outer.block wc.outer: [3, 4], {a}
+      source.test outer.block inner.block wc.inner: [4, 5], {b}
+      source.test outer.block inner.block: [5, 6], {
+      }
+    """.trimIndent())
+  }
 }
