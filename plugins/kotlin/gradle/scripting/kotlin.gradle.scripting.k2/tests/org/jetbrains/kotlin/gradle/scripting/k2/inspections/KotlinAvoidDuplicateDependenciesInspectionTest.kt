@@ -18,6 +18,13 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCase() {
 
+    override fun setUp() {
+        super.setUp()
+        if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+            disableBuiltInKotlinHighlighters()
+        }
+    }
+
     private fun runTest(
         gradleVersion: GradleVersion,
         withVersionCatalogs: Boolean,
