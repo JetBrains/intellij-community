@@ -190,7 +190,8 @@ class TextMateLexerCore(
         // and the `end` pattern is applied only when it matches strictly before the nested match.
         val applyEndPatternLast = isApplyEndPatternLast(lastRule)
         if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentState, endMatch) || lastState == currentState)) {
-          val poppedState = stackFrames.last().state
+          val poppedFrame = stackFrames.last()
+          val poppedState = poppedFrame.state
           anchorByteOffset = pushedAnchors.remove(stackFrames.size - 1) ?: (-1).byteOffset()
           stackFrames = stackFrames.removingAt(stackFrames.size - 1)
 
@@ -207,7 +208,10 @@ class TextMateLexerCore(
           scopes = closeScopeSelector(output, scopes, endPosition + lineStartOffset) // closing basic scope
 
           if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
-            addToken(output, scopes.currentScope, lineLength + lineStartOffset)
+            // the grammar pushed and popped a rule without advancing; assume that was a mistake
+            // and continue the line in the rule's state
+            stackFrames = stackFrames.adding(poppedFrame)
+            addToken(output, poppedFrame.scopes.currentScope, lineLength + lineStartOffset)
             break
           }
           localStates.remove(poppedState)

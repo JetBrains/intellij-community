@@ -444,6 +444,26 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `a rule pushed and popped without advancing stays on the stack`() {
+    // when a rule is pushed and immediately popped without advancing,
+    // the grammar is assumed to have meant to stay in that state: the rest
+    // of the line and the following lines keep the rule's scope
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "name": "loop.r", "begin": "(?=x)", "end": "(?=x)" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "x\nx", """
+      source.test loop.r: [0, 2], {x
+      }
+      source.test loop.r: [2, 3], {x}
+    """.trimIndent())
+  }
+
+  @Test
   fun `begin-string anchor stops matching once tokenization advances`() {
     val grammar = """
       {

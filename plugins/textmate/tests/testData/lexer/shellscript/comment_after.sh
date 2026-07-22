@@ -7,7 +7,7 @@ source.shell;meta.function.shell: [15, 16], { }
 source.shell;meta.function.shell;entity.name.function.shell: [16, 26], {show_usage}
 source.shell;meta.function.shell: [26, 27], { }
 source.shell;meta.function.shell;meta.function.body.shell;punctuation.definition.group.shell;punctuation.section.function.definition.shell: [27, 28], {{}
-source.shell;meta.function.shell;meta.function.body.shell: [28, 29], {
+source.shell;meta.function.shell;meta.function.body.shell;meta.statement.shell: [28, 29], {
 }
 source.shell;meta.function.shell;meta.function.body.shell: [29, 30], {
 }
