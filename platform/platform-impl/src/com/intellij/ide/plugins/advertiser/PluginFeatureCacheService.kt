@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.advertiser
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.Setting
 import com.intellij.platform.settings.objectSerializer
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 class PluginFeatureCacheService {
   companion object {
     fun getInstance(): PluginFeatureCacheService = service()
+    suspend fun getInstanceAsync(): PluginFeatureCacheService = serviceAsync()
   }
 
   private val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
