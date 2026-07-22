@@ -40,15 +40,9 @@ public interface IntentionActionWithModCommandFallback extends IntentionAction {
    * @return the fallback {@link ModCommandAction} if available, otherwise null
    */
   static @Nullable ModCommandAction getFallbackModCommandActionFor(@NotNull IntentionAction action) {
-    while (true) {
-      if (action instanceof IntentionActionWithModCommandFallback actionWithModCommandFallback) {
-        return actionWithModCommandFallback.getFallbackModCommandAction();
-      }
-      if (action instanceof IntentionActionDelegate delegate) {
-        action = delegate.getDelegate();
-      } else {
-        return null;
-      }
+    if (IntentionActionDelegate.unwrap(action) instanceof IntentionActionWithModCommandFallback actionWithModCommandFallback) {
+      return actionWithModCommandFallback.getFallbackModCommandAction();
     }
+    return null;
   }
 }
