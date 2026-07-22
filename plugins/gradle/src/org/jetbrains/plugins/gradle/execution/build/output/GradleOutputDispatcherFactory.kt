@@ -10,11 +10,14 @@ import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.LineProcessor
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
@@ -22,8 +25,10 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
+@Internal
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
-  override val externalSystemId = GradleConstants.SYSTEM_ID
+
+  override val externalSystemId: ProjectSystemId = GradleConstants.SYSTEM_ID
 
   override fun create(
     buildId: Any,
@@ -34,11 +39,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers)
   }
 
-  private class GradleOutputMessageDispatcher(
+  @VisibleForTesting
+  class GradleOutputMessageDispatcher(
     private val buildId: Any,
     private val myBuildProgressListener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
-    private val parsers: List<BuildOutputParser>
+    private val parsers: List<BuildOutputParser>,
   ) : AbstractOutputMessageDispatcher(
     myBuildProgressListener) {
     override var stdOut: Boolean = true
@@ -90,11 +96,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
             myCurrentReader = myRootReader
           }
 
-          myCurrentReader.appendLine(cleanLine)
           if (myCurrentReader != myRootReader) {
             val parentEventId = myCurrentReader.parentEventId
             myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
           }
+
+          myCurrentReader.appendLine(cleanLine)
         }
       }
     }
