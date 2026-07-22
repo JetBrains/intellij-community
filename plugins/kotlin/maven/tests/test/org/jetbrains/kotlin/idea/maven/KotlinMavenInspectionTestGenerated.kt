@@ -47,18 +47,6 @@ class KotlinMavenInspectionTestGenerated(mavenVersion: String, modelVersion: Str
     }
 
     @Test
-    @TestMetadata("deprecatedKotlinxCoroutines.xml")
-    fun testDeprecatedKotlinxCoroutines() {
-        runTest("testData/maven-inspections/deprecatedKotlinxCoroutines.xml")
-    }
-
-    @Test
-    @TestMetadata("deprecatedKotlinxCoroutinesNoError.xml")
-    fun testDeprecatedKotlinxCoroutinesNoError() {
-        runTest("testData/maven-inspections/deprecatedKotlinxCoroutinesNoError.xml")
-    }
-
-    @Test
     @TestMetadata("ideAndMavenVersions.xml")
     fun testIdeAndMavenVersions() {
         runTest("testData/maven-inspections/ideAndMavenVersions.xml")

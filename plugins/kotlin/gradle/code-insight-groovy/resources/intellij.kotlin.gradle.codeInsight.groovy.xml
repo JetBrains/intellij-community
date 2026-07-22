@@ -48,15 +48,6 @@
             hasStaticDescription="true"
             level="WARNING" key="inspection.deprecated.gradle.dependency.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
-            groupPathKey="group.path.kotlin.migration"
-            groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
-            enabledByDefault="false"
-            cleanupTool="true"
-            language="Groovy"
-            hasStaticDescription="true"
-            level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.groovy.GroovyLibraryDependenciesToBuildGradleKtsCopyPastePreprocessor"/>
   </extensions>
