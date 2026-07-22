@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
 import com.intellij.openapi.ui.validation.trimParameter
 import com.intellij.ui.dsl.ValidationException
-import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
+import com.intellij.ui.dsl.builder.impl.installValidationRequestor
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange

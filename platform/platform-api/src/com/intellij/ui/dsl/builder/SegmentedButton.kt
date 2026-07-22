@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.ui.dsl.builder.impl.LayoutDslMarker
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus

@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.ui.dsl.builder.impl.LayoutDslMarker
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps

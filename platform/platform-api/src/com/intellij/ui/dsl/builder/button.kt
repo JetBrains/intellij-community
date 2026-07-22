@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
-import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.installValidationRequestor
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.ThreeStateCheckBox

@@ -7,8 +7,6 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.observable.util.whenChanged
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.getUserData
-import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
@@ -17,7 +15,6 @@ import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.ui.validation.transformResult
-import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.UserActivityProviderComponent
 import com.intellij.ui.dsl.builder.Cell
@@ -25,7 +22,6 @@ import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.Level
 import com.intellij.ui.dsl.validation.impl.createValidationInfo
 import com.intellij.ui.layout.ComponentPredicate
-import org.jetbrains.annotations.ApiStatus
 import java.awt.ItemSelectable
 import javax.swing.JComboBox
 import javax.swing.JComponent
@@ -85,8 +81,6 @@ internal class CellValidationImpl<out T>(
 
   companion object {
 
-    private val BOUND_VALUE_PROPERTY_KEY = Key.create<ObservableProperty<*>>("BOUND_VALUE_PROPERTY_KEY")
-
     internal fun installValidationOnApply(
       dialogPanelConfig: DialogPanelConfig,
       interactiveComponent: JComponent,
@@ -140,7 +134,7 @@ internal class CellValidationImpl<out T>(
     private fun guessValidationRequestor(
       interactiveComponent: JComponent,
     ): DialogValidationRequestor? {
-      val property = interactiveComponent.getUserData(BOUND_VALUE_PROPERTY_KEY)
+      val property = interactiveComponent.defaultValidationRequestor
       if (property != null) {
         return WHEN_PROPERTY_CHANGED(property)
       }
@@ -161,13 +155,6 @@ internal class CellValidationImpl<out T>(
         }
         else -> null
       }
-    }
-
-    internal fun installDefaultValidationRequestor(
-      interactiveComponent: JComponent,
-      property: ObservableProperty<*>,
-    ) {
-      interactiveComponent.putUserData(BOUND_VALUE_PROPERTY_KEY, property)
     }
   }
 }

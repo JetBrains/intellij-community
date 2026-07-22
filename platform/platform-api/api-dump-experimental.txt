@@ -442,9 +442,17 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - com.intellij.ui.components.fields.ExtendableTextComponent
 - *:addBrowseExtension(java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.ui.components.fields.ExtendableTextField
 - *:addBrowseExtension(java.lang.Runnable,com.intellij.openapi.Disposable,Z):com.intellij.ui.components.fields.ExtendableTextField
+f:com.intellij.ui.dsl.builder.ButtonKt
+- *sf:whenStateChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenStateChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.Cell
 - com.intellij.ui.dsl.builder.CellBase
 - *a:validationInfo(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.ComboBoxKt
+- *sf:whenItemChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenItemChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- *sf:whenItemSelectedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenItemSelectedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 *:com.intellij.ui.dsl.builder.Placeholder
 - com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.Placeholder
@@ -473,6 +481,12 @@ com.intellij.ui.dsl.builder.SegmentedButton
 - *bs:whenItemSelected$default(com.intellij.ui.dsl.builder.SegmentedButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton
 - *a:whenItemSelectedFromUi(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton
 - *bs:whenItemSelectedFromUi$default(com.intellij.ui.dsl.builder.SegmentedButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton
+f:com.intellij.ui.dsl.builder.TextFieldKt
+- *sf:whenTextChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenTextChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
+- *sf:whenTextChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenTextChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 *f:com.intellij.ui.dsl.gridLayout.Constraints
 - <init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String):V
 - b:<init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V

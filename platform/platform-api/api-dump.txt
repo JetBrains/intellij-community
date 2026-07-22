@@ -8621,6 +8621,15 @@ e:com.intellij.ui.dsl.builder.BottomGap
 - s:values():com.intellij.ui.dsl.builder.BottomGap[]
 f:com.intellij.ui.dsl.builder.BuilderKt
 - sf:panel(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
+f:com.intellij.ui.dsl.builder.ButtonKt
+- sf:actionListener(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindState(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:getSelected(com.intellij.ui.dsl.builder.Cell):com.intellij.ui.layout.ComponentPredicate
+- sf:selected(com.intellij.ui.dsl.builder.Cell,Z):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.ButtonsGroup
 - com.intellij.ui.dsl.builder.RowsRange
 - a:bind(com.intellij.ui.dsl.builder.MutableProperty,java.lang.Class):com.intellij.ui.dsl.builder.ButtonsGroup
@@ -8716,6 +8725,13 @@ com.intellij.ui.dsl.builder.CollapsibleRow
 - a:setPackWindowHeight(Z):V
 - a:setTitle(java.lang.String):V
 - a:setTitleFont(java.awt.Font):V
+f:com.intellij.ui.dsl.builder.ComboBoxKt
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.openapi.ui.ComboBox,I):com.intellij.openapi.ui.ComboBox
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
 e:com.intellij.ui.dsl.builder.DslComponentProperty
 - java.lang.Enum
 - sf:ICONS_PROVIDER:com.intellij.ui.dsl.builder.DslComponentProperty
@@ -8964,6 +8980,11 @@ com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
 - a:setIcon(javax.swing.Icon):V
 - a:setText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
+f:com.intellij.ui.dsl.builder.SliderKt
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:labelTable(com.intellij.ui.dsl.builder.Cell,java.util.Map):com.intellij.ui.dsl.builder.Cell
+- sf:showValueHint(com.intellij.ui.dsl.builder.Cell):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getButtonGroupHeaderBottomGap():I
 - getDialogUnscaledGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -8979,6 +9000,46 @@ com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getVerticalComponentGap():I
 - a:getVerticalMediumGap():I
 - a:getVerticalSmallGap():I
+f:com.intellij.ui.dsl.builder.SpinnerKt
+- sf:bindIntValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextAreaKt
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:rows(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldKt
+- sf:COLUMNS_LARGE:I
+- sf:COLUMNS_MEDIUM:I
+- sf:COLUMNS_SHORT:I
+- sf:COLUMNS_TINY:I
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:columns(javax.swing.JTextField,I):javax.swing.JTextField
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- sf:textValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- sf:trimmedTextValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- sf:textValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- sf:trimmedTextValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldWithHistoryWithBrowseButtonKt
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
 e:com.intellij.ui.dsl.builder.TopGap
 - java.lang.Enum
 - sf:MEDIUM:com.intellij.ui.dsl.builder.TopGap
