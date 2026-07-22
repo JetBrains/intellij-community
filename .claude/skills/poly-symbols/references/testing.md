@@ -140,9 +140,23 @@ lives inside the helper, not the test.
 
 **Highlighting** — `doHighlightingTest(checkSymbolNames = true)` additionally validates
 `PolySymbolHighlightingCustomizer`-driven symbol-kind highlighting via
-`ExpectedHighlightingData.checkSymbolNames()`. For a test base that predates `PolySymbolsTestCase`,
-the manual fallback is `ExpectedHighlightingData(doc, false, true, true, false).checkSymbolNames()`
-+ `(fixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)`.
+`ExpectedHighlightingData.checkSymbolNames()`: mark each colored identifier inline with
+`<symbolName descr="EXTERNAL_NAME">text</symbolName>` (`EXTERNAL_NAME` = the `TextAttributesKey`'s own
+external id) directly in the source fixture - there's no separate gold file. Write the fixture
+unmarked, run once to get a `FileComparisonFailedError` with the markers auto-inserted around every
+symbol the real annotator actually colored, bake that back in, re-run to confirm.
+
+**Prefer this over calling `PolySymbolHighlightingCustomizer.getSymbolTextAttributes()`/
+`getSymbolKindTextAttributes()` directly from test code** - a direct call bypasses
+`PolySymbolHighlightingAnnotator` entirely, so it can't catch EP-registration-order bugs (multiple
+customizers compose first-non-null-wins), a customizer silently falling through to a kind-only/
+host-class fallback when it shouldn't, or the "raw, unwrapped `nameMatchQuery` result" gotcha
+described above - exactly the bug class this pattern exists to catch.
+
+For a test base that predates `PolySymbolsTestCase`, the manual fallback is
+`ExpectedHighlightingData(doc, false, true, true, false).checkSymbolNames()` +
+`(fixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)` - still the real pipeline,
+just without the `PolySymbolsTestCase` convenience wrapper.
 
 **Documentation**: `checkDocumentationAtCaret()` (or `doLookupTest(checkDocumentation = true)` for
 per-completion-item docs) diffs against `<name>.expected.html`.

@@ -400,6 +400,10 @@ their own checks on the result — see GDScript's `GdRefIdAnnotator` for the wor
 annotator that does exactly this and nothing else (coloring is fully delegated to the customizer
 above).
 
+**Testing:** see the "Highlighting" recipe in [testing.md](testing.md) - use
+`doHighlightingTest(checkSymbolNames = true)`, not a direct `getSymbolTextAttributes()` call from test
+code.
+
 ## Completion — `PolySymbolsCompletionProviderBase`
 
 ```kotlin
