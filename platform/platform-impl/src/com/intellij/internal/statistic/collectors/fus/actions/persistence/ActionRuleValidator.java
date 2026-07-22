@@ -17,6 +17,6 @@ public final class ActionRuleValidator extends ClassNameRuleValidator {
 
   @Override
   protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull IEventContext context) {
-    return ActionsCollectorImpl.canReportActionId(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+    return ActionsCollectorImpl.canReportActionId(data) ? ValidationResultType.ACCEPTED : super.doValidate(data, context);
   }
 }
