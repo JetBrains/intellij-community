@@ -178,7 +178,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       }
     }
 
-    project.messageBus.connect().subscribe(RunContentManager.TOPIC, object : RunContentWithExecutorListener {
+    project.messageBus.connect(cs).subscribe(RunContentManager.TOPIC, object : RunContentWithExecutorListener {
       override fun contentSelected(descriptor: RunContentDescriptor?, executor: Executor) {
         if (executor.toolWindowId != ToolWindowId.DEBUG) return
         if (descriptor == null) return
