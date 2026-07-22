@@ -67,11 +67,6 @@ c:com.intellij.build.SyncViewManager
 *f:com.intellij.build.issue.quickfix.OpenFileQuickFix$Companion
 - f:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - f:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
-c:com.intellij.build.output.BuildOutputInstantReaderImpl
-- com.intellij.build.output.BuildOutputInstantReader
-- java.io.Closeable
-- java.lang.Appendable
-- *f:disableActiveReading():V
 *:com.intellij.build.progress.BuildProgress
 - a:buildIssue(com.intellij.build.issue.BuildIssue,com.intellij.build.events.MessageEvent$Kind):com.intellij.build.progress.BuildProgress
 - a:cancel():com.intellij.build.progress.BuildProgress

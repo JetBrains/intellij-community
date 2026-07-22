@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ConcurrencyUtil.underThreadNameRunnable
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.util.LinkedList
@@ -34,8 +33,6 @@ class BuildOutputParserDispatcherImpl(
   private var readLinesBufferPosition = -1
   private val state = AtomicReference(State.Idle)
 
-  @Volatile
-  private var useActiveReading = true
   private var readFinishedFuture = CompletableFuture<Unit>()
 
   private val readerRunnable = underThreadNameRunnable(
@@ -53,7 +50,7 @@ class BuildOutputParserDispatcherImpl(
 
     try {
       while (true) {
-        val line = doReadLine(useActiveReading) ?: break
+        val line = doReadLine() ?: break
         if (line.isBlank()) continue
         for (parser in buildOutputParsers) {
           val readerWrapper = BuildOutputInstantReaderWrapper(this)
@@ -123,7 +120,7 @@ class BuildOutputParserDispatcherImpl(
 
   fun readLine(): String? = doReadLine()
 
-  private fun doReadLine(waitIfNotClosed: Boolean = true): String? {
+  private fun doReadLine(): String? {
     if (readLinesBufferPosition >= 0) {
       val line = readLinesBuffer[readLinesBufferPosition]
       readLinesBufferPosition--
@@ -133,7 +130,6 @@ class BuildOutputParserDispatcherImpl(
     while (true) {
       line = channel.poll(100, TimeUnit.MILLISECONDS)
       if (line != null || state.get() == State.Closed) break
-      if (!waitIfNotClosed) return null
     }
     if (line == null) return null
     readLinesBuffer.addFirst(line)
@@ -148,11 +144,6 @@ class BuildOutputParserDispatcherImpl(
     if (readLinesBufferPosition >= pushBackBufferSize) {
       readLinesBufferPosition = pushBackBufferSize - 1
     }
-  }
-
-  @Experimental
-  fun disableActiveReading() {
-    useActiveReading = false
   }
 
   private class BuildOutputInstantReaderWrapper(

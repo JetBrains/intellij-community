@@ -55,10 +55,6 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   override fun pushBack(numberOfLines: Int): Unit =
     dispatcher.pushBack(numberOfLines)
 
-  @Experimental
-  fun disableActiveReading(): Unit =
-    dispatcher.disableActiveReading()
-
 }
 
 @Internal
