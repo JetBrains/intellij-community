@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.markdown.backend.index.HeaderAnchorIndex
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbService
@@ -19,14 +20,12 @@ import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.UriUtil
-import com.intellij.markdown.backend.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import java.io.IOException
 import java.net.URI
-import java.net.URISyntaxException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
@@ -60,19 +59,13 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
       return VfsUtil.findFile(path, true)
     }
 
-    private fun createUri(link: String): URI? {
-      return try {
-        URI(link)
-      } catch (exception: URISyntaxException) {
-        logger.warn(exception)
-        null
-      }
-    }
+    private fun createUri(link: String): URI? = VfsUtil.toUri(link)
   }
 
   override suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData {
-    val file = resolveLinkAsFile(link, virtualFileId)
-               ?: return MarkdownLinkNavigationData(link, null, null, null)
+    val (uri, file) = resolveLinkAsFile(link, virtualFileId)
+                      ?: return MarkdownLinkNavigationData(link, null, null, null)
+    if (file == null) return MarkdownLinkNavigationData(uri?.toString() ?: link, null, null, null)
 
     var path = file.url
     val project = guessProjectForFile(file)
@@ -88,16 +81,16 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), headers)
   }
 
-  private fun resolveLinkAsFile(link: String, virtualFileId: VirtualFileId?): VirtualFile?{
-    if (BrowserUtil.isAbsoluteURL(link)){
+  private fun resolveLinkAsFile(link: String, virtualFileId: VirtualFileId?): Pair<URI?, VirtualFile?>? {
+    if (BrowserUtil.isAbsoluteURL(link)) {
       val uri = createUri(link)
       if (uri != null && uri.scheme == "file") {
-        return uri.findVirtualFile()
+        return uri to uri.findVirtualFile()
       }
     }
     val containingFile = virtualFileId?.virtualFile()?.parent ?: return null
     return try {
-      containingFile.findFile(link.trimAnchor())
+      null to containingFile.findFile(link.trimAnchor())
     }
     catch (_: IOException) {
       null
