@@ -55,6 +55,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager"
                     serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
+    <toolWindowEditorTabSupport key="Terminal"
+                                implementationClass="com.intellij.terminal.frontend.TerminalToolWindowEditorTabSupport"/>
 
     <projectConfigurable groupId="tools"
                          bundle="messages.IdeBundle"

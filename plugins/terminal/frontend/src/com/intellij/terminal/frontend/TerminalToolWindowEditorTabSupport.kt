@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal
+package com.intellij.terminal.frontend
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
@@ -18,7 +18,10 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.plugins.terminal.TerminalEditorTabSupportUtil
+import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener.CloseCheckResult
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.util.terminalProjectScopeBoundToDisposable
 import java.beans.PropertyChangeListener
 import javax.swing.Icon
@@ -104,43 +107,34 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
     content: Content,
     coroutineScope: CoroutineScope,
   ): StateFlow<@NlsContexts.TabTitle String> {
-    return contentPropertyFlow(
-      content = content,
-      propertyName = Content.PROP_DISPLAY_NAME,
-      valueProvider = content::getDisplayName,
-    ).stateIn(
-      scope = coroutineScope,
-      started = SharingStarted.Eagerly,
-      initialValue = content.displayName,
-    )
-  }
-
-  private fun contentIconFlow(
-    content: Content,
-    toolWindowIcon: Icon?,
-  ): Flow<Icon?> {
-    return contentPropertyFlow(
-      content = content,
-      propertyName = Content.PROP_ICON,
-      valueProvider = { content.icon ?: toolWindowIcon },
-    )
-  }
-
-  private fun <T> contentPropertyFlow(
-    content: Content,
-    propertyName: String,
-    valueProvider: () -> T,
-  ): Flow<T> {
     return callbackFlow {
       val listener = PropertyChangeListener { event ->
-        if (event.propertyName == propertyName) {
-          trySend(valueProvider())
+        if (event.propertyName == Content.PROP_DISPLAY_NAME) {
+          trySend(content.displayName)
         }
       }
-
       content.addPropertyChangeListener(listener)
-      trySend(valueProvider())
+      trySend(content.displayName)
+      awaitClose {
+        content.removePropertyChangeListener(listener)
+      }
+    }.distinctUntilChanged()
+      .stateIn(
+        scope = coroutineScope,
+        started = SharingStarted.Eagerly,
+        initialValue = content.displayName,
+      )
+  }
 
+  private fun contentIconFlow(content: Content, toolWindowIcon: Icon?): Flow<Icon?> {
+    return callbackFlow {
+      val listener = PropertyChangeListener { event ->
+        if (event.propertyName == Content.PROP_ICON) {
+          trySend(content.icon ?: toolWindowIcon)
+        }
+      }
+      content.addPropertyChangeListener(listener)
+      trySend(content.icon ?: toolWindowIcon)
       awaitClose {
         content.removePropertyChangeListener(listener)
       }

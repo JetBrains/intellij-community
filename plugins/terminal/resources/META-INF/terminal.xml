@@ -4,9 +4,6 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <toolWindowEditorTabSupport key="Terminal"
-                                implementationClass="org.jetbrains.plugins.terminal.TerminalToolWindowEditorTabSupport"/>
-
     <fileEditorProvider id="classic-terminal-session-editor"
                         implementation="org.jetbrains.plugins.terminal.vfs.ClassicTerminalSessionEditorProvider"/>
 
