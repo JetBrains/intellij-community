@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.expressionVisitor
 
@@ -66,7 +67,10 @@ class CollectionConcatenationToBuildCollectionInspection :
         if (element is KtParameter) return false
         // sub expression elements are/will be visited
         if (element is KtBinaryExpression) return false
-        if (element.parent is KtParenthesizedExpression) {
+        // do not report on arguments
+        val parent = element.parent
+        if (element is KtNameReferenceExpression && parent is KtValueArgument) return false
+        if (parent is KtParenthesizedExpression) {
             // we only care about the topmost `KtParenthesizedExpression` expression
             return false
         }
@@ -130,6 +134,7 @@ class CollectionConcatenationToBuildCollectionInspection :
             expressionType.isClassType(StandardClassIds.Set) -> Context.CollectionType.Set
             else -> return null
         }
+        if (expressionToConvert !is KtBinaryExpression && expressionToConvert.isBuildCollectionCall(collectionType)) return null
 
         val operations = when (expressionToConvert) {
             is KtBinaryExpression -> buildList {
@@ -160,6 +165,13 @@ class CollectionConcatenationToBuildCollectionInspection :
     private fun KtExpression.toOperationForStandalone(): Context.Operation? {
         val type = expressionType ?: return null
         return toOperationForPlus(isIterableOrSequence(type))
+    }
+
+    context(_: KaSession)
+    private fun KtExpression.isBuildCollectionCall(collectionType: Context.CollectionType): Boolean {
+        val callExpression = transformingCallExpression() ?: return false
+        val resolvedTo = callExpression.calleeExpression?.mainReference?.resolveToSymbol() as? KaCallableSymbol ?: return false
+        return resolvedTo.callableId?.asSingleFqName()?.asString() == collectionType.buildCallFqName
     }
 
     context(_: KaSession)

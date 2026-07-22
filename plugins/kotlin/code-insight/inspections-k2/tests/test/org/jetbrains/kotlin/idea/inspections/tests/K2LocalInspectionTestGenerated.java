@@ -12817,6 +12817,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("buildListSingleElement.kt")
+            public void testBuildListSingleElement() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/inapplicable/buildListSingleElement.kt");
+            }
+
+            @TestMetadata("buildSetAddAll.kt")
+            public void testBuildSetAddAll() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/inapplicable/buildSetAddAll.kt");
+            }
+
+            @TestMetadata("buildSetSingleElement.kt")
+            public void testBuildSetSingleElement() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/inapplicable/buildSetSingleElement.kt");
+            }
+
             @TestMetadata("contextReceiver.kt")
             public void testContextReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/inapplicable/contextReceiver.kt");
