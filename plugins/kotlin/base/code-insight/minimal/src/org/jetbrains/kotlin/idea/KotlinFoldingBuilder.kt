@@ -48,8 +48,8 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         )
 
     override fun buildLanguageFoldRegions(
-      descriptors: MutableList<FoldingDescriptor>,
-      root: PsiElement, document: Document, quick: Boolean
+        descriptors: MutableList<FoldingDescriptor>,
+        root: PsiElement, document: Document, quick: Boolean
     ) {
         if (root !is PsiFile || root.fileType != KotlinFileType.INSTANCE) return
 
@@ -170,9 +170,15 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         node.elementType == KtTokens.BLOCK_COMMENT -> "/${getFirstLineOfComment(node)}.../"
         node.elementType == KDocTokens.KDOC -> "/**${getFirstLineOfComment(node)}...*/"
         node.elementType == KtNodeTypes.STRING_TEMPLATE -> "\"\"\"${getTrimmedFirstLineOfString(node).addSpaceIfNeeded()}...\"\"\""
-      node.elementType == KtNodeTypes.PRIMARY_CONSTRUCTOR || node.elementType == KtNodeTypes.CALL_EXPRESSION -> "(...)"
+        node.elementType == KtNodeTypes.PRIMARY_CONSTRUCTOR || node.elementType == KtNodeTypes.CALL_EXPRESSION -> "(...)"
+        node.elementType is KtFunctionElementType -> if (needsLeadingSpaceBeforePlaceholder(node, range)) " {...}" else "{...}"
         node.psi is KtImportList -> "..."
         else -> "{...}"
+    }
+
+    private fun needsLeadingSpaceBeforePlaceholder(node: ASTNode, range: TextRange): Boolean {
+        val charBefore = node.text.getOrNull(range.startOffset - node.startOffset - 1)
+        return charBefore?.isWhitespace() == false
     }
 
     private fun getTrimmedFirstLineOfString(node: ASTNode): String {
@@ -219,7 +225,8 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         return false
     }
 
-    override fun isCustomFoldingRoot(node: ASTNode): Boolean = node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
+    override fun isCustomFoldingRoot(node: ASTNode): Boolean =
+        node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
 
     private fun isFirstElementInFile(element: PsiElement): Boolean {
         val parent = element.parent
