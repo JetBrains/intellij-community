@@ -14,16 +14,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val IN_COMA = Key.create<Boolean>("IN_COMA")
 private val LOG = fileLogger()
 
-private val invalidationAfterPropertyPush: AtomicBoolean = AtomicBoolean(false)
+private val isBulkInvalidationNeeded: AtomicBoolean = AtomicBoolean(false)
 
 @ApiStatus.Internal
-fun signalInvalidationAfterPropertyPush() {
-  invalidationAfterPropertyPush.set(true)
+fun signalBulkInvalidationNeeded() {
+  isBulkInvalidationNeeded.set(true)
 }
 
 internal fun pollInvalidationAfterPropertyPush(): Boolean {
   ThreadingAssertions.assertWriteAccess()
-  return invalidationAfterPropertyPush.getAndSet(false)
+  return isBulkInvalidationNeeded.getAndSet(false)
 }
 
 internal fun FileViewProvider.markPossiblyInvalidated() {

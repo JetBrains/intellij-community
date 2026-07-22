@@ -6,6 +6,8 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -97,6 +99,18 @@ public final class FileManagerImpl implements FileManagerEx {
 
     LowMemoryWatcher.register(() -> processQueue(), manager);
 
+    myConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+    });
+
     myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
@@ -135,7 +149,13 @@ public final class FileManagerImpl implements FileManagerEx {
 
       Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
       Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
-      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProvider + " got invalid as part of dumb mode!\n" +
+      String viewProviderRepresentation;
+      try {
+        viewProviderRepresentation = viewProvider.toString(); // toString calls getContent, which might behave poorly for binary files and decompilers
+      } catch (Throwable e) {
+        viewProviderRepresentation = "[class: " + viewProvider.getClass().getName() + "languages: " + viewProvider.getLanguages() + "]";
+      }
+      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProviderRepresentation + " got invalid as part of dumb mode!\n" +
                                                     "on: " + (entered ? "enteredDumbMode" : "exitDumbMode"), attachment));
     });
   }
