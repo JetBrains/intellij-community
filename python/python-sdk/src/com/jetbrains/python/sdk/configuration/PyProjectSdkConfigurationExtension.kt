@@ -38,7 +38,8 @@ suspend fun Module.findPythonVirtualEnvironments(): List<PythonBinary> {
 @ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
   companion object {
-    private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
+    private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> =
+      ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
     private val CONCURRENCY_LIMIT = Semaphore(permits = 5)
 
     /**
@@ -57,9 +58,9 @@ interface PyProjectSdkConfigurationExtension {
      * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
      */
     suspend fun findAllSortedForModule(module: Module, venvsInModule: List<PythonBinary>): List<CreateSdkInfoWithTool> {
-      return EP_NAME.extensionsIfPointIsRegistered
-        .concurrentMapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
-        .sortedBy { it.createSdkInfo }
+      return EP_NAME.extensionsIfPointIsRegistered.concurrentMapNotNull { e ->
+        e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) }
+      }.sortedBy { it.createSdkInfo }
     }
 
     suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> {
