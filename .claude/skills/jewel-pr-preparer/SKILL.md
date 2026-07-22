@@ -116,10 +116,19 @@ parameter, then amend and re-validate.
 
 ### 4e. Bazel build/tests
 
-The IntelliJ Community repo is migrating to Bazel. It's important to make sure the Bazel build is not broken and tests pass:
+The IntelliJ Community repo is migrating to Bazel. It's important to make sure the Bazel build is not broken and tests pass.
+
+Unlike the previous steps, **the commands in this step run from the repository root**, where `tests.cmd` and `bazel.cmd` live.
+`tests.cmd` needs both the JPS module that holds the test class and the test pattern:
 
 ```shell
-./tests.cmd -Dintellij.build.test.patterns=...
+./tests.cmd --module <jps-module> --test <test-class-fqn-or-pattern>
+```
+
+For example, to run the IJP API dump check the way step 4c does under the hood:
+
+```shell
+./tests.cmd --module intellij.platform.testFramework.monorepo.tests --test com.intellij.platform.testFramework.monorepo.api.ApiCheckTest
 ```
 
 If there are no useful tests, at a minimum verify Bazel compilation for the affected Jewel module targets. Common examples:

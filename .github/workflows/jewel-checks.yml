@@ -162,6 +162,60 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
+      # Bazel reads the whole JPS model, including the android modules, so the subrepo must be present
+      # even though the API check itself only looks at community modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      # The API check compiles every community module, which does not fit a hosted runner's stock
+      # resources. Same preparation as .github/actions/build_ide, which builds the IDE on ubuntu-latest.
+      - name: Free disk space
+        # language=bash
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          # Pre-installed toolchains the API check doesn't need.
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/miniconda \
+            /usr/local/lib/android \
+            /usr/local/share/boost \
+            /usr/local/share/powershell \
+            /usr/local/share/chromium \
+            /usr/local/lib/node_modules \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /opt/hostedtoolcache/Ruby \
+            /opt/hostedtoolcache/PyPy \
+            /opt/hostedtoolcache/go \
+            /opt/microsoft \
+            /opt/google \
+            /imagegeneration \
+            /var/cache/apt/archives
+          sudo apt-get -y clean
+          docker image prune --all --force || true
+          docker builder prune --all --force || true
+          echo "Disk space after cleanup:"
+          df -h /
+
+      - name: Expand swap
+        # language=bash
+        run: |
+          # Bazel's JVM workers may hit OOM (exit 137) with the default 16 GB RAM and 4 GB swap.
+          # /mnt on hosted runners has ~70 GB free, so move swap there and grow it.
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile
+          sudo fallocate -l 30G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - uses: actions/cache@v6.1.0
         name: Cache for jps-bootstrap
         with:
