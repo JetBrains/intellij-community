@@ -4,12 +4,12 @@ package org.jetbrains.plugins.terminal
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TerminalEditorTabInfo {
-  @NlsSafe
-  fun getEditorTabTitle(): String
+  val editorTabTitle: StateFlow<@NlsSafe String>
 
   suspend fun shouldConfirmClosing(): Boolean
 }

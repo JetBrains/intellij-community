@@ -1,11 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.tabInEditor
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.content.Content
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -13,31 +23,92 @@ import javax.swing.JComponent
 /**
  * Represents a virtual file for displaying tool window content in an editor tab.
  *
- * @param editorTitle The initial title of the editor tab.
+ * @param descriptorFlow The state flow that provides the initial descriptor and subsequent presentation updates.
  * @param toolWindowId The ID of the associated tool window.
  * @param component The UI component displayed in the editor tab.
  * @param preferredFocusedComponent The component that should receive focus when the editor tab is selected.
  * @param content The tool window content represented by this editor tab.
- * @param persistInEditorHistory Whether the editor tab should be persisted in the editor history.
- * @param tabIcon The initial icon of the editor tab.
+ * @param project The project associated with the editor tab.
+ * @param parentCoroutineScope The parent scope used to create a child scope for collecting descriptor updates.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class ToolWindowEditorTabFile(
-  editorTitle: String,
+class ToolWindowEditorTabFile private constructor(
+  initialDescriptor: ToolWindowEditorTabDescriptor,
+  descriptorFlow: StateFlow<ToolWindowEditorTabDescriptor>,
   val toolWindowId: String,
   val component: JComponent,
   internal val preferredFocusedComponent: JComponent,
   internal val content: Content,
   internal val project: Project,
-  tabIcon: Icon? = null,
-) : LightVirtualFile(editorTitle, ToolWindowEditorTabFileType, ""), OptionallyIncluded {
+  parentCoroutineScope: CoroutineScope,
+) : LightVirtualFile(
+  initialDescriptor.title,
+  ToolWindowEditorTabFileType,
+  "",
+), OptionallyIncluded {
 
-  internal var tabIcon: Icon? = tabIcon
+  internal constructor(
+    descriptorFlow: StateFlow<ToolWindowEditorTabDescriptor>,
+    toolWindowId: String,
+    component: JComponent,
+    preferredFocusedComponent: JComponent,
+    content: Content,
+    project: Project,
+    parentCoroutineScope: CoroutineScope,
+  ) : this(
+    initialDescriptor = descriptorFlow.value,
+    descriptorFlow = descriptorFlow,
+    toolWindowId = toolWindowId,
+    component = component,
+    preferredFocusedComponent = preferredFocusedComponent,
+    content = content,
+    project = project,
+    parentCoroutineScope = parentCoroutineScope,
+  )
+
+  private val coroutineScope = parentCoroutineScope.childScope(
+    "ToolWindowEditorTabFile[$toolWindowId]",
+  )
+
+  internal var tabIcon: Icon? = initialDescriptor.icon
     private set
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+
+    descriptorFlow
+      .onEach { descriptor ->
+        withContext(Dispatchers.EDT) {
+          if (!isValid || project.isDisposed) {
+            return@withContext
+          }
+
+          if (updatePresentation(descriptor)) {
+            FileEditorManagerEx.getInstanceEx(project)
+              .updateFilePresentation(this@ToolWindowEditorTabFile)
+          }
+        }
+      }
+      .launchIn(coroutineScope)
+  }
+
+  private fun updatePresentation(
+    descriptor: ToolWindowEditorTabDescriptor,
+  ): Boolean {
+    var changed = false
+
+    if (name != descriptor.title) {
+      rename(null, descriptor.title)
+      changed = true
+    }
+
+    if (tabIcon != descriptor.icon) {
+      tabIcon = descriptor.icon
+      changed = true
+    }
+
+    return changed
   }
 
   override fun isIncludedInEditorHistory(project: Project): Boolean = true
@@ -55,5 +126,6 @@ class ToolWindowEditorTabFile(
 
   internal fun invalidateEditorTabFile() {
     isValid = false // mark invalid, so file does not appear in the recent files
+    coroutineScope.cancel()
   }
 }

@@ -15,17 +15,15 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 internal class ToolWindowEditorTabTransferController(
   private val project: Project,
+  private val coroutineScope: CoroutineScope,
 ) {
-  fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean {
-    if (!ToolWindowEditorTabSupportUtil.isEnabled()) return false
-
-    val support = getSupport(toolWindow) ?: return false
-    return support.getEditorTabDescriptor(toolWindow, content) != null
+  fun canMoveContentToEditor(toolWindow: ToolWindow): Boolean {
+    return ToolWindowEditorTabSupportUtil.isEnabled() && getSupport(toolWindow) != null
   }
 
   fun moveContentToEditor(
@@ -34,10 +32,9 @@ internal class ToolWindowEditorTabTransferController(
     window: EditorWindow? = null,
     sourceDecorator: InternalDecoratorImpl? = null,
   ) {
-    if (!canMoveContentToEditor(toolWindow, content)) return
+    if (!canMoveContentToEditor(toolWindow)) return
 
     val support = getSupport(toolWindow) ?: return
-    val descriptor = support.getEditorTabDescriptor(toolWindow, content) ?: return
 
     if (sourceDecorator != null &&
         (sourceDecorator.contentManager.isEmpty || // when the tab is dragging from the tool window to the editor, the manager is already empty
@@ -46,7 +43,7 @@ internal class ToolWindowEditorTabTransferController(
       sourceDecorator.unsplit(null)
     }
 
-    val file = createToolWindowTabFile(toolWindow, content, descriptor)
+    val file = createToolWindowTabFile(toolWindow, content, support)
     FileEditorManagerEx.getInstanceEx(project).openFile(file, window, FileEditorOpenOptions(requestFocus = true))
 
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
@@ -107,17 +104,20 @@ internal class ToolWindowEditorTabTransferController(
   private fun createToolWindowTabFile(
     toolWindow: ToolWindow,
     content: Content,
-    descriptor: ToolWindowEditorTabDescriptor,
+    support: ToolWindowEditorTabSupport,
   ): ToolWindowEditorTabFile {
     val component = content.component
     return ToolWindowEditorTabFile(
-      editorTitle = descriptor.title,
+      descriptorFlow = support.getTabDescriptorState(project, content),
       toolWindowId = toolWindow.id,
       component = component,
-      preferredFocusedComponent = content.preferredFocusableComponent ?: component.getPreferredFocusedComponent() ?: component,
+      preferredFocusedComponent =
+        content.preferredFocusableComponent
+        ?: component.getPreferredFocusedComponent()
+        ?: component,
       content = content,
       project = project,
-      tabIcon = descriptor.icon,
+      parentCoroutineScope = coroutineScope,
     )
   }
 

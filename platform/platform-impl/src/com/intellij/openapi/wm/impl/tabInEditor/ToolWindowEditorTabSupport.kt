@@ -3,17 +3,20 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
-  fun getEditorTabDescriptor(toolWindow: ToolWindow, content: Content): ToolWindowEditorTabDescriptor?
-
   fun canCloseFile(project: Project, content: Content): Boolean = true
+
+  /**
+   * Returns the current tab descriptor and subsequent presentation updates.
+   */
+  fun getTabDescriptorState(project: Project, content: Content): StateFlow<ToolWindowEditorTabDescriptor>
 }
 
 @ApiStatus.Experimental

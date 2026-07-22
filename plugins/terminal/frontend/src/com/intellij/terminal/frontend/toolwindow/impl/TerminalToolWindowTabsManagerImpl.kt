@@ -207,7 +207,11 @@ class TerminalToolWindowTabsManagerImpl(
     }
 
     return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions).also { tab ->
-      content.putUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY, ReworkedTerminalEditorTabInfo(tab.view))
+      content.putUserData(
+        TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY,
+        ReworkedTerminalEditorTabInfo(tab.view, terminal.coroutineScope.childScope("Reworked terminal editor tab info")
+        )
+      )
       content.putUserData(TerminalToolWindowTab.KEY, tab)
     }
   }
