@@ -196,15 +196,11 @@ class TextMateLexerCore(
           stackFrames = stackFrames.removingAt(stackFrames.size - 1)
 
           val endRange = endMatch.charRange(string)
-          endPosition = endRange.start
-          val startPosition = endPosition
-          scopes = closeScopeSelector(output, scopes, startPosition + lineStartOffset) // closing content scope
-          if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null ||
-              parseCaptures(output, scopes, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, stackFrames, checkCancelledCallback) ||
-              parseCaptures(output, scopes, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, stackFrames, checkCancelledCallback)) {
-            // move line position only if anything was captured or if there is nothing to capture at all
-            endPosition = endRange.end
-          }
+          scopes = closeScopeSelector(output, scopes, endRange.start + lineStartOffset) // closing content scope
+          // `captures` apply to the end match only when the rule has no dedicated `endCaptures`
+          parseCaptures(output, scopes, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, stackFrames, checkCancelledCallback) ||
+            parseCaptures(output, scopes, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, stackFrames, checkCancelledCallback)
+          endPosition = endRange.end
           scopes = closeScopeSelector(output, scopes, endPosition + lineStartOffset) // closing basic scope
 
           if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
