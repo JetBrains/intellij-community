@@ -161,11 +161,12 @@ class PluginManagerTest {
     val modes = listOf(
       ProductMode.MONOLITH to listOf(
         "+ intellij.platform.backend",
-        "+ intellij.platform.backend.split",
+        "- intellij.platform.backend.split",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.base",
         "+ intellij.platform.jps.build.dependencyGraph",
+        "- intellij.platform.split",
       ),
       ProductMode.BACKEND to listOf(
         "+ intellij.platform.backend",
@@ -174,6 +175,7 @@ class PluginManagerTest {
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.base",
         "+ intellij.platform.jps.build.dependencyGraph",
+        "+ intellij.platform.split",
       ),
       ProductMode.FRONTEND to listOf(
         "- intellij.platform.backend",
@@ -182,6 +184,7 @@ class PluginManagerTest {
         "+ intellij.platform.frontend.split",
         "+ intellij.platform.frontend.split.base",
         "- intellij.platform.jps.build.dependencyGraph",
+        "+ intellij.platform.split",
       ),
       ProductMode.LIGHT to listOf(
         "- intellij.cwm.plugin.common",
