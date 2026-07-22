@@ -39,10 +39,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.expressionVisitor
 
 /**
  * Applicable to a topmost [KtBinaryExpression] possibly wrapped into `()`
@@ -53,17 +55,17 @@ class CollectionConcatenationToBuildCollectionInspection :
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-    ): KtVisitorVoid = object : KtVisitorVoid() {
-
-        override fun visitExpression(expression: KtExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
-        }
+    ): KtVisitorVoid = expressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 
     override fun getProblemDescription(element: KtExpression, context: Context): String =
         KotlinBundle.message("collection.concatenation.can.be.converted.to.build.collection")
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
+        if (element is KtParameter) return false
+        // sub expression elements are/will be visited
+        if (element is KtBinaryExpression) return false
         if (element.parent is KtParenthesizedExpression) {
             // we only care about the topmost `KtParenthesizedExpression` expression
             return false
