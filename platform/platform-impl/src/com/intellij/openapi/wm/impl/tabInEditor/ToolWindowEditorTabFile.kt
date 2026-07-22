@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.content.Content
@@ -38,11 +37,6 @@ class ToolWindowEditorTabFile(
   internal var tabIcon: Icon? = tabIcon
     private set
 
-  // Content normally belongs to its ContentManager's disposable tree.
-  // Once it is moved into an editor tab, re-parent it to the editorLifetime instead,
-  // because the original manager may be disposed.
-  private val editorLifetime = Disposer.newDisposable("ToolWindowEditorTabFile: $editorTitle")
-
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
   }
@@ -57,12 +51,7 @@ class ToolWindowEditorTabFile(
     }
   }
 
-  internal fun bindContentToEditorLifetime() {
-    Disposer.register(editorLifetime, content)
-  }
-
   internal fun invalidateEditorTabFile() {
-    releaseEditorLifetime()
     isValid = false // mark invalid, so file does not appear in the recent files
   }
 
@@ -71,9 +60,5 @@ class ToolWindowEditorTabFile(
       rename(null, descriptor.title)
     }
     tabIcon = descriptor.icon
-  }
-
-  private fun releaseEditorLifetime() {
-    Disposer.dispose(editorLifetime)
   }
 }

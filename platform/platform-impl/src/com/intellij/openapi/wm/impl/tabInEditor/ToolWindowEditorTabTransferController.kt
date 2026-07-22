@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPreferredFocusedComponent
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
@@ -40,15 +39,11 @@ internal class ToolWindowEditorTabTransferController(
     val support = getSupport(toolWindow) ?: return
     val descriptor = support.getEditorTabDescriptor(toolWindow, content) ?: return
 
-    // Keeps the content alive in the gap between disposing its current parent, the content manager,
-    // and creating its new disposing parent, editorLifetime in the ToolWindowEditorTabFile.
-    val transferLifetime = Disposer.newDisposable("ToolWindowContentTransfer:${toolWindow.id}")
-
     if (sourceDecorator != null &&
         (sourceDecorator.contentManager.isEmpty || // when the tab is dragging from the tool window to the editor, the manager is already empty
          (sourceDecorator.contentManager.contentCount == 1 && sourceDecorator.contentManager.getIndexOfContent(content) != -1))) {
-      Disposer.register(transferLifetime, content)
-      sourceDecorator.unsplit(content)
+      content.manager?.removeContent(content, false)
+      sourceDecorator.unsplit(null)
     }
 
     val file = createToolWindowTabFile(toolWindow, content, descriptor)
@@ -59,12 +54,10 @@ internal class ToolWindowEditorTabTransferController(
       file.invalidateEditorTabFile()
     }
     else {
-      file.bindContentToEditorLifetime()
       content.withTemporaryRemovedFlag {
         content.manager?.removeContent(content, false)
       }
     }
-    Disposer.dispose(transferLifetime)
   }
 
   fun canMoveContentToToolWindow(toolWindow: ToolWindow, file: ToolWindowEditorTabFile): Boolean {
@@ -157,10 +150,6 @@ internal class ToolWindowEditorTabTransferController(
       val manager = targetContentManager ?: toolWindow.contentManager
       manager.addContent(content)
       manager.setSelectedContent(content, true)
-
-      content.manager?.let {
-        contentManager -> Disposer.register(contentManager, content)
-      }
     }
   }
 }
