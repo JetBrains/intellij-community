@@ -33,6 +33,8 @@ import kotlin.io.path.relativeTo
 private const val KAPT_PLUGIN_ID = "kapt"
 private const val KAPT_GRADLE_PLUGIN_NAME = "kotlin.kapt"
 private const val KAPT_KEEP_JAVAC_PROCESSORS_OPTION = "keepJavacAnnotationProcessors = true"
+private const val KSP_GRADLE_PLUGIN_ID = "com.google.devtools.ksp"
+private val KSP_GRADLE_PLUGIN_ID_REGEX = Regex.escape(KSP_GRADLE_PLUGIN_ID)
 private val PROCESSOR_PATH_SEPARATOR: String = System.getProperties().getProperty("path.separator")
 
 internal const val LOMBOK_FQN: String = "lombok.Lombok"
@@ -145,7 +147,8 @@ class KaptGradleProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfi
     module.isGradleModule &&
     compilerPluginProjectConfigurators(module).isNotEmpty() &&
     !module.hasKaptGradlePluginConfigured() &&
-    module.hasNonLombokAnnotationProcessor()
+    module.hasNonLombokAnnotationProcessor() &&
+    !module.hasKspGradlePluginConfigured()
 }
 
 internal fun Module.hasLombokDependency(): Boolean =
@@ -172,6 +175,12 @@ internal fun Module.hasKaptGradlePluginConfigured(): Boolean {
   return manipulator.isConfigured(kaptPluginExpression(buildScript is KtFile)) ||
          manipulator.isConfiguredWithOldSyntax(KAPT_GRADLE_PLUGIN_NAME) ||
          manipulator.isConfiguredWithOldSyntax("kotlin-kapt")
+}
+
+internal fun Module.hasKspGradlePluginConfigured(): Boolean {
+  val buildScript = getBuildScriptPsiFile() ?: return false
+  return KSP_GRADLE_PLUGIN_REGEX.containsMatchIn(buildScript.text) ||
+         KSP_DEPENDENCY_REGEX.containsMatchIn(buildScript.text)
 }
 
 internal fun PsiFile.configureKaptForLombokIfNeeded(sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
@@ -287,6 +296,22 @@ private val PROCESSOR_DEPENDENCY_REGEX = Regex(
 )
 
 private val KAPT_DEPENDENCY_REGEX = Regex("""(?m)^\s*(kapt|kaptTest)\s*(?:\(\s*)?["']([^"']+)["']""")
+
+private val KSP_GRADLE_PLUGIN_REGEX = Regex(
+  listOf(
+    """id\s*\(\s*["']$KSP_GRADLE_PLUGIN_ID_REGEX["']\s*\)""",
+    """id\s+["']$KSP_GRADLE_PLUGIN_ID_REGEX["']""",
+    """apply\s*\(?\s*plugin\s*[:=]\s*["']$KSP_GRADLE_PLUGIN_ID_REGEX["']\s*\)?""",
+    """alias\s*\([^)\n]*\bksp\b[^)\n]*\)""",
+  ).joinToString(separator = "|", prefix = "(?m)(?:", postfix = ")")
+)
+
+private val KSP_DEPENDENCY_REGEX = Regex(
+  listOf(
+    """^\s*ksp\w*\s*(?:\(\s*)?["']""",
+    """^\s*add\s*\(\s*["']ksp\w*["']\s*,""",
+  ).joinToString(separator = "|", prefix = "(?m)(?:", postfix = ")")
+)
 
 private val KNOWN_PROCESSOR_ARTIFACTS = setOf(
   GradleProcessorPath("org.mapstruct", "mapstruct-processor"),

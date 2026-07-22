@@ -15,4 +15,10 @@ class KaptKotlinGradleInspectionTest : AbstractGradleMultiFileQuickFixTest() {
     fun testAddKaptCompilerPluginForAnnotationProcessorKts() {
         doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles = false)
     }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptCompilerPluginInspectionWhenKspConfiguredKts() {
+        doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles = false)
+    }
 }

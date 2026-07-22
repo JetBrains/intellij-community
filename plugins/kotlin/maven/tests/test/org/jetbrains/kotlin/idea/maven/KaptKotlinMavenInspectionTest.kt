@@ -2,9 +2,14 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
@@ -27,5 +32,18 @@ internal class KaptKotlinMavenInspectionTest(mavenVersion: String, modelVersion:
     @Test
     fun testAddKaptCompilerPluginForMapstructProcessorDependency() = runBlocking {
         doMultiFileTest()
+    }
+
+    @Test
+    fun testNoKaptCompilerPluginInspectionWhenKspConfigured() = runBlocking {
+        doMultiFileTest {
+            withContext(Dispatchers.EDT) {
+                writeIntentReadAction {
+                    assertTrue(
+                        codeInsightTestFixture.filterAvailableIntentions("Add Kotlin kapt compiler plugin").isEmpty()
+                    )
+                }
+            }
+        }
     }
 }

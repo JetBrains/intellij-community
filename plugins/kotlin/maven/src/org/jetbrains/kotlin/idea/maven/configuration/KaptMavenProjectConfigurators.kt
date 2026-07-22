@@ -32,8 +32,14 @@ import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 private const val KAPT_PLUGIN_ID = "kapt"
+private const val KSP_PLUGIN_ID = "ksp"
+private const val KSP_MAVEN_GROUP_ID = "com.google.devtools.ksp"
 private const val LOMBOK_FQN = "lombok.Lombok"
 private val MAVEN_COMPILER_PLUGIN_ID = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)
+private val KSP_MAVEN_PLUGIN_IDS = setOf(
+    MavenId(KSP_MAVEN_GROUP_ID, "symbol-processing-maven-plugin", null),
+    MavenId(KSP_MAVEN_GROUP_ID, "ksp-maven-plugin", null),
+)
 
 class KaptMavenKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
     override val kotlinCompilerPluginId: String = KAPT_PLUGIN_ID
@@ -77,6 +83,7 @@ class KaptMavenProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfig
         module.buildSystemType == BuildSystemType.Maven &&
                 compilerPluginProjectConfigurators(module).isNotEmpty() &&
                 !module.hasMavenKaptConfigured() &&
+                !module.hasMavenKspConfigured() &&
                 module.hasNonLombokMavenAnnotationProcessor()
 }
 
@@ -86,6 +93,14 @@ private fun Module.hasMavenKaptConfigured(): Boolean {
     val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return false
     return kotlinPlugin.findKaptExecution() != null
 }
+
+private fun Module.hasMavenKspConfigured(): Boolean =
+    findModuleAndParentPomFiles().any { xmlFile ->
+        val pom = PomFile.forFileOrNull(xmlFile) ?: return@any false
+        pom.findPlugin(kotlinPluginId)?.hasKspExecution() == true ||
+                pom.hasKspMavenPlugin() ||
+                pom.hasKspDependency()
+    }
 
 private fun Module.hasNonLombokMavenAnnotationProcessor(): Boolean {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(this) ?: return false
@@ -109,6 +124,21 @@ private fun Module.findModulePomFileWithLocalOrInheritedKotlinPlugin(): XmlFile?
     }
 
     return null
+}
+
+private fun Module.findModuleAndParentPomFiles(): List<XmlFile> {
+    val pomFile = findModulePomFile(this) ?: return emptyList()
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    val parentPomFiles = buildList {
+        var parentId = mavenProjectsManager.findProject(this@findModuleAndParentPomFiles)?.parentId
+        while (parentId != null) {
+            val parentProject = mavenProjectsManager.findProject(parentId) ?: break
+            val parentPomFile = findPomXmlByFile(parentProject.file) ?: break
+            add(parentPomFile)
+            parentId = parentProject.parentId
+        }
+    }
+    return listOf(pomFile) + parentPomFiles
 }
 
 private fun PomFile.findMavenProcessorPaths(mavenProject: MavenProject): List<MavenProcessorPath> {
@@ -178,6 +208,21 @@ private fun MavenDomPlugin.findKaptExecution(): MavenDomPluginExecution? =
     executions.executions.firstOrNull { execution ->
         execution.goals.goals.any { it.stringValue == KAPT_PLUGIN_ID }
     }
+
+private fun MavenDomPlugin.hasKspExecution(): Boolean =
+    executions.executions.any { execution ->
+        execution.goals.goals.any { it.stringValue == KSP_PLUGIN_ID }
+    }
+
+private fun PomFile.hasKspMavenPlugin(): Boolean =
+    KSP_MAVEN_PLUGIN_IDS.any { findPlugin(it) != null }
+
+private fun PomFile.hasKspDependency(): Boolean =
+    domModel.dependencies.dependencies.any { it.groupId.stringValue == KSP_MAVEN_GROUP_ID } ||
+            findPlugin(kotlinPluginId)
+        ?.dependencies
+        ?.dependencies
+        ?.any { it.groupId.stringValue == KSP_MAVEN_GROUP_ID } == true
 
 private fun MavenDomPlugin.createKaptExecution(): MavenDomPluginExecution {
     val execution = executions.addExecution()
