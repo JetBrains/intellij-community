@@ -196,6 +196,35 @@ fun extractTarXz(
   encoding: String? = null,
 ) = extractCompressedTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.XZ, temporaryDir, logger, encoding)
 
+/**
+ * Extracts an uncompressed `.tar` archive straight into [destination], applying each entry's recorded unix
+ * mode and recreating symlinks. Unlike [extractTarGz] and friends (which stage into a temp dir and then
+ * `copyToRecursively` into place, dropping permissions), this preserves file modes verbatim — so executable
+ * markers survive — and needs no cross-filesystem copy.
+ */
+@OptIn(ExperimentalPathApi::class)
+fun extractTar(
+  archive: Path,
+  destination: Path,
+  stripTopLevelFolder: Boolean,
+  cleanDestination: Boolean,
+  logger: Logger,
+  encoding: String? = null,
+) {
+  logger.info("Extracting '$archive' to '$destination'")
+  when {
+    cleanDestination -> destination.deleteRecursively()
+    else -> require(!destination.exists() || destination.isDirectory()) { "destination must be a directory if it exists" }
+  }
+  destination.createDirectories()
+  archive.inputStream().buffered().use { bufferedInputStream ->
+    TarArchiveInputStream(bufferedInputStream, encoding).use { archiveInputStream ->
+      archiveInputStream.extractEntriesTo(stripTopLevelFolder, destination, logger)
+    }
+  }
+  logger.info("Extracted '$archive' to '$destination'")
+}
+
 
 private fun extractCompressedTar(
   archive: Path,
