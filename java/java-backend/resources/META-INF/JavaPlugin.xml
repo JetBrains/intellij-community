@@ -1200,8 +1200,6 @@
     <overrideImplementsAnnotationsHandler implementation="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandlerImpl"/>
     <codeInsight.changeVariableTypeQuickFixProvider
       implementation="com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeQuickFixProvider"/>
-    <codeInsight.unresolvedReferenceQuickFixProvider
-      implementation="com.intellij.codeInsight.daemon.impl.quickfix.DefaultQuickFixProvider"/>
     <annotationSupport language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>

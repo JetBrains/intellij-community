@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.PackageUtil;
@@ -53,8 +53,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
-class MoveClassToModuleFix implements IntentionAction {
+public class MoveClassToModuleFix implements IntentionAction {
   private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
   private final Module myCurrentModule;
@@ -172,7 +173,7 @@ class MoveClassToModuleFix implements IntentionAction {
     return false;
   }
 
-  public static void registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiJavaCodeReferenceElement reference) {
+  public static void registerFixes(Consumer<? super CommonIntentionAction> registrar, @NotNull PsiJavaCodeReferenceElement reference) {
     PsiElement psiElement = reference.getElement();
     @NonNls String referenceName = reference.getRangeInElement().substring(psiElement.getText());
     Project project = psiElement.getProject();
@@ -189,7 +190,7 @@ class MoveClassToModuleFix implements IntentionAction {
     if (currentModule == null) return;
     List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
     if (sourceRoots.isEmpty()) return;
-    PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.get(0));
+    PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.getFirst());
     if (sourceDirectory == null) return;
 
     VirtualFile vsourceRoot = fileIndex.getSourceRootForFile(classVFile);
@@ -197,6 +198,6 @@ class MoveClassToModuleFix implements IntentionAction {
     PsiDirectory sourceRoot = PsiManager.getInstance(project).findDirectory(vsourceRoot);
     if (sourceRoot == null) return;
 
-    registrar.register(new MoveClassToModuleFix(referenceName, currentModule, sourceRoot, psiElement));
+    registrar.accept(new MoveClassToModuleFix(referenceName, currentModule, sourceRoot, psiElement));
   }
 }

@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -23,6 +23,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Batkovich
@@ -61,15 +63,15 @@ public class SurroundWithQuotesAnnotationParameterValueFix extends PsiUpdateModC
     return QuickFixBundle.message("surround.annotation.parameter.value.with.quotes");
   }
 
-  public static void register(@NotNull QuickFixActionRegistrar registrar,
+  public static void register(@NotNull Consumer<? super CommonIntentionAction> registrar,
                               @NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref instanceof PsiReferenceExpression) {
+    if (ref instanceof PsiReferenceExpression refExpr) {
       if (ref.getParent() instanceof PsiNameValuePair nameValuePair && nameValuePair.getValue() == ref) {
         PsiReference reference = nameValuePair.getReference();
         if (reference != null && reference.resolve() instanceof PsiMethod annotationMethod) {
           PsiType returnType = annotationMethod.getReturnType();
           if (returnType != null) {
-            registrar.register(new SurroundWithQuotesAnnotationParameterValueFix((PsiReferenceExpression)ref, returnType).asIntention());
+            registrar.accept(new SurroundWithQuotesAnnotationParameterValueFix(refExpr, returnType).asIntention());
           }
         }
       }

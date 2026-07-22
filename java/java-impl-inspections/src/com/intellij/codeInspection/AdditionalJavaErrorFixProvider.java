@@ -5,13 +5,29 @@ import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvide
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateInnerClassFromNewFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateInnerClassFromUsageFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateInnerRecordFromNewFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateRecordFromNewFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceImplementationClassFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceInterfaceOrClassFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateTypeParameterFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToModuleFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QualifyStaticConstantFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameWrongRefFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithQuotesAnnotationParameterValueFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -22,20 +38,27 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiDeconstructionPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -82,11 +105,13 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
         sink.accept(MigrateFromJavaLangIoInspection.createCanBeIOFix(ref));
       }
       registerReferenceFixes(ref, sink);
+      sink.accept(new ImportClassFix(ref));
     });
     fixes(JavaErrorKinds.TYPE_UNKNOWN_CLASS, (error, sink) -> {
       PsiJavaCodeReferenceElement element = error.psi().getInnermostComponentReferenceElement();
       if (element != null) {
         registerReferenceFixes(element, sink);
+        sink.accept(new ImportClassFix(element));
       }
     });
     fixes(JavaErrorKinds.REFERENCE_AMBIGUOUS, (error, sink) -> registerReferenceFixes(error.psi(), sink));
@@ -94,8 +119,11 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
       if (error.psi() instanceof PsiJavaCodeReferenceElement ref) {
         registerReferenceFixes(ref, sink);
+        sink.accept(new ImportClassFix(ref));
       }
     };
+    fixes(JavaErrorKinds.CALL_AMBIGUOUS_NO_MATCH, (error, sink) -> registerReferenceFixes(error.psi().getMethodExpression(), sink));
+    fixes(JavaErrorKinds.CALL_UNRESOLVED, (error, sink) -> registerReferenceFixes(error.psi().getMethodExpression(), sink));
     fixes(ACCESS_PRIVATE, accessFix);
     fixes(ACCESS_PROTECTED, accessFix);
     fixes(ACCESS_PACKAGE_LOCAL, accessFix);
@@ -113,7 +141,7 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     if (!(refExpr instanceof PsiMethodReferenceExpression)) {
       List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
       if (kind == VariableKind.FIELD) {
-        createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+        createFieldFixes = ContainerUtil.map(createFieldFixes, PriorityIntentionActionWrapper::highPriority);
       }
       result.addAll(createFieldFixes);
     }
@@ -127,16 +155,97 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
   }
   
   private static void registerReferenceFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull Consumer<? super CommonIntentionAction> sink) {
-    sink.accept(new ImportClassFix(ref));
-    if (ref instanceof PsiReferenceExpression refExpr) {
-      createVariableActions(refExpr).forEach(sink);
+    PsiFile containingFile = ref.getContainingFile();
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
+      return;
     }
+    List<IntentionAction> fixes = new ArrayList<>();
+    OrderEntryFix.registerFixes(ref, fixes);
+    fixes.forEach(sink);
+    if (PsiUtil.isModuleFile(ref.getContainingFile())) {
+      sink.accept(new CreateServiceImplementationClassFix(ref));
+      sink.accept(new CreateServiceInterfaceOrClassFix(ref));
+      return;
+    }
+    MoveClassToModuleFix.registerFixes(sink, ref);
+
     PsiElement refParent = ref.getParent();
-    if (!(refParent instanceof PsiMethodCallExpression)) {
-      PsiFile file = refParent.getContainingFile();
-      sink.accept(new StaticImportConstantFix(file, ref));
-      sink.accept(new QualifyStaticConstantFix(file, ref));
+    if (ref instanceof PsiReferenceExpression refExpr) {
+      if (!(refParent instanceof PsiMethodCallExpression)) {
+        createVariableActions(refExpr).forEach(sink);
+      }
+      sink.accept(new RenameWrongRefFix(refExpr));
+      PsiExpression qualifier = refExpr.getQualifierExpression();
+      if (qualifier != null) {
+        AddTypeCastFix.registerFix(sink, qualifier, ref);
+      }
+      BringVariableIntoScopeFix bringToScope = BringVariableIntoScopeFix.fromReference(refExpr);
+      if (bringToScope != null) {
+        sink.accept(bringToScope.asIntention());
+      }
     }
+    if (!(refParent instanceof PsiMethodCallExpression)) {
+      sink.accept(new StaticImportConstantFix(containingFile, ref));
+      sink.accept(new QualifyStaticConstantFix(containingFile, ref));
+    }
+    SurroundWithQuotesAnnotationParameterValueFix.register(sink, ref);
+
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, ref)) {
+      sink.accept(new CreateTypeParameterFromUsageFix(ref).asIntention());
+    }
+    createClassActions(ref).forEach(sink);
+  }
+
+  private static @NotNull Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
+    Collection<IntentionAction> result = new ArrayList<>();
+    PsiElement refParent = ref.getParent();
+    if (refParent != null && refParent.getParent() instanceof PsiDeconstructionPattern) {
+      result.add(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+      result.add(new CreateInnerClassFromUsageFix(ref, CreateClassKind.RECORD));
+    }
+    else {
+      PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
+      PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+
+      boolean isNewExpression =
+        parent instanceof PsiNewExpression &&
+        !(refParent instanceof PsiTypeElement) &&
+        (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false));
+
+      if (isNewExpression) {
+        result.add(new CreateClassFromNewFix((PsiNewExpression)parent));
+      }
+      else {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
+      }
+
+      result.add(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
+      if (PsiUtil.isAvailable(JavaFeature.ENUMS, ref)) {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, ref)) {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref)) {
+        if (isNewExpression) {
+          result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
+        }
+        else {
+          result.add(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+        }
+      }
+
+      if (isNewExpression) {
+        result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
+        if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+          result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
+        }
+      }
+      else {
+        result.add(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
+      }
+    }
+    return result;
   }
 
   private static void registerErrorElementFixes(@NotNull Consumer<? super CommonIntentionAction> info,
