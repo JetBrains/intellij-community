@@ -28,7 +28,7 @@
       serviceImplementation="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl"
     />
     <project.view.pane.frontend
-      implementation="com.intellij.platform.projectView.frontend.impl.legacy.LegacyFrontendProjectViewPaneProvider"
+      implementation="com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPaneProvider"
     />
     <selectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTargetProvider"/>
   </extensions>

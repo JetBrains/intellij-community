@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.DefaultTreeExpander
+import com.intellij.ide.SelectInTarget
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
@@ -24,10 +25,13 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
+import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
@@ -41,6 +45,7 @@ import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
@@ -100,8 +105,16 @@ import javax.swing.tree.TreePath
 import kotlin.time.ComparableTimeMark
 import kotlin.time.TimeSource
 
-internal abstract class TreeBasedFrontendProjectViewPane(
+internal class TreeBasedFrontendProjectViewPaneProvider : FrontendProjectViewPaneProvider {
+  override fun createPane(
+    project: Project,
+    descriptor: ProjectViewPaneDescriptorImpl
+  ): FrontendProjectViewPane = TreeBasedFrontendProjectViewPane(project, descriptor)
+}
+
+internal class TreeBasedFrontendProjectViewPane(
   private val project: Project,
+  descriptor: ProjectViewPaneDescriptorImpl,
 ) : FrontendProjectViewPane, UiDataProvider {
   private val treeModel = DefaultTreeModelWithCachedPresentation()
   private val tree = Tree(treeModel).also {
@@ -132,7 +145,21 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
 
   private val updateEpoch = MutableStateFlow(0L)
-  
+
+  override val id: ProjectViewPaneId = descriptor.id
+
+  override val displayName: @NlsSafe String = descriptor.presentableName
+
+  override val order: Int = descriptor.order
+
+  override val selectInTargets: Collection<SelectInTarget> = descriptor.selectInTargetDescriptors.map {
+    SplitProjectViewSelectInTarget(
+      minorViewId = it.id,
+      presentableName = it.presentableName,
+      weight = it.weight
+    )
+  }
+
   override val component: JComponent
     get() = contentPanel
 
