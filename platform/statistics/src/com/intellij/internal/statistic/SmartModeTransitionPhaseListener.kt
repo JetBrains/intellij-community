@@ -8,7 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 enum class SmartModeTransitionPhase {
   EEL_DEPLOY,
   EEL_CONNECT,
-  REMDEV_BACKEND_DEPLOY,
+  REMDEV_BACKEND_DOWNLOAD,
+  REMDEV_BACKEND_VERIFYING_UNPACKING,
+  REMDEV_BACKEND_INSTALLING_CONFIGURING,
+  REMDEV_BACKEND_LAUNCH,
   REMDEV_BACKEND_CONNECT,
   REMDEV_BACKEND_PROJECT_LOADED,
   PLUGINS_LOADED,
@@ -21,6 +24,8 @@ interface SmartModeTransitionPhaseListener {
   fun phaseStarted(phase: SmartModeTransitionPhase) {}
 
   fun phaseFinished(phase: SmartModeTransitionPhase) {}
+
+  fun phaseCompleted(phase: SmartModeTransitionPhase, startedAtMs: Long, finishedAtMs: Long) {}
 
   fun transitionFinished(reachedSmart: Boolean) {}
 
