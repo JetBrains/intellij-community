@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginModuleDescriptor;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -68,6 +69,8 @@ final class CheckRequiredPluginsWorker {
   }
 
   public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {
+    if (!TrustedProjects.isProjectTrusted(project)) return;
+
     var dependencies = getRequiredPlugins(dependencyManager);
     if (dependencies.isEmpty()) {
       return;
