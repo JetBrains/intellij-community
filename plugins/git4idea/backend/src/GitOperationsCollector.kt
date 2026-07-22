@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.config.GitIncomingRemoteCheckStrategy

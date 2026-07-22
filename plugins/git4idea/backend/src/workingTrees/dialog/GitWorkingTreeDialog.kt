@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.actions.workingTree
+package git4idea.workingTrees.dialog
 
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -174,13 +174,7 @@ internal class GitWorkingTreeDialog(
   private fun Row.createRefComboBox(): Cell<ComboBox<RefWithWorkingTree?>> {
     val localRefsWithTrees: List<RefWithWorkingTree?> = computeRefsWithWorkingTrees()
     val model = DefaultComboBoxModel(Vector(localRefsWithTrees))
-    val component = object : ComboBox<RefWithWorkingTree?>(model) {
-      override fun getPreferredSize(): Dimension? {
-        val dimension = super.getPreferredSize()
-        dimension.width = min(dimension.width, JBUI.scale(300))
-        return dimension
-      }
-    }
+    val component = ComboBox<RefWithWorkingTree?>(model)
     component.isSwingPopup = false
     component.isUsePreferredSizeAsMinimum = false
     component.renderer = RefWithTreeCellRenderer(data.project, data.repository)
@@ -190,6 +184,11 @@ internal class GitWorkingTreeDialog(
     if (longestRef != null) {
       component.prototypeDisplayValue = longestRef
     }
+
+    // Cap the width once upfront instead of overriding getPreferredSize()
+    val preferredSize = component.preferredSize
+    preferredSize.width = min(preferredSize.width, JBUI.scale(300))
+    component.preferredSize = preferredSize
 
     return cell(component)
       .validationRequestor(WHEN_PROPERTY_CHANGED(createNewBranch))

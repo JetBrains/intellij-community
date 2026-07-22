@@ -6,7 +6,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitTag
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTestContext

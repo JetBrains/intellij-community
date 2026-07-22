@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.workingTrees.ui
+package git4idea.workingTrees.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 
 internal class RefreshWorkingTreesAction : DumbAwareAction() {
 

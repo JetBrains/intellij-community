@@ -18,10 +18,10 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import git4idea.actions.workingTree.GitCreateWorkingTreeService
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
+import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.workingTrees.GitWorktreeSupportStatus
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
 import java.awt.Component

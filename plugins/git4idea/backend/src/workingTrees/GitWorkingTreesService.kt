@@ -37,7 +37,7 @@ import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle

@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
 import git4idea.repo.GitRepository
 import git4idea.repo.expectEvent
 import git4idea.repo.getAndInit

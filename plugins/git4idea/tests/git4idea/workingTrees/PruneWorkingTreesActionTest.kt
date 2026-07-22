@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.io.deleteRecursively
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
-import git4idea.workingTrees.ui.PruneWorkingTreesAction
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
+import git4idea.workingTrees.ui.actions.PruneWorkingTreesAction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

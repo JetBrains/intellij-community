@@ -10,7 +10,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
 import git4idea.commands.Git
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository

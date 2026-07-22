@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.actions.workingTree
+package git4idea.workingTrees
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.ide.impl.ProjectUtil
@@ -33,7 +33,9 @@ import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesService
+import git4idea.workingTrees.dialog.GitWorkingTreeDialog
+import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorkingTreePreDialogData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.workingTrees.ui
+package git4idea.workingTrees.ui.actions
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
@@ -9,13 +9,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitCreateWorkingTreeService
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 
 internal class RemoveWorkingTreeAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {

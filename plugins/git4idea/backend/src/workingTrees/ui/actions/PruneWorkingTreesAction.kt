@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.workingTrees.ui
+package git4idea.workingTrees.ui.actions
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 import git4idea.i18n.GitBundle
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
