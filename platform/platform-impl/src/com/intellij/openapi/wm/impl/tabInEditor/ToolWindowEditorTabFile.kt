@@ -30,7 +30,6 @@ class ToolWindowEditorTabFile(
   internal val preferredFocusedComponent: JComponent,
   internal val content: Content,
   internal val project: Project,
-  private val persistInEditorHistory: Boolean,
   tabIcon: Icon? = null,
 ) : LightVirtualFile(editorTitle, ToolWindowEditorTabFileType, ""), OptionallyIncluded {
 
@@ -42,7 +41,10 @@ class ToolWindowEditorTabFile(
   }
 
   override fun isIncludedInEditorHistory(project: Project): Boolean = true
-  override fun isPersistedInEditorHistory(): Boolean = persistInEditorHistory
+
+  // TODO: Enable persistence when tool window editor tabs can be restored between IDE sessions.
+  override fun isPersistedInEditorHistory(): Boolean = false
+
   override fun isWritable(): Boolean = true
 
   internal fun onEditorClosed() {

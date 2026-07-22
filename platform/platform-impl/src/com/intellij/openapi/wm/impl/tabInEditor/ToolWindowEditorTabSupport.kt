@@ -21,5 +21,4 @@ interface ToolWindowEditorTabSupport {
 data class ToolWindowEditorTabDescriptor(
   val title: @NlsContexts.TabTitle String,
   val icon: Icon? = null,
-  val persistInEditorHistory: Boolean = false,
 )
