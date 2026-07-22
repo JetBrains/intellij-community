@@ -827,6 +827,7 @@ object PyCallExpressionHelper {
         }
       }
     }
+    // The arguments do not describe a class in the MRO, so `super` gives no class here.
     return PyAnyType.unknown
   }
 

@@ -238,7 +238,9 @@ open class TypeEvalContextImpl internal constructor(
       val type = if (engine != null && engine.isSupportedForResolve(element)) {
         PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
           val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
-          engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get()
+          // An engine gives no answer for an element it cannot see, for example one in an unopened file.
+          // That means an unknown type, the same as the null it used to give.
+          engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get() ?: PyAnyType.unknown
         }
       }
       else {
@@ -266,7 +268,7 @@ open class TypeEvalContextImpl internal constructor(
     return RecursionManager.doPreventingRecursion(callable to this, false) {
       val type = callable.getReturnType(this, KeyImpl)
       assertValid(type, callable)
-      PyAnyType.validate(type)
+      PyAnyType.validate(type, callable)
       publish(myEvaluatedReturn, callable, type)
     } ?: PyAnyType.unknown
   }
@@ -391,7 +393,7 @@ open class TypeEvalContextImpl internal constructor(
       if (myParent is AssumptionContext) myParent.assumptionDepth + 1 else 1
 
     init {
-      PyAnyType.validate(type)
+      PyAnyType.validate(type, element)
       myEvaluated[element] = type ?: PyNullType
     }
 

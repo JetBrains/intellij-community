@@ -1290,4 +1290,16 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       #└ TYPE Box[str]
       """.trimIndent())
   }
+
+  @Nested
+  inner class VariadicAliasParameterization {
+    /** An ellipsis fills a `ParamSpec`, so the mapping must accept it in the last position too. */
+    @Test
+    @TestFor(issues = ["PY-91107"])
+    fun `ellipsis fills the ParamSpec of a generic type alias`() = test("""
+      from typing import Callable
+      type Alias[S1, *S2, **S3] = Callable[S3, S1] | tuple[*S2]
+      type Parameterized = Alias[int, tuple[int, str], ...]
+      """.trimIndent())
+  }
 }

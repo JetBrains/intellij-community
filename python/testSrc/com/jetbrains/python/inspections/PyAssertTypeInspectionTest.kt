@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
@@ -58,6 +59,33 @@ class PyAssertTypeInspectionTest : PyInspectionTestCase() {
                  assert_type(<warning descr="Expected type 'type[Self@Shape]', got 'Self@Shape' instead">self</warning>, type[Self]) # E
                  assert_type(self, Self) 
                  ...
+    """.trimIndent())
+  }
+
+  /**
+   * `Any` and `Unknown` are one gradual type, so `assert_type` must accept either spelling in a nested
+   * position too. An omitted type argument gives `Unknown`, the way `ty` and `basedpyright` show it.
+   */
+  @TestFor(issues = ["PY-91107"])
+  fun `test Unknown matches Any in a nested position`() {
+    doTestByText("""
+      from typing import Any, Generic, TypeVar, assert_type
+
+      T = TypeVar("T")
+
+      class Node(Generic[T]):
+          label: T
+          def __init__(self, label: T | None = None) -> None: ...
+
+      def func(p: list, q: dict, r: tuple) -> None:
+          assert_type(p, list[Any])
+          assert_type(q, dict[Any, Any])
+          assert_type(r, tuple[Any, ...])
+          assert_type(Node(), Node[Any])
+          assert_type(Node().label, Any)
+
+      def still_reports_a_real_mismatch(p: list[int]) -> None:
+          assert_type(<warning descr="Expected type 'list[str]', got 'list[int]' instead">p</warning>, list[str])
     """.trimIndent())
   }
 

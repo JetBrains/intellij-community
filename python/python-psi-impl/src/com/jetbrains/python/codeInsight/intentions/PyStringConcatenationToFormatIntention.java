@@ -63,6 +63,10 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
     LanguageLevel languageLevel = LanguageLevel.forElement(element);
     TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(context.project(), context.file());
     PyType stringType = PyBuiltinCache.getInstance(element).getStringType(languageLevel);
+    if (stringType == null) {
+      // The project has no builtins, so the operand types cannot be compared with `str`.
+      return null;
+    }
     for (PyExpression operand : operands) {
       if (operand == null) {
         return null;

@@ -93,6 +93,7 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
@@ -266,8 +267,6 @@ abstract class PyCodeInsightTestCase {
   private lateinit var myTestCaseOptions: TestCaseOptions
 
   companion object {
-    private const val PY_ANY_TYPE_KEY = "python.type.any"
-
     private data class CachedFixture(val options: TestCaseOptions, val fixture: CodeInsightTestFixture)
 
     private lateinit var testClassName: String
@@ -308,7 +307,7 @@ abstract class PyCodeInsightTestCase {
       fixture.testDataPath = PythonTestUtil.getTestDataPath()
       fixture.setUp()
       InspectionProfileImpl.INIT_INSPECTIONS = true
-      Registry.get(PY_ANY_TYPE_KEY).setValue(testCaseOptions.enablePyAnyType)
+      Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
       return fixture
     }
 
@@ -317,7 +316,7 @@ abstract class PyCodeInsightTestCase {
     fun tearDownFixture() {
       RunAll.runAll(
         { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
-        { Registry.get(PY_ANY_TYPE_KEY).resetToDefault() },
+        { Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault() },
         { InspectionProfileImpl.INIT_INSPECTIONS = false },
         { cachedFixture?.fixture?.tearDown() },
         { cachedFixture = null },

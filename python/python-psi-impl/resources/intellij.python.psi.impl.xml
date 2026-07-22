@@ -984,7 +984,7 @@
                  description="Enable weak-key caching for TypeEvalContext"/>
     <registryKey key="python.numeric.tower.type" defaultValue="true"
                  description="Enable specialized class type representing Python's numeric tower (int -> float -> complex)"/>
-    <registryKey key="python.type.any" defaultValue="false"
+    <registryKey key="python.type.any" defaultValue="true"
                  description="Enable Any and Unknown support"/>
     <registryKey key="python.use.csp.type.inference" defaultValue="true"
                  description="Enable CSP engine for type inference"/>
@@ -1129,6 +1129,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup id="Python.Internal" displayType="BALLOON" isLogByDefault="true" hideFromSettings="true"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.jetbrains.python.psi.types.PyAnyTypeRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 
   <actions resource-bundle="messages.PyPsiBundle">
     <group id="PythonPsiInternalGroup" internal="true" popup="true">

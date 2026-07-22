@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -80,14 +81,16 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
     final String referencedName = getReferencedName();
     if (PyNames.CONTAINS.equals(referencedName)) {
-      return PyBuiltinCache.getInstance(this).getBoolType();
+      final PyClassType boolType = PyBuiltinCache.getInstance(this).getBoolType();
+      return boolType != null ? boolType : PyAnyType.getUnknown();
     }
     PyType callResultType = PyCallExpressionHelper.getCallType(this, context, key);
     if (callResultType instanceof PyAnyType.Any) return callResultType;
     if (isUnknown(callResultType)) {
       if (referencedName != null && PyNames.COMPARISON_OPERATORS.contains(referencedName)) {
         // it was not an explicit `Any`, so we form an unsafe union of `Unknown` and `bool`
-        return PyUnsafeUnionType.unsafeUnion(callResultType, PyBuiltinCache.getInstance(this).getBoolType());
+        final PyClassType boolType = PyBuiltinCache.getInstance(this).getBoolType();
+        return PyUnsafeUnionType.unsafeUnion(callResultType, boolType != null ? boolType : PyAnyType.getUnknown());
       }
       return callResultType;
     }

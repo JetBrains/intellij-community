@@ -2952,7 +2952,7 @@ object PyTypeChecker {
     if (asyncIterable is PyClassType && asyncIterable.isParameterized) {
       return getIteratedItemType(asyncIterable, context)
     }
-    return null
+    return PyAnyType.unknown
   }
 
   private class MyMatchHelper(private val myKey: Any, private val myContext: MatchContext) {

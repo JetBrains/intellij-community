@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
@@ -54,7 +55,8 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       if (operand != null && context.getType(operand) instanceof PyNarrowedType narrowedType) {
         return narrowedType.negate();
       }
-      return PyBuiltinCache.getInstance(this).getBoolType();
+      final PyClassType boolType = PyBuiltinCache.getInstance(this).getBoolType();
+      return boolType != null ? boolType : PyAnyType.getUnknown();
     }
     final boolean isAwait = getOperator() == PyTokenTypes.AWAIT_KEYWORD;
     if (isAwait) {

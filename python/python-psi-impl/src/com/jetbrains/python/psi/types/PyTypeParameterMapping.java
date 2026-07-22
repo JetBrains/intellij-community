@@ -84,7 +84,7 @@ public final class PyTypeParameterMapping {
       }
       PyType rightmostActual = actualTypesDeque.peekLast();
       if (rightmostExpected != null &&
-          rightmostActual != null &&
+          !isUnknown(rightmostActual) &&
           rightmostExpected instanceof PyCallableParameterVariadicType ^ rightmostActual instanceof PyCallableParameterVariadicType) {
         break;
       }
