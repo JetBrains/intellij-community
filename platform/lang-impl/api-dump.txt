@@ -3211,7 +3211,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - f:getSelectedDescriptor():com.intellij.ide.util.treeView.NodeDescriptor
 - getSelectedDirectories():com.intellij.psi.PsiDirectory[]
 - p:getSelectedDirectories(java.lang.Object[]):com.intellij.psi.PsiDirectory[]
-- p:getSelectedDirectoriesInAmbiguousCase(java.lang.Object):com.intellij.psi.PsiDirectory[]
 - f:getSelectedElement():java.lang.Object
 - f:getSelectedElements():java.lang.Object[]
 - f:getSelectedPSIElements():com.intellij.psi.PsiElement[]

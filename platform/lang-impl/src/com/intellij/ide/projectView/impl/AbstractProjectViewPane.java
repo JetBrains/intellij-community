@@ -137,6 +137,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getNodeElement;
@@ -618,15 +619,24 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   public @Unmodifiable @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
+    return extractPsiElementsFromNodeOrUserObject(myProject, node, value);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<PsiElement> extractPsiElementsFromNodeOrUserObject(
+    @NotNull Project project,
+    @Nullable Object nodeOrUserObject,
+    @Nullable Object value
+  ) {
     JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
                        value instanceof Iterable ? JBIterable.from((Iterable<?>)value) :
-                       JBIterable.of(TreeUtil.getUserObject(node));
+                       JBIterable.of(TreeUtil.getUserObject(nodeOrUserObject));
     return it.flatten(o -> o instanceof RootsProvider ? ((RootsProvider)o).getRoots() : Collections.singleton(o))
       .map(o -> o instanceof VirtualFile
-                ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o)
+                ? PsiUtilCore.findFileSystemItem(project, (VirtualFile)o)
                 : o instanceof PsiAwareObject
-                  ? ((PsiAwareObject)o).findElement(myProject)
+                  ? ((PsiAwareObject)o).findElement(project)
                   : o)
       .filter(PsiElement.class)
       .filter(PsiElement::isValid)
@@ -822,8 +832,21 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   @RequiresBackgroundThread(generateAssertion = false)
   protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] selectedUserObjects) {
+    return extractDirectories(
+      myProject,
+      selectedUserObjects,
+      this::getElementsFromNode
+    );
+  }
+
+  @ApiStatus.Internal
+  public static PsiDirectory @NotNull [] extractDirectories(
+    @NotNull Project project,
+    Object @NotNull[] userObjects,
+    @NotNull Function<@Nullable Object, @NotNull List<@NotNull PsiElement>> psiElementExtractor
+  ) {
     List<PsiDirectory> directories = new ArrayList<>();
-    for (Object obj : selectedUserObjects) {
+    for (Object obj : userObjects) {
       PsiDirectoryNode node = ObjectUtils.tryCast(obj, PsiDirectoryNode.class);
       if (node != null) {
         PsiDirectory directory = node.getValue();
@@ -846,9 +869,9 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
-    List<PsiElement> elements = new ArrayList<>(selectedUserObjects.length);
-    for (Object node : selectedUserObjects) {
-      elements.addAll(getElementsFromNode(node));
+    List<PsiElement> elements = new ArrayList<>(userObjects.length);
+    for (Object node : userObjects) {
+      elements.addAll(psiElementExtractor.apply(node));
     }
 
     if (elements.size() == 1) {
@@ -878,20 +901,20 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
         }
       }
     }
-    else if (selectedUserObjects.length == 1) {
-      return getSelectedDirectoriesInAmbiguousCase(selectedUserObjects[0]);
+    else if (userObjects.length == 1) {
+      return getSelectedDirectoriesInAmbiguousCase(project, userObjects[0]);
     }
     return PsiDirectory.EMPTY_ARRAY;
   }
 
-  protected PsiDirectory @NotNull [] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
+  private static PsiDirectory @NotNull [] getSelectedDirectoriesInAmbiguousCase(Project project, Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null && !module.isDisposed()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
         List<PsiDirectory> dirs = new ArrayList<>(sourceRoots.length);
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
+        final PsiManager psiManager = PsiManager.getInstance(project);
         for (final VirtualFile sourceRoot : sourceRoots) {
           final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
           if (directory != null) {
@@ -904,7 +927,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     else if (userObject instanceof ProjectViewNode) {
       VirtualFile file = ((ProjectViewNode<?>)userObject).getVirtualFile();
       if (file != null && file.isValid() && file.isDirectory()) {
-        PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(file);
+        PsiDirectory directory = PsiManager.getInstance(project).findDirectory(file);
         if (directory != null) {
           return new PsiDirectory[]{directory};
         }
