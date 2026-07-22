@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
 import com.jetbrains.python.sdk.flavors.PyFlavorData;
@@ -72,6 +73,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private String myRequirementsFile;
   private Path myLegacyRequiredTxtPath;
   private @NotNull Path myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
+  private boolean myMigrationRequired;
 
   private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
 
@@ -244,9 +246,25 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   @ApiStatus.Internal
+  @PyInternalExecApi
+  protected final void setFlavorAndDataFromLegacy(@NotNull PyFlavorAndData<?, ?> flavorAndData) {
+    if (Objects.equals(myFlavorAndData, flavorAndData)) return;
+    myFlavorAndData = flavorAndData;
+    markMigrationRequired();
+  }
+
+  @ApiStatus.Internal
+  @PyInternalExecApi
+  protected final void markMigrationRequired() {
+    myMigrationRequired = true;
+  }
+
+  @ApiStatus.Internal
+  @PyInternalExecApi
   public final boolean migrateAdditionalData(@Nullable Path fallbackWorkingDirectory) {
+    boolean changed = myMigrationRequired;
     FlavorMigrationResult flavorMigration = migrateFlavorData(myFlavorAndData);
-    boolean changed = flavorMigration.changed();
+    changed |= flavorMigration.changed();
 
     Path requirementsWorkingDirectory = null;
     if (myRequirementsFile == null) {
@@ -272,6 +290,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       changed |= synchronizeFlavorWorkingDirectory();
     }
 
+    myMigrationRequired = false;
     return changed;
   }
 
@@ -284,7 +303,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void load(@Nullable Element element) {
+    Path legacyWorkingDirectory = myWorkingDirectory;
     myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
+    myMigrationRequired = false;
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
@@ -294,6 +315,10 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       String storedWorkingDirectory = element.getAttributeValue(WORKING_DIRECTORY);
       if (storedWorkingDirectory != null && !storedWorkingDirectory.isBlank()) {
         myWorkingDirectory = Path.of(storedWorkingDirectory);
+      }
+      else if (!Objects.equals(legacyWorkingDirectory, EMPTY_WORKING_DIRECTORY)) {
+        myWorkingDirectory = legacyWorkingDirectory;
+        myMigrationRequired = true;
       }
       myRequirementsFile = element.getAttributeValue(REQUIREMENTS_FILE);
       String legacyRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);

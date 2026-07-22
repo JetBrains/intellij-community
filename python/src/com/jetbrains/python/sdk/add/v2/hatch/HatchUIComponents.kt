@@ -200,11 +200,8 @@ private fun <P : PathHolder> Panel.addExecutableSelector(
     labelText = message("sdk.create.custom.venv.executable.path", "hatch"),
     missingExecutableText = message("sdk.create.custom.tool.not.detected", "hatch"),
     installAction = installHatchActionLink,
+    canBeEdited = model.fileSystem.toolPathCanBePersisted,
   )
-  if (!model.fileSystem.toolPathCanBePersisted) {
-    executablePath.textField.isEditable = false
-    executablePath.setButtonVisible(false)
-  }
 
   return executablePath
 }

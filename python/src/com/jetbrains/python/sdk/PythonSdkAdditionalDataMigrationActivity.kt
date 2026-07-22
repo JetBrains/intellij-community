@@ -8,6 +8,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
@@ -27,18 +28,18 @@ class PythonSdkAdditionalDataMigrationActivity : ProjectActivity, DumbAware {
 
 @RequiresWriteLock
 private fun migratePythonSdkAdditionalData(project: Project, sdks: List<Sdk>) {
+  val projectSdk = ProjectRootManager.getInstance(project).projectSdk
   for (sdk in sdks) {
-    val additionalData = sdk.pySdkAdditionalData
     val fallbackWorkingDirectory = sdk.associatedModuleNioPath
                                    ?: project.modules.firstNotNullOfOrNull { module ->
                                      module.takeIf { ModuleRootManager.getInstance(it).sdk == sdk }?.baseDir?.path?.let { Path.of(it) }
                                    }
-                                   ?: project.basePath?.let { Path.of(it) }
+                                   ?: project.basePath?.takeIf { projectSdk == sdk }?.let { Path.of(it) }
+    val modificator = sdk.sdkModificator
+    val additionalData = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: continue
     if (!additionalData.migrateAdditionalData(fallbackWorkingDirectory)) continue
 
-    sdk.sdkModificator.apply {
-      sdkAdditionalData = additionalData
-      commitChanges()
-    }
+    modificator.sdkAdditionalData = additionalData
+    modificator.commitChanges()
   }
 }

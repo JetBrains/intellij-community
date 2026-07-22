@@ -48,6 +48,26 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
     }
   }
 
+  override fun load(element: Element?) {
+    super.load(element)
+    if (element == null) return
+
+    val legacyFlavorData = getLegacyFlavorData(element)
+    val canonicalFlavorData = flavorAndData.data as? UvSdkFlavorData
+    val effectiveFlavorData = UvSdkFlavorData(
+      uvWorkingDirectory = canonicalFlavorData?.uvWorkingDirectory ?: legacyFlavorData.uvWorkingDirectory,
+      usePip = canonicalFlavorData?.usePip ?: legacyFlavorData.usePip,
+      venvPath = canonicalFlavorData?.venvPath ?: legacyFlavorData.venvPath,
+      uvPath = canonicalFlavorData?.uvPath ?: legacyFlavorData.uvPath,
+    )
+    if (flavorAndData.flavor != UvSdkFlavor || canonicalFlavorData != effectiveFlavorData) {
+      setFlavorAndDataFromLegacy(PyFlavorAndData(effectiveFlavorData, UvSdkFlavor))
+    }
+    if (canonicalFlavorData?.hasConflictsWith(legacyFlavorData) == true) {
+      markMigrationRequired()
+    }
+  }
+
   companion object {
     private const val IS_UV = "IS_UV"
     private const val UV_WORKING_DIR = "UV_WORKING_DIR"
@@ -59,22 +79,29 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
     fun load(element: Element): UvSdkAdditionalData? {
       return when {
         element.getAttributeValue(IS_UV) == "true" -> {
-          val uvWorkingDirectory = if (element.getAttributeValue(UV_WORKING_DIR).isNullOrEmpty()) {
-            Path.of("")
-          }
-          else {
-            Path.of(element.getAttributeValue(UV_WORKING_DIR))
-          }
-          val usePip = element.getAttributeValue(USE_PIP)?.toBoolean()
-          val venvPath = element.getAttributeValue(UV_VENV_PATH)?.takeIf { it.isNotBlank() }
-          val uvPath = if (element.getAttributeValue(UV_TOOL_PATH).isNullOrEmpty()) null else element.getAttributeValue(UV_TOOL_PATH)
-          val legacyFlavorData = UvSdkFlavorData(uvWorkingDirectory, usePip, venvPath, uvPath)
-          UvSdkAdditionalData(legacyFlavorData, uvWorkingDirectory).apply {
+          val legacyFlavorData = getLegacyFlavorData(element)
+          UvSdkAdditionalData(legacyFlavorData, legacyFlavorData.uvWorkingDirectory ?: Path.of("")).apply {
             load(element)
           }
         }
         else -> null
       }
     }
+
+    private fun getLegacyFlavorData(element: Element): UvSdkFlavorData = UvSdkFlavorData(
+      uvWorkingDirectory = element.getAttributeValue(UV_WORKING_DIR)?.takeIf { it.isNotBlank() }?.let { Path.of(it) },
+      usePip = element.getAttributeValue(USE_PIP)?.toBoolean(),
+      venvPath = element.getAttributeValue(UV_VENV_PATH)?.takeIf { it.isNotBlank() },
+      uvPath = element.getAttributeValue(UV_TOOL_PATH)?.takeIf { it.isNotBlank() },
+    )
+
+    private fun UvSdkFlavorData.hasConflictsWith(legacyData: UvSdkFlavorData): Boolean =
+      valuesConflict(uvWorkingDirectory, legacyData.uvWorkingDirectory) ||
+      valuesConflict(usePip, legacyData.usePip) ||
+      valuesConflict(venvPath, legacyData.venvPath) ||
+      valuesConflict(uvPath, legacyData.uvPath)
+
+    private fun <T : Any> valuesConflict(canonicalValue: T?, legacyValue: T?): Boolean =
+      canonicalValue != null && legacyValue != null && canonicalValue != legacyValue
   }
 }

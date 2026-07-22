@@ -35,6 +35,29 @@ class HatchSdkAdditionalData : PythonSdkAdditionalData {
     }
   }
 
+  override fun load(element: Element?) {
+    super.load(element)
+    if (element == null) return
+
+    val legacyWorkingDirectory = getWorkingDirectory(element)
+    val legacyEnvironmentName = getEnvironmentName(element)
+
+    val canonicalFlavorData = flavorAndData.data as? HatchSdkFlavorData
+    val effectiveFlavorData = HatchSdkFlavorData(canonicalFlavorData?.hatchEnvironmentName ?: legacyEnvironmentName)
+    if (flavorAndData.flavor != HatchSdkFlavor || canonicalFlavorData != effectiveFlavorData) {
+      setFlavorAndDataFromLegacy(PyFlavorAndData(effectiveFlavorData, HatchSdkFlavor))
+    }
+    if (canonicalFlavorData?.hatchEnvironmentName != null &&
+        legacyEnvironmentName != null &&
+        canonicalFlavorData.hatchEnvironmentName != legacyEnvironmentName) {
+      markMigrationRequired()
+    }
+
+    if (legacyWorkingDirectory != null && legacyWorkingDirectory != workingDirectory) {
+      markMigrationRequired()
+    }
+  }
+
   companion object {
     private const val IS_HATCH = "IS_HATCH"
     private const val HATCH_WORKING_DIRECTORY = "HATCH_WORKING_DIR"
@@ -43,14 +66,16 @@ class HatchSdkAdditionalData : PythonSdkAdditionalData {
     fun createIfHatch(element: Element): HatchSdkAdditionalData? {
       if (element.getAttributeValue(IS_HATCH) != "true") return null
 
-      val workingDirectory = element.getAttributeValue(HATCH_WORKING_DIRECTORY)?.takeIf { it.isNotBlank() }?.let { Path.of(it) }
-                             ?: Path.of("")
-      val flavorData = HatchSdkFlavorData(element.getAttributeValue(HATCH_ENVIRONMENT_NAME))
-      val data = HatchSdkAdditionalData(flavorData, workingDirectory).apply {
+      val workingDirectory = getWorkingDirectory(element) ?: Path.of("")
+      val flavorData = HatchSdkFlavorData(getEnvironmentName(element))
+      return HatchSdkAdditionalData(flavorData, workingDirectory).apply {
         load(element)
       }
-
-      return data
     }
+
+    private fun getEnvironmentName(element: Element) = element.getAttributeValue(HATCH_ENVIRONMENT_NAME)
+
+    private fun getWorkingDirectory(element: Element): Path? =
+      element.getAttributeValue(HATCH_WORKING_DIRECTORY)?.takeIf { it.isNotBlank() }?.let { Path.of(it) }
   }
 }

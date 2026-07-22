@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,7 +63,8 @@ public final class PythonMockSdk {
     Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkPath + "/bin/python");
-    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, VirtualEnvSdkFlavor.getInstance())));
+    sdkModificator.setSdkAdditionalData(
+      new PythonSdkAdditionalData(new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, VirtualEnvSdkFlavor.getInstance()), Path.of(sdkPath)));
     sdkModificator.setVersionString(toVersionString(level));
 
     createRoots(sdkPath, level).forEach(vFile -> {
