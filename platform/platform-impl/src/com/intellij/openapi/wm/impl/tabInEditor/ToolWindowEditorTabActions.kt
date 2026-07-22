@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -25,7 +24,7 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
                   project != null &&
                   toolWindow != null &&
                   content != null &&
-                  project.service<ToolWindowEditorTabTransferController>().canMoveContentToEditor(toolWindow)
+                  ToolWindowEditorTabTransferController.getInstance(project).canMoveContentToEditor(toolWindow)
 
     e.presentation.isEnabledAndVisible = enabled
   }
@@ -40,7 +39,7 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
       ?.let(InternalDecoratorImpl::findNearestDecorator)
       ?: ToolWindowContextMenuActionBase.findNearestDecorator(e)
 
-    project.service<ToolWindowEditorTabTransferController>().moveContentToEditor(toolWindow, content, e.getData(EditorWindow.DATA_KEY), sourceDecorator)
+    ToolWindowEditorTabTransferController.getInstance(project).moveContentToEditor(toolWindow, content, e.getData(EditorWindow.DATA_KEY), sourceDecorator)
 
     if (toolWindow.contentManager.contentsRecursively.isEmpty()) {
       toolWindow.hide()
@@ -62,14 +61,14 @@ internal class MoveToolWindowTabFromEditorToToolWindowAction : DumbAwareAction()
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = getContext(e) ?: return
-    context.project.service<ToolWindowEditorTabTransferController>().moveContentToToolWindow(context.toolWindow, context.file)
+    ToolWindowEditorTabTransferController.getInstance(context.project).moveContentToToolWindow(context.toolWindow, context.file)
   }
 
   private fun getContext(e: AnActionEvent): Context? {
     val project = e.project ?: return null
     val file = e.getData(PlatformDataKeys.FILE_EDITOR)?.file as? ToolWindowEditorTabFile ?: return null
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(file.toolWindowId) ?: return null
-    if (!project.service<ToolWindowEditorTabTransferController>().canMoveContentToToolWindow(toolWindow, file)) {
+    if (!ToolWindowEditorTabTransferController.getInstance(project).canMoveContentToToolWindow(toolWindow, file)) {
       return null
     }
 

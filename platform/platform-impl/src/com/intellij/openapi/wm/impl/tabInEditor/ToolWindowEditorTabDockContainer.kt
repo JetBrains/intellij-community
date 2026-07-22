@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.InternalDecorator
@@ -53,7 +52,7 @@ internal class ToolWindowEditorTabDockContainer private constructor(
   override fun getContentResponse(content: DockableContent<*>, point: RelativePoint?): DockContainer.ContentResponse {
     val file = content.getToolWindowTabFile()
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)
-    return if (file != null && toolWindow != null && project.service<ToolWindowEditorTabTransferController>()
+    return if (file != null && toolWindow != null && ToolWindowEditorTabTransferController.getInstance(project)
         .canMoveContentToToolWindow(toolWindow, file)) {
       DockContainer.ContentResponse.ACCEPT_MOVE
     }
@@ -72,7 +71,7 @@ internal class ToolWindowEditorTabDockContainer private constructor(
     val targetDecorator = findTargetDecorator(dropTarget)
 
     recordMoveToToolWindowByDrag(file, toolWindow.id)
-    project.service<ToolWindowEditorTabTransferController>().moveContentToToolWindow(toolWindow, file, targetDecorator)
+    ToolWindowEditorTabTransferController.getInstance(project).moveContentToToolWindow(toolWindow, file, targetDecorator)
   }
 
   override fun isEmpty(): Boolean = false

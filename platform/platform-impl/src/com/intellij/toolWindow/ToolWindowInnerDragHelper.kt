@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.Project
@@ -286,7 +285,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     if (ToolWindowEditorTabSupportUtil.isEnabled()) {
       val toolWindow = sourceDecorator.toolWindow
       recordMoveToEditorByDrag(sourceDecorator)
-      toolWindow.project.service<ToolWindowEditorTabTransferController>()
+      ToolWindowEditorTabTransferController.getInstance(toolWindow.project)
         .moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
       // Return false because moveContentToEditor handles unsplitting
       return false
@@ -554,7 +553,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private fun canMoveTabToEditor(decorator: InternalDecoratorImpl, content: Content?): Boolean {
     return content != null &&
            ToolWindowEditorTabSupportUtil.isEnabled() &&
-           decorator.toolWindow.project.service<ToolWindowEditorTabTransferController>().canMoveContentToEditor(decorator.toolWindow)
+           ToolWindowEditorTabTransferController.getInstance(decorator.toolWindow.project).canMoveContentToEditor(decorator.toolWindow)
   }
 
   private sealed interface EditorDropTarget {

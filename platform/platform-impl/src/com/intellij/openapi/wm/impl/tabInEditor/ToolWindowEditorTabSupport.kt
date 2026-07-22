@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -11,7 +12,8 @@ import javax.swing.Icon
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
-  fun canCloseFile(project: Project, content: Content): Boolean = true
+  @RequiresEdt
+  fun canCloseTab(project: Project, content: Content): Boolean = true
 
   /**
    * Returns the current tab descriptor and subsequent presentation updates.

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -134,6 +135,11 @@ internal class ToolWindowEditorTabTransferController(
       manager.addContent(content)
       manager.setSelectedContent(content, true)
     }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ToolWindowEditorTabTransferController = project.service()
   }
 }
 

@@ -45,7 +45,7 @@ private val TAB_DESCRIPTOR_STATE_KEY =
   )
 
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
-  override fun canCloseFile(project: Project, content: Content): Boolean {
+  override fun canCloseTab(project: Project, content: Content): Boolean {
     return TerminalTabCloseListener.runCloseQuery(project, content, projectClosing = false) {
       val terminalContent = findTerminalContent(content)
                             ?: return@runCloseQuery CloseCheckResult.CAN_CLOSE_SILENTLY
