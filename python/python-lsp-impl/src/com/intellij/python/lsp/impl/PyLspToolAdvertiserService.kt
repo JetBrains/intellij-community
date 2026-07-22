@@ -192,8 +192,9 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
 
 class PyLspToolAdvertiserStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    thisLogger().debug("PyLspToolAdvertiserStartupActivity: waiting 15s before first check")
-    delay(15.seconds)
-    PyLspToolAdvertiserService.getInstance(project).checkAndAdvertise()
+    return
+    //thisLogger().debug("PyLspToolAdvertiserStartupActivity: waiting 15s before first check")
+    //delay(15.seconds)
+    //PyLspToolAdvertiserService.getInstance(project).checkAndAdvertise()
   }
 }
