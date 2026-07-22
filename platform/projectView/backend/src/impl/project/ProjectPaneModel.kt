@@ -16,10 +16,10 @@ import com.intellij.platform.projectView.backend.ProjectViewBackendBundle
 import com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 import com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
-import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
+import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
@@ -65,12 +65,12 @@ internal class ProjectPaneModel(project: Project) : TreeStructureBasedProjectVie
 
   override fun supportsFileNesting(): Boolean = true
 
-  override suspend fun onStateChanged(state: BackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>) {
+  override suspend fun onStateChanged(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>) {
     hasSeveralTopLevelModuleNodes.store(hasSeveralTopLevelModuleNodes(state))
     updateSettings()
   }
 
-  private suspend fun hasSeveralTopLevelModuleNodes(state: BackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>): Boolean {
+  private suspend fun hasSeveralTopLevelModuleNodes(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>): Boolean {
     val root = state.getChildren(null) ?: return false
     val topLevelNodes = state.getChildren(root.single()) ?: return false
     var topLevelModules = 0

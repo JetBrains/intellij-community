@@ -142,17 +142,17 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
       }
     }
 
-    fun <T> asBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): BackendProjectViewPaneStateAccessor<T> {
-      return BackendProjectViewPaneStateAccessorImpl(flowProducer)
+    fun <T> asBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
+      return SuspendingBackendProjectViewPaneStateAccessorImpl(flowProducer)
     }
 
     fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
       return ProjectViewPaneSettingsAccessorImpl { actionState }
     }
 
-    private class BackendProjectViewPaneStateAccessorImpl<T>(
+    private class SuspendingBackendProjectViewPaneStateAccessorImpl<T>(
       private val flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>,
-    ) : BackendProjectViewPaneStateAccessor<T> {
+    ) : SuspendingBackendProjectViewPaneStateAccessor<T> {
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
       override suspend fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? = withState { state ->
         state.nodeById[id]?.model as BackendProjectViewNodeModel<T>?
@@ -223,7 +223,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   }
 
   @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-  override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+  override fun <T> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T> {
     return state.asBackendStateAccessor(flowProducer)
   }
 

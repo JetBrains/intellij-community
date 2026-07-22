@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
-import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
@@ -22,6 +21,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
@@ -44,8 +44,8 @@ interface ProjectViewTreeNodeProvider<T> {
 @ApiStatus.Experimental
 abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
   private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.BUFFERED)
-  private val currentState = AtomicReference<BackendProjectViewPaneStateAccessor<T>?>(null)
-  val state: BackendProjectViewPaneStateAccessor<T>?
+  private val currentState = AtomicReference<SuspendingBackendProjectViewPaneStateAccessor<T>?>(null)
+  val state: SuspendingBackendProjectViewPaneStateAccessor<T>?
     get() = currentState.load()
 
   protected open suspend fun isDefault(): Boolean = false
@@ -66,7 +66,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
-    val stateAccessor = builder.asBackendStateAccessor<T>()
+    val stateAccessor = builder.asSuspendingBackendStateAccessor<T>()
     try {
       currentState.store(stateAccessor)
       updateSettings(builder)
@@ -102,7 +102,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   }
 
   @ApiStatus.OverrideOnly
-  protected open suspend fun onStateChanged(state: BackendProjectViewPaneStateAccessor<T>) { }
+  protected open suspend fun onStateChanged(state: SuspendingBackendProjectViewPaneStateAccessor<T>) { }
 
   private fun buildSettingsState(settingsStateBuilder: ProjectViewPaneSettingsStateBuilder) {
     val settingsService = ProjectViewPaneSettingsService.getInstance(project)
@@ -175,7 +175,7 @@ private data object UpdateSettingsRequest : StateUpdateRequest()
 private class ProjectViewPaneTreeState<T>(
   private val nodeProvider: ProjectViewTreeNodeProvider<T>,
   private val builder: ProjectViewPaneStateBuilder,
-  private val state: BackendProjectViewPaneStateAccessor<T>,
+  private val state: SuspendingBackendProjectViewPaneStateAccessor<T>,
 ) {
   private var nextId = 1L
 
