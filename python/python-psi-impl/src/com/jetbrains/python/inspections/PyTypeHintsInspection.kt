@@ -1636,37 +1636,47 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkCallableParameters(index: PyExpression) {
 
       if (index !is PyTupleExpression) {
-        registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.callable.format"), ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(index,
+                        PyPsiBundle.problemMessage("INSP.type.hints.callable.must.have.exactly.two.parameters"),
+                        ProblemHighlightType.GENERIC_ERROR)
         return
       }
 
       val parameters = index.elements
-      if (parameters.size > 2) {
-        val possiblyLastParameter = parameters[parameters.size - 2]
-
+      if (parameters.size < 2) {
         registerProblem(index,
-                        PyPsiBundle.message("INSP.type.hints.illegal.callable.format"),
+                        PyPsiBundle.problemMessage("INSP.type.hints.callable.must.have.exactly.two.parameters"),
+                        ProblemHighlightType.GENERIC_ERROR)
+        return
+      }
+
+      val tooManyParameters = parameters.size > 2
+      if (tooManyParameters) {
+        val firstExtraParameter = parameters[2]
+        registerProblem(index,
+                        PyPsiBundle.problemMessage("INSP.type.hints.callable.must.have.exactly.two.parameters"),
                         ProblemHighlightType.GENERIC_ERROR,
-                        null,
-                        TextRange.create(0, possiblyLastParameter.startOffsetInParent + possiblyLastParameter.textLength),
-                        SurroundElementsWithSquareBracketsQuickFix())
+                        rangeInElement = TextRange.create(firstExtraParameter.startOffsetInParent, index.textLength))
       }
-      else if (parameters.size < 2) {
-        registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.callable.format"), ProblemHighlightType.GENERIC_ERROR)
+
+      val first = parameters.first()
+      if (!isSdkAvailable(first) || isParamSpecOrConcatenate(first, myTypeEvalContext)) return
+
+      if (first is PySubscriptionExpression &&
+          PyTypingTypeProvider.resolveToQualifiedNames(first.operand, myTypeEvalContext)
+            .any { it == PyTypingTypeProvider.CONCATENATE || it == PyTypingTypeProvider.CONCATENATE_EXT }) {
+        return
       }
-      else {
-        val first = parameters.first()
-        if (!isSdkAvailable(first) || isParamSpecOrConcatenate(first, myTypeEvalContext)) return
-        if (first is PySubscriptionExpression &&
-            PyTypingTypeProvider.resolveToQualifiedNames(first.operand, myTypeEvalContext)
-              .any { it == PyTypingTypeProvider.CONCATENATE || it == PyTypingTypeProvider.CONCATENATE_EXT }) {
-          return
+
+      if (first !is PyListLiteralExpression && first !is PyEllipsisLiteralExpression) {
+        val message = PyPsiBundle.problemMessage("INSP.type.hints.callable.invalid.first.parameter")
+        if (tooManyParameters) {
+          registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR,
+                          SurroundElementsWithSquareBracketsQuickFix(),
+                          rangeInElement = TextRange.create(first.startOffsetInParent, first.startOffsetInParent + first.textLength))
         }
-        if (first !is PyListLiteralExpression && first !is PyEllipsisLiteralExpression) {
-          registerProblem(first,
-                          PyPsiBundle.message("INSP.type.hints.illegal.first.parameter"),
-                          ProblemHighlightType.GENERIC_ERROR,
-                          null,
+        else {
+          registerProblem(first, message, ProblemHighlightType.GENERIC_ERROR,
                           if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
         }
       }

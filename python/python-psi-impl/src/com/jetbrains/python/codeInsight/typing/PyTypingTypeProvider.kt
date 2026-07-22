@@ -2131,13 +2131,15 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             CALLABLE_EXT
           )
         ) {
+          var returnType: PyType? = PyAnyType.unknown
+
           val indexExpr = resolved.indexExpression
           if (indexExpr is PyTupleExpression) {
             val elements = indexExpr.elements
-            if (elements.size == 2) {
+            if (elements.size >= 2) {
               val parametersExpr = elements[0]
               val returnTypeExpr = elements[1]
-              var returnType = getType(returnTypeExpr, context).derefOrUnknown()
+              returnType = getType(returnTypeExpr, context).derefOrUnknown()
               if (returnType is PyVariadicType) {
                 returnType = PyAnyType.unknown
               }
@@ -2153,6 +2155,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
               }
             }
           }
+          return PyCallableTypeImpl(null as PyCallableParameterListType?, returnType)
         }
       }
       else if (resolved is PyTargetExpression) {

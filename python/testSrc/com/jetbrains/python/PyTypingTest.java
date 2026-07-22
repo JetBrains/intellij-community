@@ -161,7 +161,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter1() {
-    doTest("Unknown",
+    doTest("(...) -> int",
            """
              from typing import Callable, Tuple
              

@@ -1223,31 +1223,35 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   fun `Callable parameters`() = test("""
     from typing import Callable, TypeAlias
 
+    _: Callable
     a: Callable[..., str]
     b: Callable[[int], str]
     c: Callable[[int, str], str]
 
     d: Callable[...]
-    #           ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #           ^^^ ERROR 'Callable' must have exactly two arguments
     e: Callable[int, str]
-    #           ^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     f: Callable[int, str, str]
-    #           ^^^^^^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #           │         ^^^ ERROR 'Callable' must have exactly two arguments
+    #           ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     g: Callable[(int, str), str]
-    #           ^^^^^^^^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^^^^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
     h: Callable[int]
-    #           ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
-    h: Callable[(int), str]
-    #           ^^^^^ ERROR 'Callable' first parameter must be a parameter expression
+    #           ^^^ ERROR 'Callable' must have exactly two arguments
+    i: Callable[int,]
+    #           ^^^^ ERROR 'Callable' must have exactly two arguments
+    j: Callable[(int), str]
+    #           ^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
 
     A1: TypeAlias = Callable[int]
-    #                        ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #                        ^^^ ERROR 'Callable' must have exactly two arguments
     A2: TypeAlias = 'Callable[int]'
-    #                         ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #                         ^^^ ERROR 'Callable' must have exactly two arguments
     A3 = Callable[int]  # type: TypeAlias
-    #             ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #             ^^^ ERROR 'Callable' must have exactly two arguments
     A4 = 'Callable[int]'  # type: TypeAlias
-    #              ^^^ ERROR 'Callable' must be used as 'Callable[[arg, ...], result]'
+    #              ^^^ ERROR 'Callable' must have exactly two arguments
     """)
 
   @Test
@@ -4308,8 +4312,21 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #\ TYPE int | None
 
     a: Callable[int, int]
-    #│          ^^^ ERROR 'Callable' first parameter must be a parameter expression
-    #\ TYPE int | None FIXME (Unknown) -> int
+    #│          ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> int
+
+    a: Callable[(int, str), float]
+    #│          ^^^^^^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> float | int
+
+    a: Callable[int, str, float, complex]
+    #│          │         ^^^^^^^^^^^^^^ ERROR 'Callable' must have exactly two arguments
+    #│          ^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification
+    #\ TYPE (...) -> str
+
+    a: Callable[[int], str, float]
+    #│                      ^^^^^ ERROR 'Callable' must have exactly two arguments
+    #\ TYPE (int) -> str
 
     a: Callable[[int], (([int]))]
     #│                   ^^^^^ ERROR Parameters to generic types must be types
