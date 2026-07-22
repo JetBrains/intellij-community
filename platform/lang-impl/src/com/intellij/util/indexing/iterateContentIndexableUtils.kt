@@ -31,6 +31,8 @@ internal fun ContentIteratorEx.unwrapCacheAvoiding(): ContentIteratorEx = Conten
 }
 
 internal fun VirtualFileFilter.andIndexable(workspaceFileIndex: WorkspaceFileIndex): VirtualFileFilter =
-  this.and { file -> workspaceFileIndex.isIndexable(file) }
+  // run `this` filter second, because it can be deduplicating, shared by multiple iterators
+  // running it first may mark it, so other iterators couldn't process it anymore
+  VirtualFileFilter { file -> workspaceFileIndex.isIndexable(file) }.and(this)
 
 
