@@ -59,12 +59,8 @@ data class LinkLabelSymbol(
 
   companion object {
     fun createPointer(label: MarkdownLinkLabel): Pointer<LinkLabelSymbol> {
-      val text = label.text
-      val rangeInElement = TextRange(0, text.length)
-      val absoluteRange = rangeInElement.shiftRight(label.startOffset)
-      val textInElement = rangeInElement.substring(text)
-      val file = label.containingFile
-      return createPointer(file, absoluteRange, textInElement)
+      val absoluteRange = label.labelTextRange.shiftRight(label.startOffset)
+      return createPointer(label.containingFile, absoluteRange, label.labelText)
     }
 
     fun createPointer(file: PsiFile, range: TextRange, text: String): Pointer<LinkLabelSymbol> {

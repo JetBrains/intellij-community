@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 class LinkLabelSymbolDeclarationProvider: PsiSymbolDeclarationProvider {
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
     if (element is MarkdownLinkLabel && element.isDeclaration) {
-      val symbol = LinkLabelSymbol.createPointer(element)?.dereference() ?: return emptyList()
+      val symbol = LinkLabelSymbol.createPointer(element).dereference() ?: return emptyList()
       return listOf(LinkLabelSymbolDeclaration(element, symbol))
     }
     return emptyList()
@@ -28,7 +28,7 @@ class LinkLabelSymbolDeclarationProvider: PsiSymbolDeclarationProvider {
     }
 
     override fun getRangeInDeclaringElement(): TextRange {
-      return TextRange(0, label.textLength)
+      return label.labelTextRange
     }
 
     override fun getSymbol(): Symbol {

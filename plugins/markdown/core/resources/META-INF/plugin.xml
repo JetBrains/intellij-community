@@ -157,6 +157,8 @@
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination$Manipulator"/>
+    <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel"
+                             implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader$Manipulator"/>
 
