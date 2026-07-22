@@ -53,6 +53,11 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
 
     /**
+     * Whether to patch the `.patronus/config.yaml` file, excluding triggers for checks mentioned in `resources/patronus-deny-list.txt`.
+     */
+    val applyPatronusDenyList: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
      * Represents modes of the application. [PROJECT_MODEL_UPDATER] is the default one.
      */
     enum class ApplicationMode {

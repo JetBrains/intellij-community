@@ -1,5 +1,6 @@
 plugins {
 	kotlin("jvm") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
     id("application")
 }
 
@@ -12,6 +13,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.intellij.deps:jdom:2.0.6")
+    implementation("com.charleskorn.kaml:kaml:0.99.0")
 }
 
 kotlin {
