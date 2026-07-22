@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.IdeBundle
@@ -230,12 +230,12 @@ internal open class StandalonePluginUpdateChecker(
 
     private fun checkUpdatesInCustomRepository(host: String): PluginUpdateStatus {
         val plugins = try {
-            RepositoryHelper.loadPlugins(/* repositoryUrl = */ host, /* build = */ null, /* indicator = */ null)
+            RepositoryHelper.loadPluginModels(/* repositoryUrl = */ host, /* build = */ null, /* indicator = */ null)
         } catch (e: Exception) {
             return PluginUpdateStatus.fromException(IdeBundle.message("plugin.updater.error.custom.repository", host), e)
         }
 
-        val newPlugin = plugins.find { pluginDescriptor ->
+        val newPlugin = plugins.asSequence().map { it.getDescriptor() }.find { pluginDescriptor ->
             pluginDescriptor.pluginId == pluginId && PluginManagerCore.isCompatible(pluginDescriptor)
         } ?: return PluginUpdateStatus.LatestVersionInstalled
 

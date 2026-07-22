@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -48,20 +48,17 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
-import static com.intellij.ide.plugins.PluginManagerCore.MARKETPLACE_PLUGIN_ID;
 import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 import static com.intellij.ide.plugins.marketplace.utils.MarketplaceUrlsKt.buildOsParameter;
 
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
 
-  /** Duplicates VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+  /// Duplicates `VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY`
   private static final String CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url";
   private static final String PLUGIN_LIST_FILE = "availables.xml";
 
-  /**
-   * Returns a list of configured custom plugin repository hosts.
-   */
+  /// Returns a list of configured custom plugin repository hosts.
   public static @NotNull List<@NotNull String> getCustomPluginRepositoryHosts() {
     var hosts = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
 
@@ -81,49 +78,29 @@ public final class RepositoryHelper {
     return hosts;
   }
 
-  /**
-   * Returns a list of configured plugin hosts.
-   * Note that the list always ends with {@code null} element denoting the main plugin repository (Marketplace).
-   */
+  /// Returns a list of configured plugin hosts.
+  /// Note that the list always ends with the `null` element denoting the main plugin repository (Marketplace).
   public static @NotNull List<@Nullable String> getPluginHosts() {
     List<@Nullable String> hosts = getCustomPluginRepositoryHosts();
     hosts.add(null); // main plugin repository
     return hosts;
   }
 
-  /**
-   * Use method only for getting plugins from custom repositories
-   *
-   * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
-   */
+  /// @deprecated use [#loadPluginModels(String, BuildNumber, ProgressIndicator)] instead.
   @Deprecated(forRemoval = true)
   public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
     return new ArrayList<>(loadPlugins(repositoryUrl, null, indicator));
   }
 
-  /**
-   * Use method only for getting plugins from custom repositories
-   * deprecated, use {@link #loadPluginModels}
-   */
+  /// @deprecated use [#loadPluginModels(String, BuildNumber, ProgressIndicator)] instead.
   @Deprecated(forRemoval = true)
   public static @NotNull @Unmodifiable List<PluginNode> loadPlugins(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator
   ) throws IOException {
-    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator, PluginNodeModelBuilderFactory.INSTANCE),
-                             it -> (PluginNode)it.getDescriptor());
-  }
-
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public static @NotNull @Unmodifiable List<PluginNode> loadPlugins(
-    @Nullable String repositoryUrl,
-    @Nullable BuildNumber build,
-    @Nullable ProgressIndicator indicator,
-    @NotNull PluginUiModelBuilderFactory factory
-  ) throws IOException {
-    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator, factory), it -> (PluginNode)it.getDescriptor());
+    var models = loadPluginModels(repositoryUrl, build, indicator, PluginNodeModelBuilderFactory.INSTANCE);
+    return ContainerUtil.map(models, it -> (PluginNode)it.getDescriptor());
   }
 
   public static @NotNull List<PluginUiModel> loadPluginModels(
@@ -173,15 +150,16 @@ public final class RepositoryHelper {
     LOG.debug("Downloading list of plugins from " + urlTarget);
 
     var message = IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority());
-    var descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile, urlTarget, indicator, message,
-                                                           input -> MarketplaceRequests.parsePluginList(input, factory));
+    var descriptors = MarketplaceRequests.readOrUpdateFile(
+      pluginListFile, urlTarget, indicator, message, input -> MarketplaceRequests.parsePluginList(input, factory)
+    );
     return process(descriptors, build != null ? build : PluginManagerCore.getBuildNumber(), repositoryUrl);
   }
 
   private static List<PluginUiModel> process(List<PluginUiModel> uiModels, BuildNumber build, @Nullable String repositoryUrl) {
     var result = new LinkedHashMap<PluginId, PluginUiModel>(uiModels.size());
 
-    var isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
+    var isPaidPluginsRequireMarketplacePlugin = arePaidPluginsRequireMarketplacePlugin();
 
     for (var model : uiModels) {
       var pluginId = model.getPluginId();
@@ -191,7 +169,7 @@ public final class RepositoryHelper {
       }
 
       if (isBrokenPlugin(model.getPluginId(), model.getVersion()) || PluginManagerCore.isIncompatible(model.getDescriptor(), build)) {
-        LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
+        LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
@@ -217,45 +195,45 @@ public final class RepositoryHelper {
     return List.copyOf(result.values());
   }
 
-  /**
-   * If a plugin is paid (has `productCode`) and the IDE is not JetBrains "ultimate", then MARKETPLACE_PLUGIN_ID is required.
-   */
+  /// If a plugin is paid (has `productCode`) and the IDE is not JetBrains "ultimate", then `MARKETPLACE_PLUGIN_ID` is required.
   @ApiStatus.Internal
   public static void addMarketplacePluginDependencyIfRequired(@NotNull PluginUiModel model) {
-    var isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
+    var isPaidPluginsRequireMarketplacePlugin = arePaidPluginsRequireMarketplacePlugin();
     addMarketplacePluginDependencyIfRequired(model, isPaidPluginsRequireMarketplacePlugin);
   }
 
-  private static boolean isPaidPluginsRequireMarketplacePlugin() {
+  private static boolean arePaidPluginsRequireMarketplacePlugin() {
     var core = PluginManagerCore.findPlugin(PluginManagerCore.CORE_ID);
-    return core == null ||
-           !core.getPluginAliases().contains(ULTIMATE_PLUGIN_ID) ||
-           !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    return (
+      core == null ||
+      !core.getPluginAliases().contains(ULTIMATE_PLUGIN_ID) ||
+      !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()
+    );
   }
 
   private static void addMarketplacePluginDependencyIfRequired(PluginUiModel node, boolean isPaidPluginsRequireMarketplacePlugin) {
     if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
-      node.addDependency(MARKETPLACE_PLUGIN_ID, false);
+      node.addDependency(PluginManagerCore.MARKETPLACE_PLUGIN_ID, false);
     }
   }
 
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings("SSBasedInspection")
   public static @NotNull @Unmodifiable Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
     @NotNull List<PluginNode> customPlugins,
-    boolean addMissing) {
-    List<PluginUiModel> marketplaceModels = ContainerUtil.map(marketplacePlugins, PluginUiModelAdapter::new);
-    List<PluginUiModel> customPluginsModels = ContainerUtil.map(customPlugins, PluginUiModelAdapter::new);
-    Collection<PluginUiModel> mergedPluginModels = mergePluginModelsFromRepositories(marketplaceModels, customPluginsModels, addMissing);
-    return ContainerUtil.map(mergedPluginModels, model-> (PluginNode)model.getDescriptor());
+    boolean addMissing
+  ) {
+    var marketplaceModels = ContainerUtil.map(marketplacePlugins, PluginUiModelAdapter::new);
+    var customPluginsModels = ContainerUtil.map(customPlugins, PluginUiModelAdapter::new);
+    var mergedPluginModels = mergePluginModelsFromRepositories(marketplaceModels, customPluginsModels, addMissing);
+    return ContainerUtil.map(mergedPluginModels, model -> (PluginNode)model.getDescriptor());
   }
 
   @ApiStatus.Internal
   public static @NotNull Collection<PluginUiModel> mergePluginModelsFromRepositories(
-    @NotNull List<PluginUiModel> marketplacePlugins,
-    @NotNull List<PluginUiModel> customPlugins,
+    @NotNull List<? extends PluginUiModel> marketplacePlugins,
+    @NotNull List<? extends PluginUiModel> customPlugins,
     boolean addMissing
   ) {
     var compatiblePluginMap = new LinkedHashMap<PluginId, PluginUiModel>(marketplacePlugins.size());
@@ -267,8 +245,11 @@ public final class RepositoryHelper {
     for (var customPlugin : customPlugins) {
       var pluginId = customPlugin.getPluginId();
       var plugin = compatiblePluginMap.get(pluginId);
-      if (plugin == null && addMissing ||
-          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin.getDescriptor()) > 0) {
+      if (
+        plugin == null && addMissing ||
+        plugin != null && customPlugin.getVersion() != null &&
+          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin.getDescriptor()) > 0
+      ) {
         compatiblePluginMap.put(pluginId, customPlugin);
       }
     }
@@ -276,26 +257,26 @@ public final class RepositoryHelper {
     return compatiblePluginMap.values();
   }
 
-  /**
-   * Returns a list of plugins compatible with the current build, loaded from all configured custom repositories.
-   */
+  /// Returns a list of plugins compatible with the current build, loaded from all configured custom repositories.
   @ApiStatus.Internal
   public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
     return loadPluginsFromCustomRepositories(indicator, PluginUiModelBuilderFactory.getInstance());
   }
 
-
   @ApiStatus.Internal
-  public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator, @NotNull PluginUiModelBuilderFactory factory) {
+  public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(
+    @Nullable ProgressIndicator indicator,
+    @NotNull PluginUiModelBuilderFactory factory
+  ) {
     var ids = new HashSet<PluginId>();
     var result = new ArrayList<PluginNode>();
 
     for (var host : getCustomPluginRepositoryHosts()) {
       try {
-        var plugins = loadPlugins(host, null, indicator, factory);
-        for (var plugin : plugins) {
-          if (ids.add(plugin.getPluginId())) {
-            result.add(plugin);
+        var models = loadPluginModels(host, null, indicator, factory);
+        for (var model : models) {
+          if (ids.add(model.getPluginId())) {
+            result.add((PluginNode)model.getDescriptor());
           }
         }
       }
@@ -308,9 +289,7 @@ public final class RepositoryHelper {
     return result;
   }
 
-  /**
-   * Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
-   */
+  /// Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
   public static @NotNull @Unmodifiable Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
     @SuppressWarnings("deprecation") var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
