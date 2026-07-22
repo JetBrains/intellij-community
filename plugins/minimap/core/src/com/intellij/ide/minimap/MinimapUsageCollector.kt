@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MinimapUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("editor.minimap", 3)
+  private val GROUP = EventLogGroup("editor.minimap", 4)
 
   override fun getGroup(): EventLogGroup = GROUP
 
