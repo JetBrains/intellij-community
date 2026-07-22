@@ -341,6 +341,9 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   public static final String PREVIEW = """
+    short = 1
+    long_name = 2
+
     x = max(
         1,
         2,
