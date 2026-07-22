@@ -407,11 +407,15 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     }
 
     val key = getFactoryKey(factory)
-    return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
+    val existingTemplate = lock.read { templateIdToConfiguration[key] }
+    if (existingTemplate != null) {
+      return existingTemplate
+    }
+    val newTemplate = createTemplateSettings(factory)
+    return lock.write {
       templateIdToConfiguration.getOrPut(key) {
-        val template = createTemplateSettings(factory)
-        workspaceSchemeManager.addScheme(template)
-        template
+        workspaceSchemeManager.addScheme(newTemplate)
+        newTemplate
       }
     }
   }
