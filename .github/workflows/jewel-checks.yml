@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - "platform/jewel/**"
+      # This workflow and the actions it depends on must run on changes to themselves, so that a change to the
+      # checks is validated by the checks it changes rather than by the next unrelated Jewel PR.
+      - ".github/workflows/jewel-checks.yml"
+      - ".github/actions/setup-kotlin/**"
 
 defaults:
   run:
@@ -24,11 +28,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Check out repository
 
       - name: Set up JBR 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.6.0
         with:
           java-version: 21
           distribution: jetbrains
@@ -42,14 +46,14 @@ jobs:
         run: ./gradlew check -x detekt --continue --no-daemon
 
       - name: Annotate JUnit test failures
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: failure()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
           annotate_only: true # A forked repo cannot write comments, so just do annotations
 
       - name: Upload JUnit test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         if: failure()
         with:
           name: junit-test-results
@@ -85,10 +89,10 @@ jobs:
       run_formalities: ${{ steps.filter.outputs.run_formalities }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         name: Check which files are changed
         id: filter
         with:
@@ -103,7 +107,7 @@ jobs:
     if: needs.check_paths.outputs.run_formalities == 'true'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
         name: Check out repository
@@ -129,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           # We need fetch-depth: '2' so we get HEAD~1 in case this is missing the PR token
           fetch-depth: '2'
@@ -155,10 +159,10 @@ jobs:
         working-directory: .
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6.1.0
         name: Cache for jps-bootstrap
         with:
           key: ${{ runner.os }}-jps-bootstrap-${{ hashFiles('platform/jps-bootstrap/**') }}
@@ -185,10 +189,10 @@ jobs:
         working-directory: .
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:
           repository: JetBrains/android
@@ -196,7 +200,7 @@ jobs:
           ref: master
 
       - name: Set up JBR 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.6.0
         with:
           java-version: 21
           distribution: jetbrains
@@ -235,11 +239,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         name: Check out repository
 
       - name: Set up JBR 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.6.0
         with:
           java-version: 21
           distribution: jetbrains
