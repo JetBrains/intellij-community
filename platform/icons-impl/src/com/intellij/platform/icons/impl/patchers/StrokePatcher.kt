@@ -39,6 +39,44 @@ fun strokeSvgPatcher(stroke: Color): SvgPatcher = svgPatcher {
 }
 
 /**
+ * The SVG patch for an icon that ships a hand-authored stroke variant, rendering it in [stroke].
+ *
+ * Such a variant is a separate drawing of the same glyph, already reduced to an outline by hand and authored in white:
+ * it needs recoloring, not the palette reduction [strokeSvgPatcher] performs. Reducing it a second time could only take
+ * away artwork the author put there deliberately, since a tint that reads as a background in a filled icon can be the
+ * outline itself in a drawing made of outlines.
+ *
+ * Rendering one in opaque white patches nothing at all: the drawing is already that color, so it is left exactly as
+ * authored, down to any opacity it carries. Recoloring it white instead would be a substitution of a color by itself
+ * that still normalizes that opacity away.
+ */
+@ApiStatus.Internal
+fun authoredStrokeSvgPatcher(stroke: Color): SvgPatcher = svgPatcher {
+    val target = stroke.toHex()
+    if (target.equals(OPAQUE_WHITE, ignoreCase = true)) return@svgPatcher
+
+    for (color in authoredStrokePalette) {
+        replaceIfMatches("fill", color, target)
+        replaceIfMatches("stroke", color, target)
+    }
+}
+
+/**
+ * The file-name suffix marking a hand-authored stroke variant, as in `run.svg` and its `run_stroke.svg`.
+ *
+ * Every frontend resolves the variant by this same suffix, so that stroking an icon reaches the same file whichever one
+ * renders it.
+ */
+@ApiStatus.Internal
+const val AUTHORED_STROKE_VARIANT_SUFFIX: String = "_stroke"
+
+/** The only color a hand-authored stroke variant is drawn in, in both spellings an SVG may use for it. */
+private val authoredStrokePalette: List<String> = listOf("white", "#ffffff")
+
+/** The hex [Color.toHex] produces for fully opaque white; a translucent white carries an alpha component instead. */
+private const val OPAQUE_WHITE: String = "#ffffff"
+
+/**
  * Foreground palette entries an SVG may spell as a color keyword rather than as hex.
  *
  * `fill="black"` and `fill="#000000"` are the same color to a renderer but not to an attribute-value comparison, so a

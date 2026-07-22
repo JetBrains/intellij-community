@@ -6,11 +6,16 @@ import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.filters.ColorFilter
 import com.intellij.platform.icons.impl.filters.TintColorFilter
+import com.intellij.platform.icons.impl.patchers.AUTHORED_STROKE_VARIANT_SUFFIX
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.patchers.SvgPatchOperation
+import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
+import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
+import com.intellij.platform.icons.impl.patchers.writeSvgAttribute
 import com.intellij.platform.icons.swing.toAwtColor
 import java.awt.Color
 import java.awt.image.RGBImageFilter
+import com.intellij.platform.icons.design.Color as DesignColor
 
 internal fun ColorFilter.toAwtFilter(): RGBImageFilter {
   return when (this) {
@@ -21,45 +26,76 @@ internal fun ColorFilter.toAwtFilter(): RGBImageFilter {
   }
 }
 
-internal fun DefaultSvgPatcher.toIJPatcher(rootPatcher: SVGLoader.SvgElementColorPatcherProvider?): SVGLoader.SvgElementColorPatcherProvider {
-  return ProxySvgPatcher(this, rootPatcher)
+/**
+ * The color patcher this frontend hands to the IntelliJ SVG loader for an icon stroked in [stroke] and patched by
+ * [patcher], on top of whatever [rootPatcher] already patches.
+ *
+ * Returns `null` when there is nothing of our own to patch, which is what tells the loader to take its plain path.
+ */
+internal fun toIJPatcher(
+  stroke: DesignColor?,
+  patcher: DefaultSvgPatcher?,
+  rootPatcher: SVGLoader.SvgElementColorPatcherProvider?,
+): SVGLoader.SvgElementColorPatcherProvider? {
+  if (stroke == null && patcher == null) return null
+  return ProxySvgPatcher(stroke = stroke, patcher = patcher, rootPatcher = rootPatcher)
 }
 
 private class ProxySvgPatcher(
-  private val patcher: DefaultSvgPatcher,
+  private val stroke: DesignColor?,
+  private val patcher: DefaultSvgPatcher?,
   private val rootPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
-): SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
-  override fun attributeForPath(path: String): SvgAttributePatcher = ProxySvgAttributePatcher(patcher, rootPatcher?.attributeForPath(path))
+): SVGLoader.SvgElementColorPatcherProvider {
+  // Which stroke patch applies depends on the file the loader ends up resolving, so it can only be picked per path: a
+  // hand-authored stroke variant is recolored as it is, while a base icon is reduced to an outline.
+  override fun attributeForPath(path: String): SvgAttributePatcher {
+    val strokePatcher = stroke?.let {
+      if (path.isAuthoredStrokeVariant()) authoredStrokeSvgPatcher(it) else strokeSvgPatcher(it)
+    }
+    // The icon's own patcher runs first and the stroke substitution after it, so an icon that explicitly recolors a
+    // palette color keeps that color: the stroke operation no longer matches what the explicit one already replaced.
+    val combined = patcher?.combineWith(strokePatcher) ?: strokePatcher
+    return ProxySvgAttributePatcher(combined as? DefaultSvgPatcher, rootPatcher?.attributeForPath(path))
+  }
+
   override fun digest(): LongArray {
+    val own = longArrayOf(patcher.hashCode().toLong(), stroke.hashCode().toLong())
     if (rootPatcher != null) {
-      return rootPatcher.digest() + longArrayOf(patcher.hashCode().toLong())
+      return rootPatcher.digest() + own
     } else {
-      return longArrayOf(patcher.hashCode().toLong())
+      return own
     }
   }
 }
 
+private fun String.isAuthoredStrokeVariant(): Boolean =
+  substringBeforeLast('.', missingDelimiterValue = "").endsWith(AUTHORED_STROKE_VARIANT_SUFFIX)
+
 private class ProxySvgAttributePatcher(
-  private val patcher: DefaultSvgPatcher,
+  private val patcher: DefaultSvgPatcher?,
   private val rootPatcher: SvgAttributePatcher? = null
 ): SvgAttributePatcher {
   override fun patchColors(attributes: MutableMap<String, String>) {
     rootPatcher?.patchColors(attributes)
     // TODO Support filtered operations - not possible with current IJ svg loader
-    for (operation in patcher.operations) {
+    val write = { name: String, value: String ->
+      writeSvgAttribute(name, value, { n, v -> attributes[n] = v }, { attributes.remove(it) })
+    }
+    for (operation in patcher?.operations ?: return) {
       when (operation.operation) {
         SvgPatchOperation.Operation.Add -> {
           if (!attributes.containsKey(operation.attributeName)) {
-            attributes[operation.attributeName] = operation.value!!
+            write(operation.attributeName, operation.value!!)
           }
         }
         SvgPatchOperation.Operation.Replace -> {
-          if (operation.conditional) {
-            if (operation.matches(attributes[operation.attributeName]) != operation.negatedCondition) {
-              attributes.replace(operation.attributeName, operation.value!!)
-            }
-          } else {
-            attributes.replace(operation.attributeName, operation.value!!)
+          // Replace never creates an attribute, conditionally or not: an element that does not carry the attribute
+          // inherits it, and adding one here would override that inheritance. Add exists for that.
+          if (attributes.containsKey(operation.attributeName) &&
+              (!operation.conditional ||
+               operation.matches(attributes[operation.attributeName]) != operation.negatedCondition)
+          ) {
+            write(operation.attributeName, operation.value!!)
           }
         }
         SvgPatchOperation.Operation.Remove -> {
@@ -71,7 +107,7 @@ private class ProxySvgAttributePatcher(
             attributes.remove(operation.attributeName)
           }
         }
-        SvgPatchOperation.Operation.Set -> attributes[operation.attributeName] = operation.value!!
+        SvgPatchOperation.Operation.Set -> write(operation.attributeName, operation.value!!)
       }
     }
   }
@@ -93,7 +129,7 @@ private class AwtColorFilter(color: Color, val keepGray: Boolean, val keepBright
   }
 
   companion object {
-    fun fromColorAndBlendMode(color: com.intellij.platform.icons.design.Color, blendMode: BlendMode): AwtColorFilter {
+    fun fromColorAndBlendMode(color: DesignColor, blendMode: BlendMode): AwtColorFilter {
       var keepGray = true
       var keepBrightness = true
       when (blendMode) {
