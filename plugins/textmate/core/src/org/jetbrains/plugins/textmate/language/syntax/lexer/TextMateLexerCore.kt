@@ -191,10 +191,6 @@ class TextMateLexerCore(
         val applyEndPatternLast = isApplyEndPatternLast(lastRule)
         if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentState, endMatch) || lastState == currentState)) {
           val poppedState = stackFrames.last().state
-          //if (poppedState.matchData.matched && !poppedState.matchedEOL) {
-          //   if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
-            //anchorByteOffset = poppedState.matchData.byteRange().end
-          //}
           anchorByteOffset = pushedAnchors.remove(stackFrames.size - 1) ?: (-1).byteOffset()
           stackFrames = stackFrames.removingAt(stackFrames.size - 1)
 
@@ -217,13 +213,14 @@ class TextMateLexerCore(
           localStates.remove(poppedState)
         }
         else if (currentMatch.matched) {
-          pushedAnchors[stackFrames.size] = anchorByteOffset
-          anchorByteOffset = currentMatch.byteRange().end
           val currentRange = currentMatch.charRange(string)
           val startPosition = currentRange.start
           endPosition = currentRange.end
 
           if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
+            // only a begin match moves the \G anchor; a plain match rule keeps it intact
+            pushedAnchors[stackFrames.size] = anchorByteOffset
+            anchorByteOffset = currentMatch.byteRange().end
             val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
             val scopesWithName = openScopeSelector(output, scopes, name, startPosition + lineStartOffset)
 

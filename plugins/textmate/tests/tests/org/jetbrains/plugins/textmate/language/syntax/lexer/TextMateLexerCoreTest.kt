@@ -364,6 +364,40 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `a plain match rule does not move the anchor`() {
+    // \G is anchored at the end of the enclosing rule's begin match;
+    // a plain match rule must not move it (only begin matches do)
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "outer",
+            "begin": "a",
+            "end": "z",
+            "patterns": [
+              { "match": "x", "name": "plain.x" },
+              { "match": "\\Gy", "name": "anchored.y" }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    // directly after the begin match, \G matches
+    assertTokenize(grammar, "ayz", """
+      source.test outer: [0, 1], {a}
+      source.test outer anchored.y: [1, 2], {y}
+      source.test outer: [2, 3], {z}
+    """.trimIndent())
+    // after an intervening match rule, \G no longer matches
+    assertTokenize(grammar, "axyz", """
+      source.test outer: [0, 1], {a}
+      source.test outer plain.x: [1, 2], {x}
+      source.test outer: [2, 4], {yz}
+    """.trimIndent())
+  }
+
+  @Test
   fun `left injection wins the tie against the end pattern`() {
     // "L:" injection matching at the same offset as the end pattern should
     // win over it, so the rule is not closed while the injection consumes its end characters
