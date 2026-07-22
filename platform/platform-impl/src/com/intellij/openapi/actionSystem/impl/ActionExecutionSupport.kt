@@ -21,7 +21,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.keymap.impl.ActionProcessor
@@ -146,7 +146,7 @@ internal suspend fun runOnEdtWithConditionalWriteIntentSuspending(action: AnActi
     Dispatchers.EDT
   }
   else {
-    Dispatchers.UI
+    Dispatchers.UiWithModelAccess
   }
   withContext(dispatcher) {
     computation()

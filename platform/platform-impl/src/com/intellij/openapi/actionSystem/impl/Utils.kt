@@ -48,7 +48,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readActionUndispatched
@@ -387,6 +387,13 @@ object Utils {
     }
     return action.templatePresentation.isRWLockRequired
   }
+
+  fun <T> runWithLocksForbidden(reason: String, runnable: () -> T): T {
+    return ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
+      "The Read/Write lock is disallowed for $reason because `Presentation#isRWLockRequired` set to `false`.\n" +
+                "Actions that require locks hinder responsiveness of the IDE. Consider refactoring your action so that it does not require the Read/Write lock", LOG::error, runnable)
+  }
+
 
   /**
    * The preferred way to synchronously expand a group while pumping EDT intended for synchronous clients
@@ -1209,7 +1216,7 @@ object Utils {
     get() = Dispatchers.EDT[CoroutineDispatcher]!!
 
   private val nonLockingEdtCoroutineDispatcher: CoroutineDispatcher
-    get() = Dispatchers.UI[CoroutineDispatcher]!!
+    get() = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
 }
 
 @ApiStatus.Internal

@@ -185,7 +185,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     if (isEDT || !shallEDT) {
       val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
       return spanBuilder.useWithScope(EmptyCoroutineContext) {
-        conditionalUndispatchedReadAction(isRWLockRequired) {
+        conditionalUndispatchedReadAction(readableRepresentation(opElement.action, opElement.opName), isRWLockRequired) {
           val start = System.nanoTime()
           try {
             ProhibitAWTEvents.start(operationName).use {
@@ -206,18 +206,26 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  private suspend inline fun <R> conditionalUndispatchedReadAction(needRwLock: Boolean, noinline block: () -> R): R {
+  private fun readableRepresentation(action: AnAction?, opName: String): String {
+    return if (action != null) {
+      "an action $action"
+    } else {
+      opName
+    }
+  }
+
+  private suspend inline fun <R> conditionalUndispatchedReadAction(reason: String, needRwLock: Boolean, noinline block: () -> R): R {
     return if (!needRwLock) {
-      block()
+      Utils.runWithLocksForbidden(reason, block)
     } else {
       readActionUndispatchedForActionExpand(block)
     }
   }
 
   @Suppress("NOTHING_TO_INLINE")
-  private inline fun <R> conditionalBlockingReadAction(needRwLock: Boolean, noinline block: () -> R): R {
+  private inline fun <R> conditionalBlockingReadAction(reason: String, needRwLock: Boolean, noinline block: () -> R): R {
     return if (!needRwLock) {
-      block()
+      Utils.runWithLocksForbidden(reason, block)
     } else {
       runReadActionBlocking(block)
     }
@@ -235,7 +243,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     var edtTraces: List<Throwable>? = null
     val start0 = System.nanoTime()
     return try {
-      computeOnEdt(isRwLockRequired) {
+      computeOnEdt(readableRepresentation(opElement.action, opElement.opName), isRwLockRequired) {
         val start = System.nanoTime()
         edtCallsCount++
         edtWaitNanos += start - start0
@@ -312,7 +320,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         group, dataContext, place, uiKind, presentationFactory, asUpdateSession()) {
         removeUnnecessarySeparators(doExpandActionGroup(group, false))
       }
-      computeOnEdt(Utils.isLockRequired(group)) {
+      computeOnEdt(group.toString(), isLockRequired(group)) {
         applyPresentationChanges()
       }
       return result
@@ -502,8 +510,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     return event
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private suspend fun <T> computeOnEdt(isRwLockRequired: Boolean, supplier: () -> T): T {
+  private suspend fun <T> computeOnEdt(reason: String, isRwLockRequired: Boolean, supplier: () -> T): T {
     // We need the block below to escape the current scope on WA to let the parent RA free
     // while the EDT block is still waiting to be cancelled in the EDT queue.
     // The target scope must not be cancelled by `AwaitSharedData` exception (SupervisorJob)!
@@ -512,7 +519,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       currentCoroutineContext().minusKey(Job) +
       CoroutineName("computeOnEdt ($place)") + Utils.adaptToLockPolicy(edtDispatcher, isRwLockRequired)) {
       // explicit acquisition of RA here is needed for fast-track update sessions
-      conditionalBlockingReadAction(isRwLockRequired, supplier)
+      conditionalBlockingReadAction(reason, isRwLockRequired, supplier)
     }
     try {
       return deferred.await()
