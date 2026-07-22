@@ -54,11 +54,4 @@ class ToolWindowEditorTabFile(
   internal fun invalidateEditorTabFile() {
     isValid = false // mark invalid, so file does not appear in the recent files
   }
-
-  internal fun updatePresentation(descriptor: ToolWindowEditorTabDescriptor) {
-    if (name != descriptor.title) {
-      rename(null, descriptor.title)
-    }
-    tabIcon = descriptor.icon
-  }
 }

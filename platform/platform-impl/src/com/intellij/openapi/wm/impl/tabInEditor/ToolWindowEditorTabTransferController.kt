@@ -100,22 +100,6 @@ internal class ToolWindowEditorTabTransferController(
     file.invalidateEditorTabFile()
   }
 
-  @RequiresEdt
-  fun updateEditorTabPresentation(
-    toolWindow: ToolWindow,
-    content: Content,
-    descriptor: ToolWindowEditorTabDescriptor,
-  ) {
-    val fileEditorManager = FileEditorManager.getInstance(project)
-    val file = fileEditorManager.openFiles
-                 .filterIsInstance<ToolWindowEditorTabFile>()
-                 .firstOrNull { it.toolWindowId == toolWindow.id && it.content === content }
-               ?: return
-
-    file.updatePresentation(descriptor)
-    fileEditorManager.updateFilePresentation(file)
-  }
-
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {
     return ToolWindowEditorTabSupportUtil.getSupport(toolWindow.id)
   }

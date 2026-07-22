@@ -13,14 +13,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupportUtil
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.mapStateIn
@@ -549,25 +546,12 @@ class TerminalViewImpl(
   private fun listenApplicationTitleChanges() {
     coroutineScope.launch {
       sessionModel.terminalState.collect { state ->
-        if (title.applicationTitle == state.windowTitle) {
-          return@collect
-        }
-
         title.change {
           @Suppress("HardCodedStringLiteral")
           applicationTitle = state.windowTitle
         }
-
-        withContext(Dispatchers.EDT) {
-          updateTerminalEditorTabsPresentation()
-        }
       }
     }
-  }
-
-  private fun updateTerminalEditorTabsPresentation() {
-    val toolWindow = project.serviceIfCreated<ToolWindowManager>()?.getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return
-    ToolWindowEditorTabSupportUtil.getSupport(toolWindow.id)?.updateAllEditorTabsPresentation(project, toolWindow)
   }
 
   /** Logic that can be performed asynchronously with typing */
