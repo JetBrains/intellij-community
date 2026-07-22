@@ -19,7 +19,8 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
     assertEquals(1, getPopupActionCount(markers))
   }
 
-  fun `test code span run marker is not shown for absent Java class`() {
+  fun `test code span run marker is not shown for non-runnable Java class`() {
+    myFixture.addClass("public class JavaClass {}")
     configureMarkdown("`JavaClass`")
 
     val markers = findRunMarkers()
