@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.Nls
@@ -94,7 +93,7 @@ class SegmentedButtonTest {
       }
     }
 
-    assertThrows<UiDslException> {
+    assertThrows<IllegalStateException> {
       panel {
         row {
           segmentedButton(listOf(1)) { }

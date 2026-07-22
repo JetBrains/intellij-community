@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.RightGap
@@ -210,9 +209,7 @@ internal class SegmentedButtonImpl<T>(
     val result = ItemPresentationImpl()
     result.renderer(item)
 
-    if (result.text.isNullOrEmpty() && result.icon == null) {
-      throw UiDslException("Empty text in segmented button presentation is not allowed")
-    }
+    check(!(result.text.isNullOrEmpty() && result.icon == null)) { "Empty text in segmented button presentation is not allowed" }
 
     return result
   }

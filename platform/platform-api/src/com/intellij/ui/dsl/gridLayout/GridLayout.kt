@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout
 
-import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.checkComponent
-import com.intellij.ui.dsl.checkConstraints
+import com.intellij.ui.dsl.builder.impl.checkConstraints
+import com.intellij.ui.dsl.builder.impl.checkJComponent
+import com.intellij.ui.dsl.builder.impl.checkNull
+import com.intellij.ui.dsl.builder.impl.failInDebugOrLog
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import com.intellij.ui.dsl.gridLayout.impl.SizeConstrainsData
 import org.jetbrains.annotations.ApiStatus
@@ -43,10 +44,10 @@ class GridLayout : LayoutManager2 {
   var respectMinimumSize: Boolean = false
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
-    val checkedConstraints = checkConstraints(constraints)
-    val checkedComponent = checkComponent(comp)
+    checkConstraints(constraints)
+    checkJComponent(comp)
 
-    (checkedConstraints.grid as GridImpl).register(checkedComponent, checkedConstraints)
+    (constraints.grid as GridImpl).register(comp, constraints)
   }
 
   fun setComponentConstrains(comp: JComponent, constraints: Constraints) {
@@ -57,25 +58,23 @@ class GridLayout : LayoutManager2 {
    * Creates a sub grid in the specified cell
    */
   fun addLayoutSubGrid(constraints: Constraints): Grid {
-    if (constraints.widthGroup != null) {
-      throw UiDslException("Sub-grids cannot use widthGroup: ${constraints.widthGroup}")
-    }
+    checkNull(constraints.widthGroup) { "Sub-grids cannot use widthGroup: ${constraints.widthGroup}" }
 
     return (constraints.grid as GridImpl).registerSubGrid(constraints)
   }
 
   override fun addLayoutComponent(name: String?, comp: Component?) {
-    throw UiDslException("Method addLayoutComponent(name: String?, comp: Component?) is not supported")
+    error("Method addLayoutComponent(name: String?, comp: Component?) is not supported")
   }
 
   override fun removeLayoutComponent(comp: Component?) {
-    if (!_rootGrid.unregister(checkComponent(comp))) {
-      throw UiDslException("Component has not been registered: $comp")
+    if (!_rootGrid.unregister(checkJComponent(comp))) {
+      error("Component has not been registered: $comp")
     }
   }
 
   override fun preferredLayoutSize(parent: Container?): Dimension {
-    requireNotNull(parent)
+    checkNotNull(parent)
 
     synchronized(parent.treeLock) {
       return getPreferredSizeData(parent).preferredSize
@@ -87,7 +86,7 @@ class GridLayout : LayoutManager2 {
       return preferredLayoutSize(parent)
     }
 
-    requireNotNull(parent)
+    checkNotNull(parent)
 
     synchronized(parent.treeLock) {
       return getPreferredSizeData(parent).minimumSize
@@ -98,9 +97,7 @@ class GridLayout : LayoutManager2 {
     Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)
 
   override fun layoutContainer(parent: Container?) {
-    if (parent == null) {
-      throw UiDslException("Parent is null")
-    }
+    checkNotNull(parent) { "Parent is null" }
 
     synchronized(parent.treeLock) {
       _rootGrid.layout(parent.width, parent.height, parent.insets, respectMinimumSize)
@@ -136,19 +133,19 @@ class GridLayout : LayoutManager2 {
 fun JComponent.setVisualPadding(visualPaddings: UnscaledGaps) {
   val parent = parent
   if (parent == null) {
-    UiDslException.error("Parent is null: $this")
+    failInDebugOrLog("Parent is null: $this")
     return
   }
 
   val layout = parent.layout as? GridLayout
   if (layout == null) {
-    UiDslException.error("GridLayout was expected, found: ${parent.layout}")
+    failInDebugOrLog("GridLayout was expected, found: ${parent.layout}")
     return
   }
 
   val constraints = layout.getConstraints(this)
   if (constraints == null) {
-    UiDslException.error("Component is not found in the layout: $this")
+    failInDebugOrLog("Component is not found in the layout: $this")
     return
   }
 

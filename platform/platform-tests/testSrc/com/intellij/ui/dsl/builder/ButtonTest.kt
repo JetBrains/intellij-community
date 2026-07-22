@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.ui.components.JBCheckBox
+import org.junit.Before
 import org.junit.Test
 import kotlin.random.Random
 import kotlin.test.assertEquals
@@ -26,6 +28,11 @@ class ButtonTest {
     set(value) {
       booleanNoBackingField = value
     }
+
+  @Before
+  fun before() {
+    TestApplicationManager.getInstance()
+  }
 
   @Test
   fun testBindingInitialization() {
