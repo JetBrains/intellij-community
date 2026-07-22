@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -59,15 +60,19 @@ abstract class AbstractCommitter(
         suspendCancellableCoroutine { cont ->
           ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
             progress(message("message.text.commit.progress"))
-            try {
-              // No ProgressManager.runProcess here — we are already inside a coroutine progress context with the `currentReporter`
-              runCommitTask(useCustomPostRefresh) {
-                commit()
+            runBlockingCancellable {
+              val job = launch {
+                try {
+                  runCommitTask(useCustomPostRefresh) {
+                    commit()
+                  }
+                  cont.resume(Unit)
+                }
+                catch (t: Throwable) {
+                  cont.resumeWithException(t)
+                }
               }
-              cont.resume(Unit)
-            }
-            catch (t: Throwable) {
-              cont.resumeWithException(t)
+              cont.invokeOnCancellation { job.cancel() }
             }
           }
         }
