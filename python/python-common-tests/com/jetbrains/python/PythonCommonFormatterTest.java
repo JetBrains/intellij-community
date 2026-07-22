@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -684,6 +685,12 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   // PY-14962
   public void testAlignDictLiteralOnColon() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignments() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTest();
   }
 
