@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -50,6 +52,8 @@ abstract class AbstractK2CheckDescriptorMultiModuleMoveTest : KotlinMultiFileTes
                             val descriptor = moveModel.toDescriptor()
                             checkMoveDescriptor(descriptor)
                             descriptor.refactoringProcessor().run()
+                            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+                            NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
                         }
                     }
                 })
