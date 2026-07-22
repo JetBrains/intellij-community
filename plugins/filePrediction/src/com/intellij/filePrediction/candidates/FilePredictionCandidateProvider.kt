@@ -16,7 +16,8 @@ interface FilePredictionCandidateProvider {
   fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile>
 }
 
-internal abstract class FilePredictionBaseCandidateProvider(private val weight: Int) : FilePredictionCandidateProvider {
+@ApiStatus.Internal
+abstract class FilePredictionBaseCandidateProvider(private val weight: Int) : FilePredictionCandidateProvider {
   override fun getWeight(): Int = weight
 
   internal fun addWithLimit(from: Iterator<VirtualFile>,

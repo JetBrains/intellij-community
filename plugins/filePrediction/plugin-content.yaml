@@ -9,3 +9,6 @@
 - name: lib/modules/intellij.filePrediction.java.jar
   contentModules:
   - name: intellij.filePrediction.java
+- name: lib/modules/intellij.filePrediction.vcs.jar
+  contentModules:
+  - name: intellij.filePrediction.vcs

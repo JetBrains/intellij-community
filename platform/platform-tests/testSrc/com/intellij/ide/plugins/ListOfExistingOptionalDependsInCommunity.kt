@@ -20,7 +20,4 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "TestNG-J",
     "JUnit",
   ),
-  "com.jetbrains.filePrediction" to setOf( // IJPL-249466
-    "Git4Idea",
-  ),
 )
