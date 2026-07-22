@@ -61,7 +61,11 @@ internal class TracePiiFilteringEventLogger(
 }
 
 internal object TraceLlmPiiDataFilter {
-  private const val LLM_PARAMETERS_RULE = "util#llm_parameters"
+  private val LLM_PARAMETERS_RULES = listOf(
+    "util#llm_parameters",
+    "util#llm_code_parameters",
+    "util#llm_text_parameters",
+  )
   private val llmFieldPathsResolver = TraceLlmFieldPathsResolver()
 
   fun createFilter(recorderOptionsProvider: RecorderOptionProvider?): (EventLogGroup, String, Map<String, Any>) -> Map<String, Any> {
@@ -273,7 +277,9 @@ internal object TraceLlmPiiDataFilter {
     }
 
     private fun shouldBePiiFiltered(validationRules: List<String>): Boolean {
-      return validationRules.any { rule -> rule.contains(LLM_PARAMETERS_RULE) }
+      return validationRules.any { rule ->
+        LLM_PARAMETERS_RULES.any { ruleName -> rule.contains(ruleName) }
+      }
     }
   }
 }
