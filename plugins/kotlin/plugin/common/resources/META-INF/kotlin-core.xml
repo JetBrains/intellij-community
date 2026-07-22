@@ -218,6 +218,11 @@
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$Resource"/>
     <projectStructure.sourceRootEditHandler implementation="org.jetbrains.kotlin.idea.roots.ui.KotlinModuleSourceRootEditHandler$TestResource"/>
 
+    <advancedSetting
+            id="kotlin.enable.autoconfiguration"
+            default="true"
+            groupKey="advanced.settings.kotlin"
+            bundle="messages.KotlinBundle"/>
 
     <registryKey
             key="kotlin.code-vision.usages"

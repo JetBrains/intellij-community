@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -32,6 +33,10 @@ import kotlin.io.path.relativeTo
 abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
+        if (!AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration")) {
+            return ConfigureKotlinStatus.NON_APPLICABLE
+        }
+
         val module = moduleSourceRootGroup.baseModule
         if (!isApplicable(module)) {
             return ConfigureKotlinStatus.NON_APPLICABLE

@@ -21,7 +21,6 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
-import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorNotificationPanel
@@ -37,7 +36,6 @@ import java.nio.file.Path
 @TestApplication
 class KotlinSetupEnvironmentNotificationProviderJpsTest {
     private val disposableFixture = disposableFixture()
-    private val notificationRegistryFixture = registryKeyFixture("kotlin.not.configured.show.notification") { setValue(true) }
     private val projectFixture = projectFixture(openAfterCreation = true)
     private val moduleFixture = projectFixture.moduleFixture("main", JavaModuleType.getModuleType().id)
     private val sourceRootFixture = moduleFixture.sourceRootFixture(pathFixture = projectFixture.pathInProjectFixture(Path.of("src")))
@@ -48,7 +46,6 @@ class KotlinSetupEnvironmentNotificationProviderJpsTest {
 
     @BeforeEach
     fun setUp() {
-        notificationRegistryFixture.get()
         setUpProjectJdk()
     }
 

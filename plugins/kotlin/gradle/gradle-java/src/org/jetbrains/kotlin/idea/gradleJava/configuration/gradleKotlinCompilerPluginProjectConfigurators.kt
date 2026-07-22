@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiFile
@@ -32,10 +33,9 @@ import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
-    override fun isApplicable(module: Module): Boolean {
-        val topLevelBuildScriptPsiFile = module.getTopLevelBuildScriptPsiFile()
-        return topLevelBuildScriptPsiFile != null
-    }
+    override fun isApplicable(module: Module): Boolean =
+        AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration") &&
+                module.getTopLevelBuildScriptPsiFile() != null
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project

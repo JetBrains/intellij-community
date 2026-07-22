@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.EditorNotifications
@@ -238,6 +239,8 @@ class KotlinProjectConfigurationService(private val project: Project, val corout
 
     @ApiStatus.Internal
     suspend fun autoConfigure(module: Module): Boolean {
+        if (!AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration")) return false
+
         val autoConfigurator = readAction {
             KotlinProjectConfigurator.EP_NAME.extensionList
                 .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }

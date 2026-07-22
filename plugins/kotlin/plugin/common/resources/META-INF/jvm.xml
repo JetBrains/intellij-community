@@ -6,10 +6,6 @@
             defaultValue="https://central.sonatype.com/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-stdlib&amp;core=gav&amp;rows=20&amp;wt=json&amp;sort=v+desc"
             restartRequired="false"/>
 
-    <registryKey key="kotlin.not.configured.show.notification"
-                 defaultValue="true"
-                 description="Show notification about Kotlin missing configuration"/>
-
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

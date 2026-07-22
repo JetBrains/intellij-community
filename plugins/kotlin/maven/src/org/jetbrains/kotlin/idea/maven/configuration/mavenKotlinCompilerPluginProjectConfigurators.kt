@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.maven.configuration
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopes
@@ -34,7 +35,8 @@ import kotlin.io.path.relativeTo
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
     override fun isApplicable(module: Module): Boolean =
-        module.findSuitablePomFileWithPlugin(kotlinPluginId) != null
+        AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration") &&
+            module.findSuitablePomFileWithPlugin(kotlinPluginId) != null
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
