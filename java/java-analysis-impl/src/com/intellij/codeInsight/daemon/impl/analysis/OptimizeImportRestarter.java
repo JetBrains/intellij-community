@@ -76,7 +76,7 @@ public final class OptimizeImportRestarter implements Disposable {
 
   private void clear() {
     synchronized (queue) {
-      queue.clear();
+      drainQueue();
       for (Future<?> future : scheduledFutures) {
         future.cancel(false);
       }
@@ -85,12 +85,7 @@ public final class OptimizeImportRestarter implements Disposable {
   }
 
   private void onDaemonFinished() {
-    List<OptimizeRequest> requests;
-
-    synchronized (queue) {
-      requests = new ArrayList<>(queue);
-      queue.clear();
-    }
+    List<OptimizeRequest> requests = drainQueue();
     for (OptimizeRequest request : requests) {
       if (myProject.isDisposed()) {
         break;
@@ -121,6 +116,14 @@ public final class OptimizeImportRestarter implements Disposable {
           .submit(AppExecutorUtil.getAppExecutorService());
       scheduledFutures.add(future);
       future.onProcessed(_->scheduledFutures.remove(future));
+    }
+  }
+
+  private @NotNull List<OptimizeRequest> drainQueue() {
+    synchronized (queue) {
+      List<OptimizeRequest> requests = new ArrayList<>(queue);
+      queue.clear();
+      return requests;
     }
   }
 
