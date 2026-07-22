@@ -191,9 +191,12 @@ class WorkspaceModelJsonDumpTest {
       val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
       project.workspaceModel.update {
         val urls = listOf("1.txt", "2.kt", "3.cpp").map { name -> vfuManager.getOrCreateFromUrl("file:///someDir/subDir/$name") }
+        val strings = listOf("a", "a", "b", "c", "b")
         it.addEntity(BaseTestEntity(
           "base",
           listOf(ImplClass1("impl1", 1), ImplClass2("impl2", "name"), ImplClass1("impl1", 2)),
+          strings,
+          strings.toSet(),
           NonPersistentEntitySource
         ) {
           this.singleChild = SingleChild("some data", NonPersistentEntitySource)
@@ -247,6 +250,20 @@ private const val complexEntityExpected = """{
       "string": "impl1",
       "version": "2"
     }
+  ],
+  "stringList_Count": 5,
+  "stringList": [
+    "a",
+    "a",
+    "b",
+    "c",
+    "b"
+  ],
+  "stringSet_Count": 3,
+  "stringSet": [
+    "a",
+    "b",
+    "c"
   ],
   "Children_ChildEntity_Count": 1,
   "Children_ChildEntity": [

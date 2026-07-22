@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 class WorkspaceModelJsonDumpSerializer {
   // private val encounteredClasses: MutableMap<String, StorageClassMetadata> = mutableMapOf()
 
-  private fun JsonObjectBuilder.putList(propertyName: String, valueList: List<Any>, valueTypeMetadata: ValueTypeMetadata) {
+  private fun JsonObjectBuilder.putListOrSet(propertyName: String, valueList: Collection<Any>, valueTypeMetadata: ValueTypeMetadata) {
     put("${propertyName}_Count", valueList.size)
     if (valueList.isEmpty()) {
       putJsonArray(propertyName) {}
@@ -165,8 +165,8 @@ class WorkspaceModelJsonDumpSerializer {
         }
 
         @Suppress("UNCHECKED_CAST")
-        val valueList = propertyValue as List<Any>
-        putList(propertyName, valueList, valueTypeMetadata)
+        val valueList = propertyValue as Collection<Any>
+        putListOrSet(propertyName, valueList, valueTypeMetadata)
       }
     }
   }
