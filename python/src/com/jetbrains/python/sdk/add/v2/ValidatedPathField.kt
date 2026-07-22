@@ -105,6 +105,7 @@ private object ValidationInProgressExtension : ExtendableTextComponent.Extension
 internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   val fileSystem: FileSystem<P>,
   val pathValidator: PathValidator<T, P, VP>,
+  val canBeEdited: Boolean,
   browseFolderDialogTitle: @Nls String,
   isFileSelectionMode: Boolean,
 ) : TextFieldWithBrowseButton() {
@@ -145,6 +146,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   }
 
   init {
+    setButtonVisible(canBeEdited)
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         textInputFlow.value = text
@@ -190,7 +192,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         }
         else {
           editorMode.store(false)
-          isEnabled = true
+          isEnabled = canBeEdited
 
           pathValidator.backProperty.get()?.validationResult?.let { validationResult ->
             validationResult
@@ -318,6 +320,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   installAction: ActionLink? = null,
   isFileSelectionMode: Boolean = true,
   venvExistenceValidationState: ObservableProperty<VenvExistenceValidationState>? = null,
+  canBeEdited: Boolean = true,
 ): ValidatedPathField<T, P, VP> {
 
   val validatedPathField = ValidatedPathField(
@@ -325,6 +328,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     pathValidator = pathValidator,
     browseFolderDialogTitle = labelText,
     isFileSelectionMode = isFileSelectionMode,
+    canBeEdited = canBeEdited,
   )
 
   if (missingExecutableText != null && installAction != null && !fileSystem.isReadOnly) {

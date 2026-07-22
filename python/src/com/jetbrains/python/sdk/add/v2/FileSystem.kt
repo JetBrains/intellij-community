@@ -282,7 +282,12 @@ data class EelFileSystem(
   }
 
   override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel {
-    return PathHolder.Eel(pythonHomeOrBinary.path.resolvePythonHome())
+    val path = pythonHomeOrBinary.path
+    val fileName = path.fileName?.toString()
+    val parentName = path.parent?.fileName?.toString()
+    val isPythonBinary = fileName?.startsWith("python", ignoreCase = true) == true &&
+                         (parentName == "bin" || parentName.equals("scripts", ignoreCase = true))
+    return if (isPythonBinary) PathHolder.Eel(path.resolvePythonHome()) else pythonHomeOrBinary
   }
 
   override fun getVenvName(pythonHome: PathHolder.Eel): String? {
