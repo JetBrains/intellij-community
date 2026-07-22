@@ -1530,7 +1530,6 @@ f:com.intellij.ide.plugins.PluginNode
 - getVendorUrl():java.lang.String
 - hashCode():I
 - isConverted():Z
-- isIncomplete():Z
 - isLicenseOptional():Z
 - isLoaded():Z
 - setBugtrackerUrl(java.lang.String):V

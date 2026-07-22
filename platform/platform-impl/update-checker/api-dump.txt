@@ -8,10 +8,6 @@ f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt
 f:com.intellij.openapi.updateSettings.impl.UpdateChecker
 - sf:INSTANCE:com.intellij.openapi.updateSettings.impl.UpdateChecker
 - sf:NOTIFICATIONS:com.intellij.notification.NotificationGroup
-- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map):V
-- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber):V
-- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):V
-- bs:checkAndPrepareToInstall$default(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):V
 - sf:getDisabledToUpdate():java.util.Set
 - sf:getDisabledToUpdatePlugins():java.util.Set
 - f:getExcludedFromUpdateCheckPlugins():java.util.HashSet

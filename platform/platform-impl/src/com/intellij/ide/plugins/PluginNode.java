@@ -576,6 +576,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return null;
   }
 
+  /**
+   * @return if this plugin description is provided by a custom repository with simple format of description which misses some data
+   * @deprecated as describing de facto obsolete logic
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public boolean isIncomplete() {
     return myIncomplete;
   }

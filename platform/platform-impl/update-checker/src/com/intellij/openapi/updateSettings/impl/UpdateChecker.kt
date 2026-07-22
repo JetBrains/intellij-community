@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginStringSetFile
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
@@ -36,7 +35,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -58,7 +56,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CancellationException
@@ -177,7 +174,6 @@ object UpdateChecker {
   private val productDataLock = ReentrantLock()
   private var productDataUrl: Url? = null
   private var productDataCache: SoftReference<Product?>? = null
-  private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
 
   /**
    * Adding a plugin ID to this collection allows excluding a plugin from a regular update check.
@@ -483,46 +479,26 @@ object UpdateChecker {
     return ExternalPluginResults(result, errors)
   }
 
+  @ApiStatus.Internal
   @Throws(IOException::class)
   @JvmOverloads
   @JvmStatic
   @RequiresBackgroundThread
-  fun checkAndPrepareToInstall(
-    originalDownloader: PluginDownloader,
+  fun checkDownloader(
+    downloader: PluginDownloader,
     state: InstalledPluginsState,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
     buildNumber: BuildNumber? = null,
-    indicator: ProgressIndicator? = null,
   ) {
-    val pluginId = originalDownloader.id
-    val pluginVersion = originalDownloader.pluginVersion
+    val pluginId = downloader.id
+    val pluginVersion = downloader.pluginVersion
     val installedPlugin = UpdateCheckerPluginsFacade.getInstance().getPlugin(pluginId)
     if (installedPlugin == null
         || pluginVersion == null
         || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
-            && allowedUpgrade(installedPlugin, originalDownloader.descriptor))
+            && allowedUpgrade(installedPlugin, downloader.descriptor))
         || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
-            && allowedDowngrade(installedPlugin, originalDownloader.descriptor))) {
-      val oldDownloader = ourUpdatedPlugins[pluginId]
-      val downloader = if (UpdateCheckerPluginsFacade.getInstance().isDisabled(pluginId)) {
-        originalDownloader
-      }
-      else if (oldDownloader == null
-               || (VersionComparatorUtil.compare(pluginVersion, oldDownloader.pluginVersion) > 0
-                   && allowedUpgrade(installedPlugin, oldDownloader.descriptor))
-               || (VersionComparatorUtil.compare(pluginVersion, oldDownloader.pluginVersion) < 0 &&
-                   allowedDowngrade(installedPlugin, oldDownloader.descriptor))) {
-        val descriptor = originalDownloader.descriptor
-        if (descriptor is PluginNode && descriptor.isIncomplete) {
-          originalDownloader.prepareToInstall(indicator ?: EmptyProgressIndicator())
-          ourUpdatedPlugins[pluginId] = originalDownloader
-        }
-        originalDownloader
-      }
-      else {
-        oldDownloader
-      }
-
+            && allowedDowngrade(installedPlugin, downloader.descriptor))) {
       val descriptor = downloader.descriptor
       if (UpdateCheckerPluginsFacade.getInstance().isCompatible(descriptor, downloader.buildNumber)
           && !state.wasUpdated(descriptor.pluginId)) {
