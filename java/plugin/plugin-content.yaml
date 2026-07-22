@@ -299,6 +299,9 @@
       jmc-flightrecorder:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-flightrecorder/8/jmc-flightrecorder-8.jar
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-common/8/jmc-common-8.jar
+- name: lib/modules/intellij.profiler.ultimate.vcs.jar
+  contentModules:
+  - name: intellij.profiler.ultimate.vcs
 - name: lib/modules/intellij.uiDesigner.jar
   contentModules:
   - name: intellij.uiDesigner
