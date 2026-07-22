@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class IDESettingsFUSCollector : ProjectUsagesCollector() {
-    override fun getGroup() = GROUP
+    override fun getGroup(): EventLogGroup = GROUP
 
-    override fun getMetrics(project: Project): Set<MetricEvent> {
+    override suspend fun collect(project: Project): Set<MetricEvent> {
         if (KotlinPlatformUtils.isAndroidStudio) {
             return emptySet()
         }
@@ -34,7 +34,6 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
     }
 
     private val GROUP = EventLogGroup("kotlin.ide.settings", 5)
-
 
     // addUnambiguousImportsOnTheFly Event
     private val unambiguousImportsEvent =

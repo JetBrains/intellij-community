@@ -56,11 +56,9 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
         UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN
     )
 
-    override fun requiresReadAccess(): Boolean = true
-
     override fun getGroup(): EventLogGroup = GROUP
 
-    override fun getMetrics(project: Project): Set<MetricEvent> {
+    override suspend fun collect(project: Project): Set<MetricEvent> {
         val receiptFile = getReceiptFile(project) ?: return emptySet()
         val wizardReceipt = readReceiptFile(receiptFile) ?: return emptySet()
 

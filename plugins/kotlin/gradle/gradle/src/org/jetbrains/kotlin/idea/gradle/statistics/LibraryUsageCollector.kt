@@ -4,8 +4,8 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -27,8 +27,6 @@ abstract class LibraryUsagesCollector(
     private val librariesToScanFor: Set<String>
 ) : ProjectUsagesCollector() {
     private val GROUP = EventLogGroup(eventGroupId, version)
-
-    override fun requiresReadAccess(): Boolean = true
 
     override fun getGroup(): EventLogGroup = GROUP
 
@@ -70,20 +68,19 @@ abstract class LibraryUsagesCollector(
         return UsedLibrary(artifactCoordinates, libraryDefinition.version)
     }
 
-    override fun getMetrics(project: Project): Set<MetricEvent> {
+    override suspend fun collect(project: Project): Set<MetricEvent> {
         val allLibraries = mutableSetOf<UsedLibrary>()
-        for (module in project.modules) {
-            // check for cancellation to avoid freezes in large projects
-            ProgressManager.checkCanceled()
+        readAction {
+            for (module in project.modules) {
+                val gradleModuleData = GradleUtil.findGradleModuleData(module) ?: continue
+                val gradleProjectData = ExternalSystemApiUtil.find(gradleModuleData, KotlinGradleProjectData.KEY)?.data
+                // If the module does not have the Kotlin plugin (either directly or through KMP), then we skip it
+                if (gradleProjectData == null || (!gradleProjectData.isHmpp && !gradleProjectData.hasKotlinPlugin)) continue
 
-            val gradleModuleData = GradleUtil.findGradleModuleData(module) ?: continue
-            val gradleProjectData = ExternalSystemApiUtil.find(gradleModuleData, KotlinGradleProjectData.KEY)?.data
-            // If the module does not have the Kotlin plugin (either directly or through KMP), then we skip it
-            if (gradleProjectData == null || (!gradleProjectData.isHmpp && !gradleProjectData.hasKotlinPlugin)) continue
-
-            val moduleRoots = ModuleRootManager.getInstance(module)
-            moduleRoots.orderEntries.filterIsInstance<LibraryOrderEntry>()
-                .mapNotNullTo(allLibraries, ::parseLibrary)
+                val moduleRoots = ModuleRootManager.getInstance(module)
+                moduleRoots.orderEntries.filterIsInstance<LibraryOrderEntry>()
+                    .mapNotNullTo(allLibraries, ::parseLibrary)
+            }
         }
         return allLibraries.mapTo(mutableSetOf()) { USED_LIBRARY.metric(it.library, it.version) }
     }

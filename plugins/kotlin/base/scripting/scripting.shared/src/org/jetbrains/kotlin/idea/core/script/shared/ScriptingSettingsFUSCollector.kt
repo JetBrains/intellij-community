@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
-    override fun getMetrics(project: Project): Set<MetricEvent> {
+    override suspend fun collect(project: Project): Set<MetricEvent> {
         if (KotlinPlatformUtils.isAndroidStudio) {
             return emptySet()
         }
