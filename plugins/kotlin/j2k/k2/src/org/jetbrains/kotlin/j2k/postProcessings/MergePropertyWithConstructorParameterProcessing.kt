@@ -3,12 +3,15 @@
 package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -47,6 +50,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.asAssignment
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
@@ -185,7 +189,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
 
         initialization.assignment.getExplicitLabelComment()?.delete()
         initialization.assignment.delete()
-        commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
+        commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(restoreCommentsTarget))
     }
 
     private fun ConstructorParameterInitialization.mergePropertyAndConstructorParameter() {
@@ -200,7 +204,13 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
             parameter.addModifier(visibilityModifier)
         }
 
-        val commentSaver = CommentSaver(property)
+        // CommentSaver(property) alone only captures comments that are descendants of `property`. Other
+        // processings (e.g. K2ConvertGettersAndSettersToPropertyProcessing) can leave a property's
+        // getter/setter comments as preceding SIBLINGS in the class body instead, so also pull those in.
+        val firstLeadingComment = property.siblings(forward = false, withSelf = false)
+            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+            .lastOrNull { it is PsiComment } ?: property
+        val commentSaver = CommentSaver(PsiChildRange(firstLeadingComment, property))
 
         parameter.annotationEntries.forEach {
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER)
@@ -216,8 +226,17 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
             }
         }
 
-        property.delete()
-        commentSaver.restore(parameter, forceAdjustIndent = false)
+        val hasLeadingComments = firstLeadingComment != property
+        if (hasLeadingComments) {
+            property.parent.deleteChildRange(firstLeadingComment, property)
+        } else {
+            property.delete()
+        }
+        // A lone trailing comment on the property (no accessor comments merged in alongside it) keeps
+        // its long-standing placement as a leading comment on the parameter. Only preserve it as
+        // trailing when there are also leading comments here to keep distinct from it — otherwise the
+        // property's own comment would be indistinguishable from an accessor's once both are leading.
+        commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(parameter), preserveTrailingComments = hasLeadingComments)
     }
 
     private fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
@@ -241,7 +260,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
                 val commentSaver = CommentSaver(initBlock)
                 initBlock.delete()
                 val target = primaryConstructor ?: this
-                commentSaver.restore(target)
+                commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(target))
             }
         }
     }
@@ -277,7 +296,7 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
         if (body.declarations.isEmpty()) {
             val commentSaver = CommentSaver(body)
             body.delete()
-            commentSaver.restore(resultElement = this)
+            commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(this))
         }
     }
 }

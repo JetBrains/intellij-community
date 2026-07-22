@@ -3,11 +3,12 @@
 package org.jetbrains.kotlin.j2k.k2
 
 // import removed: forbidAnalysis no longer used during application phase
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -85,12 +86,14 @@ internal class K2J2KPostProcessor : PostProcessor {
             for (applier in appliers) {
                 checkCanceled()
                 edtWriteAction {
-                    try {
-                        applier.apply()
-                    } catch (e: ProcessCanceledException) {
-                        throw e
-                    } catch (t: Throwable) {
-                        LOG.error(t)
+                    CodeStyleManager.getInstance(contextElement.project).performActionWithFormatterDisabled {
+                        try {
+                            applier.apply()
+                        } catch (e: ProcessCanceledException) {
+                            throw e
+                        } catch (t: Throwable) {
+                            LOG.error(t)
+                        }
                     }
                 }
             }
@@ -150,6 +153,13 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             // OptimizeImportsProcessing depends on the results of K2ShortenReferenceProcessing,
             // that's why it currently has to be in a separate group: KTIJ-29644
             OptimizeImportsProcessing()
+        )
+    ),
+
+    NamedPostProcessingGroup(
+        KotlinJ2KK2Bundle.message("processing.step.optimizing.imports"),
+        listOf(
+            FormatCodeProcessing()
         )
     )
 )

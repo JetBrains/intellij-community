@@ -63,9 +63,11 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.JKInMemoryFilesSearcher
+import org.jetbrains.kotlin.j2k.PostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.elements
 import org.jetbrains.kotlin.j2k.resolve
 import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -111,6 +113,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -131,37 +134,27 @@ import kotlin.collections.mutableMapOf
  * into a single property, taking into account various complicated rules
  * of what makes a legal Kotlin property (for example, regarding inheritance)
  */
-internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
+internal class K2ConvertGettersAndSettersToPropertyProcessing : PostProcessing {
     private data class ApplicationInfo(
         val converter: ClassConverter,
         val klass: KtClassOrObject,
         val propertiesWithAccessors: List<PropertyWithAccessors>
     )
 
-    // TODO:
-    //  We can't apply for all classes at once, because it breaks inheritance cases.
-    //  K1 version relies on sequential analysis and application to all classes.
-    //  Test: org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverterSingleFileTestGenerated.DetectProperties.testAccessorsImplementInterface
-    private class Applier(private val infos: Set<ApplicationInfo>?) : PostProcessingApplier {
+    private class Applier(private val info: ApplicationInfo) : PostProcessingApplier {
         override fun apply() {
-            if (infos == null) return
-            for ((converter, klass, propertiesWithAccessors) in infos) {
-                // TODO change everything to PSI element pointers
-                converter.convertClass(klass, propertiesWithAccessors)
-            }
-        }
-
-        companion object {
-            val EMPTY = Applier(infos = null)
+            val (converter, klass, propertiesWithAccessors) = info
+            // TODO change everything to PSI element pointers
+            converter.convertClass(klass, propertiesWithAccessors)
         }
     }
 
-    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
+    override fun runProcessing(target: PostProcessingTarget, converterContext: ConverterContext) {
         error("Not supported in K2 J2K")
     }
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
-        val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return Applier.EMPTY }
+    override fun computeAppliers(target: PostProcessingTarget, converterContext: ConverterContext): List<PostProcessingApplier> {
+        val ktElements = target.elements().filterIsInstance<KtElement>().ifEmpty { return emptyList() }
         val psiFactory = KtPsiFactory(converterContext.project)
         val searcher = JKInMemoryFilesSearcher.create(ktElements)
 
@@ -181,7 +174,7 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
                 }
             }
 
-        val classesWithPropertiesData = collector.collectPropertiesData(classes).ifEmpty { return Applier.EMPTY }
+        val classesWithPropertiesData = collector.collectPropertiesData(classes).ifEmpty { return emptyList() }
         val classesWithAccessors = mutableMapOf<KtClassOrObject, List<PropertyWithAccessors>>()
 
         for ((klass, propertiesData) in classesWithPropertiesData) {
@@ -194,11 +187,9 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
 
         val precomputedUsages = calculateUsages(searcher, classesWithAccessors.flatMap { it.value })
         val converter = ClassConverter(searcher, psiFactory, precomputedUsages)
-        val infos = classesWithAccessors.map { (klass, propertiesWithAccessors) ->
-            ApplicationInfo(converter, klass, propertiesWithAccessors)
-        }.toSet()
-
-        return Applier(infos)
+        return classesWithAccessors.map { (klass, propertiesWithAccessors) ->
+            Applier(ApplicationInfo(converter, klass, propertiesWithAccessors))
+        }
     }
 
     private fun calculateUsages(
@@ -732,29 +723,32 @@ private class ClassConverter(
         }
 
         fun removeRealAccessors() {
-            if (realGetter != null) {
-                if (realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
-                    ktProperty.addModifier(ABSTRACT_KEYWORD)
-                    ktGetter.removeModifier(ABSTRACT_KEYWORD)
-                }
-
-                if (ktGetter.isRedundant()) {
-                    realGetter.function.deleteExplicitLabelComments()
-                    val commentSaver = CommentSaver(realGetter.function)
-                    commentSaver.restore(ktProperty)
-                }
-
-                realGetter.function.delete()
+            if (realGetter != null && realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
+                ktProperty.addModifier(ABSTRACT_KEYWORD)
+                ktGetter.removeModifier(ABSTRACT_KEYWORD)
             }
 
+            // Restore the setter's comments first so the getter's end up closer to the property: each
+            // restoreKeepingIndent() call inserts its comments immediately before ktProperty, so
+            // whichever accessor is processed last ends up right next to the property in the output.
             if (realSetter != null) {
                 if (ktSetter?.isRedundant() == true) {
                     realSetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realSetter.function)
-                    commentSaver.restore(ktProperty)
+                    commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(ktProperty))
                 }
 
                 realSetter.function.delete()
+            }
+
+            if (realGetter != null) {
+                if (ktGetter.isRedundant()) {
+                    realGetter.function.deleteExplicitLabelComments()
+                    val commentSaver = CommentSaver(realGetter.function)
+                    commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(ktProperty))
+                }
+
+                realGetter.function.delete()
             }
         }
 
@@ -1007,7 +1001,7 @@ private class ClassConverter(
         val commentSaver = CommentSaver(body)
         getter.addBefore(KtPsiFactory(getter.project).createEQ(), body)
         val newBody = body.replaced(returnedExpression)
-        commentSaver.restore(newBody)
+        commentSaver.restoreKeepingIndent(PsiChildRange.singleElement(newBody))
     }
 }
 
