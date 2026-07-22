@@ -213,6 +213,12 @@ abstract class ProductProperties {
   var alternativeScrambleStubPath: Path? = null
 
   /**
+   * Extra ZKM script directives merged into this product's main scramble run at the
+   * `__SCRAMBLE-INCLUDE__` placeholder, independently of any bundled plugin's co-scramble include.
+   */
+  var additionalScrambleZkmScriptInclude: String? = null
+
+  /**
    * Describes which modules should be included in the product's platform and which plugins should be bundled with the product.
    */
   val productLayout: ProductModulesLayout = ProductModulesLayout()
