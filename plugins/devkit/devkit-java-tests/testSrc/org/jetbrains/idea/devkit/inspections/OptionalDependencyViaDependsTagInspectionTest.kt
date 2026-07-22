@@ -2,7 +2,9 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.TestApplication
@@ -88,4 +90,57 @@ internal class OptionalDependencyViaDependsTagInspectionTest {
       |</idea-plugin>
     """.trimMargin(), true)
   }
+
+  @Test
+  fun `quick fix to convert optional dependency to content module`(): Unit = timeoutRunBlocking(timeout = 20.seconds) {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(projectFixture.get(), true)
+
+    withContext(Dispatchers.EDT) {
+      val pluginXml = fixture.addFileToProject("plugin.xml", """
+      |<idea-plugin>
+      |    <id>plugin</id>
+      |    <depends optional="true<caret>" config-file="optional.xml">anotherPlugin</depends>
+      |</idea-plugin>
+    """.trimMargin())
+      PsiTestUtil.addModule(
+        fixture.project,
+        JavaModuleType.getModuleType(),
+        "optional",
+        fixture.tempDirFixture.findOrCreateDir("optional")
+      )
+
+      fixture.addFileToProject("optional.xml", """
+      |<idea-plugin>
+      |    <actions>
+      |        <action class="com.example.MyAction"/>
+      |    </actions>
+      |</idea-plugin>
+    """.trimMargin())
+      fixture.addFileToProject("optional/com/example/MyAction.java", "package com.example; class MyAction {}")
+      fixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+    }
+    val intention = fixture.findSingleIntention("Convert 'optional.xml' to a content module 'optional'")
+    fixture.launchAction(intention)
+    waitCoroutinesBlocking(getExtractToJpsModuleCoroutineScope(projectFixture.get()), timeoutMs = 3_000)
+
+    fixture.checkResult("""
+      |<idea-plugin>
+      |    <id>plugin</id>
+      |    <content>
+      |        <module name="optional"/>
+      |    </content>
+      |</idea-plugin>
+    """.trimMargin())
+    fixture.checkResult("optional/resources/optional.xml", """
+      |<idea-plugin>
+      |    <dependencies>
+      |        <plugin id="anotherPlugin"/>
+      |    </dependencies>
+      |    <actions>
+      |        <action class="com.example.MyAction"/>
+      |    </actions>
+      |</idea-plugin>
+    """.trimMargin(), true)
+  }
+
 }
