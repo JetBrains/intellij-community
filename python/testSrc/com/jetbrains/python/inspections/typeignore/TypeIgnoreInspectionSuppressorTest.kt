@@ -2,10 +2,8 @@
 package com.jetbrains.python.inspections.typeignore
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.idea.TestFor
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyFinalInspection
@@ -15,7 +13,6 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.inspections.PyTypedDictInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection
 
 class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
 
@@ -226,85 +223,12 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
     """.trimIndent())
   }
 
-  @TestFor(issues = ["PY-90290"])
-  fun testSpecificCodeSuppressesOnlyNamedInspection() {
-    doTestByText("""
-      def foo(x: str):
-          print(2 + 'foo', x.<warning descr="Unresolved attribute reference 'bar' for class 'str'">bar</warning>)  # type: ignore[PyTypeChecker]
-    """)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testPyCharmNamespaceCodeEquivalentToBareCode() {
-    doTestByText("""
-      def foo(x: str):
-          print(2 + 'foo', x.<warning descr="Unresolved attribute reference 'bar' for class 'str'">bar</warning>)  # type: ignore[pycharm:PyTypeChecker]
-    """)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testMultipleSpecificCodesSuppressEach() {
-    doTestByText("""
-      def foo(x: str):
-          print(2 + 'foo', x.bar)  # type: ignore[PyTypeChecker, PyUnresolvedReferences]
-    """)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testBareIgnoreSuppressesNonTypeInspectionWhenLenient() {
-    myFixture.enableInspections(PyUnusedLocalVariableInspection::class.java)
-    doTestByText("""
-      def foo():
-          x = 1  # type: ignore
-          <weak_warning descr="Local variable 'y' value is not used">y</weak_warning> = 1
-    """)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testStrictBareIgnoreSuppressesNothing() {
-    doTestByText("""
-      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)  # type: ignore
-    """, strictCodeCoverage = true)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testStrictSpecificCodeStillSuppresses() {
-    doTestByText("""
-      print(2 + 'foo')  # type: ignore[PyTypeChecker]
-    """, strictCodeCoverage = true)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testStrictForeignCodeSuppressesNothing() {
-    doTestByText("""
-      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)  # type: ignore[attr-defined]
-    """, strictCodeCoverage = true)
-  }
-
-  @TestFor(issues = ["PY-90290"])
-  fun testFileLevelSpecificCodeAppliesPreciselyFileWide() {
-    doTestByText("""
-      # type: ignore[PyUnresolvedReferences]
-      def foo(x: str):
-          print(x.bar)
-          print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)
-    """)
-  }
-
-  private fun doTestByText(notTrimmedText: String, strictCodeCoverage: Boolean = false) {
-    val settings = PyCodeInsightSettings.getInstance()
-    val oldStrict = settings.TYPE_IGNORE_STRICT_CODE_COVERAGE
-    settings.TYPE_IGNORE_STRICT_CODE_COVERAGE = strictCodeCoverage
-    try {
-      val text = notTrimmedText.trimIndent()
-      myFixture.enableInspections(inspections)
-      val currentFile: PsiFile = myFixture.configureByText(PythonFileType.INSTANCE, text)
-      myFixture.checkHighlighting()
-      assertSdkRootsNotParsed(currentFile)
-    }
-    finally {
-      settings.TYPE_IGNORE_STRICT_CODE_COVERAGE = oldStrict
-    }
+  private fun doTestByText(notTrimmedText: String) {
+    val text = notTrimmedText.trimIndent()
+    myFixture.enableInspections(inspections)
+    val currentFile: PsiFile = myFixture.configureByText(PythonFileType.INSTANCE, text)
+    myFixture.checkHighlighting()
+    assertSdkRootsNotParsed(currentFile)
   }
 
   companion object {

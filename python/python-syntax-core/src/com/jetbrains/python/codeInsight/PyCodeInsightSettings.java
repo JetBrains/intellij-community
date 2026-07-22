@@ -38,13 +38,6 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = true;
   public boolean COPY_TYPE_ANNOTATIONS_FROM_STUBS = true;
 
-  /**
-   * When {@code true}, a {@code # type: ignore} comment suppresses an inspection only when it explicitly
-   * names that inspection's code (e.g. {@code # type: ignore[PyTypeChecker]}). When {@code false} (default),
-   * a {@code # type: ignore} without a recognized code suppresses every inspection on the line.
-   */
-  public boolean TYPE_IGNORE_STRICT_CODE_COVERAGE = false;
-
   @Override
   public PyCodeInsightSettings getState() {
     return this;
