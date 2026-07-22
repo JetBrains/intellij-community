@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.inspections;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -17,7 +17,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testSimpleVar() {
     doTestHighlighting("""
                          final foo = 5
-                         <warning>foo</warning> = 7
+                         <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 7
                          print foo""");
   }
 
@@ -25,7 +25,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     doTestHighlighting("""                      
                          final foo
                          foo = 7
-                         <warning>foo</warning> = 8
+                         <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 8
                          print foo""");
   }
 
@@ -33,7 +33,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     doTestHighlighting("""
                          final foo = 5
                          if (cond) {
-                           <warning>foo</warning> = 7
+                           <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 7
                          }
                          print foo""");
   }
@@ -47,7 +47,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          else {
                            foo = 2
                          }
-                         <warning>foo</warning> = 1
+                         <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 1
                          print foo""");
   }
 
@@ -57,7 +57,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          if (cond) {
                            foo = 7
                          }
-                         <warning>foo</warning> = 1
+                         <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 1
                          print foo""");
   }
 
@@ -73,7 +73,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     doTestHighlighting("""
                          final foo = 5
                          for (a in b) {
-                           <warning>foo</warning> = 5
+                           <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 5
                            print foo
                          }""");
   }
@@ -87,7 +87,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testForParam() {
     doTestHighlighting("""
                          for (final i : [1, 2]) {
-                           <warning>i</warning> = 5
+                           <error descr="Cannot assign a value to final variable 'i'">i</error> = 5
                            print i
                          }""");
   }
@@ -101,7 +101,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          
                          if (otherCond) {
                            final foo = 2  //correct
-                           <warning>foo</warning> = 4
+                           <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 4
                            print foo
                          }
                          
@@ -113,7 +113,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     doTestHighlighting("""
                          if (cond) {
                            final foo = 5
-                           <warning>foo</warning> = 4
+                           <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 4
                            print foo
                          }
                          
@@ -132,7 +132,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            def bar() {
                              if (cond) {
                                final foo = 5
-                               <warning>foo</warning> = 4
+                               <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 4
                                print foo
                              }
                          
@@ -147,10 +147,24 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  public void testNoDuplicatedMessage() {
+    doTestHighlighting("""
+                         class X {
+                           void x() {
+                             final String a = ''
+                             <error descr="Cannot assign a value to final variable 'a'">a</error> = 'str'
+                             println a
+                           }
+                         }
+                         final String a = ''
+                         <error descr="Cannot assign a value to final variable 'a'">a</error> = 'str'
+                         """);
+  }
+
   public void testFinalField0() {
     doTestHighlighting("""
                          class Foo {
-                           final <warning>foo</warning>
+                           final <error descr="Field 'foo' might not have been initialized">foo</error>
                          }""");
   }
 
@@ -168,7 +182,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testFinalField2() {
     doTestHighlighting("""
                          class Foo {
-                           final <warning>foo</warning>
+                           final <error descr="Field 'foo' might not have been initialized">foo</error>
                          
                            def Foo() {
                              foo = 2
@@ -189,7 +203,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            }
                          
                            def Foo() {
-                             <warning>foo</warning> = 2
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
                            }
                          
                            def Foo(x) {
@@ -215,7 +229,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testFinalField5() {
     doTestHighlighting("""
                          class Foo {
-                           final <warning>foo</warning> //correct
+                           final <error descr="Field 'foo' might not have been initialized">foo</error> //correct
                          
                            def Foo() {
                          
@@ -230,7 +244,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testFinalField6() {
     doTestHighlighting("""
                          class Foo {
-                           final <warning>foo</warning> //correct
+                           final <error descr="Field 'foo' might not have been initialized">foo</error> //correct
                          
                            <error>def Foo()</error> {
                              this(2)
@@ -252,14 +266,14 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testStaticFinalField1() {
     doTestHighlighting("""
                          class Foo {
-                           static final <warning>foo</warning>
+                           static final <error descr="Field 'foo' might not have been initialized">foo</error>
                          }""");
   }
 
   public void testStaticFinalField2() {
     doTestHighlighting("""
                          class Foo {
-                           static final <warning>foo</warning>
+                           static final <error descr="Field 'foo' might not have been initialized">foo</error>
                          
                            static {
                              if (1) {
@@ -311,7 +325,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            final foo = 0;
                          
                            {
-                             <warning>foo</warning> = 1
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 1
                            }
                          }""");
   }
@@ -326,7 +340,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            }
                          
                            {
-                             <warning>foo</warning> = 1
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 1
                            }
                          }""");
   }
@@ -341,7 +355,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            }
                          
                            Foo(){
-                             <warning>foo</warning> = 1
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 1
                            }
                          }""");
   }
@@ -357,7 +371,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          
                            Foo(){
                              this(1)
-                             <warning>foo</warning> = 1
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 1
                            }
                          }""");
   }
@@ -369,7 +383,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          
                            {
                              foo = 0
-                             <warning>foo</warning> = 2
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
                            }
                          
                          }""");
@@ -384,7 +398,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                              if (1) {
                                foo = 0
                              }
-                             <warning>foo</warning> = 2
+                             <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
                            }
                          
                          }""");
@@ -396,7 +410,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            public final foo = 5
                          }
                          
-                         <warning>new Foo().foo</warning> = 3""");
+                         <error descr="Cannot assign a value to final field 'foo'">new Foo().foo</error> = 3""");
   }
 
   public void testImmutable() {
@@ -407,15 +421,15 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          class Money {
                              String currency
                              int amount
-                             private final <warning>privateField</warning>
+                             private final <error descr="Field 'privateField' might not have been initialized">privateField</error>
                          
                              void doubleYourMoney() {
-                                 <error>amount</error> *= 2
+                                 <error descr="Cannot assign a value to final field 'amount'">amount</error> *= 2
                              }
                          }
                          
                          def a = new Money('USA', 100)
-                         <warning>a.amount</warning> = 1000""");
+                         <error descr="Cannot assign a value to final field 'amount'">a.amount</error> = 1000""");
   }
 
   public void testNonFinalField1() {
@@ -461,7 +475,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          enum E {
                            abc, cde
                          
-                           final int <warning descr="Variable 'x' might not have been initialized">x</warning>
+                           final int <error descr="Field 'x' might not have been initialized">x</error>
                          }
                          """);
   }
@@ -472,11 +486,11 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                              final int foo = 0
                          
                              def test(final String p) {
-                                 ++<warning>foo</warning>
-                                 ++<warning>p</warning>
+                                 ++<error descr="Cannot assign a value to final field 'foo'">foo</error>
+                                 ++<error descr="Cannot assign a value to final parameter 'p'">p</error>
                          
                                  final int i = 0
-                                 ++<warning>i</warning>
+                                 ++<error descr="Cannot assign a value to final variable 'i'">i</error>
                              }
                          }
                          """);

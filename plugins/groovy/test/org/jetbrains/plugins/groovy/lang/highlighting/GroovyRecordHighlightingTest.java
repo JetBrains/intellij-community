@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -39,7 +39,7 @@ public class GroovyRecordHighlightingTest extends LightGroovyTestCase implements
     highlightingTest("""
                        record R(int a) {}
                        def x = new R(10)
-                       <warning>x.a</warning> = 20
+                       <error descr="Cannot assign a value to final field 'a'">x.a</error> = 20
                        """, GrFinalVariableAccessInspection.class);
   }
 

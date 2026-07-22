@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection;
@@ -77,7 +77,7 @@ public class AutoFinalSupportTest extends GroovyLatestTest implements Highlighti
              class Bar {
              
                  def foo() {
-                     1.with {a -> <warning>a</warning> = 2}
+                     1.with {a -> <error descr="Cannot assign a value to final variable 'a'">a</error> = 2}
                  }
              }
              """);
