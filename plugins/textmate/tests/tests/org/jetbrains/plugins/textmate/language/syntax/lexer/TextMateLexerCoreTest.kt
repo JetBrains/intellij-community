@@ -464,6 +464,24 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `re-pushing the same rule without advancing does not grow the stack`() {
+    // a rule that recursively pushes itself at the same position is cut off:
+    // the duplicated frame is reverted before the line is finished,
+    // so the tail of the line is not scoped with the rule's name twice
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "name": "r.block", "begin": "(?=x)", "end": "q", "patterns": [ { "include": "${'$'}self" } ] }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "x", """
+      source.test r.block: [0, 1], {x}
+    """.trimIndent())
+  }
+
+  @Test
   fun `begin-string anchor stops matching once tokenization advances`() {
     val grammar = """
       {

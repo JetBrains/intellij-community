@@ -249,6 +249,13 @@ class TextMateLexerCore(
           }
 
           if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
+            if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
+              // the grammar pushed the same rule again without advancing;
+              // revert the push before stopping the line, so the stack doesn't grow
+              stackFrames = stackFrames.removingAt(stackFrames.size - 1)
+              pushedAnchors.remove(stackFrames.size)
+              scopes = stackFrames.last().scopes
+            }
             addToken(output, scopes.currentScope, lineLength + lineStartOffset)
             break
           }
