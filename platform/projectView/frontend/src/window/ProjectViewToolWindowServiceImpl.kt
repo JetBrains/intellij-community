@@ -221,9 +221,19 @@ internal class ProjectViewToolWindowServiceImpl(
             try {
               rpc.getPaneStateFlow(toolWindow.project.projectId(), pane.id).collect { eventDTO ->
                 withContext(Dispatchers.UI) {
-                  val event = eventDTO.toEvent()
-                  LOG.trace { "Update pane state for ${pane.id}: $event" }
-                  pane.applyStateChange(event)
+                  try {
+                    val event = eventDTO.toEvent()
+                    LOG.trace { "Update pane state for ${pane.id}: $event" }
+                    pane.applyStateChange(event)
+                  }
+                  catch (e: Exception) {
+                    rethrowControlFlowException(e)
+                    LOG.error(
+                      "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
+                      "The problematic event was $eventDTO",
+                      e
+                    )
+                  }
                 }
               }
             }
@@ -235,10 +245,25 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
         LOG.debug { "Sending pane requests for ${pane.id}" }
-        val rpcChannel = rpc.getPaneRequestChannel(project.projectId(), pane.id)
-        for (request in pane.requestChannel) {
-          LOG.trace { "Sent request for pane ${pane.id}: $request" }
-          rpcChannel.send(request)
+        try {
+          val rpcChannel = rpc.getPaneRequestChannel(project.projectId(), pane.id)
+          for (request in pane.requestChannel) {
+            try {
+              LOG.trace { "Sent request for pane ${pane.id}: $request" }
+              rpcChannel.send(request)
+            }
+            catch (e: Exception) {
+              rethrowControlFlowException(e)
+              LOG.error(
+                "An error has occurred when trying to send a request to the backend. " +
+                "The problematic request was $request",
+                e
+              )
+            }
+          }
+        }
+        finally {
+          LOG.debug { "Finished sending pane requests for ${pane.id}" }
         }
       }
       LOG.debug { "Managing pane ${pane.id}" }
