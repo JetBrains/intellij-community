@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginNodeVendorDetails
@@ -106,7 +106,7 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
       val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
       resultDto.date = format.parse(date).time
     }
-    catch (e: Exception) {
+    catch (_: Exception) {
       // If date parsing fails, leave date as 0
     }
     return this
@@ -126,11 +126,6 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     val currentTags = resultDto.tags?.toMutableList() ?: mutableListOf()
     currentTags.add(tag)
     resultDto.tags = currentTags
-    return this
-  }
-
-  override fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder {
-    // PluginDto doesn't have direct incomplete field
     return this
   }
 
@@ -186,8 +181,8 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     return this
   }
 
-  override fun setContentModules(content: List<PluginContentModule>): PluginUiModelBuilder {
-    resultDto.contentModules = content
+  override fun setContentModules(contentModules: List<PluginContentModule>): PluginUiModelBuilder {
+    resultDto.contentModules = contentModules
     return this
   }
 
@@ -201,9 +196,7 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     return this
   }
 
-  override fun build(): PluginUiModel {
-    return resultDto
-  }
+  override fun build(): PluginUiModel = resultDto
 }
 
 @ApiStatus.Internal

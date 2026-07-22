@@ -83,7 +83,6 @@ final class RepositoryContentHandler extends DefaultHandler {
       if (dateString != null) {
         builder.setDate(dateString);
       }
-      builder.setIncomplete(false);
     }
     else if (qName.equals(IDEA_VERSION)) {
       builder()
@@ -100,8 +99,7 @@ final class RepositoryContentHandler extends DefaultHandler {
       var id = attributes.getValue(ID);
       builder = factory.createBuilder(PluginId.getId(requireNonNullElse(id, "unknown")))
         .setDownloadUrl(attributes.getValue(URL))
-        .setVersion(attributes.getValue(VERSION))
-        .setIncomplete(true);
+        .setVersion(attributes.getValue(VERSION));
     }
     currentValue.setLength(0);
   }

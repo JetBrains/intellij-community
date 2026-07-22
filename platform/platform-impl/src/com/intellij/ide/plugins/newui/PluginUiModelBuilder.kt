@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.ModuleDependency
@@ -34,7 +34,6 @@ interface PluginUiModelBuilder {
   fun setDependencies(dependencies: List<PluginDependencyModel>): PluginUiModelBuilder
   fun addDependency(id: String, optional: Boolean): PluginUiModelBuilder
   fun addTag(tag: String): PluginUiModelBuilder
-  fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder
   fun setIsConverted(converted: Boolean): PluginUiModelBuilder
   fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder
   fun setIsFromMarketPlace(isFromMarketPlace: Boolean): PluginUiModelBuilder
@@ -45,7 +44,7 @@ interface PluginUiModelBuilder {
   fun setRepositoryName(repositoryName: String): PluginUiModelBuilder
   fun setVendorDetails(organization: String?): PluginUiModelBuilder
   fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder
-  fun setContentModules(content: List<PluginContentModule>): PluginUiModelBuilder
+  fun setContentModules(contentModules: List<PluginContentModule>): PluginUiModelBuilder
   fun setModules(modules: List<PluginModule>): PluginUiModelBuilder
   fun setMainModuleDependencies(mainModuleDependencies: List<ModuleDependency>): PluginUiModelBuilder
 
@@ -54,18 +53,13 @@ interface PluginUiModelBuilder {
 
 @ApiStatus.Internal
 interface PluginUiModelBuilderFactory {
-
   fun createBuilder(id: PluginId): PluginUiModelBuilder
 
   companion object {
     @JvmStatic
-    fun getInstance(): PluginUiModelBuilderFactory {
-      if (UiPluginManager.isCombinedPluginManagerEnabled()) {
-        return PluginDtoModelBuilderFactory
-      }
-      else {
-        return PluginNodeModelBuilderFactory
-      }
+    fun getInstance(): PluginUiModelBuilderFactory = when {
+      UiPluginManager.isCombinedPluginManagerEnabled() -> PluginDtoModelBuilderFactory
+      else -> PluginNodeModelBuilderFactory
     }
   }
 }
