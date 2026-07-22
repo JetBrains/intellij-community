@@ -31,6 +31,7 @@
     <module name="intellij.libraries.teamcity.service.messages"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.bootstrap"/>
     <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
@@ -58,15 +59,18 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.rd.community"/>
     <module name="intellij.platform.runtime.product"/>
     <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.welcomeScreen.impl"/>
     <module name="intellij.remoteDev.util"/>
   </dependencies>
 
@@ -139,6 +143,8 @@
     <module name="intellij.java.rt"/>
     <!-- chain: direct -->
     <module name="intellij.lambda.testFramework"/>
+    <!-- chain: direct -->
+    <module name="intellij.remoteDev.testFramework"/>
     <!-- chain: direct -->
     <module name="intellij.tools.ide.starter"/>
     <!-- chain: direct -->
