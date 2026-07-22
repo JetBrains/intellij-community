@@ -172,6 +172,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UIUtilDispatchAllInvocationEventsInTests"})
+@TestOnly
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
 
@@ -282,8 +283,8 @@ public final class PlatformTestUtil {
     int level,
     boolean withSelection,
     @Nullable Queryable.PrintInfo printInfo,
-    @Nullable Predicate<Pair<Object, String>> nodePrintCondition,
-    @Nullable Function<@NotNull PrintNodeInfo, @NotNull PrintChildrenResult> beforeChildren
+    @Nullable Predicate<? super Pair<Object, String>> nodePrintCondition,
+    @Nullable Function<? super @NotNull PrintNodeInfo, @NotNull PrintChildrenResult> beforeChildren
   ) {
     var pathComponent = path.getLastPathComponent();
     var userObject = TreeUtil.getUserObject(pathComponent);
@@ -425,10 +426,12 @@ public final class PlatformTestUtil {
     return false;
   }
 
+  @RequiresEdt
   public static void waitWhileBusy(@NotNull JTree tree) {
     waitWhileBusy(() -> isBusy(tree, tree.getModel()));
   }
 
+  @RequiresEdt
   public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
     var startTimeMillis = System.currentTimeMillis();
@@ -519,6 +522,7 @@ public final class PlatformTestUtil {
   }
 
   @SuppressWarnings("UsagesOfObsoleteApi")
+  @RequiresEdt
   public static void waitForAlarm(int delay) {
     var app = ApplicationManager.getApplication();
     assertDispatchThreadWithoutWriteAccess();
@@ -585,6 +589,7 @@ public final class PlatformTestUtil {
    * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
+  @RequiresEdt
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     var eventQueue = IdeEventQueue.getInstance();
@@ -631,6 +636,7 @@ public final class PlatformTestUtil {
   /**
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
+  @RequiresEdt
   public static void dispatchAllEventsInIdeEventQueue() {
     EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
   }
@@ -638,6 +644,7 @@ public final class PlatformTestUtil {
   /**
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
+  @RequiresEdt
   public static AWTEvent dispatchNextEventIfAny() {
     return EdtTestUtilKt.dispatchNextEventIfAny();
   }
@@ -881,11 +888,9 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(
-    VirtualFile[] files,
-    @Nullable VirtualFileFilter filter,
-    @Nullable Function<VirtualFile, String> fileNameMapper
-  ) {
+  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files,
+                                                                      @Nullable VirtualFileFilter filter,
+                                                                      @Nullable Function<? super VirtualFile, String> fileNameMapper) {
     var map = new HashMap<String, VirtualFile>();
     for (var file : files) {
       if (filter != null && !filter.accept(file)) continue;
