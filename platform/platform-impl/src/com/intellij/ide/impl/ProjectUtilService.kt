@@ -3,7 +3,6 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,7 +15,6 @@ open class ProjectUtilService(protected val project: Project) {
 
   @ApiStatus.Internal
   companion object {
-    @RequiresBlockingContext
     fun getInstance(project: Project): ProjectUtilService = project.service<ProjectUtilService>()
   }
 }
