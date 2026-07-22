@@ -94,7 +94,7 @@ open class IDETestContext(
     )
   }
 
-  open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = null): IDETestContext {
+  open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = testCase.sdk): IDETestContext {
     require(sdk == null || testCase.projectInfo != NoProject) { "project must be specified to setup project SDK" }
     return IDETestContext(paths, ide ?: this.ide, testCase.copy(sdk = sdk), testName, resolvedProjectHome ?: this._resolvedProjectHome, profilerType,
                           publishers, isReportPublishingEnabled, preserveSystemDir)
