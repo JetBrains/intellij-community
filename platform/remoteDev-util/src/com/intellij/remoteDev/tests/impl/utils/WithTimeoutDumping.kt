@@ -76,7 +76,8 @@ suspend fun <T> withTimeoutDumping(
 }
 
 @TestOnly
-internal suspend fun waitSuspending(
+@ApiStatus.Internal
+suspend fun waitSuspending(
   subjectOfWaiting: String,
   timeout: Duration,
   delay: Duration = 500.milliseconds,

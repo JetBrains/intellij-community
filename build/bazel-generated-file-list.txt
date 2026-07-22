@@ -937,6 +937,7 @@ platform/remote-topics/backend
 platform/remote-topics/frontend
 platform/remote-topics/shared
 platform/remoteDev-util
+platform/remoteDev-util/testFramework
 platform/runtime/loader
 platform/runtime/product
 platform/runtime/product/tests

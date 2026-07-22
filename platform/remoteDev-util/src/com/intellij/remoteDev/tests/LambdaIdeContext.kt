@@ -57,7 +57,7 @@ abstract class LambdaIdeContextClass(
   }
 
   @TestOnly
-  internal suspend fun runAfterEachCleanup() {
+  suspend fun runAfterEachCleanup() {
     if (actionsAfterEach.isNotEmpty()) {
       actionsAfterEach.reversed().forEachIndexed { index, function ->
         runLogged("After each cleanup action [#$index/${actionsAfterEach.size}]") {

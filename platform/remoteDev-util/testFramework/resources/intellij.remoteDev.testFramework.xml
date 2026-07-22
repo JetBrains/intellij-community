@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.remoteDev.tests.impl.LambdaTestHost" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.remoteDev.tests.impl.DistributedTestHost" preload="true"/>
+    <applicationService serviceInterface="com.intellij.remoteDev.tests.RemoteDevTestModeService"
+                        serviceImplementation="com.intellij.remoteDev.tests.impl.RemoteDevTestModeServiceImpl"/>
+  </extensions>
+</idea-plugin>

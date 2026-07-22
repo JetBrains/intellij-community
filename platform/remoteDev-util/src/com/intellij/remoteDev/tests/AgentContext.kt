@@ -32,19 +32,22 @@ interface ClientContext : AgentContext
 // If you need some extra data or behavior for a particular class, e.g. HostContext should have some host specific data, just derive from
 // the AgentContextImpl and derive it also from HostContext
 // then create proper inheritor in AgentContext.create() depending on agentId
-internal class HostAgentContextImpl(
+@ApiStatus.Internal
+class HostAgentContextImpl(
   override val rdAgentInfo: RdAgentInfo,
   override val protocol: IProtocol,
   override val coroutineContext: CoroutineContext,
 ) : HostContext
 
-internal class ClientAgentContextImpl(
+@ApiStatus.Internal
+class ClientAgentContextImpl(
   override val rdAgentInfo: RdAgentInfo,
   override val protocol: IProtocol,
   override val coroutineContext: CoroutineContext,
 ) : ClientContext
 
-internal class GatewayAgentContextImpl(
+@ApiStatus.Internal
+class GatewayAgentContextImpl(
   override val rdAgentInfo: RdAgentInfo,
   override val protocol: IProtocol,
   override val coroutineContext: CoroutineContext,

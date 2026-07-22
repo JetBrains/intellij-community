@@ -27,6 +27,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fatalErrorWithWarnDetails
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -90,6 +91,7 @@ import kotlin.time.Duration.Companion.seconds
 @Suppress("NonDefaultConstructor")
 @TestOnly
 @ApiStatus.Internal
+@InternalIgnoreDependencyViolation
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
   companion object {
     // it is easier to sort out logs from just testFramework

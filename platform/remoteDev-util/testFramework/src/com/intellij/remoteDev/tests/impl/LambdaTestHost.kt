@@ -20,7 +20,9 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.remoteDev.tests.LambdaBackendContextClass
 import com.intellij.remoteDev.tests.LambdaFrontendContextClass
@@ -70,6 +72,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
 @ApiStatus.Internal
+@InternalIgnoreDependencyViolation
 open class LambdaTestHost(coroutineScope: CoroutineScope) {
   companion object {
     // it is easier to sort out logs from just testFramework
@@ -235,7 +238,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             }
           }
           runLogged("Sync front and back protocol events", 20.seconds) {
-            LambdaTestBridge.getInstance().syncProtocolEvents()
+            serviceOrNull<LambdaTestBridge>()?.syncProtocolEvents()
           }
           ideContext = getLambdaIdeContext()
         }

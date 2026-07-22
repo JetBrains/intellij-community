@@ -2,8 +2,17 @@
 package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.application.Application
-import com.intellij.remoteDev.tests.impl.DistributedTestHost
+import com.intellij.openapi.components.serviceOrNull
+import org.jetbrains.annotations.ApiStatus
 
-val Application.isDistributedTestMode by lazy {
-  DistributedTestHost.getDistributedTestPort() != null
+val Application.isDistributedTestMode: Boolean
+  get() = serviceOrNull<RemoteDevTestModeService>()?.isDistributedTestMode ?: false
+
+val Application.isLambdaTestMode: Boolean
+  get() = serviceOrNull<RemoteDevTestModeService>()?.isLambdaTestMode ?: false
+
+@ApiStatus.Internal
+interface RemoteDevTestModeService {
+  val isDistributedTestMode: Boolean
+  val isLambdaTestMode: Boolean
 }
