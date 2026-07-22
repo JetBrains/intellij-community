@@ -1,0 +1,10 @@
+<!-- @skip-dependency-generation - the TestNG plugin dependency cannot be represented by a JDK 8-compatible JPS dependency -->
+<idea-plugin>
+  <dependencies>
+    <plugin id="TestNG-J"/>
+    <module name="intellij.java.coverage.rt"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.theoryinpractice.testng">
+    <listener implementation="com.intellij.java.coverage.rt.testng.IDEATestNGCoverageListener"/>
+  </extensions>
+</idea-plugin>

@@ -610,6 +610,8 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" filepath="$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/junit/intellij.java.coverage.rt.junit.iml" filepath="$PROJECT_DIR$/plugins/coverage/junit/intellij.java.coverage.rt.junit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/testng/intellij.java.coverage.rt.testng.iml" filepath="$PROJECT_DIR$/plugins/coverage/testng/intellij.java.coverage.rt.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/intellij.java.debugger.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/intellij.java.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/debugger-agent/intellij.java.debugger.agent.holder.iml" filepath="$PROJECT_DIR$/java/debugger/debugger-agent/intellij.java.debugger.agent.holder.iml" />

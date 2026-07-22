@@ -1,5 +1,0 @@
-<idea-plugin package="com.intellij.coverage.listeners.java.junit">
-  <extensions defaultExtensionNs="com.intellij">
-    <junitListener implementation="com.intellij.coverage.listeners.java.junit.IDEAJUnitCoverageListener"/>
-  </extensions>
-</idea-plugin>

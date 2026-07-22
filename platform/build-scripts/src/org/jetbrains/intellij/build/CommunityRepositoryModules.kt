@@ -206,7 +206,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") { spec ->
-      spec.withModule("intellij.java.coverage.rt")
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },

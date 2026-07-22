@@ -1033,6 +1033,8 @@ plugins/coverage
 plugins/coverage-common
 plugins/coverage-common/intellij.platform.coverage.agent
 plugins/coverage/coverage_rt
+plugins/coverage/junit
+plugins/coverage/testng
 plugins/cucumber-jvm-formatter
 plugins/cucumber-jvm-formatter3
 plugins/cucumber-jvm-formatter4

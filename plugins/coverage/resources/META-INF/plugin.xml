@@ -2,8 +2,6 @@
   <name>Code Coverage for Java</name>
   <id>Coverage</id>
   <category>JVM Tools</category>
-  <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
-  <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
 
   <dependencies>
     <module name="intellij.java.backend"/>
@@ -18,8 +16,11 @@
     <!-- endregion -->
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.libraries.test.discovery" loading="embedded"/>
+    <module name="intellij.java.coverage.rt" loading="embedded"/>
+    <module name="intellij.java.coverage.rt.junit"/>
+    <module name="intellij.java.coverage.rt.testng"/>
   </content>
 
   <description>
