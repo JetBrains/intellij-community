@@ -85,6 +85,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.GrRemoveExceptionFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.GrReplacePrimitiveTypeWithWrapperFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDelimiterFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -2045,12 +2046,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       @GrModifier.GrModifierConstant String name = modifier.getText();
       if (set.contains(name)) {
         String message = GroovyBundle.message("duplicate.modifier", name);
-        AnnotationBuilder builder =
-          holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
-        GrModifierFix fix = member instanceof PsiMember ? new GrModifierFix((PsiMember)member, name, false, false, GrModifierFix.MODIFIER_LIST) :
-                            member instanceof GrVariable ? new GrModifierFix((GrVariable)member, name, false, GrModifierFix.MODIFIER_LIST) :
-                            null;
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
         if (member != null) {
+          GrModifierFix fix = new GrRemoveModifierFix(name, GrModifierFix.MODIFIER_LIST);
           builder = registerLocalFix(builder, fix, list, message, ProblemHighlightType.ERROR, list.getTextRange());
         }
         builder.create();

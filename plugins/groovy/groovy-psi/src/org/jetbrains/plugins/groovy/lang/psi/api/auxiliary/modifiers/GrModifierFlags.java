@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
 /**
@@ -26,4 +26,5 @@ public interface GrModifierFlags {
   int DEFAULT_MASK = 0x40000;
   int SEALED_MASK = 0x80000;
   int NON_SEALED_MASK = 0x100000;
+  int VAR_MASK = 0x200000;
 }
