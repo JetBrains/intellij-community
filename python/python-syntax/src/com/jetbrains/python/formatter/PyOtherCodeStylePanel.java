@@ -45,6 +45,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   private final JPanel myPanel;
   private final JBCheckBox myAddTrailingBlankLineCheckbox;
   private final ComboBox<DictAlignment> myDictAlignmentCombo;
+  private final JBCheckBox myAlignConsecutiveAssignments;
   private final JPanel myPreviewPanel;
   private final JBCheckBox myFormatInjectedFragments;
   private final JBCheckBox myAddIndentInsideInjections;
@@ -89,6 +90,12 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
       panel1.add(myDictAlignmentCombo, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
                                                            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
                                                            null, null, 0, false));
+      myAlignConsecutiveAssignments = new JBCheckBox();
+      this.$$$loadButtonText$$$(myAlignConsecutiveAssignments,
+                                this.$$$getMessageFromBundle$$$("messages/PySyntaxBundle", "formatter.panel.align.consecutive.assignments"));
+      panel1.add(myAlignConsecutiveAssignments,
+                 new GridConstraints(1, 0, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final JPanel panel3 = new JPanel();
       panel3.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
       panel3.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
@@ -143,6 +150,13 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     });
 
     myAddIndentInsideInjections.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        somethingChanged();
+      }
+    });
+
+    myAlignConsecutiveAssignments.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         somethingChanged();
@@ -278,6 +292,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     myAddTrailingBlankLineCheckbox.setSelected(pySettings.BLANK_LINE_AT_FILE_END);
     myFormatInjectedFragments.setSelected(pySettings.FORMAT_INJECTED_FRAGMENTS);
     myAddIndentInsideInjections.setSelected(pySettings.ADD_INDENT_INSIDE_INJECTIONS);
+    myAlignConsecutiveAssignments.setSelected(pySettings.ALIGN_CONSECUTIVE_ASSIGNMENTS);
   }
 
   @Override
@@ -287,6 +302,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
     customSettings.FORMAT_INJECTED_FRAGMENTS = formatInjectedFragments();
     customSettings.ADD_INDENT_INSIDE_INJECTIONS = addIndentInsideInjections();
+    customSettings.ALIGN_CONSECUTIVE_ASSIGNMENTS = myAlignConsecutiveAssignments.isSelected();
   }
 
   @Override
@@ -295,7 +311,8 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
            customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() ||
            customSettings.FORMAT_INJECTED_FRAGMENTS != formatInjectedFragments() ||
-           customSettings.ADD_INDENT_INSIDE_INJECTIONS != addIndentInsideInjections();
+           customSettings.ADD_INDENT_INSIDE_INJECTIONS != addIndentInsideInjections() ||
+           customSettings.ALIGN_CONSECUTIVE_ASSIGNMENTS != myAlignConsecutiveAssignments.isSelected();
   }
 
   @Override
