@@ -110,12 +110,12 @@ object SuvorovProgress {
    * See IJPL-211485
    */
   fun tryProgressWithPendingBackgroundWriteAction() {
+    val application = ApplicationManager.getApplication()
+    val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
     if (Thread.holdsLock(awtComponentLock)) {
-      val application = ApplicationManager.getApplication()
-      val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
       @Suppress("TestOnlyProblems")
       if (rwService is PlatformReadWriteActionSupport) {
-        rwService.signalWriteActionNeedsToBeRetried()
+        rwService.signalBackgroundWriteActionNeedsToBeRetried()
       }
     }
   }

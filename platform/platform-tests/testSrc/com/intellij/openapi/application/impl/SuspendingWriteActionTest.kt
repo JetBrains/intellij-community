@@ -27,7 +27,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -205,7 +204,7 @@ class SuspendingWriteActionTest {
   }
 
   @Test
-  fun foo(): Unit = concurrencyTest {
+  fun `pending read actions are canceled on reacquisition of write lock`(): Unit = concurrencyTest {
     readAction {  } // init internal structures
     val wasCanceled = AtomicBoolean(false)
     backgroundWriteAction {

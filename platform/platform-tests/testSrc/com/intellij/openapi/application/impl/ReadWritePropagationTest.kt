@@ -5,12 +5,12 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.Semaphore
@@ -130,6 +130,7 @@ class ReadWritePropagationTest {
   fun `nested read action can be run under modal progress even if write is waiting`(): Unit = timeoutRunBlocking {
     val writePending = beforeWrite()
     val readTaskReady = Semaphore(1)
+    val service = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
     val ra = launch(Dispatchers.EDT) {
       ApplicationManager.getApplication().runReadAction {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
@@ -144,7 +145,7 @@ class ReadWritePropagationTest {
     readTaskReady.waitFor()
     val wa = launch(Dispatchers.Default) {
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
-      getGlobalThreadingSupport().runWriteAction {
+      service.runWriteAction {
         assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed)
       }
     }

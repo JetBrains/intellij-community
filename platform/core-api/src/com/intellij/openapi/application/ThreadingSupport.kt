@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.ThreadingSupport.ExecutorResult.Completion
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
@@ -86,16 +89,80 @@ interface ThreadingSupport {
   @RequiresBlockingContext
   fun <T> runWriteActionBlocking(computation: () -> T): T
 
+  sealed interface ExecutorResult<out T> {
+    data class Completion<T>(val value : T) : ExecutorResult<T>
+    object Retry: ExecutorResult<Nothing>
+    object Denied: ExecutorResult<Nothing>
+  }
+
+  sealed interface WriteActionResult<out T> {
+    data class Completion<T>(val value : T) : WriteActionResult<T>
+    object Denied: WriteActionResult<Nothing>
+  }
+
+  suspend fun <T, R> runWriteActionWithExecutor(
+    @RequiresWriteLock action: () -> T,
+    onJobPublished: (Job) -> Unit,
+    onJobNotNeeded: (Job) -> Unit,
+    executor: (() -> T, Job) -> ExecutorResult<R>): R {
+    return when (val result = runWriteActionWithExecutor(action, onJobPublished, onJobNotNeeded, null, executor)) {
+      is WriteActionResult.Completion<R> -> result.value
+      WriteActionResult.Denied -> error("It is not possible to deny write action here")
+    }
+  }
+
   /**
    * Runs the specified computation asynchronously with a _Write_ lock.
+   * This is the most generic function of running suspending write actions that all other ways should delegate to.
    *
-   * This function suspends until it is possible to acquire _Write_ lock, and then it starts running [computation] in the current context.
-   * There can happen several redispatches before [computation] runs even if it is possible to acquire write lock right away.
+   * The flow of execution is the following:
+   * 1. Before starting the execution, this function crafts a special [Job] that is used for lock acquisition.
+   *    - If the job is canceled with [RetryLockAcquisitionException], then the process restarts.
+   * 2. [onJobPublished] is called when this [Job] is created.
+   * 3. The function acquires a write-intent lock under [Job].
+   *    - The acquisition process can be canceled with [RetryLockAcquisitionException] or any other exception by the caller.
+   * 4. [shouldProceedWithWriteAction] is executed.
+   *    - If [shouldProceedWithWriteAction] is not `null` and returns false, this [runWriteActionWithExecutor] returns [WriteActionResult.Denied].
+   *    - If [shouldProceedWithWriteAction] is `null` or returns `true`, then the execution continues
+   * 5. The state of [pending write action][isWriteActionPending] is initiated
+   * 6. [WriteActionListener.beforeWriteActionStart] is called.
+   * 7. The acquired write-intent lock is upgraded to the write lock in suspending way
+   *     - The upgrade process can be canceled with [RetryLockAcquisitionException] or any other exception by the caller.
+   * 8. [Job] is checked for cancellation one more time
+   * 9. [executor] is called with a special runnable that runs [action] and the created [Job].
+   *    - [executor] is expected to be a synchronous function. It is allowed to execute arbitrary logic before running the passed computation.
+   *    - [executor] is allowed to signal retry by the means of [ExecutorResult.Retry]. In this case, the whole process will be retried.
+   *    - [executor] is allowed to deny execution by the means of [ExecutorResult.Denied]. In this case, [runWriteActionWithExecutor] will exit.
+   * 10. The runnable passed to [executor] runs on a single thread without any suspensions. The following happens inside it:
+   *    1. [pending write action][isWriteActionPending] ends
+   *    2. [WriteActionListener.writeActionStarted] is called
+   *    3. [action] is executed
+   *    4. [WriteActionListener.writeActionFinished] is called
+   * 11. At this stage the [executor] returns.
+   * 12. The upgraded write permit is released.
+   * 13. The write-intent permit is released.
+   * 14. [Job] is canceled.
+   * 15. [onJobNotNeeded] is called.
+   * 16. If no retries were issued, [WriteActionListener.afterWriteActionFinished] is called.
    *
-   * @param computation the computation to perform.
-   * @return the result returned by the computation.
+   * There are few requirements on the behavior of [executor].
+   * It is free to switch threads and do custom computations, as long as its execution is synchronous.
+   * If is important that it runs the passed computation no more than once.
+   * It is allowed to throw arbitrary exceptions from [executor]
+   *
+   * [shouldProceedWithWriteAction] has atomicity guarantees -- it runs with [write-intent access][isWriteIntentReadAccessAllowed],
+   * and it is guaranteed to atomically upgrade to write if it returns `true`.
+   *
+   * The suspending computations run on the dispatcher provided by [kotlin.coroutines.coroutineContext]
    */
-  suspend fun <T> runWriteAction(computation: () -> T): T
+  suspend fun <T, R> runWriteActionWithExecutor(
+    @RequiresWriteLock action: () -> T,
+    onJobPublished: (Job) -> Unit,
+    onJobNotNeeded: (Job) -> Unit,
+    shouldProceedWithWriteAction: (() -> Boolean)?,
+    executor: (actualAction: () -> T, Job) -> ExecutorResult<R>): WriteActionResult<R>
+
+  class RetryLockAcquisitionException : CancellationException()
 
   /**
    * This function allows to conditionally execute [computation] under _Write_ lock
@@ -113,9 +180,14 @@ interface ThreadingSupport {
    * Sometimes it is possible to avoid the execution of _Write_ action, but the decision needs to be taken with a consistent view of the world.
    * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions.
    *
-   * @return the result of the [computation] if it was executed, or `null` if [shouldProceedWithWriteAction] returned `false` .
+   * @see runWriteActionWithExecutor as the underlying implementation with more power.
+   * @return the result of the [computation] if it was executed, or `null` if [shouldProceedWithWriteAction] returned `false`.
    */
-  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, computation: () -> T): T?
+  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, computation: () -> T): T? =
+    when (val writeResult = runWriteActionWithExecutor(computation, {}, {}, shouldProceedWithWriteAction, {action, _ -> Completion(action()) })) {
+      is WriteActionResult.Completion<T> -> return writeResult.value
+      WriteActionResult.Denied -> return null
+    }
 
   /**
    * @return true if some thread is performing _Write_ action right now

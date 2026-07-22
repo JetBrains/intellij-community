@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("IncorrectCancellationExceptionHandling")
+
 package com.intellij.openapi.application.rw
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
@@ -20,23 +23,18 @@ import com.intellij.openapi.application.useTrueSuspensionForWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
 import com.intellij.util.application
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
-import java.util.concurrent.CancellationException
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -49,7 +47,8 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   private val retryMarker: Any = ObjectUtils.sentinel("rw action")
 
   private val backgroundWriteActionDispatcher = Dispatchers.IO.limitedParallelism(1, "Background write action dispatcher")
-  private val backgroundWriteActionDumpDispatcher = Dispatchers.IO.limitedParallelism(1, "Dispatcher for dumping threads and coroutines for background write action")
+  private val backgroundWriteActionDumpDispatcher =
+    Dispatchers.IO.limitedParallelism(1, "Dispatcher for dumping threads and coroutines for background write action")
 
   init {
     // init the write action counter listener
@@ -100,7 +99,9 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     action: ReadAndWriteScope.() -> ReadResult<X>,
   ): X {
     while (true) {
-      val (readResult: ReadResult<X>, stamp: Long) = executeReadAction(constraints.toList(), undispatched = undispatched, blocking = false) {
+      val (readResult: ReadResult<X>, stamp: Long) = executeReadAction(constraints.toList(),
+                                                                       undispatched = undispatched,
+                                                                       blocking = false) {
         Pair(ReadAndWriteScopeImpl.action(), AsyncExecutionServiceImpl.getWriteActionCounter())
       }
       require(readResult is ReadResultImpl<X>) {
@@ -119,7 +120,8 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             try {
               InternalThreading.incrementBackgroundWriteActionCount()
               executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
-            } finally {
+            }
+            finally {
               InternalThreading.decrementBackgroundWriteActionCount()
             }
           }
@@ -136,6 +138,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     return withContext(Dispatchers.EDT) {
       val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
       if (originalStamp == writeStamp) {
+        @Suppress("ForbiddenInSuspectContextMethod")
         application.runWriteAction(lambdaToComputable(action))
       }
       else {
@@ -144,32 +147,60 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     }
   }
 
-  private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
+  private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(
+    lock: ThreadingSupport,
+    originalStamp: Long,
+    action: () -> T,
+  ): /*T or retryMarker */ Any? {
     val dispatcher = backgroundWriteActionDispatcher
-    val ref = withContext(dispatcher) {
-      executeWriteActionWithPossibleRetry {
-        lock.runWriteActionWithCheckInWriteIntent(
-          {
-            val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
-            return@runWriteActionWithCheckInWriteIntent originalStamp == writeStamp
-          }, {
-            // ref because we want to handle nullable T
-            // if only we had union types in Kotlin...
-            Ref(action())
-          })
+    return withContext(dispatcher) {
+      val execResult = lock.runWriteActionWithExecutor(
+        action,
+        { publishedBackgroundWriteActionJobs.add(it) },
+        { publishedBackgroundWriteActionJobs.remove(it) },
+        {
+          val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+          originalStamp == writeStamp
+        }) { actualAction, job ->
+        val result = publishedBackgroundWriteActionJobs.remove(job)
+        if (!result) {
+          return@runWriteActionWithExecutor ThreadingSupport.ExecutorResult.Retry
+        }
+        if (job.isCancelled) {
+          ThreadingSupport.ExecutorResult.Retry
+        }
+        else {
+          ThreadingSupport.ExecutorResult.Completion(actualAction())
+        }
+      }
+      when (execResult) {
+        is ThreadingSupport.WriteActionResult.Completion<T> -> execResult.value
+        ThreadingSupport.WriteActionResult.Denied -> retryMarker
       }
     }
-    return if (ref == null) retryMarker else ref.get()
   }
 
-  fun signalWriteActionNeedsToBeRetried() {
-    val exception = WriteActionNeedsToBeRetriedException()
-    publishedBackgroundWriteActionJobs.forEach {
-      it.cancel(exception)
+  private fun signalWriteActionNeedsToBeRetried(target: MutableSet<Job>) {
+    val exception = ThreadingSupport.RetryLockAcquisitionException()
+    val entries = target.toMutableList()
+    while (entries.isNotEmpty()) {
+      try {
+        val entry = entries.removeLast()
+        target.remove(entry)
+        entry.cancel(exception)
+      }
+      catch (_: NoSuchElementException) {
+        break
+      }
     }
   }
 
-  private val publishedBackgroundWriteActionJobs = ContainerUtil.newConcurrentSet<Job>()
+  fun signalBackgroundWriteActionNeedsToBeRetried() {
+    signalWriteActionNeedsToBeRetried(publishedBackgroundWriteActionJobs)
+  }
+
+  private val publishedBackgroundWriteActionJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
+
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val context = if (useBackgroundWriteAction) {
@@ -207,10 +238,22 @@ ${dump.rawDump}""")
         if (useBackgroundWriteAction && useTrueSuspensionForWriteAction && lock != null) {
           InternalThreading.incrementBackgroundWriteActionCount()
           try {
-            executeWriteActionWithPossibleRetry {
-              lock.runWriteAction(action)
+            lock.runWriteActionWithExecutor(action, { job ->
+              publishedBackgroundWriteActionJobs.add(job)
+            }, { publishedBackgroundWriteActionJobs.remove(it) }) { actualAction, job ->
+              val result = publishedBackgroundWriteActionJobs.remove(job)
+              if (!result) {
+                return@runWriteActionWithExecutor ThreadingSupport.ExecutorResult.Retry
+              }
+              if (job.isCancelled) {
+                ThreadingSupport.ExecutorResult.Retry
+              }
+              else {
+                ThreadingSupport.ExecutorResult.Completion(actualAction())
+              }
             }
-          } finally {
+          }
+          finally {
             InternalThreading.decrementBackgroundWriteActionCount()
           }
         }
@@ -224,34 +267,4 @@ ${dump.rawDump}""")
       }
     }
   }
-
-  private suspend  fun <T> executeWriteActionWithPossibleRetry(action: suspend () -> T): T {
-    val result = Ref<T>()
-    var resultSet = false
-    while (true) {
-      try {
-        coroutineScope {
-          val thisJob = coroutineContext.job
-          thisJob.invokeOnCompletion { publishedBackgroundWriteActionJobs.remove(thisJob) }
-          publishedBackgroundWriteActionJobs.add(thisJob)
-          result.set(action())
-          // we get WriteActionNeedsToBeRetried on exit of `coroutineScope`
-          // so we record information that the computation finished successfully and do not retry on cancellation
-          resultSet = true
-        }
-        break
-      } catch (_: WriteActionNeedsToBeRetriedException) {
-        if (resultSet) {
-          return result.get()
-        } else {
-          continue
-        }
-      } catch (e : Throwable) {
-        throw e
-      }
-    }
-    return result.get()
-  }
-
-  class WriteActionNeedsToBeRetriedException : CancellationException()
 }

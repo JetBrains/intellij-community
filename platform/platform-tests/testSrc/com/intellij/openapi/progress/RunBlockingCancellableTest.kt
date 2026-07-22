@@ -2,10 +2,11 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -279,7 +280,8 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
   fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
-    getGlobalThreadingSupport().runWriteAction {
+    val service = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
+    service.runWriteAction {
       ReadAction.run<Throwable> {
         // checks that there are no assertions
         runBlockingCancellable {

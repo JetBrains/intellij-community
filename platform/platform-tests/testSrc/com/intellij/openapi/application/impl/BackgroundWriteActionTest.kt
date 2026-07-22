@@ -884,7 +884,7 @@ class BackgroundWriteActionTest {
       }
 
       launch(Dispatchers.Default) {
-        service.signalWriteActionNeedsToBeRetried()
+        service.signalBackgroundWriteActionNeedsToBeRetried()
       }
     }
 
