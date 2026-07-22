@@ -14,7 +14,6 @@ import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import com.intellij.util.indexing.unwrapCacheAvoiding
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.getInstance
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -64,7 +63,13 @@ internal class ModuleFilesIteratorImpl(
     val myWorkspaceFileIndex = getInstance(project) as WorkspaceFileIndexEx
 
     return if (recursive) {
-      iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)
+      val processor = processorEx.unwrapCacheAvoiding()
+      val customFilter = VirtualFileFilter { file ->
+        val info = myWorkspaceFileIndex.getFileInfo(file, true, true, false, false, false ,false, false)
+        info.findFileSet { it.kind.isIndexable && (it.data as? ModuleRelatedRootData)?.module == module } != null
+      }.and(fileFilter) // run `fileFilter` second, so if it is deduplication filter, it won't be invoked on files outside module
+      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && fileSet.kind.isContent }
+      myWorkspaceFileIndex.processContentUnderDirectory(root, processor, customFilter, fileSetFilter)
     }
     else {
       val processorEx = processorEx.unwrapCacheAvoiding()
