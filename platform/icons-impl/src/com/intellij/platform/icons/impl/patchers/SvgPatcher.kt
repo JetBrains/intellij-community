@@ -79,10 +79,10 @@ class SvgPatchOperation(
     /**
      * Whether [actualValue], the attribute's current value, satisfies this operation's condition.
      *
-     * A plain color compares case-insensitively, because hex colors and keywords are case-insensitive in SVG:
-     * `#6C707E` and `#6c707e` are the same color, and which one a document uses is an authoring accident. Everything
-     * else compares exactly — an `id`, and equally the fragment in a `fill="url(#Gradient)"` paint reference, is
-     * case-sensitive, so folding case there would match a different paint server.
+     * A plain color compares as a color, because SVG lets one color be written several ways and which one a document
+     * uses is an authoring accident: `#6C707E` and `#6c707e` are the same color, and so are `#fff` and `#ffffff`.
+     * Everything else compares exactly — an `id`, and equally the fragment in a `fill="url(#Gradient)"` paint
+     * reference, is case-sensitive, so folding case there would match a different paint server.
      *
      * Condition evaluation lives here rather than in each renderer so that every frontend resolves the same operation
      * the same way; a renderer that compared differently would draw the same icon differently.
@@ -90,7 +90,7 @@ class SvgPatchOperation(
     @ApiStatus.Internal
     fun matches(actualValue: String?): Boolean =
         if (attributeName in COLOR_ATTRIBUTES && isPlainColor(expectedValue) && isPlainColor(actualValue)) {
-            actualValue.equals(expectedValue, ignoreCase = true)
+            sameColor(actualValue, expectedValue)
         } else {
             actualValue == expectedValue
         }
@@ -149,3 +149,38 @@ private val COLOR_KEYWORD = Regex("[a-zA-Z]+(-[a-zA-Z]+)*")
  */
 private fun isPlainColor(value: String?): Boolean =
     value != null && (HEX_COLOR.matches(value) || COLOR_KEYWORD.matches(value))
+
+/**
+ * Whether two plain color literals denote the same color.
+ *
+ * Hex literals compare canonically, so a shorthand names the same color as the form it stands for. Any alpha the
+ * literal carries is not part of which color it names, because a substitution replaces the opacity of what it matched
+ * along with the color itself. A keyword, and a hex literal of a length that names no color, compares
+ * case-insensitively as text.
+ */
+private fun sameColor(actualValue: String?, expectedValue: String?): Boolean {
+    val actual = actualValue?.toRgbHex()
+    val expected = expectedValue?.toRgbHex()
+    return if (actual != null && expected != null) {
+        actual == expected
+    } else {
+        actualValue.equals(expectedValue, ignoreCase = true)
+    }
+}
+
+/**
+ * The lowercase `#rrggbb` this hex literal names, or `null` when it names no color.
+ *
+ * A color carries 3, 4, 6 or 8 significant digits — the lengths `ColorHexUtil` accepts — with the two shorthands
+ * standing for doubled pairs. There is no valid five- or seven-digit form.
+ */
+private fun String.toRgbHex(): String? {
+    if (!startsWith('#')) return null
+
+    val digits = drop(1).lowercase()
+    return when (digits.length) {
+        3, 4 -> "#" + digits.take(3).map { "$it$it" }.joinToString(separator = "")
+        6, 8 -> "#" + digits.take(6)
+        else -> null
+    }
+}

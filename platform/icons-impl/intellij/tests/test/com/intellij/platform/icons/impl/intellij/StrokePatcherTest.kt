@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij
 
+import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.impl.design.DefaultSRGB
+import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.patchers.SvgPatchOperation
 import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
@@ -75,6 +77,43 @@ class StrokePatcherTest {
     assert(unconditional.isEmpty()) { "unconditional operations would erase off-palette artwork: $unconditional" }
   }
 
+  @Test
+  fun `stroking a hand-authored variant recolors the white it is drawn in, on both attributes`() {
+    for (value in AUTHORED_STROKE_COLORS) {
+      for (attribute in ATTRIBUTES) {
+        val match = conditionalReplacement(attribute, value, operations(authored = true))
+        assertNotNull(match) { "no $attribute replacement for $value in a hand-authored stroke variant" }
+        assert(match.value == red.toHex()) { "$attribute for $value became ${match.value}, wanted red" }
+      }
+    }
+  }
+
+  @Test
+  fun `stroking a hand-authored variant reduces no palette color`() {
+    // The variant is already an outline; dropping a background tint out of it could only take away artwork, since a
+    // tint that reads as a background in a filled icon can be the outline itself in a drawing made of outlines.
+    val expected = AUTHORED_STROKE_COLORS.size * ATTRIBUTES.size
+    val actual = operations(authored = true).size
+    assert(actual == expected) {
+      "expected $expected operations to recolor a hand-authored variant, got $actual: ${operations(authored = true)}"
+    }
+  }
+
+  @Test
+  fun `stroking a hand-authored variant in opaque white patches nothing`() {
+    // The variant is already drawn in white, so it is left exactly as authored — including any opacity it carries,
+    // which recoloring white to white would still normalize away.
+    val operations = operations(authored = true, stroke = DefaultSRGB.fromHex("#FFFFFFFF"))
+    assert(operations.isEmpty()) { "stroking white must leave a hand-authored variant untouched, got $operations" }
+  }
+
+  @Test
+  fun `stroking a hand-authored variant in translucent white still recolors`() {
+    // Translucent white is a different color from the white the variant is drawn in, so it is a real substitution.
+    val operations = operations(authored = true, stroke = DefaultSRGB.fromHex("#FFFFFF80"))
+    assert(operations.isNotEmpty()) { "translucent white is not the color the variant is authored in" }
+  }
+
   private fun assertRecolored(value: String, what: String) {
     for (attribute in ATTRIBUTES) {
       val match = conditionalReplacement(attribute, value)
@@ -83,16 +122,20 @@ class StrokePatcherTest {
     }
   }
 
-  private fun conditionalReplacement(attribute: String, expectedValue: String): SvgPatchOperation? =
-    operations().singleOrNull {
+  private fun conditionalReplacement(
+    attribute: String,
+    expectedValue: String,
+    operations: List<SvgPatchOperation> = operations(),
+  ): SvgPatchOperation? =
+    operations.singleOrNull {
       it.attributeName == attribute &&
       it.operation == SvgPatchOperation.Operation.Replace &&
       it.conditional &&
       it.expectedValue == expectedValue
     }
 
-  private fun operations(): List<SvgPatchOperation> {
-    val patcher = strokeSvgPatcher(red) as? DefaultSvgPatcher
+  private fun operations(authored: Boolean = false, stroke: Color = red): List<SvgPatchOperation> {
+    val patcher = (if (authored) authoredStrokeSvgPatcher(stroke) else strokeSvgPatcher(stroke)) as? DefaultSvgPatcher
     assertNotNull(patcher)
     return patcher.operations
   }
@@ -113,5 +156,8 @@ class StrokePatcherTest {
       listOf(
         "#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff",
       )
+
+    // A hand-authored stroke variant is drawn in white alone, in either spelling an SVG may use for it.
+    private val AUTHORED_STROKE_COLORS = listOf("white", "#ffffff")
   }
 }
