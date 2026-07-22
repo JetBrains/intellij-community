@@ -39,6 +39,13 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlinCompilerRepoPath: String? by OptionalPreference
 
     /**
+     * Whether to publish the Gradle Plugin artifacts.
+     *
+     * @see ApplicationMode.COMPILER_PUBLICATION
+     */
+    val publishGradlePlugin: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
      * Whether to convert the JPS project to Bazel format.
      *
      * @see ApplicationMode.PROJECT_MODEL_UPDATER
