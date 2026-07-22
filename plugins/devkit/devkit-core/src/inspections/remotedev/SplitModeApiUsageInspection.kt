@@ -123,14 +123,8 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      if (SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).isExcluded(sourcePsi, SPLIT_MODE_API_USAGE_SHORT_NAME)) {
-        return
-      }
       val regularFixes = SplitModeDependencyQuickFixes.createMismatchFixes(module, null, expectedModuleKind)
-      val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createCommonSuppressionQuickFixes(
-        sourcePsi,
-        SPLIT_MODE_API_USAGE_SHORT_NAME,
-      )
+      val suppressionFixes = SplitModeInspectionExclusionsService.getInstance(sourcePsi.project).createCommonSuppressionQuickFixes()
       val fixes = regularFixes + suppressionFixes
 
       descriptors.add(

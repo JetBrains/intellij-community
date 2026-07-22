@@ -28,11 +28,8 @@ internal class SplitModeImplicitModuleKindInspection : DevKitPluginXmlInspection
 
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
-    val xmlElement = element.xmlElement ?: return
+    if (element.xmlElement == null) return
     val exclusionsService = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project)
-    if (exclusionsService.isExcluded(xmlElement, SPLIT_MODE_IMPLICIT_MODULE_KIND_SHORT_NAME)) {
-      return
-    }
 
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
     if (!SplitModeInspectionUtil.isImplicitFrontendOrBackendMainPluginXml(currentXmlFile, moduleAnalysis)) {
@@ -41,10 +38,7 @@ internal class SplitModeImplicitModuleKindInspection : DevKitPluginXmlInspection
 
     val regularFixes =
       SplitModeDependencyQuickFixes.createAddExplicitDependenciesFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
-    val suppressionFixes = exclusionsService.createCommonSuppressionQuickFixes(
-      xmlElement,
-      SPLIT_MODE_IMPLICIT_MODULE_KIND_SHORT_NAME,
-    )
+    val suppressionFixes = exclusionsService.createCommonSuppressionQuickFixes()
     val quickFixes = regularFixes + suppressionFixes
     holder.createProblem(
       element,
