@@ -1560,7 +1560,7 @@ class PyTypeHintsInspection : PyInspection() {
       val elements = (flatIndexExpr as? PyTupleExpression)?.elements ?: arrayOf(flatIndexExpr)
       if (elements.size != 1) {
         registerProblem(flatIndexExpr,
-                        PyPsiBundle.message("INSP.type.hints.optional.must.have.exactly.one.argument"),
+                        PyPsiBundle.problemMessage("INSP.type.hints.optional.must.have.exactly.one.argument"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }

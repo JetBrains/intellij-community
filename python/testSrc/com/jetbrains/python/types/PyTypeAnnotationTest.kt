@@ -4114,7 +4114,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[((int, int))]
     #│            ^^^^^^^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: tuple[((int)), ((...))]
     #\ TYPE tuple[int, ...]
@@ -4211,7 +4211,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[()]
     #│          ^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: C1[()]
     #│    ^^ WARNING Passed type arguments do not match type parameters [T] of class 'C1'
@@ -4302,7 +4302,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[int, int]
     #│          ^^^^^^^^ ERROR 'Optional' must have exactly one argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: Optional[(int,)]
     #\ TYPE int | None
@@ -4428,15 +4428,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: Optional[...]
     #│          ^^^ ERROR Invalid type argument
-    #\ TYPE Unknown FIXME Unknown | None
+    #\ TYPE Unknown | None
 
     a: tuple[*tuple[str], ...]
     #│                    ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+    #\ TYPE Unknown | None FIXME tuple[Unknown, ...]
 
     a: tuple[*tuple[str, ...], ...]
     #│                         ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown FIXME tuple[Unknown, ...]
+    #\ TYPE Unknown | None FIXME tuple[Unknown, ...]
 
     a: C1[...]
     #│    ^^^ ERROR Invalid type argument

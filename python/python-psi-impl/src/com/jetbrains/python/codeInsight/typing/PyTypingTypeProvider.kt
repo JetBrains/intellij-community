@@ -1791,13 +1791,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             else -> indexExpr
           }
 
+          var argType: PyType? = PyAnyType.unknown
           if (argExpr != null) {
-            val typeRef: Ref<PyType?>? = getType(argExpr, context)
-            if (typeRef != null) {
-              return Ref(PyUnionType.union(typeRef.get(), PyBuiltinCache.getInstance(element).noneType))
-            }
+            argType = getType(argExpr, context).derefOrUnknown()
           }
-          return Ref(PyAnyType.unknown)
+          return Ref(PyUnionType.union(argType, PyBuiltinCache.getInstance(element).noneType))
         }
       }
       return null
