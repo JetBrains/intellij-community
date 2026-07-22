@@ -6,23 +6,17 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomElementsInspection
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 
-class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java),
-    PluginVersionDependentInspection {
+class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
     private val idePluginVersion by lazy { KotlinPluginLayout.ideCompilerVersion.languageVersion }
-
-    override var testVersionMessage: String? = null
-        @TestOnly set
 
     override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val project = domFileElement.module?.project ?: return
@@ -47,7 +41,7 @@ class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProj
 
     private fun createProblem(holder: DomElementAnnotationHolder, plugin: MavenDomPlugin) {
         val versionFromMaven = plugin.version.stringValue
-        val versionFromIde = testVersionMessage ?: idePluginVersion
+        val versionFromIde = idePluginVersion
 
         holder.createProblem(
             plugin.version,

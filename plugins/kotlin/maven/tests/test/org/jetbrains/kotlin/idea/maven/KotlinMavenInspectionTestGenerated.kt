@@ -35,18 +35,6 @@ class KotlinMavenInspectionTestGenerated(mavenVersion: String, modelVersion: Str
     }
 
     @Test
-    @TestMetadata("deprecatedJre.xml")
-    fun testDeprecatedJre() {
-        runTest("testData/maven-inspections/deprecatedJre.xml")
-    }
-
-    @Test
-    @TestMetadata("deprecatedJreWithDependencyManagement.xml")
-    fun testDeprecatedJreWithDependencyManagement() {
-        runTest("testData/maven-inspections/deprecatedJreWithDependencyManagement.xml")
-    }
-
-    @Test
     @TestMetadata("ideAndMavenVersions.xml")
     fun testIdeAndMavenVersions() {
         runTest("testData/maven-inspections/ideAndMavenVersions.xml")
@@ -86,12 +74,6 @@ class KotlinMavenInspectionTestGenerated(mavenVersion: String, modelVersion: Str
     @TestMetadata("noExecutions.xml")
     fun testNoExecutions() {
         runTest("testData/maven-inspections/noExecutions.xml")
-    }
-
-    @Test
-    @TestMetadata("oldVersionWithJre.xml")
-    fun testOldVersionWithJre() {
-        runTest("testData/maven-inspections/oldVersionWithJre.xml")
     }
 
     @Test

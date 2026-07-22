@@ -98,14 +98,6 @@
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.different.kotlin.maven.version.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DeprecatedMavenDependencyInspection"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     language="XML"
-                     hasStaticDescription="true"
-                     level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
-
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToBuild</className>

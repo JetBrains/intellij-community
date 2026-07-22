@@ -26,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenPluginPhaseInspection
@@ -75,6 +76,7 @@ abstract class AbstractKotlinMavenInspectionTest(
         val expectedProblemsText = pomText.lines()
             .filter { PROBLEM_REGEX.matches(it) }
             .joinToString("\n")
+            .replace($$"$PLUGIN_VERSION", KotlinPluginLayout.ideCompilerVersion.languageVersion.toString(), false)
 
         // The global inspection must run on the EDT without write access: InspectionTestUtil.runTool pumps the IDE event
         // queue (PlatformTestUtil.assertDispatchThreadWithoutWriteAccess). PSI is then read back under a read action.

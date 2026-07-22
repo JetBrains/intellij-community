@@ -171,7 +171,6 @@
   - name: intellij.kotlin.base.analysis.utils
   - name: intellij.kotlin.native
   - name: kotlin.scripting
-  - name: kotlin.inspections
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
   - name: kotlin.jsr223
