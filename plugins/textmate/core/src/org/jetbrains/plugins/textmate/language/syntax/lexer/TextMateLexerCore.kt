@@ -119,8 +119,8 @@ class TextMateLexerCore(
         // nested inside it is discarded from the stack, and the discarded frames take their scopes away with them.
         // The conditions of the discarded nested rules are not checked.
         val newStackFrames = persistentListOf<TextMateStackFrame>().builder()
-        var matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
         for (frame in stackFrames) {
+          val matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
           if (frame.state.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
             val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
                                                               string = string,
@@ -140,6 +140,10 @@ class TextMateLexerCore(
                                 lineStartOffset, framesWithWhileRule, checkCancelledCallback)
               }
               anchorByteOffset = matchWhile.byteRange().end
+              if (matchWhile.byteRange().end > lineByteOffset) {
+                linePosition = matchWhile.charRange(string).end
+                lineByteOffset = matchWhile.byteRange().end
+              }
             }
             else {
               break
@@ -191,7 +195,7 @@ class TextMateLexerCore(
           //   if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
             //anchorByteOffset = poppedState.matchData.byteRange().end
           //}
-          anchorByteOffset = pushedAnchors.remove(stackFrames.size) ?: (-1).byteOffset()
+          anchorByteOffset = pushedAnchors.remove(stackFrames.size - 1) ?: (-1).byteOffset()
           stackFrames = stackFrames.removingAt(stackFrames.size - 1)
 
           val endRange = endMatch.charRange(string)

@@ -242,6 +242,38 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `nested rules do not match inside the prefix consumed by a while condition`() {
+    // after a while-condition matches, the scan continues past its match,
+    // so the nested patterns never see the consumed prefix
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "quote.block",
+            "begin": "> ",
+            "while": "> ",
+            "patterns": [
+              { "match": "> ", "name": "bad.requote" },
+              { "match": "x", "name": "content.x" }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "> x\n> x\n", """
+      source.test quote.block: [0, 2], {> }
+      source.test quote.block content.x: [2, 3], {x}
+      source.test quote.block: [3, 4], {
+      }
+      source.test quote.block: [4, 6], {> }
+      source.test quote.block content.x: [6, 7], {x}
+      source.test quote.block: [7, 8], {
+      }
+    """.trimIndent())
+  }
+
+  @Test
   fun `while captures of an outer rule are emitted without the scopes of nested rules`() {
     val grammar = """
       {
