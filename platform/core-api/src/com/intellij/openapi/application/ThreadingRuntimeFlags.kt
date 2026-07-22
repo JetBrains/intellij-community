@@ -11,6 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
 /**
+ * - `false` means that [edtWriteAction] will acquire lock on background in a suspending way and only then dispatch to EDT
+ * - `true` means that [edtWriteAction] will first dispatch to EDT and then block the UI thread until the lock can be acquired
+ */
+@ApiStatus.Internal
+val useBlockingEdtWriteActionImplementation: Boolean = System.getProperty("idea.use.blocking.edt.write.action.implementation", "true").toBoolean()
+
+/**
  * - `true` means some high-level Swing code will use write-intent lock defensively for execution of user's code
  * - `false` means that write-intent lock will not be inserted there
  *

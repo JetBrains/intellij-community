@@ -29,4 +29,6 @@ interface ReadWriteActionSupport {
   ): X
 
   suspend fun <T> runWriteAction(action: () -> T): T
+
+  suspend fun <T> runEdtWriteAction(action: () -> T): T
 }

@@ -15,10 +15,12 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.lambdaToComputable
 import com.intellij.openapi.application.useBackgroundWriteAction
+import com.intellij.openapi.application.useBlockingEdtWriteActionImplementation
 import com.intellij.openapi.application.useTrueSuspensionForWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -26,15 +28,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
 import com.intellij.util.application
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -46,6 +58,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   private val retryMarker: Any = ObjectUtils.sentinel("rw action")
 
+  private val edtWriteActionAcquisitionDispatcher = Dispatchers.IO.limitedParallelism(1, "EDT write action acquisition dispatcher")
   private val backgroundWriteActionDispatcher = Dispatchers.IO.limitedParallelism(1, "Background write action dispatcher")
   private val backgroundWriteActionDumpDispatcher =
     Dispatchers.IO.limitedParallelism(1, "Dispatcher for dumping threads and coroutines for background write action")
@@ -180,6 +193,85 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     }
   }
 
+  /**
+   * EDT write action is intended to run on the UI thread.
+   *
+   * Since the UI thread is a single-threaded executor, the naive implementation is prone to deadlocks:
+   * we can initiate a pending locking action, suspend, and then the next computation would block the executor on a blocking locking action --
+   * like a blocking read action.
+   * This fact makes the implementation quite sophisticated -- we acquire a write permit on a background executor,
+   * and then we perform synchronous transition to the EDT via custom-made `invokeAndWait`.
+   * To avoid the aforementioned deadlock, we allow retrying the EDT write action until it succeeds.
+   *
+   * By doing this, we effectively destroy write-bias of the Read-Write Lock. While it sounds dangerous -- we are open to starvation --
+   * our domain dictates that the responsiveness of the UI is of the utmost priority,
+   * hence we allow to stall writes if the UI thread wants to run a reading operation.
+   */
+  override suspend fun <T> runEdtWriteAction(action: () -> T): T {
+    if (useBlockingEdtWriteActionImplementation) {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      return withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction(lambdaToComputable<T>(action))
+      }
+    }
+    val lock = application.threadingSupport!!
+    val dispatcher = edtWriteActionAcquisitionDispatcher
+    val outerContext = currentCoroutineContext()
+    val result = withContext(dispatcher) {
+      lock.runWriteActionWithExecutor<T, Result<T>>(action, {
+        publishedEdtWriteActionJobs.add(it)
+      }, { publishedEdtWriteActionJobs.remove(it) }) { actualAction, job ->
+        // background thread
+        // but we have write access now
+
+        // completion with a result means that the [action] has completed -- either successfully or with an exception
+        // cancellation means that the execution needs to be retried
+        val resultDeferred: CompletableDeferred<Result<T>> = CompletableDeferred(null)
+        // affinity guard: we allow execution no more than once
+        val execAllowed = AtomicBoolean(true)
+        @OptIn(InternalCoroutinesApi::class)
+        job.invokeOnCompletion(onCancelling = true) {
+          // either we promptly cancel the action for retry, or execute it once
+          if (!execAllowed.getAndSet(false)) {
+            return@invokeOnCompletion
+          }
+          resultDeferred.cancel()
+        }
+        val outerResult: AtomicReference<Result<T>?> = AtomicReference(null)
+        @Suppress("OPT_IN_USAGE")
+        GlobalScope.async(context = outerContext + Dispatchers.UiWithModelAccess) {
+          if (!execAllowed.getAndSet(false)) {
+            return@async
+          }
+          publishedEdtWriteActionJobs.remove(job)
+          try {
+            val result = actualAction()
+            outerResult.set(Result.success(result))
+          }
+          catch (t: Throwable) {
+            coroutineContext.job.cancel()
+            outerResult.set(Result.failure(t))
+          }
+        }.invokeOnCompletion {
+          // we need to wait until the execution of `actualAction` before assigning the result
+          // to avoid early returns from `async`
+          val outerResult = outerResult.get()
+          if (outerResult != null) {
+            resultDeferred.complete(outerResult)
+          }
+        }
+        try {
+          val resultValue = resultDeferred.asCompletableFuture().get()
+          ThreadingSupport.ExecutorResult.Completion(resultValue)
+        }
+        catch (_: CancellationException) {
+          ThreadingSupport.ExecutorResult.Retry
+        }
+      }
+    }
+    return result.getOrThrow()
+  }
+
   private fun signalWriteActionNeedsToBeRetried(target: MutableSet<Job>) {
     val exception = ThreadingSupport.RetryLockAcquisitionException()
     val entries = target.toMutableList()
@@ -199,7 +291,12 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     signalWriteActionNeedsToBeRetried(publishedBackgroundWriteActionJobs)
   }
 
+  fun signalSuspendedEdtWriteActionNeedsToBeRetried() {
+    signalWriteActionNeedsToBeRetried(publishedEdtWriteActionJobs)
+  }
+
   private val publishedBackgroundWriteActionJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
+  private val publishedEdtWriteActionJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
 
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
