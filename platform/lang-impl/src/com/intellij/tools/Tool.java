@@ -35,8 +35,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.eel.EelOsFamily;
-import com.intellij.platform.eel.fs.EelFileSystemApiKt;
-import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -387,7 +385,8 @@ public class Tool implements SchemeElement {
       commandLine.getParametersList().addParametersString(
         MacroManager.getInstance().expandMacrosInString(paramString, false, paramContext));
 
-      if (Files.isDirectory(exePath) && exePath.getFileName().endsWith(".app")) {
+      Path exeFileName = exePath.getFileName();
+      if (Files.isDirectory(exePath) && exeFileName != null && exeFileName.toString().endsWith(".app")) {
         commandLine.withExePath("open");
         commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
