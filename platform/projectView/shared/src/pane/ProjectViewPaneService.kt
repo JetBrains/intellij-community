@@ -2,11 +2,16 @@
 @file:OptIn(FlowPreview::class)
 package com.intellij.platform.projectView.pane
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.fromDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
 import com.intellij.platform.projectView.settings.toSettingValue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -27,6 +32,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -117,10 +123,11 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
 
   private val subscriberCount = MutableStateFlow(0)
   private val stateBuilder = ProjectViewPaneStateBuilderImpl()
-  private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
+  private val manageScopeDeferred = CompletableDeferred<CoroutineScope>()
 
   suspend fun manage() {
     coroutineScope {
+      manageScopeDeferred.complete(this)
       launch(CoroutineName("State updates for PV pane $id")) {
         subscriberCount.map { subscriberCount -> subscriberCount > 0 }
           .distinctUntilChanged() // leave only activate / deactivate events
@@ -139,23 +146,6 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
             }
           }
       }
-      launch(CoroutineName("Requests for PV pane $id")) {
-        for (request in requestChannel) {
-          when (request) {
-            is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
-            is ProjectViewPaneSelectionChanged -> pane.setSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
-            is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
-            is ProjectViewPaneChangeOptionValueRequest -> pane.setOptionValue(request.option.fromDTO(), request.newValue)
-            is ProjectViewPaneChangeSortKeyRequest -> pane.setSortKey(request.sortKey.toSettingValue())
-            is ProjectViewPaneChangeFileNestingRequest -> pane.setFileNesting(
-              ProjectViewPaneFileNestingValueImpl(
-                request.isFileNestingOn,
-                request.activeRules.map { it.toNestingRule() },
-              )
-            )
-          }
-        }
-      }
     }
   }
 
@@ -169,8 +159,47 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
     }
   }
 
-  fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
+  suspend fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
+    val scope = withTimeoutOrNull(15.seconds) {
+      manageScopeDeferred.await()
+    }
+    if (scope == null) {
+      throw IllegalStateException("The scope for pane $id doesn't exist. It's either already disposed or is stuck during the startup")
+    }
+    val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
+    scope.launch(CoroutineName("Requests for PV pane $id") + ClientId.current.asContextElement()) {
+      processRequests(requestChannel)
+    }
     return requestChannel
+  }
+
+  private suspend fun processRequests(requestChannel: Channel<ProjectViewPaneRequest>) {
+    for (request in requestChannel) {
+      try {
+        when (request) {
+          is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
+          is ProjectViewPaneSelectionChanged -> pane.setSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
+          is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
+          is ProjectViewPaneChangeOptionValueRequest -> pane.setOptionValue(request.option.fromDTO(), request.newValue)
+          is ProjectViewPaneChangeSortKeyRequest -> pane.setSortKey(request.sortKey.toSettingValue())
+          is ProjectViewPaneChangeFileNestingRequest -> pane.setFileNesting(
+            ProjectViewPaneFileNestingValueImpl(
+              request.isFileNestingOn,
+              request.activeRules.map { it.toNestingRule() },
+            )
+          )
+        }
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.error(
+          "An error has occurred when processing a request for pane $id. " +
+          "The problematic request was $request",
+          e
+        )
+      }
+    }
   }
 }
 
+private val LOG = logger<ProjectViewPaneService>()
