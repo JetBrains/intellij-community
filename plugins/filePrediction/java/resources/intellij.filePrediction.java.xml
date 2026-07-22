@@ -6,6 +6,6 @@
     <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <filePrediction.referencesProvider implementation="com.intellij.filePrediction.references.java.JavaFileReferenceProvider"/>
+    <filePrediction.referencesProvider implementation="com.intellij.filePrediction.java.JavaFileReferenceProvider"/>
   </extensions>
 </idea-plugin>
