@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -321,12 +322,12 @@ abstract class NonModalWindowWrapper(
         frame.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
-        val fss = FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport")
-        fullScreenSupport = fss
         ToolbarService.getInstance().setTransparentTitleBar(
           window = frame,
           rootPane = frame.rootPane,
-          handlerProvider = { fss },
+          handlerProvider = {
+            FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport").also { fullScreenSupport = it }
+          },
           onDispose = { runnable -> Disposer.register(wd) { runnable.run() } },
         )
       }
@@ -409,7 +410,7 @@ abstract class NonModalWindowWrapper(
    * pre-full-screen window bounds. On non-macOS, [fullScreenSupport] is always null.
    */
   private fun switchWindowMode(toFloat: Boolean) {
-    val macFss = if (toFloat) fullScreenSupport as? MacFullScreenSupport else null
+    val macFss = if (toFloat && SystemInfoRt.isMac) fullScreenSupport as? MacFullScreenSupport else null
     if (macFss != null && macFss.isFullScreen) {
       val ideFrame = getIdeJFrame()
       macFss.exitFullScreen(activeWindow) {
@@ -625,6 +626,7 @@ abstract class NonModalWindowWrapper(
    * Returns `false` on non-macOS.
    */
   private fun isInvokingFrameInFullScreen(): Boolean {
+    if (!SystemInfoRt.isMac) return false
     val ultimateParent = ComponentUtil.findUltimateParent(invokingWindow ?: return false)
     // Main IDE frame: IdeFrame.isInFullScreen() is reliable (MacMainFrameDecorator).
     if ((ultimateParent as? IdeFrame)?.isInFullScreen == true) return true
