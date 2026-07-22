@@ -8,4 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PlatformIjentRegistry : IjentRegistry {
   override fun isEnabled(key: String, defaultValue: Boolean): Boolean = Registry.`is`(key, defaultValue)
+
+  override fun intValue(key: String, defaultValue: Int): Int = Registry.intValue(key, defaultValue)
 }
