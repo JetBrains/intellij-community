@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -78,8 +79,8 @@ public final class BatchModeDescriptorsUtil {
     }
 
     for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
-      List<ProblemDescriptor> problemDescriptors = entry.getValue();
       RefElement refElement = entry.getKey();
+      Collection<ProblemDescriptor> problemDescriptors = new LinkedHashSet<>(entry.getValue()); // can be duplicates if GlobalInspectionContextImpl.findProblemsInFile() is canceled and restarted mid-execution, thanks to outer ReadAction.nonBlocking()
       CommonProblemDescriptor[] descriptions = problemDescriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       dpi.addProblemElement(refElement, filterSuppressed, descriptions);
     }
