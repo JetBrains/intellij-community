@@ -38,6 +38,8 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.uast"/>
     <module name="intellij.platform.uast.ide"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
   <!-- endregion -->
 

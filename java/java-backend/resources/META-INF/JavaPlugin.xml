@@ -311,11 +311,6 @@
     <codeInsight.linkHandler prefix="#javaClass/" handlerClass="com.intellij.codeInsight.daemon.impl.JavaClassTooltipLinkHandler"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
-    <lang.logicalStructureElementsProvider implementationClass="com.intellij.lang.java.logical.ClassOwnerLogicalStructureElementsProvider"
-                                           forClass="com.intellij.psi.PsiClassOwner"/>
-    <lang.logicalStructureTreeElementProvider
-      id="javaPsiClassLogicalStructureTreeElementProvider"
-      implementation="com.intellij.lang.java.logical.JavaPsiClassLogicalStructureTreeElementProvider"/>
 
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
@@ -714,7 +709,6 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <workspaceModel.moduleExtensionBridgeFactory
       implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Factory"/>
-    <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext contextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext contextId="JAVA_STATEMENT" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>

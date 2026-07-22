@@ -76,6 +76,8 @@ jvm_library(
         "//java/idea-ui:ui",
         "//uast/uast-java-ide:java-uast-ide",
         "//platform/backend",
+        "//platform/built-in-server:builtInServer-impl",
+        "//RegExpSupport:regexp",
     ],
 )
 
@@ -121,6 +123,8 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//uast/uast-java-ide:java-uast-ide_test_lib",
         "//platform/backend:backend_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//RegExpSupport:regexp_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.backend` end
