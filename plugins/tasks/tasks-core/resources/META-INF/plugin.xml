@@ -17,6 +17,7 @@
     <module name="intellij.tasks.trac"/>
     <module name="intellij.tasks.bugzilla"/>
     <module name="intellij.tasks.jira"/>
+    <module name="intellij.tasks.java"/>
   </content>
   <content>
     <module name="intellij.libraries.xml.rpc"/>
@@ -30,7 +31,6 @@
     <!-- endregion -->
   </dependencies>
 
-  <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
     see com.intellij.tasks.generic.ResponseType.XML

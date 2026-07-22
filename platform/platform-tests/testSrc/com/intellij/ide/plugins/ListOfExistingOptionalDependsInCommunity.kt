@@ -21,7 +21,6 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "JUnit",
   ),
   "com.intellij.tasks" to setOf( // IJPL-249465
-    "com.intellij.java",
     "XPathView",
   ),
   "com.jetbrains.filePrediction" to setOf( // IJPL-249466

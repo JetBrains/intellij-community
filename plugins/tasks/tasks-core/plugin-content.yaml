@@ -25,6 +25,9 @@
 - name: lib/modules/intellij.tasks.bugzilla.jar
   contentModules:
   - name: intellij.tasks.bugzilla
+- name: lib/modules/intellij.tasks.java.jar
+  contentModules:
+  - name: intellij.tasks.java
 - name: lib/modules/intellij.tasks.jira.jar
   contentModules:
   - name: intellij.tasks.jira
@@ -35,5 +38,4 @@
   modules:
   - name: intellij.tasks
   - name: intellij.tasks.compatibility
-  - name: intellij.tasks.java
   - name: intellij.tasks.core
