@@ -2,12 +2,15 @@
 package com.intellij.externalDependencies.impl
 
 import com.intellij.externalDependencies.ExternalDependenciesManager
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 internal class CheckProjectRequiredPluginsActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.serviceAsync<ExternalDependenciesManager>()
+    if (TrustedProjects.isProjectTrusted(project)) {
+      project.serviceAsync<ExternalDependenciesManager>()
+    }
   }
 }
