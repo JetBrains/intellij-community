@@ -41,9 +41,35 @@ class SvgPatchOperationMatchesTest {
   }
 
   @Test
+  fun `hex shorthands match the form they stand for`() {
+    // Every digit stands for a doubled pair, so #fff names the same color as #ffffff.
+    assertTrue(condition("fill", "#ffffff").matches("#fff"))
+    assertTrue(condition("fill", "#fff").matches("#FFFFFF"))
+    assertTrue(condition("fill", "#66cc77").matches("#6c7"))
+  }
+
+  @Test
+  fun `an alpha the literal carries is not part of which color it names`() {
+    // A substitution replaces the opacity of what it matched along with the color, so the authored alpha does not
+    // decide whether the color is a palette color.
+    assertTrue(condition("fill", "#6c707e").matches("#6c707eff"))
+    assertTrue(condition("fill", "#6c707e").matches("#6C707E80"))
+    assertTrue(condition("fill", "#ffffff").matches("#fff8"))
+  }
+
+  @Test
+  fun `a hex literal of no valid length names no color`() {
+    // There is no five- or seven-digit hex color; such a value is not a color and must not be expanded into one.
+    assertFalse(condition("fill", "#6c707e").matches("#6c707"))
+    assertFalse(condition("fill", "#ffffff").matches("#fffff"))
+    assertFalse(condition("fill", "#ffffff").matches("#ff"))
+  }
+
+  @Test
   fun `different colors do not match`() {
     assertFalse(condition("fill", "#6c707e").matches("#818594"))
     assertFalse(condition("fill", "white").matches("black"))
+    assertFalse(condition("fill", "#ffffff").matches("#fffffe"))
   }
 
   @Test

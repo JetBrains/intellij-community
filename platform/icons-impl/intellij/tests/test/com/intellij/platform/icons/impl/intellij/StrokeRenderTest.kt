@@ -10,6 +10,7 @@ import com.intellij.platform.icons.patchers.svgPatcher
 import com.intellij.platform.icons.swing.toSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
 import java.awt.image.BufferedImage
+import kotlin.math.roundToInt
 import javax.swing.UIManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -88,6 +89,39 @@ class StrokeRenderTest {
     // override it. Asserting only the absence of red would also pass on a blank or unpatched render.
     assertTrue(counts.green > 0) { "$path: the icon's own patcher did not take effect, got $counts" }
     assertEquals(0, counts.red, "$path: the stroke color overrode the icon's own patcher, got $counts")
+  }
+
+  @Test
+  fun `icon with a hand-authored stroke variant strokes red`() {
+    // run.svg is a palette background fill inside an off-palette green outline, so reducing it to an outline cannot
+    // produce the stroked glyph — the icon ships run_stroke.svg, a separate drawing, for exactly that.
+    val stroked = count(render("expui/run/run.svg", IconModifier.stroke(red)))
+    println("[stroke-render] expui/run/run.svg  stroked=[$stroked]")
+
+    assertTrue(stroked.red > 0) { "expected stroking to produce red pixels, got $stroked" }
+    assertEquals(0, stroked.green, "the authored green outline must not survive stroking, got $stroked")
+  }
+
+  @Test
+  fun `stroking replaces the opacity a shape was authored with`() {
+    // cursorText.svg draws one of its shapes at fill-opacity="0.7". That opacity described the color stroking has just
+    // replaced, so it cannot go on shading the color that replaced it.
+    val stroked = render("expui/windows/mouse/cursorText.svg", IconModifier.stroke(red))
+    val authored = (0.7f * 255).roundToInt()
+    val atAuthoredOpacity = (authored - 1..authored + 1).sumOf { alpha -> countAtAlpha(stroked, alpha) }
+    println("[stroke-render] cursorText.svg  stroked=[${count(stroked)}]  atAuthoredOpacity=$atAuthoredOpacity")
+
+    assertEquals(0, atAuthoredOpacity, "pixels are still rendered at the authored 0.7 opacity")
+  }
+
+  private fun countAtAlpha(image: BufferedImage, alpha: Int): Int {
+    var count = 0
+    for (y in 0 until image.height) {
+      for (x in 0 until image.width) {
+        if (image.getRGB(x, y) ushr 24 and 0xFF == alpha) count++
+      }
+    }
+    return count
   }
 
   private fun assertStrokedRed(path: String) {
