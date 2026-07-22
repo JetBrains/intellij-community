@@ -35,11 +35,13 @@ class BuildOutputLineDispatcher<Payload>(
 
   fun close() {
     buffer.getAndSet(null)
-      ?.flushBuffer()
+      ?.flushBuffer(skipEmptyLine = true)
   }
 
-  private fun BuildOutputBuffer<Payload>.flushBuffer() {
-    lineConsumer.accept(text.toString(), payload.toList())
+  private fun BuildOutputBuffer<Payload>.flushBuffer(skipEmptyLine: Boolean = false) {
+    if (!skipEmptyLine || text.isNotEmpty()) {
+      lineConsumer.accept(text.toString(), payload.toList())
+    }
     text.setLength(0)
     payload.clear()
   }
