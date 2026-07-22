@@ -18,7 +18,7 @@ runs:
   steps:
     - name: Restore cached Kotlin ${{ inputs.version }}
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         key: kotlin-${{ runner.os }}-${{ inputs.version }}
         path: ${{ runner.temp }}/kotlin-${{ inputs.version }}
