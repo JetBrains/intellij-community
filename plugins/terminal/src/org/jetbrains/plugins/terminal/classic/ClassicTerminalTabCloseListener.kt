@@ -7,10 +7,12 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
-internal class ClassicTerminalTabCloseListener private constructor(
+@ApiStatus.Internal
+class ClassicTerminalTabCloseListener private constructor(
   content: Content,
   project: Project,
   parentDisposable: Disposable,

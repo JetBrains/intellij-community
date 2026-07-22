@@ -8,6 +8,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabDescriptor
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabCloseListenerImpl
+import com.intellij.terminal.frontend.toolwindow.impl.getTitleText
+import com.intellij.terminal.frontend.toolwindow.impl.titleStateFlow
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
@@ -17,11 +23,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.jetbrains.plugins.terminal.TerminalEditorTabSupportUtil
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener.CloseCheckResult
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import org.jetbrains.plugins.terminal.util.terminalProjectScopeBoundToDisposable
 import java.beans.PropertyChangeListener
 import javax.swing.Icon
@@ -36,10 +47,16 @@ private val TAB_DESCRIPTOR_STATE_KEY =
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   override fun canCloseFile(project: Project, content: Content): Boolean {
     return TerminalTabCloseListener.runCloseQuery(project, content, projectClosing = false) {
-      val info = content.getUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY)
-                 ?: return@runCloseQuery CloseCheckResult.CAN_CLOSE_SILENTLY
+      val terminalContent = findTerminalContent(content)
+                            ?: return@runCloseQuery CloseCheckResult.CAN_CLOSE_SILENTLY
+
       TerminalTabCloseListener.runCloseCheckBlocking(project) {
-        info.shouldConfirmClosing()
+        when (terminalContent) {
+          is TerminalContent.Reworked ->
+            TerminalTabCloseListenerImpl.shouldConfirmClosing(terminalContent.view)
+          is TerminalContent.Classic ->
+            ClassicTerminalTabCloseListener.shouldConfirmClosing(terminalContent.widget)
+        }
       }
     }
   }
@@ -71,17 +88,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       .getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
       ?.icon
 
-    // The info must be set before the descriptor state is created.
-    // We do not observe changes to this user-data key.
-    val info = content.getUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY)
-
-    val titleState: StateFlow<@NlsContexts.TabTitle String> =
-      info?.editorTabTitle ?: run {
-        LOG.warn(
-          "Terminal editor tab info is not defined; falling back to Content.displayName"
-        )
-        contentDisplayNameState(content, descriptorStateScope)
-      }
+    val titleState = createTerminalTitleState(content = content, scope = descriptorStateScope)
+                     ?: run {
+                       LOG.warn("Terminal title state is unavailable; falling back to Content.displayName")
+                       contentDisplayNameState(content, descriptorStateScope)
+                     }
 
     return combine(
       titleState,
@@ -140,4 +151,57 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       }
     }.distinctUntilChanged()
   }
+
+  private fun createTerminalTitleState(
+    content: Content,
+    scope: CoroutineScope,
+  ): StateFlow<@NlsContexts.TabTitle String>? {
+    return when (val terminalContent = findTerminalContent(content)) {
+      is TerminalContent.Reworked -> {
+        val view = terminalContent.view
+        view.titleStateFlow()
+          .map { it.croppedText }
+          .distinctUntilChanged()
+          .stateIn(
+            scope = scope,
+            started = SharingStarted.Lazily,
+            initialValue = view.getTitleText(),
+          )
+      }
+
+      is TerminalContent.Classic -> {
+        val terminalTitle = terminalContent.widget.terminalTitle
+        terminalTitle.stateFlow(
+          buildCroppedTitle = { it.buildSettingsAwareTitle() },
+          buildFullTitle = { it.buildSettingsAwareFullTitle() },
+        )
+          .map { it.croppedText }
+          .distinctUntilChanged()
+          .stateIn(
+            scope = scope,
+            started = SharingStarted.Lazily,
+            initialValue = terminalTitle.buildSettingsAwareTitle(false),
+          )
+      }
+
+      null -> null
+    }
+  }
+}
+
+private sealed interface TerminalContent {
+  data class Reworked(val view: TerminalView) : TerminalContent
+  data class Classic(val widget: TerminalWidget) : TerminalContent
+}
+
+private fun findTerminalContent(content: Content): TerminalContent? {
+  content.getTerminalTab()?.view?.let {
+    return TerminalContent.Reworked(it)
+  }
+
+  TerminalToolWindowManager.findWidgetByContent(content)?.let {
+    return TerminalContent.Classic(it)
+  }
+
+  return null
 }
