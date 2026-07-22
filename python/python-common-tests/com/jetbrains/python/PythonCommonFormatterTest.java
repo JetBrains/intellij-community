@@ -688,12 +688,6 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
-  @TestFor(issues = "PY-34006")
-  public void testAlignConsecutiveAssignments() {
-    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
-    doTest();
-  }
-
   // PY-14962
   public void testDictWrappingChopDownIfLong() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
@@ -1639,5 +1633,71 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
       getPythonCodeStyleSettings().USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true;
       doTest();
     });
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignments() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsBrokenByStatement() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsTrailingCommentKept() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsChainedFirstOnly() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsNestedScopesIndependent() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsDisabledRemovesExistingAlignment() {
+    // setting is off: reformatting already-aligned code must collapse the padding back to a single space
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsStandaloneCommentBreaksGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultilineRhsContinuesGroup() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsIncompleteCode() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsIdempotent() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
+  }
+
+  @TestFor(issues = "PY-34006")
+  public void testAlignConsecutiveAssignmentsMultipleAugmentedOperators() {
+    getPythonCodeStyleSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    doTest();
   }
 }
