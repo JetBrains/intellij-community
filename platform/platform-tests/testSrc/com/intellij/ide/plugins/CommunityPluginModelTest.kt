@@ -49,6 +49,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.jetbrains.client",
     "com.intellij.modules.appcode.ide",
     "com.intellij.modules.rustrover",
+    "dev.tachilabs.mermaidstudio.core", // IJPL-250887
   ),
   componentImplementationClassesToIgnore = setOf(
     "com.intellij.designer.DesignerToolWindowManager",

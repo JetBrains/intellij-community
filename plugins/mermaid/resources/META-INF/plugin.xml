@@ -7,6 +7,8 @@
     <a href="https://mermaid.js.org/">Mermaid</a> diagramming and charting language.
   ]]></description>
 
+  <incompatible-with>dev.tachilabs.mermaidstudio.core</incompatible-with>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.json"/>
