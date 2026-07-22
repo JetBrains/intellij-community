@@ -14,7 +14,7 @@ interface ProjectViewPaneModel {
 
   suspend fun manageState(builder: ProjectViewPaneStateBuilder)
 
-  suspend fun setSelected(isSelected: Boolean, options: ProjectViewPaneSelectionOptions)
+  suspend fun setPaneSelected(isSelected: Boolean, options: ProjectViewPaneSelectionOptions)
 
   suspend fun loadChildren(parentId: Long, options: ProjectViewPaneLoadChildrenOptions)
 

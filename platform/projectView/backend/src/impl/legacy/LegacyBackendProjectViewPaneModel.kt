@@ -180,7 +180,7 @@ private class LegacyBackendProjectViewPaneModel(
     }
   }
 
-  override suspend fun setSelected(
+  override suspend fun setPaneSelected(
     isSelected: Boolean,
     options: ProjectViewPaneSelectionOptions,
   ) {

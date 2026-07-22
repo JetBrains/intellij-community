@@ -137,7 +137,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     return false
   }
 
-  override suspend fun setSelected(
+  override suspend fun setPaneSelected(
     isSelected: Boolean,
     options: ProjectViewPaneSelectionOptions,
   ) {

@@ -178,7 +178,7 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
       try {
         when (request) {
           is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
-          is ProjectViewPaneSelectionChanged -> pane.setSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
+          is ProjectViewPaneSelectionChanged -> pane.setPaneSelected(request.paneId == id, ProjectViewPaneSelectionOptionsImpl)
           is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
           is ProjectViewPaneChangeOptionValueRequest -> pane.setOptionValue(request.option.fromDTO(), request.newValue)
           is ProjectViewPaneChangeSortKeyRequest -> pane.setSortKey(request.sortKey.toSettingValue())
