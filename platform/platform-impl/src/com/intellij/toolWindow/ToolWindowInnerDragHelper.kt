@@ -274,6 +274,13 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
   }
 
+  /**
+   * Moves the dragged [content] from the tool window represented by [sourceDecorator]
+   * into the editor window under [target].
+   *
+   * @return `true` if the caller should unsplit the source decorator when it becomes empty;
+   * `false` if the move failed or the transfer implementation handles unsplitting itself.
+   */
   private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, target: EditorDropTarget): Boolean {
     val editorWindow = target.resolveWindow() ?: return false
     if (ToolWindowEditorTabSupportUtil.isEnabled()) {
@@ -281,6 +288,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       recordMoveToEditorByDrag(sourceDecorator)
       toolWindow.project.service<ToolWindowEditorTabTransferController>()
         .moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
+      // Return false because moveContentToEditor handles unsplitting
       return false
     }
 
