@@ -42,7 +42,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
 
-class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionAction {
+abstract class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(StaticImportMemberQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
@@ -90,14 +90,7 @@ class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionA
     return true;
   }
 
-  protected void doImport(@NotNull T toImport) {
-    Project project = toImport.getProject();
-    PsiElement element = myRef.getElement();
-    if (element == null) return;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
-      AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
-  }
+  abstract protected void doImport(@NotNull T toImport);
 
   private void chooseAndImport(@NotNull Editor editor, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
