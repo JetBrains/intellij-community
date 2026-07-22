@@ -11,7 +11,7 @@ import com.intellij.util.ui.JBUI
 interface SpacingConfiguration {
 
   /**
-   * Small horizontal gap, used between label and related component for example
+   * A small horizontal gap used between a label and a related component, for example
    */
   val horizontalSmallGap: Int
 
@@ -26,7 +26,7 @@ interface SpacingConfiguration {
   val horizontalColumnsGap: Int
 
   /**
-   * Horizontal gap between component and related comment
+   * Horizontal gap between a component and its related comment
    */
   val horizontalCommentGap: Int
 
@@ -41,7 +41,7 @@ interface SpacingConfiguration {
   val horizontalToggleButtonIndent: Int
 
   /**
-   * Top and bottom gaps for components like CheckBox, JTextField etc
+   * Top and bottom gaps for components like CheckBox, JTextField, etc.
    */
   val verticalComponentGap: Int
 
@@ -56,7 +56,7 @@ interface SpacingConfiguration {
   val verticalSmallGap: Int
 
   /**
-   * Vertical medium gap, for example used before and after groups
+   * A medium vertical gap used before and after groups, for example
    */
   val verticalMediumGap: Int
 
@@ -120,7 +120,7 @@ open class IntelliJSpacingConfiguration : SpacingConfiguration {
 /**
  * Returns space between left visible part of CheckBox and text
  *
- * See [com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI] and [com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder]
+ * See com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI and com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder
  */
 private fun calculateHorizontalIndent(): Int {
   val iconSize = JBUIScale.scale(JBUI.getInt("CheckBox.iconSize", 18))

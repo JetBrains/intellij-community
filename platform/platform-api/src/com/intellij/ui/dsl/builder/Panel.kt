@@ -32,23 +32,23 @@ interface Panel : CellBase<Panel> {
   override fun customize(customGaps: UnscaledGaps): Panel
 
   /**
-   * Adds standard left indent and groups rows into [RowsRange] that allows to use some groups operations on the rows
+   * Adds a standard left indent and groups the rows into a [RowsRange], allowing group operations to be performed on them
    *
    * @see [rowsRange]
    */
   fun indent(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label can contain mnemonic and is assigned
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label can contain a mnemonic and is assigned
    * to the first component in the row via [JLabel.labelFor] property.
-   * Use row("") if label is empty
+   * Use `row("")` if label is empty
    */
   fun row(@Nls label: String, init: Row.() -> Unit): Row
 
   /**
    * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label is assigned
    * to the first component in the row via [JLabel.labelFor] property.
-   * If label is null then [RowLayout.INDEPENDENT] layout is used
+   * If the label is null, the [RowLayout.INDEPENDENT] layout is used.
    */
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
@@ -63,25 +63,25 @@ interface Panel : CellBase<Panel> {
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
   /**
-   * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
+   * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with a title
    */
   fun separator(background: Color? = null): Row
 
   /**
-   * Creates sub-panel that occupies the whole width and uses its own grid inside
+   * Creates a sub-panel that occupies the whole width and uses its own grid inside
    */
   fun panel(init: Panel.() -> Unit): Panel
 
   /**
-   * Groups rows into [RowsRange] that allows to use some groups operations on the rows
+   * Groups rows into a [RowsRange], allowing group operations to be performed on them
    *
    * @see [indent]
    */
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with independent grid, title and some vertical space above (except the group in the parents first row)
-   * and below (except the group in the parents last row) the group.
+   * Adds a panel with an independent grid, title and some vertical space above (except the group in the first row of the parent)
+   * and below (except the group in the last row of the parent) the group.
    * Grouped radio buttons and checkboxes should use [Panel.buttonsGroup] method, which uses different title gaps.
    * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
@@ -108,8 +108,8 @@ interface Panel : CellBase<Panel> {
                      init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds collapsible panel with independent grid, title and some vertical space above (except the group in the parents first row)
-   * and below (except the group in the parents last row) the group. The group title is focusable via the Tab key and supports mnemonics.
+   * Adds a collapsible panel with independent grid, title and some vertical space above (except the group in the first row of the parent)
+   * and below (except the group in the last row of the parent) the group. The group title is focusable via the Tab key and supports mnemonics.
    * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
    * @param indent true if left indent is needed
@@ -122,7 +122,7 @@ interface Panel : CellBase<Panel> {
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
 
-   * @param indent true if left indent is needed. By default, true if title exists and false otherwise
+   * @param indent whether a left indent is needed. Defaults to true if a title exists and false otherwise
    */
   fun buttonsGroup(@NlsContexts.Label title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
 
