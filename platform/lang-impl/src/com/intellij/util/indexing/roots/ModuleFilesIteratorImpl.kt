@@ -16,8 +16,12 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.g
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
-internal class ModuleFilesIteratorImpl(
+@ApiStatus.Internal
+@VisibleForTesting
+class ModuleFilesIteratorImpl(
   private val module: Module,
   private val root: VirtualFile,
   private val recursive: Boolean,
@@ -61,7 +65,12 @@ internal class ModuleFilesIteratorImpl(
     val myWorkspaceFileIndex = getInstance(project) as WorkspaceFileIndexEx
 
     return if (recursive) {
-      iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)
+      val customFilter = VirtualFileFilter { file ->
+        val info = myWorkspaceFileIndex.getFileInfo(file, true, true, false, false, false ,false, false)
+        info.findFileSet { it.kind.isIndexable && (it.data as? ModuleRelatedRootData)?.module == module } != null
+      }.and(fileFilter) // run `fileFilter` second, so if it is deduplication filter, it won't be invoked on files outside module
+      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && fileSet.kind.isContent }
+      myWorkspaceFileIndex.processContentUnderDirectory(root, processorEx, customFilter, fileSetFilter)
     }
     else {
       fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
