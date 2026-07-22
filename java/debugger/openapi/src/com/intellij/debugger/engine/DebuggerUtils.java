@@ -657,15 +657,29 @@ public abstract class DebuggerUtils {
    * Safely iterates through the provided {@code iterable} and applies the given {@code action} to each element.
    * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
    * while execution continues for the other elements.
+   * <p>
+   * The first exception is handled only after the iteration (later ones are attached to it as suppressed), because
+   * {@code logErrorImpl} rethrows control-flow exceptions like {@code VMDisconnectedException}. Handling it in place
+   * would skip the remaining elements — e.g. leave a {@code RemoteDebugProcessHandler} whose {@code processDetached}
+   * listener didn't run stuck in the terminating state forever, never disposing its {@code DebugProcessImpl}.
    */
   public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
+    Throwable failure = null;
     for (T o : iterable) {
       try {
         action.accept(o);
       }
       catch (Throwable e) {
-        getInstance().logErrorImpl(e);
+        if (failure == null) {
+          failure = e;
+        }
+        else if (failure != e) {
+          failure.addSuppressed(e);
+        }
       }
+    }
+    if (failure != null) {
+      getInstance().logErrorImpl(failure);
     }
   }
 
