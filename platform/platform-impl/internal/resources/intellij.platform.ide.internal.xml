@@ -118,7 +118,7 @@
     <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
   </extensions>
 
-  <actions resource-bundle="messages.ActionsBundle">
+  <actions resource-bundle="messages.PlatformInternalBundle">
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
     <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
       <synonym key="action.OpenLog.Show.text"/>

@@ -53,6 +53,6 @@ internal class ToggleIncompleteDependenciesModeAction : DumbAwareAction() {
 
     e.presentation.isEnabled = !isIncomplete || isToggledIncomplete(project)
     e.presentation.text = if (isIncomplete) "Exit Incomplete Dependencies Mode"
-    else ActionsBundle.message("action.ToggleIncompleteMode.text")
+    else PlatformInternalBundle.message("action.ToggleIncompleteMode.text")
   }
 }
