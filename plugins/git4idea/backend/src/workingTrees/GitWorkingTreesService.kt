@@ -418,9 +418,3 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
   }
 }
-
-internal sealed class GitWorktreeSupportStatus {
-  data object Unsupported : GitWorktreeSupportStatus()
-  data class SingleRepository(val repository: GitRepository) : GitWorktreeSupportStatus()
-  data class MultipleRepository(val repositories: List<GitRepository>) : GitWorktreeSupportStatus()
-}
