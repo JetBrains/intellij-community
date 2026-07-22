@@ -18,6 +18,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val runButton: StripeButtonUi = stripeButton("Run")
   val buildButton: StripeButtonUi = stripeButton("Build")
   val gitButton: StripeButtonUi = stripeButton("Git")
+  val vcsButton: StripeButtonUi = stripeButton("Version Control")
   val commitButton: StripeButtonUi = stripeButton("Commit")
   val structureButton: StripeButtonUi = stripeButton("Structure")
   val servicesButton: StripeButtonUi = stripeButton("Services")
