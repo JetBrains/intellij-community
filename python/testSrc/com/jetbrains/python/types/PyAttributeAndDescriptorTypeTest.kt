@@ -1006,7 +1006,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       expr = x.method()
       #│       ^^^^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
-      #└ TYPE C
+      #└ TYPE C | Unknown
       """,
     )
 

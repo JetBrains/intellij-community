@@ -831,6 +831,23 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               expr = self.x
       #       └ TYPE C1
       """)
+
+    @Test
+    fun `calling union of dataclasses`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass
+      class DC1:
+          x: int = 0
+
+      @dataclass
+      class DC2:
+          y: str = ""
+
+      def f(cls: type[DC1] | type[DC2]):
+          expr = cls()
+      #   └ TYPE DC1 | DC2
+      """)
   }
 
   @Nested
@@ -2145,7 +2162,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #                   ^^^ WARNING Expected type 'int | Box[str]', got 'EllipsisType' instead
       expr = r.get()
       #│       ^^^ WEAK-WARNING Member 'int' of 'int | Box[str]' does not have attribute 'get'
-      #└ TYPE str FIXME str | Any
+      #└ TYPE str | Unknown
       """)
 
     @Test
@@ -2164,7 +2181,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
       #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
-      #└ TYPE str
+      #└ TYPE str | Unknown
       """)
   }
 

@@ -205,7 +205,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       x = f()
       expr = x.bit_length()
       # │      ^^^^^^^^^^ WEAK-WARNING Member 'slice' of 'int | slice' does not have attribute 'bit_length'
-      # └ TYPE int
+      # └ TYPE int | Unknown
       """)
 
     @Test

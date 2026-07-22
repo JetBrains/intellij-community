@@ -900,7 +900,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
-      #└ TYPE tuple[str, int, float | int]
+      #└ TYPE tuple[str, int, float | int] | Unknown
       """)
 
     @Test

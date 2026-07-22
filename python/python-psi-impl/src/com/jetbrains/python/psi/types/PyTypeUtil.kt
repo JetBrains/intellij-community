@@ -494,7 +494,6 @@ object PyTypeUtil {
   @ApiStatus.Internal
   fun mapCallableType(functionType: PyType?, mapper: (PyCallableType) -> PyCallableType?): PyType? {
     return when (functionType) {
-      is PyClassLikeType -> functionType
       is PyCallableType -> mapper(functionType)
       is PyOverloadType -> functionType.map { mapper(it) }
       else -> functionType
@@ -505,7 +504,6 @@ object PyTypeUtil {
   @JvmStatic
   fun getCallableItems(functionType: PyType?): List<PyCallableType> {
     return when (functionType) {
-      is PyClassLikeType -> listOf()
       is PyCallableType -> listOf(functionType)
       is PyOverloadType -> functionType.items
       else -> listOf()
@@ -653,6 +651,8 @@ object PyTypeUtil {
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>?
   ): PyType? {
+    if (memberType is PyClassLikeType) return memberType
+
     val signatures = getCallableItems(memberType)
     if (signatures.isEmpty()) return memberType
 

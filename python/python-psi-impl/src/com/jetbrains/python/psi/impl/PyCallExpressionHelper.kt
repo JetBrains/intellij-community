@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
@@ -41,7 +42,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.flattenToCallables
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -76,6 +76,7 @@ import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
+import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
@@ -143,38 +144,32 @@ object PyCallExpressionHelper {
   }
 
   /**
-   * Resolves the callee to the callable type it may denote, **preserving the composite structure** of the callee type.
-   * Use [multiResolveCallee] (or [PyType.flattenToCallables]) when the flat callable signatures are enough, regardless of that structure.
+   * If the callee type is [PyClassType], returns a callable type that is either a class
+   * constructor or a `__call__` method. Otherwise, returns the callee type as is.
    */
   @JvmStatic
-  fun getCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
-    return PyUtil.getNullableParameterizedCachedValue(expression, resolveContext) {
-      val types = listOfNotNull(
-        getExplicitCalleeType(expression, it),
-        getImplicitCalleeType(expression, it),
-        getRemoteCalleeType(expression, it),
+  fun getCalleeType(callExpression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    return PyUtil.getNullableParameterizedCachedValue(callExpression, resolveContext) {
+      PyUnionType.union(
+        buildList {
+          add(getExplicitCalleeType(callExpression, it))
+          addIfNotNull(getImplicitCalleeType(callExpression, it))
+          addIfNotNull(getRemoteCalleeType(callExpression, it))
+        }
       )
-      if (types.isEmpty()) null else PyUnionType.union(types)
     }
   }
 
-  /**
-   * Resolves the callee to its individual callable signatures: an overloaded callable is unfolded into its overloads, a
-   * composite (union/intersection) is expanded into the callables of its members, a plain callable is kept as is, and
-   * anything non-callable is dropped. Unlike [PyTypeUtil.getCallableItems] this preserves a callable [PySelfType] (which
-   * is also a `PyClassLikeType`). Use [getCalleeType] when the union/intersection structure must be preserved.
-   */
+  @Deprecated(message = "Use `getCalleeType(PyCallExpression, PyResolveContext)`")
   @JvmStatic
-  fun multiResolveCallee(expression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    return getCalleeType(expression, resolveContext).flattenToCallables()
+  fun multiResolveCallee(callExpression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
+    return getCalleeType(callExpression, resolveContext).flattenToCallables()
   }
 
   private fun PyType?.flattenToCallables(): List<PyCallableType> {
     return when (this) {
       is PyCompositeType -> members.flatMap { it.flattenToCallables() }
-      is PyOverloadType -> items
-      is PyCallableType -> listOf(this)
-      else -> emptyList()
+      else -> PyTypeUtil.getCallableItems(this)
     }
   }
 
@@ -210,41 +205,25 @@ object PyCallExpressionHelper {
       .toList()
   }
 
-  /**
-   * Resolves the explicitly written callee into a callable type, mirroring the composite structure of its type: a union
-   * stays a union of callables, an intersection stays an intersection of callables, and an overloaded callable is kept as
-   * a single [PyOverloadType] rather than unfolded into its overloads. A non-callable member contributes nothing (it is
-   * reported separately by `PyCallingNonCallableInspection`).
-   */
-  private fun getExplicitCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
-    val callee = expression.callee ?: return null
+  private fun getExplicitCalleeType(callExpression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    val callee = callExpression.callee ?: return PyAnyType.unknown
 
     val context = resolveContext.typeEvalContext
-    val calleeType = context.getType(callee)
-
-    val provided = PyTypeProvider.EP_NAME.extensionList.mapNotNull { it.prepareCalleeTypeForCall(calleeType, expression, context) }
-    if (provided.isNotEmpty()) {
-      val callables = provided.mapNotNull { Ref.deref(it) }
-      return if (callables.isEmpty()) null else PyOverloadType(callables, null)
-    }
-
-    return getExplicitCalleeType(calleeType, resolveContext)
-  }
-
-  private fun getExplicitCalleeType(type: PyType?, resolveContext: PyResolveContext): PyType? {
-    return when (type) {
-      is PyUnionType -> PyUnionType.union(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
-      is PyUnsafeUnionType -> PyUnsafeUnionType.unsafeUnion(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
-      is PyIntersectionType -> PyIntersectionType.intersection(type.members.mapNotNull { getExplicitCalleeType(it, resolveContext) })
+    return context.getType(callee).compositeMap { type ->
+      val provided = PyTypeProvider.EP_NAME.computeSafeIfAny { it.prepareCalleeTypeForCall(type, callExpression, context) }
+      if (provided != null) {
+        provided.get() ?: PyAnyType.unknown
+      }
       // When invoking cls(), turn type[Self] into Self.
       // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
       // as a call result, losing Self.
-      // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
-      is PySelfType -> type
-      is PyClassType -> createCallableFromClass(type, resolveContext)
-      is PyCallableType -> type
-      is PyOverloadType -> type
-      else -> null
+      // See e.g. PyTypeAliasAndFormsTest.SelfTypeCheckerInspections.`Self in class methods`
+      else if (type is PyClassType && type !is PySelfType) {
+        createCallableFromClass(type, resolveContext)
+      }
+      else {
+        type
+      }
     }
   }
 
