@@ -3,8 +3,8 @@ package com.intellij.notification.impl.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.util.BasePropertyService
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.DoNotAskAppManager
+import com.intellij.notification.DoNotAskProjectManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
@@ -15,8 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 import javax.swing.JComponent
 import kotlin.math.min
-
-private const val DO_NOT_ASK_KEY_PREFIX = "Notification.DoNotAsk-"
 
 internal class DoNotAskConfigurableUi {
   private var myCreated = false
@@ -33,33 +31,32 @@ internal class DoNotAskConfigurableUi {
   }
 
   private fun getDoNotAskValues(): List<DoNotAskInfo> {
-    val list = ArrayList<DoNotAskInfo>()
+    return buildList {
+      addAll(
+        convertToDoNotAskValues(
+          DoNotAskAppManager.getInstance().getDoNotAskNotifications(),
+          forProject = false
+        )
+      )
 
-    getValues(PropertiesComponent.getInstance(), list, false)
-
-    val project = getProject()
-    if (project != null) {
-      getValues(PropertiesComponent.getInstance(project), list, true)
-    }
-
-    list.sortWith(Comparator { o1, o2 -> o1.id.compareTo(o2.id) })
-
-    return list
+      getProject()?.let { project ->
+        addAll(
+          convertToDoNotAskValues(
+            DoNotAskProjectManager.getInstance(project).getDoNotAskNotifications(),
+            forProject = true
+          )
+        )
+      }
+    }.sortedBy(DoNotAskInfo::id)
   }
 
   private fun getProject(): Project? {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(WindowManager.getInstance().mostRecentFocusedWindow))
   }
 
-  private fun getValues(manager: PropertiesComponent, list: ArrayList<DoNotAskInfo>, forProject: Boolean) {
-    if (manager is BasePropertyService) {
-      manager.forEachPrimitiveValue { key, _ ->
-        if (key.startsWith(DO_NOT_ASK_KEY_PREFIX)) {
-          val id = key.substring(DO_NOT_ASK_KEY_PREFIX.length)
-          val name = manager.getValue("Notification.DisplayName-DoNotAsk-$id", id)
-          list.add(DoNotAskInfo(id, name, forProject))
-        }
-      }
+  private fun convertToDoNotAskValues(entries: Map<String, String>, forProject: Boolean): List<DoNotAskInfo> {
+    return entries.map { (id, name) ->
+      DoNotAskInfo(id, name, forProject)
     }
   }
 
@@ -101,26 +98,16 @@ internal class DoNotAskConfigurableUi {
   }
 
   fun apply() {
-    val manager = PropertiesComponent.getInstance()
-
     val project = getProject()
-    val projectManager = if (project == null) null else PropertiesComponent.getInstance(project)
 
     for (info in myRemoveList) {
       if (info.forProject) {
-        if (projectManager != null) {
-          removeKey(projectManager, info.id)
-        }
+        project?.let { DoNotAskProjectManager.getInstance(it).clearDoNotAsk(info.id) }
       }
       else {
-        removeKey(manager, info.id)
+        DoNotAskAppManager.getInstance().clearDoNotAsk(info.id)
       }
     }
-  }
-
-  private fun removeKey(manager: PropertiesComponent, id: String) {
-    manager.unsetValue("Notification.DoNotAsk-$id")
-    manager.unsetValue("Notification.DisplayName-DoNotAsk-$id")
   }
 }
 
