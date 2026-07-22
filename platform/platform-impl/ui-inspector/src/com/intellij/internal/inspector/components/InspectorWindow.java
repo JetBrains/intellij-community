@@ -6,7 +6,7 @@ import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -779,11 +779,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
     private boolean showAccessibilityIssues;
 
     private ToggleShowAccessibilityIssuesAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
       showAccessibilityIssues =
         isAccessibilityAuditEnabled && PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
       getTemplatePresentation().setDescription(
-        InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
 
     @Override
@@ -822,7 +822,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class RefreshAction extends MyTextAction {
     private RefreshAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.refresh"));
     }
 
     @Override
@@ -843,7 +843,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ToggleAccessibleAction extends MyTextAction implements Toggleable {
     private ToggleAccessibleAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.Accessible"));
     }
 
     @Override
@@ -870,7 +870,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ToggleThemeColorPickerAction extends MyTextAction implements Toggleable {
     private ToggleThemeColorPickerAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.colorPicker"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.colorPicker"));
     }
 
     @Override
@@ -893,8 +893,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     private static final String ALT_HOVER_ENABLED_KEY = "ui.inspector.alt.hover.enabled.key";
 
     private ToggleAltHoverAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.AltHover"));
-      getTemplatePresentation().setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.AltHover"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.AltHover"));
+      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.AltHover"));
       myIsAltHoverEnabled = PropertiesComponent.getInstance().getBoolean(ALT_HOVER_ENABLED_KEY, true);
     }
 
@@ -923,7 +923,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ShowDataContextAction extends MyTextAction {
     private ShowDataContextAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.DataContext"));
     }
 
     @Override
@@ -954,7 +954,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       super(true);
       Presentation presentation = getTemplatePresentation();
       presentation.setText(ActionsBundle.messagePointer("action.EditSource.text"));
-      presentation.setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.open.definition"));
+      presentation.setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.open.definition"));
       presentation.putClientProperty(SHORTCUT_SHOULD_SHOWN, true);
     }
 

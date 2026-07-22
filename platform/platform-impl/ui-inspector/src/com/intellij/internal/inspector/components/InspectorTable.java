@@ -9,8 +9,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.ComponentPropertiesCollector;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
 import com.intellij.internal.inspector.UiInspectorImpl;
@@ -529,11 +529,11 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
               scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
               myAccessibilityInspectionTabs.addTab(
-                InternalActionsBundle.message("ui.inspector.accessibility.audit.inspection.tab.text", inspectionCount), scrollPane);
+                IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.inspection.tab.text", inspectionCount), scrollPane);
             }
           }
           if (inspectionCount > 0) {
-            myAccessibilityInspectionTabs.insertTab(InternalActionsBundle.message("ui.inspector.accessibility.audit.preview.tab.text"),
+            myAccessibilityInspectionTabs.insertTab(IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.preview.tab.text"),
                                                     null, myPreviewComponent.getComponent(), null, 0);
             myAccessibilityInspectionTabs.setSelectedIndex(0);
             setSecondComponent(myAccessibilityInspectionTabs);
@@ -730,7 +730,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
           if (failedInspection.getPropertyName().equalsIgnoreCase(propertyName.trim())) {
             setIcon(failedInspection.getIcon());
             setHorizontalTextPosition(LEFT);
-            setToolTipText(InternalActionsBundle.message("ui.inspector.accessibility.audit.table.property.name.tooltip"));
+            setToolTipText(IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.table.property.name.tooltip"));
             break;
           }
           else {
