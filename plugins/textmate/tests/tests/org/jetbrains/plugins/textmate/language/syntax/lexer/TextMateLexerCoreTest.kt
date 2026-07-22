@@ -376,4 +376,29 @@ class TextMateLexerCoreTest {
       }
     """.trimIndent())
   }
+
+  @Test
+  fun `begin-string anchor stops matching once tokenization advances`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "match": "x", "name": "m.x" },
+          { "match": "(?<=\\Ax)y", "name": "anchored.y" },
+          { "match": "y", "name": "plain.y" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "xy\nxy\n", """
+      source.test m.x: [0, 1], {x}
+      source.test plain.y: [1, 2], {y}
+      source.test: [2, 3], {
+      }
+      source.test m.x: [3, 4], {x}
+      source.test plain.y: [4, 5], {y}
+      source.test: [5, 6], {
+      }
+    """.trimIndent())
+  }
+
 }

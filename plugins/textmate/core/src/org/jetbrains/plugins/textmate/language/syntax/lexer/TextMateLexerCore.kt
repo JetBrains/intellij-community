@@ -107,7 +107,6 @@ class TextMateLexerCore(
     var lastSuccessStateOccursCount = 0
     var lastMovedOffset = lineStartOffset
 
-    val matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
     // makes sense only for a line, cannot be used across lines;
     // when the topmost begin match consumed the trailing newline of the previous line,
     // \G matches at the beginning of this line.
@@ -120,6 +119,7 @@ class TextMateLexerCore(
         // nested inside it is discarded from the stack, and the discarded frames take their scopes away with them.
         // The conditions of the discarded nested rules are not checked.
         val newStackFrames = persistentListOf<TextMateStackFrame>().builder()
+        var matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
         for (frame in stackFrames) {
           if (frame.state.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
             val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
@@ -156,6 +156,7 @@ class TextMateLexerCore(
       val localStates = mutableSetOf<TextMateLexerState>()
       val pushedAnchors = mutableMapOf<Int, TextMateByteOffset>()
       while (true) {
+        val matchBeginString = lineStartOffset.offset == 0 && linePosition.offset == 0
         val lastState = stackFrames.last().state
         val lastRule = lastState.syntaxRule
 
