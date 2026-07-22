@@ -291,6 +291,20 @@ a:com.intellij.ui.GroupedElementsRenderer
 *:com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler
 - a:calcAttributes(javax.swing.text.html.HTML$Tag,javax.swing.text.MutableAttributeSet):com.intellij.ui.SimpleTextAttributes
 - extendWith(com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler):com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler
+*a:com.intellij.ui.HwFacadeHelper
+- *sf:Companion:com.intellij.ui.HwFacadeHelper$Companion
+- <init>():V
+- a:addNotify():V
+- *sf:create(javax.swing.JComponent):com.intellij.ui.HwFacadeHelper
+- a:hide():V
+- a:paint(java.awt.Graphics,java.util.function.Consumer):V
+- a:removeNotify():V
+- a:show():V
+*f:com.intellij.ui.HwFacadeHelper$Companion
+- f:create(javax.swing.JComponent):com.intellij.ui.HwFacadeHelper
+*:com.intellij.ui.HwFacadeProvider
+- a:create(javax.swing.JComponent):com.intellij.ui.HwFacadeHelper
+- a:isAvailable():Z
 c:com.intellij.ui.SimpleColoredComponent
 - javax.swing.JComponent
 - com.intellij.ui.ColoredTextContainer

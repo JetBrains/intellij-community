@@ -11,7 +11,7 @@ import javax.swing.JComponent
  * Provides an optional heavyweight facade for lightweight popup/dialog components.
  * The platform default is a no-op; JCEF installs an implementation that can overlap windowed browser components.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 abstract class HwFacadeHelper {
   abstract fun addNotify()
 
