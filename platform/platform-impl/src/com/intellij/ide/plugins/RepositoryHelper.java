@@ -185,8 +185,7 @@ public final class RepositoryHelper {
 
     for (var model : uiModels) {
       var pluginId = model.getPluginId();
-
-      if (repositoryUrl != null && model.getDownloadUrl() == null) {
+      if ("unknown".equals(pluginId.toString()) || repositoryUrl != null && model.getDownloadUrl() == null) {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
