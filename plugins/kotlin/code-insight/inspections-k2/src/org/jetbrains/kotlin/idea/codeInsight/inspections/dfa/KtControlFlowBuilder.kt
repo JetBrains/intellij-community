@@ -133,6 +133,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -452,8 +453,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(_: KaSession)
     private fun processIsExpression(expr: KtIsExpression) {
         processExpression(expr.leftHandSide)
-        val type = getTypeCheckDfType(expr.typeReference)
-        if (type == DfType.TOP) {
+        val typeReference = expr.typeReference
+        val type = getTypeCheckDfType(typeReference)
+        // A reified generic check like `x is Foo<String>` cannot be evaluated precisely: the data flow analysis operates on erased
+        // types (`Foo`) and would otherwise consider such a condition to be constant, producing a false positive.
+        if (type == DfType.TOP || hasReifiedTypeArguments(typeReference)) {
             addInstruction(PopInstruction())
             pushUnknown()
         } else {
@@ -533,6 +537,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             result.convert(KtClassDef.typeConstraintFactory(typeReference))
         else
             result
+    }
+
+    context(_: KaSession)
+    private fun hasReifiedTypeArguments(typeReference: KtTypeReference?): Boolean {
+        val classType = typeReference?.type as? KaClassType ?: return false
+        // Arrays are reified on the JVM, so their element types are tracked precisely by the data flow analysis.
+        if (classType.isArrayOrPrimitiveArray) return false
+        return classType.typeArguments.any { it !is KaStarTypeProjection }
     }
 
 
