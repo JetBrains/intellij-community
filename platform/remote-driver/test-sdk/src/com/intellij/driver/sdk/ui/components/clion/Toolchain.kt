@@ -27,6 +27,15 @@ sealed class Toolchain(
     else "${name}_${compiler}_$debugger"
   }
 
+  /**
+   * Path of the GDB executable shipped with the MinGW toolset ("MinGW-w64 GDB" in the toolchain settings UI).
+   *
+   * It is better to specify not from the debugger Path to test that non bundled GDB is found, but this strategy only works from UI.
+   * From XML setup, the full path must be specified.
+   */
+  val mingwToolsetGdbPath: String
+    get() = "${toolset.path}/bin/gdb.exe"
+
   class Default(
     compiler: Compiler = Compiler.DEFAULT,
     debugger: Debugger = Debugger.BUNDLED_GDB,
