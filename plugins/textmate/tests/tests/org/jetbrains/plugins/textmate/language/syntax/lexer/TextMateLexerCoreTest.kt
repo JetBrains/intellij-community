@@ -275,4 +275,59 @@ class TextMateLexerCoreTest {
       }
     """.trimIndent())
   }
+
+  @Test
+  fun `rules opened during capture retokenization do not leak their scopes`() {
+    // a rule that begins inside a capture with nested patterns and does not end within it
+    // must not affect the tokens after the capture
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "match": "(\\[\\w+)",
+            "name": "m.bracket",
+            "captures": {
+              "1": {
+                "patterns": [ { "name": "inner.block", "begin": "\\[", "end": "\\]" } ]
+              }
+            }
+          },
+          { "match": "z", "name": "m.z" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "[a.z\n", """
+      source.test m.bracket inner.block: [0, 1], {[}
+      source.test m.bracket inner.block: [1, 2], {a}
+      source.test: [2, 3], {.}
+      source.test m.z: [3, 4], {z}
+      source.test: [4, 5], {
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `popping a rule restores the anchor that was in effect when the rule was pushed`() {
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "name": "outer", "begin": "a", "end": "z",
+            "patterns": [
+              { "name": "q", "begin": "\\G\\[", "end": "(?=x)" },
+              { "match": "\\Gx", "name": "anchored.x" },
+              { "match": "x", "name": "plain.x" }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "a[xz", """
+      source.test outer: [0, 1], {a}
+      source.test outer q: [1, 2], {[}
+      source.test outer plain.x: [2, 3], {x}
+      source.test outer: [3, 4], {z}
+    """.trimIndent())
+  }
 }

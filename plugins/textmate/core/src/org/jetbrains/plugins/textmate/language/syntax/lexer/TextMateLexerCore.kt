@@ -154,6 +154,7 @@ class TextMateLexerCore(
 
       var scopes = stackFrames.last().scopes
       val localStates = mutableSetOf<TextMateLexerState>()
+      val pushedAnchors = mutableMapOf<Int, TextMateByteOffset>()
       while (true) {
         val lastState = stackFrames.last().state
         val lastRule = lastState.syntaxRule
@@ -185,10 +186,11 @@ class TextMateLexerCore(
         val applyEndPatternLast = isApplyEndPatternLast(lastRule)
         if (endMatch.matched && (!currentMatch.matched || endWinsOverCurrent(applyEndPatternLast, currentMatch, endMatch) || lastState == currentState)) {
           val poppedState = stackFrames.last().state
-          if (poppedState.matchData.matched && !poppedState.matchedEOL) {
-            // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
-            anchorByteOffset = poppedState.matchData.byteRange().end
-          }
+          //if (poppedState.matchData.matched && !poppedState.matchedEOL) {
+          //   if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
+            //anchorByteOffset = poppedState.matchData.byteRange().end
+          //}
+          anchorByteOffset = pushedAnchors.remove(stackFrames.size) ?: (-1).byteOffset()
           stackFrames = stackFrames.removingAt(stackFrames.size - 1)
 
           val endRange = endMatch.charRange(string)
@@ -210,8 +212,8 @@ class TextMateLexerCore(
           localStates.remove(poppedState)
         }
         else if (currentMatch.matched) {
+          pushedAnchors[stackFrames.size] = anchorByteOffset
           anchorByteOffset = currentMatch.byteRange().end
-
           val currentRange = currentMatch.charRange(string)
           val startPosition = currentRange.start
           endPosition = currentRange.end
