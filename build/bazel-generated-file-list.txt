@@ -1090,6 +1090,7 @@ plugins/evaluation-plugin/languages/kotlin
 plugins/evaluation-plugin/languages/python
 plugins/extended-toolwindows-ui
 plugins/filePrediction
+plugins/filePrediction/java
 plugins/findUsagesMl
 plugins/git-features-trainer
 plugins/git-modal-commit

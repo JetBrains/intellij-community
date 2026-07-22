@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.filePrediction" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.filePrediction.java" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.filePrediction" />
 </module>

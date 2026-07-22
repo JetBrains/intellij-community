@@ -17,8 +17,8 @@
   <content namespace="jetbrains">
     <!-- The implicit main module of the plugin depends on internal modules (intellij.platform.ml.impl), so it's required to set the namespace for it
          todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+    <module name="intellij.filePrediction.java"/>
   </content>
-  <depends optional="true" config-file="file-prediction-java.xml">com.intellij.java</depends>
   <depends optional="true" config-file="file-prediction-vcs.xml">Git4Idea</depends>
 
   <extensionPoints>

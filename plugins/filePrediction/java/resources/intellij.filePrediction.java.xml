@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.jetbrains.filePrediction"/>
+    <module name="intellij.platform.uast"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <filePrediction.referencesProvider implementation="com.intellij.filePrediction.references.java.JavaFileReferenceProvider"/>
+  </extensions>
+</idea-plugin>

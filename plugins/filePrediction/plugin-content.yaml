@@ -6,3 +6,6 @@
 - name: lib/filePrediction.jar
   modules:
   - name: intellij.filePrediction
+- name: lib/modules/intellij.filePrediction.java.jar
+  contentModules:
+  - name: intellij.filePrediction.java

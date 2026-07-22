@@ -7,10 +7,14 @@ import com.intellij.filePrediction.references.ExternalReferencesResult.Companion
 import com.intellij.filePrediction.references.FileExternalReferencesProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.toUElement
 
-internal class JavaFileReferenceProvider : FileExternalReferencesProvider {
+@VisibleForTesting
+@ApiStatus.Internal
+class JavaFileReferenceProvider : FileExternalReferencesProvider {
 
   override fun externalReferences(file: PsiFile): ExternalReferencesResult? {
     val uFile = file.toUElement()
