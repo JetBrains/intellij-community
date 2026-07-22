@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
@@ -13,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
+import com.intellij.util.containers.addIfNotNull
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -62,7 +62,11 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         if (cleanLine.startsWith("> Task :")) {
           val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
-          currentReader = tasksOutputReaders[taskName] ?: reader
+          val taskOutputReader = BuildOutputInstantReaderImpl(buildId, taskName, this@GradleOutputMessageDispatcher, parsers)
+          val oldTaskOutputReader = tasksOutputReaders.put(taskName, taskOutputReader)
+          // multiple invocations of the same task during the build session
+          tasksOutputRedefinedReaders.addIfNotNull(oldTaskOutputReader)
+          currentReader = taskOutputReader
         }
         else if (cleanLine.startsWith("> Configure") ||
                  cleanLine.startsWith("FAILURE: Build failed") ||
@@ -74,8 +78,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         }
 
         if (currentReader != reader) {
-          val parentEventId = currentReader.parentEventId
-          onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
+          onEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', stdOut)) //NON-NLS
         }
 
         currentReader.appendLine(cleanLine)
@@ -94,20 +97,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
       super.onEvent(buildId, buildEvent)
 
-      if (event.parentId != buildId) return
-      if (event is StartEvent) {
-        val eventId = event.id
-        val oldValue = tasksOutputReaders.put(event.message,
-                                              BuildOutputInstantReaderImpl(buildId, eventId, this, parsers))
-        if (oldValue != null) {  // multiple invocations of the same task during the build session
-          tasksOutputRedefinedReaders.add(oldValue)
-        }
-        tasksEventIds[event.message] = eventId
-      }
-      else if (event is FinishEvent) {
-        // unreceived output is still possible after finish task event but w/o long pauses between chunks
-        // also no output expected for up-to-date tasks
-        tasksOutputReaders[event.message]?.disableActiveReading()
+      if (event.parentId == buildId && event is StartEvent) {
+        tasksEventIds[event.message] = event.id
       }
     }
 

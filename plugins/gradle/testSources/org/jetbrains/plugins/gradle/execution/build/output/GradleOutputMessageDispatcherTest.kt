@@ -47,7 +47,7 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent.id to listOf("> Task :task", "task output", "", "")
+      ":task" to listOf("> Task :task", "task output", "", "")
     )
     listener.assertEvents(
       null to { assertEqualsOrdered(listOf(startBuildEvent, finishBuildEvent), it) },
@@ -82,8 +82,8 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent1.id to listOf("> Task :task1", "task1 output", ""),
-      startEvent2.id to listOf("> Task :task2", "task2 output", "", ""),
+      ":task1" to listOf("> Task :task1", "task1 output", ""),
+      ":task2" to listOf("> Task :task2", "task2 output", "", ""),
     )
     listener.assertEvents(
       null to { assertEqualsOrdered(listOf(startBuildEvent, finishBuildEvent), it) },
@@ -113,7 +113,7 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent.id to listOf("> Task :task", "output after finish event", "", "")
+      ":task" to listOf("> Task :task", "output after finish event", "", "")
     )
     listener.assertEvents(
       null to { assertEqualsOrdered(listOf(startBuildEvent, finishBuildEvent), it) },
@@ -172,8 +172,8 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent1.id to listOf("> Task :task", "first run", ""),
-      startEvent2.id to listOf("> Task :task", "second run", "", ""),
+      ":task" to listOf("> Task :task", "first run", ""),
+      ":task" to listOf("> Task :task", "second run", "", ""),
     )
     listener.assertEvents(
       null to { assertEqualsOrdered(listOf(startBuildEvent, finishBuildEvent), it) },
@@ -227,7 +227,7 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent.id to listOf("> Task :task", "task output", ""),
+      ":task" to listOf("> Task :task", "task output", ""),
       buildId to listOf("BUILD SUCCESSFUL in 1s", "2 actionable tasks: 2 executed", "", ""),
     )
     listener.assertEvents(
@@ -294,7 +294,7 @@ class GradleOutputMessageDispatcherTest {
     dispatcher.closeBlocking()
 
     parser.assertLines(
-      startEvent.id to listOf("> Task :task", "task output", ""),
+      ":task" to listOf("> Task :task", "task output", ""),
       buildId to listOf("> Configure project :project", "configure output", "", ""),
     )
     listener.assertEvents(
