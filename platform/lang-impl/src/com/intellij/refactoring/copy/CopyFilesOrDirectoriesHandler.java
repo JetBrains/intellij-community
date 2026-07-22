@@ -273,7 +273,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
           PsiFile firstFile = added.get(0);
           CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
           if (!(firstFile instanceof PsiBinaryFile)) {
-            EditorHelper.openInEditor(firstFile, true, true);
+            EditorHelper.requestOpenInEditor(firstFile, true);
           }
         }
       }
