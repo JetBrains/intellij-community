@@ -49,7 +49,7 @@ private class ComponentManagerElement(
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
-  override fun toString(): String = "ComponentManager(${componentManager.get()?.debugString() ?: "null"})"
+  override fun toString(): String = componentManager.get()?.debugString() ?: "ComponentManager(null)"
 }
 
 private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManagerElement>, InternalCoroutineContextKey<ComponentManagerElement>
