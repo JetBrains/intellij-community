@@ -2712,29 +2712,32 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
                 if (indexExpr is PyTupleExpression) {
                   val arguments = indexExpr.elements.map { PyPsiUtils.flattenParens(it) }
 
-                  if (arguments.lastOrNull() is PyEllipsisLiteralExpression) {
-                    if (arguments.size != 2) return null
-                    if (arguments.first() is PyEllipsisLiteralExpression) return null
+                  if (arguments.size == 2 && arguments.last() is PyEllipsisLiteralExpression) {  // Homogeneous
+                    if (arguments.first() is PyEllipsisLiteralExpression) {
+                      return PyTupleType.createHomogeneous(element, PyAnyType.unknown)
+                    }
 
                     val indexType = indexTypes.first()
-                    if (indexType is PyPositionalVariadicType) return null
-
+                    if (indexType is PyPositionalVariadicType) {
+                      return PyTupleType.createHomogeneous(element, PyAnyType.unknown)
+                    }
                     return PyTupleType.createHomogeneous(element, indexType)
                   }
-                  else {
-                    for (argument in arguments) {
-                      if (argument is PyEllipsisLiteralExpression) return null
-                      if (argument is PyTupleExpression && argument.elements.isEmpty()) {
-                        if (arguments.size != 1) return null
-                      }
+
+                  val elementTypes = arguments.zip(indexTypes) { argument, indexType ->
+                    when (argument) {
+                      is PyEllipsisLiteralExpression -> PyAnyType.unknown
+                      is PyTupleExpression if argument.elements.isEmpty() -> PyAnyType.unknown
+                      else -> indexType
                     }
-                    return PyTupleType.create(element, indexTypes)
                   }
+                  return PyTupleType.create(element, elementTypes)
                 }
-                else {
-                  if (indexExpr is PyEllipsisLiteralExpression) return null
-                  return PyTupleType.create(element, indexTypes)
+
+                if (indexExpr is PyEllipsisLiteralExpression) {
+                  return PyTupleType.create(element, listOf(PyAnyType.unknown))
                 }
+                return PyTupleType.create(element, indexTypes)
               }
 
               if (isGeneric(operandType, context.typeContext)) {

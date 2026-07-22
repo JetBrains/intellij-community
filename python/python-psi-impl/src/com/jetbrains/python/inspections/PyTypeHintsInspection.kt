@@ -1533,12 +1533,12 @@ class PyTypeHintsInspection : PyInspection() {
         when (val flatArgument = PyPsiUtils.flattenParens(argument)) {
           is PyEllipsisLiteralExpression if (index != arguments.lastIndex || arguments.size != 2) -> {
             registerProblem(flatArgument,
-                            PyPsiBundle.message("INSP.type.hints.ellipsis.allowed.only.as.second.argument"),
+                            PyPsiBundle.problemMessage("INSP.type.hints.ellipsis.allowed.only.as.second.argument"),
                             ProblemHighlightType.GENERIC_ERROR)
           }
           is PyTupleExpression if flatArgument.elements.isEmpty() && arguments.size != 1 -> {
             registerProblem(flatArgument,
-                            PyPsiBundle.message("INSP.type.hints.empty.tuple.only.as.lone.argument"),
+                            PyPsiBundle.problemMessage("INSP.type.hints.empty.tuple.only.as.lone.argument"),
                             ProblemHighlightType.GENERIC_ERROR)
           }
         }
@@ -1549,7 +1549,7 @@ class PyTypeHintsInspection : PyInspection() {
         val type = Ref.deref(PyTypingTypeProvider.getType(arguments.first(), myTypeEvalContext))
         if (type is PyPositionalVariadicType) {
           registerProblem(lastArgument,
-                          PyPsiBundle.message("INSP.type.hints.ellipsis.cannot.be.used.with.unpacked.type"),
+                          PyPsiBundle.problemMessage("INSP.type.hints.ellipsis.cannot.be.used.with.unpacked.type"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }

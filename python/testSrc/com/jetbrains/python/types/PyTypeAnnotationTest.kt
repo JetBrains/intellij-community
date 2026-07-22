@@ -4127,10 +4127,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[((...)), ((int))]
     #│         ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[((...)), ((int))]
     #│         ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[(int,), ...]
     #│       ^^^^^^ ERROR Invalid type argument
@@ -4159,17 +4159,17 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[int, ()]
     #│            ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[int, Unknown]
     a: Tuple[int, ()]
     #│            ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[int, Unknown]
 
     a: tuple[(), int]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[(), int]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[()] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[(), ...]
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
@@ -4181,11 +4181,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     a: tuple[(), ()]
     #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, Unknown]
     a: Tuple[(), ()]
     #│       │   ^^ ERROR Empty tuple is allowed only as a sole argument
     #│       ^^ ERROR Empty tuple is allowed only as a sole argument
-    #\ TYPE tuple[Unknown, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, Unknown]
 
     a: list[()]
     #│      ^^ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
@@ -4385,38 +4385,49 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[..., int]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
     a: Tuple[..., int]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[Unknown, int]
 
     a: tuple[int, int, ...]
     #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, int, Unknown]
     a: Tuple[int, int, ...]
     #│                 ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, int, Unknown]
 
     a: tuple[int, ..., int]
     #│            ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, Unknown, int]
     a: Tuple[int, ..., int]
     #│            ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...]
+    #\ TYPE tuple[int, Unknown, int]
 
     a: tuple[...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown]
     a: Tuple[...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown]
 
     a: tuple[..., ...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, ...]
     a: Tuple[..., ...]
     #│       ^^^ ERROR '...' is allowed only as the second of two arguments
-    #\ TYPE tuple[int, ...] FIXME tuple[Unknown]
+    #\ TYPE tuple[Unknown, ...]
+
+    a: tuple[..., ..., ...]
+    #│       │    │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[Unknown, Unknown, Unknown]
+    a: Tuple[..., ..., ...]
+    #│       │    │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       │    ^^^ ERROR '...' is allowed only as the second of two arguments
+    #│       ^^^ ERROR '...' is allowed only as the second of two arguments
+    #\ TYPE tuple[Unknown, Unknown, Unknown]
 
     a: list[...]
     #│      ^^^ ERROR Invalid type argument
@@ -4449,11 +4460,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     a: tuple[*tuple[str], ...]
     #│                    ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown | None FIXME tuple[Unknown, ...]
+    #\ TYPE tuple[Unknown, ...]
 
     a: tuple[*tuple[str, ...], ...]
     #│                         ^^^ ERROR '...' cannot be used with an unpacked 'TypeVarTuple' or tuple
-    #\ TYPE Unknown | None FIXME tuple[Unknown, ...]
+    #\ TYPE tuple[Unknown, ...]
 
     a: C1[...]
     #│    ^^^ ERROR Invalid type argument
