@@ -5,6 +5,10 @@ import com.intellij.openapi.application.ApplicationManager;
 
 import java.util.List;
 
+/**
+ * @deprecated The old Search Everywhere API is being sunset. This functionality is obsolete.
+ */
+@Deprecated
 public interface SearchEverywhereRemoteSupportService {
 
   static SearchEverywhereRemoteSupportService getInstance() {

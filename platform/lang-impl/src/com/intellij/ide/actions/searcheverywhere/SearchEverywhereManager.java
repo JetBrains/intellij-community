@@ -32,11 +32,11 @@ public interface SearchEverywhereManager {
   boolean isShown();
 
   @Nullable
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   SearchEverywherePopupInstance getCurrentlyShownPopupInstance();
 
   /**
-   * @deprecated Use {@link #getCurrentlyShownPopupInstance()} instead
+   * @deprecated This functionality is obsolete.
    */
   @Deprecated(forRemoval = true)
   @NotNull

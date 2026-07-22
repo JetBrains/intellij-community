@@ -40,7 +40,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +52,6 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupHeaderPane(
   private val project: Project?,

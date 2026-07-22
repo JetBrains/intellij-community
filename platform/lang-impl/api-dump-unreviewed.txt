@@ -4165,7 +4165,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 - sf:LOCATION_SETTINGS_KEY:java.lang.String
 - <init>():V
 - <init>(com.intellij.openapi.project.Project):V
-- getCurrentlyShownPopupInstance():com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - getCurrentlyShownUI():com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - getPrevSelection(java.lang.String):java.lang.Object
 - getSelectedTabID():java.lang.String

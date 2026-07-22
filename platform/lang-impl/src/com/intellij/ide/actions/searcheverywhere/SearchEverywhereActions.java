@@ -4,6 +4,10 @@ package com.intellij.ide.actions.searcheverywhere;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset. This functionality is obsolete.
+ */
+@Deprecated
 @ApiStatus.Internal
 public interface SearchEverywhereActions {
 

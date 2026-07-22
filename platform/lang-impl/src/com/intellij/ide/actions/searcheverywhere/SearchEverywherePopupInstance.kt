@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Future
 import javax.swing.text.Document
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface SearchEverywherePopupInstance {
   fun getSearchText(): String?
   fun setSearchText(searchText: String?)

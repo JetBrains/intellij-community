@@ -5,6 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.List;
 
+/**
+ * @deprecated The old Search Everywhere API is being sunset. This functionality is obsolete.
+ */
+@Deprecated
 public interface RemoteSearchEverywhereConverterSupplier<I, P extends RemoteSearchEverywherePresentation> {
 
   ExtensionPointName<RemoteSearchEverywhereConverterSupplier<?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereRemoteConverter");
