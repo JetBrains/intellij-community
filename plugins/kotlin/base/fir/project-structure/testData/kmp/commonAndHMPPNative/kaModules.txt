@@ -12,7 +12,7 @@ KaLibraryModule:
 
 KaLibraryModule:
   description: Library NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=<kgp_version>)
-  targetPlatform: Native (android_arm32)/Native (android_arm64)/Native (android_x64)/Native (android_x86)/Native (ios_arm64)/Native (ios_simulator_arm64)/Native (ios_x64)/Native (linux_arm32_hfp)/Native (linux_arm64)/Native (linux_x64)/Native (macos_arm64)/Native (macos_x64)/Native (mingw_x64)/Native (tvos_arm64)/Native (tvos_simulator_arm64)/Native (tvos_x64)/Native (watchos_arm32)/Native (watchos_arm64)/Native (watchos_device_arm64)/Native (watchos_simulator_arm64)/Native (watchos_x64)
+  targetPlatform: Native (android_arm32)/Native (android_arm64)/Native (android_x64)/Native (android_x86)/Native (ios_arm64)/Native (ios_simulator_arm64)/Native (ios_x64)/Native (linux_arm32_hfp)/Native (linux_arm64)/Native (linux_x64)/Native (macos_arm64)/Native (macos_x64)/Native (mingw_x64)/Native (tvos_arm64)/Native (tvos_simulator_arm64)/Native (tvos_x64)/Native (watchos_arm64)/Native (watchos_device_arm64)/Native (watchos_simulator_arm64)/Native (watchos_x64)
   libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=<kgp_version>)
   isSdk: false
   regularDependencies:
