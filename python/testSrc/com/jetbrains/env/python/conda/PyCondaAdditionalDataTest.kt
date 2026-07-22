@@ -2,6 +2,7 @@
 package com.jetbrains.env.python.conda
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -32,7 +33,7 @@ class PyCondaAdditionalDataTest {
       )
     )
     val data = PythonSdkAdditionalData(
-      PyFlavorAndData(flavorData, CondaEnvSdkFlavor))
+      PyFlavorAndData(flavorData, CondaEnvSdkFlavor), projectRule.project.basePath?.toNioPathOrNull()!!)
     val rootElement = Element("root")
     data.save(rootElement)
 
