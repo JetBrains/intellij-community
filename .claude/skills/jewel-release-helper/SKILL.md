@@ -70,7 +70,7 @@ Ask the user:
 - [ ] **1c. IJP target version**: Ask if the IJP target version in `platform/jewel/gradle/libs.versions.toml` needs updating; if so,
   update it.
 - [ ] **1d. Formatting**: Ask the user how they run ktfmt, then format any changed files as needed.
-- [ ] **1e. Bazel checks**: Run Bazel compilation and tests for Jewel (`./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.jewel.*`
+- [ ] **1e. Bazel checks**: Run Bazel compilation and tests for Jewel (`./tests.cmd --module <jps-module> --test org.jetbrains.jewel.*`
   or `./bazel.cmd build //platform/jewel/...`).
 
 **Wait for user confirmation.**
@@ -105,7 +105,8 @@ Repeat for **each target release branch** (ask user which branch to do first):
 - [ ] **3c. Regenerate & Validate**:
   - `./gradlew generateThemes --rerun-tasks`
   - `./gradlew check detekt detektMain detektTest --continue --no-daemon`
-  - Run Bazel compilation and tests for Jewel (`./tests.cmd` or `./bazel.cmd build //platform/jewel/...`)
+  - Run Bazel compilation and tests for Jewel (`./tests.cmd --module <jps-module> --test <pattern>` or
+    `./bazel.cmd build //platform/jewel/...`)
   - run IJ tests as needed
   - verify the standalone sample works
   - verify the IDE samples work

@@ -26,8 +26,7 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
         val repoRoot = findCommunityRoot() ?: exitWithError("Could not find the repository root directory.")
         println(" DONE: ${repoRoot.canonicalPath}")
 
-        val command =
-            "./tests.cmd -Dintellij.build.test.patterns=com.intellij.platform.testFramework.monorepo.api.ApiCheckTest"
+        val command = "./tests.cmd --module $TEST_MODULE --test $TEST_CLASS"
         if (verbose) println("Running: $command")
 
         // Stream output in real-time and save to a temporary file for later analysis
@@ -36,12 +35,14 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
         try {
             println("Output will be streamed in real-time and saved to: ${outputFile.absolutePath}")
 
-            // Create a temporary shell script to handle the pipe properly
+            // Create a temporary shell script to handle the pipe properly. The pipeline's exit status must be
+            // tests.cmd's and not tee's, hence the pipefail; errexit makes a failing cd fatal, too.
             scriptFile.writeText(
                 """
                 #!/bin/bash
-                cd "${repoRoot.absolutePath}"
-                $command | tee "${outputFile.absolutePath}"
+                set -e -o pipefail
+                cd ${repoRoot.absolutePath.asShellLiteral()}
+                $command | tee ${outputFile.absolutePath.asShellLiteral()}
                 """
                     .trimIndent()
             )
@@ -66,7 +67,9 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
                 val moduleList = failingModules.joinToString(", ")
                 exitWithError("❌ API check test failed — failing modules: $moduleList")
             } else if (result.isFailure) {
-                exitWithError("❌ API check test command failed.")
+                // The output scraping only recognises TeamCity test failures; anything else that makes the
+                // command fail (bad invocation, build error, crash) must still be reported as a failure.
+                exitWithError("❌ API check test command failed. See the output above for details.")
             } else {
                 printlnSuccess("✅ API check test passed — no test failures detected.")
             }
@@ -76,11 +79,21 @@ private class CheckUpdatedCommand : SuspendingCliktCommand(name = "check") {
         }
     }
 
+    /**
+     * Renders this string as a single-quoted shell literal. Paths embedded in generated shell source must be quoted
+     * this way: inside double quotes the shell would still expand `$`, backticks and backslashes.
+     */
+    private fun String.asShellLiteral(): String = "'" + replace("'", """'\''""") + "'"
+
     private fun extractFailingModules(output: String): List<String> {
-        val failurePattern =
-            """##teamcity\[testFailed name='com\.intellij\.platform\.testFramework\.monorepo\.api\.ApiCheckTest\.([^']+)'"""
-                .toRegex()
+        val failurePattern = """##teamcity\[testFailed name='${Regex.escape(TEST_CLASS)}\.([^']+)'""".toRegex()
         return failurePattern.findAll(output).map { it.groupValues[1] }.distinct().sorted().toList()
+    }
+
+    private companion object {
+        // tests.cmd needs both the JPS module that holds the test class, and the test pattern itself.
+        const val TEST_MODULE = "intellij.platform.testFramework.monorepo.tests"
+        const val TEST_CLASS = "com.intellij.platform.testFramework.monorepo.api.ApiCheckTest"
     }
 }
 
