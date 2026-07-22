@@ -112,8 +112,11 @@ internal class StructureUiModelImpl : StructureUiModel {
   }
 
   private fun registerModelDisposal(project: Project) {
+    // capture the service scope eagerly: the completion handler may run during project disposal,
+    // when the service is no longer accessible (see ContainerDisposedException)
+    val serviceScope = StructureViewScopeHolder.getInstance(project).cs
     cs.coroutineContext.job.invokeOnCompletion {
-      StructureViewScopeHolder.getInstance(project).cs.launch {
+      serviceScope.launch {
         StructureTreeApi.callDisposeModel(dtoId)
       }
     }
