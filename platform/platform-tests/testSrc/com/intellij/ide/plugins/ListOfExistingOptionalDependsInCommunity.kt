@@ -20,9 +20,6 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "TestNG-J",
     "JUnit",
   ),
-  "TestNG-J" to setOf(
-    "org.intellij.intelliLang",
-  ),
   "com.intellij.tasks" to setOf( // IJPL-249465
     "com.intellij.java",
     "XPathView",
