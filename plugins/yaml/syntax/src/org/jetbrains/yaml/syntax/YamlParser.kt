@@ -91,7 +91,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
         if (wasEolSeen) currentIndent else indent,
         minIndent = indent
       )
-      if (nodeType == null) {
+      if (nodeType === null) {
         if (parsedTokenType === YamlSyntaxElementTypes.SEQUENCE_ITEM) {
           nodeType = YamlSyntaxElementTypes.SEQUENCE
         }
@@ -116,7 +116,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
     includeBlockEmptyTail(indent)
 
-    if (nodeType != null) {
+    if (nodeType !== null) {
       marker.done(nodeType)
       marker.setCustomEdgeTokenBinders(
         left = { tokens, _, _ -> findLeftRange(tokens) },
@@ -238,7 +238,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
       nodeType = null
     }
 
-    if (nodeType != null) {
+    if (nodeType !== null) {
       marker.done(nodeType)
     }
     else {
@@ -365,9 +365,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
         endOfValue = null
       }
       if (type === YamlSyntaxTokenTypes.SCALAR_EOL) {
-        if (endOfValue != null) {
-          endOfValue.drop()
-        }
+        endOfValue?.drop()
         endOfValue = builder.mark()
       }
 
@@ -511,7 +509,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
       val marker = mark()
       val parsedElement = parseSingleStatement(0, 0)
-      if (parsedElement != null) {
+      if (parsedElement !== null) {
         marker.done(YamlSyntaxElementTypes.SEQUENCE_ITEM)
       }
       else {
