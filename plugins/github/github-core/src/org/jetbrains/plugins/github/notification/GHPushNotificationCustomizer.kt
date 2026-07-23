@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
+import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -37,6 +38,8 @@ import java.util.concurrent.CancellationException
 private val LOG = logger<GHPushNotificationCustomizer>()
 
 internal class GHPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
+  private val lookupCache = GHPushNotificationLookupCache()
+
   override suspend fun getActions(
     repository: GitRepository,
     pushResult: GitPushRepoResult,
@@ -68,7 +71,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
       return emptyList()
     }
 
-    val existingPrs = findExistingPullRequests(projectMapping, account, remoteBranch)
+    val existingPrs = findExistingPullRequests(projectMapping, account, remoteBranch, pushResult.sourceBranch)
     return when (existingPrs.size) {
       0 -> {
         listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
@@ -125,21 +128,42 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
 
   /**
    * Look up any existing open pull requests on the given remote branch.
+   *
+   * Results are de-duplicated per (server, repository, remote branch, pushed revision) via
+   * [lookupCache] so that repeated pushes of an unchanged head do not repeatedly hit the REST
+   * `/pulls` endpoint. Only the first two matches are fetched — [getActions] only distinguishes
+   * between zero, exactly one, and more-than-one existing pull request.
    */
   private suspend fun findExistingPullRequests(
     repositoryMapping: GHGitRepositoryMapping,
     account: GithubAccount,
     branch: GitRemoteBranch,
+    sourceRevision: String,
   ): List<GHPullRequestRestIdOnly> {
+    val repository = repositoryMapping.repository
+    val remoteBranchName = branch.nameForRemoteOperations
+
+    val cacheKey = GHPushNotificationLookupCache.Key(
+      server = account.server.toString(),
+      repositoryPath = repository.repositoryPath.toString(),
+      remoteBranch = remoteBranchName,
+      sourceRevision = sourceRevision,
+    )
+    lookupCache.get(cacheKey)?.let { return it }
+
     val accountManager = serviceAsync<GHAccountManager>()
     val token = accountManager.findCredentials(account) ?: return emptyList()
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
-    val repository = repositoryMapping.repository
-    val remoteBranchName = branch.nameForRemoteOperations
-
     return try {
-      executor.executeSuspend(PullRequests.find(repository, GithubIssueState.open, baseRef = null, headRef = repository.repositoryPath.owner + ":" + remoteBranchName)).items
+      val existingPrs = executor.executeSuspend(
+        PullRequests.find(repository, GithubIssueState.open, baseRef = null,
+                          headRef = repository.repositoryPath.owner + ":" + remoteBranchName,
+                          // only the 0/1/>1 distinction matters, so two results are enough
+                          pagination = GithubRequestPagination(pageSize = 2))
+      ).items
+      lookupCache.put(cacheKey, existingPrs)
+      existingPrs
     }
     catch (ce: CancellationException) {
       throw ce
