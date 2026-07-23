@@ -2017,6 +2017,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
             }
 
+            @TestMetadata("backtickedReceiver.kt")
+            public void testBacktickedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/backtickedReceiver.kt");
+            }
+
             @TestMetadata("caretInsideBodyExplicitSignature.kt")
             public void testCaretInsideBodyExplicitSignature() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/caretInsideBodyExplicitSignature.kt");
