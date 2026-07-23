@@ -24,15 +24,3 @@ suspend fun collectWatchedTodoFiles(
     }
   }
 }
-
-@ApiStatus.Internal
-private fun TodoFilter.toConfig(): TodoFilterConfig {
-  val filter = this
-  val patterns = mutableListOf<TodoPatternConfig>()
-  val it = filter.iterator()
-  while (it.hasNext()) {
-    val filter = it.next()
-    patterns.add(TodoPatternConfig(filter.patternString, filter.isCaseSensitive))
-  }
-  return TodoFilterConfig(filter.name, patterns)
-}
