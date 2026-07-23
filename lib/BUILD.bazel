@@ -85,9 +85,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rule-engine-0.3.274.jar_copy",
-    src = "@ai_grazie-grazie-rule-engine-0_3_274_http//file",
-    out = "ai.grazie/grazie-rule-engine-0.3.274.jar",
+    name = "ai.grazie/grazie-rule-engine-0.3.278.jar_copy",
+    src = "@ai_grazie-grazie-rule-engine-0_3_278_http//file",
+    out = "ai.grazie/grazie-rule-engine-0.3.278.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -105,15 +105,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie-grazie-rule-engine-0_3_274_http_import",
+        ":ai_grazie-grazie-rule-engine-0_3_278_http_import",
         ":net_fellbaum-jemoji-1_3_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie-grazie-rule-engine-0_3_274_http_import",
-    jar = "@ai_grazie-grazie-rule-engine-0_3_274_http//file",
-    source_jar = "@ai_grazie-grazie-rule-engine-0_3_274-sources_http//file",
+    name = "ai_grazie-grazie-rule-engine-0_3_278_http_import",
+    jar = "@ai_grazie-grazie-rule-engine-0_3_278_http//file",
+    source_jar = "@ai_grazie-grazie-rule-engine-0_3_278-sources_http//file",
 )
 
 jvm_import(
@@ -123,17 +123,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rules-llm-0.3.274.jar_copy",
-    src = "@ai_grazie-grazie-rules-llm-0_3_274_http//file",
-    out = "ai.grazie/grazie-rules-llm-0.3.274.jar",
+    name = "ai.grazie/grazie-rules-llm-0.3.278.jar_copy",
+    src = "@ai_grazie-grazie-rules-llm-0_3_278_http//file",
+    out = "ai.grazie/grazie-rules-llm-0.3.278.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "ai-grazie-semantic-engine",
-    jar = "@ai_grazie-grazie-rules-llm-0_3_274_http//file",
-    source_jar = "@ai_grazie-grazie-rules-llm-0_3_274-sources_http//file",
+    jar = "@ai_grazie-grazie-rules-llm-0_3_278_http//file",
+    source_jar = "@ai_grazie-grazie-rules-llm-0_3_278-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

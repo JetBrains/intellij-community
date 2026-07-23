@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ai.grazie.semantic.engine" type="repository">
-    <properties include-transitive-deps="false" maven-id="ai.grazie:grazie-rules-llm:0.3.274">
+    <properties include-transitive-deps="false" maven-id="ai.grazie:grazie-rules-llm:0.3.278">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.274/grazie-rules-llm-0.3.274.jar">
-          <sha256sum>f8f4232377275aea232596c556563d6c51a79d9cbb38897114597cce025c76e3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278.jar">
+          <sha256sum>822ffa1a82a8561dccd3297604c44dd8b1c43bd684ed80cbee7ded86d6a021c3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.274/grazie-rules-llm-0.3.274.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.274/grazie-rules-llm-0.3.274-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.278/grazie-rules-llm-0.3.278-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

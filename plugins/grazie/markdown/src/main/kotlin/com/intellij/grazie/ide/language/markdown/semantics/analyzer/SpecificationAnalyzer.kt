@@ -52,7 +52,7 @@ internal object SpecificationAnalyzer {
           log.info("$analyzerName starts executing request with lock")
           val analysis = analyzer.analyze(specifications, client)
           val timeMs = System.currentTimeMillis() - start
-          val credits = analysis.spentCredits / Credit.CREDITS_IN_DOLLAR
+          val credits = analysis.spentCredits() / Credit.CREDITS_IN_DOLLAR
           log.info("""
             Analyzing text with $analyzerName took $timeMs ms on
             text with length ${textLength} and used $credits credits.

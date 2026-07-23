@@ -13,4 +13,6 @@ class VariableJson {
   public static void main(String[] args) {
     VariableJson variavel;
   }
+
+  private static boolean Test_Groesser_Als(double num) { return false; }
 }

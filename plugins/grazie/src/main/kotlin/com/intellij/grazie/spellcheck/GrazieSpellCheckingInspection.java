@@ -2,6 +2,7 @@
 package com.intellij.grazie.spellcheck;
 
 import ai.grazie.nlp.langs.LanguageISO;
+import ai.grazie.rules.de.DigraphExpansion;
 import ai.grazie.spell.suggestion.ranker.AsciiRanker;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -317,11 +318,26 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
         return true;
       }
 
+      if (isAcceptedAsUnicodeExpansion(word)) {
+        return false;
+      }
+
       Project project = myElement.getProject();
       return SpellCheckerManager.getInstance(project).getSuggestions(word)
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> AsciiRanker.equalsIgnoringDiacritics(word, suggestion));
+    }
+
+    private boolean isAcceptedAsUnicodeExpansion(String word) {
+      for (String candidate : DigraphExpansion.generateCombinations(word)) {
+        if (candidate.equalsIgnoreCase(word)) continue;
+        String lower = StringUtil.toLowerCase(candidate);
+        if (!myManager.hasProblem(lower) || !myManager.hasProblem(StringUtil.capitalize(lower))) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static boolean isOnlyEnglishDictionaryEnabled(Project project) {
