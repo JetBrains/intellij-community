@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.hyperlinks.rpc
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -35,7 +35,8 @@ interface TerminalHyperlinksSessionRemoteApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): TerminalHyperlinksSessionRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalHyperlinksSessionRemoteApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<TerminalHyperlinksSessionRemoteApi>())
     }
   }
 }
