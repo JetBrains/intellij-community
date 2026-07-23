@@ -3,13 +3,13 @@ package com.intellij.python.hatch.impl
 
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +23,7 @@ internal class HatchPyProjectManager : PyProjectManager {
   override val id: ToolId = HATCH_TOOL_ID
   override val ui: PyToolUIInfo = HATCH_UI_INFO
 
-  override val additionalDataType: Class<HatchSdkAdditionalData> = HatchSdkAdditionalData::class.java
+  override val flavorDataType: Class<HatchSdkFlavor> = HatchSdkFlavor::class.java
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 

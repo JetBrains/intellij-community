@@ -5,7 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
@@ -20,14 +20,14 @@ interface PyProjectManager : PyDependencyGroupLocator {
 
     fun forSdk(sdk: Sdk): PyProjectManager? {
       val additionalData = sdk.pySdkAdditionalData
-      return EP.extensionList.firstOrNull { it.additionalDataType.isInstance(additionalData) }
+      return EP.extensionList.firstOrNull { it.flavorDataType.isInstance(additionalData.flavor) }
     }
   }
 
   /**
    * To be used by [forSdk]
    */
-  val additionalDataType: Class<out PythonSdkAdditionalData>
+  val flavorDataType: Class<out PythonSdkFlavor<*>>
 
   /**
    * CLI adapter for `pyproject.toml` dependency groups (PEP 735 / PEP 621), or `null` when this

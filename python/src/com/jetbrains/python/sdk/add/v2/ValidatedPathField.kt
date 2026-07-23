@@ -295,14 +295,14 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
   installAction: ActionLink,
   validatedPathField: ValidatedPathField<T, P, V>,
 ): Row {
-  val selectExecutableLink = if (fileSystem.isBrowsable) ActionLink(message("sdk.create.custom.select.executable.link")) {
+  val selectExecutableLink = if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
     validatedPathField.button.doClick()
   }
   else null
 
   return row("") {
     validationTooltip(missingExecutableText,
-                      installAction,
+                      if (fileSystem.toolPathCanBePersisted) installAction else null,
                       selectExecutableLink,
                       validationType = ValidationType.WARNING,
                       inline = true)

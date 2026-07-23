@@ -17,7 +17,7 @@ import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
+import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,7 +36,7 @@ internal class UvPyProjectManager : PyProjectManager {
 
   override val ui: PyToolUIInfo = UV_UI_INFO
 
-  override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
+  override val flavorDataType: Class<UvSdkFlavor> = UvSdkFlavor::class.java
 
   override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 

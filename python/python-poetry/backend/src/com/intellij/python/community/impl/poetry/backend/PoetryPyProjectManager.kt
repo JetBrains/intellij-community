@@ -13,7 +13,7 @@ import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.sdk.poetry.PoetryDependencyGroupSupport
-import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 
@@ -22,7 +22,7 @@ internal class PoetryPyProjectManager : PyProjectManager {
   override val id: ToolId = POETRY_TOOL_ID
   override val ui: PyToolUIInfo = POETRY_UI_INFO
 
-  override val additionalDataType: Class<PyPoetrySdkAdditionalData> = PyPoetrySdkAdditionalData::class.java
+  override val flavorDataType: Class<PyPoetrySdkFlavor> = PyPoetrySdkFlavor::class.java
 
   override val dependencyGroupSupport: PySdkDependencyGroupSupport = PoetryDependencyGroupSupport
 
