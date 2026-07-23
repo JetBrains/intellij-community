@@ -110,7 +110,7 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                             if (!functionCallOrVariableAccess) return@forEach
                         }
                     }
-                    val referencedName = expression.getReferencedName()
+                    val referencedName = expression.getReferencedNameElement().text
                     expression.replace(psiFactory.createExpression("$referencedName()"))
                 }
 

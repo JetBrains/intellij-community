@@ -28,6 +28,11 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedName.kt")
+            public void testBacktickedName() throws Exception {
+                runTest("testData/quickfix/objectInheritsException/backtickedName.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/quickfix/objectInheritsException/simple.kt");
