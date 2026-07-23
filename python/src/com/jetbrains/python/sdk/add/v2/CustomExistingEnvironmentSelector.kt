@@ -37,12 +37,19 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
+      val missingExecutableText = if (model.fileSystem.toolPathCanBePersisted) {
+        message("sdk.create.custom.venv.missing.text", name)
+      }
+      else {
+        message("sdk.create.custom.tool.not.detected", name)
+      }
       executablePath = validatablePathField(
         fileSystem = model.fileSystem,
         pathValidator = toolState,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", name),
-        missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
+        missingExecutableText = missingExecutableText,
+        canBeEdited = model.fileSystem.toolPathCanBePersisted,
       )
 
       comboBox = pythonInterpreterComboBox(
