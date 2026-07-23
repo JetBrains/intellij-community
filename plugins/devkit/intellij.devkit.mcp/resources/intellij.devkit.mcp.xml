@@ -1,13 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.mcpServer"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.scaffolding"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.mcpServer">
     <mcpToolset implementation="com.intellij.devkit.mcp.DevKitMcpToolset" />

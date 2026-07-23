@@ -4,11 +4,11 @@ package com.intellij.mcpserver.settings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpserverIcons
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
+import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState

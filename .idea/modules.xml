@@ -1208,6 +1208,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.main.iml" filepath="$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.frontend/intellij.mcpserver.frontend.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.frontend/intellij.mcpserver.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.plugin/intellij.mcpserver.plugin.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.plugin/intellij.mcpserver.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.stdio/intellij.mcpserver.stdio.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.stdio/intellij.mcpserver.stdio.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.terminal/intellij.mcpserver.terminal.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.terminal/intellij.mcpserver.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.terminal.frontend/intellij.mcpserver.terminal.frontend.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.terminal.frontend/intellij.mcpserver.terminal.frontend.iml" />

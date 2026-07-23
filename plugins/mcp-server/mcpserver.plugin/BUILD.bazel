@@ -1,0 +1,56 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.mcpserver.plugin` start
+jvm_library(
+    name = "mcpserver.plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.frontend",
+        "//plugins/mcp-server/mcpserver.stdio",
+        "//plugins/mcp-server/mcpserver.terminal",
+        "//plugins/mcp-server/mcpserver.terminal.frontend",
+        "//plugins/mcp-server/mcpserver.vcs",
+    ],
+)
+
+jvm_library(
+    name = "mcpserver.plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":mcpserver.plugin",
+        "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_test_lib",
+        "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
+        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
+        "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_test_lib",
+        "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_test_lib",
+    ],
+)
+### auto-generated section `build intellij.mcpserver.plugin` end
+
+### auto-generated section `iml intellij.mcpserver.plugin` start
+exports_files(
+    [
+        "intellij.mcpserver.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.mcpserver.plugin` end

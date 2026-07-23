@@ -1,0 +1,28 @@
+<idea-plugin package="com.intellij.mcpserver" allow-bundled-update="true">
+  <name>MCP Server</name>
+  <id>com.intellij.mcpServer</id>
+  <category>AI-Powered</category>
+  <description><![CDATA[
+    MCP (Model Context Protocol) Server for JetBrains IDEs
+    This plugin integrates the MCP server into JetBrains IDEs, enabling seamless communication between LLMsc
+    and your development environment. It provides tools for interacting with the IDE, including:
+    <ul>
+      <li>Reading the current file</li>
+      <li>Executing terminal commands</li>
+      <li>Setting breakpoints</li>
+      <li>Searching project files</li>
+      <li>And more</li>
+    </ul>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <content namespace="jetbrains">
+    <!--todo: embedded to simulate old behaviour-->
+    <module name="intellij.mcpserver" loading="embedded"/>
+    <module name="intellij.mcpserver.stdio" loading="embedded"/>
+    <module name="intellij.mcpserver.vcs"/>
+    <module name="intellij.mcpserver.terminal"/>
+    <module name="intellij.mcpserver.terminal.frontend"/>
+    <module name="intellij.mcpserver.frontend" required-if-available="intellij.platform.frontend"/>
+  </content>
+</idea-plugin>

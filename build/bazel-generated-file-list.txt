@@ -1475,6 +1475,8 @@ plugins/maven/proofreading
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
+plugins/mcp-server/mcpserver.frontend
+plugins/mcp-server/mcpserver.plugin
 plugins/mcp-server/mcpserver.stdio
 plugins/mcp-server/mcpserver.terminal
 plugins/mcp-server/mcpserver.terminal.frontend

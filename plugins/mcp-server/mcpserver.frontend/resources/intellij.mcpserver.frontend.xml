@@ -1,0 +1,30 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.mcpserver"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <serviceViewContributor implementation="com.intellij.mcpserver.services.McpServiceViewContributor"/>
+
+    <statusBarWidgetFactory id="McpServerStatusBarWidget"
+                            implementation="com.intellij.mcpserver.widget.McpServerStatusBarWidgetFactory"
+                            order="after PowerSaveMode"/>
+
+    <applicationConfigurable
+      instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
+      id="com.intellij.mcpserver.settings"
+      key="mcp.server.configurable.name"
+      bundle="messages.McpServerBundle"
+      dynamic="true"
+      parentId="tools"/>
+
+    <applicationConfigurable
+      instance="com.intellij.mcpserver.settings.McpToolFilterConfigurable"
+      id="com.intellij.mcpserver.settings.filter"
+      key="configurable.mcp.tool.filter"
+      bundle="messages.McpServerBundle"
+      dynamic="true"
+      parentId="com.intellij.mcpserver.settings"/>
+  </extensions>
+</idea-plugin>
