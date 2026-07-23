@@ -18,7 +18,8 @@ import static org.junit.Assert.fail;
   DependencyGraphTest.class,
   KotlinCriTest.class,
   JavaAbiFilterTest.class,
-  WarningLevelTests.class
+  WarningLevelTests.class,
+  BuildContextKotlinOptionsTest.class
 })
 public class AllTests {
 
