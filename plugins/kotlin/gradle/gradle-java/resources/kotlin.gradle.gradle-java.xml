@@ -29,6 +29,7 @@
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines"/>
+    <module name="intellij.kotlin.native"/>
     <module name="intellij.kotlin.preferences"/>
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.projectWizard.core"/>

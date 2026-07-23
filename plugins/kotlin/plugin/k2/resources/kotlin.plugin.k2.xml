@@ -14,8 +14,6 @@
   <xi:include href="caches.xml"/>
   <xi:include href="kotlin-core.xml"/>
   <xi:include href="scripting-v1.xml"/>
-  <xi:include href="native.xml"/>
-
   <xi:include href="ultimate-plugin.k2.xml">
     <xi:fallback/>
   </xi:include>
@@ -187,6 +185,7 @@
     <module name="intellij.kotlin.base.compilerConfiguration" loading="embedded"/>
     <module name="intellij.kotlin.base.plugin" loading="embedded"/>
     <module name="intellij.kotlin.base.compilerConfiguration.ui" loading="embedded"/>
+    <module name="intellij.kotlin.native" loading="embedded"/>
     <module name="intellij.kotlin.base.platforms" loading="embedded"/>
     <module name="intellij.kotlin.base.jps" loading="embedded"/>
     <module name="intellij.kotlin.base.kdoc" loading="embedded"/>
