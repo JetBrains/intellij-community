@@ -313,14 +313,14 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         || (hostInetAddress.isLoopbackAddress() && serverSocket.getInetAddress().isLoopbackAddress())) {
       return serverSocket;
     }
-    var newSocket = new ServerSocket(port, 0, hostInetAddress);
+    // Close the pre-created loopback socket BEFORE binding the new one.
     try {
       serverSocket.close();
     }
     catch (IOException e) {
       LOG.warn("Failed to close the original server socket", e);
     }
-    return newSocket;
+    return new ServerSocket(port, 0, hostInetAddress);
   }
 
   private static void closeServerSocket(@NotNull ServerSocket serverSocket, @NotNull Throwable cause) {
