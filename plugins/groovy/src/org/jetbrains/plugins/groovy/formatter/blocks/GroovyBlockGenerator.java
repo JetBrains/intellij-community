@@ -480,7 +480,8 @@ public class GroovyBlockGenerator {
     for (ASTNode child : children) {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
-        if (((GrLabeledStatement)psi).getLabel().getText().equals("where")) {
+        String labelText = ((GrLabeledStatement)psi).getLabel().getText();
+        if (labelText.equals("where") || labelText.equals("combined")) {
           alignGroup(currentGroup, spock, classLevel);
           currentGroup = new ArrayList<>();
           spock = true;

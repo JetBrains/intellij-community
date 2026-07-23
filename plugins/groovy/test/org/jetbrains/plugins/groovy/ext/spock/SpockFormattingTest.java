@@ -32,6 +32,8 @@ public class SpockFormattingTest extends GroovyFormatterTestCase {
 
   public void testSpockTableWithUndefinedLabel() { doTest(); }
 
+  public void testSpockTableInCombinedBlock() { doTest(); }
+
   public void doTest() {
     List<String> strings = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(strings.get(0), StringUtil.trimEnd(strings.get(1), "\n"));
