@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.external;
 
 import com.intellij.CommonBundle;
@@ -705,7 +705,7 @@ public final class ExternalDiffToolUtil {
   private static class TestKillableProcessHandler extends KillableProcessHandler {
     private static final BaseOutputReader.Options FULL_LINES_READER_OPTIONS = new BaseOutputReader.Options() {
       @Override
-      public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.NON_BLOCKING; }
+      public BaseDataReader.@NotNull SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.NON_BLOCKING; }
 
       @Override
       public boolean sendIncompleteLines() { return false; }
