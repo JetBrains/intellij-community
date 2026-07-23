@@ -217,6 +217,7 @@ class ProductPluginInitContext(
       val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
       when {
         productMode.isLight -> {
+          val rpc = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
           val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
@@ -224,11 +225,13 @@ class ProductPluginInitContext(
 
           setModuleAvailability(frontendSplitBase, true)
 
-          for (moduleId in listOf(frontendSplit, platformSplit, rdClient, cwmPluginCommon)) {
+          for (moduleId in listOf(frontendSplit, platformSplit, rpc, rdClient, cwmPluginCommon)) {
             setModuleAvailability(moduleId, false)
           }
 
-          setModuleAvailability(platformSplitConnection, productMode == ProductModes.LIGHT_WITH_RD_CONNECTION)
+          for (moduleId in listOf(platformSplitConnection)) {
+            setModuleAvailability(moduleId, productMode == ProductModes.LIGHT_WITH_RD_CONNECTION)
+          }
         }
         else -> {
           setModuleAvailability(frontendSplitBase, productMode == ProductModes.FRONTEND)

@@ -67,6 +67,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -88,7 +89,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlin.concurrent.atomics.AtomicReference
 
 suspend fun withRebaseLoop(
-  remoteKernel: RemoteKernel,
+  remoteKernel: Deferred<RemoteKernel>,
   instructionSet: InstructionSet,
   reconnectWhenBroken: Boolean,
   body: suspend CoroutineScope.() -> Unit,
@@ -98,7 +99,7 @@ suspend fun withRebaseLoop(
     launch {
       val rebaseLoop: suspend CoroutineScope.() -> Unit = {
         durable {
-          remoteKernelConnection(ready, remoteKernel, instructionSet)
+          remoteKernelConnection(ready, remoteKernel = remoteKernel, instructionSet)
         }
       }
       if (reconnectWhenBroken) {
@@ -442,7 +443,7 @@ private suspend fun <T> subscribe(transactor: Transactor, clientId: UID, body: S
 
 private suspend fun remoteKernelConnection(
   connected: CompletableDeferred<Unit>,
-  remoteKernel: RemoteKernel,
+  remoteKernel: Deferred<RemoteKernel>,
   instructionSet: InstructionSet,
 ) {
   spannedScope("remoteKernelConnection") {
@@ -452,7 +453,7 @@ private suspend fun remoteKernelConnection(
     subscribe(transactor, clientId) { dbSnapshot, changesReceiver ->
       connected.complete(Unit)
       val subscription = spannedScope("RemoteKernel.subscribe") {
-        durable { withoutCausality { remoteKernel.subscribeWithChunkedSnapshot(clientId) } }
+        durable { withoutCausality { remoteKernel.await().subscribeWithChunkedSnapshot(clientId) } }
       }
       val snapshot = spannedScope("fetch snapshot") {
         DurableSnapshot(
@@ -478,7 +479,7 @@ private suspend fun remoteKernelConnection(
           val workspaceBroadcastReceiver = this
           val (frontendTxsSender, frontendTxsReceiver) = channels<Transaction>()
           try {
-            withoutCausality { remoteKernel.transact(frontendTxsReceiver) }
+            withoutCausality { remoteKernel.await().transact(frontendTxsReceiver) }
             logger.trace { "[$transactor] launching rebase loop" }
             val initialRebaseState = run {
               val baseClock = VectorClock(subscription.vectorClock.toPersistentHashMap())
