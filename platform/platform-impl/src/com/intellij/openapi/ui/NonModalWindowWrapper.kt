@@ -27,13 +27,11 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.WindowStateService
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ToolbarService
 import com.intellij.ui.mac.MacFullScreenSupport
@@ -54,7 +52,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
-import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
@@ -124,16 +121,6 @@ abstract class NonModalWindowWrapper(
   private lateinit var minWindowSize: Dimension
   private var windowListener: WindowAdapter? = null
   private var windowDisposable: Disposable? = null
-  /** Non-null only on macOS while [activeWindow] is a [WindowFrame]. Tracks native full-screen state. */
-  private var fullScreenSupport: FullScreenSupport? = null
-
-  /**
-   * The AWT window that had focus when this wrapper was constructed — i.e. the window the user
-   * was in when they invoked the action that opened Settings. Captured eagerly so that
-   * [isInvokingFrameInFullScreen] can identify the invoking IDE frame even after AWT focus
-   * has shifted to the newly created Settings window.
-   */
-  private val invokingWindow: Window? = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
 
   protected var isFloat: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(floatModeKey, true)
@@ -208,8 +195,7 @@ abstract class NonModalWindowWrapper(
     IdeBundle.messagePointer("action.ToggleAction.description.pin.window"),
     AllIcons.General.Pin_tab,
   ) {
-    override fun isSelected(e: AnActionEvent): Boolean =
-      if (::activeWindow.isInitialized) activeWindow is FloatDialog else isFloat
+    override fun isSelected(e: AnActionEvent): Boolean = isFloat
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       isFloat = state
       switchWindowMode(state)
@@ -229,11 +215,7 @@ abstract class NonModalWindowWrapper(
   protected fun initWindow(content: JComponent, minSize: Dimension, initialSize: Dimension) {
     this.content = content
     this.minWindowSize = minSize
-    // When the invoking IDE frame is in full-screen, always open as a dialog (float/pinned) so
-    // the Settings window appears on the IDE's Space rather than spawning its own separate Space.
-    // The saved preference is not modified so it is honoured the next time the IDE is not in full-screen.
-    val effectiveFloat = isFloat || isInvokingFrameInFullScreen()
-    activeWindow = createAwtWindow(effectiveFloat, content, minSize, initialSize)
+    activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
     installWindowListeners()
@@ -326,9 +308,7 @@ abstract class NonModalWindowWrapper(
         ToolbarService.getInstance().setTransparentTitleBar(
           window = frame,
           rootPane = frame.rootPane,
-          handlerProvider = {
-            FullScreenSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport").also { fullScreenSupport = it }
-          },
+          handlerProvider = null,
           onDispose = { runnable -> Disposer.register(wd) { runnable.run() } },
         )
       }
@@ -403,33 +383,14 @@ abstract class NonModalWindowWrapper(
   /**
    * Switches between Float ([JDialog]) and Window ([JFrame]) mode.
    * The [content] component is reparented and window bounds are transferred.
-   *
-   * On macOS, if the [WindowFrame] is in native full-screen when the user pins the window
-   * (toFloat=true, i.e. switching FROM WindowFrame TO FloatDialog), we first exit full-screen
-   * via [MacFullScreenSupport.exitFullScreen] and defer the actual switch until the OS animation
-   * completes. This ensures the new [FloatDialog] is created after macOS has restored the
-   * pre-full-screen window bounds. On non-macOS, [fullScreenSupport] is always null.
    */
   private fun switchWindowMode(toFloat: Boolean) {
-    val macFss = if (toFloat && SystemInfoRt.isMac) fullScreenSupport as? MacFullScreenSupport else null
-    if (macFss != null && macFss.isFullScreen) {
-      val ideFrame = getIdeJFrame()
-      macFss.exitFullScreen(activeWindow) {
-        if (!isDisposed) doSwitchWindowMode(toFloat, ideFrame)
-      }
-      return
-    }
-    doSwitchWindowMode(toFloat)
-  }
-
-  private fun doSwitchWindowMode(toFloat: Boolean, ideFrameToActivate: JFrame? = null) {
     val oldBounds = activeWindow.bounds
     val wasVisible = activeWindow.isVisible
     val savedDefaultButton = (activeWindow as RootPaneContainer).rootPane.defaultButton
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
     content.parent?.remove(content)
-    fullScreenSupport = null
     disposeWindow(activeWindow)
     windowDisposable?.let { Disposer.dispose(it) }
     windowDisposable = null
@@ -441,10 +402,7 @@ abstract class NonModalWindowWrapper(
     activeWindow.bounds = oldBounds
     dimensionKey?.let { WindowStateService.getInstance(project).getState(it, activeWindow) }
     if (wasVisible) {
-      // When switching back from full-screen, first bring the IDE frame to front so macOS
-      // navigates to the IDE Space, then show the dialog on top of it.
-      ideFrameToActivate?.toFront()
-      activeWindow.isVisible = true
+      showActiveWindow()
       activeWindow.toFront()
       activeWindow.requestFocus()
     }
@@ -624,25 +582,35 @@ abstract class NonModalWindowWrapper(
     ComponentUtil.getWindow(WindowManager.getInstance().getIdeFrame(project)?.component) as? JFrame
 
   /**
-   * Returns `true` if the window that triggered this invocation is in macOS native full-screen.
+   * Makes [activeWindow] visible, bringing the IDE frame to front first when needed.
    *
-   * Two mechanisms are used:
-   * - [IdeFrame.isInFullScreen] — reliable for the main IDE JFrame (handled by the macOS frame decorator).
-   * - [MacFullScreenSupport] stored as a root-pane client property — reliable for [FrameWrapper]-based
-   *   windows (e.g. detached editor tabs) whose [IdeFrame.isInFullScreen] always returns `false`.
-   *
-   * Returns `false` on non-macOS.
+   * On macOS, a [FloatDialog] is owned by the IDE JFrame and lives on the IDE's Space.
+   * If the IDE is in full-screen (or the user invokes Settings from a detached editor tab
+   * on its own Space), macOS keeps focus on the current Space after the dialog becomes visible.
+   * Bringing the IDE frame to front first navigates macOS to the IDE Space.
    */
-  private fun isInvokingFrameInFullScreen(): Boolean {
-    if (!SystemInfoRt.isMac) return false
-    val ultimateParent = ComponentUtil.findUltimateParent(invokingWindow ?: return false)
-    // Main IDE frame: IdeFrame.isInFullScreen() is reliable (MacMainFrameDecorator).
-    if ((ultimateParent as? IdeFrame)?.isInFullScreen == true) return true
-    // Detached editor tabs (FrameWrapper.MyJFrame): isInFullScreen() always returns false,
-    // so fall back to MacFullScreenSupport stored in the root pane by addListener.
-    val rootPane = (invokingWindow as? RootPaneContainer)?.rootPane ?: return false
-    val fss = rootPane.getClientProperty(MacFullScreenSupport.ROOT_PANE_KEY) as? MacFullScreenSupport
-    return fss?.isFullScreen == true
+  private fun showActiveWindow() {
+    if (activeWindow is FloatDialog) {
+      getIdeJFrame()?.toFront()
+    }
+    activeWindow.isVisible = true
+    disableNativeFullScreen(activeWindow)
+  }
+
+  /**
+   * Disables the macOS green full-screen button on a [WindowFrame].
+   *
+   * Must be called **after** the window is made visible: JBR's `CPlatformWindow` unconditionally
+   * calls `setCanFullscreen(true)` for any resizable `Frame` during `setVisible(true)`, which
+   * overrides an earlier `setWindowCanFullScreen(false)` call.
+   *
+   * The [SystemInfoRt.isMac] guard ensures [MacFullScreenSupport] (which references `com.apple.eawt`)
+   * is never class-loaded on Windows/Linux.
+   */
+  private fun disableNativeFullScreen(window: Window) {
+    if (SystemInfoRt.isMac && window is WindowFrame) {
+      MacFullScreenSupport.disableNativeFullScreen(window)
+    }
   }
 
   // ── Public API ───────────────────────────────────────────────────────────────
@@ -670,14 +638,7 @@ abstract class NonModalWindowWrapper(
       activeWindow.requestFocus()
       return
     }
-    // On macOS, a FloatDialog is owned by the IDE JFrame and lives on the IDE's Space.
-    // If the user invokes Settings from a detached editor tab (its own Space), macOS keeps
-    // focus on the detached tab's Space after the dialog becomes visible. Bringing the IDE
-    // frame to front first navigates macOS to the IDE Space before the dialog appears.
-    if (activeWindow is FloatDialog) {
-      getIdeJFrame()?.toFront()
-    }
-    activeWindow.isVisible = true
+    showActiveWindow()
     getPreferredFocusComponent()?.requestFocusInWindow()
     onShown()
   }
