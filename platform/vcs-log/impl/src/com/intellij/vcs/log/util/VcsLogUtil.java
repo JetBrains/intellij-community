@@ -29,6 +29,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt;
 import com.intellij.vcs.log.VcsLogBranchFilter;
+import com.intellij.vcs.log.VcsLogBranchLikeFilter;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogDataPack;
@@ -189,7 +190,9 @@ public final class VcsLogUtil {
 
   public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters,
                                                                   @NotNull VcsLogAggregatedStoredRefs refs) {
-    VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
+    List<VcsLogBranchLikeFilter> branchLikeFilters = ContainerUtil.filterIsInstance(filters.getFilters(), VcsLogBranchLikeFilter.class);
+    if (branchLikeFilters.size() != 1) return null;
+    VcsLogBranchFilter filter = ContainerUtil.getOnlyItem(ContainerUtil.filterIsInstance(branchLikeFilters, VcsLogBranchFilter.class));
     if (filter == null) return null;
 
     String branchName = null;
