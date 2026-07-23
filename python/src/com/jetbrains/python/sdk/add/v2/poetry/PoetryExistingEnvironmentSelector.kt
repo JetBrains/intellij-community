@@ -5,7 +5,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.intellij.python.community.impl.poetry.common.poetryPath
@@ -20,15 +19,13 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
-import kotlin.io.path.pathString
 
 internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) :
   CustomExistingEnvironmentSelector<P>("poetry", model, module) {
@@ -41,7 +38,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
 
-    val pythonBinaryPath = selectedEnv.get()?.homePath as? PathHolder.Eel
+    val pythonBinaryPath = selectedEnv.get()?.homePath
                            ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",
                                                                               selectedEnv.get()?.homePath))
 
@@ -49,18 +46,23 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
       return Result.success(it)
     }
 
-    val basePathString = moduleOrProject.moduleIfExists?.baseDir?.path ?: moduleOrProject.project.basePath
-    val basePath = basePathString?.let { Path.of(it) } ?: error("module base path is not valid: $basePathString")
+    val basePath = moduleOrProject.workingDirectory
+                   ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
 
-    return createPoetrySdk(basePath, pythonBinaryPath)
+    return createPoetrySdk(
+      basePath = basePath,
+      pythonBinaryPath = pythonBinaryPath,
+      fileSystem = model.fileSystem,
+      targetPanelExtension = model.state.targetPanelExtension.get(),
+    )
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
-    val existingEnvs = detectPoetryEnvs(modulePath).mapNotNull { pythonBinary ->
-      val pythonInfo = ExecService().validatePythonAndGetInfo(pythonBinary).successOrNull ?: return@mapNotNull null
-      model.fileSystem.parsePath(pythonBinary.pathString).successOrNull?.let { fsPath ->
-        DetectedSelectableInterpreter(fsPath, pythonInfo, false, POETRY_UI_INFO)
-      }
+    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder
+    val existingEnvs = detectPoetryEnvs(modulePath, model.fileSystem, poetryExecutable).mapNotNull { pythonBinary ->
+      val pythonInfo = model.fileSystem.getBinaryToExec(pythonBinary).validatePythonAndGetInfo().successOrNull
+                       ?: return@mapNotNull null
+      DetectedSelectableInterpreter(pythonBinary, pythonInfo, false, POETRY_UI_INFO)
     }
     return existingEnvs
   }

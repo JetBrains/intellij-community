@@ -11,7 +11,7 @@ import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,8 +23,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
 internal object DefaultPyProjectManager : PyProjectManager {
-  override val additionalDataType: Class<PythonSdkAdditionalData> = PythonSdkAdditionalData::class.java
-
+  override val flavorDataType: Class<PythonSdkFlavor.UnknownFlavor> = PythonSdkFlavor.UnknownFlavor::class.java
 
   override suspend fun createProject(
     where: Directory,

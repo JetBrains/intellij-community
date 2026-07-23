@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
-import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.findModuleForSdk
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -30,10 +29,10 @@ import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.packaging.pyRequirement
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.poetry.POETRY_LOCK
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -198,12 +197,13 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   private suspend fun editablePackagesFromLock(): Map<String, URI?> {
-    val projectPath = sdk.associatedModuleNioPath ?: return emptyMap()
+    val data = sdk.pySdkAdditionalData
+    val workingDir = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() } ?: return emptyMap()
     val content = withContext(Dispatchers.IO) {
-      try { projectPath.resolve(POETRY_LOCK.value).readText() } catch (_: IOException) { null }
+      try { workingDir.resolve(POETRY_LOCK.value).readText() } catch (_: IOException) { null }
     } ?: return emptyMap()
     return parsePoetryLockEditablePackages(content).mapValues { (_, url) ->
-      url?.let { resolveEditableLocation(it, projectPath) }
+      url?.let { resolveEditableLocation(it, workingDir) }
     }
   }
 

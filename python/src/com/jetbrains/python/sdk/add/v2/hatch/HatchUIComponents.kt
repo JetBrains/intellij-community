@@ -193,12 +193,18 @@ private fun <P : PathHolder> Panel.addExecutableSelector(
 ): ValidatedPathField<Version, P, ValidatedPath.Executable<P>> {
 
 
+  val missingExecutableText = if (model.fileSystem.toolPathCanBePersisted) {
+    message("sdk.create.custom.venv.missing.text", "hatch")
+  }
+  else {
+    message("sdk.create.custom.tool.not.detected", "hatch")
+  }
   val executablePath = validatablePathField(
     fileSystem = model.fileSystem,
     pathValidator = model.hatchViewModel.toolValidator,
     validationRequestor = validationRequestor,
     labelText = message("sdk.create.custom.venv.executable.path", "hatch"),
-    missingExecutableText = message("sdk.create.custom.tool.not.detected", "hatch"),
+    missingExecutableText = missingExecutableText,
     installAction = installHatchActionLink,
     canBeEdited = model.fileSystem.toolPathCanBePersisted,
   )

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
@@ -25,9 +26,11 @@ import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.createSdk
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.pythonInterpreterAsync
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
+import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.Serializable
@@ -217,15 +220,16 @@ class PythonEnvironmentMcpToolset : McpToolset {
    * inspecting the detected [PythonEnvironment] for SDKs not registered with one of those additional-data types.
    */
   private fun detectPackageManager(sdk: Sdk, env: PythonEnvironment?): String =
-    when (sdk.sdkAdditionalData) {
-      is PyPoetrySdkAdditionalData -> "poetry"
-      is HatchSdkAdditionalData -> "hatch"
-      is UvSdkAdditionalData -> "uv"
-      else -> when (env) {
-        is PythonEnvironment.Conda -> "conda"
-        is PythonEnvironment.Venv -> if (env.config.containsKey("uv")) "uv" else "pip"
-        is PythonEnvironment.SystemPython, null -> "unknown"
-      }
+    // TODO: Still not nice, but at least it will detect remote interpreters properly
+    when (sdk.pySdkAdditionalData.flavor) {
+        PyPoetrySdkFlavor -> "poetry"
+        HatchSdkFlavor -> "hatch"
+        UvSdkFlavor -> "uv"
+        else -> when (env) {
+          is PythonEnvironment.Conda -> "conda"
+          is PythonEnvironment.Venv -> if (env.config.containsKey("uv")) "uv" else "pip"
+          is PythonEnvironment.SystemPython, null -> "unknown"
+        }
     }
 
   @Serializable

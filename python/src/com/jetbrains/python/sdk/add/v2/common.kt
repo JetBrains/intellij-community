@@ -145,7 +145,7 @@ enum class PythonSupportedEnvironmentManagers(
 ) {
   VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
   CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
-  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = false),
+  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = true, { true }),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PythonCommunityImplPipenvIcons.PythonClosed, sshAutoUploadRequired = false),
   UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonUvCommonIcons.UV, sshAutoUploadRequired = true, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = true, { true }),

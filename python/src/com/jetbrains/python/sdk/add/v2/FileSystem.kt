@@ -382,7 +382,7 @@ data class EelFileSystem(
 
 data class TargetFileSystem(
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
-  val pythonLanguageRuntimeConfiguration: PythonLanguageRuntimeConfiguration,
+  private val pythonLanguageRuntimeConfiguration: PythonLanguageRuntimeConfiguration,
 ) : FileSystem<PathHolder.Target> {
   override val isReadOnly: Boolean
     get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
