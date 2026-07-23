@@ -12,7 +12,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon.Companion.layeredIcon
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -37,13 +39,27 @@ abstract class LanguageServiceWidgetItem {
    */
   open val isError: Boolean = false
 
+  /**
+   * If not [LanguageServiceItemRunningState.NotRunning] and [isError] is `false`,
+   * then the Platform will add a liveness badge (green for [LanguageServiceItemRunningState.Running],
+   * blue for [LanguageServiceItemRunningState.Initializing])
+   * to the icon of the action returned by the [createWidgetMainAction] function.
+   */
+  @ApiStatus.Internal
+  open val runningState: LanguageServiceItemRunningState = LanguageServiceItemRunningState.NotRunning
+
   abstract val widgetActionLocation: LanguageServicePopupSection
 
   fun createWidgetAction(): AnAction {
     val mainAction = createWidgetMainAction()
-    if (isError) {
-      mainAction.templatePresentation.icon = mainAction.templatePresentation.icon?.let {
-        layeredIcon(arrayOf(it, AllIcons.Nodes.ErrorMark))
+    mainAction.templatePresentation.icon = mainAction.templatePresentation.icon?.let {
+      when {
+        isError -> layeredIcon(arrayOf(it, AllIcons.Nodes.ErrorMark))
+        runningState == LanguageServiceItemRunningState.Running ->
+          IconManager.getInstance().withIconBadge(it, JBUI.CurrentTheme.IconBadge.SUCCESS)
+        runningState == LanguageServiceItemRunningState.Initializing ->
+          IconManager.getInstance().withIconBadge(it, JBUI.CurrentTheme.IconBadge.INFORMATION)
+        else -> it
       }
     }
 
@@ -70,6 +86,9 @@ abstract class LanguageServiceWidgetItem {
 
 
 enum class LanguageServicePopupSection { ForCurrentFile, Other }
+
+@ApiStatus.Internal
+enum class LanguageServiceItemRunningState { Running, Initializing, NotRunning }
 
 
 /**

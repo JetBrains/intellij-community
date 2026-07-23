@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lang.lsWidget.LanguageServiceItemRunningState
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.Other
@@ -22,6 +23,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 /**
@@ -42,6 +44,13 @@ open class LspClientWidgetItem(
     get() = lspClient.descriptor.presentableName + versionPostfix
 
   override val isError: Boolean = lspClient.state == LspServerState.ShutdownUnexpectedly
+
+  @ApiStatus.Internal
+  override val runningState: LanguageServiceItemRunningState = when (lspClient.state) {
+    LspServerState.Running -> LanguageServiceItemRunningState.Running
+    LspServerState.Initializing -> LanguageServiceItemRunningState.Initializing
+    else -> LanguageServiceItemRunningState.NotRunning
+  }
 
   override val widgetActionLocation: LanguageServicePopupSection by lazy {
     if (currentFile != null &&
