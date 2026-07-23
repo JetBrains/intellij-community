@@ -5,12 +5,14 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.platform.backend"/>
     <!-- endregion -->
   </dependencies>
 
-<!--This module is used outside (kotlin).
-This module shouldn't declare anything,
-because it can be loaded on the frontend part, please,
-declare inside intellij.java.indexing.impl.
-It is impossible to add a dependency on "backend", because it uses java 25-->
+  <!--This module is used outside (kotlin).-->
+  <extensions defaultExtensionNs="com.intellij">
+    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
+
+    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
+  </extensions>
 </idea-plugin>

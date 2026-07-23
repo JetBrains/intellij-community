@@ -22,6 +22,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.backend",
     visibility = ["//visibility:public"],
     runtime_deps = [":backend"],
