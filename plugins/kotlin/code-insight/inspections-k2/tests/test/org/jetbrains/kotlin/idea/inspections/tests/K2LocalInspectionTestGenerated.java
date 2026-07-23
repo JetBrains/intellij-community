@@ -22091,6 +22091,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/setterBackingFieldAssignment/assignment.kt");
             }
 
+            @TestMetadata("backtickedParamName.kt")
+            public void testBacktickedParamName() throws Exception {
+                runTest("testData/inspectionsLocal/setterBackingFieldAssignment/backtickedParamName.kt");
+            }
+
             @TestMetadata("decrement.kt")
             public void testDecrement() throws Exception {
                 runTest("testData/inspectionsLocal/setterBackingFieldAssignment/decrement.kt");
