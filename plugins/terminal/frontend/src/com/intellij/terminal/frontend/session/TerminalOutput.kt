@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.progress.TerminalProgressState
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
@@ -73,6 +74,7 @@ internal fun createTerminalOutputFlow(
     isAltSendsEscape = controller.altSendsEscape,
     isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
     windowTitle = terminalDisplay.windowTitleText,
+    terminalProgressState = terminalDisplay.terminalProgressState,
     isShellIntegrationEnabled = false,
     currentDirectory = getInitialWorkingDirectory(services),
   ))
@@ -216,6 +218,12 @@ internal fun createTerminalOutputFlow(
     override fun windowTitleChanged(title: String) {
       textBuffer.withLock {
         stateChangesTracker.updateState { it.copy(windowTitle = title) }
+      }
+    }
+
+    override fun terminalProgressChanged(terminalProgressState: TerminalProgressState) {
+      textBuffer.withLock {
+        stateChangesTracker.updateState { it.copy(terminalProgressState = terminalProgressState) }
       }
     }
   })

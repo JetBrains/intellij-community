@@ -20,10 +20,12 @@ import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalBundle;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+import org.jetbrains.plugins.terminal.progress.TerminalProgressManager;
+import org.jetbrains.plugins.terminal.progress.TerminalProgressStripe;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Container;
 
 public final class TerminalContainer {
@@ -80,6 +82,7 @@ public final class TerminalContainer {
   }
 
   private void processSessionCompleted() {
+    TerminalProgressManager.clear(myTerminalWidget);
     if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().getCloseSessionOnLogout()) {
       myTerminalToolWindowManager.closeTab(myContent);
     }
@@ -131,13 +134,15 @@ public final class TerminalContainer {
       setChildComponent(terminal.myTerminalWidget.getComponent());
     }
 
-    private void setChildComponent(@NotNull Component childComponent) {
+    private void setChildComponent(@NotNull JComponent childComponent) {
       Container parent = childComponent.getParent();
       if (parent != null) {
         parent.remove(childComponent);
       }
+      TerminalProgressStripe progressStripe = new TerminalProgressStripe(childComponent, myTerminal.myContent);
+      TerminalProgressManager.install(childComponent, progressStripe);
       removeAll();
-      add(childComponent, BorderLayout.CENTER);
+      add(progressStripe, BorderLayout.CENTER);
       revalidate();
     }
   }

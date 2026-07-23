@@ -8,6 +8,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.terminal.TerminalExecutorServiceManager
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.progress.TerminalProgressParser
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
 
 @ApiStatus.Internal
@@ -60,6 +62,7 @@ fun createTerminalSession(
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
   val services: JediTermServices = createJediTermServices(observableTtyConnector, options, maxHistoryLinesCount, settings)
+  installTerminalProgressListener(observableTtyConnector, services.terminalDisplay, coroutineScope)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
@@ -102,6 +105,19 @@ fun createTerminalSession(
     coroutineScope = coroutineScope,
     ttyConnector = ttyConnector.original as LocalTerminalTtyConnector,
   )
+}
+
+private fun installTerminalProgressListener(
+  connector: ObservableTtyConnector,
+  terminalDisplay: TerminalDisplayImpl,
+  coroutineScope: CoroutineScope,
+) {
+  val parser = TerminalProgressParser(terminalDisplay::setTerminalProgressState)
+  connector.addListener(coroutineScope.asDisposable(), object : TtyConnectorListener {
+    override fun charsRead(buf: CharArray, offset: Int, length: Int) {
+      parser.process(buf, offset, length)
+    }
+  })
 }
 
 private fun createJediTermServices(
