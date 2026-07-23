@@ -36,6 +36,7 @@ import java.util.regex.Pattern
 private val patternToDetectMembers = Pattern.compile("(.+)(#)(.*)")
 private val LOG = logger<ClassSearchEverywhereContributor>()
 
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere (com.intellij.platform.searchEverywhere).")
 open class ClassSearchEverywhereContributor @Internal constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?)
   : AbstractGotoSEContributor(event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
   private val filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT))
