@@ -15,12 +15,21 @@
  */
 package com.jetbrains.python.run;
 
+import com.intellij.execution.filters.Filter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.testing.pytest.PyTestTracebackParser;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import junit.framework.TestCase;
 import org.junit.Assert;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.mockito.Mockito;
+
+import java.util.List;
 
 /**
  * Ensures we can parse python traces for links
@@ -61,6 +70,59 @@ public class PyTracebackParserTest extends TestCase {
     Assert.assertEquals("Bad line number", 42, linkInTrace.getLineNumber());
     Assert.assertEquals("Bad start pos", 22, linkInTrace.getStartPos());
     Assert.assertEquals("Bad end pos", 37, linkInTrace.getEndPos());
+  }
+
+  public void testSeveralLinksInOneLine() {
+    final String line = "first.py:10 http://localhost:8080 subdirectory/second.py:20 https://example.com third.py:30";
+    final Filter.Result result = createTracebackFilter().applyFilter(line, line.length());
+
+    Assert.assertNotNull("Failed to parse file links", result);
+    final List<Filter.ResultItem> resultItems = result.getResultItems();
+    Assert.assertEquals(3, resultItems.size());
+    Assert.assertEquals("first.py:10", getHighlightedText(line, resultItems.get(0)));
+    Assert.assertEquals("subdirectory/second.py:20", getHighlightedText(line, resultItems.get(1)));
+    Assert.assertEquals("third.py:30", getHighlightedText(line, resultItems.get(2)));
+    for (Filter.ResultItem resultItem : resultItems) {
+      Assert.assertNotNull("Link is not clickable", resultItem.getHyperlinkInfo());
+    }
+  }
+
+  public void testMixedTracebackFormatsInOneLine() {
+    final String line = "File \"a.py\", line 1 ... b.py:2";
+    final Filter.Result result = createTracebackFilter().applyFilter(line, line.length());
+
+    Assert.assertNotNull("Failed to parse file links", result);
+    final List<Filter.ResultItem> resultItems = result.getResultItems();
+    Assert.assertEquals(2, resultItems.size());
+    Assert.assertEquals("a.py", getHighlightedText(line, resultItems.get(0)));
+    Assert.assertEquals("b.py:2", getHighlightedText(line, resultItems.get(1)));
+    for (Filter.ResultItem resultItem : resultItems) {
+      Assert.assertNotNull("Link is not clickable", resultItem.getHyperlinkInfo());
+    }
+  }
+
+  public void testSeveralStandardTracebackLinksInOneLine() {
+    final String line = "File \"a.py\", line 1; File \"b.py\", line 2";
+    final Filter.Result result = createTracebackFilter().applyFilter(line, line.length());
+
+    Assert.assertNotNull("Failed to parse file links", result);
+    final List<Filter.ResultItem> resultItems = result.getResultItems();
+    Assert.assertEquals(2, resultItems.size());
+    Assert.assertEquals("a.py", getHighlightedText(line, resultItems.get(0)));
+    Assert.assertEquals("b.py", getHighlightedText(line, resultItems.get(1)));
+  }
+
+  private static @NotNull PythonTracebackFilter createTracebackFilter() {
+    return new PythonTracebackFilter(Mockito.mock(Project.class), null) {
+      @Override
+      protected @Nullable VirtualFile findFileByName(@NotNull String fileName) {
+        return new LightVirtualFile(fileName);
+      }
+    };
+  }
+
+  private static @NotNull String getHighlightedText(@NotNull String line, @NotNull Filter.ResultItem resultItem) {
+    return line.substring(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset());
   }
 
   /**
