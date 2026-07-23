@@ -19,6 +19,7 @@ import com.intellij.markdown.backend.services.MarkdownFileGraphUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -59,13 +60,11 @@ open class SpecificationContradictionInspection : SpecificationBaseInspection<Co
   }
 
   override fun reportProblems(holder: ProblemsHolder, file: PsiFile, dependencies: Set<PsiFile>, issues: List<LlmIssue<Contradiction>>) {
-    val filePaths = dependencies.asSequence()
-      .map { it.viewProvider.virtualFile }
-      .associateBy { it.path }
+    val filePaths = dependencies.associateBy { it.viewProvider.virtualFile.path }
     issues.forEach { reportIssue(holder, file, it, filePaths) }
   }
 
-  private fun reportIssue(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<Contradiction>, filePaths: Map<String, VirtualFile>) {
+  private fun reportIssue(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<Contradiction>, filePaths: Map<String, PsiFile>) {
     val filePath = file.viewProvider.virtualFile.path
     issue.issue.statements.filter { it.path == filePath }.forEach { statement ->
       val range = TextRange(statement.startOffset, statement.endOffset)
@@ -79,7 +78,10 @@ open class SpecificationContradictionInspection : SpecificationBaseInspection<Co
       statement.contradicts().forEach { contradiction ->
         val contradictionFile = filePaths[contradiction.path()] ?: return@forEach
         fixes.add(NavigateToContradictionQuickFix(
-          contradictionFile, contradiction.startOffset(), contradiction.path() == filePath
+          contradictionFile.viewProvider.virtualFile,
+          contradiction.startOffset(),
+          StringUtil.offsetToLineNumber(contradictionFile.text, contradiction.startOffset()) + 1,
+          contradiction.path() == filePath,
         ))
       }
 
@@ -94,13 +96,14 @@ open class SpecificationContradictionInspection : SpecificationBaseInspection<Co
   private class NavigateToContradictionQuickFix(
     private val file: VirtualFile,
     private val offset: Int,
+    private val lineNumber: Int,
     private val sameFile: Boolean,
   ) : LocalQuickFix, Iconable {
     override fun getName(): String {
       if (sameFile) {
-        return GrazieBundle.message("specification.quick.fix.navigate.to.contradiction.same.file", offset)
+        return GrazieBundle.message("specification.quick.fix.navigate.to.contradiction.same.file", lineNumber)
       }
-      return GrazieBundle.message("specification.quick.fix.navigate.to.contradiction.another.file", file.name, offset)
+      return GrazieBundle.message("specification.quick.fix.navigate.to.contradiction.another.file", file.name, lineNumber)
     }
     override fun getFamilyName(): String = GrazieBundle.message("specification.quick.fix.navigate.to.contradiction.family")
     override fun startInWriteAction(): Boolean = false

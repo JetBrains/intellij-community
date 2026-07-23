@@ -106,7 +106,7 @@ internal class SpecificationInspectionTest : BaseTestCase() {
       LlmContradiction(Contradiction(statements), 12, 17))
     ))
     myFixture.checkHighlighting()
-    assertNotNull(myFixture.getAvailableIntention ("Navigate to contradiction at beautiful.md:16"))
+    assertNotNull(myFixture.getAvailableIntention("Navigate to contradiction at beautiful.md:L1"))
   }
 
   internal class SpecificationTestInspection<T>(private val issues: List<LlmIssue<T>>) : SpecificationBaseInspection<T>() {
