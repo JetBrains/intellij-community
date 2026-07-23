@@ -22,6 +22,7 @@ jvm_library(
         "//plugins/kotlin/plugin/common",
         "//plugins/kotlin/plugin",
         "@lib//:kotlinc-kotlin-compiler-common",
+        "@lib//:kotlinc-analysis-api-platform-interface",
         "@lib//:kotlinc-analysis-api-k2",
         "@lib//:kotlinc-low-level-api-fir",
         "@lib//:kotlinc-symbol-light-classes",

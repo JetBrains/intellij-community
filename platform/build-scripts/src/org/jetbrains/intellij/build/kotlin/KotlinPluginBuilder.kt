@@ -29,7 +29,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     val MODULES: List<String> = java.util.List.of(
       "kotlin.plugin.common",
       "kotlin.plugin.k2",
-      "intellij.kotlin.base.analysis.utils",
       "intellij.kotlin.native",
       "kotlin.scripting",
       "intellij.kotlin.codeInsight.utils",

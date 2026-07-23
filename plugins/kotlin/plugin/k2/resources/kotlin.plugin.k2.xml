@@ -155,6 +155,7 @@
 
     <module name="intellij.kotlin.base.resources" loading="embedded"/>
     <module name="intellij.kotlin.base.analysis" loading="embedded"/>
+    <module name="intellij.kotlin.base.analysis.utils" loading="embedded"/>
     <module name="intellij.kotlin.base.codeInsight" loading="embedded"/>
     <module name="intellij.kotlin.base.codeInsight.minimal" loading="embedded"/>
     <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
