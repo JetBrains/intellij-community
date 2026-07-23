@@ -41,7 +41,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
     var event = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
-    process(event, false);
+    process(event);
   }
 
   @Override
@@ -52,17 +52,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
     var testDescriptor = GradleXmlTestEventConverter.convertTestDescriptor(eventTime, eventXml);
     var testResult = GradleXmlTestEventConverter.convertOperationResult(eventXml);
     var event = new ExternalSystemFinishEvent<>(testId, testParentId, testDescriptor, testResult);
-    process(event, true);
-  }
-
-  private void process(@NotNull ExternalSystemFinishEvent<? extends TestOperationDescriptor> event, boolean isXml) {
-    var patcher = getExecutionConsole().getFileComparisonEventPatcher();
-    var patchedEvent = patcher.patchTestFinishEvent(event, isXml);
-    if (patchedEvent == null) {
-      LOG.info("Skipped event because it is incomplete: " + event);
-      return;
-    }
-    process(patchedEvent);
+    process(event);
   }
 
   private void process(@NotNull ExternalSystemFinishEvent<? extends TestOperationDescriptor> event) {

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.task
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
@@ -16,7 +15,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend
-import org.jetbrains.plugins.gradle.service.execution.loadFileComparisonTestLoggerInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadIjTestLoggerInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmOptionsInitScript
@@ -30,17 +28,15 @@ class JavaGradleTaskManagerExtension : GradleTaskManagerExtension {
     settings: GradleExecutionSettings,
     gradleVersion: GradleVersion?,
   ) {
-    configureTestLogger(settings, gradleVersion)
+    configureTestLogger(settings)
     configureJvmDebugger(id, settings)
     configureJvmOptions(settings)
   }
 
-  private fun configureTestLogger(settings: GradleExecutionSettings, gradleVersion: GradleVersion?) {
-    if (settings.isRunAsTest && gradleVersion.isGradleClassloaderEnhancementPossible()) {
-      if (settings.isBuiltInTestEventsUsed) {
-        settings.addInitScript(TEST_LOGGER_SCRIPT_NAME, loadFileComparisonTestLoggerInitScript())
-      }
-      else {
+  private fun configureTestLogger(settings: GradleExecutionSettings) {
+    if (settings.isRunAsTest) {
+      // Gradle prior to 7.6
+      if (!settings.isBuiltInTestEventsUsed) {
         settings.addInitScript(TEST_LOGGER_SCRIPT_NAME, loadIjTestLoggerInitScript())
       }
     }
@@ -87,9 +83,6 @@ class JavaGradleTaskManagerExtension : GradleTaskManagerExtension {
 
     settings.addInitScript(JVM_OPTIONS_SCRIPT_NAME, loadJvmOptionsInitScript(settings.tasks, jvmArgs))
   }
-
-  private fun GradleVersion?.isGradleClassloaderEnhancementPossible(): Boolean =
-    this != null && GradleVersionUtil.isGradleOlderThan(this, "9.7")
 
   companion object {
     private const val TEST_LOGGER_SCRIPT_NAME = "ijTestLogger"
