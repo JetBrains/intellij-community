@@ -55,8 +55,10 @@ private class ImplementReadResolveQuickFix : PsiUpdateModCommandQuickFix() {
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val objectDeclaration =
             (element as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return
-        val readResolveDeclaration =
-            KtPsiFactory(project).createDeclarationByPattern<KtFunction>("private fun readResolve(): Any = $0", objectDeclaration.name ?: return)
+        val readResolveDeclaration = KtPsiFactory(project).createDeclarationByPattern<KtFunction>(
+            "private fun readResolve(): Any = $0",
+            objectDeclaration.nameAsSafeName
+        )
         val body = objectDeclaration.getOrCreateBody()
         body.addAfter(readResolveDeclaration, body.lBrace)
     }

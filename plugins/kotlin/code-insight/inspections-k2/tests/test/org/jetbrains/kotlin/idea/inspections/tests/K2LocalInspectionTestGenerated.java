@@ -17555,6 +17555,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedObjectName_positive.kt")
+            public void testBacktickedObjectName_positive() throws Exception {
+                runTest("testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/backtickedObjectName_positive.kt");
+            }
+
             @TestMetadata("doesntImplementSerializable_negative.kt")
             public void testDoesntImplementSerializable_negative() throws Exception {
                 runTest("testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/doesntImplementSerializable_negative.kt");
