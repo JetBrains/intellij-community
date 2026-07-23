@@ -9665,6 +9665,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedSubclassName.kt")
+        public void testBacktickedSubclassName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/backtickedSubclassName.kt");
+        }
+
         @TestMetadata("dropDefaultConstructorCall.kt")
         public void testDropDefaultConstructorCall() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/dropDefaultConstructorCall.kt");

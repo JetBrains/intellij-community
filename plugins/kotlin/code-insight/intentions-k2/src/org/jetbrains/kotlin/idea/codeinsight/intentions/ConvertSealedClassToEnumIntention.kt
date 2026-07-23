@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import kotlin.collections.iterator
 
 /**
  * Tests:
@@ -200,7 +199,7 @@ internal class ConvertSealedClassToEnumIntention : KotlinApplicableModCommandAct
             subclass as KtObjectDeclaration
 
             val entryText = buildString {
-                append(subclass.name)
+                append(subclass.nameIdentifier?.text)
                 if (constructorCallNeeded) {
                     append((subclass.superTypeListEntries.firstOrNull() as? KtSuperTypeCallEntry)?.valueArgumentList?.text ?: "()")
                 }
