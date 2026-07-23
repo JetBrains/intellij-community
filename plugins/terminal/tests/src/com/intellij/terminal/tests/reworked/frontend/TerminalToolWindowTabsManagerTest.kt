@@ -12,6 +12,7 @@ import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -21,6 +22,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.junit.jupiter.api.Test
@@ -192,20 +194,17 @@ internal class TerminalToolWindowTabsManagerTest {
 
   /**
    * Registers a fresh Terminal tool window, subscribes a [RecordingListener] and runs [body].
-   *
-   * No explicit cleanup is needed: [projectFixture] creates a fresh project for each test and disposes it
-   * afterwards, which tears down the tool window (with all its contents) together with the project-level
-   * [TerminalToolWindowTabsManager] service and its coroutine scope.
    */
-  private fun withTerminalToolWindow(
+  private suspend fun withTerminalToolWindow(
     body: (toolWindow: ToolWindow, manager: TerminalToolWindowTabsManager, listener: RecordingListener) -> Unit,
   ) {
     val toolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
     val listener = RecordingListener()
     project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, listener)
-    body(toolWindow, manager, listener)
+    withTerminalToolWindowManager(project) { manager ->
+      body(toolWindow, manager, listener)
+    }
   }
 
   private class RecordingListener : TerminalTabsManagerListener {
@@ -230,5 +229,24 @@ internal class TerminalToolWindowTabsManagerTest {
       tabsAdded.clear()
       tabsDetached.clear()
     }
+  }
+}
+
+/**
+ * Performs some actions on the [TerminalToolWindowTabsManager] and then cleans it up by cancelling all children of its coroutine scope.
+ * It is important to ensure that all editors created for Terminal View's using [com.intellij.terminal.frontend.view.impl.TerminalEditorFactory.createOutputEditor]
+ * are released before [projectFixture] checks that all editors are released.
+ * (because editors are released asynchronously in our case)
+ */
+internal suspend fun withTerminalToolWindowManager(project: Project, action: suspend (TerminalToolWindowTabsManager) -> Unit) {
+  val manager = TerminalToolWindowTabsManager.getInstance(project) as TerminalToolWindowTabsManagerImpl
+  try {
+    action(manager)
+  }
+  finally {
+    val managerJob = manager.coroutineScope.coroutineContext.job
+    val children = managerJob.children
+    children.forEach { it.cancel() }
+    children.forEach { it.join() }
   }
 }

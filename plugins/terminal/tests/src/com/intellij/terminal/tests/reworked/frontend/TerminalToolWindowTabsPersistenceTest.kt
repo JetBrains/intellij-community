@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -74,20 +73,21 @@ internal class TerminalToolWindowTabsPersistenceTest {
     val toolWindow = registerTerminalToolWindow()
     TerminalToolWindowInitializer.performInitialization(toolWindow)
 
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
-    awaitCondition("2 tabs should be restored") { manager.tabs.size == 2 }
+    withTerminalToolWindowManager(project) { manager ->
+      awaitCondition("2 tabs should be restored") { manager.tabs.size == 2 }
 
-    val tabs = manager.tabs
-    val first = tabs.single { it.view.title.userDefinedTitle == "Restored 1" }
-    assertThat(first.processOptions.shellCommand).containsExactly("/bin/zsh")
-    assertThat(first.processOptions.workingDirectory).isEqualTo("/tmp/one")
-    assertThat(first.processOptions.envVariables).containsEntry("FOO", "bar").hasSize(1)
-    assertThat(first.processOptions.processType).isEqualTo(TerminalProcessType.SHELL)
+      val tabs = manager.tabs
+      val first = tabs.single { it.view.title.userDefinedTitle == "Restored 1" }
+      assertThat(first.processOptions.shellCommand).containsExactly("/bin/zsh")
+      assertThat(first.processOptions.workingDirectory).isEqualTo("/tmp/one")
+      assertThat(first.processOptions.envVariables).containsEntry("FOO", "bar").hasSize(1)
+      assertThat(first.processOptions.processType).isEqualTo(TerminalProcessType.SHELL)
 
-    val second = tabs.single { it.view.title.defaultTitle == "Restored 2" }
-    assertThat(second.view.title.userDefinedTitle).isNull()
-    assertThat(second.processOptions.workingDirectory).isEqualTo("/tmp/two")
-    assertThat(second.processOptions.processType).isEqualTo(TerminalProcessType.NON_SHELL)
+      val second = tabs.single { it.view.title.defaultTitle == "Restored 2" }
+      assertThat(second.view.title.userDefinedTitle).isNull()
+      assertThat(second.processOptions.workingDirectory).isEqualTo("/tmp/two")
+      assertThat(second.processOptions.processType).isEqualTo(TerminalProcessType.NON_SHELL)
+    }
   }
 
   @Test
@@ -96,28 +96,29 @@ internal class TerminalToolWindowTabsPersistenceTest {
     storage.updateStoredTabs(emptyList())
 
     val toolWindow = registerTerminalToolWindow()
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
     // Installs the persistence that watches the tool window content manager.
     TerminalToolWindowInitializer.performInitialization(toolWindow)
 
-    val tab = manager.createTabBuilder()
-      .tabName("Persisted")
-      .workingDirectory("/tmp/persist")
-      .shellCommand(listOf("/bin/bash"))
-      .requestFocus(false)
-      .createTab()
+    withTerminalToolWindowManager(project) { manager ->
+      val tab = manager.createTabBuilder()
+        .tabName("Persisted")
+        .workingDirectory("/tmp/persist")
+        .shellCommand(listOf("/bin/bash"))
+        .requestFocus(false)
+        .createTab()
 
-    awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
-    val persisted = storage.getStoredTabs().single()
-    assertThat(persisted.name).isEqualTo("Persisted")
-    assertThat(persisted.isUserDefinedName).isFalse()
-    assertThat(persisted.shellCommand).containsExactly("/bin/bash")
-    assertThat(persisted.workingDirectory).isEqualTo("/tmp/persist")
-    assertThat(persisted.processType).isEqualTo(TerminalProcessType.SHELL)
+      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
+      val persisted = storage.getStoredTabs().single()
+      assertThat(persisted.name).isEqualTo("Persisted")
+      assertThat(persisted.isUserDefinedName).isFalse()
+      assertThat(persisted.shellCommand).containsExactly("/bin/bash")
+      assertThat(persisted.workingDirectory).isEqualTo("/tmp/persist")
+      assertThat(persisted.processType).isEqualTo(TerminalProcessType.SHELL)
 
-    manager.closeTab(tab)
+      manager.closeTab(tab)
 
-    awaitCondition("the closed tab should be removed from storage") { storage.getStoredTabs().isEmpty() }
+      awaitCondition("the closed tab should be removed from storage") { storage.getStoredTabs().isEmpty() }
+    }
   }
 
   @Test
@@ -126,23 +127,24 @@ internal class TerminalToolWindowTabsPersistenceTest {
     storage.updateStoredTabs(emptyList())
 
     val toolWindow = registerTerminalToolWindow()
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
     TerminalToolWindowInitializer.performInitialization(toolWindow)
 
-    val tab = manager.createTabBuilder()
-      .tabName("Before")
-      .requestFocus(false)
-      .createTab()
+    withTerminalToolWindowManager(project) { manager ->
+      val tab = manager.createTabBuilder()
+        .tabName("Before")
+        .requestFocus(false)
+        .createTab()
 
-    awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
+      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
 
-    tab.view.title.change {
-      userDefinedTitle = "After"
-    }
+      tab.view.title.change {
+        userDefinedTitle = "After"
+      }
 
-    awaitCondition("the renamed tab should be persisted with the user-defined name") {
-      val stored = storage.getStoredTabs().singleOrNull()
-      stored?.name == "After" && stored.isUserDefinedName
+      awaitCondition("the renamed tab should be persisted with the user-defined name") {
+        val stored = storage.getStoredTabs().singleOrNull()
+        stored?.name == "After" && stored.isUserDefinedName
+      }
     }
   }
 
