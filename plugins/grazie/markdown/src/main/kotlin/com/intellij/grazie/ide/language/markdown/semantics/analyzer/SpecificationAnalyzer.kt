@@ -133,7 +133,7 @@ private data class Storage<T>(val file: PsiFile, val name: String, val text: Str
     this(file, file.viewProvider.virtualFile.path, file.text, file.viewProvider.modificationStamp, file.getUserData(analyzerKey))
 
   fun isOutdated(dependencies: Set<String>): Boolean =
-    cache == null || cache.stamp < this.stamp || cache.dependencies != dependencies
+    cache == null || cache.stamp != this.stamp || cache.dependencies != dependencies
 }
 
 private data class Cache<T>(val text: String, val dependencies: Set<String>, val stamp: Long, val data: List<T>)
