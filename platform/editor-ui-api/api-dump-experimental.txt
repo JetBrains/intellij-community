@@ -92,6 +92,8 @@
 - <init>(com.intellij.ide.structureView.StructureViewTreeElement,I):V
 - f:getElement():com.intellij.ide.structureView.StructureViewTreeElement
 - f:getFragmentIndex():I
+a:com.intellij.ide.structureView.StructureViewFactory
+- *a:refreshStructureView():V
 *:com.intellij.ide.structureView.StructureViewModel$ClickHandler
 - a:handleClick(com.intellij.ide.structureView.StructureViewClickEvent):java.util.concurrent.CompletableFuture
 com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider

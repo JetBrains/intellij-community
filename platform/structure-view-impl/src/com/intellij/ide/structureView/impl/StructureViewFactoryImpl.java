@@ -40,8 +40,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 @State(name = "StructureViewFactory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements PersistentStateComponent<StructureViewFactoryImpl.State> {
-  private static final ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.lang.structureViewExtension");
+public final class StructureViewFactoryImpl extends StructureViewFactoryEx
+  implements PersistentStateComponent<StructureViewFactoryImpl.State> {
+  private static final ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME =
+    new ExtensionPointName<>("com.intellij.lang.structureViewExtension");
 
   public static final class State {
     @SuppressWarnings("WeakerAccess") public boolean AUTOSCROLL_MODE = true;
@@ -101,13 +103,15 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
       return result;
     }
 
-    ExtensionPointImpl<@NotNull StructureViewExtension> point = (ExtensionPointImpl<@NotNull StructureViewExtension>)EXTENSION_POINT_NAME.getPoint();
+    ExtensionPointImpl<@NotNull StructureViewExtension> point =
+      (ExtensionPointImpl<@NotNull StructureViewExtension>)EXTENSION_POINT_NAME.getPoint();
     Set<Class<? extends PsiElement>> visitedTypes = new HashSet<>();
     result = new ArrayList<>();
     for (StructureViewExtension extension : point.getExtensionList()) {
       Class<? extends PsiElement> registeredType = extension.getType();
       if (ReflectionUtil.isAssignable(registeredType, type) && visitedTypes.add(registeredType)) {
-        result.addAll(ExtensionProcessingHelper.INSTANCE.getByGroupingKey(point, StructureViewExtension.class, registeredType, StructureViewExtension::getType));
+        result.addAll(ExtensionProcessingHelper.INSTANCE.getByGroupingKey(point, StructureViewExtension.class, registeredType,
+                                                                          StructureViewExtension::getType));
       }
     }
 
@@ -153,7 +157,16 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   @Override
-  public @NotNull StructureView createStructureView(FileEditor fileEditor, @NotNull StructureViewModel treeModel, @NotNull Project project) {
+  public void refreshStructureView() {
+    if (myStructureViewWrapperImpl != null) {
+      myStructureViewWrapperImpl.rebuildNow("structure view refresh requested");
+    }
+  }
+
+  @Override
+  public @NotNull StructureView createStructureView(FileEditor fileEditor,
+                                                    @NotNull StructureViewModel treeModel,
+                                                    @NotNull Project project) {
     return createStructureView(fileEditor, treeModel, project, true);
   }
 
