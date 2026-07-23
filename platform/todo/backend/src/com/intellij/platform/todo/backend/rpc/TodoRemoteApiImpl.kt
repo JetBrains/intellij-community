@@ -11,7 +11,6 @@ import com.intellij.ide.todo.rpc.TodoPatternConfig
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.shouldUseSplitTodo
 import com.intellij.ide.util.scopeChooser.ScopesStateService
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
@@ -129,27 +128,6 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       val result = buildTodoFileResult(project, psiFile, file, filter)
       if (result != null) trySend(TodoEvent.ItemUpserted(result))
       else trySend(TodoEvent.ItemRemoved(file.rpcId()))
-    }
-  }
-
-  override suspend fun fileMatchesFilter(
-    projectId: ProjectId,
-    fileId: VirtualFileId,
-    filter: TodoFilterConfig?
-  ): Boolean {
-    val project = projectId.findProjectOrNull() ?: return false
-    val virtualFile = fileId.virtualFile() ?: return false
-    val resolvedFilter = resolveFilter(project, filter)
-
-    return readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction false
-      val helper = PsiTodoSearchHelper.getInstance(project)
-
-      if (resolvedFilter != null) {
-        resolvedFilter.accept(helper, psiFile)
-      } else {
-        helper.getTodoItemsCount(psiFile) > 0
-      }
     }
   }
 

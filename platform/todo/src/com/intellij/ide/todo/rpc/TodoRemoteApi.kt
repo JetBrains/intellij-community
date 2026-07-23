@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo.rpc
 
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -17,12 +16,6 @@ interface TodoRemoteApi : RemoteApi<Unit> {
     projectId: ProjectId,
     request: TodoFilesWatchRequest,
   ) : Flow<TodoEvent>
-
-  suspend fun fileMatchesFilter(
-    projectId: ProjectId,
-    fileId: VirtualFileId,
-    filter: TodoFilterConfig?
-  ): Boolean
 
   companion object {
     @JvmStatic

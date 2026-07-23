@@ -3,10 +3,7 @@ package com.intellij.ide.todo.rpc
 
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.model.TodoScope
-import com.intellij.ide.vfs.rpcId
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
@@ -25,18 +22,6 @@ suspend fun collectWatchedTodoFiles(
     TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
      collector(event)
     }
-  }
-}
-
-@ApiStatus.Internal
-fun fileMatchesFilter(
-  project: Project,
-  file: VirtualFile,
-  filter: TodoFilter?
-): Boolean = runBlockingCancellable {
-  durable {
-    val projectId = project.projectId()
-    TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.toConfig())
   }
 }
 
