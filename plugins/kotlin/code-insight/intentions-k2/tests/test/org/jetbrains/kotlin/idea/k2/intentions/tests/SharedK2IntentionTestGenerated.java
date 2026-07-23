@@ -4123,6 +4123,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/valToObject/annotations.kt");
         }
 
+        @TestMetadata("backtickedName.kt")
+        public void testBacktickedName() throws Exception {
+            runTest("testData/intentions/valToObject/backtickedName.kt");
+        }
+
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             runTest("testData/intentions/valToObject/callableReference.kt");
