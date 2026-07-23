@@ -495,7 +495,7 @@ object PyTypeUtil {
     return when (functionType) {
       is PyClassLikeType -> functionType
       is PyCallableType -> mapper(functionType)
-      is PyOverloadType -> functionType.map { if (it == null) null else mapper(it) }
+      is PyOverloadType -> functionType.map { mapper(it) }
       else -> functionType
     }
   }
