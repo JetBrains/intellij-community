@@ -25,6 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 public class AntTestContentHandler extends DefaultHandler {
@@ -79,7 +80,7 @@ public class AntTestContentHandler extends DefaultHandler {
   private final List<TestProblem> myProblems = new ArrayList<>();
   private TestIgnoredEvent myIgnoredEvent;
   private int myPropertiesLevel;
-  private final ArrayDeque<TextElement> myTextElements = new ArrayDeque<>();
+  private final Deque<TextElement> myTextElements = new ArrayDeque<>();
 
   public AntTestContentHandler(GeneralTestEventsProcessor processor) {
     myProcessor = processor;
