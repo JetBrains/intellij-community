@@ -58,6 +58,9 @@
 - name: lib/intellij.kotlin.codeInsight.api.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.api
+- name: lib/intellij.kotlin.codeInsight.descriptions.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.descriptions
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
@@ -183,7 +186,6 @@
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2
   - name: kotlin.scripting
-  - name: intellij.kotlin.codeInsight.descriptions
   - name: kotlin.jsr223
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger

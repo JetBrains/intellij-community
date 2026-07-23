@@ -30,7 +30,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.plugin.common",
       "kotlin.plugin.k2",
       "kotlin.scripting",
-      "intellij.kotlin.codeInsight.descriptions",
       "kotlin.jsr223",
     )
 
