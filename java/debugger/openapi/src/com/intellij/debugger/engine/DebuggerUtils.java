@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -71,6 +72,7 @@ import com.sun.jdi.ShortValue;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.Type;
 import com.sun.jdi.TypeComponent;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.VoidType;
@@ -658,10 +660,11 @@ public abstract class DebuggerUtils {
    * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
    * while execution continues for the other elements.
    * <p>
-   * The first exception is handled only after the iteration (later ones are attached to it as suppressed), because
-   * {@code logErrorImpl} rethrows control-flow exceptions like {@code VMDisconnectedException}. Handling it in place
-   * would skip the remaining elements — e.g. leave a {@code RemoteDebugProcessHandler} whose {@code processDetached}
-   * listener didn't run stuck in the terminating state forever, never disposing its {@code DebugProcessImpl}.
+   * The first control-flow exception (or the first exception if there are none) is handled only after the iteration;
+   * other exceptions are attached to it as suppressed. {@code logErrorImpl} rethrows control-flow exceptions like
+   * {@code VMDisconnectedException}, so making one primary ensures it is still rethrown when an earlier action also failed.
+   * Handling it in place would skip the remaining elements — e.g. leave a {@code RemoteDebugProcessHandler} whose
+   * {@code processDetached} listener didn't run stuck in the terminating state forever, never disposing its {@code DebugProcessImpl}.
    */
   public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
     Throwable failure = null;
@@ -673,6 +676,10 @@ public abstract class DebuggerUtils {
         if (failure == null) {
           failure = e;
         }
+        else if (isControlFlowException(e) && !isControlFlowException(failure)) {
+          e.addSuppressed(failure);
+          failure = e;
+        }
         else if (failure != e) {
           failure.addSuppressed(e);
         }
@@ -681,6 +688,12 @@ public abstract class DebuggerUtils {
     if (failure != null) {
       getInstance().logErrorImpl(failure);
     }
+  }
+
+  private static boolean isControlFlowException(@NotNull Throwable e) {
+    return e instanceof VMDisconnectedException ||
+           e instanceof ProcessCanceledException ||
+           e instanceof InterruptedException;
   }
 
   protected abstract void logErrorImpl(@NotNull Throwable e);
