@@ -88,7 +88,6 @@ import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.toolbox.Maybe
 import org.jetbrains.annotations.ApiStatus
-import kotlin.math.min
 import com.intellij.openapi.util.Pair as JBPair
 
 /**
@@ -571,7 +570,7 @@ object PyCallExpressionHelper {
     return getCallType(multiResolveOperator(expression, resolveContext), expression, context)
   }
 
-  @Deprecated(message = "Use `getCallType(PyType?, PyCallSiteOwner, TypeEvalContext)` overload")
+  @Deprecated(message = "Use `getCallType(PyType?, PyCallSiteOwner, TypeEvalContext)`")
   private fun getCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
     return types.filter { it.isCallable }
       .groupBy {
@@ -834,7 +833,7 @@ object PyCallExpressionHelper {
     context: TypeEvalContext,
   ): PyArgumentsMapping {
     val parameters = callableType.getParameters(context)
-        ?.let { unpackParametersIfNeeded(it, arguments, context) }
+        ?.let { unpackParameters(it, arguments, context) }
 
     if (parameters == null) return PyArgumentsMapping.empty(expression)
 
@@ -893,35 +892,6 @@ object PyCallExpressionHelper {
     val classType = context.getType(this) as? PyClassType ?: return false
     val metaClassType = classType.getMetaClassType(context, true) ?: return false
     return metaClassType !== PyBuiltinCache.getInstance(this).typeType
-  }
-
-  @JvmStatic
-  fun mapArguments(expression: PyCallSiteOwner, callable: PyCallable, context: TypeEvalContext): PyArgumentsMapping {
-    val callableType = context.getType(callable) as? PyCallableType?
-                       ?: return PyArgumentsMapping.empty(expression)
-
-    val arguments = expression.getArguments(callable)
-    val parameters = callableType.getParameters(context)
-      ?.let { unpackParametersIfNeeded(it, arguments, context) }
-
-    if (parameters == null) return PyArgumentsMapping.empty(expression)
-
-    val resolveContext = PyResolveContext.defaultContext(context)
-    val explicitParameters = filterExplicitParameters(parameters, callable, expression, resolveContext)
-    val implicitParameters = parameters.subList(0, parameters.size - explicitParameters.size)
-
-    val mappingResults = analyzeArguments(arguments, explicitParameters, context)
-
-    return PyArgumentsMapping(expression,
-                              callableType,
-                              implicitParameters,
-                              mappingResults.mappedParameters,
-                              mappingResults.unmappedParameters,
-                              mappingResults.unmappedContainerParameters,
-                              mappingResults.unmappedArguments,
-                              mappingResults.parametersMappedToVariadicPositionalArguments,
-                              mappingResults.parametersMappedToVariadicKeywordArguments,
-                              mappingResults.mappedTupleParameters)
   }
 
   @JvmStatic
@@ -1162,11 +1132,12 @@ object PyCallExpressionHelper {
     parametersType: PyCallableParameterListType,
     context: TypeEvalContext,
   ): ArgumentMappingResults {
-    val parameters = unpackParametersIfNeeded(parametersType.parameters, arguments, context)
+    val parameters = unpackParameters(parametersType.parameters, arguments, context)
     return analyzeArguments(arguments, parameters, context)
   }
 
-  private fun analyzeArguments(
+  @JvmStatic
+  fun analyzeArguments(
     arguments: List<PyExpression>,
     parameters: List<PyCallableParameter>,
     context: TypeEvalContext,
@@ -1574,7 +1545,8 @@ object PyCallExpressionHelper {
     return results
   }
 
-  private fun unpackParametersIfNeeded(
+  @JvmStatic
+  fun unpackParameters(
     parameters: List<PyCallableParameter>,
     arguments: List<PyExpression>,
     context: TypeEvalContext,
@@ -1596,28 +1568,6 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun isVariadicPositionalArgument(expression: PyExpression): Boolean {
     return expression is PyStarArgument && !expression.isKeyword
-  }
-
-  private fun filterExplicitParameters(
-    parameters: List<PyCallableParameter>,
-    callable: PyCallable?,
-    callSite: PyCallSiteOwner,
-    resolveContext: PyResolveContext,
-  ): List<PyCallableParameter> {
-    val implicitOffset: Int
-    if (callSite is PyCallExpression) {
-      val callee = callSite.callee
-      if (callee != null && callable is PyFunction) {
-        implicitOffset = getImplicitArgumentCount(callee, callable, resolveContext)
-      }
-      else {
-        implicitOffset = 0
-      }
-    }
-    else {
-      implicitOffset = 1
-    }
-    return parameters.subList(min(implicitOffset, parameters.size), parameters.size)
   }
 
   /**
