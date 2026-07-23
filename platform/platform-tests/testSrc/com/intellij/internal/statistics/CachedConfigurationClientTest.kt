@@ -5,8 +5,10 @@ import com.intellij.internal.statistic.eventLog.connection.CachedConfigurationCl
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -17,6 +19,11 @@ class CachedConfigurationClientTest {
    */
   private val alwaysExpired = 0L
   private val delegate = mockk<ConfigurationClient>(relaxed = true)
+
+  @After
+  fun tearDown() {
+    unmockkAll()
+  }
 
   @Test
   fun `update is retried up to maxUpdateAttempts when it keeps failing`() {
