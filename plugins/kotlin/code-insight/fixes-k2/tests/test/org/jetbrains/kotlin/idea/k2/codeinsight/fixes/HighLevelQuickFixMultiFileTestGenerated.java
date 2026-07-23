@@ -1508,6 +1508,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCall4.before.Main.kt");
         }
 
+        @TestMetadata("abstractSuperCallKeywordJavaInterface.before.Main.kt")
+        public void testAbstractSuperCallKeywordJavaInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCallKeywordJavaInterface.before.Main.kt");
+        }
+
         @TestMetadata("abstractSuperCallWithExplicitSuper3.before.Main.kt")
         public void testAbstractSuperCallWithExplicitSuper3() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper3.before.Main.kt");
