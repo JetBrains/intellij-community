@@ -558,7 +558,7 @@ public final class FileTypeDetectionService {
     long start = System.currentTimeMillis();
     if (content == null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null) {
+      if (document != null && file.isCharsetSet()) {
         content = document.getText().getBytes(file.getCharset());
       }
     }
