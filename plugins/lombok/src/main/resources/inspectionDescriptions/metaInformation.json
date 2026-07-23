@@ -43,6 +43,10 @@
     {
       "id": "DeprecatedLombok",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnusedLogger",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }
