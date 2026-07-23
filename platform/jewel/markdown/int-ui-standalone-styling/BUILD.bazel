@@ -24,6 +24,11 @@ jvm_provided_library(
     lib = "//platform/jewel/markdown/extensions/gfm-tables",
 )
 
+jvm_provided_library(
+    name = "platform_jewel_markdown_extensions_front-matter_provided",
+    lib = "//platform/jewel/markdown/extensions/front-matter",
+)
+
 jvm_library(
     name = "int-ui-standalone-styling",
     srcs = glob(
@@ -54,6 +59,7 @@ jvm_library(
         "//libraries/compose-foundation-desktop",
         ":platform_jewel_markdown_extensions_gfm-alerts_provided",
         ":platform_jewel_markdown_extensions_gfm-tables_provided",
+        ":platform_jewel_markdown_extensions_front-matter_provided",
     ],
 )
 
@@ -80,6 +86,8 @@ jvm_library(
         "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
         "//platform/jewel/markdown/extensions/gfm-tables",
         "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",

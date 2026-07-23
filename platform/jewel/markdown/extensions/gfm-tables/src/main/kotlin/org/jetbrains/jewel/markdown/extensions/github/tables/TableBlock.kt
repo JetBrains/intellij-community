@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.markdown.extensions.github.tables
 
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 internal data class TableBlock(val header: TableHeader, val rows: List<TableRow>) : MarkdownBlock.CustomBlock {
     val rowCount: Int = rows.size + 1 // We always have a header
     val columnCount: Int
