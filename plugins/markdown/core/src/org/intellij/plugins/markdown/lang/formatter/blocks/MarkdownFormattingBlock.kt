@@ -44,10 +44,12 @@ internal open class MarkdownFormattingBlock(
 
   companion object {
     private val NON_ALIGNABLE_LIST_ELEMENTS = TokenSet.orSet(MarkdownTokenTypeSets.LIST_MARKERS, MarkdownTokenTypeSets.LISTS)
-    private val EMPHASIS_ELEMENTS = TokenSet.create(
+    private val TEXT_SEPARATED_INLINE_ELEMENTS = TokenSet.create(
       MarkdownElementTypes.EMPH,
       MarkdownElementTypes.STRONG,
-      MarkdownElementTypes.STRIKETHROUGH
+      MarkdownElementTypes.STRIKETHROUGH,
+      MarkdownTokenTypes.LPAREN,
+      MarkdownTokenTypes.RPAREN
     )
   }
 
@@ -86,17 +88,17 @@ internal open class MarkdownFormattingBlock(
       return Spacing.createSpacing(spaces, spaces, 0, false, 0)
     }
     val result = spacing.getSpacing(this, child1, child2)
-    if (result != null && isTextGluedToEmphasis(child1, child2)) {
+    if (result != null && isTextGluedToFollowingInline(child1, child2)) {
       return Spacing.createSpacing(0, 0, 0, false, 0)
     }
     return result
   }
 
-  private fun isTextGluedToEmphasis(child1: Block?, child2: Block): Boolean {
+  private fun isTextGluedToFollowingInline(child1: Block?, child2: Block): Boolean {
     val node1 = (child1 as? AbstractBlock)?.node ?: return false
     val node2 = (child2 as? AbstractBlock)?.node ?: return false
     return node1.elementType == MarkdownTokenTypes.TEXT
-           && node2.elementType in EMPHASIS_ELEMENTS
+           && node2.elementType in TEXT_SEPARATED_INLINE_ELEMENTS
            && child1.textRange.endOffset == child2.textRange.startOffset
   }
 
