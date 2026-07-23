@@ -95,7 +95,6 @@ import com.jetbrains.python.psi.types.PySentinelType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
-import com.jetbrains.python.psi.types.PyTypeChecker.explainMismatch
 import com.jetbrains.python.psi.types.PyTypeChecker.containsAny
 import com.jetbrains.python.psi.types.PyTypeChecker.getTargetTypeFromTupleAssignment
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
@@ -110,14 +109,12 @@ import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
-import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.checkExpression
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.isDictExpression
 import com.jetbrains.python.psi.types.PyTypedDictType.ExtraKeyError
 import com.jetbrains.python.psi.types.PyTypedDictType.MissingKeysError
 import com.jetbrains.python.psi.types.PyTypedDictType.TypeCheckingResult
-import com.jetbrains.python.psi.types.PyTypedDictType.ValueTypeError
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
@@ -126,10 +123,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isObject
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil.isOverload
 import org.jetbrains.annotations.PropertyKey
 import java.util.Objects
-import java.util.function.Supplier
 import kotlin.math.min
 
 open class PyTypeCheckerInspection : PyInspection() {
@@ -930,7 +927,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
         // TODO: intersection type
         for (component in PyCallExpressionHelper.getCalleeType(callSite, resolveContext).compositeComponents) {
-          val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }.toList()
+          val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }
           if (reportIfNoneMatches(callSite, argumentsMappings)) break
         }
       }

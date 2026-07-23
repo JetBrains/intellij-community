@@ -884,7 +884,7 @@ object PyCallExpressionHelper {
       if (ancestor !is PyClassType) continue
       val resolved = ancestor.resolveMember(PyNames.INIT_SUBCLASS, null, AccessDirection.READ, resolveContext, false)
       if (resolved.isNullOrEmpty()) continue
-      return PyTypeUtil.getCallableItems(PyTypeUtil.getTypeOfBoundMember(ancestor, resolved, context)).toList()
+      return PyTypeUtil.getCallableItems(PyTypeUtil.getTypeOfBoundMember(ancestor, resolved, context))
     }
     return emptyList()
   }

@@ -502,12 +502,12 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun getCallableItems(functionType: PyType?): Sequence<PyCallableType> {
+  fun getCallableItems(functionType: PyType?): List<PyCallableType> {
     return when (functionType) {
-      is PyClassLikeType -> emptySequence()
-      is PyCallableType -> sequenceOf(functionType)
-      is PyOverloadType -> functionType.items.asSequence()
-      else -> emptySequence()
+      is PyClassLikeType -> listOf()
+      is PyCallableType -> listOf(functionType)
+      is PyOverloadType -> functionType.items
+      else -> listOf()
     }
   }
 
@@ -623,7 +623,7 @@ object PyTypeUtil {
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>?
   ): PyType? {
-    val signatures = getCallableItems(memberType).toList()
+    val signatures = getCallableItems(memberType)
     if (signatures.isEmpty()) return memberType
 
     val isStaticMethod = signatures.all { it.modifier == PyAstFunction.Modifier.STATICMETHOD }
