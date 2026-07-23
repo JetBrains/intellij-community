@@ -50,7 +50,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       
       class Main {
         void foo() {
-          Charset utf = <error descr="Usage of API documented as @since 1.7+">StandardCharsets</error>.UTF_8;
+          Charset utf = <error descr="Usage of API documented as @since 1.7+">StandardCharsets</error>.<error descr="Usage of API documented as @since 1.7+">UTF_8</error>;
         }
       }
     """.trimIndent())
@@ -292,6 +292,19 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  fun `test method from new interface called`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.List;
+      
+      class Indubitably {
+        String x(List<String> list) {
+          return list.<error descr="Usage of API documented as @since 21+">getFirst</error>();
+        }
+      }
+    """.trimIndent())
+  }
+
   fun `test import for static methods`() {
     myFixture.addClass("""
       package java.lang;
@@ -309,7 +322,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
           }
           void foo() {
               String s = "";
-              println();
+              <error descr="Usage of API documented as @since 25+">println</error>();
           }
       }
     """.trimIndent())
@@ -335,7 +348,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         class Main {
           static void main() {
               <error descr="java.util.concurrent.StructuredTaskScope is a preview API and is disabled by default">StructuredTaskScope</error> a; // JEP 505
-              <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue<String></error></error> b = <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue</error></error>.<caret>of("foo");
+              <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue<String></error></error> b = <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default"><caret>StableValue</error></error>.<error descr="Usage of API documented as @since 25+">of</error>("foo");
           }
       }
     """.trimIndent())
@@ -352,7 +365,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         class Main {
           static void main() {
               StructuredTaskScope a; // JEP 505
-              <error descr="Usage of preview API documented as @since 25+">StableValue<String></error> b = <error descr="Usage of preview API documented as @since 25+">StableValue</error>.<caret>of("foo");
+              <error descr="Usage of preview API documented as @since 25+">StableValue<String></error> b = <error descr="Usage of preview API documented as @since 25+"><caret>StableValue</error>.<error descr="Usage of API documented as @since 25+">of</error>("foo");
           }
       }
     """.trimIndent())

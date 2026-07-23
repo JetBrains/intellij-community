@@ -5,7 +5,6 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
-  
 
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
@@ -19,7 +18,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
   fun `test ignored`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
-      package java.awt.geom; 
+      package java.awt.geom;
       
       public class GeneralPath {
         public void moveTo(int x, int y) { }
@@ -41,14 +40,14 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
       import java.nio.charset.StandardCharsets
       
       fun main() {
-        <error descr="Usage of API documented as @since 1.7+">StandardCharsets</error>.UTF_8
+        <error descr="Usage of API documented as @since 1.7+">StandardCharsets</error>.<error descr="Usage of API documented as @since 1.7+">UTF_8</error>
       }
     """.trimIndent())
   }
 
   fun `test reference in callable reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    val withErrorMessage = "\"default charset \${<error descr=\"Usage of API documented as @since 1.7+\">StandardCharsets</error>.UTF_8}\"::toString"
+    val withErrorMessage = "\"default charset \${<error descr=\"Usage of API documented as @since 1.7+\">StandardCharsets</error>.<error descr=\"Usage of API documented as @since 1.7+\">UTF_8</error>}\"::toString"
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.nio.charset.StandardCharsets
 
@@ -56,7 +55,6 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
         ${withErrorMessage}
       }
     """.trimIndent())
-    ""::toString
   }
 
   fun `test annotation`() {
@@ -136,7 +134,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
           override fun get(index: Int): Int = 0
 
           override fun <error descr="Usage of API documented as @since 1.8+">spliterator</error>(): java.util.<error descr="Usage of API documented as @since 1.8+">Spliterator</error><Int> =
-            java.util.<error descr="Usage of API documented as @since 1.8+">Spliterators</error>.spliterator(this, 0)
+            java.util.<error descr="Usage of API documented as @since 1.8+">Spliterators</error>.<error descr="Usage of API documented as @since 1.8+">spliterator</error>(this, 0)
         }
     """.trimIndent())
   }
