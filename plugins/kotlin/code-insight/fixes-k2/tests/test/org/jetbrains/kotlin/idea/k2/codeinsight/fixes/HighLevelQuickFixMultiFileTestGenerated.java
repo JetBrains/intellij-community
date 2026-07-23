@@ -2809,6 +2809,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/import.before.Main.kt");
             }
 
+            @TestMetadata("javaKeywordNames.test")
+            public void testJavaKeywordNames() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/javaKeywordNames.test");
+            }
+
             @TestMetadata("overrideJavaMethodWithAnnotation.test")
             public void testOverrideJavaMethodWithAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethodWithAnnotation.test");

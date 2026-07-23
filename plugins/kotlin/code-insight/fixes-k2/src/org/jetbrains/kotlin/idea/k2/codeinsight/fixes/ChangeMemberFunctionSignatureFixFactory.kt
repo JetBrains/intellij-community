@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -106,7 +107,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         val superClass = superFunction.containingSymbol
         val substitutor = if (subClass is KaClassSymbol && superClass is KaClassSymbol) createInheritanceTypeSubstitutor(subClass, superClass) else null
 
-        val names = superParameters.map { it.name.asString() }.toMutableList()
+        val names = superParameters.map { it.name.render() }.toMutableList()
         val substitutedTypes = superParameters.map { superParam ->
             val returnType = superParam.returnType
             (substitutor?.substitute(returnType) ?: returnType).approximateToDenotableSubtypeOrSelf()
@@ -202,7 +203,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
 
 
             val superParameters = superFunction.valueParameters
-            append(superFunction.name.asString())
+            append(superFunction.name.render())
             append(names.indices.joinToString(prefix = "(", postfix = ")") { index ->
                 val name = names[index]
                 val type = types[index]
@@ -262,7 +263,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     if (parameterChooser.accept(parameter, superParameter, substitutedType) && !used[index1]) {
                         used[index1] = true
                         matched[index] = true
-                        names[index] = parameter.name.asString()
+                        names[index] = parameter.name.render()
                         return@forEachIndexed
                     }
                 }
