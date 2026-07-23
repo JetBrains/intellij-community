@@ -2231,10 +2231,4 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
   <xi:include href="/META-INF/RemoteDevUtil.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="intellij.platform.project.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="intellij.platform.ide.progress.xml">
-    <xi:fallback/>
-  </xi:include>
 </idea-plugin>

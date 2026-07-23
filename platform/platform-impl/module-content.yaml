@@ -24,8 +24,4 @@
   - name: intellij.platform.pratt
   - name: intellij.platform.resources
   - name: intellij.platform.resources.en
-  - name: intellij.platform.syntax.extensions
-  - name: intellij.platform.syntax.i18n
-  - name: intellij.platform.syntax.psi
   - name: intellij.platform.syntax.tree
-  - name: intellij.platform.syntax.util

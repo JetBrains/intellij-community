@@ -371,11 +371,14 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.testIntegration.ui")
     embeddedModule("intellij.platform.lang")
     embeddedModule("intellij.platform.lang.impl")
+    embeddedModule("intellij.platform.syntax.psi")
 
     embeddedModule("intellij.platform.statistics")
     embeddedModule("intellij.platform.statistics.config")
     embeddedModule("intellij.platform.statistics.uploader")
     embeddedModule("intellij.platform.experiment")
+    embeddedModule("intellij.platform.project")
+    embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.ide.impl")
 
     embeddedModule("intellij.platform.rd.community")

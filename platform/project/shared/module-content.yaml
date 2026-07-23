@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.project.jar
+  modules:
+  - name: intellij.platform.ide.rpc
+  - name: intellij.platform.project

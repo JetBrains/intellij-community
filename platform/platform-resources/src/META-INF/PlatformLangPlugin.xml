@@ -47,10 +47,6 @@
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
-  <xi:include href="intellij.platform.syntax.psi.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>

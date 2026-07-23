@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.syntax.psi.jar
+  modules:
+  - name: intellij.platform.syntax.extensions
+  - name: intellij.platform.syntax.i18n
+  - name: intellij.platform.syntax.psi
+  - name: intellij.platform.syntax.util

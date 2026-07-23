@@ -200,10 +200,13 @@
     <module name="intellij.platform.testIntegration.ui" loading="embedded"/>
     <module name="intellij.platform.lang" loading="embedded"/>
     <module name="intellij.platform.lang.impl" loading="embedded"/>
+    <module name="intellij.platform.syntax.psi" loading="embedded"/>
     <module name="intellij.platform.statistics" loading="embedded"/>
     <module name="intellij.platform.statistics.config" loading="embedded"/>
     <module name="intellij.platform.statistics.uploader" loading="embedded"/>
     <module name="intellij.platform.experiment" loading="embedded"/>
+    <module name="intellij.platform.project" loading="embedded"/>
+    <module name="intellij.platform.ide.progress" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
