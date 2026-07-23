@@ -5,11 +5,13 @@ import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import javax.swing.Icon
 
 
-internal object PyPipEnvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
+@ApiStatus.Internal
+object PyPipEnvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon(): Icon = PipEnvPyTool.getInstance().icon
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 

@@ -15,24 +15,20 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
-import com.jetbrains.python.sdk.pipenv.runPipEnv
+import com.jetbrains.python.sdk.pipenv.runPipEnvWithSdk
 import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
 internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  private val modulePath: Path?
-    get() = sdk.associatedModulePath?.let { Path.of(it) }
-
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
-    return runPipEnv(modulePath, "install", "--dev").mapSuccess { }
+    return runPipEnvWithSdk(sdk, "install", "--dev").mapSuccess { }
   }
 
   suspend fun lock(): PyResult<Unit> {
-    return runPipEnv(modulePath, "lock").mapSuccess { }
+    return runPipEnvWithSdk(sdk, "lock").mapSuccess { }
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
@@ -41,24 +37,24 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
 
         val args = listOf("install") + installRequest.specifications.map { it.nameWithVersionSpec } + options
-        runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
+        runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
       }
     }
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
     val args = listOf("install") + specifications.map { it.nameWithVersionSpec }
-    return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
+    return runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val args = listOf("uninstall") + pythonPackages.toList()
-    return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
+    return runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
 
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    val output = runPipEnv(modulePath, "graph", "--json")
+    val output = runPipEnvWithSdk(sdk, "graph", "--json")
     output.getOr {
       return it
     }
@@ -72,7 +68,7 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    val output = runPipEnv(modulePath, "update", "--dry-run").getOr { return it }
+    val output = runPipEnvWithSdk(sdk, "update", "--dry-run").getOr { return it }
     val outdated = PipEnvParser.parseOutdatedPackagesOutput(output)
 
     return PyResult.success(outdated)
