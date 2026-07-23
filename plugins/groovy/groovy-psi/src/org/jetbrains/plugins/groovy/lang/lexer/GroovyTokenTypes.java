@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
@@ -68,6 +67,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRAIT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRANSIENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRUE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOID;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOLATILE;
@@ -297,6 +297,7 @@ public interface GroovyTokenTypes {
   IElementType kCONTINUE = KW_CONTINUE;
   IElementType kDEF = KW_DEF;
   IElementType kVAR = KW_VAR;
+  IElementType kVAL = KW_VAL;
   IElementType kDEFAULT = KW_DEFAULT;
   IElementType kDO = KW_DO;
   IElementType kDOUBLE = KW_DOUBLE;

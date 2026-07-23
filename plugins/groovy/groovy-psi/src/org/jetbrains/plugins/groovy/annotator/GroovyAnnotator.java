@@ -1517,6 +1517,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (PsiModifier.FINAL.equals(modifierText)) continue;
       if (GrModifier.DEF.equals(modifierText)) continue;
       if (GrModifier.VAR.equals(modifierText)) continue;
+      if (GrModifier.VAL.equals(modifierText)) continue;
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("not.allowed.modifier.in.for.in", modifierText)).range(modifier).create();
     }
   }
