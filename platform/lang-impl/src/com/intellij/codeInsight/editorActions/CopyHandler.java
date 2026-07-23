@@ -112,10 +112,18 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
       }
     });
 
-    String text = editor.getCaretModel().supportsMultipleCarets()
+    boolean supportsMultipleCarets = editor.getCaretModel().supportsMultipleCarets();
+    String text = supportsMultipleCarets
                   ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, options, transferableDataList)
                   : selectionModel.getSelectedText();
     String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDataList);
+    String plainText = rawText;
+    if (supportsMultipleCarets) {
+      TextBlockTransferable.VirtualSelectionText selectionText =
+        TextBlockTransferable.convertVirtualSelectionRowsToEmptyLines(rawText, editor, transferableDataList);
+      rawText = selectionText.rawText();
+      plainText = selectionText.text();
+    }
     String escapedText = null;
     for (CopyPastePreProcessor processor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       try {
@@ -131,8 +139,12 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
         break;
       }
     }
-    return new TextBlockTransferable(escapedText != null ? escapedText : rawText,
+    String transferableText = escapedText != null ? escapedText : plainText;
+    if (supportsMultipleCarets && escapedText != null) {
+      transferableText = TextBlockTransferable.convertVirtualSelectionRowsToEmptyLines(transferableText, editor);
+    }
+    return new TextBlockTransferable(transferableText,
                                      transferableDataList,
-                                     escapedText != null ? new RawText(rawText) : null);
+                                     escapedText != null || !transferableText.equals(rawText) ? new RawText(rawText) : null);
   }
 }
