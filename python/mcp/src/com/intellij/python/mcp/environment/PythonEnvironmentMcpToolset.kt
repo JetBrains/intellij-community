@@ -20,16 +20,15 @@ import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
-import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.createSdk
 import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavor
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.pythonInterpreterAsync
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.currentCoroutineContext
@@ -108,7 +107,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
   @McpDescription(
     """
     Configures a Python interpreter for the module containing the given file using PyCharm's own detection
-    (existing .venv folder, or a fresh uv/poetry/hatch venv when the corresponding tool is already installed).
+    (existing .venv folder, or a fresh uv/poetry/hatch/pipenv venv when the corresponding tool is already installed).
     Call this only after get_python_environment reported that no interpreter is configured.
     This tool does NOT install env-management tools like uv or poetry; if PyCharm needs one, the call fails
     with the missing tool name so the agent can install it manually first and retry.
@@ -224,6 +223,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
     when (sdk.pySdkAdditionalData.flavor) {
         PyPoetrySdkFlavor -> "poetry"
         HatchSdkFlavor -> "hatch"
+        PyPipEnvSdkFlavor -> "pipenv"
         UvSdkFlavor -> "uv"
         else -> when (env) {
           is PythonEnvironment.Conda -> "conda"
@@ -242,7 +242,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
     val executablePath: String? = null,
     @property:McpDescription("Root of the virtual environment (venv prefix or conda prefix); null for system Python or unconfigured")
     val environmentPath: String? = null,
-    @property:McpDescription("'pip', 'uv', 'poetry', 'hatch', 'conda', or 'unknown'; null when no interpreter is configured")
+    @property:McpDescription("'pip', 'uv', 'poetry', 'hatch', 'pipenv', 'conda', or 'unknown'; null when no interpreter is configured")
     val packageManager: String? = null,
     @property:McpDescription("When non-null, no interpreter is configured for this module. Describes the current state and what action to take next.")
     val noInterpreterConfigured: String? = null,
