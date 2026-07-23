@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -97,7 +98,7 @@ internal class RemoveExplicitSuperQualifierInspection :
         val psiFactory = KtPsiFactory(superExpression.project)
         val labelName = superExpression.getLabelNameAsName()
         return (if (labelName != null)
-            psiFactory.createExpressionByPattern("super@$0", labelName.asString())
+            psiFactory.createExpressionByPattern("super@$0", labelName.render())
         else
             psiFactory.createExpression("super")) as KtSuperExpression
     }
