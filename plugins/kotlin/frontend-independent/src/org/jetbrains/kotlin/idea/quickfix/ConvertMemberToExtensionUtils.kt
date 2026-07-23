@@ -245,7 +245,7 @@ private fun KtCallableDeclaration.setReceiverType(klass: KtClassOrObject) {
         append(klass.nameAsSafeName.render())
         if (klass.typeParameters.isNotEmpty()) {
             append(klass.typeParameters.joinToString(", ", "<", ">") {
-                it.name ?: ""
+                it.nameIdentifier?.text ?: ""
             })
         }
     }
