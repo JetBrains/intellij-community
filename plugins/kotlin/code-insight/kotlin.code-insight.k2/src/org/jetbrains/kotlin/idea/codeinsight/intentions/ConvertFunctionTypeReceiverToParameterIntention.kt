@@ -279,7 +279,7 @@ internal class ReceiverToParameterConverter(
                             usages.add(ConvertWithReplacement(parent, "$newParameterName.${parent.text}"))
                         }
                     } else if ((parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
-                        val referencedName = expression.getReferencedName()
+                        val referencedName = expression.getReferencedNameElement().text
                         usages.add(ConvertWithReplacement(expression, "$newParameterName.$referencedName"))
                     }
                 }

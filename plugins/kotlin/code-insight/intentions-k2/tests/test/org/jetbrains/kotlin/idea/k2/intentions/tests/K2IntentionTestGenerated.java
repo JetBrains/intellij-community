@@ -10861,6 +10861,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedMember.kt")
+        public void testBacktickedMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/backtickedMember.kt");
+        }
+
         @TestMetadata("Foo.kt")
         public void testFoo() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/Foo.kt");
