@@ -215,8 +215,12 @@ object JUnitReportXmlDetector {
         .expireWith(this)
         .finishOnUiThread(ModalityState.any()) { matches ->
           pendingRequests.remove(request)
-          if (!project.isDisposed && file.isValid && request.revision == (file.modificationStamp to file.length)) {
-            detectionCache[file] = CachedDetection(request.revision, matches)
+          if (!project.isDisposed && file.isValid) {
+            // Cache only results produced for the current revision.
+            if (request.revision == (file.modificationStamp to file.length)) {
+              detectionCache[file] = CachedDetection(request.revision, matches)
+            }
+            // Refresh after a stale result too, so the provider can schedule detection for the current revision.
             EditorNotifications.getInstance(project).updateNotifications(file)
           }
         }
