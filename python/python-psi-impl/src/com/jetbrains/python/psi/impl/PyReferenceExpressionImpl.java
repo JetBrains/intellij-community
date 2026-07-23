@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
@@ -79,7 +80,6 @@ import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.psi.types.TypeEvalContextImpl;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -529,6 +529,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     boolean isFunction = specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
                          specializedMemberType instanceof PyOverloadType;
     if (isFunction) {
+      // Callable that is also an instance attribute, as opposed to a normal method definition, as in:
+      //
+      // class C:
+      //     attr: Callable[..., int]
+      //
+      // C().attr() # attr does not need binding its first parameter upon accessing it
       if (!selfType.isDefinition() && PyTypeUtil.isInstanceMember(resolveResults, context)) {
         return specializedMemberType;
       }
