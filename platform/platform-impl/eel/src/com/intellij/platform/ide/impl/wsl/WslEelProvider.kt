@@ -19,6 +19,7 @@ import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.EelAlternativeRootProvider
 import com.intellij.platform.eel.provider.EelEnvironmentInitializer
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
@@ -241,14 +242,14 @@ class WslEelDescriptor internal constructor(val distribution: WSLDistribution, f
     other as WslEelDescriptor
 
     if (distribution != other.distribution) return false
-    if (fsRoot != other.fsRoot) return false
+    if (rootPath.asEelPath() != other.rootPath.asEelPath()) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = distribution.hashCode()
-    result = 31 * result + fsRoot.hashCode()
+    result = 31 * result + rootPath.asEelPath().hashCode()
     return result
   }
 
