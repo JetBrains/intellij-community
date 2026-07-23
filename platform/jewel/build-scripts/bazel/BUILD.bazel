@@ -1,0 +1,55 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_import", "kt_jvm_test")
+load("@rules_java//java:defs.bzl", "java_binary")
+
+kt_jvm_import(
+    name = "kotlinpoet",
+    jar = "@jewel_deps_kotlinpoet//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
+    name = "ktfmt",
+    jar = "@jewel_deps_ktfmt//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_library(
+    name = "jewel-bazel-scripts-utils",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelBazelScriptsUtils.kt"],
+    deps = ["@lib//:kotlinx-coroutines-core"],
+)
+
+kt_jvm_library(
+    name = "ktfmt-runner-lib",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/KtfmtRunner.kt"],
+    deps = [
+        ":jewel-bazel-scripts-utils",
+        ":ktfmt",
+    ],
+)
+
+kt_jvm_library(
+    name = "jewel-version-updater",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/JewelVersionUpdater.kt"],
+    deps = [":jewel-bazel-scripts-utils", "@lib//:kotlinx-coroutines-core"]
+)
+
+java_binary(
+    name = "ktfmtFormat",
+    runtime_deps = [":ktfmt-runner-lib"],
+    main_class = "org.jetbrains.jewel.scripts.bazel.KtfmtRunnerKt",
+    args = ["format"],
+)
+
+java_binary(
+    name = "ktfmtCheck",
+    runtime_deps = [":ktfmt-runner-lib"],
+    main_class = "org.jetbrains.jewel.scripts.bazel.KtfmtRunnerKt",
+    args = ["check"],
+)
+
+java_binary(
+    name = "jewelVersionUpdater",
+    runtime_deps = [":jewel-version-updater"],
+    main_class = "org.jetbrains.jewel.scripts.bazel.JewelVersionUpdaterKt"
+)
