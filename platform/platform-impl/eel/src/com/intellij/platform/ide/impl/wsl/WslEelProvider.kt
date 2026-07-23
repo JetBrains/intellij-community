@@ -242,14 +242,14 @@ class WslEelDescriptor internal constructor(val distribution: WSLDistribution, f
     other as WslEelDescriptor
 
     if (distribution != other.distribution) return false
-    if (rootPath.asEelPath() != other.rootPath.asEelPath()) return false
+    if (fsRoot != other.fsRoot) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = distribution.hashCode()
-    result = 31 * result + rootPath.asEelPath().hashCode()
+    result = 31 * result + fsRoot.hashCode()
     return result
   }
 
