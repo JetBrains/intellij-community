@@ -258,8 +258,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/observable",
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
         "//plugins/gradle/properties",
         "//plugins/gradle/properties:properties_test_lib",
         "//plugins/gradle/java",
