@@ -52,7 +52,7 @@ sealed class CreateLabelFix(
 
     private fun doCreateLabel(expression: KtLabelReferenceExpression, it: KtExpression, project: Project) {
         project.executeWriteCommand(text) {
-            it.replace(KtPsiFactory(project).createExpressionByPattern("${expression.getReferencedName()}@ $0", it))
+            it.replace(KtPsiFactory(project).createExpressionByPattern("${expression.getReferencedNameElement().text}@ $0", it))
         }
     }
 

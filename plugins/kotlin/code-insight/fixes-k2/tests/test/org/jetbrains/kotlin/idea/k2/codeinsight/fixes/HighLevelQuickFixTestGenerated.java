@@ -6719,6 +6719,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedLabel.kt")
+        public void testBacktickedLabel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/backtickedLabel.kt");
+        }
+
         @TestMetadata("breakInLoop.kt")
         public void testBreakInLoop() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/createLabel/breakInLoop.kt");
