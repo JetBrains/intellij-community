@@ -235,6 +235,31 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/JvmFieldAnnotation.kt");
         }
 
+        @TestMetadata("KDocLinkToJavaSyntheticProperty.kt")
+        public void testKDocLinkToJavaSyntheticProperty() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KDocLinkToJavaSyntheticProperty.kt");
+        }
+
+        @TestMetadata("KDocLinkToOverloads1.kt")
+        public void testKDocLinkToOverloads1() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KDocLinkToOverloads1.kt");
+        }
+
+        @TestMetadata("KDocLinkToOverloads2.kt")
+        public void testKDocLinkToOverloads2() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KDocLinkToOverloads2.kt");
+        }
+
+        @TestMetadata("KDocLinkToOverloads3.kt")
+        public void testKDocLinkToOverloads3() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KDocLinkToOverloads3.kt");
+        }
+
+        @TestMetadata("KDocLinkToPackage.kt")
+        public void testKDocLinkToPackage() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KDocLinkToPackage.kt");
+        }
+
         @TestMetadata("KotlinClassUsedFromJava.java")
         public void testKotlinClassUsedFromJava() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/KotlinClassUsedFromJava.java");
@@ -258,6 +283,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         @TestMetadata("LateinitName.kt")
         public void testLateinitName() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/LateinitName.kt");
+        }
+
+        @TestMetadata("LocalKDocLink.kt")
+        public void testLocalKDocLink() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/LocalKDocLink.kt");
         }
 
         @TestMetadata("MethodFromStdLib.kt")
@@ -448,6 +478,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         @TestMetadata("QualifiedNameDocLink.kt")
         public void testQualifiedNameDocLink() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/QualifiedNameDocLink.kt");
+        }
+
+        @TestMetadata("RegularKDocLink.kt")
+        public void testRegularKDocLink() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/RegularKDocLink.kt");
         }
 
         @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
