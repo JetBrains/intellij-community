@@ -26,7 +26,7 @@ import kotlin.reflect.jvm.javaMethod
  * Build a commandline to run MCP IDE server stdio transport in a separate process
  * @param ideServerPort port that the MCP server is running on. Can be obtained from [com.intellij.mcpserver.impl.McpServerService.port]
  * @param projectBasePath path to the project. It's passed as a metadata into MCP requests and used on the server side to determine the proper project for a tool
- * @return commandline to run MCP stdio transport process
+ * @return commandline to run the MCP stdio transport process
  */
 fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): GeneralCommandLine {
   // Some test runtimes do not expose an IDE launcher path; fall back to the Java entrypoint in that case.

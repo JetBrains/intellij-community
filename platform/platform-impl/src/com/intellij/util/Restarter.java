@@ -155,7 +155,6 @@ public final class Restarter {
     return Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
-  @ApiStatus.Internal
   public static void scheduleRestart(boolean elevate, @SuppressWarnings("SSBasedInspection") @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
     var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
@@ -225,17 +224,14 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  @ApiStatus.Internal
   public static void setCopyRestarterFiles() {
     copyRestarterFiles = true;
   }
 
-  @ApiStatus.Internal
   public static void setMainAppArgs(@NotNull List<String> args) {
     mainAppArgs = new ArrayList<>(args);
   }
 
-  @ApiStatus.Internal
   public static void setRestarterEnv(@NotNull Map<String, String> env) {
     restarterEnv = new HashMap<>(env);
   }
