@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -14,4 +15,14 @@ class IdeVirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : Vi
   override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrlImpl {
     return VirtualFileUrlBridge(id, manager)
   }
+}
+
+@ApiStatus.Internal
+class ConcurrentIdeVirtualFileUrlManagerImpl : ConcurrentVirtualFileUrlManager() {
+  override fun createVirtualFileUrl(name: String, manager: ConcurrentVirtualFileUrlManager, parent: VirtualFileUrl?): VirtualFileUrl {
+    return NewVirtualFileUrlBridge(name, manager, parent)
+  }
+
+  override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+    get() = NewVirtualFileUrlBridge::class.java
 }

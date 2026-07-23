@@ -2,23 +2,21 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer, VirtualFileUrlWithVirtualFile {
 
-  private val cachedFile: AtomicReference<Pair<VirtualFile?, Long>> = AtomicReference(Pair(null, -1))
+  private val fileFinder = CachedVirtualFileFinder()
 
-  override fun getFile() = findVirtualFile()
-  override fun isValid() = findVirtualFile() != null
-  override fun toString() = url
+  override fun getFile(): VirtualFile? = fileFinder.findVirtualFile(url)
+  override fun isValid(): Boolean = fileFinder.findVirtualFile(url) != null
+  override fun toString(): String = url
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -32,29 +30,6 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
   override fun hashCode(): Int = id
 
   override fun cacheVirtualFile(file: VirtualFile) {
-    cachedFile.set(Pair(file, VirtualFileManager.getInstance().modificationCount))
-  }
-
-  private fun findVirtualFile(): VirtualFile? {
-    val fileManager = VirtualFileManager.getInstance()
-    val cached = cachedFile.get()
-    val timestamp = cached.second
-    val cachedResults = cached.first
-    return if (timestamp == fileManager.modificationCount) cachedResults
-    else {
-      val modCounterBefore = fileManager.modificationCount
-      val file = fileManager.findFileByUrl(url)
-      val modCounterAfter = fileManager.modificationCount
-      if (modCounterBefore == modCounterAfter) {
-        cachedFile.set(Pair(file, modCounterAfter))
-      }
-      // else {
-      // we don't know what we have calculated just now. This might happen, because  findFileByUrl might load (not yet loaded) children
-      // and increment the counter, or because the client didn't hold RA and another VFS event has occurred. Either way, don't cache
-      // and don't log an error, because incrementing VFS counter from findFileByUrl is expected (though, not desired) behavior.
-      // thisLogger().error("Race detected: fileManager.modificationCount has changed during method invocation. Probably, missing ReadAction?")
-      // }
-      file
-    }
+    fileFinder.cacheVirtualFile(file)
   }
 }
