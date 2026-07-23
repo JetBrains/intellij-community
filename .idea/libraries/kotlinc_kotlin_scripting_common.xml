@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-common">
+  <library name="kotlinc.kotlin-scripting-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.0-dev-2030">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-2030/kotlin-scripting-common-2.5.0-dev-2030.jar">
+          <sha256sum>b5df32a111e73badc708fc1384a19364ad539f362b19d66000be153d320809e9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-2030/kotlin-scripting-common-2.5.0-dev-2030.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-common/2.5.255-dev-255/kotlin-scripting-common-2.5.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-2030/kotlin-scripting-common-2.5.0-dev-2030-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

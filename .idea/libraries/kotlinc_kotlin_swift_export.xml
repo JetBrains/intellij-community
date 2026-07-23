@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-swift-export">
+  <library name="kotlinc.kotlin-swift-export" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-swift-export-for-ide:2.5.0-dev-2030">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-2030/kotlin-swift-export-for-ide-2.5.0-dev-2030.jar">
+          <sha256sum>fd096b08482bb7a818aa1a4002eef19e91cc2cf72ed7d1be0b52960e8a32f39f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.255-dev-255/kotlin-swift-export-for-ide-2.5.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-2030/kotlin-swift-export-for-ide-2.5.0-dev-2030.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.255-dev-255/kotlin-swift-export-for-ide-2.5.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-2030/kotlin-swift-export-for-ide-2.5.0-dev-2030-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
