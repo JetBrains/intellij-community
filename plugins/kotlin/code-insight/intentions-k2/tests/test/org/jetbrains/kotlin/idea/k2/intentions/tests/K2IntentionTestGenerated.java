@@ -10668,6 +10668,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/backtickedEnum.kt");
         }
 
+        @TestMetadata("backtickedEnumEntries.kt")
+        public void testBacktickedEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/backtickedEnumEntries.kt");
+        }
+
         @TestMetadata("entriesAndMembers.kt")
         public void testEntriesAndMembers() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesAndMembers.kt");
