@@ -7,10 +7,9 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.lang.Appendable
-import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 @Internal
@@ -55,16 +54,24 @@ open class ExternalSystemOutputMessageDispatcherImpl(
     }
   }
 
-  protected open fun closeAndGetFuture(): CompletableFuture<*> =
-    reader.closeAndGetFuture()
+  protected open fun doClose() {
+    reader.close()
+  }
 
   final override fun close() {
-    val future = closeAndGetFuture()
+    val exception = runCatching { doClose() }.exceptionOrNull()
+
     isClosed = true
-    for (handler in onCompletionHandlers.asReversed()) {
-      future.whenComplete { _, u -> handler.accept(u) }
+
+    for (handler in onCompletionHandlers) {
+      try {
+        handler.accept(exception)
+      }
+      catch (exception: Exception) {
+        rethrowControlFlowException(exception)
+        LOG.warn(exception)
+      }
     }
-    onCompletionHandlers.clear()
   }
 
   companion object {

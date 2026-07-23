@@ -40,11 +40,14 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     apply { dispatcher.notifyTextAvailable(c.toString(), ProcessOutputType.STDOUT) }
 
   override fun close() {
-    closeAndGetFuture()
+    dispatcher.close()
   }
 
-  open fun closeAndGetFuture(): CompletableFuture<Unit> =
-    dispatcher.launchDispose()
+  @Deprecated("Use close() instead", ReplaceWith("close()"))
+  open fun closeAndGetFuture(): CompletableFuture<Unit> {
+    close()
+    return CompletableFuture.completedFuture(Unit)
+  }
 
   override fun readLine(): @NlsSafe String? =
     dispatcher.readLine()

@@ -105,17 +105,18 @@ class BuildOutputParserDispatcherImpl(
     }
   }
 
-  fun launchDispose(): CompletableFuture<Unit> {
+  fun close() {
     buildOutputLineDispatcher.close()
 
-    if (state.get() == State.Closed) return readFinishedFuture
-    if (state.compareAndSet(State.Idle, State.Closed)) {
-      readFinishedFuture.complete(Unit)
+    if (state.get() != State.Closed) {
+      if (state.compareAndSet(State.Idle, State.Closed)) {
+        readFinishedFuture.complete(Unit)
+      }
+      else {
+        state.set(State.Closed)
+      }
     }
-    else {
-      state.set(State.Closed)
-    }
-    return readFinishedFuture
+    readFinishedFuture.get()
   }
 
   fun readLine(): String? = doReadLine()

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
 import java.util.function.Consumer
 
 @TestApplication
@@ -37,14 +36,15 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("task output")
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.appendLine("task output")
+        dispatcher.onEvent(buildId, finishEvent)
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task" to listOf("> Task :task", "task output")
@@ -68,18 +68,19 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent1)
-    dispatcher.onEvent(buildId, startEvent2)
-    dispatcher.appendLine("> Task :task1")
-    dispatcher.appendLine("task1 output")
-    dispatcher.appendLine("> Task :task2")
-    dispatcher.appendLine("task2 output")
-    dispatcher.onEvent(buildId, finishEvent1)
-    dispatcher.onEvent(buildId, finishEvent2)
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent1)
+        dispatcher.onEvent(buildId, startEvent2)
+        dispatcher.appendLine("> Task :task1")
+        dispatcher.appendLine("task1 output")
+        dispatcher.appendLine("> Task :task2")
+        dispatcher.appendLine("task2 output")
+        dispatcher.onEvent(buildId, finishEvent1)
+        dispatcher.onEvent(buildId, finishEvent2)
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task1" to listOf("> Task :task1", "task1 output"),
@@ -103,14 +104,15 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.appendLine("output after finish event")
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.onEvent(buildId, finishEvent)
+        dispatcher.appendLine("output after finish event")
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task" to listOf("> Task :task", "output after finish event")
@@ -132,12 +134,13 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent)
+        dispatcher.onEvent(buildId, finishEvent)
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines()
     listener.assertEvents(
@@ -158,18 +161,19 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent1)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("first run")
-    dispatcher.onEvent(buildId, finishEvent1)
-    dispatcher.onEvent(buildId, startEvent2)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("second run")
-    dispatcher.onEvent(buildId, finishEvent2)
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent1)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.appendLine("first run")
+        dispatcher.onEvent(buildId, finishEvent1)
+        dispatcher.onEvent(buildId, startEvent2)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.appendLine("second run")
+        dispatcher.onEvent(buildId, finishEvent2)
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task" to listOf("> Task :task", "first run"),
@@ -191,11 +195,12 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.appendLine("root output")
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.appendLine("root output")
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       buildId to listOf("root output")
@@ -215,16 +220,17 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("task output")
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.appendLine("BUILD SUCCESSFUL in 1s")
-    dispatcher.appendLine("2 actionable tasks: 2 executed")
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.appendLine("task output")
+        dispatcher.onEvent(buildId, finishEvent)
+        dispatcher.appendLine("BUILD SUCCESSFUL in 1s")
+        dispatcher.appendLine("2 actionable tasks: 2 executed")
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task" to listOf("> Task :task", "task output"),
@@ -256,14 +262,14 @@ class GradleOutputMessageDispatcherTest {
     }
 
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("task output")
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser)).use { dispatcher ->
+      dispatcher.onEvent(buildId, startBuildEvent)
+      dispatcher.onEvent(buildId, startEvent)
+      dispatcher.appendLine("> Task :task")
+      dispatcher.appendLine("task output")
+      dispatcher.onEvent(buildId, finishEvent)
+      dispatcher.onEvent(buildId, finishBuildEvent)
+    }
 
     listener.assertEvents(
       null to { assertEqualsOrdered(listOf(startBuildEvent, finishBuildEvent), it) },
@@ -282,16 +288,17 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    val dispatcher = GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
-    dispatcher.onEvent(buildId, startBuildEvent)
-    dispatcher.onEvent(buildId, startEvent)
-    dispatcher.appendLine("> Task :task")
-    dispatcher.appendLine("task output")
-    dispatcher.onEvent(buildId, finishEvent)
-    dispatcher.appendLine("> Configure project :project")
-    dispatcher.appendLine("configure output")
-    dispatcher.onEvent(buildId, finishBuildEvent)
-    dispatcher.closeBlocking()
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent)
+        dispatcher.appendLine("> Task :task")
+        dispatcher.appendLine("task output")
+        dispatcher.onEvent(buildId, finishEvent)
+        dispatcher.appendLine("> Configure project :project")
+        dispatcher.appendLine("configure output")
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
 
     parser.assertLines(
       ":task" to listOf("> Task :task", "task output"),
@@ -302,13 +309,6 @@ class GradleOutputMessageDispatcherTest {
       buildId to { assertEqualsOrdered(listOf(startEvent, finishEvent), it) },
       startEvent.id to { assertOutputEventsOrdered(listOf("> Task :task\n", "task output\n"), it) }
     )
-  }
-
-  private fun GradleOutputMessageDispatcher.closeBlocking() {
-    val latch = CountDownLatch(1)
-    invokeOnCompletion { latch.countDown() }
-    close()
-    latch.await()
   }
 
   private class RecordingBuildOutputParser : BuildOutputParser {

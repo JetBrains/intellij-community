@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.enums.enumEntries
 
@@ -102,12 +101,17 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
     }
 
-    override fun closeAndGetFuture(): CompletableFuture<*> {
+    override fun doClose() {
       lineProcessor.close()
-      val futures = (tasksOutputReaders.values.asSequence() + tasksOutputRedefinedReaders.asSequence())
-        .map { it.closeAndGetFuture() }
-        .toList()
-      return CompletableFuture.allOf(super.closeAndGetFuture(), *futures.toTypedArray())
+
+      super.doClose()
+
+      for (taskOutputReader in tasksOutputReaders.values) {
+        taskOutputReader.close()
+      }
+      for (redefinedReader in tasksOutputRedefinedReaders) {
+        redefinedReader.close()
+      }
     }
 
     override fun append(csq: CharSequence): Appendable {
