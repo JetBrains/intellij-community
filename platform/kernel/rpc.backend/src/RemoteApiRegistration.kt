@@ -36,7 +36,18 @@ internal class RemoteApiRegistration : PluginAware {
   }
 
   fun loadApiInterface(): Class<*> {
-    return ApplicationManager.getApplication().loadClass<Any>(apiInterface, pluginDescriptor)
+    try {
+      return ApplicationManager.getApplication().loadClass<Any>(apiInterface, pluginDescriptor)
+    }
+    catch (e: ClassNotFoundException) {
+      throw ClassNotFoundException(
+        "RPC API interface '$apiInterface' declared in a <platform.rpc.backend.remoteApi> extension of plugin " +
+        "'${pluginDescriptor.pluginId}' could not be found.\n" +
+        "The module where this extension is declared should have a dependency on the module that " +
+        "declares '$apiInterface'.\n" +
+        "Cause: ${e.message}"
+      )
+    }
   }
 
   fun createImplementation(): RemoteApi<Unit> {
