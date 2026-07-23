@@ -101,6 +101,8 @@ jvm_library(
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "@lib//:jimfs",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util-ex",
