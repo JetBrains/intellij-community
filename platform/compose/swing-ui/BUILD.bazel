@@ -1,0 +1,174 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.platform.compose.swing` start
+create_kotlinc_options(
+    name = "custom_swing",
+    warn = "error",
+    x_explicit_api_mode = "strict",
+)
+
+jvm_library(
+    name = "swing",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_swing",
+    module_name = "intellij.platform.compose.swing",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-swing-ui:compose-swing",
+    ],
+)
+
+content_module_jar(module = ":swing")
+
+jvm_library(
+    name = "swing_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_swing",
+    module_name = "intellij.platform.compose.swing",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":swing",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+        "//libraries/compose-swing-ui:compose-swing_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.compose.swing` end
+
+### auto-generated section `iml intellij.platform.compose.swing` start
+exports_files(
+    [
+        "intellij.platform.compose.swing.iml",
+        "resources/intellij.platform.compose.swing.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.compose.swing` end
+
+### auto-generated section `build intellij.platform.compose.swing.tests` start
+create_kotlinc_options(
+    name = "custom_swing-tests",
+    warn = "error",
+)
+
+jvm_library(
+    name = "swing-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.compose.swing.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "swing-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/compose/swing-ui:swing",
+        "//platform/compose/swing-ui:swing_test_lib",
+    ],
+    kotlinc_opts = ":custom_swing-tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":swing-tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+        "//libraries/compose-swing-ui:compose-swing",
+        "//libraries/compose-swing-ui:compose-swing_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.compose.swing.tests` end
+
+### auto-generated section `iml intellij.platform.compose.swing.tests` start
+exports_files(
+    [
+        "intellij.platform.compose.swing.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.compose.swing.tests` end
+
+### auto-generated section `test intellij.platform.compose.swing.tests` start
+jps_test(
+    name = "swing-tests_test",
+    runtime_deps = [":swing-tests_test_lib"],
+)
+### auto-generated section `test intellij.platform.compose.swing.tests` end

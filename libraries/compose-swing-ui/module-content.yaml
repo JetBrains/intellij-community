@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.compose.swing.jar
+  modules:
+  - name: intellij.libraries.compose.swing
+    libraries:
+      dev.matkov.compose.swing.swing-ui:
+      - name: $MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui/0/swing-ui-0.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1/kotlinx-coroutines-swing-1.jar

@@ -1,0 +1,68 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.compose.swing` start
+jvm_library(
+    name = "compose-swing",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.compose.swing",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/compose-runtime-desktop",
+    ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui"],
+    module = ":compose-swing",
+)
+
+jvm_library(
+    name = "compose-swing_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.compose.swing",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":compose-swing",
+        "@lib//:libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.compose.swing` end
+
+### auto-generated section `iml intellij.libraries.compose.swing` start
+exports_files(
+    [
+        "intellij.libraries.compose.swing.iml",
+        "resources/intellij.libraries.compose.swing.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.compose.swing` end

@@ -297,8 +297,10 @@ object CommunityModuleSets {
   fun compose(): ModuleSet = moduleSet("compose") {
     module("intellij.libraries.skiko")
     module("intellij.libraries.coil")
+    module("intellij.libraries.compose.swing")
     module("intellij.platform.compose")
     module("intellij.platform.compose.markdown")
+    module("intellij.platform.compose.swing")
     module("intellij.platform.jewel.foundation")
     module("intellij.libraries.compose.foundation.desktop")
     module("intellij.libraries.compose.runtime.desktop")

@@ -430,6 +430,7 @@ libraries/completion-ranking-typescript
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
+libraries/compose-swing-ui
 libraries/dokka
 libraries/download-pgp-verifier
 libraries/ec4j/core
@@ -700,6 +701,7 @@ platform/completion/frontend
 platform/compose
 platform/compose/compiler-plugin
 platform/compose/markdown
+platform/compose/swing-ui
 platform/configuration-store-impl
 platform/core-api
 platform/core-impl

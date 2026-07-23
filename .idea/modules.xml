@@ -1038,6 +1038,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" filepath="$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-foundation-desktop-junit/intellij.libraries.compose.foundation.desktop.junit.iml" filepath="$PROJECT_DIR$/libraries/compose-foundation-desktop-junit/intellij.libraries.compose.foundation.desktop.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-runtime-desktop/intellij.libraries.compose.runtime.desktop.iml" filepath="$PROJECT_DIR$/libraries/compose-runtime-desktop/intellij.libraries.compose.runtime.desktop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/compose-swing-ui/intellij.libraries.compose.swing.iml" filepath="$PROJECT_DIR$/libraries/compose-swing-ui/intellij.libraries.compose.swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/dokka/intellij.libraries.dokka.iml" filepath="$PROJECT_DIR$/libraries/dokka/intellij.libraries.dokka.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/download-pgp-verifier/intellij.libraries.download.pgp.verifier.iml" filepath="$PROJECT_DIR$/libraries/download-pgp-verifier/intellij.libraries.download.pgp.verifier.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ec4j/core/intellij.libraries.ec4j.core.iml" filepath="$PROJECT_DIR$/libraries/ec4j/core/intellij.libraries.ec4j.core.iml" />
@@ -1414,6 +1415,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" filepath="$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" filepath="$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/markdown/intellij.platform.compose.markdown.iml" filepath="$PROJECT_DIR$/platform/compose/markdown/intellij.platform.compose.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.iml" filepath="$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.tests.iml" filepath="$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/intellij.platform.compose.tests.iml" filepath="$PROJECT_DIR$/platform/compose/intellij.platform.compose.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.iml" filepath="$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.tests.iml" filepath="$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.tests.iml" />

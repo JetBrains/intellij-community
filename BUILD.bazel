@@ -951,6 +951,8 @@ jvm_library(
         "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
         "//platform/collaboration-tools:collaborationTools-tests",
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
+        "//platform/compose/swing-ui:swing-tests",
+        "//platform/compose/swing-ui:swing-tests_test_lib",
         "//platform/compose:compose-tests",
         "//platform/compose:compose-tests_test_lib",
         "//plugins/coverage-common:coverage-tests",

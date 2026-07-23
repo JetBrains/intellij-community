@@ -10206,6 +10206,98 @@ jvm_import(
 )
 
 copy_file(
+    name = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha03.jar_copy",
+    src = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http//file",
+    out = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha03.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlinx/kotlinx-coroutines-swing-1.9.0.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-coroutines-swing-1.9.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http_import",
+        ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http_import",
+    jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03_http//file",
+    source_jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha03-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
+    jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0-sources_http//file",
+)
+
+copy_file(
+    name = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha03.jar_copy",
+    src = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http//file",
+    out = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha03.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-test-2.3.20.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-test-2_3_20_http//file",
+    out = "org.jetbrains.kotlin/kotlin-test-2.3.20.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlinx/kotlinx-coroutines-test-jvm-1.9.0.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-coroutines-test-jvm-1.9.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http_import",
+        ":org_jetbrains_kotlin-kotlin-test-2_3_20_http_import",
+        ":org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http_import",
+        ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http_import",
+    jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03_http//file",
+    source_jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha03-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_kotlin-kotlin-test-2_3_20_http_import",
+    jar = "@org_jetbrains_kotlin-kotlin-test-2_3_20_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-test-2_3_20-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http_import",
+    jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.1.0.jar_copy",
     src = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0_http//file",
     out = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.1.0.jar",
