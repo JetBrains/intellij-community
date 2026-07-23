@@ -9845,6 +9845,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertPrimaryConstructorToSecondary/annotationClass.kt");
         }
 
+        @TestMetadata("backtickedParam.kt")
+        public void testBacktickedParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPrimaryConstructorToSecondary/backtickedParam.kt");
+        }
+
         @TestMetadata("caretOnClassBody.kt")
         public void testCaretOnClassBody() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPrimaryConstructorToSecondary/caretOnClassBody.kt");

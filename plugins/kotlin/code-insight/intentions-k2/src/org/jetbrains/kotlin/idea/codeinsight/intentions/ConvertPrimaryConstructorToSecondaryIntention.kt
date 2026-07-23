@@ -119,7 +119,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
                     val annotations = valueParameter.annotationEntries.joinToString(separator = " ") { it.text }
                     val vararg = if (valueParameter.isVarArg) VARARG_KEYWORD.value else ""
                     param(
-                        "$annotations $vararg ${valueParameter.name ?: ""}",
+                        "$annotations $vararg ${valueParameter.nameIdentifier?.text ?: ""}",
                         valueParameter.typeReference?.text ?: "",
                         valueParameter.defaultValue?.text
                     )
@@ -133,14 +133,14 @@ class ConvertPrimaryConstructorToSecondaryIntention :
                 }
                 val valueParameterInitializers =
                     primaryCtor.valueParameters.asSequence().filter { it.hasValOrVar() }.joinToString(separator = "\n") {
-                        val name = it.name!!
+                        val name = it.nameIdentifier!!.text
                         "this.$name = $name"
                     }
                 val classBodyInitializers = element.declarations.asSequence().filter {
                     (it is KtProperty && initializerMap[it] != null) || it is KtAnonymousInitializer
                 }.joinToString(separator = "\n") {
                     if (it is KtProperty) {
-                        val name = it.name!!
+                        val name = it.nameIdentifier!!.text
                         val text = initializerMap[it]
                         if (text != null) {
                             "${THIS_KEYWORD.value}.$name = $text"
@@ -183,7 +183,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
             val typeText = valueParameter.typeReference?.text
             val property = factory.createProperty(
                 valueParameter.modifierList?.text,
-                valueParameter.name!!,
+                valueParameter.nameIdentifier!!.text,
                 if (isVararg && typeText != null) "Array<out $typeText>" else typeText,
                 valueParameter.isMutable,
                 null
