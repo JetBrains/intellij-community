@@ -1,8 +1,7 @@
-import abc
-from abc import ABC
+from abc import abstractmethod, ABC
 
 
 class A(ABC):
-    @abc.abstractmethod
+    @abstractmethod
     def meth(self):
         ...
