@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
@@ -79,7 +79,10 @@ abstract class GitConfigurationCacheBase() : Disposable {
   @RequiresBackgroundThread
   @Suppress("UNCHECKED_CAST")
   fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T {
-    return cache.computeIfAbsent(configKey) { k -> Optional.ofNullable(computeValue()) }.getOrNull() as T
+    cache[configKey]?.let { return it.getOrNull() as T }
+    val computed = Optional.ofNullable(computeValue())
+    val existing = cache.putIfAbsent(configKey, computed)
+    return (existing ?: computed).getOrNull() as T
   }
 
   fun clearCache() {
