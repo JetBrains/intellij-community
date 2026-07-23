@@ -27,6 +27,18 @@ public class PrimitiveStreamResolveTest extends TraceExecutionTestCase {
     doTest(false);
   }
 
+  public void testMapMultiToInt() {
+    doTest(false);
+  }
+
+  public void testMapMultiToLong() {
+    doTest(false);
+  }
+
+  public void testMapMultiToDouble() {
+    doTest(false);
+  }
+
   public void testSortedPrimitive() {
     doTest(false);
   }

@@ -1,0 +1,36 @@
+LineBreakpoint created at MapMultiFilter.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MapMultiFilter
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+MapMultiFilter.java:6
+Stream.of(1, 2, 3, 4, 5)
+.mapMulti((x, c) -> {
+      if (x % 2 == 0) {
+        c.accept(x * 10);
+      }
+    })
+.count()
+mapMulti
+    before: 1,2,4,5,7
+    after: 3,6
+count
+    before: 3,6
+    after: nothing
+mappings for mapMulti
+  direct:
+    1 -> nothing
+    2 -> 3
+    4 -> nothing
+    5 -> 6
+    7 -> nothing
+  reverse:
+    2 <- 3
+    5 <- 6
+mappings for count
+  direct:
+    3 -> nothing
+    6 -> nothing
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

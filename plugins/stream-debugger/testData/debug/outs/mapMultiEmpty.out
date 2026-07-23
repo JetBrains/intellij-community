@@ -1,0 +1,30 @@
+LineBreakpoint created at MapMultiEmpty.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MapMultiEmpty
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+MapMultiEmpty.java:6
+Stream.of(1, 2, 3)
+.mapMulti((x, c) -> {
+      // Process every element, but never push anything downstream
+    })
+.count()
+mapMulti
+    before: 1,2,3
+    after: nothing
+count
+    before: nothing
+    after: nothing
+mappings for mapMulti
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+  reverse:
+    empty
+mappings for count
+  direct:
+    empty
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
