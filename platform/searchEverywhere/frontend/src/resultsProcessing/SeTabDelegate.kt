@@ -10,10 +10,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -385,8 +383,7 @@ class SeTabDelegate(
 
       val availableRemoteProviders = when {
         projectId == null -> null
-        !service<RemoteApiProviderService>().isServiceOperational() -> null
-        else -> SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId)
+        else -> SeRemoteApi.tryGetInstance()?.getAvailableProviderIds(projectId, session, dataContextId)
       }
 
       val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {

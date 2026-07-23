@@ -17,7 +17,6 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>

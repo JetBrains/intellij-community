@@ -28,7 +28,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.platform.searchEverywhere.frontend" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="intellij.platform.rpc" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
