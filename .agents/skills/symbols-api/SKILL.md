@@ -1,6 +1,6 @@
 ---
 name: symbols-api
-description: Platform Symbol API (com.intellij.model.Symbol) — the low-level foundation for symbol-based code insight: declarations, references (own/external/implicit), search targets, rename targets, navigation. Read this to understand the mechanisms, but for implementing actual language/framework symbol support, prefer the poly-symbols skill/framework built on top of it — it wires most of this up for you and is the intended go-to solution, not just a microsyntax add-on. Use this skill directly only for a one-off symbol outside PolySymbols' model.
+description: Use IntelliJ Symbol API for declarations, references, search, rename, and navigation outside PolySymbols.
 ---
 
 # Symbol API

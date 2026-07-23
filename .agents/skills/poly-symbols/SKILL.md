@@ -1,6 +1,6 @@
 ---
 name: poly-symbols
-description: PolySymbols framework (com.intellij.polySymbols.PolySymbol) built on the Symbol API — implement multi-language "microsyntax" code insight (completion, references, docs, rename, find-usages) shared across HTML/CSS/JS and frameworks like Vue/Angular. Use when adding PolySymbol support for a new language, framework, or symbol kind, or when reviewing/extending an existing PolySymbols integration.
+description: Implement PolySymbols completion, references, rename, and docs across languages and frameworks.
 ---
 
 # PolySymbols

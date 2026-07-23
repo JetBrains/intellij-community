@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: Guidelines for writing tests in IntelliJ codebase. Use when creating new test classes or test methods.
+description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, registry, and system properties.
 ---
 
 # Writing Tests

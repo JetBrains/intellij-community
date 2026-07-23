@@ -1,6 +1,6 @@
 ---
 name: driver-ui-tests
-description: Guide for writing UI tests using IDE Starter and UI Driver frameworks. Use when creating or modifying UI tests or when user ask to implement test case from testops.
+description: Write IntelliJ UI tests with IDE Starter or UI Driver, including TestOps cases.
 ---
 
 # Driver UI Tests Guide

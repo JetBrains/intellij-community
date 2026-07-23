@@ -1,6 +1,6 @@
 ---
 name: poly-context
-description: PolyContext — a general-purpose, performance-optimized context-detection API for gating any IDE feature by framework/environment/package-manager presence, not just PolySymbols or web frameworks. Use when deciding when any feature/scope/inspection should be enabled, when substituting a file's Language based on its environment, adding new context detection (PolyContextProvider), or authoring Web Types contexts-config / .ws-context rules.
+description: Implement PolyContext feature gating, environment detection, language substitution, or rules.
 ---
 
 # PolyContext

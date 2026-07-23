@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Code style rules for IntelliJ codebase. Use when writing or reviewing code for style compliance.
+description: Apply IntelliJ Kotlin and Java code style when writing or reviewing code.
 ---
 
 # Code Style

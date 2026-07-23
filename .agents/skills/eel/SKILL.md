@@ -1,6 +1,6 @@
 ---
 name: eel
-description: EEL (Execution Environment Layer) API for local, WSL, and Docker environments. Use when working with process execution (ProcessBuilder, GeneralCommandLine), file paths (java.io.File, nio.Path across environments), OS/platform detection (SystemInfo), or environment variables in code that must support WSL or Docker.
+description: Use IntelliJ EEL APIs for process execution, paths, environments, WSL, or Docker.
 ---
 
 # EEL (Execution Environment Layer) Skill

@@ -1,6 +1,6 @@
 ---
 name: ssr
-description: Guide for using Structural Search and Replace in IntelliJ. Use when creating or modifying SSR inspections or search patterns.
+description: Create or modify IntelliJ Structural Search and Replace patterns and inspections.
 ---
 
 # Structural Search and Replace
