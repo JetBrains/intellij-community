@@ -1,18 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.report
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.LimitedInputStream
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Heuristic detection of [JUnit-style XML](https://github.com/testmoapp/junitxml) reports.
@@ -23,54 +27,20 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 object JUnitReportXmlDetector {
   const val MAX_PREFIX_BYTES: Int = 256 * 1024
+  private val TESTSUITE = "testsuite".toByteArray(StandardCharsets.US_ASCII)
+  private val TESTSUITES = "testsuites".toByteArray(StandardCharsets.US_ASCII)
 
-  private val DETECTION_CACHE_KEY = Key.create<DetectionCache>("junit.report.xml.detection")
-  private val DEFER_ATTEMPT_KEY = Key.create<AtomicInteger>("junit.report.xml.detection.defer")
-
-  private data class DetectionCache(val stamp: Long, val length: Long, val match: Boolean)
-
-  enum class JUnitReportXmlDetection {
-    MATCH,
-    NO_MATCH,
-    /** Content not ready yet; caller may schedule a notification refresh. */
-    DEFER_NOTIFICATION_UPDATE,
+  @JvmStatic
+  fun looksLikeJUnitReportFile(file: VirtualFile): Boolean {
+    val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return false
+    return looksLikeJUnitReportFile(project, file)
   }
 
-  @JvmStatic
-  fun looksLikeJUnitReportFile(file: VirtualFile): Boolean =
-    detectJUnitReportXmlFile(file, allowDeferredRefresh = false, project = null) == JUnitReportXmlDetection.MATCH
+  internal fun looksLikeJUnitReportFile(project: Project, file: VirtualFile): Boolean =
+    project.service<DetectionCache>().getOrScheduleDetection(file) == true
 
-  /**
-   * Clears cached detection / defer counters so the next [detectJUnitReportXmlFile] run reads the file again.
-   * Used when an editor is opened so the notification layer can observe freshly available content.
-   */
-  @JvmStatic
-  fun invalidateEditorDetectionState(file: VirtualFile) {
-    file.putUserData(DEFER_ATTEMPT_KEY, null)
-    file.putUserData(DETECTION_CACHE_KEY, null)
-  }
-
-  /**
-   * @param allowDeferredRefresh when true and [project] non-null, schedules [EditorNotifications.updateNotifications]
-   * if the file prefix could not be read yet (e.g. content still loading).
-   */
-  @JvmStatic
-  fun detectJUnitReportXmlFile(
-    file: VirtualFile,
-    allowDeferredRefresh: Boolean,
-    project: Project?,
-  ): JUnitReportXmlDetection {
-    if (!file.isValid || file.isDirectory) return JUnitReportXmlDetection.NO_MATCH
-    if (!file.name.endsWith(".xml", ignoreCase = true)) return JUnitReportXmlDetection.NO_MATCH
-
-    val stamp = file.modificationStamp
-    val length = file.length
-    file.getUserData(DETECTION_CACHE_KEY)?.let { cached ->
-      if (cached.stamp == stamp && cached.length == length) {
-        return if (cached.match) JUnitReportXmlDetection.MATCH else JUnitReportXmlDetection.NO_MATCH
-      }
-    }
-
+  private fun detectJUnitReportFile(file: VirtualFile): Boolean {
+    if (!file.isValid || file.isDirectory || !file.name.endsWith(".xml", ignoreCase = true)) return false
     val prefix = try {
       file.inputStream.use { raw ->
         LimitedInputStream(raw, MAX_PREFIX_BYTES).use { limited ->
@@ -79,65 +49,16 @@ object JUnitReportXmlDetector {
       }
     }
     catch (_: IOException) {
-      return handleIncompleteOrIoFailure(file, stamp, length, allowDeferredRefresh, project)
+      return false
     }
 
-    if (prefix.isEmpty() && length > 0) {
-      return handleIncompleteOrIoFailure(file, stamp, length, allowDeferredRefresh, project)
-    }
-
-    file.putUserData(DEFER_ATTEMPT_KEY, null)
-
-    val match = looksLikeJUnitReportXml(prefix, prefix.size)
-    file.putUserData(DETECTION_CACHE_KEY, DetectionCache(stamp, length, match))
-    return if (match) JUnitReportXmlDetection.MATCH else JUnitReportXmlDetection.NO_MATCH
-  }
-
-  private fun handleIncompleteOrIoFailure(
-    file: VirtualFile,
-    stamp: Long,
-    length: Long,
-    allowDeferredRefresh: Boolean,
-    project: Project?,
-  ): JUnitReportXmlDetection {
-    if (allowDeferredRefresh && project != null && !project.isDisposed) {
-      val attempts = file.getUserData(DEFER_ATTEMPT_KEY) ?: AtomicInteger(0).also { file.putUserData(DEFER_ATTEMPT_KEY, it) }
-      if (attempts.incrementAndGet() <= 12) {
-        file.putUserData(DETECTION_CACHE_KEY, null)
-        scheduleNotificationRefresh(project, file)
-        return JUnitReportXmlDetection.DEFER_NOTIFICATION_UPDATE
-      }
-      file.putUserData(DEFER_ATTEMPT_KEY, null)
-      file.putUserData(DETECTION_CACHE_KEY, DetectionCache(stamp, length, false))
-      return JUnitReportXmlDetection.NO_MATCH
-    }
-
-    if (length > 0) {
-      file.putUserData(DETECTION_CACHE_KEY, null)
-    }
-    else {
-      file.putUserData(DETECTION_CACHE_KEY, DetectionCache(stamp, length, false))
-    }
-    return JUnitReportXmlDetection.NO_MATCH
-  }
-
-  private fun scheduleNotificationRefresh(project: Project, file: VirtualFile) {
-    AppExecutorUtil.getAppScheduledExecutorService().schedule(
-      {
-        ApplicationManager.getApplication().invokeLater {
-          if (!project.isDisposed && file.isValid) {
-            EditorNotifications.getInstance(project).updateNotifications(file)
-          }
-        }
-      },
-      200L,
-      TimeUnit.MILLISECONDS,
-    )
+    return looksLikeJUnitReportXml(prefix, prefix.size)
   }
 
   /**
    * @param contentPrefix first bytes of the file (UTF-8 or ASCII); only indices `< length` are read
    */
+  @VisibleForTesting
   @JvmStatic
   fun looksLikeJUnitReportXml(contentPrefix: ByteArray, length: Int): Boolean {
     if (length <= 0) return false
@@ -169,11 +90,11 @@ object JUnitReportXmlDetector {
           val end = indexOf(contentPrefix, i + 9, length, "]]>".toByteArray(StandardCharsets.US_ASCII))
           i = if (end < 0) length else end + 3
         }
-        i < length && contentPrefix[i] == '<'.code.toByte() && i + 1 < length && contentPrefix[i + 1] == '/'.code.toByte() -> {
+        contentPrefix[i] == '<'.code.toByte() && i + 1 < length && contentPrefix[i + 1] == '/'.code.toByte() -> {
           val end = indexOfByte(contentPrefix, i + 2, length, '>'.code.toByte())
           i = if (end < 0) length else end + 1
         }
-        i < length && contentPrefix[i] == '<'.code.toByte() -> {
+        contentPrefix[i] == '<'.code.toByte() -> {
           i++
           val nameStart = i
           while (i < length) {
@@ -181,8 +102,7 @@ object JUnitReportXmlDetector {
             if (b <= ' '.code || b == '>'.code || b == '/'.code) break
             i++
           }
-          if (nameStart >= i) return false
-          return isJUnitRootSuiteElement(contentPrefix, nameStart, i)
+          return nameStart < i && isJUnitRootSuiteElement(contentPrefix, nameStart, i)
         }
         else -> {
           val nextLt = indexOfByte(contentPrefix, i, length, '<'.code.toByte())
@@ -205,9 +125,6 @@ object JUnitReportXmlDetector {
     return regionEquals(buf, localStart, localLen, TESTSUITE) ||
            regionEquals(buf, localStart, localLen, TESTSUITES)
   }
-
-  private val TESTSUITE = "testsuite".toByteArray(StandardCharsets.US_ASCII)
-  private val TESTSUITES = "testsuites".toByteArray(StandardCharsets.US_ASCII)
 
   private fun regionEquals(buf: ByteArray, start: Int, len: Int, ascii: ByteArray): Boolean {
     if (len != ascii.size) return false
@@ -258,5 +175,70 @@ object JUnitReportXmlDetector {
       if (buf[i] == b) return i
     }
     return -1
+  }
+
+  /**
+   * Handle the detection request, and cache detection results.
+   */
+  @Service(Service.Level.PROJECT)
+  private class DetectionCache(private val project: Project) : Disposable {
+    private val detectionCache = ConcurrentHashMap<VirtualFile, CachedDetection>()
+    private val pendingRequests = ConcurrentHashMap.newKeySet<DetectionRequest>()
+
+    fun getOrScheduleDetection(file: VirtualFile): Boolean? {
+      return getCachedDetection(file).also { cachedDetection ->
+        if (cachedDetection == null) {
+          scheduleDetection(file)
+        }
+      }
+    }
+
+    private fun getCachedDetection(file: VirtualFile): Boolean? {
+      if (!isCandidate(file)) return false
+
+      val cached = detectionCache[file] ?: return null
+      if (cached.revision == (file.modificationStamp to file.length)) return cached.matches
+
+      detectionCache.remove(file, cached)
+      return null
+    }
+
+    private fun scheduleDetection(file: VirtualFile) {
+      if (getCachedDetection(file) != null) return
+
+      val request = DetectionRequest(file, file.modificationStamp to file.length)
+      if (!pendingRequests.add(request)) return
+
+      ReadAction.nonBlocking<Boolean> {
+        detectJUnitReportFile(file)
+      }
+        .expireWith(this)
+        .finishOnUiThread(ModalityState.any()) { matches ->
+          pendingRequests.remove(request)
+          if (!project.isDisposed && file.isValid && request.revision == (file.modificationStamp to file.length)) {
+            detectionCache[file] = CachedDetection(request.revision, matches)
+            EditorNotifications.getInstance(project).updateNotifications(file)
+          }
+        }
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
+
+    override fun dispose() {
+      detectionCache.clear()
+      pendingRequests.clear()
+    }
+
+    private fun isCandidate(file: VirtualFile): Boolean =
+      file.isValid && !file.isDirectory && file.name.endsWith(".xml", ignoreCase = true)
+
+    /**
+     * Model the result of the detection.
+     */
+    private data class CachedDetection(val revision: Pair<Long, Long>, val matches: Boolean)
+
+    /**
+     * Model a request for a specific file at specific revision.
+     */
+    private data class DetectionRequest(val file: VirtualFile, val revision: Pair<Long, Long>)
   }
 }

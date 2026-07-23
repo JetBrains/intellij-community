@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.report
 
-import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,11 +11,7 @@ import com.intellij.openapi.project.Project
 /**
  * Context menu entry for the Project view (and other trees exposing [CommonDataKeys.VIRTUAL_FILE]).
  */
-class JUnitViewReportAsTestResultsAction : DumbAwareAction(
-  SmRunnerBundle.messagePointer("sm.test.runner.import.test"),
-  SmRunnerBundle.messagePointer("sm.test.runner.import.test.description"),
-  AllIcons.ToolbarDecorator.Import,
-) {
+class JUnitViewReportAsTestResultsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

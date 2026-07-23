@@ -21,15 +21,10 @@ class JUnitReportFileEditorNotificationProvider : EditorNotificationProvider, Du
     project: Project,
     file: VirtualFile,
   ): Function<in FileEditor, out JComponent?>? {
-    if (JUnitReportEditorBannerDismissState.isDismissed(file)) return null
-
-    return when (JUnitReportXmlDetector.detectJUnitReportXmlFile(file, allowDeferredRefresh = true, project = project)) {
-      JUnitReportXmlDetector.JUnitReportXmlDetection.MATCH ->
-        Function { fileEditor -> JUnitReportEditorNotificationPanel(project, file, fileEditor) }
-
-      JUnitReportXmlDetector.JUnitReportXmlDetection.DEFER_NOTIFICATION_UPDATE,
-      JUnitReportXmlDetector.JUnitReportXmlDetection.NO_MATCH,
-      -> null
+    if (!JUnitReportXmlDetector.looksLikeJUnitReportFile(project, file)) return null
+    return Function { fileEditor ->
+      if (JUnitReportEditorBannerDismissState.isDismissed(fileEditor, file)) null
+      else JUnitReportEditorNotificationPanel(project, file, fileEditor)
     }
   }
 }
@@ -45,7 +40,7 @@ private class JUnitReportEditorNotificationPanel(
       AbstractImportTestsAction.doImport(project, file, null)
     }
     setCloseAction {
-      JUnitReportEditorBannerDismissState.dismiss(file)
+      JUnitReportEditorBannerDismissState.dismiss(fileEditor, file)
       EditorNotifications.getInstance(project).updateNotifications(file)
     }
   }
