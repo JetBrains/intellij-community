@@ -3898,6 +3898,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedOuterMember.kt")
+            public void testBacktickedOuterMember() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/scopeFunctions/letToRun/backtickedOuterMember.kt");
+            }
+
+            @TestMetadata("backtickedThisLabel.kt")
+            public void testBacktickedThisLabel() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/scopeFunctions/letToRun/backtickedThisLabel.kt");
+            }
+
             @TestMetadata("lambdaWithParam.kt")
             public void testLambdaWithParam() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/scopeFunctions/letToRun/lambdaWithParam.kt");
@@ -3997,6 +4007,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public static class RunToLet extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("backtickedMember.kt")
+            public void testBacktickedMember() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/scopeFunctions/runToLet/backtickedMember.kt");
             }
 
             @TestMetadata("capturedIt.kt")

@@ -37,8 +37,6 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.applyFromWithConversion
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.applyToWithConversion
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.counterpartNames
@@ -50,9 +48,12 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.isSimpleLambdaPar
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.nameResolvesToStdlib
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.usesExplicitParameter
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.usesImplicitThis
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -72,6 +73,7 @@ import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
@@ -326,7 +328,7 @@ private class ReceiverToParameterVisitor(
                 // Skip already qualified expressions: this.foo -> paramName.foo (handled elsewhere)
             } else {
                 // Handle property access: this.prop -> paramName.prop
-                val referencedName = expression.getReferencedName()
+                val referencedName = expression.getReferencedName().quoteIfNeeded()
                 replacements.add(expression) {
                     createExpression("$parameterName.$referencedName")
                 }
@@ -511,7 +513,7 @@ private class ParameterToReceiverVisitor(
                 }
             } else {
                 // Handle property access: prop -> this@Qualifier.prop
-                val referencedName = expression.getReferencedName()
+                val referencedName = expression.getReferencedName().quoteIfNeeded()
                 replacements.add(expression) {
                     createExpression("$thisQualifier.$referencedName")
                 }
@@ -527,23 +529,24 @@ private class ParameterToReceiverVisitor(
         return when {
             // For companion objects, use ContainingClass.CompanionName
             (symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT -> {
-                val containingClassName = (with(session) { symbol.containingSymbol } as KaClassifierSymbol).name?.asString() ?: ""
-                val companionName = symbol.name?.asString() ?: ""
+                val containingClass = with(session) { symbol.containingSymbol } as KaClassifierSymbol
+                val containingClassName = containingClass.name?.render() ?: ""
+                val companionName = symbol.name?.render() ?: ""
                 "$containingClassName.$companionName"
             }
             // For objects, use the object name
             (symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT -> {
-                symbol.name?.asString()
+                symbol.name?.render()
             }
             // For classes, use this@ClassName
             symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> {
-                val className = (symbol.psi as? PsiClass)?.name ?: symbol.name?.asString()
+                val className = (symbol.psi as? PsiClass)?.name?.quoteIfNeeded() ?: symbol.name?.render()
                 if (className != null) "this@$className" else "this"
             }
             // For functions, use this@FunctionName if available
             symbol is KaReceiverParameterSymbol && 
             (symbol.owningCallableSymbol is KaNamedSymbol || symbol.owningCallableSymbol is KaAnonymousFunctionSymbol) -> {
-                symbol.owningCallableSymbol.getThisLabelName()?.let { "this@$it" } ?: "this"
+                symbol.owningCallableSymbol.getThisLabelName()?.quoteIfNeeded()?.let { "this@$it" } ?: "this"
             }
             // Default case
             else -> "this"
@@ -558,7 +561,7 @@ private class ParameterToReceiverVisitor(
 
         if (implicitReceiverValue == null) {
             // If we can't get an implicit receiver, try to get the class name directly
-            val className = (expression.instanceReference.mainReference.resolve() as? KtClass)?.name ?: return
+            val className = (expression.instanceReference.mainReference.resolve() as? KtClass)?.nameIdentifier?.text ?: return
             // Replace with a qualified 'this' expression
             replacements.add(expression) { createThisExpression(className) }
         } else {
