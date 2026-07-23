@@ -1039,7 +1039,6 @@ object Utils {
 
   private fun <R> runWithPotemkinOverlayProgress(actions: List<AnAction>, contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     if (shallAbortActionUpdateDueToProhibitingWriteAction(actions)) {
-      LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
     if (ourInUpdateSessionForInputEventEDTLoop) {
