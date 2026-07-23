@@ -4049,6 +4049,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/annotationEntry/annotationWithTypeParams.kt");
             }
 
+            @TestMetadata("backtickedNamedArgument.kt")
+            public void testBacktickedNamedArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/annotationEntry/backtickedNamedArgument.kt");
+            }
+
             @TestMetadata("notAnnotation.kt")
             public void testNotAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/annotationEntry/notAnnotation.kt");
@@ -5165,6 +5170,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassNoClassObject2.kt");
             }
 
+            @TestMetadata("extensionFunOnClassWithBacktickedName.kt")
+            public void testExtensionFunOnClassWithBacktickedName() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassWithBacktickedName.kt");
+            }
+
             @TestMetadata("extensionFunOnGenericType.kt")
             public void testExtensionFunOnGenericType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnGenericType.kt");
@@ -5464,6 +5474,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("argumentTypeMismatch.kt")
             public void testArgumentTypeMismatch() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/argumentTypeMismatch.kt");
+            }
+
+            @TestMetadata("backtickedNamedArguments.kt")
+            public void testBacktickedNamedArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/simple/backtickedNamedArguments.kt");
             }
 
             @TestMetadata("binaryOperationInCall.kt")

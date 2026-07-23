@@ -1,0 +1,15 @@
+// "Create extension function '`Foo-Bar`.Companion.test'" "true"
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class `Foo-Bar` {
+    companion object
+}
+
+fun main() {
+    `Foo-Bar`.test()
+}
+
+private fun `Foo-Bar`.Companion.test() {
+    TODO("Not yet implemented")
+}

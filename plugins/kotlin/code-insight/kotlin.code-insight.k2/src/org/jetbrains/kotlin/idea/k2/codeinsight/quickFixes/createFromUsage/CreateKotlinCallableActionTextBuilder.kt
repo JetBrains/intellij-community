@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.Creat
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.hasAbstractDeclaration
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.Variance
 
@@ -94,7 +95,7 @@ object CreateKotlinCallableActionTextBuilder {
                     val receiverIsCompanion = (receiverSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT
                     if (request.isForCompanion && receiverIsCompanion) {
                         (receiverSymbol.containingDeclaration as? KaClassSymbol)?.classId?.shortClassName?.let {
-                            append(it)
+                            append(it.render())
                             append('.')
                         }
                     }
@@ -135,7 +136,7 @@ object CreateKotlinCallableActionTextBuilder {
                 }
             }
 
-            is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
+            is KaClassLikeSymbol -> classId?.shortClassName?.render() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
         }
     }
@@ -167,7 +168,7 @@ object CreateKotlinCallableActionTextBuilder {
             printer: PrettyPrinter
         ) {
             val visibleQualifiers = K2CreateFunctionFromUsageUtil.filterOutImplementationDetailQualifiers(type, qualifiers)
-            printer.append(visibleQualifiers.joinToString(separator = ".") { it.name.asString() })
+            printer.append(visibleQualifiers.joinToString(separator = ".") { it.name.render() })
             if (!asRaw && type is KaClassType) {
                 printer.printCollectionIfNotEmpty(type.typeArguments, prefix = "<", postfix = ">", separator = ", ", renderItem = {
                     typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, it, typeRenderer, this)
