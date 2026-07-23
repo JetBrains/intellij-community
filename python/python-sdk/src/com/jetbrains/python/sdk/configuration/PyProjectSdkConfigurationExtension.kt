@@ -58,9 +58,10 @@ interface PyProjectSdkConfigurationExtension {
      * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
      */
     suspend fun findAllSortedForModule(module: Module, venvsInModule: List<PythonBinary>): List<CreateSdkInfoWithTool> {
-      return EP_NAME.extensionsIfPointIsRegistered.concurrentMapNotNull { e ->
-        e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) }
-      }.sortedBy { it.createSdkInfo }
+      return EP_NAME.extensionsIfPointIsRegistered
+        .concurrentMapNotNull { e ->
+          e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { CreateSdkInfoWithTool(it, e.toolId) }
+        }.sortedBy { it.createSdkInfo }
     }
 
     suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> {
@@ -87,7 +88,7 @@ interface PyProjectSdkConfigurationExtension {
    * Instead, the method returns a [CreateSdkInfo] descriptor that encapsulates:
    * - user-facing labels (intentionName) and tool metadata (toolInfo), and
    * - a suspendable sdkCreator that will create and register the SDK when executed by the caller
-   *   (see [PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo]).
+   *   (see [CreateSdkInfoWithSdkCreator.getSdkCreator]).
    *
    * Return value semantics:
    * - Existing environment found: return a CreateSdkInfo.ExistingEnv whose creator simply registers the discovered SDK.
@@ -114,10 +115,13 @@ interface PyProjectSdkConfigurationExtension {
   fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension?
 }
 
+
 /**
  * [createSdkInfo] with [toolId] that created it
  */
-data class CreateSdkInfoWithTool(val createSdkInfo: CreateSdkInfo, val toolId: ToolId)
+data class CreateSdkInfoWithToolBase<T>(val createSdkInfo: T, val toolId: ToolId)
+typealias CreateSdkInfoWithTool = CreateSdkInfoWithToolBase<CreateSdkInfo>
+
 
 @ApiStatus.Internal
 val VENV_TOOL_ID: ToolId = ToolId("Venv")

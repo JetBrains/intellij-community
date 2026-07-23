@@ -13,7 +13,7 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
-import com.jetbrains.python.sdk.configuration.getSdkAssociatedModule
+import com.jetbrains.python.impl.getSdkAssociatedModule
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.setAssociationToModule

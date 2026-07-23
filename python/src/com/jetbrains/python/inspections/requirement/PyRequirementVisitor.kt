@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class PyRequirementVisitor(
   holder: ProblemsHolder?,
   val ignoredPackages: Collection<PyPackageName>,
