@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -68,7 +69,7 @@ private fun KaSession.dataClassParameterName(declarationEntry: KtDestructuringDe
     val classSymbol = (type as? KaClassType)?.expandedSymbol ?: return null
     if (classSymbol is KaNamedClassSymbol && classSymbol.isData) {
         val primaryConstructor = classSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary } ?: return null
-        return primaryConstructor.valueParameters.getOrNull(entryIndex)?.name?.asString()
+        return primaryConstructor.valueParameters.getOrNull(entryIndex)?.name?.render()
     }
 
     val mapEntrySymbol = findClass(StandardClassIds.MapEntry) ?: return null
@@ -90,5 +91,5 @@ private fun KaSession.lambdaParameterName(parameter: KtParameter): String? {
         ?.returnType as? KaFunctionType ?: return null
 
     val valueParameter = functionType.parameters.getOrNull(parameterIndex) ?: return null
-    return valueParameter.name?.asString() ?: KotlinNameSuggester().suggestTypeNames(parameter.symbol.returnType).firstOrNull()
+    return valueParameter.name?.render() ?: KotlinNameSuggester().suggestTypeNames(parameter.symbol.returnType).firstOrNull()
 }

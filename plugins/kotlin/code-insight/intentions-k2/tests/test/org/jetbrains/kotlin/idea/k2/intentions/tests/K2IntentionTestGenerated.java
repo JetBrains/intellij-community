@@ -7634,6 +7634,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/destructuringDeclaration.kt");
         }
 
+        @TestMetadata("destructuringDeclarationBacktickedProperty.kt")
+        public void testDestructuringDeclarationBacktickedProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/destructuringDeclarationBacktickedProperty.kt");
+        }
+
         @TestMetadata("for.kt")
         public void testFor() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/for.kt");
