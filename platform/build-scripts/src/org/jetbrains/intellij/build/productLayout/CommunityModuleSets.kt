@@ -131,6 +131,7 @@ object CommunityModuleSets {
     module("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
     module("intellij.platform.ide.internal")
+    module("intellij.platform.ide.internal.backend")
     embeddedModule("intellij.platform.feedback")
 
     module("intellij.platform.pluginManager.shared")

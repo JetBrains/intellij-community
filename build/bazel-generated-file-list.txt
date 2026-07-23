@@ -805,6 +805,7 @@ platform/platform-impl/designer
 platform/platform-impl/eel
 platform/platform-impl/initial-config-import
 platform/platform-impl/internal
+platform/platform-impl/internal/ide.internal.backend
 platform/platform-impl/internal/jcef
 platform/platform-impl/jcef
 platform/platform-impl/plugin-signature-verifier

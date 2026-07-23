@@ -34,7 +34,6 @@
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.statistics.uploader"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -141,7 +140,6 @@
     </action>
 
     <group id="Internal.Ex" internal="true">
-      <action id="ShowRegisteredRemoteApis" internal="true" class="com.intellij.internal.rpc.ShowRegisteredRemoteApisAction"/>
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action id="ClearIDEStatistics"
               class="com.intellij.internal.ClearIDEStatisticsAction"
