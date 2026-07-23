@@ -26,8 +26,7 @@ f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
 - f:reset():V
 - setValue(java.lang.Object):V
 f:com.intellij.platform.compose.swing.components.ActionLinkKt
-- *sf:ActionLink(java.lang.String,java.awt.event.ActionListener,org.jetbrains.compose.swing.modifier.SwingModifier,androidx.compose.runtime.Composer,I,I):V
-- *sf:ActionLink(java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,I,I):V
+- *sf:ActionLink(java.lang.String,kotlin.jvm.functions.Function0,org.jetbrains.compose.swing.modifier.SwingModifier,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.components.BrowserLinkKt
 - *sf:BrowserLink(java.lang.String,java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,androidx.compose.runtime.Composer,I,I):V
 - *sf:BrowserLink(java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,androidx.compose.runtime.Composer,I,I):V
