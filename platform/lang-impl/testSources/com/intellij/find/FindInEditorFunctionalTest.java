@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
+import com.intellij.BundleBase;
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction;
@@ -26,6 +27,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import java.util.Map;
 import java.util.function.Function;
@@ -189,6 +191,25 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     session.setTextInField("baz bar");
     assertEquals("baz bar", model.getStringToFind());
     assertEquals("baz bar", session.getComponent().getSearchTextComponent().getText());
+  }
+
+  public void testReplaceActionButtonsDoNotShowMnemonicMarkers() {
+    init("foo");
+    initReplace();
+    SearchReplaceComponent component = getEditorSearchComponent().getComponent();
+    for (ActionToolbarImpl toolbar : UIUtil.findComponentsOfType(component, ActionToolbarImpl.class)) {
+      PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
+    }
+
+    String expectedText = TextWithMnemonic.parse(ApplicationBundle.message("editorsearch.replace.all.action.text")).getText();
+    assertNotNull(ContainerUtil.find(UIUtil.findComponentsOfType(component, JButton.class),
+                                    button -> expectedText.equals(button.getText())));
+    for (JButton button : UIUtil.findComponentsOfType(component, JButton.class)) {
+      String text = button.getText();
+      if (text != null) {
+        assertFalse(text, text.contains(BundleBase.MNEMONIC_STRING));
+      }
+    }
   }
 
   private static ActionButton findActionButton(JComponent component, @NonNls @NotNull String bundleKey) {
