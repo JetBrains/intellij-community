@@ -5883,6 +5883,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/annotationWithUseSite.kt");
         }
 
+        @TestMetadata("backtickedIdentifier.kt")
+        public void testBacktickedIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/backtickedIdentifier.kt");
+        }
+
         @TestMetadata("declaredInInterface.kt")
         public void testDeclaredInInterface() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/declaredInInterface.kt");

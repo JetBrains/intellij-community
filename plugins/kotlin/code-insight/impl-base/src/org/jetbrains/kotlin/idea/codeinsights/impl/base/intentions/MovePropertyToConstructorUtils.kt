@@ -93,7 +93,7 @@ object MovePropertyToConstructorUtils {
         modifierList?.getModifiersText()?.let { appendWithSpaceBefore(it) }
         if (isVarArg) appendWithSpaceBefore(KtTokens.VARARG_KEYWORD.value)
         appendWithSpaceBefore(valOrVarKeyword.text)
-        name?.let { appendWithSpaceBefore(it) }
+        nameIdentifier?.text?.let { appendWithSpaceBefore(it) }
         typeText?.let { append(": $it") }
         defaultValueText?.let { append(" = $it") }
     }
