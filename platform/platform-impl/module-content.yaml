@@ -13,6 +13,7 @@
   - name: intellij.platform.diagnostic.startUpPerformanceReporter
   - name: intellij.platform.ide.impl
   - name: intellij.platform.ide.recentProjects
+  - name: intellij.platform.ide.rpc
   - name: intellij.platform.ide.ui
   - name: intellij.platform.ide.util.io.impl
   - name: intellij.platform.ide.util.netty
