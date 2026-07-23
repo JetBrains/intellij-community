@@ -3264,6 +3264,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/hasTypeParameter.kt");
         }
 
+        @TestMetadata("keyword.kt")
+        public void testKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/keyword.kt");
+        }
+
         @TestMetadata("labeledReturn.kt")
         public void testLabeledReturn() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/labeledReturn.kt");
@@ -3297,6 +3302,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("testNoConvertOnSpuriousRecursion.kt")
         public void testTestNoConvertOnSpuriousRecursion() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/testNoConvertOnSpuriousRecursion.kt");
+        }
+
+        @TestMetadata("testNoConvertOnSpuriousRecursionKeyword.kt")
+        public void testTestNoConvertOnSpuriousRecursionKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/testNoConvertOnSpuriousRecursionKeyword.kt");
         }
 
         @TestMetadata("typeArgument.kt")

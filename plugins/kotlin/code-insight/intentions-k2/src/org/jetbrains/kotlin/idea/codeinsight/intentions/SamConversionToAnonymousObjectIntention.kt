@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.getLambdaExpressionForSamConvers
 import org.jetbrains.kotlin.idea.k2.codeinsight.hasRecursiveSamCall
 import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVariance
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.Variance
 
@@ -59,7 +60,7 @@ internal class SamConversionToAnonymousObjectIntention :
 
         if (lambdaParameters.any { it.returnType is KaErrorType }) return null
 
-        val samName = samMethod.name.asString()
+        val samName = samMethod.name.render()
         if (functionLiteral.hasRecursiveSamCall(samName, lambdaParameters)) return null
 
         val callee = element.calleeExpression
@@ -67,7 +68,7 @@ internal class SamConversionToAnonymousObjectIntention :
 
         val interfaceName = callType.getInterfaceName()
         val typeArgumentsText = computeTypeArguments(element, callType, classSymbol)
-        val samParameterNames = samMethod.valueParameters.map { it.name.asString() }
+        val samParameterNames = samMethod.valueParameters.map { it.name.render() }
 
         val functionText = LambdaToAnonymousFunctionUtil.prepareFunctionText(
             lambda = lambda,
