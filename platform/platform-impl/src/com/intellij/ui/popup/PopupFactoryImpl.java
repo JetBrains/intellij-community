@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -75,6 +75,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.icons.CustomIconUtilKt;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -120,6 +121,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -150,6 +152,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     LOG.assertTrue(list.isEmpty() || !(list.get(0) instanceof PsiElement) || ApplicationManager.getApplication().isUnitTestMode(),
                    "Do not use PsiElement for popup model. See PsiTargetNavigator");
     JBList<T> jbList = new JBList<>(new CollectionListModel<>(list));
+    jbList.setCellRenderer(BuilderKt.textListCellRenderer("", Objects::toString));
     PopupUtil.applyNewUIBackground(jbList);
     return new PopupChooserBuilder<>(jbList);
   }
