@@ -72,7 +72,9 @@ class RecentProjectIconHelper {
         val fileName = file.fileName.toString()
         val dotIndex = fileName.lastIndexOf('.')
         val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.take(dotIndex)
-        return file.parent.resolve("$DIRECTORY_STORE_FOLDER/$DIRECTORY_STORE_FOLDER.$fileNameWithoutExt/$DIRECTORY_STORE_FOLDER")
+        val nestedDotIdea = file.parent.resolve("$DIRECTORY_STORE_FOLDER/$DIRECTORY_STORE_FOLDER.$fileNameWithoutExt/$DIRECTORY_STORE_FOLDER")
+        if (Files.isDirectory(nestedDotIdea)) return nestedDotIdea
+        return ProjectStorePathManager.getInstance().getStoreDescriptor(file).dotIdea
       }
       catch (_: InvalidPathException) {
         return null
