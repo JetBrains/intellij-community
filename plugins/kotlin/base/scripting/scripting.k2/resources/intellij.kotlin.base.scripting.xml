@@ -14,6 +14,7 @@
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.preferences"/>
   </dependencies>
   <!-- endregion -->
