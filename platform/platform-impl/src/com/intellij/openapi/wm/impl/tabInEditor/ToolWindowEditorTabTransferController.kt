@@ -45,8 +45,18 @@ internal class ToolWindowEditorTabTransferController(
     }
 
     val file = createToolWindowTabFile(toolWindow, content, support)
-    FileEditorManagerEx.getInstanceEx(project).openFile(file, window, FileEditorOpenOptions(requestFocus = true))
+    FileEditorManagerEx.getInstanceEx(project).openFile(
+      file = file,
+      window = window,
+      options = FileEditorOpenOptions(
+        requestFocus = true,
+        // Keep the default: Wait for the editor composite to be fully opened so the check `isFileOpen`
+        // observes the final result rather than racing an asynchronous open.
+        waitForCompositeOpen = true,
+      )
+    )
 
+    // Restore the content to the tool window if opening the editor tab failed. This is unexpected, but still possible.
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
       restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
       file.invalidateEditorTabFile()
