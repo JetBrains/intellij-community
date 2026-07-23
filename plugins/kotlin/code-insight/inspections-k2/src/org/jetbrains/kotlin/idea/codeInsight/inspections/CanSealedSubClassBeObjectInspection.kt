@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createDeclarationByPattern
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -236,7 +237,10 @@ private class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     private fun Map<Language?, List<PsiElement>>.replaceKotlin(klass: KtClass) {
         val kotlinReferences = this[KOTLIN_LANGUAGE] ?: return
-        val singletonCall = KtPsiFactory(klass.project).createExpression(klass.name ?: return)
+        val singletonCall = KtPsiFactory(klass.project).createExpressionByPattern(
+            "$0",
+            klass.nameAsSafeName,
+        )
 
         kotlinReferences.filter { it.node.elementType == KtNodeTypes.CALL_EXPRESSION }
             .forEach { it.replace(singletonCall) }
