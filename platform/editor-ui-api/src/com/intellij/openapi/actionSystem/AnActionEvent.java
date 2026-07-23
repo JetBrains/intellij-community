@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
-import kotlinx.coroutines.CoroutineScope;
 import com.intellij.util.ui.JdkConstants;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +63,42 @@ public class AnActionEvent implements PlaceProvider {
     myDataContext = dataContext;
     myPlace = place;
     myPresentation = presentation;
-    myModifiers = modifiers;
+    myModifiers = addMissingModifiers(modifiers);
     myUiKind = uiKind;
+  }
+
+  /**
+   * Adds missing old/new (pre-/post-Java 1.4) modifiers to the mask.
+   * <p>
+   *   The input event may be missing some of the bits, especially if it's "fake" (not originating from Swing).
+   *   Because some actions expect, for example, {@code CTRL_DOWN_MASK}, they may fail
+   *   if the event has only {@code InputEvent.CTRL_MASK} or vice versa.
+   *   This function makes the modifiers consistent: if any of the two bits is present, both will be set.
+   * </p>
+   * @param modifiers the original modifiers
+   * @return modifiers with consistent old/new style bit pairs
+   */
+  private static @JdkConstants.InputEventMask int addMissingModifiers(@JdkConstants.InputEventMask int modifiers) {
+    @JdkConstants.InputEventMask int fullModifiers = modifiers;
+    fullModifiers = addBothIfAny(fullModifiers, InputEvent.SHIFT_MASK, InputEvent.SHIFT_DOWN_MASK);
+    fullModifiers = addBothIfAny(fullModifiers, InputEvent.CTRL_MASK, InputEvent.CTRL_DOWN_MASK);
+    fullModifiers = addBothIfAny(fullModifiers, InputEvent.ALT_MASK, InputEvent.ALT_DOWN_MASK);
+    fullModifiers = addBothIfAny(fullModifiers, InputEvent.ALT_GRAPH_MASK, InputEvent.ALT_GRAPH_DOWN_MASK);
+    fullModifiers = addBothIfAny(fullModifiers, InputEvent.META_MASK, InputEvent.META_DOWN_MASK);
+    return fullModifiers;
+  }
+
+  private static @JdkConstants.InputEventMask int addBothIfAny(
+    @JdkConstants.InputEventMask int modifiers,
+    @JdkConstants.InputEventMask int bit1,
+    @JdkConstants.InputEventMask int bit2
+  ) {
+    if ((modifiers & bit1) != 0 || (modifiers & bit2) != 0) {
+      return modifiers | bit1 | bit2;
+    }
+    else {
+      return modifiers;
+    }
   }
 
   public final @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
