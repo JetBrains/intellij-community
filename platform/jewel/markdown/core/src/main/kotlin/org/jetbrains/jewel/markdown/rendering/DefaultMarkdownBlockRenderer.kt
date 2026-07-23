@@ -551,7 +551,9 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         val content = block.content
         val highlighter = LocalCodeHighlighter.current
-        val highlightedCode by highlighter.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        val highlightedCode by
+            remember(content, mimeType, highlighter) { highlighter.highlight(content, mimeType) }
+                .collectAsState(AnnotatedString(content))
         Text(
             text = highlightedCode,
             style = styling.editorTextStyle,
@@ -573,9 +575,11 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
     ) {
         val content = block.content
+        val language = block.language.orEmpty()
         val highlighter = LocalCodeHighlighter.current
         val highlightedCode by
-            highlighter.highlight(content, block.language.orEmpty()).collectAsState(AnnotatedString(content))
+            remember(content, language, highlighter) { highlighter.highlight(content, language) }
+                .collectAsState(AnnotatedString(content))
         Text(
             text = highlightedCode,
             style = styling.editorTextStyle,

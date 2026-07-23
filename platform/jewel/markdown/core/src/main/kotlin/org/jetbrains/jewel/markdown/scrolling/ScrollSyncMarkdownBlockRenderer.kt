@@ -133,8 +133,10 @@ public open class ScrollSyncMarkdownBlockRenderer(
                 }
 
         val content = block.content
+        val highlighter = LocalCodeHighlighter.current
         val highlightedCode by
-            LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+            remember(content, mimeType, highlighter) { highlighter.highlight(content, mimeType) }
+                .collectAsState(AnnotatedString(content))
         val uniqueBlock = LocalLocatableBlock.current?.takeIf { it.originalBlock == block } ?: block
         val actualBlock by rememberUpdatedState(uniqueBlock)
         AutoScrollableBlock(actualBlock, synchronizer) {
@@ -163,9 +165,10 @@ public open class ScrollSyncMarkdownBlockRenderer(
                 }
 
         val content = block.content
+        val language = block.language.orEmpty()
+        val highlighter = LocalCodeHighlighter.current
         val highlightedCode by
-            LocalCodeHighlighter.current
-                .highlight(content, block.language.orEmpty())
+            remember(content, language, highlighter) { highlighter.highlight(content, language) }
                 .collectAsState(AnnotatedString(content))
         val uniqueBlock = LocalLocatableBlock.current?.takeIf { it.originalBlock == block } ?: block
         val actualBlock by rememberUpdatedState(uniqueBlock)

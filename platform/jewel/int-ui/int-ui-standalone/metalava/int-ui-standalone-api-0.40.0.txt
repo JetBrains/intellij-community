@@ -106,6 +106,89 @@ package org.jetbrains.jewel.intui.standalone.bundle {
 
 }
 
+package org.jetbrains.jewel.intui.standalone.code.highlighting {
+
+  @SuppressCompatibility @androidx.compose.runtime.Immutable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class LanguageGrammar {
+    ctor public LanguageGrammar(String name, optional java.util.List<java.lang.String> aliases, java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule> rules);
+    method public java.util.List<java.lang.String> getAliases();
+    method public String getName();
+    method public java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule> getRules();
+    method public boolean matches(String languageTag);
+    property public java.util.List<java.lang.String> aliases;
+    property public String name;
+    property public java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule> rules;
+    field public static final org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar.Companion Companion;
+  }
+
+  public static final class LanguageGrammar.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class SimpleCodeHighlighter implements org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter {
+    ctor public SimpleCodeHighlighter(org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors colors);
+    ctor public SimpleCodeHighlighter(org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors colors, java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar> additionalGrammars, optional kotlinx.coroutines.CoroutineDispatcher highlightDispatcher);
+    method public java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar> getAdditionalGrammars();
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors getColors();
+    method public kotlinx.coroutines.CoroutineDispatcher getHighlightDispatcher();
+    method public kotlinx.coroutines.flow.Flow<androidx.compose.ui.text.AnnotatedString> highlight(String code, String language);
+    method @Deprecated public kotlinx.coroutines.flow.Flow<androidx.compose.ui.text.AnnotatedString> highlight(String code, String? mimeType);
+    property public java.util.List<org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar> additionalGrammars;
+    property public org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors colors;
+    property public kotlinx.coroutines.CoroutineDispatcher highlightDispatcher;
+  }
+
+  @SuppressCompatibility @androidx.compose.runtime.Immutable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class SyntaxHighlightColors {
+    ctor @KotlinOnly public SyntaxHighlightColors(androidx.compose.ui.graphics.Color keyword, androidx.compose.ui.graphics.Color type, androidx.compose.ui.graphics.Color constant, androidx.compose.ui.graphics.Color functionCall, androidx.compose.ui.graphics.Color string, androidx.compose.ui.graphics.Color comment, androidx.compose.ui.graphics.Color number, androidx.compose.ui.graphics.Color builtin);
+    property public androidx.compose.ui.graphics.Color builtin;
+    property public androidx.compose.ui.graphics.Color comment;
+    property public androidx.compose.ui.graphics.Color constant;
+    property public androidx.compose.ui.graphics.Color functionCall;
+    property public androidx.compose.ui.graphics.Color keyword;
+    property public androidx.compose.ui.graphics.Color number;
+    property public androidx.compose.ui.graphics.Color string;
+    property public androidx.compose.ui.graphics.Color type;
+    field public static final org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors.Companion Companion;
+  }
+
+  public static final class SyntaxHighlightColors.Companion {
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors dark();
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors light();
+  }
+
+  @SuppressCompatibility @androidx.compose.runtime.Immutable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class TokenRule {
+    ctor public TokenRule(@org.intellij.lang.annotations.Language("RegExp") String pattern, java.util.Map<java.lang.Integer,? extends org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType> captures);
+    method public java.util.Map<java.lang.Integer,org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType> getCaptures();
+    method public String getPattern();
+    property public java.util.Map<java.lang.Integer,org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType> captures;
+    property @org.intellij.lang.annotations.Language("RegExp") public String pattern;
+    field public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule.Companion Companion;
+  }
+
+  public static final class TokenRule.Companion {
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule builtin(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule comment(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule constant(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule functionCall(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule functionDeclaration(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule keyword(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule number(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule string(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule type(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+    method public org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule typeDeclaration(@org.intellij.lang.annotations.Language("RegExp") String pattern);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum TokenType {
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType BUILTIN;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType COMMENT;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType CONSTANT;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType FUNCTION_CALL;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType KEYWORD;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType NUMBER;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType STRING;
+    enum_constant public static final org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType TYPE;
+  }
+
+}
+
 package org.jetbrains.jewel.intui.standalone.styling {
 
   public final class IntUIBannerStylingKt {
