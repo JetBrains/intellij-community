@@ -28056,6 +28056,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedLambdaLabel.kt")
+        public void testBacktickedLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/backtickedLambdaLabel.kt");
+        }
+
         @TestMetadata("basic.kt")
         public void testBasic() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/basic.kt");
