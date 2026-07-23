@@ -62,7 +62,7 @@ public final class ActiveRules {
       }
     }
     else {
-      rules.add(new FileGroupingRule(project, usageViewSettings.getShowShortFilePath()));
+      rules.add(new FileGroupingRule(project, usageViewSettings.isShortFilePathEnabled()));
     }
 
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
@@ -113,7 +113,7 @@ public final class ActiveRules {
       rules.add(rule);
     }
 
-    rules.add(new FileGroupingRule(project, usageViewSettings.getShowShortFilePath()));
+    rules.add(new FileGroupingRule(project, usageViewSettings.isShortFilePathEnabled()));
 
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }

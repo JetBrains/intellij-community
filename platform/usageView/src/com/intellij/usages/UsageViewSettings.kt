@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
@@ -112,6 +113,9 @@ open class UsageViewSettings(
 
   @get:OptionTag("SHORT_FILE_PATH")
   open var showShortFilePath: Boolean by property(true)
+
+  @ApiStatus.Internal
+  open fun isShortFilePathEnabled(): Boolean = showShortFilePath && !isGroupByDirectoryStructure && !isGroupByPackage
 
   var exportFileName: String?
     @Transient

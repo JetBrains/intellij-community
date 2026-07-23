@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 public final class JavaClassGroupRuleProvider implements FileStructureGroupRuleProvider {
   @Override
   public UsageGroupingRule getUsageGroupingRule(final @NotNull Project project) {
-    return new ClassGroupingRule(UsageViewSettings.getInstance().getShowShortFilePath());
+    return new ClassGroupingRule(UsageViewSettings.getInstance().isShortFilePathEnabled());
   }
 
   @Override
   public UsageGroupingRule getUsageGroupingRule(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
-    return new ClassGroupingRule(usageViewSettings.getShowShortFilePath());
+    return new ClassGroupingRule(usageViewSettings.isShortFilePathEnabled());
   }
 }
