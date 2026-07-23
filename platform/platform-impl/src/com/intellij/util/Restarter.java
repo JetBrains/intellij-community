@@ -44,7 +44,7 @@ public final class Restarter {
     return ourRestartSupported.get();
   }
 
-  private static final NullableLazyValue<Path> ourLauncherWithoutRemoteDevOverride = lazyNullable(() -> {
+  private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
     var baseName = ApplicationNamesInfo.getInstance().getScriptName();
     var launcher = switch (OS.CURRENT) {
       case Windows -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat"));
@@ -55,7 +55,19 @@ public final class Restarter {
     return launcher != null && Files.exists(launcher) ? launcher : null;
   });
 
-  private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
+  private static final NullableLazyValue<Path> ourBinLauncher = Boolean.getBoolean("ide.native.launcher") ? ourLauncher : lazyNullable(() -> {
+    var baseName = ApplicationNamesInfo.getInstance().getScriptName();
+    var launcher = switch (OS.CURRENT) {
+      case Windows -> PathManager.getBinDir().resolve(baseName + "64.exe");
+      case macOS -> PathManager.getHomeDir().resolve("MacOS").resolve(baseName);
+      case Linux -> PathManager.getBinDir().resolve(baseName);
+      default -> null;
+    };
+    return launcher != null && Files.exists(launcher) ? launcher : null;
+  });
+
+  // the RemDev starter binary is an implementation detail that should not be exposed externally
+  private static final NullableLazyValue<Path> ourLauncherWithRemDevOverride = lazyNullable(() -> {
     if (Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
       var launcher = PathManager.getBinDir().resolve(OS.CURRENT.getBinaryName("remote-dev-server"));
       if (Files.exists(launcher)) return launcher;
@@ -64,7 +76,7 @@ public final class Restarter {
       );
     }
 
-    var launcher = ourLauncherWithoutRemoteDevOverride.getValue();
+    var launcher = ourLauncher.getValue();
     if (launcher != null) return launcher;
 
     if (PlatformUtils.isJetBrainsClient()) {
@@ -102,7 +114,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Windows) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getBinDir();
       }
       else {
@@ -110,7 +122,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.macOS) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getHomeDir().resolve("MacOS");
       }
       else {
@@ -118,7 +130,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Linux) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getBinDir();
       }
       else {
@@ -173,12 +185,15 @@ public final class Restarter {
   }
 
   public static @Nullable Path getIdeStarter() {
-    // The RemDev starter binary is an implementation detail that should not be exposed externally
-    return ourLauncherWithoutRemoteDevOverride.getValue();
+    return ourLauncher.getValue();
+  }
+
+  public static @Nullable Path getBinStarter() {
+    return ourBinLauncher.getValue();
   }
 
   private static void restartOnWindows(boolean elevate, List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starter = ourLauncher.getValue();
+    var starter = ourLauncherWithRemDevOverride.getValue();
     if (starter == null) throw new IOException("Starter executable wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter.exe", beforeRestart);
     command.add(String.valueOf((elevate ? 2 : 1) + args.size()));
@@ -191,7 +206,7 @@ public final class Restarter {
   }
 
   private static void restartOnMac(List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starter = ourLauncher.getValue();
+    var starter = ourLauncherWithRemDevOverride.getValue();
     if (starter == null) throw new IOException("Starter executable wasn't found in: " + PathManager.getHomeDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));
@@ -201,7 +216,7 @@ public final class Restarter {
   }
 
   private static void restartOnLinux(List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starterScript = ourLauncher.getValue();
+    var starterScript = ourLauncherWithRemDevOverride.getValue();
     if (starterScript == null) throw new IOException("Starter script wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));

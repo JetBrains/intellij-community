@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -30,7 +31,7 @@ import kotlin.reflect.jvm.javaMethod
 fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): GeneralCommandLine {
   // Some test runtimes do not expose an IDE launcher path; fall back to the Java entrypoint in that case.
   val launcher = try {
-    Restarter.getIdeStarter()
+    Restarter.getBinStarter()
   }
   catch (_: RuntimeException) {
     null
