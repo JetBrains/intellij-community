@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.computeReturnsToReplace
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.ReturnsToReplace
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.computeReturnsToReplace
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.isZeroBasedRange
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.relabelReturns
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 private val REPEAT_KEYWORD: Name = Name.identifier("repeat")
 private val FOR_EACH_NAME: Name = StandardKotlinNames.For.forEachName
@@ -98,7 +99,7 @@ internal class ReplaceForEachWithRepeatIntention :
         val innerLabel = (element.valueArguments.singleOrNull()?.getArgumentExpression() as? KtLabeledExpression)
             ?.getLabelName()
         val userLabel = outerLabel?.getLabelName() ?: innerLabel
-        val labelName = userLabel ?: REPEAT_KEYWORD.asString()
+        val labelName = userLabel?.quoteIfNeeded() ?: REPEAT_KEYWORD.asString()
         val needLabel = relabelReturns(elementContext.returnsToRelabel, lambda, labelName, factory)
         val labelPart = if (userLabel != null || needLabel) "$labelName@ " else ""
 

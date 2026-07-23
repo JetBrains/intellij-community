@@ -15440,6 +15440,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedLabel.kt")
+        public void testBacktickedLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForEachWithRepeat/backtickedLabel.kt");
+        }
+
         @TestMetadata("comments.kt")
         public void testComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceForEachWithRepeat/comments.kt");
