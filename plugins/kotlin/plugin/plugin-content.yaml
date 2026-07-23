@@ -46,6 +46,9 @@
 - name: lib/intellij.kotlin.base.scripting.shared.jar
   contentModules:
   - name: intellij.kotlin.base.scripting.shared
+- name: lib/intellij.kotlin.base.serialization.jar
+  contentModules:
+  - name: intellij.kotlin.base.serialization
 - name: lib/intellij.kotlin.base.statistics.jar
   contentModules:
   - name: intellij.kotlin.base.statistics
@@ -182,7 +185,6 @@
   - name: kotlin.scripting
   - name: intellij.kotlin.codeInsight.descriptions
   - name: kotlin.jsr223
-  - name: intellij.kotlin.base.serialization
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs

@@ -32,7 +32,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.scripting",
       "intellij.kotlin.codeInsight.descriptions",
       "kotlin.jsr223",
-      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
