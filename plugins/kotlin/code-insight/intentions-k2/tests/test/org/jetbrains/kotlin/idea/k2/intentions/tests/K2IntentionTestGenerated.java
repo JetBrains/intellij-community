@@ -10733,6 +10733,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedInterfaceName.kt")
+        public void testBacktickedInterfaceName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/backtickedInterfaceName.kt");
+        }
+
         @TestMetadata("funInterface.kt")
         public void testFunInterface() throws Exception {
             runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/funInterface.kt");

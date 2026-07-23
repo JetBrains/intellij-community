@@ -95,7 +95,7 @@ internal class SamConversionToAnonymousObjectIntention :
 }
 
 private fun KaClassType.getInterfaceName(): String =
-    (abbreviation ?: this).classId.asFqNameString()
+    (abbreviation ?: this).classId.asSingleFqName().render()
 
 @OptIn(KaExperimentalApi::class)
 private fun KaSession.computeTypeArguments(
