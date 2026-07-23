@@ -36,6 +36,8 @@
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationCognitiveLoadInspection"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector"/>
+    <codeInsight.lineMarkerProvider
+      language="Markdown" implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationUsageMarkerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

@@ -13,21 +13,30 @@ import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.updateUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 private typealias AnalyzerCacheKey<T> = Key<Cache<LlmIssue<T>>>
 
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
+data class Costs(val credits: Double, val since: LocalDateTime = LocalDateTime.now()) {
+  operator fun plus(other: Double): Costs = Costs(credits + other, since)
+}
+
 @ApiStatus.Experimental
 internal object SpecificationAnalyzer {
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
+  private val costKey = Key.create<Costs>("cost key for analyzers")
+
+  fun getCosts(file: PsiFile): Costs? = file.viewProvider.virtualFile.getUserData(costKey)
 
   @RequiresBackgroundThread
   fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
@@ -64,6 +73,10 @@ internal object SpecificationAnalyzer {
               analyzerKey,
               Cache(storage.text, dependencies, storage.stamp, analysis.data[storage.name].orEmpty())
             )
+            (storage.file.viewProvider.virtualFile as UserDataHolderEx).updateUserData(costKey) {
+              // Split costs equally across files
+              (it ?: Costs(0.0)) + credits / newStorages.size
+            }
           }
           analysis.data[file.viewProvider.virtualFile.path].orEmpty()
         }
