@@ -104,27 +104,52 @@ Use `@SystemProperty` annotation instead of `System.setProperty()`:
 fun testWithSystemProperty() { ... }
 ```
 
-## Running Tests in EDT
+## Coroutines and UI Tests
 
-Use `@RunInEdt` annotation to run test methods in EDT:
+Use `com.intellij.testFramework.common.timeoutRunBlocking` as the coroutine boundary and add a 30-second JUnit
+`@Timeout`. `timeoutRunBlocking` has a 10-second default timeout, so a suspended test fails quickly with a coroutine-aware thread dump.
+
+Keep setup, background work, and assertions off the UI thread. Move only Swing operations into a small
+`withContext(Dispatchers.UI)` block:
 
 ```kotlin
-@TestApplication
-@RunInEdt
-class MyEdtTest {
-  @Test
-  fun testInEdt() { ... }
-}
-
-// Or for specific methods only
-@TestApplication
-@RunInEdt(allMethods = false)
-class MyTest {
-  @Test
-  @RunMethodInEdt
-  fun testInEdt() { ... }
+@Test
+@Timeout(30)
+fun updatesLabel(): Unit = timeoutRunBlocking {
+  val value = loadValue()
+  val actual = withContext(Dispatchers.UI) {
+    label.text = value
+    label.text
+  }
+  assertThat(actual).isEqualTo(value)
 }
 ```
+
+`Dispatchers.UI` is strict: it supplies UI-thread affinity without implicit model access. Use `Dispatchers.EDT` only when the tested
+operation genuinely requires model or lock access and cannot be split from the UI operation. Keep write actions explicit.
+
+Editor creation/disposal, editor document mutation, completion invocation, action-group expansion, and file-editor operations are common
+model-backed exceptions. Keep their full synchronous lifecycle in a narrow `Dispatchers.EDT` block; do not construct on strict UI and
+dispose later from a different dispatcher.
+
+Do not use `@RunInEdt`, `@RunMethodInEdt`, `runInEdtAndWait`, or `runInEdtAndGet` in new tests. They hide the coroutine boundary,
+move lifecycle methods and assertions onto EDT, and can accidentally grant model or write-intent access.
+
+When a synchronous callback API cannot call a suspending function, use a narrow bounded adapter around that callback only:
+
+```kotlin
+timeoutRunBlocking(timeout = 10.seconds, context = Dispatchers.UI) {
+  createSwingComponent()
+}
+```
+
+Prefer observable completion signals, flows, latches, or virtual time over sleeps. If polling is unavoidable, bound it and make the
+predicate suspending so UI checks can use `withContext(Dispatchers.UI)` without nested blocking.
+
+Use the enclosing test scope for launched work: pass `this` from `timeoutRunBlocking`/`coroutineScope`, or `backgroundScope` from
+`runTest`, into the code under test. Create a standalone `CoroutineScope(...)` only when independent scope lifetime is itself under test;
+parent it to the test job and cancel it in `finally`. Use `delay` freely with `runTest` virtual time, but do not use a real timing-only
+delay as a completion signal.
 
 ## Key Classes
 
@@ -132,7 +157,7 @@ class MyTest {
 - `com.intellij.testFramework.junit5.TestDisposable` - injects test disposables
 - `com.intellij.testFramework.junit5.RegistryKey` - sets registry values
 - `com.intellij.testFramework.junit5.SystemProperty` - sets system properties
-- `com.intellij.testFramework.junit5.RunInEdt` - runs tests in EDT
+- `com.intellij.testFramework.common.timeoutRunBlocking` - runs suspending test code with a 10-second default timeout
 - `com.intellij.testFramework.junit5.fixture.projectFixture` - creates project fixtures
 - `com.intellij.testFramework.junit5.fixture.moduleFixture` - creates module fixtures
 
@@ -141,7 +166,7 @@ class MyTest {
 - `JUnit5ProjectFixtureTest.kt` - project fixture patterns
 - `JUnit5DisposableTest.kt` - disposable injection
 - `JUnit5SystemPropertyTest.kt` - system property usage
-- `JUnit5RunInEdtTest.java` - EDT execution
+- `JUnit5RunInEdtTest.java` - legacy EDT extension behavior; do not copy it for new tests
 
 ## Running Tests
 
@@ -149,5 +174,5 @@ To run tests via command line, see [TESTING.md](../testing/SKILL.md).
 
 Quick example:
 ```bash
-./tests.cmd -Dintellij.build.test.patterns=*MyTest
+./tests.cmd --module <test-module> --test com.example.MyTest
 ```
