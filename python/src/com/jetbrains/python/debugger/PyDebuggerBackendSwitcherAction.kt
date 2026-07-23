@@ -104,7 +104,7 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 
     if (!PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) {
       val handlers = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList
-      if (handlers.all { !it.shouldShowSwitcher(project) }) {
+      if (isPythonDapPluginInstalledAndEnabled() && handlers.all { !it.shouldShowSwitcher(project) }) {
         e.presentation.isEnabledAndVisible = false
         return
       }
