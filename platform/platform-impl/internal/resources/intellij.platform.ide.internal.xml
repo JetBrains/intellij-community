@@ -23,6 +23,7 @@
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
