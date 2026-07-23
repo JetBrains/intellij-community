@@ -104,6 +104,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -111,6 +112,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -514,6 +516,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
     final T configuration = getConfiguration();
+    Set<String> classpath = new LinkedHashSet<>();
     for (final Object listener : Extensions.getRootArea().getExtensionPoint(epName).getExtensionList()) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
@@ -526,9 +529,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         if (!buf.isEmpty()) buf.append(delimiter);
         final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
-        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+        classpath.add(PathUtil.getJarPathForClass(classListener));
+        Class<?> parentClass = classListener.getSuperclass();
+        while (parentClass != null) {
+          if (Modifier.isAbstract(parentClass.getModifiers())) {
+            classpath.add(PathUtil.getJarPathForClass(parentClass));
+          }
+          parentClass = parentClass.getSuperclass();
+        }
       }
     }
+    classpath.forEach(javaParameters.getClassPath()::add);
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
