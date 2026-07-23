@@ -10614,113 +10614,137 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.compose.foundation/foundation-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_foundation-foundation-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.foundation/foundation-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.foundation/foundation-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_foundation-foundation-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.foundation/foundation-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.animation/animation-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_animation-animation-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.animation/animation-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.animation/animation-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_animation-animation-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.animation/animation-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.animation/animation-core-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_animation-animation-core-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.animation/animation-core-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.animation/animation-core-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_animation-animation-core-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.animation/animation-core-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-geometry-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-geometry-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-geometry-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-geometry-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-graphics-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-graphics-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-graphics-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-graphics-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.foundation/foundation-layout-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.foundation/foundation-layout-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.foundation/foundation-layout-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.foundation/foundation-layout-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-unit-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-unit-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-unit-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-unit-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-unit-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-unit-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "androidx.lifecycle/lifecycle-viewmodel-desktop-2.9.4.jar_copy",
-    src = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_4_http//file",
-    out = "androidx.lifecycle/lifecycle-viewmodel-desktop-2.9.4.jar",
+    name = "androidx.lifecycle/lifecycle-viewmodel-compose-desktop-2.11.0.jar_copy",
+    src = "@androidx_lifecycle-lifecycle-viewmodel-compose-desktop-2_11_0_http//file",
+    out = "androidx.lifecycle/lifecycle-viewmodel-compose-desktop-2.11.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "androidx.lifecycle/lifecycle-viewmodel-savedstate-desktop-2.9.4.jar_copy",
-    src = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4_http//file",
-    out = "androidx.lifecycle/lifecycle-viewmodel-savedstate-desktop-2.9.4.jar",
+    name = "androidx.lifecycle/lifecycle-viewmodel-desktop-2.11.0.jar_copy",
+    src = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_11_0_http//file",
+    out = "androidx.lifecycle/lifecycle-viewmodel-desktop-2.11.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "androidx.navigationevent/navigationevent-desktop-1.0.1.jar_copy",
-    src = "@androidx_navigationevent-navigationevent-desktop-1_0_1_http//file",
-    out = "androidx.navigationevent/navigationevent-desktop-1.0.1.jar",
+    name = "androidx.lifecycle/lifecycle-runtime-compose-desktop-2.11.0.jar_copy",
+    src = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_11_0_http//file",
+    out = "androidx.lifecycle/lifecycle-runtime-compose-desktop-2.11.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-backhandler-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-backhandler-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-backhandler-desktop-1.11.0.jar",
+    name = "androidx.lifecycle/lifecycle-viewmodel-savedstate-desktop-2.11.0.jar_copy",
+    src = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_11_0_http//file",
+    out = "androidx.lifecycle/lifecycle-viewmodel-savedstate-desktop-2.11.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-text-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-text-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-text-desktop-1.11.0.jar",
+    name = "org.jetbrains.androidx.navigationevent/navigationevent-compose-desktop-1.1.0.jar_copy",
+    src = "@org_jetbrains_androidx_navigationevent-navigationevent-compose-desktop-1_1_0_http//file",
+    out = "org.jetbrains.androidx.navigationevent/navigationevent-compose-desktop-1.1.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-util-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-util-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-util-desktop-1.11.0.jar",
+    name = "androidx.navigationevent/navigationevent-compose-desktop-1.1.1.jar_copy",
+    src = "@androidx_navigationevent-navigationevent-compose-desktop-1_1_1_http//file",
+    out = "androidx.navigationevent/navigationevent-compose-desktop-1.1.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "androidx.navigationevent/navigationevent-desktop-1.1.1.jar_copy",
+    src = "@androidx_navigationevent-navigationevent-desktop-1_1_1_http//file",
+    out = "androidx.navigationevent/navigationevent-desktop-1.1.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.compose.ui/ui-text-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-text-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-text-desktop-1.12.0-beta02.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.compose.ui/ui-util-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-util-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-util-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10738,106 +10762,127 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jetbrains_compose_foundation-foundation-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_animation-animation-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_animation-animation-core-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-geometry-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-graphics-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_foundation-foundation-layout-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-unit-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-desktop-1_11_0_http_import",
-        ":androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_4_http_import",
-        ":androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4_http_import",
-        ":androidx_navigationevent-navigationevent-desktop-1_0_1_http_import",
-        ":org_jetbrains_compose_ui-ui-backhandler-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-text-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-util-desktop-1_11_0_http_import",
+        ":org_jetbrains_compose_foundation-foundation-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_animation-animation-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_animation-animation-core-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-geometry-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-graphics-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_foundation-foundation-layout-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-unit-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-desktop-1_12_0-beta02_http_import",
+        ":androidx_lifecycle-lifecycle-viewmodel-compose-desktop-2_11_0_http_import",
+        ":androidx_lifecycle-lifecycle-viewmodel-desktop-2_11_0_http_import",
+        ":androidx_lifecycle-lifecycle-runtime-compose-desktop-2_11_0_http_import",
+        ":androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_11_0_http_import",
+        ":org_jetbrains_androidx_navigationevent-navigationevent-compose-desktop-1_1_0_http_import",
+        ":androidx_navigationevent-navigationevent-compose-desktop-1_1_1_http_import",
+        ":androidx_navigationevent-navigationevent-desktop-1_1_1_http_import",
+        ":org_jetbrains_compose_ui-ui-text-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-util-desktop-1_12_0-beta02_http_import",
         ":org_jetbrains_kotlinx-atomicfu-jvm-0_28_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_foundation-foundation-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_foundation-foundation-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_animation-animation-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_animation-animation-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_animation-animation-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_animation-animation-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_animation-animation-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_animation-animation-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_animation-animation-core-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_animation-animation-core-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_animation-animation-core-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_animation-animation-core-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_animation-animation-core-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_animation-animation-core-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-geometry-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-geometry-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-geometry-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-graphics-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-graphics-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-graphics-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_foundation-foundation-layout-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_foundation-foundation-layout-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_foundation-foundation-layout-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-unit-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-unit-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-unit-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_4_http_import",
-    jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_4_http//file",
-    source_jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_9_4-sources_http//file",
+    name = "androidx_lifecycle-lifecycle-viewmodel-compose-desktop-2_11_0_http_import",
+    jar = "@androidx_lifecycle-lifecycle-viewmodel-compose-desktop-2_11_0_http//file",
+    source_jar = "@androidx_lifecycle-lifecycle-viewmodel-compose-desktop-2_11_0-sources_http//file",
 )
 
 jvm_import(
-    name = "androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4_http_import",
-    jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4_http//file",
-    source_jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4-sources_http//file",
+    name = "androidx_lifecycle-lifecycle-viewmodel-desktop-2_11_0_http_import",
+    jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_11_0_http//file",
+    source_jar = "@androidx_lifecycle-lifecycle-viewmodel-desktop-2_11_0-sources_http//file",
 )
 
 jvm_import(
-    name = "androidx_navigationevent-navigationevent-desktop-1_0_1_http_import",
-    jar = "@androidx_navigationevent-navigationevent-desktop-1_0_1_http//file",
-    source_jar = "@androidx_navigationevent-navigationevent-desktop-1_0_1-sources_http//file",
+    name = "androidx_lifecycle-lifecycle-runtime-compose-desktop-2_11_0_http_import",
+    jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_11_0_http//file",
+    source_jar = "@androidx_lifecycle-lifecycle-runtime-compose-desktop-2_11_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-backhandler-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-backhandler-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-backhandler-desktop-1_11_0-sources_http//file",
+    name = "androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_11_0_http_import",
+    jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_11_0_http//file",
+    source_jar = "@androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_11_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-text-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_androidx_navigationevent-navigationevent-compose-desktop-1_1_0_http_import",
+    jar = "@org_jetbrains_androidx_navigationevent-navigationevent-compose-desktop-1_1_0_http//file",
+    source_jar = "@org_jetbrains_androidx_navigationevent-navigationevent-compose-desktop-1_1_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-util-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_11_0-sources_http//file",
+    name = "androidx_navigationevent-navigationevent-compose-desktop-1_1_1_http_import",
+    jar = "@androidx_navigationevent-navigationevent-compose-desktop-1_1_1_http//file",
+    source_jar = "@androidx_navigationevent-navigationevent-compose-desktop-1_1_1-sources_http//file",
+)
+
+jvm_import(
+    name = "androidx_navigationevent-navigationevent-desktop-1_1_1_http_import",
+    jar = "@androidx_navigationevent-navigationevent-desktop-1_1_1_http//file",
+    source_jar = "@androidx_navigationevent-navigationevent-desktop-1_1_1-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_compose_ui-ui-text-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-text-desktop-1_12_0-beta02-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_compose_ui-ui-util-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-util-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
@@ -10847,17 +10892,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-test-junit4-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-test-junit4-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-test-junit4-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-test-junit4-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.ui/ui-test-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_ui-ui-test-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.ui/ui-test-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.ui/ui-test-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_ui-ui-test-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.ui/ui-test-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10867,27 +10912,27 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_11_0_http_import",
-        ":org_jetbrains_compose_ui-ui-test-desktop-1_11_0_http_import",
+        ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_12_0-beta02_http_import",
+        ":org_jetbrains_compose_ui-ui-test-desktop-1_12_0-beta02_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jetbrains_compose_ui-ui-test-desktop-1_11_0_http_import",
-    jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_11_0-sources_http//file",
+    name = "org_jetbrains_compose_ui-ui-test-desktop-1_12_0-beta02_http_import",
+    jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_ui-ui-test-desktop-1_12_0-beta02-sources_http//file",
 )
 
 copy_file(
-    name = "androidx.compose.runtime/runtime-desktop-1.11.0.jar_copy",
-    src = "@androidx_compose_runtime-runtime-desktop-1_11_0_http//file",
-    out = "androidx.compose.runtime/runtime-desktop-1.11.0.jar",
+    name = "androidx.compose.runtime/runtime-desktop-1.12.0-beta02.jar_copy",
+    src = "@androidx_compose_runtime-runtime-desktop-1_12_0-beta02_http//file",
+    out = "androidx.compose.runtime/runtime-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10901,9 +10946,9 @@ copy_file(
 )
 
 copy_file(
-    name = "androidx.compose.runtime/runtime-annotation-jvm-1.11.0.jar_copy",
-    src = "@androidx_compose_runtime-runtime-annotation-jvm-1_11_0_http//file",
-    out = "androidx.compose.runtime/runtime-annotation-jvm-1.11.0.jar",
+    name = "androidx.compose.runtime/runtime-annotation-jvm-1.12.0-beta02.jar_copy",
+    src = "@androidx_compose_runtime-runtime-annotation-jvm-1_12_0-beta02_http//file",
+    out = "androidx.compose.runtime/runtime-annotation-jvm-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10913,17 +10958,17 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":androidx_compose_runtime-runtime-desktop-1_11_0_http_import",
+        ":androidx_compose_runtime-runtime-desktop-1_12_0-beta02_http_import",
         ":androidx_collection-collection-jvm-1_5_0_http_import",
         ":androidx_annotation-annotation-jvm-1_9_1_http_import",
-        ":androidx_compose_runtime-runtime-annotation-jvm-1_11_0_http_import",
+        ":androidx_compose_runtime-runtime-annotation-jvm-1_12_0-beta02_http_import",
     ],
 )
 
 jvm_import(
-    name = "androidx_compose_runtime-runtime-desktop-1_11_0_http_import",
-    jar = "@androidx_compose_runtime-runtime-desktop-1_11_0_http//file",
-    source_jar = "@androidx_compose_runtime-runtime-desktop-1_11_0-sources_http//file",
+    name = "androidx_compose_runtime-runtime-desktop-1_12_0-beta02_http_import",
+    jar = "@androidx_compose_runtime-runtime-desktop-1_12_0-beta02_http//file",
+    source_jar = "@androidx_compose_runtime-runtime-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
@@ -10933,30 +10978,30 @@ jvm_import(
 )
 
 jvm_import(
-    name = "androidx_compose_runtime-runtime-annotation-jvm-1_11_0_http_import",
-    jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_11_0_http//file",
-    source_jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_11_0-sources_http//file",
+    name = "androidx_compose_runtime-runtime-annotation-jvm-1_12_0-beta02_http_import",
+    jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_12_0-beta02_http//file",
+    source_jar = "@androidx_compose_runtime-runtime-annotation-jvm-1_12_0-beta02-sources_http//file",
 )
 
 copy_file(
-    name = "androidx.compose.runtime/runtime-retain-desktop-1.11.0.jar_copy",
-    src = "@androidx_compose_runtime-runtime-retain-desktop-1_11_0_http//file",
-    out = "androidx.compose.runtime/runtime-retain-desktop-1.11.0.jar",
+    name = "androidx.compose.runtime/runtime-retain-desktop-1.12.0-beta02.jar_copy",
+    src = "@androidx_compose_runtime-runtime-retain-desktop-1_12_0-beta02_http//file",
+    out = "androidx.compose.runtime/runtime-retain-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
-    jar = "@androidx_compose_runtime-runtime-retain-desktop-1_11_0_http//file",
-    source_jar = "@androidx_compose_runtime-runtime-retain-desktop-1_11_0-sources_http//file",
+    jar = "@androidx_compose_runtime-runtime-retain-desktop-1_12_0-beta02_http//file",
+    source_jar = "@androidx_compose_runtime-runtime-retain-desktop-1_12_0-beta02-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "androidx.compose.runtime/runtime-saveable-desktop-1.11.0.jar_copy",
-    src = "@androidx_compose_runtime-runtime-saveable-desktop-1_11_0_http//file",
-    out = "androidx.compose.runtime/runtime-saveable-desktop-1.11.0.jar",
+    name = "androidx.compose.runtime/runtime-saveable-desktop-1.12.0-beta02.jar_copy",
+    src = "@androidx_compose_runtime-runtime-saveable-desktop-1_12_0-beta02_http//file",
+    out = "androidx.compose.runtime/runtime-saveable-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -11022,7 +11067,7 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":androidx_compose_runtime-runtime-saveable-desktop-1_11_0_http_import",
+        ":androidx_compose_runtime-runtime-saveable-desktop-1_12_0-beta02_http_import",
         ":androidx_savedstate-savedstate-compose-desktop-1_3_2_http_import",
         ":androidx_savedstate-savedstate-desktop-1_3_2_http_import",
         ":androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_4_http_import",
@@ -11034,9 +11079,9 @@ java_library(
 )
 
 jvm_import(
-    name = "androidx_compose_runtime-runtime-saveable-desktop-1_11_0_http_import",
-    jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_11_0_http//file",
-    source_jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_11_0-sources_http//file",
+    name = "androidx_compose_runtime-runtime-saveable-desktop-1_12_0-beta02_http_import",
+    jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_12_0-beta02_http//file",
+    source_jar = "@androidx_compose_runtime-runtime-saveable-desktop-1_12_0-beta02-sources_http//file",
 )
 
 jvm_import(
@@ -13920,32 +13965,32 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.skiko/skiko-awt-0.144.5.jar_copy",
-    src = "@org_jetbrains_skiko-skiko-awt-0_144_5_http//file",
-    out = "org.jetbrains.skiko/skiko-awt-0.144.5.jar",
+    name = "org.jetbrains.skiko/skiko-awt-0.150.1.jar_copy",
+    src = "@org_jetbrains_skiko-skiko-awt-0_150_1_http//file",
+    out = "org.jetbrains.skiko/skiko-awt-0.150.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-skiko-jetbrains-skiko-awt-compose",
-    jar = "@org_jetbrains_skiko-skiko-awt-0_144_5_http//file",
-    source_jar = "@org_jetbrains_skiko-skiko-awt-0_144_5-sources_http//file",
+    jar = "@org_jetbrains_skiko-skiko-awt-0_150_1_http//file",
+    source_jar = "@org_jetbrains_skiko-skiko-awt-0_150_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.skiko/skiko-awt-runtime-all-0.144.5.jar_copy",
-    src = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_144_5_http//file",
-    out = "org.jetbrains.skiko/skiko-awt-runtime-all-0.144.5.jar",
+    name = "org.jetbrains.skiko/skiko-awt-runtime-all-0.150.1.jar_copy",
+    src = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_150_1_http//file",
+    out = "org.jetbrains.skiko/skiko-awt-runtime-all-0.150.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
-    jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_144_5_http//file",
-    source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_144_5-sources_http//file",
+    jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_150_1_http//file",
+    source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_150_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19557,46 +19602,46 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.compose.components/components-resources-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_components-components-resources-1_11_0_http//file",
-    out = "org.jetbrains.compose.components/components-resources-1.11.0.jar",
+    name = "org.jetbrains.compose.components/components-resources-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_components-components-resources-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.components/components-resources-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-    jar = "@org_jetbrains_compose_components-components-resources-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_components-components-resources-1_11_0-sources_http//file",
+    jar = "@org_jetbrains_compose_components-components-resources-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_components-components-resources-1_12_0-beta02-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.compose.components/components-resources-desktop-1.11.0.jar_copy",
-    src = "@org_jetbrains_compose_components-components-resources-desktop-1_11_0_http//file",
-    out = "org.jetbrains.compose.components/components-resources-desktop-1.11.0.jar",
+    name = "org.jetbrains.compose.components/components-resources-desktop-1.12.0-beta02.jar_copy",
+    src = "@org_jetbrains_compose_components-components-resources-desktop-1_12_0-beta02_http//file",
+    out = "org.jetbrains.compose.components/components-resources-desktop-1.12.0-beta02.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-    jar = "@org_jetbrains_compose_components-components-resources-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_11_0-sources_http//file",
+    jar = "@org_jetbrains_compose_components-components-resources-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_12_0-beta02-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
-    jar = "@org_jetbrains_compose_components-components-resources-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_components-components-resources-1_11_0-sources_http//file",
+    jar = "@org_jetbrains_compose_components-components-resources-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_components-components-resources-1_12_0-beta02-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
-    jar = "@org_jetbrains_compose_components-components-resources-desktop-1_11_0_http//file",
-    source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_11_0-sources_http//file",
+    jar = "@org_jetbrains_compose_components-components-resources-desktop-1_12_0-beta02_http//file",
+    source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_12_0-beta02-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
