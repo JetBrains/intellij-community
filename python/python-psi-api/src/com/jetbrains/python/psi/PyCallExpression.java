@@ -154,14 +154,6 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
       return myCallSiteOwner;
     }
 
-    /**
-     * @deprecated use `getCallSiteOwner` instead
-     */
-    @Deprecated(forRemoval = true)
-    public @NotNull PyCallSiteOwner getCallSiteExpression() {
-      return getCallSiteOwner();
-    }
-
     public @Nullable PyCallableType getCallableType() {
       return myCallableType;
     }
