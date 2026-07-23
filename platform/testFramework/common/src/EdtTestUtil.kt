@@ -12,7 +12,9 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 
 /**
- * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ * Legacy synchronous bridge to EDT. In coroutine-based tests, prefer a bounded
+ * `timeoutRunBlocking` boundary and a small `withContext(Dispatchers.UI)` block. Use
+ * `Dispatchers.EDT` only for operations known to require IntelliJ model or lock access.
  */
 @TestOnly
 fun <V> runInEdtAndGet(compute: () -> V): V {
@@ -21,7 +23,9 @@ fun <V> runInEdtAndGet(compute: () -> V): V {
 }
 
 /**
- * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ * Legacy synchronous bridge to EDT. In coroutine-based tests, prefer a bounded
+ * `timeoutRunBlocking` boundary and a small `withContext(Dispatchers.UI)` block. Use
+ * `Dispatchers.EDT` only for operations known to require IntelliJ model or lock access.
  */
 @TestOnly
 fun <V> runInEdtAndGet(writeIntent: Boolean, compute: () -> V): V {
@@ -30,7 +34,9 @@ fun <V> runInEdtAndGet(writeIntent: Boolean, compute: () -> V): V {
 }
 
 /**
- * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ * Legacy synchronous bridge to EDT. In coroutine-based tests, prefer a bounded
+ * `timeoutRunBlocking` boundary and a small `withContext(Dispatchers.UI)` block. Use
+ * `Dispatchers.EDT` only for operations known to require IntelliJ model or lock access.
  */
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
@@ -39,7 +45,9 @@ fun runInEdtAndWait(runnable: () -> Unit) {
 }
 
 /**
- * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ * Legacy synchronous bridge to EDT. In coroutine-based tests, prefer a bounded
+ * `timeoutRunBlocking` boundary and a small `withContext(Dispatchers.UI)` block. Use
+ * `Dispatchers.EDT` only for operations known to require IntelliJ model or lock access.
  */
 @TestOnly
 fun runInEdtAndWait(writeIntent: Boolean, runnable: () -> Unit) {
