@@ -13428,6 +13428,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationWithUseSite.kt");
         }
 
+        @TestMetadata("backtickedIdentifier.kt")
+        public void testBacktickedIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/backtickedIdentifier.kt");
+        }
+
         @TestMetadata("dataClass.kt")
         public void testDataClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/dataClass.kt");

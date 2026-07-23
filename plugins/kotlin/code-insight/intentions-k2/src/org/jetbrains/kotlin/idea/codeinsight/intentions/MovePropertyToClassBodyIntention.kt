@@ -45,8 +45,9 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
     ) {
         val parentClass = PsiTreeUtil.getParentOfType(element, KtClass::class.java) ?: return
 
+        val parameterName = element.nameIdentifier?.text ?: return
         val propertyDeclaration = KtPsiFactory(element.project)
-            .createProperty("${element.valOrVarKeyword?.text} ${element.name} = ${element.name}")
+            .createProperty("${element.valOrVarKeyword?.text} $parameterName = $parameterName")
 
         val firstProperty = parentClass.getProperties().firstOrNull()
         parentClass.addDeclarationBefore(propertyDeclaration, firstProperty).apply {
