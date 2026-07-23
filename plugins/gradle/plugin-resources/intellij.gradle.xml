@@ -183,6 +183,8 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
+    <qualifiedNameProvider implementation="org.jetbrains.plugins.gradle.action.GradleBuildScriptQualifiedNameProvider"/>
+
     <runAnything.executionProvider implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider" order="first"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleProjectRepositoryCollector"/>
