@@ -15,9 +15,8 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
   fun parse() {
     val fileMarker = mark()
-    // stopTokensStack.clear()
     parseFile()
-    // require(builder.eof()) { "Not all tokens were passed." }
+    require(builder.eof()) { "Not all tokens were passed." }
     fileMarker.done(YamlSyntaxElementTypes.FILE)
   }
 
@@ -317,7 +316,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
   private fun parseScalarValue(indent: Int): SyntaxElementType? {
     val tokenType = getTokenType()
-//        require(YamlSyntaxElementTypes.SCALAR_VALUES.contains(tokenType)) { "Scalar value expected!" }
+    require(YamlSyntaxElementTypes.SCALAR_VALUES.contains(tokenType)) { "Scalar value expected!" }
     if (tokenType === YamlSyntaxTokenTypes.SCALAR_LIST || tokenType === YamlSyntaxTokenTypes.SCALAR_TEXT) {
       return parseMultiLineScalar(tokenType)
     }
@@ -339,7 +338,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseMultiLineScalar(tokenType: SyntaxElementType?): SyntaxElementType {
-//        require(tokenType === getTokenType())
+    require(tokenType === getTokenType())
     // Accept header token: '|' or '>'
     advanceLexer()
 
@@ -399,7 +398,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseExplicitKeyValue(indent: Int): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.QUESTION)
+    require(getTokenType() === YamlSyntaxTokenTypes.QUESTION)
 
     var indentAddition = getShorthandIndentAddition()
     advanceLexer()
@@ -433,7 +432,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
 
 
   private fun parseScalarKeyValue(indent: Int): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.SCALAR_KEY) { "Expected scalar key" }
+    require(getTokenType() === YamlSyntaxTokenTypes.SCALAR_KEY) { "Expected scalar key" }
     wasEolSeen = false
 
     val indentAddition = getShorthandIndentAddition()
@@ -443,7 +442,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseSimpleScalarKeyValueFromColon(indent: Int, indentAddition: Int): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.COLON) { "Expected colon" }
+    require(getTokenType() === YamlSyntaxTokenTypes.COLON) { "Expected colon" }
     advanceLexer()
 
     val rollbackMarker = mark()
@@ -463,7 +462,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseSequenceItem(indent: Int): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.SEQUENCE_MARKER)
+    require(getTokenType() === YamlSyntaxTokenTypes.SEQUENCE_MARKER)
 
     val indentAddition = getShorthandIndentAddition()
     advanceLexer()
@@ -475,7 +474,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseHash(): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.LBRACE)
+    require(getTokenType() === YamlSyntaxTokenTypes.LBRACE)
     advanceLexer()
     stopTokensStack.add(HASH_STOP_TOKENS)
 
@@ -493,7 +492,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   }
 
   private fun parseArray(): SyntaxElementType {
-//        require(getTokenType() === YamlSyntaxTokenTypes.LBRACKET)
+    require(getTokenType() === YamlSyntaxTokenTypes.LBRACKET)
     advanceLexer()
     stopTokensStack.add(ARRAY_STOP_TOKENS)
 

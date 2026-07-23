@@ -4,4 +4,4 @@ package org.jetbrains.yaml
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.ElementTypeConverters
 
-fun getYamlElementTypeConverter(): ElementTypeConverter = ElementTypeConverters.getConverter(YAMLLanguage.INSTANCE)
+internal fun getYamlElementTypeConverter(): ElementTypeConverter = ElementTypeConverters.getConverter(YAMLLanguage.INSTANCE)

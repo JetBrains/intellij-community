@@ -7,7 +7,7 @@ import com.intellij.platform.syntax.psi.elementTypeConverterOf
 import org.jetbrains.yaml.syntax.YamlSyntaxElementTypes
 import org.jetbrains.yaml.syntax.YamlSyntaxTokenTypes
 
-class YamlElementTypeConverterFactory : ElementTypeConverterFactory {
+internal class YamlElementTypeConverterFactory : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = yamlElementTypeConverter
 }
 
@@ -63,7 +63,7 @@ private val yamlElementTypeConverter = elementTypeConverterOf(
   YamlSyntaxTokenTypes.ALIAS to YAMLTokenTypes.ALIAS,
 )
 
-class YamlFileElementTypeConverterFactory : ElementTypeConverterFactory {
+internal class YamlFileElementTypeConverterFactory : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = yamlFileElementTypeConverter
 }
 
