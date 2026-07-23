@@ -54,7 +54,7 @@ internal class ReplaceForLoopWithRepeatIntention :
         val times = loopRange.right?.text ?: return null
         val continuesToReplace = element.computeContinuesToReplace()
 
-        val loopParameterName = element.loopParameter?.name.takeIf { element.isParameterUsedInBody() }
+        val loopParameterName = element.loopParameter?.nameIdentifier?.text.takeIf { element.isParameterUsedInBody() }
 
         return Context(times, continuesToReplace, loopParameterName)
     }

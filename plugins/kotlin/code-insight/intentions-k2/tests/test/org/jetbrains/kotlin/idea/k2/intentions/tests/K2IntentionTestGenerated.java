@@ -15322,6 +15322,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedParameter.kt")
+        public void testBacktickedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/backtickedParameter.kt");
+        }
+
         @TestMetadata("continueFromNestedLambda.kt")
         public void testContinueFromNestedLambda() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/continueFromNestedLambda.kt");
