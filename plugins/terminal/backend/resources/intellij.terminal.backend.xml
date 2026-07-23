@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.kernel.backend"/>
