@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -265,7 +266,7 @@ private fun KtIfExpression.siblingsUpTo(other: KtExpression): List<PsiElement> {
 private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid(),PsiRecursiveVisitor {
     val labelName: String? by lazy {
         nearestLoopIfAny?.let { loop ->
-            getExistingLabelName(loop) ?: getUniqueLabelName(loop)
+            getExistingLabelName(loop)?.quoteIfNeeded() ?: getUniqueLabelName(loop)
         }
     }
 

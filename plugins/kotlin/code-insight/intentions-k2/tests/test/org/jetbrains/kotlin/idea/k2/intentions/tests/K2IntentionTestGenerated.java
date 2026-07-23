@@ -11581,6 +11581,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments13.kt");
             }
 
+            @TestMetadata("withLoopExistingBacktickedLabel.kt")
+            public void testWithLoopExistingBacktickedLabel() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopExistingBacktickedLabel.kt");
+            }
+
             @TestMetadata("withLoopExistingLabel.kt")
             public void testWithLoopExistingLabel() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopExistingLabel.kt");
