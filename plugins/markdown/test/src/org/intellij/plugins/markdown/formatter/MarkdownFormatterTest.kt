@@ -65,6 +65,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test keep line breaks inside text block`() = doTest(rightMargin = 120, keepLineBreaks = true)
 
+  fun `test reflow text glued to emphasis`() = doTest()
+
   // IJPL-241496: a single long line wrapped at 100 and then reformatted at 80 must reflow cleanly,
   // not accumulate extra line breaks, when "keep line breaks inside text blocks" is disabled.
   fun `test text block reflow after decreasing margin`() {

@@ -18,6 +18,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -43,6 +44,11 @@ internal open class MarkdownFormattingBlock(
 
   companion object {
     private val NON_ALIGNABLE_LIST_ELEMENTS = TokenSet.orSet(MarkdownTokenTypeSets.LIST_MARKERS, MarkdownTokenTypeSets.LISTS)
+    private val EMPHASIS_ELEMENTS = TokenSet.create(
+      MarkdownElementTypes.EMPH,
+      MarkdownElementTypes.STRONG,
+      MarkdownElementTypes.STRIKETHROUGH
+    )
   }
 
   override fun getSettings(): CodeStyleSettings = settings
@@ -79,7 +85,19 @@ internal open class MarkdownFormattingBlock(
       val spaces = continuation.text.substringAfter('>').length.coerceAtLeast(1)
       return Spacing.createSpacing(spaces, spaces, 0, false, 0)
     }
-    return spacing.getSpacing(this, child1, child2)
+    val result = spacing.getSpacing(this, child1, child2)
+    if (result != null && isTextGluedToEmphasis(child1, child2)) {
+      return Spacing.createSpacing(0, 0, 0, false, 0)
+    }
+    return result
+  }
+
+  private fun isTextGluedToEmphasis(child1: Block?, child2: Block): Boolean {
+    val node1 = (child1 as? AbstractBlock)?.node ?: return false
+    val node2 = (child2 as? AbstractBlock)?.node ?: return false
+    return node1.elementType == MarkdownTokenTypes.TEXT
+           && node2.elementType in EMPHASIS_ELEMENTS
+           && child1.textRange.endOffset == child2.textRange.startOffset
   }
 
   override fun getIndent(): Indent? {
