@@ -564,6 +564,24 @@ object PyTypeUtil {
         lastType
       }
       if (elementsWithDeclaredType.isEmpty() && memberType.isNoneType) {
+        /* we support a special case where we convert an unannotated attribute of `None` to `UnsafeUnion[None, Unknown]`
+          this is because there are frequently cases in real code where inferring `None` would lead to undesirable false positives:
+          ```py
+          class C:
+              def __init__(self):
+                  self.a = None  # user intends `int | None` / `late int`
+              def set_a(self):
+                  self.a = 1
+          def f(c: C):
+              c.a + 1  # FP here
+          ```
+
+          we use `UnsafeUnion` to avoid cases where the `None` doesn't typically surface to usages,
+          if the user is interested in typing they should always annotate an attribute that is initialised with `None`
+
+          there is also a consideration for the case where a base class sets an attribute with `None`, expecting it to be
+          overridden with a value
+        */
         return PyUnsafeUnionType.unsafeUnion(memberType, PyAnyType.unknown)
       }
       return memberType
