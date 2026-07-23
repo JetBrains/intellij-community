@@ -26,22 +26,17 @@ class MarkdownParserManager: Disposable {
 
   @JvmOverloads
   fun parse(buffer: CharSequence, flavour: MarkdownFlavourDescriptor = FLAVOUR): ASTNode {
-    val wrappedBuffer = object: BombedCharSequence(buffer) {
-      override fun checkCanceled() {
-        ProgressManager.checkCanceled()
-      }
-    }
-    return performParsing(wrappedBuffer, flavour)
-  }
-
-  private fun performParsing(buffer: CharSequence, flavour: MarkdownFlavourDescriptor = FLAVOUR): ASTNode {
     val info = lastParsingResult.get()?.get()
     if (info != null && info.bufferHash == buffer.hashCode() && info.buffer == buffer) {
       return info.tree
     }
     val parseResult = createMarkdownParser(flavour).parse(
       MarkdownElementTypes.MARKDOWN_FILE,
-      buffer,
+      object : BombedCharSequence(buffer) {
+        override fun checkCanceled() {
+          ProgressManager.checkCanceled()
+        }
+      },
       parseInlines = false
     )
     lastParsingResult.set(SoftReference(ParsingResult(buffer, parseResult)))
