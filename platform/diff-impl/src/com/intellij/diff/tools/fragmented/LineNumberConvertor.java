@@ -5,8 +5,11 @@ import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -53,6 +56,17 @@ public final class LineNumberConvertor {
 
   public int convert(int value, boolean fromMaster, boolean approximate) {
     return myCorrector.convertCorrected(value, fromMaster, approximate);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<Range> getRanges() {
+    List<Range> result = new ArrayList<>(myFragments.size());
+    for (Map.Entry<Integer, Data> entry : myFragments.entrySet()) {
+      int start = entry.getKey();
+      Data data = entry.getValue();
+      result.add(new Range(start, start + data.length, data.otherStart, data.otherStart + data.otherLength));
+    }
+    return Collections.unmodifiableList(result);
   }
 
   /**

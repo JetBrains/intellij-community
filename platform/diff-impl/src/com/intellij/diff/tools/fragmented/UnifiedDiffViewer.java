@@ -37,6 +37,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.LineRange;
+import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -968,6 +969,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
   public @Nullable List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable List<Range> getLineNumberMapping(@NotNull Side side) {
+    LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
+    return convertor != null ? convertor.getRanges() : null;
   }
 
   private @NotNull List<UnifiedDiffChange> getNonSkippedDiffChanges() {

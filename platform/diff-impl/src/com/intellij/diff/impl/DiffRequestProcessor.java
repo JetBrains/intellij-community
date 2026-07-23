@@ -15,6 +15,7 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.DiffNextFileAction;
 import com.intellij.diff.actions.impl.DiffPreviousFileAction;
 import com.intellij.diff.editor.DiffViewerVirtualFile;
+import com.intellij.diff.frontend.impl.LocalFrontendDiffExtensionBridge;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffHeaderToolbarPanel;
 import com.intellij.diff.impl.ui.DiffHeaderToolbarUtil;
@@ -414,6 +415,7 @@ public abstract class DiffRequestProcessor
         LOG.error(e);
       }
     }
+    LocalFrontendDiffExtensionBridge.notifyViewerCreated(viewer, myContext, myActiveRequest);
 
     DiffViewerWrapper wrapper = myActiveRequest.getUserData(DiffViewerWrapper.KEY);
     if (wrapper == null) {
