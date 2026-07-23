@@ -58,7 +58,8 @@ public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFil
     cal.add(Calendar.DAY_OF_YEAR, -6);
     Date oneWeekBefore = cal.getTime();
 
-    return new DefaultActionGroup(new SelectAction(),
+    return new DefaultActionGroup(createAllAction(),
+                                  new SelectAction(),
                                   new DateAction(oneDayBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.day")),
                                   new DateAction(oneWeekBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.week")));
   }

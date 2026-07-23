@@ -47,6 +47,7 @@ public class UserFilterPopupComponent
   @Override
   protected @NotNull ActionGroup createActionGroup() {
     List<AnAction> group = new ArrayList<>();
+    group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
       group.add(new PredefinedValueAction(Collections.singletonList(VcsLogFilterObject.ME), () -> me(), true));
