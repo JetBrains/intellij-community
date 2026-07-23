@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.components.JBCheckBox;
@@ -130,15 +129,8 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
     var iconPath = AppUIUtil.findAppIcon();
     if (iconPath == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binDir));
 
-    var starter = Restarter.getIdeStarter();
+    var starter = Restarter.getBinStarter();
     if (starter == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binDir));
-    var starterName = NioFiles.getFileName(starter);
-    if (starterName.endsWith(".sh")) {
-      var binStarter = starter.resolveSibling(starterName.substring(0, starterName.length() - 3));
-      if (Files.exists(binStarter)) {
-        starter = binStarter;
-      }
-    }
 
     var names = ApplicationNamesInfo.getInstance();
     var name = names.getFullProductNameWithEdition();
