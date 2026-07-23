@@ -41,7 +41,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyEnumAttributeStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
@@ -720,10 +719,6 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     Set<PyCallableParameter> boundParameters = new HashSet<>(mapping.getMappedParameters().values());
     List<PyCallableParameter> remaining = new ArrayList<>();
     for (PyCallableParameter param : originalParams) {
-      if (mapping.getImplicitParameters().contains(param)) {
-        continue;
-      }
-
       if (!(param.isPositionalContainer() || param.isKeywordContainer()) && boundParameters.contains(param)) {
         continue;
       }

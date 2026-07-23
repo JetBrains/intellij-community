@@ -841,7 +841,6 @@ object PyCallExpressionHelper {
 
     return PyArgumentsMapping(expression,
                               callableType,
-                              emptyList(),
                               mappingResults.mappedParameters,
                               mappingResults.unmappedParameters,
                               mappingResults.unmappedContainerParameters,

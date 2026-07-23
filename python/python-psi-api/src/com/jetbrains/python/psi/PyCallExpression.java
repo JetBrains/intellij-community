@@ -9,6 +9,7 @@ import com.jetbrains.python.ast.PyAstCallExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,6 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
   class PyArgumentsMapping {
     private final @NotNull PyCallSiteOwner myCallSiteOwner;
     private final @Nullable PyCallableType myCallableType;
-    private final @NotNull List<PyCallableParameter> myImplicitParameters;
     private final @NotNull Map<PyExpression, PyCallableParameter> myMappedParameters;
     private final @NotNull List<PyCallableParameter> myUnmappedParameters;
     private final @NotNull List<PyCallableParameter> myUnmappedContainerParameters;
@@ -117,9 +117,9 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
     private final @NotNull List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
     private final @NotNull Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
+    @ApiStatus.Internal
     public PyArgumentsMapping(@NotNull PyCallSiteOwner callSiteOwner,
                               @Nullable PyCallableType callableType,
-                              @NotNull List<PyCallableParameter> implicitParameters,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
                               @NotNull List<PyCallableParameter> unmappedContainerParameters,
@@ -129,7 +129,6 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
                               @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
       myCallSiteOwner = callSiteOwner;
       myCallableType = callableType;
-      myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedContainerParameters = unmappedContainerParameters;
@@ -142,7 +141,6 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
     public static @NotNull PyArgumentsMapping empty(@NotNull PyCallSiteOwner callSiteExpression) {
       return new PyCallExpression.PyArgumentsMapping(callSiteExpression,
                                                      null,
-                                                     Collections.emptyList(),
                                                      Collections.emptyMap(),
                                                      Collections.emptyList(),
                                                      Collections.emptyList(),
@@ -166,10 +164,6 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
 
     public @Nullable PyCallableType getCallableType() {
       return myCallableType;
-    }
-
-    public @NotNull List<PyCallableParameter> getImplicitParameters() {
-      return myImplicitParameters;
     }
 
     public @NotNull Map<PyExpression, PyCallableParameter> getMappedParameters() {
