@@ -7,6 +7,7 @@
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ml.impl"/>
     <!-- endregion -->
   </dependencies>

@@ -1,9 +1,6 @@
 ---
 name: pseudo-kmp
-description: >-
-  Working with pseudo-KMP (Kotlin Multiplatform) modules in the IntelliJ monorepo.
-  Use when creating, migrating, or modifying modules that use the expects-compiler-plugin
-  for expect/actual emulation in JPS projects.
+description: Create, migrate, or modify IntelliJ pseudo-KMP modules using expect/actual emulation.
 ---
 
 # Pseudo-KMP Modules

@@ -319,10 +319,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return data;
   }
 
-  private static void invokeProcessQueueToTriggerEvictedListener(@NotNull Map<? extends PsiElement, ?> map) {
-    ((ReferenceQueueable)map).processQueue(); // to call evictionListener if needed
-  }
-
   @Override
   public synchronized void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                                                 @NotNull TextRange restrictRange,
@@ -615,7 +611,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       for (Map.Entry<Object, ToolHighlights> toolEntry : map.entrySet()) {
         ToolHighlights toolHighlights = toolEntry.getValue();
         Object toolId = toolEntry.getKey();
-        invokeProcessQueueToTriggerEvictedListener(toolHighlights.elementHighlights);
         if (!toolPredicate.matches(toolId)) {
           continue;
         }

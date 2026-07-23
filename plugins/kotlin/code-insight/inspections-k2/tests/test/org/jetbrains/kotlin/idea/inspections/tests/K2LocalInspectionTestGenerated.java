@@ -17555,6 +17555,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedObjectName_positive.kt")
+            public void testBacktickedObjectName_positive() throws Exception {
+                runTest("testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/backtickedObjectName_positive.kt");
+            }
+
             @TestMetadata("doesntImplementSerializable_negative.kt")
             public void testDoesntImplementSerializable_negative() throws Exception {
                 runTest("testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/doesntImplementSerializable_negative.kt");
@@ -22084,6 +22089,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("assignment.kt")
             public void testAssignment() throws Exception {
                 runTest("testData/inspectionsLocal/setterBackingFieldAssignment/assignment.kt");
+            }
+
+            @TestMetadata("backtickedParamName.kt")
+            public void testBacktickedParamName() throws Exception {
+                runTest("testData/inspectionsLocal/setterBackingFieldAssignment/backtickedParamName.kt");
             }
 
             @TestMetadata("decrement.kt")
@@ -29224,6 +29234,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("annotation.kt")
         public void testAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/annotation.kt");
+        }
+
+        @TestMetadata("backtickedClassName.kt")
+        public void testBacktickedClassName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/backtickedClassName.kt");
         }
 
         @TestMetadata("baseEquals.kt")

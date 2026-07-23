@@ -1,15 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
-import com.intellij.internal.performance.LatencyDistributionRecord;
-import com.intellij.internal.performance.LatencyDistributionRecordKey;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowUtilValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EnumEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.IntEventField;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
@@ -32,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;

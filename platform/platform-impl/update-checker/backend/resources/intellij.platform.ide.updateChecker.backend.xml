@@ -1,12 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.rpc.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
                         serviceImplementation="com.intellij.platform.ide.updateChecker.backend.DefaultPluginUpdateHandlerProvider"/>

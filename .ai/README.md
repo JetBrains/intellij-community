@@ -71,6 +71,17 @@ Generated stubs are recognized by marker:
 
 Manual files in `.agents/skills/` without that marker are treated as ultimate-only sources.
 
+### Skill description budget
+
+Skill descriptions are always loaded into Codex context, so canonical `SKILL.md` frontmatter must keep them concise:
+
+- `description` must be a non-empty, single-line YAML value without an inline YAML comment.
+- Each description is limited to 160 UTF-8 bytes.
+- All descriptions available in one edition are limited to 6 KiB (`6 * 1024` bytes) combined.
+- Front-load the skill's action and decisive trigger terms; keep detailed guidance in the skill body.
+
+The renderer validates the canonical sources available to the selected edition before writing or pruning generated files. If rendering fails on this budget, shorten the reported canonical descriptions and rerun the renderer; do not edit generated skill stubs.
+
 ```text
 PASS 1 (community source skills)
 --------------------------------

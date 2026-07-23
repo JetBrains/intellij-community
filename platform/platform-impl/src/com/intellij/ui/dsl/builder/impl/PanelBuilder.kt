@@ -18,7 +18,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JRadioButton
@@ -169,7 +168,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
   private fun checkRow(row: RowImpl): Boolean {
     if (row.cells.isEmpty()) {
-      warn("Row should not be empty")
+      logWarningWithDebugStacktrace("Row should not be empty")
       return false
     }
 
@@ -180,7 +179,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     val gaps = grid.rowsGaps
     for (i in gaps.indices) {
       if (i > 0 && gaps[i - 1].bottom > 0 && gaps[i].top > 0) {
-        warn("There is double gap between two near rows")
+        logWarningWithDebugStacktrace("There is double gap between two near rows")
       }
     }
   }

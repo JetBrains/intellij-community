@@ -57,8 +57,4 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return pack(ourKeys.get(tokenType));
   }
-
-  public static Map<IElementType, TextAttributesKey> getKeys() {
-    return ourKeys;
-  }
 }

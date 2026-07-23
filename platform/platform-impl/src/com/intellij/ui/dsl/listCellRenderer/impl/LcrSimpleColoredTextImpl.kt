@@ -3,12 +3,10 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.dsl.checkTrue
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JComponent
@@ -24,7 +22,7 @@ internal class LcrSimpleColoredTextImpl(
   override val type = Type.SIMPLE_COLORED_TEXT
 
   override fun apply(component: JComponent, enabled: Boolean, list: JList<*>, isSelected: Boolean) {
-    checkTrue(type.isInstance(component))
+    check(type.isInstance(component))
 
     component as PatchedSimpleColoredComponent
     component.clear()

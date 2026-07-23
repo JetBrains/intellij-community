@@ -14,7 +14,20 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
+    /**
+     * KGP version used in Kotlin Gradle import tests
+     * Needed as a fallback to pin the exact version of KGP in exceptional situations, otherwise intended to be absent
+     *
+     * @see GeneratorPreferences.kotlinGradlePluginArtifactVersion
+     */
     val kotlinGradlePluginVersion: String? by OptionalPreference
+
+    /**
+     * KGP version used in Kotlin plugin tests, which rely on Gradle import
+     * Intended to be fixed and updated manually because tests are included in quality gates
+     *
+     * @see GeneratorPreferences.kotlinNativeArtifactVersion
+     */
     val kotlinNativeVersion: String? by OptionalPreference
 
     /**

@@ -142,16 +142,10 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   }
 
   override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
-    // TODO Describe why it's fine to return local paths here.
-    // TODO Speed up.
-
-    // This code deliberately returns only `\\wsl.localhost\` paths despite the existence of `\\wsl$`.
-    // This function is often used in UI like file choosers, and it looks awkward
-    // if the same root appears in the file tree twice.
-    // The disadvantage is that `Path.of("""\\wsl$\Ubuntu\home").root` is not in `getRootDirectories()`,
-    // but the default Windows file system behaves exactly the same:
-    // its `getRootDirectories()` never returns WSL roots at all.
-    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf()).map { wsl ->
+    // Only `\\wsl.localhost\` so the file chooser doesn't show each distro twice.
+    // IJPL-172763: read the cache only; `installedDistributionsFuture` would spawn `wsl.exe --list`.
+    val distributions = WslDistributionManager.getInstance().lastInstalledDistributions ?: return emptyList()
+    return distributions.map { wsl ->
       wsl.roots.first { root ->
         root.contains("wsl.localhost")
       }
@@ -159,9 +153,11 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {
-    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf())
+    // IJPL-172763: see getCustomRoots.
+    val distributions = WslDistributionManager.getInstance().lastInstalledDistributions ?: return emptyList()
+    return distributions
       .flatMap { it.roots }
-      .flatMap { compute(localFS, it)!!.fileStores }
+      .flatMap { compute(localFS, it)?.fileStores ?: emptyList() }
   }
 
   companion object {

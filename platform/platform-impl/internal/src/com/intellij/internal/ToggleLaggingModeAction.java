@@ -57,8 +57,8 @@ final class ToggleLaggingModeAction extends AnAction implements DumbAware {
   @Override
   public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setText(isLagging ?
-                                InternalActionsBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode") :
-                                InternalActionsBundle.messagePointer(
+                                PlatformInternalBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode") :
+                                PlatformInternalBundle.messagePointer(
                                   "action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));
   }
 }

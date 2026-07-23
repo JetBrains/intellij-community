@@ -13,10 +13,9 @@ object KotlinVersionTestsProperty : KotlinTestsResolvableProperty<KotlinVersionT
     @Suppress("unused") // passed using environment variables
     enum class Value(override val versionAlias: String, override val version: String) : ValueFromEnvironment {
         MinSupported("MIN", "1.7.21"),
-        PreviousMajorRelease("PREV_RELEASE", "1.8.22"),
         LatestStable("STABLE", KotlinGradlePluginVersions.V_2_3_0.toString()),
-        Latest("LATEST", KotlinGradlePluginVersions.latest.toString()),
-        SNAPSHOT("SNAPSHOT", KotlinGradlePluginVersions.latest.run { "$major.$minor.255-SNAPSHOT" })
+        LatestPinned("LATEST_PINNED", KotlinGradlePluginVersions.latestPinned.toString()),
+        Latest("LATEST", KotlinGradlePluginVersions.latestBootstrap.toString()),
     }
 
     override val versionByAlias: Map<Value, String> = Value.entries.associateWith { it.version }

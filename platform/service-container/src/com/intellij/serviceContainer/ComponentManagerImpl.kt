@@ -1560,7 +1560,9 @@ internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, check
           if (module.packagePrefix == null && !module.moduleId.name.startsWith("intellij.libraries.")) {
             val pluginClassLoader = module.classLoader as? PluginAwareClassLoader ?: continue
             pluginClassLoader.loadClassInsideSelf(name)?.let {
-              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
+              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java)) {
+                "Can't load '$name': it belongs to a different module"
+              }
               return it
             }
           }

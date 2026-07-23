@@ -104,7 +104,7 @@ class PyTypingNewType(
 
 /**
  * Represents a type of callable object returned in runtime by `typing.NewType()`.
- * For type annotations {@link com.jetbrains.python.psi.types.PyTypingNewType} is used.
+ * For type annotations [PyTypingNewType] is used.
  */
 @ApiStatus.Internal
 class PyTypingNewTypeFactoryType(type: PyTypingNewType)

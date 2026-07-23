@@ -36,7 +36,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
@@ -481,8 +480,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   private fun registerRadioButton(cell: CellImpl<out JRadioButton>, value: Any?) {
-    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
-      "Button group must be defined before using radio button")
+    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup()
+    checkNotNull(buttonsGroup) { "Button group must be defined before using radio button" }
     buttonsGroup.add(cell, value)
   }
 

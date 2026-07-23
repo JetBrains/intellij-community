@@ -63,8 +63,8 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
     processRoot(communityRoot, communityLibraries)
     regenerateCompilerDependenciesIml(communityRoot, communityLibraries)
-    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginArtifactVersion)
-    updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinNativeArtifactVersion)
+    updateKgpVersionForKotlinGradleImportTests(communityRoot, preferences.kotlinGradlePluginArtifactVersion)
+    updateKgpVersionForKotlinNativeTests(communityRoot, preferences.kotlinNativeArtifactVersion)
 
     if (monorepoRoot != null) {
         if (preferences.convertJpsToBazel == true) {
@@ -206,27 +206,17 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
  * in the source code. The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
  * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
  */
-private fun updateLatestGradlePluginVersion(communityRoot: Path, kotlinGradlePluginVersion: String) {
-    val kotlinGradlePluginVersionsKt = communityRoot.resolve(
-        "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
-    )
-
-    updateFile(
-        kotlinGradlePluginVersionsKt,
-        """val latest = .*""",
-        "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")",
-    )
+private fun updateKgpVersionForKotlinGradleImportTests(communityRoot: Path, kotlinGradlePluginVersion: String) {
+    updateKgpVersionsFile(communityRoot, "latestBootstrap", kotlinGradlePluginVersion)
 }
 
-private fun updateKGPVersionForKotlinNativeTests(communityRoot: Path, kotlinGradlePluginVersion: String) {
-    val kotlinNativeVersionsKt = communityRoot.resolve(
-        "plugins/kotlin/base/pluginTestFramework/src/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
-    )
-    updateFile(
-        kotlinNativeVersionsKt,
-        """private const val kotlinGradlePluginVersion: String =.*""",
-        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\"",
-    )
+/**
+ * Updates the `KotlinNativeVersion.kt` and `KotlinGradlePluginVersions.kt` source files with [kotlinNativeArtifactVersion]
+ * to contain the fixed bootstrap version of KGP in the source code.
+ */
+private fun updateKgpVersionForKotlinNativeTests(communityRoot: Path, kotlinGradlePluginVersion: String) {
+    updateKotlinNativeVersionFile(communityRoot, kotlinGradlePluginVersion)
+    updateKgpVersionsFile(communityRoot, "latestPinned", kotlinGradlePluginVersion)
 }
 
 private fun regenerateCompilerDependenciesIml(communityRoot: Path, libraries: List<JpsLibrary>) {
@@ -277,6 +267,28 @@ internal fun renderCompilerDependenciesIml(libraries: List<JpsLibrary>): String 
             }
         }
     }.render(addXmlDeclaration = true)
+}
+
+private fun updateKgpVersionsFile(communityRoot: Path, propertyName: String, kotlinGradlePluginVersion: String) {
+    val kotlinGradlePluginVersionsKt = communityRoot.resolve(
+        "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+    )
+    updateFile(
+        kotlinGradlePluginVersionsKt,
+        """val $propertyName = .*""",
+        "val $propertyName = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")",
+    )
+}
+
+private fun updateKotlinNativeVersionFile(communityRoot: Path, kotlinGradlePluginVersion: String) {
+    val kotlinNativeVersionsKt = communityRoot.resolve(
+        "plugins/kotlin/base/pluginTestFramework/src/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
+    )
+    updateFile(
+        kotlinNativeVersionsKt,
+        """private const val kotlinGradlePluginVersion: String =.*""",
+        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\"",
+    )
 }
 
 private fun updateFile(sourceFile: Path, regexp: String, replacement: String) {

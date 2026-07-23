@@ -1,6 +1,6 @@
 ---
 name: extract-module
-description: Extract an optional dependency from a plugin module into a new content module. Use when making a library dependency optional by separating integration code into its own module.
+description: Extract optional plugin dependencies into separate IntelliJ content modules.
 ---
 
 # Extracting an Optional Dependency into a New Content Module

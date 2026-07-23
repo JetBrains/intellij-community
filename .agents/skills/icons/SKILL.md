@@ -1,6 +1,6 @@
 ---
 name: icons
-description: Generate New UI icons for the IntelliJ Platform. Use when creating, editing, or reviewing SVG icons for the New UI — action icons (16×16), tree-node icons (16×16), tool-window icons (16×16 + 20×20), main-toolbar icons (20×20), editor-gutter icons (12×12 / 14×14), status-bar icons, and other system icons. Produces a light and a `_dark` variant that share geometry and use the canonical New UI palette so the icons theme correctly in both themes.
+description: Create or review IntelliJ New UI SVG icons, theme variants, sizes, and palette.
 ---
 
 # IntelliJ Platform New UI Icons

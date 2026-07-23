@@ -293,10 +293,12 @@
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache"/>
     <module name="intellij.platform.managed.cache.backend"/>
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.feedback" loading="embedded"/>
     <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.pluginManager.backend"/>
     <module name="intellij.platform.pluginManager.frontend"/>
+    <module name="intellij.platform.ide.updateChecker" loading="embedded"/>
     <module name="intellij.platform.ide.updateChecker.backend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>

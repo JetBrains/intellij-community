@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.anomalies;
 
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.PlatformInternalBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,7 +36,7 @@ final class TopAnomaliesAction extends ActionGroup {
       return Integer.compare(o1.hashCode(), o2.hashCode());
     };
 
-    private static final ResettableAction TOP_PARENTS = new ResettableAction(InternalActionsBundle.messagePointer("action.Anonymous.text.parents")) {
+    private static final ResettableAction TOP_PARENTS = new ResettableAction(PlatformInternalBundle.messagePointer("action.Anonymous.text.parents")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -83,7 +83,7 @@ final class TopAnomaliesAction extends ActionGroup {
       }
     };
 
-    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(InternalActionsBundle.messagePointer("action.Anonymous.text.clientproperties")) {
+    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(PlatformInternalBundle.messagePointer("action.Anonymous.text.clientproperties")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -142,7 +142,7 @@ final class TopAnomaliesAction extends ActionGroup {
     };
 
 
-    private static final ResettableAction RESET_THEM_ALL = new ResettableAction(() -> InternalActionsBundle
+    private static final ResettableAction RESET_THEM_ALL = new ResettableAction(() -> PlatformInternalBundle
       .message("action.Anonymous.text.reset.statistics")) {
       @Override
       void reset() {

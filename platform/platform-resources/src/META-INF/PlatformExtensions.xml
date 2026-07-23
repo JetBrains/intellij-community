@@ -158,8 +158,6 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.featureStatistics.InternalFlagDetection"/>
-
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.UltimateDependencyChecker"
@@ -495,8 +493,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.TypedAction"
                         serviceImplementation="com.intellij.openapi.editor.impl.TypedActionImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
-                        serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
     <applicationService serviceImplementation="com.intellij.util.text.DateTimeFormatManager"/>
     <applicationSettings service="com.intellij.util.text.DateTimeFormatManager"/>
 
@@ -558,9 +554,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                         preload="true"/>
     <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider"
                         serviceImplementation="com.intellij.ide.gdpr.ConsentOptionsProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
-                        serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
                         serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -921,6 +914,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                          implementationClass="com.intellij.internal.statistic.collectors.fus.BackspaceSelectionLoggingHandler"
                          id="backspace.selection.logging"
                          order="after backspace.lookup, before backspace.for.selection"/>
+
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
@@ -980,19 +974,15 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
 
-    <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
-                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.JetBrainsConsentProvider" open="true"
                         serviceImplementation="com.intellij.internal.statistic.EmptyJetBrainsConsentProvider"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.openapi.fileTypes.impl.FileTypeValidationRule"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
     <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>
-    <statistics.validation.customValidationRule
       implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector$UrlValidationRule"/>
@@ -1001,40 +991,12 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.GotItIDValidator"/>
 
     <statistics.projectUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
-    <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.otherIde.DotVSCodeProjectCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
-                                           allowOnStartup="true"/>
-    <statistics.applicationUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginRepositoriesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.DuplicatingPluginIdStateCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.ConsentUsagesCollector"
                                            allowOnStartup="true"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
-    <statistics.applicationUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
-    <statistics.applicationUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.os.LinuxWindowManagerUsageCollector" allowOnStartup="true"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector"
-                                           allowOnStartup="true"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.LocalizationUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
-                                           allowOnStartup="true"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.SystemPropertiesFileCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <applicationActivity implementation="com.intellij.ide.ImportOldConfigsUsagesCollector$Trigger"/>
-    <statistics.applicationUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
-    <statistics.applicationUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.ToolkitInfoCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
-    <statistics.projectUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.project.IntelliJProjectUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector"/>
     <statistics.counterUsagesCollector
@@ -1042,7 +1004,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneCollector"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.SpeculativeUndoStatCollector" />
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
     <statistics.counterUsagesCollector
@@ -1160,20 +1121,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.markup.InspectionsFUS"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.build.BuildToolsCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.environment.EditorsCollector"/>
-
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.psi.IElementTypeUsageCollector"/>
-
-    <fileTypeUsageSchemaDescriptor schema="DotBazelFile"
-                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.DotBazelFileTypeUsageSchemaDescriptor"/>
-    <fileTypeUsageSchemaDescriptor schema="BazelBuildFile"
-                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelBuildFileTypeUsageSchemaDescriptor"/>
-    <fileTypeUsageSchemaDescriptor schema="BazelWorkspaceFile"
-                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelWorkspaceFileTypeUsageSchemaDescriptor"/>
-    <fileTypeUsageSchemaDescriptor schema="BazelModuleFile"
-                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelModuleFileTypeUsageSchemaDescriptor"/>
-
     <applicationService
       serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
       preload="true"/>
@@ -2246,9 +2193,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
 
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
-
-    <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
-              class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
 
     <listener class="com.intellij.ui.tree.RecursiveExpandSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener" />

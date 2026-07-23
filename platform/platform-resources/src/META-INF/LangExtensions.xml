@@ -1135,14 +1135,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.codeInsight.completion.command.CommandCompletionStateCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.multiverse.CodeInsightContextFusCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionValidationRule"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator"/>
     <statistics.validation.customValidationRule
@@ -1175,8 +1172,6 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.projectView.ProjectViewCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectView.impl.ProjectViewPerformanceCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapChangesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
@@ -1429,8 +1424,6 @@
 
     <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler" id="TextPrintHandler"/>
     <fileDropHandler implementation="com.intellij.application.options.colors.EditorColorSchemeDropHandler"/>
-
-    <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
 
     <implementationViewSessionFactory implementation="com.intellij.codeInsight.hint.PsiImplementationSessionViewFactory"/>
 

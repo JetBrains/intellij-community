@@ -120,9 +120,13 @@ internal class JdkUpdaterStartup : ProjectActivity {
 
       var items = listDownloader.downloadModelForJdkInstaller(predicate = JdkPredicate.default(), progress = indicator)
 
-      if (SystemInfo.isWindows && WslDistributionManager.getInstance().installedDistributions.isNotEmpty()) {
-        @Suppress("SuspiciousCollectionReassignment")
-        items += listDownloader.downloadModelForJdkInstaller(predicate = JdkPredicate.forWSL(), progress = indicator)
+      if (SystemInfo.isWindows) {
+        // IJPL-172763: cache only; `installedDistributions` would spawn `wsl.exe`. WSL feed picks up on a later cycle.
+        val cachedDistributions = WslDistributionManager.getInstance().lastInstalledDistributions
+        if (cachedDistributions != null && cachedDistributions.isNotEmpty()) {
+          @Suppress("SuspiciousCollectionReassignment")
+          items += listDownloader.downloadModelForJdkInstaller(predicate = JdkPredicate.forWSL(), progress = indicator)
+        }
       }
       items.toList()
     }

@@ -1,6 +1,6 @@
 ---
 name: icon-resources
-description: Work with IntelliJ icon resources, generated *Icons.java classes, icon-robots.txt rules, IconLoader wrappers, or CommunityIconClassesTest failures.
+description: Manage IntelliJ icons, generated Icons classes, icon-robots rules, and icon test failures.
 ---
 
 # Icon Resources

@@ -12,9 +12,14 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.ide.internal",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/util-ex",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
@@ -66,6 +71,7 @@ jvm_library(
         "//platform/kernel/rpc",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/locking-impl",
+        "//platform/lang-impl",
     ],
 )
 
@@ -81,6 +87,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":internal",
+        "//platform/util-ex:util-ex_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -131,6 +138,7 @@ jvm_library(
         "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/locking-impl:locking-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

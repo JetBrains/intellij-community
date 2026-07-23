@@ -1,6 +1,6 @@
 ---
 name: kotlin-ui-swing-component-architecture
-description: Design, review, and refactor Kotlin or Java Swing UI in IntelliJ-based IDEs as isolated feature components with explicit state, semantic intents, unidirectional data flow, EDT-safe asynchronous work, and lifecycle ownership. Use when creating or changing Swing panels, dialogs, tool windows, or Kotlin UI DSL components; separating UI from services or business logic; fixing widget-driven state, blocking EDT work, listener leaks, or oversized god panels; or reviewing Swing UI architecture without overengineering small components.
+description: Design IntelliJ Swing UI components, state flow, EDT work, and lifecycle ownership.
 ---
 
 # Swing feature component architecture

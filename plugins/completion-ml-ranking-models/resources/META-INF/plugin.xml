@@ -9,6 +9,11 @@
       These models are used in A/B experiments during EAP.</p>
     ]]></description>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.internal"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>

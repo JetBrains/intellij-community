@@ -11,6 +11,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 interface IjentMachine : EelMachine {
   fun getCachedIjentSession(): IjentSession?
   suspend fun getIjentSession(sessionScope: ParentOfIjentScopes): IjentSession
+
+  /** `false` when the backend is known-gone and callers should skip remote operations that would otherwise spin up a session. */
+  fun isBackendAvailable(): Boolean = true
 }
 
 interface IjentSession {

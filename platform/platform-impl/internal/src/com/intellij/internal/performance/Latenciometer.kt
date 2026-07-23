@@ -3,61 +3,18 @@
 
 package com.intellij.internal.performance
 
+import com.intellij.internal.statistic.collectors.fus.LatencyDistributionRecord
+import com.intellij.internal.statistic.collectors.fus.LatencyDistributionRecordKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 
 internal class LatencyRecorderImpl : LatencyRecorder {
   override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
     (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, timestampMs)
-  }
-}
-
-class LatencyRecord {
-  var totalLatency: Long = 0L
-  var maxLatency: Int = 0
-  val samples: IntArrayList = IntArrayList()
-  private var samplesSorted = false
-
-  fun update(latencyInMS: Int) {
-    samplesSorted = false
-    samples.add(latencyInMS)
-    totalLatency += latencyInMS
-    if (latencyInMS > maxLatency) {
-      maxLatency = latencyInMS
-    }
-  }
-
-  val averageLatency: Long
-    get() = totalLatency / samples.size
-
-  fun percentile(n: Int): Int {
-    if (!samplesSorted) {
-      samples.sort()
-      samplesSorted = true
-    }
-    val index = (samples.size * n / 100).coerceAtMost(samples.size - 1)
-    return samples.getInt(index)
-  }
-}
-
-@ApiStatus.Internal
-data class LatencyDistributionRecordKey(val name: String) {
-  var details: String? = null
-}
-
-@ApiStatus.Internal
-class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
-  val totalLatency: LatencyRecord = LatencyRecord()
-  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf()
-
-  fun update(action: String, latencyInMS: Int) {
-    totalLatency.update(latencyInMS)
-    actionLatencyRecords.getOrPut(action) { LatencyRecord() }.update(latencyInMS)
   }
 }
 

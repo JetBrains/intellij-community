@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
@@ -280,7 +281,7 @@ public class UpdateCheckerService {
     var id = event.getDescription();
     if (id != null) {
       var pluginId = PluginId.getId(id);
-      PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId));
+      PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId), PluginManagerOpenSourceEnum.NOTIFICATION);
     }
   }
 

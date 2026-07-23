@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.PlatformInternalBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -79,8 +79,8 @@ final class FocusTracesAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setText(myActive ?
-                         InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.stop.focus.tracing") :
-                         InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.start.focus.tracing"));
+                         PlatformInternalBundle.messagePointer("action.presentation.FocusTracesAction.text.stop.focus.tracing") :
+                         PlatformInternalBundle.messagePointer("action.presentation.FocusTracesAction.text.start.focus.tracing"));
     presentation.setEnabledAndVisible(e.getProject() != null);
   }
 }

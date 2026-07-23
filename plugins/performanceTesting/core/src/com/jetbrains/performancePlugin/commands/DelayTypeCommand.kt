@@ -3,7 +3,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.internal.performance.LatencyRecord
+import com.intellij.internal.statistic.collectors.fus.LatencyRecord
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT

@@ -5,8 +5,6 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getStringBasedType
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyCallSiteExpression
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl.Companion.create
@@ -23,28 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
-  override fun getCallType(
-    function: PyFunction,
-    callSite: PyCallSiteExpression,
-    context: TypeEvalContext,
-  ): Ref<PyType?>? {
-    if (callSite is PyCallExpression &&
-        PyTypingTypeProvider.NEW_TYPE == function.qualifiedName
-    ) {
-      val newType = createNewType(callSite, context)
-      if (newType != null) {
-        return Ref.create<PyType?>(newType)
-      }
-    }
-    return null
-  }
-
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType?>? {
-    val newType: PyTypingNewType? = getNewTypeForResolvedElement(referenceTarget, context)
-    if (newType != null) {
-      return Ref.create<PyType?>(PyTypingNewTypeFactoryType(newType))
-    }
-    return null
+    val newType = getNewTypeForResolvedElement(referenceTarget, context)
+    return if (newType != null) Ref.create(PyTypingNewTypeFactoryType(newType)) else null
   }
 
   override fun prepareCalleeTypeForCall(
@@ -53,10 +32,10 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
     context: TypeEvalContext,
   ): Ref<PyCallableType?>? {
     if (type is PyClassType && PyTypingTypeProvider.NEW_TYPE == type.classQName) {
-      val newType: PyTypingNewTypeFactoryType? = createNewType(call, context)
+      val newType = createNewType(call, context)
       if (newType != null) {
         val parameters = type.toClass().getParameters(context)
-        return Ref.create<PyCallableType?>(PyCallableTypeImpl(parameters, newType))
+        return Ref.create(PyCallableTypeImpl(parameters, newType))
       }
     }
     return null
@@ -74,7 +53,7 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
           if (leftHandSideExpression is PyTargetExpression) {
             val stub = create(callExpression)
             if (stub != null) {
-              val type: PyClassType? = getClassType(stub, context, callExpression)
+              val type = getClassType(stub, context, callExpression)
               if (type != null) {
                 val newType = PyTypingNewType(type, stub.name, leftHandSideExpression)
                 return PyTypingNewTypeFactoryType(newType)
@@ -89,17 +68,9 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
     fun getNewTypeForResolvedElement(element: PsiElement, context: TypeEvalContext): PyTypingNewType? {
       if (element is PyTargetExpression) {
         return StubAwareComputation.on(element)
-          .withCustomStub { stub ->
-            stub.getCustomStub(PyTypingNewTypeStub::class.java)
-          }
-          .overStub { customStub ->
-            getNewTypeFromStub(
-              element,
-              customStub,
-              context
-            )
-          }
-          .withStubBuilder { expression -> create(expression) }
+          .withCustomStub { it.getCustomStub(PyTypingNewTypeStub::class.java) }
+          .overStub { getNewTypeFromStub(element, it, context) }
+          .withStubBuilder { create(it) }
           .compute(context)
       }
       return null
@@ -111,7 +82,7 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
       context: TypeEvalContext,
     ): PyTypingNewType? {
       if (stub == null) return null
-      val type: PyClassType? = getClassType(stub, context, target)
+      val type = getClassType(stub, context, target)
       return if (type != null) PyTypingNewType(type, stub.name, target) else null
     }
 
@@ -120,11 +91,8 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
       context: TypeEvalContext,
       anchor: PsiElement,
     ): PyClassType? {
-      val type = Ref.deref<PyType?>(getStringBasedType(stub.classType, anchor, context))
-      if (type is PyClassType) {
-        return type.toClass()
-      }
-      return null
+      val type = Ref.deref(getStringBasedType(stub.classType, anchor, context))
+      return if (type is PyClassType) type.toClass() else null
     }
   }
 }

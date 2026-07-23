@@ -4573,7 +4573,6 @@ a:com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.highlighter.custom.CustomFileHighlighter
 - getHighlightingLexer():com.intellij.lexer.Lexer
-- s:getKeys():java.util.Map
 - getTokenHighlights(com.intellij.psi.tree.IElementType):com.intellij.openapi.editor.colors.TextAttributesKey[]
 f:com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher
 - sf:INSTANCE:com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter
@@ -5800,9 +5799,6 @@ f:com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider$Companion
 f:com.intellij.internal.ImageDuplicateResultsDialog
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.util.Map):V
 - getPreferredFocusedComponent():javax.swing.JComponent
-com.intellij.internal.retype.RetypeFileAssistant
-- a:acceptLookupElement(com.intellij.codeInsight.lookup.LookupElement):Z
-- retypeDone(com.intellij.openapi.editor.Editor):V
 a:com.intellij.lang.SmartEnterProcessorWithFixers
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - psf:MAX_ATTEMPTS:I

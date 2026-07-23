@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -6,8 +6,14 @@ import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.DiffExtension;
 import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
+import com.intellij.diff.PatchBaseAnnotationInfo;
+import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeThreesideViewer;
 import com.intellij.diff.merge.TextMergeViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -20,6 +26,7 @@ import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.diff.tools.util.base.DiffViewerListener;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.notification.Notification;
@@ -29,8 +36,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -52,6 +61,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -67,11 +77,14 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.JComponent;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Window;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
@@ -163,6 +176,8 @@ public final class AnnotateDiffViewerAction {
     if (diffContext != null) diffContext.showProgressBar(true);
 
     BackgroundTaskUtil.executeOnPooledThread(viewer, () -> {
+      // loader.run() does all the heavy lifting (VCS calls, and for a patch-base side the line-diff that builds the
+      // line-number provider) on this pooled thread, so showAnnotation() below never freezes the UI.
       try {
         loader.run();
       }
@@ -181,10 +196,11 @@ public final class AnnotateDiffViewerAction {
             return;
           }
 
-          if (loader.getResult() == null) return;
+          AnnotationData result = loader.getResult();
+          if (result == null) return;
           if (viewer.isDisposed()) return;
 
-          annotator.showAnnotation(loader.getResult());
+          annotator.showAnnotation(result);
         });
       }
     });
@@ -243,6 +259,13 @@ public final class AnnotateDiffViewerAction {
       if (loader != null) return loader;
     }
 
+    VirtualFile localFile = content.getUserData(DiffVcsDataKeys.LOCAL_FILE);
+    if (localFile != null) {
+      AbstractVcs vcs = VcsUtil.getVcsFor(project, localFile);
+      FileAnnotationLoader loader = doCreateAnnotationsLoader(project, vcs, localFile);
+      if (loader != null) return loader;
+    }
+
     Pair<FilePath, VcsRevisionNumber> info = content.getUserData(DiffVcsDataKeys.REVISION_INFO);
     if (info != null) {
       FilePath filePath = info.first;
@@ -250,7 +273,105 @@ public final class AnnotateDiffViewerAction {
       FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, info.second);
       if (loader != null) return loader;
     }
+
+    PatchBaseAnnotationInfo patchBaseInfo = content.getUserData(DiffVcsDataKeys.PATCH_BASE_INFO);
+    if (patchBaseInfo != null) {
+      AbstractVcs vcs = VcsUtil.getVcsFor(project, patchBaseInfo.getPath());
+      if (vcs != null) {
+        Document patchedDocument = content instanceof DocumentContent documentContent ? documentContent.getDocument() : null;
+        FileAnnotationLoader loader = createPatchBaseAnnotationsLoader(vcs, patchBaseInfo, patchedDocument);
+        if (loader != null) return loader;
+      }
+    }
     return null;
+  }
+
+  /**
+   * Annotates the committed base revision referenced by a patch base version id (see {@link DiffVcsDataKeys#PATCH_BASE_INFO}),
+   * so the "Your uncommitted changes" side of a patch conflict can be blamed against it.
+   * <p>
+   * Both the revision resolution (some VCS, e.g. Git, run commands to resolve a revision number and validate an annotation)
+   * and the line-number provider's line diff run on a background thread inside {@link FileAnnotationLoader#run()}, so nothing
+   * heavy happens on the EDT where this loader is built as part of the annotate action.
+   */
+  private static @Nullable FileAnnotationLoader createPatchBaseAnnotationsLoader(@NotNull AbstractVcs vcs,
+                                                                                 @NotNull PatchBaseAnnotationInfo patchBaseInfo,
+                                                                                 @Nullable Document patchedDocument) {
+    FilePath path = patchBaseInfo.getPath();
+    String baseVersionId = patchBaseInfo.getBaseVersionId();
+    AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    if (!(annotationProvider instanceof AnnotationProviderEx annotationProviderEx)) return null;
+    if (DefaultPatchBaseVersionProvider.parseVersionAsRevision(baseVersionId, vcs) == null) return null; // cheap check, no VCS calls
+
+    return new FileAnnotationLoader(vcs) {
+      @Override
+      protected FileAnnotation compute() throws VcsException {
+        String revisionString = DefaultPatchBaseVersionProvider.parseVersionAsRevision(baseVersionId, vcs);
+        if (revisionString == null) return null;
+        VcsRevisionNumber revision = vcs.parseRevisionNumber(revisionString, path);
+        if (revision == null || revision == VcsRevisionNumber.NULL) return null;
+        if (!annotationProviderEx.isAnnotationValid(path, revision)) return null;
+        return annotationProviderEx.annotate(path, revision);
+      }
+
+      @Override
+      protected @Nullable UpToDateLineNumberProvider computeLineNumberProvider() {
+        // The annotation is computed for the base revision; remap the displayed (patched) lines back to it so that lines
+        // added on top of the base render as "not committed yet".
+        if (patchedDocument == null) return null;
+        return createPatchBaseLineNumberProvider(patchBaseInfo.getBaseContent(), patchedDocument);
+      }
+    };
+  }
+
+  /**
+   * Maps lines of a patched content (a base revision with extra changes applied) back to the base revision lines:
+   * context lines map to their base line, lines added/changed on top of the base map to {@code FAKE_LINE_NUMBER}
+   * (rendered as "not committed yet"). Returns {@code null} if the texts are too big to diff.
+   */
+  @VisibleForTesting
+  public static @Nullable UpToDateLineNumberProvider createPatchBaseLineNumberProvider(@NotNull CharSequence baseContent,
+                                                                                       @NotNull Document patchedDocument) {
+    int patchedLineCount = patchedDocument.getLineCount();
+    // mapping[patchedLine] = corresponding base-revision line, or FAKE_LINE_NUMBER for lines added on top of the base.
+    // Default everything to FAKE; the walk below fills in the lines that map back to a base line.
+    int[] mapping = new int[patchedLineCount];
+    Arrays.fill(mapping, UpToDateLineNumberProvider.FAKE_LINE_NUMBER);
+    //noinspection IncorrectCancellationExceptionHandling
+    try {
+      // Each fragment is a *changed* region (base range [startLine1, endLine1) vs patched range [startLine2, endLine2));
+      // the gaps between fragments are equal regions that line up 1:1 between base and patched.
+      List<LineFragment> fragments = ComparisonManager.getInstance()
+        .compareLines(baseContent, patchedDocument.getImmutableCharSequence(),
+                      ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+
+      int baseLine = 0;
+      int patchedLine = 0;
+      for (LineFragment fragment : fragments) {
+        // Equal region before this fragment: context lines map 1:1 to their base line.
+        while (patchedLine < fragment.getStartLine2() && patchedLine < patchedLineCount) {
+          mapping[patchedLine++] = baseLine++;
+        }
+        // The fragment's patched lines were added/changed on top of the base: no base line, leave them FAKE.
+        while (patchedLine < fragment.getEndLine2() && patchedLine < patchedLineCount) {
+          mapping[patchedLine++] = UpToDateLineNumberProvider.FAKE_LINE_NUMBER;
+        }
+        // Skip the base lines the fragment deleted/replaced (they don't appear in patched) and resync the patched cursor.
+        baseLine = fragment.getEndLine1();
+        patchedLine = Math.max(patchedLine, fragment.getEndLine2());
+      }
+      // Trailing equal region after the last fragment: map the rest 1:1.
+      while (patchedLine < patchedLineCount) {
+        mapping[patchedLine++] = baseLine++;
+      }
+    }
+    catch (DiffTooBigException e) {
+      return null;
+    }
+    // getLineCount() must report the annotated (base) content size, not the displayed editor size, so that
+    // AnnotateWarningsService does not flag a line-count mismatch (the base revision and the patched content may differ).
+    int baseLineCount = LineOffsetsUtil.create(baseContent).getLineCount();
+    return new PatchBaseUpToDateLineNumberProvider(mapping, baseLineCount);
   }
 
   private static @Nullable FileAnnotationLoader doCreateAnnotationsLoader(@NotNull Project project,
@@ -494,6 +615,53 @@ public final class AnnotateDiffViewerAction {
     }
   }
 
+  private static final class PatchBaseUpToDateLineNumberProvider
+    implements UpToDateLineNumberProvider, AnnotationGutterLineConvertorProxy.NonAnnotatedLineTextProvider {
+    private final int[] myMapping; // patched line -> base revision line, or FAKE_LINE_NUMBER for added/changed lines
+    private final int myBaseLineCount; // line count of the annotated (base) revision
+
+    private PatchBaseUpToDateLineNumberProvider(int[] mapping, int baseLineCount) {
+      myMapping = mapping;
+      myBaseLineCount = baseLineCount;
+    }
+
+    @Override
+    public @Nullable String getNonAnnotatedLineText(int line) {
+      // Lines added on top of the base (mapped to FAKE_LINE_NUMBER) have no committed source - label them as local edits.
+      return getLineNumber(line) == FAKE_LINE_NUMBER ? VcsBundle.message("annotation.line.not.committed.yet") : null;
+    }
+
+    @Override
+    public int getLineCount() {
+      return myBaseLineCount;
+    }
+
+    @Override
+    public int getLineNumber(int currentNumber) {
+      if (currentNumber < 0 || currentNumber >= myMapping.length) return ABSENT_LINE_NUMBER;
+      return myMapping[currentNumber];
+    }
+
+    @Override
+    public int getLineNumber(int currentNumber, boolean approximate) {
+      return getLineNumber(currentNumber);
+    }
+
+    @Override
+    public boolean isLineChanged(int currentNumber) {
+      int number = getLineNumber(currentNumber);
+      return number == FAKE_LINE_NUMBER || number == ABSENT_LINE_NUMBER;
+    }
+
+    @Override
+    public boolean isRangeChanged(int start, int end) {
+      for (int i = start; i <= end; i++) {
+        if (isLineChanged(i)) return true;
+      }
+      return getLineNumber(end) - getLineNumber(start) != end - start;
+    }
+  }
+
   private static class ThreesideAnnotatorFactory extends ThreesideViewerAnnotatorFactory<ThreesideTextDiffViewerEx> {
     @Override
     public @NotNull Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
@@ -517,7 +685,13 @@ public final class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side, @NotNull AnnotationData data) {
       Project project = Objects.requireNonNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
+      Editor editor = viewer.getEditor(side);
+
+      if (data.lineNumberProvider != null) {
+        AnnotateToggleAction.doAnnotate(editor, project, data.annotation, data.vcs, data.lineNumberProvider);
+        return;
+      }
+      AnnotateToggleAction.doAnnotate(editor, project, data.annotation, data.vcs);
     }
 
     @Override
@@ -730,7 +904,7 @@ public final class AnnotateDiffViewerAction {
     private final @NotNull AbstractVcs myVcs;
 
     private @Nullable VcsException myException;
-    private @Nullable FileAnnotation myResult;
+    private @Nullable AnnotationData myResult;
 
     FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
@@ -741,28 +915,41 @@ public final class AnnotateDiffViewerAction {
     }
 
     public @Nullable AnnotationData getResult() {
-      return myResult != null ? new AnnotationData(myVcs, myResult) : null;
+      return myResult;
     }
 
     public void run() {
       try {
-        myResult = compute();
+        FileAnnotation annotation = compute();
+        if (annotation != null) {
+          myResult = new AnnotationData(myVcs, annotation, computeLineNumberProvider());
+        }
       }
       catch (VcsException e) {
         myException = e;
       }
     }
 
-    protected abstract FileAnnotation compute() throws VcsException;
+    protected abstract @Nullable FileAnnotation compute() throws VcsException;
+
+    /**
+     * Computes a custom line-number provider for {@link #getResult}, on the same background thread as {@link #compute}
+     * (so its potentially heavy line diff does not freeze the EDT). Returns {@code null} when no custom provider is needed.
+     */
+    protected @Nullable UpToDateLineNumberProvider computeLineNumberProvider() {
+      return null;
+    }
   }
 
   private static class AnnotationData {
     public final @NotNull AbstractVcs vcs;
     public final @NotNull FileAnnotation annotation;
+    public final @Nullable UpToDateLineNumberProvider lineNumberProvider;
 
-    AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
+    AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation, @Nullable UpToDateLineNumberProvider lineNumberProvider) {
       this.vcs = vcs;
       this.annotation = annotation;
+      this.lineNumberProvider = lineNumberProvider;
     }
   }
 

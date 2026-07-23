@@ -5,12 +5,12 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.LanguageRef;
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator;
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule;
 
 final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
 
@@ -26,7 +26,7 @@ final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesColl
 
   private static final EventId2<String, Boolean> FILE_TYPE_CHANGED_EVENT = GROUP.registerEvent(
     "file.type.changed",
-    EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule.class),
+    EventFields.StringValidatedByCustomRule("fileType", FileTypeValidationRule.class),
     EventFields.Boolean("enabled")
   );
 

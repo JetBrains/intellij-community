@@ -12,7 +12,7 @@ internal enum class ValidationError(internal val argsCount: Int) {
 
 internal class ValidationException(val error: ValidationError, vararg val args: Any = emptyArray()) : Exception() {
   init {
-    checkTrue(error.argsCount == args.size)
+    check(error.argsCount == args.size)
   }
 
   override fun toString(): String {

@@ -8,5 +8,5 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Internal
 public interface TabHeaderListener {
-  void selectionChanged(int index);
+  void selectionChanged(int index, boolean userInitiated);
 }

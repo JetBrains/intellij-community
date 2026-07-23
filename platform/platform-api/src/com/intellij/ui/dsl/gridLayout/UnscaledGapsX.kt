@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout
 
-import com.intellij.ui.dsl.checkNonNegative
+import com.intellij.ui.dsl.builder.impl.checkNonNegative
 
 /**
  * Defines left and right gaps. Values must be provided unscaled

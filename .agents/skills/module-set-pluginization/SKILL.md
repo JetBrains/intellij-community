@@ -1,6 +1,6 @@
 ---
 name: module-set-pluginization
-description: Pluginize a Product DSL module set by hand-writing a wrapper plugin module next to its feature modules. Use when promoting modules out of an aggregate module set (e.g. `essential`, `ide.common`) into a bundled plugin so products can include or omit them through normal plugin wiring, when updating bundled plugin registration for such a wrapper, or when fixing tests whose plugin loading logs show a missing wrapper plugin for a former module set.
+description: Convert Product DSL module sets into bundled wrapper plugins and fix loading wiring.
 ---
 
 # Module Set Pluginization

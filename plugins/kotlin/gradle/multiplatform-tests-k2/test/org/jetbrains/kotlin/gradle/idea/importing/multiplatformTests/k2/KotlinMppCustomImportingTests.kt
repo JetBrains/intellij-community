@@ -110,7 +110,7 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
     fun `testPrepareKotlinIdeaImport-compositeBuild`() = doTest(runImport = true) {
         runAfterImport {
             /* Only run against a single configuration */
-            Assume.assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latest)
+            Assume.assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latestBootstrap)
 
             val consumerStateFile = myProjectRoot.toNioPath().resolve("consumerA/prepareKotlinIdeaImport.executed").toFile()
             if (!consumerStateFile.exists()) fail("consumerA: prepareKotlinIdeaImport not executed")
