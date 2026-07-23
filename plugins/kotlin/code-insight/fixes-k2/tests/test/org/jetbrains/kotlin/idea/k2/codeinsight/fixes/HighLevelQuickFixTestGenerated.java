@@ -9550,6 +9550,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedProperty.kt")
+        public void testBacktickedProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/initializeWithConstructorParameter/backtickedProperty.kt");
+        }
+
         @TestMetadata("constructorWithThisDelegation.kt")
         public void testConstructorWithThisDelegation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/initializeWithConstructorParameter/constructorWithThisDelegation.kt");
