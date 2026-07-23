@@ -179,7 +179,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
         val fullQualifiedPropertyName = if (containingClass != null) {
             buildString {
                 append("this")
-                append(containingClass.name?.let { "@$it." } ?: ".")
+                append(containingClass.nameIdentifier?.text?.let { "@$it." } ?: ".")
                 append(propertyNameText)
             }
         } else {

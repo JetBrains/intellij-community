@@ -16029,6 +16029,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backingPropertyWithGetter.kt");
             }
 
+            @TestMetadata("backtickedClassName.kt")
+            public void testBacktickedClassName() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backtickedClassName.kt");
+            }
+
             @TestMetadata("commentsInsideBrackets.kt")
             public void testCommentsInsideBrackets() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/commentsInsideBrackets.kt");
