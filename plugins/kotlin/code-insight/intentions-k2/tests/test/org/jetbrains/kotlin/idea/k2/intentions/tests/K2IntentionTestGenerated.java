@@ -10929,6 +10929,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedLabel.kt")
+        public void testBacktickedLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/backtickedLabel.kt");
+        }
+
         @TestMetadata("insideParenthesis.kt")
         public void testInsideParenthesis() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/insideParenthesis.kt");
