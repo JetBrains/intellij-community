@@ -12713,6 +12713,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedProperty.kt")
+            public void testBacktickedProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/backtickedProperty.kt");
+            }
+
             @TestMetadata("binaryExpression.kt")
             public void testBinaryExpression() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression.kt");
@@ -12854,6 +12859,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public static class ConvertToRun extends AbstractK2IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("backtickedReceiver.kt")
+            public void testBacktickedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/backtickedReceiver.kt");
             }
 
             @TestMetadata("binaryExpression.kt")
