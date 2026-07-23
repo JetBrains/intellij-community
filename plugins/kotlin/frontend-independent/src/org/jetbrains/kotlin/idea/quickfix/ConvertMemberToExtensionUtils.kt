@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -241,7 +242,7 @@ private fun KtTypeParameter.textWithoutVariance(): String {
 
 private fun KtCallableDeclaration.setReceiverType(klass: KtClassOrObject) {
     val className = buildString {
-        append(klass.name)
+        append(klass.nameAsSafeName.render())
         if (klass.typeParameters.isNotEmpty()) {
             append(klass.typeParameters.joinToString(", ", "<", ">") {
                 it.name ?: ""

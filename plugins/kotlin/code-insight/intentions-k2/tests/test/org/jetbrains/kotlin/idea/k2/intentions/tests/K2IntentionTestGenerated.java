@@ -9376,6 +9376,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/abstractProperty.kt");
         }
 
+        @TestMetadata("backtickedClassName.kt")
+        public void testBacktickedClassName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/backtickedClassName.kt");
+        }
+
         @TestMetadata("delegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/delegatedProperty.kt");
