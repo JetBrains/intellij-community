@@ -52,6 +52,10 @@ jvm_library(
         "//plugins/gradle",
         "//platform/external-system-impl:externalSystem-impl",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        "//plugins/kotlin/base/facet",
+        "//platform/lang-core",
+        "@lib//:kotlinc-kotlin-jps-common-provided",
+        "//plugins/kotlin/base/compiler-configuration",
     ],
 )
 
@@ -92,6 +96,10 @@ jvm_library(
         "//plugins/gradle:gradle_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "@lib//:kotlinc-kotlin-jps-common-provided",
+        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2` end

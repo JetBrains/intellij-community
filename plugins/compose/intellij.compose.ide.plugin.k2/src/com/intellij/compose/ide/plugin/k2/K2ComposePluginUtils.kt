@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -34,16 +35,27 @@ import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataSer
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal val Module.isComposeCompilerPluginApplied: Boolean
   get() {
-    val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(this) ?: return false
-    val extensions = getGradleExtensions(mainModuleDataNode) ?: return false
-    return extensions.any { ext ->
-      ext.name == COMPOSE_PLUGIN_ID &&
-      ext.typeFqn == COMPOSE_KOTLIN_PLUGIN_NAME
-    }
+    if (hasComposeGradlePluginExtension()) return true
+
+    val settings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(this) ?: return false
+    val classpaths = settings.compilerArguments?.pluginClasspaths ?: return false
+    return classpaths.any(::isComposeCompilerPluginPath)
   }
+
+private fun Module.hasComposeGradlePluginExtension(): Boolean {
+  val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(this) ?: return false
+  val extensions = getGradleExtensions(mainModuleDataNode) ?: return false
+  return extensions.any { it.name == COMPOSE_PLUGIN_ID && it.typeFqn == COMPOSE_KOTLIN_PLUGIN_NAME }
+}
+
+private fun isComposeCompilerPluginPath(pathString: String): Boolean {
+  val fileName = Path(pathString).name.lowercase()
+  return fileName.contains("compose-compiler-plugin")
+}
 
 private fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
   ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions

@@ -7,6 +7,8 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis.utils"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.completion.impl"/>
     <module name="intellij.kotlin.highlighting"/>
@@ -22,6 +24,7 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
