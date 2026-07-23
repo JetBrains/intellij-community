@@ -34,11 +34,11 @@ internal class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection(
         returnExpressionVisitor(fun(returnExpression: KtReturnExpression) {
             if (returnExpression.labelQualifier != null) return
             val lambda = returnExpression.getParentOfType<KtLambdaExpression>(true, KtNamedFunction::class.java) ?: return
-            val parentFunction = lambda.getStrictParentOfType<KtNamedFunction>() ?: return
+            val parentFunctionName = lambda.getStrictParentOfType<KtNamedFunction>()?.nameIdentifier?.text ?: return
 
             if (hasDiagnosticError(returnExpression)) return
 
-            val action = ChangeToLabeledReturnFix(returnExpression, labeledReturn = "return@${parentFunction.name}")
+            val action = ChangeToLabeledReturnFix(returnExpression, labeledReturn = "return@$parentFunctionName")
             holder.registerProblem(
                 returnExpression.returnKeyword,
                 KotlinBundle.message("unlabeled.return.inside.lambda"),

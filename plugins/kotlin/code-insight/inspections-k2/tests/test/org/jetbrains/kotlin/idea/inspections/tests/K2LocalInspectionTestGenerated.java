@@ -10627,6 +10627,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedFunctionName.kt")
+        public void testBacktickedFunctionName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unlabeledReturnInsideLambda/backtickedFunctionName.kt");
+        }
+
         @TestMetadata("labeledReturn.kt")
         public void testLabeledReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unlabeledReturnInsideLambda/labeledReturn.kt");
