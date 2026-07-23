@@ -158,7 +158,8 @@ object EventLogExternalUploader {
       findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.fus-api
       findLibraryByClass(Json::class.java), // kotlinx.serialization.json
       findLibraryByClass(StringFormat::class.java), // kotlinx.serialization
-      findLibraryByClass(StatisticsStringUtil::class.java) // statistics config (IJPL-238623 extracted to separate jar)
+      findLibraryByClass(StatisticsStringUtil::class.java), // statistics config (IJPL-238623 extracted to separate jar)
+      findLibraryByClass(kotlinx.coroutines.flow.StateFlow::class.java) // kotlinx.coroutines.flow
     )
     val classpath = joinAsClasspath(libPaths.toList(), uploader)
 
