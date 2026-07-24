@@ -26,6 +26,8 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.cloneWith
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.ui.IdeUICustomization
@@ -46,7 +48,7 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
-    val allTabFilter = SeEverywhereFilter.from(params.filter)
+    val allTabFilter = SeEverywhereFilterImpl.from(params.filter)
     return delegate.getItems(params, allTabFilter.disabledProviderIds)
   }
 
@@ -59,7 +61,7 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   }
 
   override suspend fun openInFindToolWindow(session: SeSession, params: SeParams): Boolean {
-    val allTabFilter = SeEverywhereFilter.from(params.filter)
+    val allTabFilter = SeEverywhereFilterImpl.from(params.filter)
     return delegate.openInFindToolWindow(session, params, true, allTabFilter.disabledProviderIds)
   }
 
@@ -87,7 +89,9 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   }
 }
 
-private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(true, false, disabledProviders)) {
+private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) :
+  SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilterImpl(true, false, disabledProviders))
+{
   private val actions = listOf(getEverywhereToggleAction(), PreviewAction(), getFilterTypesAction(providersIdToName))
   override fun getHeaderActions(): List<AnAction> = actions
 

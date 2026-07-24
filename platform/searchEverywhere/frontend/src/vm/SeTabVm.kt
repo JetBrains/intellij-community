@@ -44,7 +44,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPr
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
@@ -191,7 +191,7 @@ class SeTabVmImpl(
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
-          val disabledProviderIds = SeEverywhereFilter.from(filterData).disabledProviderIds
+          val disabledProviderIds = SeEverywhereFilterImpl.from(filterData).disabledProviderIds
 
           SeMlService.getInstanceIfEnabled()?.onStateStarted(this@SeTabVmImpl.tabId, params)
 
