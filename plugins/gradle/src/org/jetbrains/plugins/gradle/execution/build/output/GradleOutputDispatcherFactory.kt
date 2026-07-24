@@ -41,7 +41,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   @VisibleForTesting
   class GradleOutputMessageDispatcher(
     private val buildId: Any,
-    private val listener: BuildProgressListener,
+    listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
     private val parsers: List<BuildOutputParser>,
   ) : AbstractOutputMessageDispatcher(listener) {
@@ -52,17 +52,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
     private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
-    private val rootReader = BuildOutputInstantReaderImpl(buildId, buildId, BuildProgressListener { _: Any, event: BuildEvent ->
-      var buildEvent = event
-      val parentId = buildEvent.parentId
-      if (parentId != buildId && parentId is String) {
-        val taskEventId = tasksEventIds[parentId]
-        if (taskEventId != null) {
-          buildEvent = BuildEventInvocationHandler.wrap(event, taskEventId)
-        }
-      }
-      listener.onEvent(buildId, buildEvent)
-    }, parsers)
+    private val rootReader = BuildOutputInstantReaderImpl(buildId, buildId, this, parsers)
 
     private val lineProcessor = object : LineProcessor() {
 
@@ -88,7 +78,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         if (currentReader != rootReader) {
           val parentEventId = currentReader.parentEventId
-          listener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
+          onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
         }
 
         currentReader.appendLine(cleanLine)
@@ -96,12 +86,22 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun onEvent(buildId: Any, event: BuildEvent) {
-      super.onEvent(buildId, event)
+      var buildEvent = event
+      val parentId = event.parentId
+      if (parentId != buildId && parentId is String) {
+        val taskEventId = tasksEventIds[parentId]
+        if (taskEventId != null) {
+          buildEvent = BuildEventInvocationHandler.wrap(event, taskEventId)
+        }
+      }
+
+      super.onEvent(buildId, buildEvent)
+
       if (event.parentId != buildId) return
       if (event is StartEvent) {
         val eventId = event.id
         val oldValue = tasksOutputReaders.put(event.message,
-                                              BuildOutputInstantReaderImpl(buildId, eventId, myBuildProgressListener, parsers))
+                                              BuildOutputInstantReaderImpl(buildId, eventId, this, parsers))
         if (oldValue != null) {  // multiple invocations of the same task during the build session
           redefinedReaders.add(oldValue)
         }
@@ -129,7 +129,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(csq: CharSequence): Appendable {
       if (appendOutputToMainConsole) {
-        listener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
+        onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq)
       return this
@@ -137,7 +137,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(csq: CharSequence, start: Int, end: Int): Appendable {
       if (appendOutputToMainConsole) {
-        listener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
+        onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq, start, end)
       return this
@@ -145,7 +145,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(c: Char): Appendable {
       if (appendOutputToMainConsole) {
-        listener.onEvent(buildId, OutputBuildEventImpl(buildId, c.toString(), stdOut))
+        onEvent(buildId, OutputBuildEventImpl(buildId, c.toString(), stdOut))
       }
       lineProcessor.append(c)
       return this
