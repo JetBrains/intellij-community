@@ -6,8 +6,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.toUpdate
@@ -19,35 +17,29 @@ internal fun scheduleHyperlinksSessionProcessing(session: BackendTerminalHyperli
 }
 
 private suspend fun processHyperlinksSession(session: BackendTerminalHyperlinksSession) = coroutineScope {
-  // BackendTerminalHyperlinkFacade is not thread-safe, so we need to synchronize access to it
-  val facadeMutex = Mutex()
-
   launch(CoroutineName("Process input events")) {
-    processInputEvents(session.hyperlinksFacade, session.inputEventsSink, facadeMutex)
+    processInputEvents(session.hyperlinksFacade, session.inputEventsSink)
   }
   launch(CoroutineName("Process results")) {
-    collectHyperlinkResults(session.hyperlinksFacade, session.hyperlinkUpdatesChannel, facadeMutex)
+    collectHyperlinkResults(session.hyperlinksFacade, session.hyperlinkUpdatesChannel)
   }
 }
 
 private suspend fun processInputEvents(
   hyperlinkFacade: BackendTerminalHyperlinkFacade,
   inputEventsChannel: ReceiveChannel<TerminalHyperlinksInputEvent>,
-  facadeMutex: Mutex,
 ) {
   for (event in inputEventsChannel) {
-    facadeMutex.withLock {
-      try {
-        processInputEvent(hyperlinkFacade, event)
-      }
-      catch (e: Exception) {
-        LOG.error("Error when processing input event $event", e)
-      }
+    try {
+      processInputEvent(hyperlinkFacade, event)
+    }
+    catch (e: Exception) {
+      LOG.error("Error when processing input event $event", e)
     }
   }
 }
 
-private fun processInputEvent(
+private suspend fun processInputEvent(
   hyperlinkFacade: BackendTerminalHyperlinkFacade,
   event: TerminalHyperlinksInputEvent,
 ) {
@@ -65,13 +57,10 @@ private fun processInputEvent(
 private suspend fun collectHyperlinkResults(
   facade: BackendTerminalHyperlinkFacade,
   sink: SendChannel<TerminalHyperlinksOutputEvent>,
-  facadeMutex: Mutex,
 ) = coroutineScope {
   launch(CoroutineName("Heartbeat")) {
     facade.heartbeatFlow.collect {
-      val events = facadeMutex.withLock {
-        collectResultsAndApplyToModel(facade)
-      }
+      val events = collectResultsAndApplyToModel(facade)
       for (event in events) {
         sink.send(event)
       }
@@ -85,7 +74,7 @@ private suspend fun collectHyperlinkResults(
   }
 }
 
-private fun collectResultsAndApplyToModel(facade: BackendTerminalHyperlinkFacade): List<TerminalHyperlinksOutputEvent> {
+private suspend fun collectResultsAndApplyToModel(facade: BackendTerminalHyperlinkFacade): List<TerminalHyperlinksOutputEvent> {
   val events = try {
     facade.collectResultsAndMaybeStartNewTask()
   }

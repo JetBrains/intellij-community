@@ -9,6 +9,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
@@ -28,6 +30,7 @@ internal class BackendTerminalHyperlinkFacade(
   eelDescriptor: EelDescriptor,
   coroutineScope: CoroutineScope,
 ) {
+  private val mutex = Mutex()
   private val filterContext = TerminalHyperlinkFilterContextImpl(eelDescriptor)
   private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext).also {
     it.getFilter() // kickstart computation
@@ -53,26 +56,33 @@ internal class BackendTerminalHyperlinkFacade(
   val filterUpdatesFlow: Flow<Unit>
     get() = filterWrapper.getFilterFlow().map { /*Unit*/ }
 
-  fun applyContentUpdate(update: TerminalOutputContentUpdate) {
-    trimOffset.set(update.trimStartOffset)
-    highlighter.applyUpdate(update)
+  suspend fun applyContentUpdate(update: TerminalOutputContentUpdate) {
+    mutex.withLock {
+      trimOffset.set(update.trimStartOffset)
+      highlighter.applyUpdate(update)
+    }
   }
 
   /**
    * [newDirectory] - native path inside the environment of [filterContext]'s [EelDescriptor].
    */
-  fun updateWorkingDirectory(newDirectory: @NativePath String?) {
-    filterContext.updateCurrentDirectory(newDirectory)
+  suspend fun updateWorkingDirectory(newDirectory: @NativePath String?) {
+    mutex.withLock {
+      filterContext.updateCurrentDirectory(newDirectory)
+    }
   }
 
-  fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
-    return highlighter.collectResultsAndMaybeStartNewTask()
+  suspend fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
+    return mutex.withLock {
+      highlighter.collectResultsAndMaybeStartNewTask()
+    }
   }
 
-  fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated): Boolean {
-    model.removeHyperlinks(event.coveredStartOffset, event.coveredEndOffset)
-    model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
-    return true
+  suspend fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
+    mutex.withLock {
+      model.removeHyperlinks(event.coveredStartOffset, event.coveredEndOffset)
+      model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
+    }
   }
 
   fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
