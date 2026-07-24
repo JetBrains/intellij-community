@@ -13,7 +13,9 @@ import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.backend.ProjectViewBackendBundle
+import com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
 import com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 import com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -35,7 +37,9 @@ internal class ProjectPaneProvider : ProjectViewPaneProvider {
 
 internal class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
   private val hasSeveralTopLevelModuleNodes = AtomicBoolean(false)
-  
+
+  override val psi: ProjectViewPsiExtractor<TreeStructureProjectViewNode> = DefaultTreeStructurePsiExtractor(project)
+
   override suspend fun id(): ProjectViewPaneId = projectViewPaneId(ProjectViewPane.ID)
 
   override suspend fun presentableName(): @NlsSafe String = ProjectViewBackendBundle.message("project.view.pane.project.title")

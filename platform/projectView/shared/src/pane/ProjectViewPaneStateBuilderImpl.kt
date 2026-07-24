@@ -19,12 +19,13 @@ import com.intellij.platform.projectView.settings.toSettingValue
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.ConcurrentHashMap
 
 internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private class State : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(SuperRootModel as ProjectViewNodeModelImpl<*>)
-    private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
+    private val nodeById = ConcurrentHashMap<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     private val nodeByUserObject = hashMapOf<Any, Node>()
 
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
@@ -142,12 +143,25 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
       }
     }
 
-    fun <T> asBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
+    fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+      return BackendProjectViewPaneStateAccessorImpl(nodeById)
+    }
+
+    fun <T> asSuspendingBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
       return SuspendingBackendProjectViewPaneStateAccessorImpl(flowProducer)
     }
 
     fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
       return ProjectViewPaneSettingsAccessorImpl { actionState }
+    }
+
+    private class BackendProjectViewPaneStateAccessorImpl<T>(
+      private val nodeById: ConcurrentHashMap<Long, Node>,
+    ) : BackendProjectViewPaneStateAccessor<T> {
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? {
+        return nodeById[id]?.model as BackendProjectViewNodeModel<T>?
+      }
     }
 
     private class SuspendingBackendProjectViewPaneStateAccessorImpl<T>(
@@ -222,9 +236,13 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     flowProducer.handleUpdate(update)
   }
 
+  override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+    return state.asBackendStateAccessor()
+  }
+
   @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
   override fun <T> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T> {
-    return state.asBackendStateAccessor(flowProducer)
+    return state.asSuspendingBackendStateAccessor(flowProducer)
   }
 
   override fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {

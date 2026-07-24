@@ -47,7 +47,7 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
   }
 
   override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
-    val node = state?.getNodeById(nodeId) ?: return
+    val node = suspendingState?.getNodeById(nodeId) ?: return
     val navigatable = node.userObject.elementDescriptor as? Navigatable? ?: return
     val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
     NavigationService.getInstance(project).navigate(

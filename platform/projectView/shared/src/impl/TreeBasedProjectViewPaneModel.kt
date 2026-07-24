@@ -3,13 +3,27 @@
 
 package com.intellij.platform.projectView.impl
 
+import com.intellij.ide.IdeView
+import com.intellij.ide.projectView.HelpID
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
+import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
@@ -30,6 +44,10 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBu
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
 import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.nullize
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.atomics.AtomicReference
@@ -44,9 +62,14 @@ interface ProjectViewTreeNodeProvider<T> {
 @ApiStatus.Experimental
 abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
   private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.BUFFERED)
-  private val currentState = AtomicReference<SuspendingBackendProjectViewPaneStateAccessor<T>?>(null)
-  val state: SuspendingBackendProjectViewPaneStateAccessor<T>?
+  private val currentSuspendingState = AtomicReference<SuspendingBackendProjectViewPaneStateAccessor<T>?>(null)
+  private val currentState = AtomicReference<BackendProjectViewPaneStateAccessor<T>?>(null)
+  val suspendingState: SuspendingBackendProjectViewPaneStateAccessor<T>?
+    get() = currentSuspendingState.load()
+  val state: BackendProjectViewPaneStateAccessor<T>?
     get() = currentState.load()
+  
+  protected abstract val psi: ProjectViewPsiExtractor<T>
 
   protected open suspend fun isDefault(): Boolean = false
 
@@ -68,7 +91,8 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
     val stateAccessor = builder.asSuspendingBackendStateAccessor<T>()
     try {
-      currentState.store(stateAccessor)
+      currentState.store(builder.asBackendStateAccessor())
+      currentSuspendingState.store(stateAccessor)
       updateSettings(builder)
       val nodeProvider = createNodeProvider(builder.asSettingsAccessor())
       val state = ProjectViewPaneTreeState(nodeProvider, builder, stateAccessor)
@@ -87,6 +111,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
       }
     }
     finally {
+      currentSuspendingState.store(null)
       currentState.store(null)
     }
   }
@@ -161,10 +186,71 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: emptyList()
+    val selectedNodes = selectedIds.mapNotNull<Long, BackendProjectViewNodeModel<T>> { state?.getNodeById(it) }
+    uiDataSnapshotForSelection(selectedNodes, sink, snapshot)
+    // stuff that could be useful for backend-only code, not in the monolith
+    sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] = FileEditorManager.getInstance(project).selectedEditor
+  }
+
+  protected open fun uiDataSnapshotForSelection(
+    selectedNodes: List<BackendProjectViewNodeModel<T>>,
+    sink: DataSink,
+    snapshot: DataSnapshot,
+  ) {
+    sink[PlatformCoreDataKeys.HELP_ID] = HelpID.PROJECT_VIEWS
+    sink[LangDataKeys.IDE_VIEW] = MyIdeView(selectedNodes)
+    sink[PlatformCoreDataKeys.SELECTED_ITEMS] = selectedNodes.map { it.userObject as Any }.toTypedArray()
+    // stuff that could be useful for backend-only code, not in the monolith
+    val navigatables = selectedNodes.mapNotNull { it.userObject as? Navigatable }
+    if (navigatables.isNotEmpty()) {
+      sink[CommonDataKeys.NAVIGATABLE_ARRAY] = navigatables.nullize()?.toTypedArray()
+    }
+    sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+      psi.extractPsiElements(selectedNodes).singleOrNull()
+    }
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY) {
+      psi.extractPsiElements(selectedNodes).nullize()?.toTypedArray()
+    }
+    sink.lazy(PlatformCoreDataKeys.PROJECT_CONTEXT) {
+      selectedNodes.singleOrNull()?.let { singleNode -> psi.extractProject(singleNode) }
+    }
+    sink.lazy(LangDataKeys.MODULE_CONTEXT) {
+      selectedNodes.singleOrNull()?.let { singleNode -> psi.extractSingleModule(singleNode) }
+    }
+    sink.lazy(LangDataKeys.MODULE_CONTEXT_ARRAY) {
+      psi.extractModules(selectedNodes).nullize()?.toTypedArray()
+    }
+    sink.lazy(ProjectView.UNLOADED_MODULES_CONTEXT_KEY) {
+      psi.extractUnloadedModules(selectedNodes)
+    }
+    sink.lazy(ModuleGroup.ARRAY_DATA_KEY) {
+      psi.extractModuleGroups(selectedNodes).nullize()?.toTypedArray()
+    }
+    sink.lazy(LibraryGroupElement.ARRAY_DATA_KEY) {
+      psi.extractLibraryGroups(selectedNodes).nullize()?.toTypedArray()
+    }
+    sink.lazy(NamedLibraryElement.ARRAY_DATA_KEY) {
+      psi.extractNamedLibraryElements(selectedNodes).nullize()?.toTypedArray()
+    }
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
     return null
+  }
+  
+  private inner class MyIdeView(private val selectedNodes: List<BackendProjectViewNodeModel<T>>) : IdeView {
+    override fun getDirectories(): Array<out PsiDirectory> {
+      return psi.extractPsiDirectories(selectedNodes).toTypedArray()
+    }
+
+    override fun getOrChooseDirectory(): PsiDirectory? {
+      return DirectoryChooserUtil.getOrChooseDirectory(this)
+    }
+
+    override fun selectElement(element: PsiElement) {
+      // TODO - need to send a request to the front
+    }
   }
 }
 

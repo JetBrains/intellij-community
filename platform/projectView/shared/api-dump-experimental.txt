@@ -1,3 +1,15 @@
+*f:com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
+- com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- <init>(com.intellij.openapi.project.Project):V
+- extractLibraryGroups(java.util.List):java.util.List
+- extractModuleGroups(java.util.List):java.util.List
+- extractModules(java.util.List):java.util.List
+- extractNamedLibraryElements(java.util.List):java.util.List
+- extractProject(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.project.Project
+- extractPsiDirectories(java.util.List):java.util.List
+- extractPsiElements(java.util.List):java.util.List
+- extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
+- extractUnloadedModules(java.util.List):java.util.List
 *c:com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 - com.intellij.ide.projectView.ViewSettings
 - <init>(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
@@ -13,6 +25,16 @@
 - isShowScratchesAndConsoles():Z
 - isShowURL():Z
 - isStructureView():Z
+*:com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- a:extractLibraryGroups(java.util.List):java.util.List
+- a:extractModuleGroups(java.util.List):java.util.List
+- a:extractModules(java.util.List):java.util.List
+- a:extractNamedLibraryElements(java.util.List):java.util.List
+- a:extractProject(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.project.Project
+- a:extractPsiDirectories(java.util.List):java.util.List
+- a:extractPsiElements(java.util.List):java.util.List
+- a:extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
+- a:extractUnloadedModules(java.util.List):java.util.List
 *:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - a:createNodeModel(J,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:getChildren(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
@@ -23,22 +45,25 @@
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - pf:getProject():com.intellij.openapi.project.Project
+- pa:getPsi():com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- f:getState():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+- f:getSuspendingState():com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - pa:id(kotlin.coroutines.Continuation):java.lang.Object
 - p:isDefault(kotlin.coroutines.Continuation):java.lang.Object
 - loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
 - manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
-- navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
-- p:onStateChanged(com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor,kotlin.coroutines.Continuation):java.lang.Object
+- p:onStateChanged(com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:order(kotlin.coroutines.Continuation):java.lang.Object
 - pa:presentableName(kotlin.coroutines.Continuation):java.lang.Object
 - setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
 - setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
-- setSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
+- setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
 - setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
 - p:supportedSortKeys():java.util.List
 - p:supportsFileNesting():Z
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+- p:uiDataSnapshotForSelection(java.util.List,com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 - pf:updateSettings(kotlin.coroutines.Continuation):java.lang.Object
 *a:com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 - com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
@@ -46,6 +71,7 @@
 - p:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createTreeStructure(com.intellij.ide.projectView.ViewSettings):com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - p:createTreeStructureViewSettings(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 *:com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 - a:getElementDescriptor():com.intellij.ide.util.treeView.NodeDescriptor
@@ -58,9 +84,7 @@
 - com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - a:getUserObject():java.lang.Object
 *:com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
-- a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):java.util.List
 - a:getNodeById(J):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
-- a:getNodeByUserObject(java.lang.Object):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - a:canNavigate():Z
 - a:canNavigateToSource():Z
@@ -100,7 +124,7 @@
 - a:navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
 - a:setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
 - a:setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:setSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
+- a:setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
 - a:setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 *:com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
@@ -110,6 +134,7 @@
 - a:addNode(J,I,com.intellij.platform.projectView.pane.ProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 - a:asBackendStateAccessor():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 - a:asSettingsAccessor():com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+- a:asSuspendingBackendStateAccessor():com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - a:clear(kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChild(J,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChildren(J,kotlin.coroutines.Continuation):java.lang.Object
@@ -124,6 +149,11 @@
 - com.intellij.platform.projectView.pane.SelectInRequest
 - a:getConsiderOnlyLastFocusedEditor():Z
 *:com.intellij.platform.projectView.pane.SelectInRequest
+*:com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
+- a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodeById(J,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodeByUserObject(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- a:getParentByChildId(J,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 - a:getNestingRules():java.util.List
 - a:isFileNestingOn():Z

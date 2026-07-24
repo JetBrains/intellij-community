@@ -21,7 +21,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
-internal fun getNodeElement(userObject: Any?): Any? {
+@ApiStatus.Internal
+fun getNodeElement(userObject: Any?): Any? {
   return when (userObject) {
     is AbstractTreeNode<*> -> userObject.value
     is NodeDescriptor<*> -> userObject.element
@@ -75,7 +76,8 @@ private fun moduleBySingleContentRoot(project: Project, file: VirtualFile): Modu
   return module
 }
 
-internal fun unloadedModules(project: Project, elements: Array<out Any>): List<UnloadedModuleDescription> {
+@ApiStatus.Internal
+fun unloadedModules(project: Project, elements: Array<out Any>): List<UnloadedModuleDescription> {
   val result = SmartList<UnloadedModuleDescription>()
   for (element in elements) {
     val file = when (element) {
