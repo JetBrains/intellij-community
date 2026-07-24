@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isFunctionType
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -107,6 +108,7 @@ private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall)
         return null
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun needCommaForParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): Boolean {
         if (parameter.symbol.hasDefaultValue) return false // parameter is optional
         if (parameter.symbol.isVararg) return false // vararg arguments list can be empty
