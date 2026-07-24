@@ -15,14 +15,13 @@ internal class ComposePanelProvider : MarkdownHtmlPanelProvider() {
     return MarkdownComposePanel()
   }
 
-  override fun createHtmlPanel(project: Project, virtualFile: VirtualFile): MarkdownHtmlPanel {
-    return MarkdownComposePanel(project, virtualFile)
-  }
+  override fun createHtmlPanel(project: Project, virtualFile: VirtualFile): MarkdownHtmlPanel = MarkdownComposePanel(project, virtualFile)
 
   override fun isAvailable(): AvailabilityInfo {
     if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && AppMode.isMonolith()) {
       return AvailabilityInfo.AVAILABLE
     }
+
     return AvailabilityInfo.UNAVAILABLE
   }
 
