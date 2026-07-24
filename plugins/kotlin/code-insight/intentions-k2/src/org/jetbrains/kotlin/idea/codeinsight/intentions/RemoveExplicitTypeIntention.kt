@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.components.isPublicApi
+import org.jetbrains.kotlin.analysis.api.visibility.isPublicApi
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -97,7 +97,7 @@ internal class RemoveExplicitTypeIntention :
         if (declaration is KtFunction && declaration.isLocal) return false
         if (declaration is KtProperty && declaration.isLocal) return false
 
-        return isPublicApi(declaration.symbol)
+        return declaration.symbol.isPublicApi
     }
 
     context(_: KaSession)
