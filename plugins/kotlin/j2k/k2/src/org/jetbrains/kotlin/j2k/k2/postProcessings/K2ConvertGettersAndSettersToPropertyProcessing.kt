@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValu
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.EnumEntryValue
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isAnyType

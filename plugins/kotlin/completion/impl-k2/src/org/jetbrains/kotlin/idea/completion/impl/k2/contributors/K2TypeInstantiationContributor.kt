@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.samConstructor
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator

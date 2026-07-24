@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
-import org.jetbrains.kotlin.analysis.api.components.asCompositeScope
+import org.jetbrains.kotlin.analysis.api.scopes.asCompositeScope
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
-import org.jetbrains.kotlin.analysis.api.components.packageScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
