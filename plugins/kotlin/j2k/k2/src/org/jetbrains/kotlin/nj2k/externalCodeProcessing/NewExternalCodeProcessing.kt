@@ -2,7 +2,15 @@
 
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -139,25 +147,63 @@ class NewExternalCodeProcessing(
         }
     }
 
-    override fun collectUsages(): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
-        return members.values.map { it.collectUsages() }
+    override fun collectUsages(onProgress: ((done: Int, total: Int, name: String) -> Unit)?): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
+        val total = members.size
+        return members.values.mapIndexed { index, member ->
+            onProgress?.invoke(index, total, member.name)
+            try {
+                member.collectUsages()
+            } catch (e: ProcessCanceledException) {
+                throw e
+            } catch (t: Throwable) {
+                LOG.error("Failed to collect usages of '${member.name}'", t)
+                ExternalUsagesFixer.JKMemberInfoWithUsages(member, emptyList(), emptyList())
+            }
+        }
+    }
+
+    companion object {
+        private val LOG: Logger = logger<NewExternalCodeProcessing>()
     }
 
     private fun JKMemberData.collectUsages(): ExternalUsagesFixer.JKMemberInfoWithUsages {
         val javaUsages = mutableListOf<PsiElement>()
         val kotlinUsages = mutableListOf<KtElement>()
-        if (this is JKMemberDataCameFromJava<*>) referenceSearcher.findUsagesForExternalCodeProcessing(
-            javaElement,
-            searchJava = searchInJavaFiles,
-            searchKotlin = searchInKotlinFiles
-        ).forEach { usage ->
-            val element = usage.element
-            if (isInConversionContext(element)) return@forEach
-            when {
-                element is KtElement -> kotlinUsages += element
-                element.language == JavaLanguage.INSTANCE -> javaUsages += element
+        if (this is JKMemberDataCameFromJava<*>) {
+            // Bridges the enclosing coroutine Job's cancellation (e.g. the modal progress Cancel button) into a
+            // classic ProgressIndicator, so the blocking PSI search below actually stops when the user cancels.
+            blockingContextToIndicator {
+                val currentIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+                ProgressManager.getInstance().runProcess(
+                    {
+                        referenceSearcher.findUsagesForExternalCodeProcessing(
+                            javaElement,
+                            searchJava = searchInJavaFiles,
+                            searchKotlin = searchInKotlinFiles
+                        ).forEach { usage ->
+                            val element = usage.element
+                            if (isInConversionContext(element)) return@forEach
+                            when {
+                                element is KtElement -> kotlinUsages += element
+                                element.language == JavaLanguage.INSTANCE -> javaUsages += element
+                            }
+                        }
+                    },
+                    // PsiSearchHelperImpl reports its own low-level "searching for word" text/fraction on this indicator,
+                    SilentSearchProgressIndicator(currentIndicator)
+                )
             }
         }
         return ExternalUsagesFixer.JKMemberInfoWithUsages(this, javaUsages, kotlinUsages)
+    }
+}
+
+private class SilentSearchProgressIndicator(delegate: ProgressIndicator) : DelegatingProgressIndicator(delegate) {
+    override fun setText(text: String?) {
+        // swallow: don't let the low-level reference search overwrite our own progress text
+    }
+
+    override fun setFraction(fraction: Double) {
+        // swallow: don't let the low-level reference search overwrite our own progress fraction
     }
 }

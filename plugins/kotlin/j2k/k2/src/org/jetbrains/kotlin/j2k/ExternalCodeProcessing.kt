@@ -13,5 +13,5 @@ interface ExternalCodeProcessing {
     context(_: KaSession)
     fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>)
 
-    fun collectUsages(): List<ExternalUsagesFixer.JKMemberInfoWithUsages>
+    fun collectUsages(onProgress: ((done: Int, total: Int, name: String) -> Unit)? = null): List<ExternalUsagesFixer.JKMemberInfoWithUsages>
 }

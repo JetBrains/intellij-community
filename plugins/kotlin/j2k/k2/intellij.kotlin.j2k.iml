@@ -70,5 +70,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
   </component>
 </module>

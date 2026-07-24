@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiClass
@@ -73,6 +74,7 @@ class JavaToKotlinConverter(
         postProcessor: PostProcessor,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>,
+        reporter: RawProgressReporter? = null,
     ): ConversionResult {
         if (files.isEmpty()) return ConversionResult(emptyMap(), null)
 
@@ -91,6 +93,7 @@ class JavaToKotlinConverter(
             copiedFiles = copiedFiles,
             postProcessor = postProcessor,
             postprocessorExtensions = postprocessorExtensions,
+            reporter = reporter,
         )
     }
 
@@ -99,7 +102,10 @@ class JavaToKotlinConverter(
         copiedFiles: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         postprocessorExtensions: List<J2kPostprocessorExtension>,
+        reporter: RawProgressReporter?,
     ): ConversionResult {
+        reporter?.text(KotlinJ2KK2Bundle.message("j2k.applying.conversions"))
+        reporter?.fraction(0.0)
 
         val (results, externalCodeProcessing, context) = readAction {
             val originalJavaPsiContext = OriginalJavaPsiContext(
@@ -131,7 +137,10 @@ class JavaToKotlinConverter(
             }
         }
 
-        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
+        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
+            reporter?.text(description)
+            reporter?.fraction(phase.toDouble() / postProcessor.phasesCount.toDouble())
+        }
         PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
 
         val (javaLines, kotlinLines) = readAction {

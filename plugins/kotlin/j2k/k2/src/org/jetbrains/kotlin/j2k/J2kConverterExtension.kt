@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
@@ -63,6 +64,7 @@ abstract class J2kConverterExtension {
             settings: ConverterSettings,
             preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
             postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList,
+            reporter: RawProgressReporter? = null,
         ): ConversionResult {
             val j2kConverterExtension = extension()
             return j2kConverterExtension.createJavaToKotlinConverter(project, module, settings).filesToKotlin(
@@ -70,6 +72,7 @@ abstract class J2kConverterExtension {
                 postProcessor = j2kConverterExtension.createPostProcessor(),
                 preprocessorExtensions = preprocessorExtensions,
                 postprocessorExtensions = postprocessorExtensions,
+                reporter = reporter,
             )
         }
     }

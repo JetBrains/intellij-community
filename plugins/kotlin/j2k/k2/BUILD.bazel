@@ -77,6 +77,7 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//platform/code-style-api:codeStyle",
         "//platform/forms_rt:java-guiForms-rt",
+        "//platform/util/progress",
     ],
 )
 
@@ -135,6 +136,7 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//platform/util/progress:progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.j2k` end

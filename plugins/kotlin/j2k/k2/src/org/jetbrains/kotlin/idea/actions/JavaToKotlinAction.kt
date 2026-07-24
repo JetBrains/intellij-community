@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
@@ -34,6 +34,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
@@ -207,15 +209,26 @@ object JavaToKotlinActionHandler {
     ) {
         val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return }
 
-        val result = runConversion(
-            javaFiles = javaFiles,
-            project = project,
-            module = module,
-            settings = settings,
-        )
+        val (result, usages) = withModalProgress(project, phaseDescription) {
+            reportRawProgress { reporter ->
+                val result = runConversion(
+                    javaFiles = javaFiles,
+                    project = project,
+                    module = module,
+                    settings = settings,
+                    reporter = reporter,
+                )
+                val usages = collectExternalUsages(
+                    project = project,
+                    enableExternalCodeProcessing = enableExternalCodeProcessing,
+                    externalCodeProcessing = result.externalCodeProcessing,
+                    reporter = reporter,
+                )
+                result to usages
+            }
+        }
 
         val externalCodeProcessing = result.externalCodeProcessing
-        val usages = collectExternalUsages(enableExternalCodeProcessing, externalCodeProcessing)
 
         val userConfirmed = !askExternalCodeProcessing || withContext(Dispatchers.EDT) {
             Messages.showYesNoDialog(
@@ -240,17 +253,17 @@ object JavaToKotlinActionHandler {
         project: Project,
         module: Module,
         settings: ConverterSettings,
+        reporter: RawProgressReporter,
     ): ConversionResult {
         val (result, conversionTime) = measureTimedValue {
-            withModalProgress(project, phaseDescription) {
-                withCommandOnEdt(project) {
-                    J2kConverterExtension.convertJavaFilesToKotlin(
-                        files = javaFiles,
-                        project = project,
-                        module = module,
-                        settings = settings,
-                    )
-                }
+            withCommandOnEdt(project) {
+                J2kConverterExtension.convertJavaFilesToKotlin(
+                    files = javaFiles,
+                    project = project,
+                    module = module,
+                    settings = settings,
+                    reporter = reporter,
+                )
             }
         }
 
@@ -265,11 +278,20 @@ object JavaToKotlinActionHandler {
     }
 
     private suspend fun collectExternalUsages(
+        project: Project,
         enableExternalCodeProcessing: Boolean,
         externalCodeProcessing: ExternalCodeProcessing?,
+        reporter: RawProgressReporter,
     ): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
         if (!enableExternalCodeProcessing || externalCodeProcessing == null) return emptyList()
-        return readAction { externalCodeProcessing.collectUsages() }
+        reporter.text(KotlinJ2KK2Bundle.message("progress.searching.usages"))
+        reporter.fraction(0.0)
+        return smartReadAction(project) {
+            externalCodeProcessing.collectUsages { done, total, name ->
+                reporter.fraction(done.toDouble() / total.toDouble())
+                reporter.details(name)
+            }
+        }
     }
 
     private suspend fun commitConversionResult(
