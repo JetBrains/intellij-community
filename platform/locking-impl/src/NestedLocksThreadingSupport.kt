@@ -1291,7 +1291,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           }
           val executorResult = executor(runnable, acquisitionJob)
           when (executorResult) {
-            is ThreadingSupport.ExecutorResult.Retry -> require(!syncExecutionGuard.get()) {
+            is ThreadingSupport.ExecutorResult.Retry, ThreadingSupport.ExecutorResult.Denied -> require(!syncExecutionGuard.get()) {
               "Retry request should not happen with successful execution of action"
             }
             else -> require(syncExecutionGuard.get()) {
