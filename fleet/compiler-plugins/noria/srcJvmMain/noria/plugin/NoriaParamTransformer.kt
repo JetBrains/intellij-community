@@ -301,11 +301,10 @@ class NoriaParamTransformer(
     }
   }
 
-  private fun irConst(value: String): IrConst = IrConstImpl(
+  private fun irConst(value: String): IrConst = IrConstImpl.string(
     UNDEFINED_OFFSET,
     UNDEFINED_OFFSET,
     context.irBuiltIns.stringType,
-    IrConstKind.String,
     value
   )
 
