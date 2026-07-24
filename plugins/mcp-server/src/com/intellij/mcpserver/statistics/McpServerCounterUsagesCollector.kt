@@ -18,7 +18,7 @@ import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.CoroutineScope
 
-internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
+object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("mcpserver.events", 5)
 
   private val MCP_TOOL_CALL_EVENT: EventId1<String> = GROUP.registerEvent(

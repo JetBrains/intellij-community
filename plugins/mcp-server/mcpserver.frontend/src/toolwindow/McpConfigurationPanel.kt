@@ -1,9 +1,9 @@
-package com.intellij.mcpserver.toolwindow
+package com.intellij.mcpserver.frontend.toolwindow
 
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpServerSettings
-import com.intellij.mcpserver.settings.McpServerSettingsConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.panel
@@ -41,9 +41,9 @@ internal class McpConfigurationPanel(private val project: Project) : JPanel(Bord
         row {
           checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations"))
             .applyToComponent {
-              this.isSelected = settings.state.enableBraveMode
+              this.isSelected = settings.enableBraveMode
               addActionListener {
-                settings.state.enableBraveMode = this.isSelected
+                settings.enableBraveMode = this.isSelected
               }
             }
         }

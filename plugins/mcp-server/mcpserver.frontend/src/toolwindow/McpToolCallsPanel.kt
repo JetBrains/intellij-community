@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mcpserver.toolwindow
+package com.intellij.mcpserver.frontend.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.toolwindow.McpDiagnosticService
+import com.intellij.mcpserver.toolwindow.McpToolCallEntry
+import com.intellij.mcpserver.toolwindow.ToolCallStatus
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -455,25 +457,6 @@ private val jsonPrinter = Json { prettyPrint = true }
 
 private fun formatJson(json: JsonObject): String {
   return jsonPrinter.encodeToString(JsonObject.serializer(), json)
-}
-
-internal data class McpToolCallEntry(
-  val callId: Int,
-  val sessionId: String?,
-  val toolName: String,
-  val clientInfo: ClientInfo,
-  val projectName: String?,
-  val arguments: JsonObject,
-  val startTimeMs: Long,
-  val endTimeMs: Long?,
-  val status: ToolCallStatus,
-  val errorMessage: String?,
-  val sideEffectsCount: Int,
-  val responseText: String? = null,
-)
-
-internal enum class ToolCallStatus {
-  IN_PROGRESS, SUCCESS, ERROR, CANCELLED,
 }
 
 private fun formatTime(timeMs: Long): String {

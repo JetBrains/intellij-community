@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mcpserver.settings
+package com.intellij.mcpserver.frontend.settings
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ProjectUtil
@@ -8,11 +8,12 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
+import com.intellij.mcpserver.frontend.util.getConsentDialog
 import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
-import com.intellij.mcpserver.util.getConsentDialog
+import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.actionSystem.AnAction
@@ -63,6 +64,7 @@ import java.nio.file.Path
 import javax.swing.AbstractAction
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.io.path.createFile
@@ -92,8 +94,8 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }, ConsentValidator)
         cell(checkboxWithValidation).bind(componentGet = { it.isValidatedSelected },
                                           componentSet = { component, value -> component.isValidatedSelected = value },
-                                          prop = MutableProperty(getter = { settings.state.enableMcpServer },
-                                                                 setter = { settings.state.enableMcpServer = it })).gap(RightGap.SMALL)
+                                          prop = MutableProperty(getter = { settings.enableMcpServer },
+                                                                 setter = { settings.enableMcpServer = it })).gap(RightGap.SMALL)
         enabledCheckboxState = ValueComponentPredicate(checkboxWithValidation.isValidatedSelected).also { predicate ->
           checkboxWithValidation.addPropertyChangeListener(CheckboxWithValidation.IS_VALIDATED_SELECTED_PROPERTY) { evt ->
             predicate.set(evt.newValue as Boolean)
@@ -205,7 +207,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         row {
           checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).comment(McpServerBundle.message(
             "text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution"))
-            .bindSelected(settings.state::enableBraveMode)
+            .bindSelected(settings::enableBraveMode)
         }
       }.visibleIf(enabledCheckboxState!!)
 
@@ -237,7 +239,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   override fun disposeUIResources() {
     enabledCheckboxState?.let {
       val uiEnableValue = it()
-      val settingsEnableValue = McpServerSettings.getInstance().state.enableMcpServer
+      val settingsEnableValue = McpServerSettings.getInstance().enableMcpServer
       if (uiEnableValue != settingsEnableValue) {
         McpServerService.getInstance().settingsChanged(settingsEnableValue)
       }
@@ -275,9 +277,9 @@ private fun Panel.buildClientRows(
   val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
 
   val transportTypeKnown = ValueComponentPredicate(false)
-  lateinit var configuredTextCell: Cell<javax.swing.JEditorPane>
-  lateinit var restartInfoTextCell: Cell<javax.swing.JEditorPane>
-  lateinit var errorCommentCell: Cell<javax.swing.JEditorPane>
+  lateinit var configuredTextCell: Cell<JEditorPane>
+  lateinit var restartInfoTextCell: Cell<JEditorPane>
+  lateinit var errorCommentCell: Cell<JEditorPane>
 
   // Function to refresh transport message
   fun refreshTransportMessage() {
@@ -359,7 +361,8 @@ private fun Panel.buildClientRows(
   refreshTransportMessage()
 }
 
-internal fun showMcpServerTerminalPromotionProperty(): MutableProperty<Boolean> {
+@ApiStatus.Internal
+fun showMcpServerTerminalPromotionProperty(): MutableProperty<Boolean> {
   return MutableProperty(
     getter = { !McpServerTerminalPromotionDismissalState.isDismissed() },
     setter = { value ->
@@ -464,7 +467,8 @@ fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>,
   }
 }
 
-internal fun openFileInEditor(filePath: Path, project: Project?) {
+@ApiStatus.Internal
+fun openFileInEditor(filePath: Path, project: Project?) {
   if (project == null) {
     return
   }

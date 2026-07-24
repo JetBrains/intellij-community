@@ -817,7 +817,7 @@ extension properties — never sent to the LLM:
 - [`McpToolDescriptor.presentableDescription`](src/com/intellij/mcpserver/McpToolDescriptor.kt) = `displayDescription(toolName)` or the agent-facing `description`.
 
 These are what [`ShowMcpToolsAction`](src/com/intellij/mcpserver/actions/ShowMcpToolsAction.kt)
-and [`McpToolFilterConfigurable`](src/com/intellij/mcpserver/settings/McpToolFilterConfigurable.kt)
+and [`McpToolFilterConfigurable`](mcpserver.frontend/src/settings/McpToolFilterConfigurable.kt)
 render (tree labels, the per-tool description pane, the search index, group headers), and what
 [`McpToolsMarkdownExporter`](src/com/intellij/mcpserver/McpToolsMarkdownExporter.kt) exports.
 

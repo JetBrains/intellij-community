@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.widget
+package com.intellij.mcpserver.frontend.widget
 
 import androidx.compose.runtime.Stable
 import com.intellij.execution.services.ServiceViewManager
@@ -8,16 +8,17 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
+import com.intellij.mcpserver.frontend.services.McpServiceViewContributor
+import com.intellij.mcpserver.frontend.util.getConsentDialog
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
-import com.intellij.mcpserver.services.McpServiceViewContributor
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
-import com.intellij.mcpserver.util.getConsentDialog
 import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
@@ -52,7 +53,7 @@ internal class McpServerPopupModelImpl(
   private val onStateChangedAction: () -> Unit,
 ) : McpServerPopupModel {
   companion object {
-    private val LOG = com.intellij.openapi.diagnostic.logger<McpServerPopupModelImpl>()
+    private val LOG = logger<McpServerPopupModelImpl>()
   }
 
   private val settings = McpServerSettings.getInstance()
@@ -68,8 +69,8 @@ internal class McpServerPopupModelImpl(
     false
   }
 
-  override val initialEnabled: Boolean get() = settings.state.enableMcpServer
-  override val braveMode: Boolean get() = settings.state.enableBraveMode
+  override val initialEnabled: Boolean get() = settings.enableMcpServer
+  override val braveMode: Boolean get() = settings.enableBraveMode
   override val sseUrl: String? get() = if (service.isRunning) addressProvider?.serverSseUrl else null
   override val streamUrl: String? get() = if (service.isRunning) addressProvider?.serverStreamUrl else null
 
@@ -94,20 +95,20 @@ internal class McpServerPopupModelImpl(
   override fun tryEnable(): Boolean {
     val consented = getConsentDialog(project)
     if (!consented) return false
-    settings.state.enableMcpServer = true
+    settings.enableMcpServer = true
     service.settingsChanged(true)
     onStateChangedAction()
     return true
   }
 
   override fun disable() {
-    settings.state.enableMcpServer = false
+    settings.enableMcpServer = false
     service.settingsChanged(false)
     onStateChangedAction()
   }
 
   override fun setBraveMode(value: Boolean) {
-    settings.state.enableBraveMode = value
+    settings.enableBraveMode = value
   }
 
   override fun copySseConfig(): Boolean =

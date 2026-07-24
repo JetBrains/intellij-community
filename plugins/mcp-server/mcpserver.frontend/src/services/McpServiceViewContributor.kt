@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mcpserver.services
+package com.intellij.mcpserver.frontend.services
 
+import com.intellij.execution.services.ServiceEventListener
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewDescriptor
 import com.intellij.execution.services.ServiceViewNonActivatingDescriptor
@@ -9,10 +10,10 @@ import com.intellij.execution.services.SimpleServiceViewDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.toolwindow.McpConfigurationPanel
+import com.intellij.mcpserver.frontend.toolwindow.McpConfigurationPanel
+import com.intellij.mcpserver.frontend.toolwindow.McpToolCallsPanel
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.toolwindow.McpSessionInfo
-import com.intellij.mcpserver.toolwindow.McpToolCallsPanel
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
@@ -21,15 +22,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.application
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.Timer
 
 internal class McpServiceViewContributor : ServiceViewContributor<McpSessionInfo> {
   override fun getViewDescriptor(project: Project): ServiceViewDescriptor {
+    project.service<McpServiceViewHelperService>()
     return McpServerRootDescriptor(project)
   }
 
@@ -63,9 +68,9 @@ private class McpServerRootDescriptor(
 
   private fun createContentComponent(): JComponent {
     val diagnosticService = service<McpDiagnosticService>()
-    val tabbedPane = com.intellij.ui.components.JBTabbedPane()
+    val tabbedPane = JBTabbedPane()
     val toolCallsPanel = McpToolCallsPanel(diagnosticService)
-    Disposer.register(project.service<McpServiceViewProjectDisposable>(), toolCallsPanel)
+    Disposer.register(project.service<McpServiceViewHelperService>(), toolCallsPanel)
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), toolCallsPanel)
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.configuration"), McpConfigurationPanel(project))
     val panel = JPanel(BorderLayout())
@@ -90,10 +95,10 @@ private class McpSessionDescriptor(private val session: McpSessionInfo) : Servic
 
   private fun createContentComponent(): JComponent {
     val diagnosticService = service<McpDiagnosticService>()
-    val tabbedPane = com.intellij.ui.components.JBTabbedPane()
+    val tabbedPane = JBTabbedPane()
 
     val durationLabel = javax.swing.JLabel(StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs))
-    val timer = javax.swing.Timer(1000) {
+    val timer = Timer(1000) {
       durationLabel.text = StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs)
     }
     Disposer.register(session) {
@@ -135,6 +140,17 @@ private fun TransportType.displayName(): String = when (this) {
 }
 
 @Service(Service.Level.PROJECT)
-private class McpServiceViewProjectDisposable : Disposable {
+private class McpServiceViewHelperService : Disposable {
+  init {
+    service<McpDiagnosticService>().observeSessions(this) {
+      fireServiceViewReset()
+    }
+  }
   override fun dispose() = Unit
+
+  private fun fireServiceViewReset() {
+    application.messageBus
+      .syncPublisher(ServiceEventListener.TOPIC)
+      .handle(ServiceEventListener.ServiceEvent.createResetEvent(McpServiceViewContributor::class.java))
+  }
 }

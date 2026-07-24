@@ -3,8 +3,8 @@
 
 package com.intellij.mcpserver
 
-import com.intellij.mcpserver.settings.ToolCategoryGroup
-import com.intellij.mcpserver.settings.buildCategoryGroups
+import com.intellij.mcpserver.frontend.settings.ToolCategoryGroup
+import com.intellij.mcpserver.frontend.settings.buildCategoryGroups
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject

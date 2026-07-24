@@ -1,13 +1,12 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.toolwindow
 
-import com.intellij.execution.services.ServiceEventListener
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallInfo
 import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolSideEffectEvent
 import com.intellij.mcpserver.ToolCallListener
-import com.intellij.mcpserver.services.McpServiceViewContributor
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -43,7 +42,7 @@ private fun String.prettifyJsonOrSelf(): String = runCatching {
 }.getOrNull() ?: this
 
 @Service
-internal class McpDiagnosticService(private val cs: CoroutineScope) {
+class McpDiagnosticService(private val cs: CoroutineScope) {
   private val MAX_TOOL_CALLS = 5000
 
   private val _sessions = MutableStateFlow<List<McpSessionInfo>>(emptyList())
@@ -166,7 +165,6 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       hasLocalAgent = localAgentId != null,
       toolsCount = toolsCount,
     )
-    fireServiceViewReset()
   }
 
   fun sessionEnded(sessionId: String) {
@@ -185,7 +183,6 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     if (ended != null) {
       disposeSessionInfo(ended)
     }
-    fireServiceViewReset()
   }
 
   fun clearToolCalls() {
@@ -202,15 +199,9 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       }
     }
   }
-
-  private fun fireServiceViewReset() {
-    application.messageBus
-      .syncPublisher(ServiceEventListener.TOPIC)
-      .handle(ServiceEventListener.ServiceEvent.createResetEvent(McpServiceViewContributor::class.java))
-  }
 }
 
-internal class McpSessionInfo(
+class McpSessionInfo(
   val sessionId: String,
   val clientInfo: ClientInfo?,
   val transportType: TransportType,
@@ -229,8 +220,28 @@ internal class McpSessionInfo(
   override fun hashCode(): Int = sessionId.hashCode()
 }
 
-internal enum class TransportType {
+enum class TransportType {
   SSE,
   STREAMABLE_HTTP,
   STDIO,
 }
+
+data class McpToolCallEntry(
+  val callId: Int,
+  val sessionId: String?,
+  val toolName: String,
+  val clientInfo: ClientInfo,
+  val projectName: String?,
+  val arguments: JsonObject,
+  val startTimeMs: Long,
+  val endTimeMs: Long?,
+  val status: ToolCallStatus,
+  val errorMessage: String?,
+  val sideEffectsCount: Int,
+  val responseText: String? = null,
+)
+
+enum class ToolCallStatus {
+  IN_PROGRESS, SUCCESS, ERROR, CANCELLED,
+}
+

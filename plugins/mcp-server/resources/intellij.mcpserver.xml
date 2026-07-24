@@ -8,7 +8,6 @@
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
     <module name="intellij.mcpserver.stdio"/>
-    <module name="intellij.platform.compose"/>
   </dependencies>
   <!-- endregion -->
 
@@ -77,16 +76,10 @@
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
 
-    <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettings"/>
-    <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettings"/>
-    <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettings"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettingsImpl"/>
   </extensions>
 
   <resource-bundle>messages.McpServerBundle</resource-bundle>
-
-  <actions>
-    <action id="com.intellij.mcpserver.actions.ShowMcpToolsAction" class="com.intellij.mcpserver.actions.ShowMcpToolsAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-  </actions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.widget
+package com.intellij.mcpserver.frontend.widget
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.remember
@@ -7,8 +7,8 @@ import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.impl.McpServerService
-import com.intellij.mcpserver.settings.McpServerSettingsConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup

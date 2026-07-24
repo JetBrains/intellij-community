@@ -67,7 +67,7 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
 
     val port = parsePort(actualArgs)
     if (port != null) {
-      McpServerSettings.getInstance().state.mcpServerPort = port
+      McpServerSettings.getInstance().mcpServerPort = port
     }
 
     val projectInitTimeout = timeoutFromProperty(PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY, 10.minutes)

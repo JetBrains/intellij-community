@@ -10,4 +10,4 @@ import com.intellij.mcpserver.McpToolFilterProvider
  * The configurable excludes such providers when building its tool list, so that the list shows every tool available
  * in the product instead of being filtered by the configurable's own persisted state.
  */
-internal interface UserConfigurableMcpToolFilterProvider : McpToolFilterProvider
+interface UserConfigurableMcpToolFilterProvider : McpToolFilterProvider

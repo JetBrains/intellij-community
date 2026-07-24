@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mcpserver.settings
+package com.intellij.mcpserver.frontend.settings
 
 import com.intellij.mcpserver.McpManagedSessionSupport
 import com.intellij.mcpserver.McpServerBundle
@@ -11,7 +11,9 @@ import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.UserConfigurableMcpToolFilterProvider
 import com.intellij.mcpserver.presentableDescription
 import com.intellij.mcpserver.presentableName
+import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
@@ -43,6 +45,7 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.event.ActionEvent
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
@@ -62,18 +65,18 @@ private const val EXPAND_LINK = "..."
 private const val DESCRIPTION_COLLAPSED_MAX_LENGTH = 140
 private const val DESCRIPTION_COLLAPSED_LINK_GAP = 4
 
-internal data class ToolCategoryGroup(
+data class ToolCategoryGroup(
   val category: McpToolCategory,
   val tools: List<McpTool>,
 )
 
-internal data class DescriptionRenderModel(
+data class DescriptionRenderModel(
   val collapsedPreview: String,
   val collapsedTruncated: Boolean,
   val expandedRows: List<@NlsSafe String>,
 )
 
-internal fun buildCategoryGroups(tools: List<McpTool>): List<ToolCategoryGroup> {
+fun buildCategoryGroups(tools: List<McpTool>): List<ToolCategoryGroup> {
   return tools
     .groupBy { it.descriptor.category }
     .toSortedMap(compareBy(String.CASE_INSENSITIVE_ORDER) { it.shortName })
@@ -85,9 +88,9 @@ internal fun buildCategoryGroups(tools: List<McpTool>): List<ToolCategoryGroup> 
     }
 }
 
-internal fun userConfigurableTools(tools: List<McpTool>): List<McpTool> = tools.filter { it.isUserConfigurable }
+fun userConfigurableTools(tools: List<McpTool>): List<McpTool> = tools.filter { it.isUserConfigurable }
 
-internal fun buildDescriptionRenderModel(
+fun buildDescriptionRenderModel(
   description: String,
   collapsedTextWidth: Int,
   expandedTextWidth: Int,
@@ -899,7 +902,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     val actionKey = "mcp.space.activate.${System.identityHashCode(component)}"
     component.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), actionKey)
     component.actionMap.put(actionKey, object : AbstractAction() {
-      override fun actionPerformed(e: java.awt.event.ActionEvent?) {
+      override fun actionPerformed(e: ActionEvent?) {
         action()
       }
     })

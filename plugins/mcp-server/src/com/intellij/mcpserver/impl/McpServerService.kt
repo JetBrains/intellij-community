@@ -21,7 +21,7 @@ import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.mcpserver.toolwindow.TransportType
-import com.intellij.mcpserver.widget.enableIfNotExplicitlyDisabled
+import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
@@ -189,12 +189,12 @@ open class McpServerService(val cs: CoroutineScope) {
     get() = connectionAddressProvider.serverStreamUrl
 
   fun start() {
-    McpServerSettings.getInstance().state.enableMcpServer = true
+    McpServerSettings.getInstance().enableMcpServer = true
     settingsChanged(true)
   }
 
   fun stop() {
-    McpServerSettings.getInstance().state.enableMcpServer = false
+    McpServerSettings.getInstance().enableMcpServer = false
     settingsChanged(false)
   }
 
@@ -279,7 +279,8 @@ open class McpServerService(val cs: CoroutineScope) {
     return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
   }
 
-  internal fun settingsChanged(enabled: Boolean) {
+  //todo: I think that should be a subscription to McpServerSettings
+  fun settingsChanged(enabled: Boolean) {
     server.update { currentServer ->
       val effectivelyEnabled = enabled || isMcpServerForceEnabled()
       if (!effectivelyEnabled) {
@@ -303,12 +304,12 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun startGlobalServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    if (!isMcpServerEffectivelyEnabled(McpServerSettings.getInstance().state.enableMcpServer)) return null
+    if (!isMcpServerEffectivelyEnabled(McpServerSettings.getInstance().enableMcpServer)) return null
     return startGlobalServer()
   }
 
   private fun startGlobalServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    val settings = McpServerSettings.getInstance().state
+    val settings = McpServerSettings.getInstance()
     val forcePortState = getForcedMcpServerPortState()
     val desiredPort = when (forcePortState) {
       ForcedPortState.Absent -> settings.mcpServerPort
@@ -472,7 +473,7 @@ open class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  internal fun getMcpTools(
+  fun getMcpTools(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
     clientInfo: Implementation? = null,
@@ -509,7 +510,7 @@ open class McpServerService(val cs: CoroutineScope) {
    * This is useful for UI that needs to show tools filtered by some providers but not others
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
    */
-  internal fun getMcpToolsFiltered(
+  fun getMcpToolsFiltered(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
     excludeProviders: Set<Class<out McpToolFilterProvider>>,

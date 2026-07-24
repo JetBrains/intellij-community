@@ -96,7 +96,7 @@ suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: S
       if (!askConfirmation(project, notificationText, command)) throw rejected()
     }
     McpServerService.AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS -> {
-      if (!McpServerSettings.getInstance().state.enableBraveMode && !askConfirmation(project, notificationText, command)) {
+      if (!McpServerSettings.getInstance().enableBraveMode && !askConfirmation(project, notificationText, command)) {
         throw rejected()
       }
     }
@@ -137,7 +137,7 @@ suspend fun askConfirmation(project: Project, @NlsContexts.Label notificationTex
           }
           row {
             checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations"))
-              .bindSelected(McpServerSettings.getInstance().state::enableBraveMode)
+              .bindSelected(McpServerSettings.getInstance()::enableBraveMode)
               .comment(McpServerBundle.message("text.note.you.can.enable.brave.mode.in.settings.to.skip.this.confirmation"))
           }
         }

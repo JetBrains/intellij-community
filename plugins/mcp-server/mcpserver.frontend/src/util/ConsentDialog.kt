@@ -1,6 +1,7 @@
-package com.intellij.mcpserver.util
+package com.intellij.mcpserver.frontend.util
 
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages

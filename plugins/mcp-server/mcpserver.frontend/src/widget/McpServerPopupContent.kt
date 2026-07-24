@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage", "FunctionName")
 
-package com.intellij.mcpserver.widget
+package com.intellij.mcpserver.frontend.widget
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable

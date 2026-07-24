@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.actions
+package com.intellij.mcpserver.frontend.actions
 
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpTool
