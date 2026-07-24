@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -26,6 +27,7 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -117,18 +119,17 @@ class K2MoveToClassDialog(
         text = candidateList.selectedValue?.targetClassFqName?.asString().orEmpty()
     }
 
+    private var isTargetClassFound = true
+
     /**
      * Installs a validator for the target class text field.
      * The validator checks that the inserted FQ name can be resolved to a [KtClassOrObject].
-     * The validation can happen not more often than once per [VALIDATION_DELAY_MILLIS] ms.
+     * The validation cannot happen more often than once per [VALIDATION_DELAY_MILLIS] ms.
      */
     private fun TextFieldWithBrowseButton.installTargetClassValidator() {
         ComponentValidator(disposable).withValidator {
-            val isValid = ReadAction.nonBlocking(Callable {
-                currentTargetClass() != null
-            }).executeSynchronously()
-            okAction.isEnabled = isValid
-            if (!isValid) {
+            okAction.isEnabled = isTargetClassFound
+            if (!isTargetClassFound && classChooser.text.isNotEmpty()) {
                 ValidationInfo(KotlinBundle.message("refactoring.cannot.find.target.class"), textField)
             } else null
         }.installOn(textField)
@@ -137,7 +138,14 @@ class K2MoveToClassDialog(
             override fun textChanged(e: DocumentEvent) {
                 validationAlarm.cancelAllRequests()
                 validationAlarm.addRequest({
-                    ComponentValidator.getInstance(textField).ifPresent { validator -> validator.revalidate() }
+                    ComponentValidator.getInstance(textField).ifPresent { validator ->
+                        ReadAction.nonBlocking(Callable {
+                            currentTargetClass() != null
+                        }).finishOnUiThread(ModalityState.stateForComponent(this@installTargetClassValidator)) {
+                            isTargetClassFound = it
+                            validator.revalidate()
+                        }.submit(AppExecutorUtil.getAppExecutorService())
+                    }
                 }, delayMillis = VALIDATION_DELAY_MILLIS)
             }
         })
