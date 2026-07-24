@@ -47,6 +47,7 @@ import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.containers.nullize
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
@@ -183,6 +184,33 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
   override suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue) {
     ProjectViewFileNestingService.getInstance().setRules(fileNestingValue.nestingRules)
+  }
+  
+  suspend fun visitTree(visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
+    val superRoot = suspendingState?.getNodeById(SUPER_ROOT_ID) ?: return null
+    val listOfMaybeSingleRoot = suspendingState?.getChildren(superRoot) ?: return null
+    return visitNodes(listOfMaybeSingleRoot, visitNode)
+  }
+
+  private suspend fun visitNodes(
+    nodes: List<BackendProjectViewNodeModel<T>>,
+    visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action,
+  ): BackendProjectViewNodeModel<T>? {
+    for (node in nodes) {
+      val action = visitNode(node)
+      val currentState = suspendingState ?: return null // disposed
+      when (action) {
+        TreeVisitor.Action.INTERRUPT -> return node // found here
+        TreeVisitor.Action.CONTINUE -> {
+          val children = currentState.getChildren(node) ?: continue // the node is gone
+          val resultFromChildren = visitNodes(children, visitNode)
+          if (resultFromChildren != null) return resultFromChildren // found deeper
+        }
+        TreeVisitor.Action.SKIP_CHILDREN -> continue
+        TreeVisitor.Action.SKIP_SIBLINGS -> return null
+      }
+    }
+    return null
   }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
