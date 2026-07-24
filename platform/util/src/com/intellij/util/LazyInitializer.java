@@ -35,27 +35,20 @@ public final class LazyInitializer {
     public T get() {
       T v = value;
       if (v != UNINITIALIZED_VALUE) {
-        return value;
+        return v;
       }
 
       //noinspection SynchronizeOnThis
       synchronized (this) {
         v = value;
         if (v != UNINITIALIZED_VALUE) {
-          return value;
+          return v;
         }
 
         v = initializer.get();
         value = v;
       }
-      return value;
-    }
-
-    void set(T value) {
-      //noinspection SynchronizeOnThis
-      synchronized(this) {
-        this.value = value;
-      }
+      return v;
     }
 
     @Override
