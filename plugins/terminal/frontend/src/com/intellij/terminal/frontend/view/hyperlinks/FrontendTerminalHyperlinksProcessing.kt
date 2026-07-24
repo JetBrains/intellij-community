@@ -324,7 +324,17 @@ private fun processHyperlinksUpdatedEvent(
   val coveredStart = event.coveredStartOffset
   val coveredEnd = event.coveredEndOffset
 
-  val firstChangedOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp).toAbsolute()
+  val firstChangedTerminalOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp)
+  if (firstChangedTerminalOffset == null) {
+    // The change history no longer covers this stamp (too many changes happened while the result was being computed),
+    // so we can't tell which part of the result is still valid. Drop the batch rather than risk showing stale links.
+    LOG.trace {
+      "processHyperlinksUpdatedEvent skip stale: stamp=${event.documentModificationStamp} predates the tracked change history"
+    }
+    return
+  }
+
+  val firstChangedOffset = firstChangedTerminalOffset.toAbsolute()
   val applyUpToOffset = minOf(coveredEnd, firstChangedOffset)
   LOG.trace {
     "processHyperlinksUpdatedEvent: modelStart=$modelStartOffset modelEnd=$modelEndOffset covered=[$coveredStart,$coveredEnd) " +
