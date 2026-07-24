@@ -33,6 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
   override fun beforeAll(context: ExtensionContext) {
     context.testApplication().getOrThrow()
+    ThreadLeakTrackerExtension.refreshPerClassThreadLeakBaseline(context)
   }
 
   override fun afterEach(context: ExtensionContext) {
