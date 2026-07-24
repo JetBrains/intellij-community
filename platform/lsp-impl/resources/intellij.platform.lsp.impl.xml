@@ -13,6 +13,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
@@ -47,6 +48,8 @@
 
     <projectService serviceInterface="com.intellij.platform.lsp.api.LspClientManager"
                     serviceImplementation="com.intellij.platform.lsp.impl.LspClientManagerImpl"/>
+
+    <serviceViewContributor implementation="com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor"/>
 
     <editorFactoryDocumentListener id="LspDocumentListener"
                                    implementation="com.intellij.platform.lsp.impl.platformListeners.LspDocumentListener"/>

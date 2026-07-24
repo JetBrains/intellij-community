@@ -32,6 +32,7 @@ jvm_library(
         "//platform/lsp-impl",
         "//platform/structure-view-impl:structureView",
         "//platform/util:util-ui",
+        "//platform/platform-frontend:frontend",
     ],
 )
 
@@ -59,6 +60,7 @@ jvm_library(
         "//platform/lsp-impl:lsp-impl_test_lib",
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.structureView` end
