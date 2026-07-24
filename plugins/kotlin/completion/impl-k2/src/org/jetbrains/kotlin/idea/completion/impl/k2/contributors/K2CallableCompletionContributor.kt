@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.scopes.asCompositeScope
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
-import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope

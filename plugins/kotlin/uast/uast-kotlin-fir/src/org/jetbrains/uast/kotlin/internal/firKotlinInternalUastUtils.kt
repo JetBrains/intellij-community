@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.containingJvmClassName
+import org.jetbrains.kotlin.analysis.api.javaInterop.containingJvmClassName
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
