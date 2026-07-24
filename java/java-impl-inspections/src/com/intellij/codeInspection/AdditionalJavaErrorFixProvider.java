@@ -162,7 +162,7 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     List<IntentionAction> fixes = new ArrayList<>();
     OrderEntryFix.registerFixes(ref, fixes);
     fixes.forEach(sink);
-    if (PsiUtil.isModuleFile(ref.getContainingFile())) {
+    if (PsiUtil.isModuleFile(containingFile)) {
       sink.accept(new CreateServiceImplementationClassFix(ref));
       sink.accept(new CreateServiceInterfaceOrClassFix(ref));
       return;
