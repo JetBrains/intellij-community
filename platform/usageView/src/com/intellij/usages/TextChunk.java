@@ -99,15 +99,18 @@ public final class TextChunk {
   }
 
   private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull @Unmodifiable List<@NotNull TextChunk> chunks) {
+    if (chunks.isEmpty()) {
+      return EMPTY_ARRAY;
+    }
     AttributesFlyweight defaultFlyweight = defaultAttributes().getFlyweight();
     if (ContainerUtil.and(chunks, chunk -> !chunk.myAttributes.equals(defaultFlyweight))) {
       return chunks.size() == 1
-             ? chunks.get(0)                  // TextChunk
+             ? chunks.getFirst() // TextChunk
              : chunks.toArray(EMPTY_ARRAY);   // TextChunk[] with non-default attributes
     }
     List<Object> result = ContainerUtil.map(chunks, chunk -> chunk.myAttributes.equals(defaultFlyweight) ? chunk.myText : chunk);
     return result.size() == 1
-           ? result.get(0)                    // String
+           ? result.getFirst()  // String
            : ArrayUtil.toObjectArray(result); // Object[] with String or TextChunk elements
   }
 
