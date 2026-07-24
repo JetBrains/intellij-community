@@ -483,11 +483,6 @@ class HighlightingTest : BaseTestCase() {
       </body>
     """.trimIndent())
     myFixture.checkHighlighting()
-
-    // sentence tokenizer should respect exclusions
-    Registry.get("grazie.correct.text.enabled").setValue(false, testRootDisposable)
-    configureByText("a.md", text)
-    myFixture.checkHighlighting()
   }
 
   @Test

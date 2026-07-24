@@ -7,9 +7,7 @@ import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.utils.getProblemsForText
 import com.intellij.grazie.utils.isSpelling
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -54,13 +52,6 @@ internal class TextCheckerManager {
     }
 
     fun doRun(checkers: List<TextChecker>, contexts: List<ProofreadingContext>): Collection<TextProblem> {
-      if (!Registry.`is`("grazie.correct.text.enabled")) {
-        return contexts.flatMap { context ->
-          ProgressManager.checkCanceled()
-          doRun(checkers, context)
-        }
-      }
-
       if (checkers.isSingleSpellingChecker()) {
         return runSpellingChecker(checkers.first(), contexts)
       }
