@@ -123,7 +123,7 @@
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
     <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
       <synonym key="action.OpenLog.Show.text"/>
-      <add-to-group group-id="HelpMenu"/>
+      <add-to-group group-id="HelpMenu" relative-to-action="ShowLog" anchor="before"/>
     </action>
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
