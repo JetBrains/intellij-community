@@ -69,25 +69,15 @@ private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfi
     } else {
         text
     }
-    val processorDependencyMatches = PROCESSOR_DEPENDENCY_REGEX.findAll(fileText)
-        .mapNotNull { it.toKaptProcessorDependency() }
-        .toList()
-    val kaptDependencies = KAPT_DEPENDENCY_REGEX.findAll(fileText)
-        .map { KaptDependency(it.groupValues[1], it.groupValues[2]) }
-        .toSet()
-    val dependenciesToAdd = processorDependencyMatches
-        .distinctBy { it.kaptConfiguration to it.notation }
-        .filterNot { KaptDependency(it.kaptConfiguration, it.notation) in kaptDependencies }
-    val dependenciesToRemove = processorDependencyMatches
-        .filter { it.dropOriginal }
 
-    if (dependenciesToAdd.isEmpty() && dependenciesToRemove.isEmpty()) return
+    val changes = findKaptDependencyChanges(fileText)
+    if (changes.isEmpty) return
 
     val dependenciesBlock = findTopLevelBlock("dependencies") ?: return
 
     changedFiles.storeOriginalFileContent(this)
-    dependenciesBlock.addDependencies(dependenciesToAdd)
-    dependenciesBlock.removeDependencies(dependenciesToRemove)
+    dependenciesBlock.addDependencies(changes.dependenciesToAdd)
+    dependenciesBlock.removeDependencies(changes.dependenciesToRemove)
 
     val codeStyleManager = CodeStyleManager.getInstance(project)
     codeStyleManager.reformat(dependenciesBlock, true)
@@ -260,6 +250,46 @@ private data class KaptProcessorDependency(
 )
 
 private data class KaptDependency(val configuration: String, val notation: String)
+
+private val KaptProcessorDependency.kaptDependency: KaptDependency
+    get() = KaptDependency(kaptConfiguration, notation)
+
+private data class KaptDependencyChanges(
+    val dependenciesToAdd: List<KaptProcessorDependency>,
+    val dependenciesToRemove: List<KaptProcessorDependency>,
+) {
+    val isEmpty: Boolean
+        get() = dependenciesToAdd.isEmpty() && dependenciesToRemove.isEmpty()
+}
+
+private fun findKaptDependencyChanges(fileText: String): KaptDependencyChanges {
+    val processorDependencies = PROCESSOR_DEPENDENCY_REGEX
+        .findAll(fileText)
+        .mapNotNull(MatchResult::toKaptProcessorDependency)
+        .toList()
+
+    val existingKaptDependencies = KAPT_DEPENDENCY_REGEX
+        .findAll(fileText)
+        .map { match ->
+            KaptDependency(
+                configuration = match.groupValues[1],
+                notation = match.groupValues[2],
+            )
+        }
+        .toSet()
+
+    val dependenciesToAdd = processorDependencies
+        .distinctBy(KaptProcessorDependency::kaptDependency)
+        .filterNot { it.kaptDependency in existingKaptDependencies }
+
+    val dependenciesToRemove = processorDependencies
+        .filter(KaptProcessorDependency::dropOriginal)
+
+    return KaptDependencyChanges(
+        dependenciesToAdd = dependenciesToAdd,
+        dependenciesToRemove = dependenciesToRemove,
+    )
+}
 
 private enum class GradleProcessorDependencyConfiguration(
     val dependencyConfiguration: String,
