@@ -111,6 +111,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.liveTemplates.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -130,7 +131,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-codeInsight-liveTemplates-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-codeInsight-liveTemplates-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-liveTemplates-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -140,8 +145,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/base/code-insight",

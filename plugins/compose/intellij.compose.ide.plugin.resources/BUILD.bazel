@@ -175,7 +175,11 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin.resources.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
+    ],
 )
 
 jvm_library(
@@ -200,6 +204,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
     ],
     deps = [
         # do not sort,
@@ -305,8 +310,6 @@ jvm_library(
         "@lib//:studio-platform",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/api:api_test_lib",
     ],

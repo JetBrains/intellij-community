@@ -13,6 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/fir",
         "//platform/usageView",
         "//plugins/kotlin/base/analysis",
@@ -35,6 +36,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":test",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/kotlin/fir:fir_test_lib",
     ],
     deps = [
@@ -54,8 +56,6 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/tests-common:common-tests",

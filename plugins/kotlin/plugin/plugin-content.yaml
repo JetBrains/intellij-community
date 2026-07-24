@@ -210,21 +210,12 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
   modules:
-  - name: kotlin.plugin.common
-  - name: kotlin.plugin.k2
   - name: kotlin.scripting
-  - name: kotlin-ultimate.common-native
-  - name: kotlin-ultimate.javascript.debugger
-  - name: kotlin-ultimate.javascript.nodeJs
-  - name: kotlin-ultimate.native-debugger
-  - name: kotlin-ultimate.ultimate-native
-  - name: kotlin-ultimate.wasm.debugger
-  - name: kotlin-ultimate.profiler
-  - name: kotlin-ultimate.ultimate-plugin
+  - name: intellij.kotlin.plugin
+  contentModules:
   - name: intellij.kotlin.duplicate.scope
   - name: intellij.debugger.jvm.advanced.kotlin
   - name: intellij.debugger.logpoints.kotlin
-  - name: kotlin.plugin
 - name: lib/kotlin.fir.frontend-independent.jar
   contentModules:
   - name: kotlin.fir.frontend-independent
@@ -571,6 +562,27 @@
 - name: lib/modules/intellij.kotlin.uast.jar
   contentModules:
   - name: intellij.kotlin.uast
+- name: lib/modules/intellij.kotlin.ultimate.common.native.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.common.native
+- name: lib/modules/intellij.kotlin.ultimate.javascript.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.javascript.debugger
+- name: lib/modules/intellij.kotlin.ultimate.javascript.nodeJs.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.javascript.nodeJs
+- name: lib/modules/intellij.kotlin.ultimate.native.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.native.debugger
+- name: lib/modules/intellij.kotlin.ultimate.native.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.native
+- name: lib/modules/intellij.kotlin.ultimate.profiler.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.profiler
+- name: lib/modules/intellij.kotlin.ultimate.wasm.debugger.jar
+  contentModules:
+  - name: intellij.kotlin.ultimate.wasm.debugger
 - name: lib/modules/intellij.libraries.completion.ranking.kotlin.jar
   contentModules:
   - name: intellij.libraries.completion.ranking.kotlin
@@ -595,6 +607,9 @@
     libraries:
       kotlin-tooling-core:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
+- name: lib/modules/intellij.platform.commercial.verifier.jar
+  contentModules:
+  - name: intellij.platform.commercial.verifier
 - name: lib/modules/kotlin.base.injection.jar
   contentModules:
   - name: kotlin.base.injection

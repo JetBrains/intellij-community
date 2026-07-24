@@ -23,6 +23,7 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
+        "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
 
@@ -40,7 +41,11 @@ jvm_library(
     kotlinc_opts = ":custom_tests",
     module_name = "intellij.kotlin.j2k.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//java/testFramework",
@@ -54,8 +59,6 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//java/java-psi-api:psi",

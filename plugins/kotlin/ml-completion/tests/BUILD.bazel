@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/ml-completion:completion-ml",
         "//platform/platform-impl/internal",
     ],
@@ -35,7 +35,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
     ],
     deps = [

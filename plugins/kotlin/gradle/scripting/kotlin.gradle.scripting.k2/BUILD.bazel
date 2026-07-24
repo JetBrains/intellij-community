@@ -189,7 +189,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/testRunner/plugin",
         "//plugins/gradle/plugin",
         "//plugins/gradle/java/plugin",
@@ -216,7 +216,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-scripting-tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/gradle/plugin:plugin_test_lib",
         "//platform/observable:observable_test_lib",

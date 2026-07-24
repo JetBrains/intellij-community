@@ -15,7 +15,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlin/reflect",
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/frontend-independent",
@@ -49,7 +49,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],

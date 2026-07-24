@@ -19,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/fir",
         "//plugins/kotlin/base/psi",
     ],
@@ -44,6 +45,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-refactorings-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/observable:observable_test_lib",
@@ -64,8 +66,6 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/references",
         "//plugins/kotlin/references:references_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",

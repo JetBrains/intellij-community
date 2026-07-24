@@ -5,14 +5,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.plugin" exported="" />
-    <orderEntry type="module" module-name="kotlin.plugin.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" exported="" />
+    <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" exported="" />

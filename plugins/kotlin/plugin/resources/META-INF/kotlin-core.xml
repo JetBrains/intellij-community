@@ -26,7 +26,6 @@
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
-    <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
             default="true"

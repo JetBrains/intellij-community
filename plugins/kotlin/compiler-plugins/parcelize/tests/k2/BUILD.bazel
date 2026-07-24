@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerPlugins.parcelize.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -25,7 +26,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerPlugins.parcelize.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-compilerPlugins-parcelize-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -39,8 +44,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2/tests",
         "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
         "//platform/testFramework",

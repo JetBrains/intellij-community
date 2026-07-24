@@ -69,6 +69,8 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
+    <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
+
     <structureViewBuilder
             order="first"
             key="CLASS"

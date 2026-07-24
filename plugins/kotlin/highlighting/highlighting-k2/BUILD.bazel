@@ -157,6 +157,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.highlighting.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -176,7 +177,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-highlighting-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-highlighting-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-highlighting-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -189,8 +194,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",

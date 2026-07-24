@@ -139,6 +139,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.analysis.platform.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -158,7 +159,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-analysis-platform-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-analysis-platform-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-analysis-platform-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -179,8 +184,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",

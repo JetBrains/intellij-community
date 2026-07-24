@@ -1430,8 +1430,6 @@ plugins/kotlin/onboarding-maven
 plugins/kotlin/onboarding-promoter
 plugins/kotlin/plugin
 plugins/kotlin/plugin-updater
-plugins/kotlin/plugin/common
-plugins/kotlin/plugin/k2
 plugins/kotlin/preferences
 plugins/kotlin/project-configuration
 plugins/kotlin/project-configuration-vcs

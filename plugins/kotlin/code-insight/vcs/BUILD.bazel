@@ -17,6 +17,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/vcs-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -46,6 +47,7 @@ jvm_library(
         ":vcs",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

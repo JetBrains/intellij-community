@@ -114,6 +114,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.base.scripting.main.kts.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -132,14 +133,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-base-scripting-main-kts-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/scripting/scripting.main.kts",
         "//plugins/kotlin/base/scripting/scripting.main.kts:scripting.main.kts_test_lib",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",

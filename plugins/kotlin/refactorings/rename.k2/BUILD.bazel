@@ -120,6 +120,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.refactorings.rename.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -139,7 +140,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-refactorings-rename-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-refactorings-rename-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-refactorings-rename-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -157,8 +162,6 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/indexing-api:indexing",
         "//platform/indexing-api:indexing_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/psi",

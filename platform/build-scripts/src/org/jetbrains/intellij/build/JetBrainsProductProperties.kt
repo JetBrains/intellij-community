@@ -38,8 +38,8 @@ val knownMissingModuleDependencies: List<String> = listOf(
   // conditional xi-include
   "kotlin.base.scripting.k1",
   "kotlin.plugin.k2",
-  "kotlin-ultimate.common-native",
-  "kotlin-ultimate.native-debugger",
+  "intellij.kotlin.ultimate.common.native",
+  "intellij.kotlin.ultimate.native.debugger",
   // included using `withModule`
   "intellij.libraries.groovy",
   "intellij.python.frontend",

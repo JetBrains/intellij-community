@@ -14,6 +14,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
 
@@ -30,7 +31,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.codeInsight.groovy.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-gradle-codeInsight-groovy-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,8 +43,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/test-framework",

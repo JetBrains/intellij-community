@@ -127,6 +127,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.postfixTemplates.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -146,7 +147,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-codeInsight-postfixTemplates-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-codeInsight-postfixTemplates-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-postfixTemplates-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -169,8 +174,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi",

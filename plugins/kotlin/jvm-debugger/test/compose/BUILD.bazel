@@ -28,7 +28,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/execution.serviceView/plugin",
     ],
 )
@@ -53,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compose",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
     ],
     deps = [
@@ -61,8 +62,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//platform/testFramework",

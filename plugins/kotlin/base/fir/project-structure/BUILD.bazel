@@ -126,6 +126,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.projectStructure.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -148,6 +149,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-projectStructure-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
@@ -165,8 +167,6 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
         "//java/testFramework",

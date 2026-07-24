@@ -14,7 +14,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
-    runtime_deps = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
+    runtime_deps = [
+        # do not sort,
+        "//java/java-psi-impl:psi-impl",
+        "@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes",
+    ],
 )
 
 jvm_library(
@@ -28,7 +32,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.symbol.light.classes",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
-    runtime_deps = [":libraries-kotlinc-symbol-light-classes"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-symbol-light-classes",
+        "//java/java-psi-impl:psi-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.symbol.light.classes` end
 

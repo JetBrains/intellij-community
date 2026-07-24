@@ -1,7 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.kotlin.k2"/>
+    <plugin id="com.intellij.modules.kotlin"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight.intentions"/>
     <module name="intellij.kotlin.devkit"/>

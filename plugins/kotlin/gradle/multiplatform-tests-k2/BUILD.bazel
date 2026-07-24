@@ -12,6 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "@lib//:kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
@@ -49,12 +50,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-multiplatform-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",

@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.grazie.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -25,11 +26,13 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.grazie.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-grazie-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-grazie-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/grazie",
         "//plugins/kotlin/grazie:grazie_test_lib",
         "//platform/testFramework",

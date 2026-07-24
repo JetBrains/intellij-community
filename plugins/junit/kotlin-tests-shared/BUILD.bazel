@@ -12,11 +12,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/junit/testFramework",
         "//platform/testFramework/junit5",
         "//plugins/junit/java-tests",
     ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -34,8 +35,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//plugins/junit/testFramework",
         "//plugins/junit/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
@@ -43,7 +42,11 @@ jvm_library(
         "//plugins/junit/java-tests",
         "//plugins/junit/java-tests:java-tests_test_lib",
     ],
-    runtime_deps = [":kotlin-tests-shared"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-tests-shared",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -62,8 +65,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//java/java-psi-api:psi",
