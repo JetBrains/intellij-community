@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightT
 import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents.AbstractModuleDependentsTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceCallExpressionCalleeResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceDotQualifiedExpressionReceiverResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceDotQualifiedExpressionSelectorResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServicePropertyDeclarationInitializerResilienceTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractDirectInheritorsProviderTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractSealedInheritorsProviderTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.projectStructure.scopes.AbstractResolutionScopeStructureTest
@@ -212,6 +216,22 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
 
         testClass<AbstractResolutionScopeStructureTest> {
             model("resolutionScopes", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractDeclarationModificationServiceCallExpressionCalleeResilienceTest> {
+            model("declarationModificationPsiResilience/callExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServiceDotQualifiedExpressionReceiverResilienceTest> {
+            model("declarationModificationPsiResilience/dotQualifiedExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServiceDotQualifiedExpressionSelectorResilienceTest> {
+            model("declarationModificationPsiResilience/dotQualifiedExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServicePropertyDeclarationInitializerResilienceTest> {
+            model("declarationModificationPsiResilience/propertyDeclaration", pattern = KT_WITHOUT_DOTS)
         }
     }
 
