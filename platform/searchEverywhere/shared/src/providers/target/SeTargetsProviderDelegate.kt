@@ -27,7 +27,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresenta
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.psi.codeStyle.NameUtil
@@ -71,7 +71,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
-      SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
         scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
