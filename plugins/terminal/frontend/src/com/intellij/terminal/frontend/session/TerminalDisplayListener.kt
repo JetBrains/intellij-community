@@ -5,6 +5,7 @@ import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.progress.TerminalProgressState
 import java.util.EventListener
 
 @ApiStatus.Internal
@@ -22,6 +23,8 @@ interface TerminalDisplayListener : EventListener {
   fun bracketedPasteModeChanged(isEnabled: Boolean) {}
 
   fun windowTitleChanged(title: String) {}
+
+  fun terminalProgressChanged(terminalProgressState: TerminalProgressState) {}
 
   fun beep() {}
 }

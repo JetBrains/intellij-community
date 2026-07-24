@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl;
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
+import org.jetbrains.plugins.terminal.progress.TerminalProgressManager;
 
 import java.awt.Component;
 import java.time.Duration;
@@ -240,9 +241,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
             if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
             try {
               ShellStartupOptions optionsWithTermSize = configuredOptions.builder().initialTermSize(resultInitialTermSize).build();
-              TtyConnector connector = createTtyConnector(optionsWithTermSize);
+              TtyConnector connector = TerminalProgressManager.wrapConnector(terminalWidget, createTtyConnector(optionsWithTermSize));
               Duration durationBetweenStartupAndConnectorCreated = startupMoment.elapsedNow();
-              if (connector instanceof ProcessTtyConnector processTtyConnector) {
+              ProcessTtyConnector processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
+              if (processTtyConnector != null) {
                 logCommonStartupInfo(
                   connector,
                   processTtyConnector.getProcess(),

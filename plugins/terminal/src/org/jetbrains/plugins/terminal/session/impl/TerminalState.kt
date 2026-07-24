@@ -5,6 +5,7 @@ import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.progress.TerminalProgressState
 
 @ApiStatus.Internal
 data class TerminalState(
@@ -20,6 +21,7 @@ data class TerminalState(
   val isAltSendsEscape: Boolean,
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
+  val terminalProgressState: TerminalProgressState,
   /** Whether such events as command started/finished are supported by the shell integration */
   val isShellIntegrationEnabled: Boolean,
   /**

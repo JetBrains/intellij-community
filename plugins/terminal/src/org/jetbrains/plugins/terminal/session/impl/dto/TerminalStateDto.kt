@@ -19,6 +19,7 @@ data class TerminalStateDto(
   val isAltSendsEscape: Boolean,
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
+  val terminalProgressState: TerminalProgressStateDto = TerminalProgressStateDto(),
   val isShellIntegrationEnabled: Boolean,
   val currentDirectory: String?,
 )
@@ -37,6 +38,7 @@ fun TerminalState.toDto(): TerminalStateDto {
     isAltSendsEscape = isAltSendsEscape,
     isBracketedPasteMode = isBracketedPasteMode,
     windowTitle = windowTitle,
+    terminalProgressState = terminalProgressState.toDto(),
     isShellIntegrationEnabled = isShellIntegrationEnabled,
     currentDirectory = currentDirectory,
   )
@@ -56,6 +58,7 @@ fun TerminalStateDto.toTerminalState(): TerminalState {
     isAltSendsEscape = isAltSendsEscape,
     isBracketedPasteMode = isBracketedPasteMode,
     windowTitle = windowTitle,
+    terminalProgressState = terminalProgressState.toTerminalProgressState(),
     isShellIntegrationEnabled = isShellIntegrationEnabled,
     currentDirectory = currentDirectory,
   )
