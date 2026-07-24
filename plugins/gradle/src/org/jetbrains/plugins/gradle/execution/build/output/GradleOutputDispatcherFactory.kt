@@ -10,7 +10,7 @@ import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.LineProcessor
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import org.apache.commons.lang3.ClassUtils
@@ -23,6 +23,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.enums.enumEntries
 
 @Internal
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
@@ -44,19 +45,15 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
     private val parsers: List<BuildOutputParser>,
-  ) : AbstractOutputMessageDispatcher(listener) {
+  ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
 
-    override var stdOut: Boolean = true
-
-    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
     private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
-    private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
-
-    private val rootReader = BuildOutputInstantReaderImpl(buildId, buildId, this, parsers)
+    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
     private val lineProcessor = object : LineProcessor() {
 
-      private var currentReader = rootReader
+      private var currentReader = reader
 
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
@@ -65,7 +62,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         if (cleanLine.startsWith("> Task :")) {
           val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
-          currentReader = tasksOutputReaders[taskName] ?: rootReader
+          currentReader = tasksOutputReaders[taskName] ?: reader
         }
         else if (cleanLine.startsWith("> Configure") ||
                  cleanLine.startsWith("FAILURE: Build failed") ||
@@ -73,10 +70,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
                  cleanLine.startsWith("[Incubating] Problems report is available at:") ||
                  cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                  cleanLine.startsWith("BUILD SUCCESSFUL")) {
-          currentReader = rootReader
+          currentReader = reader
         }
 
-        if (currentReader != rootReader) {
+        if (currentReader != reader) {
           val parentEventId = currentReader.parentEventId
           onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
         }
@@ -103,7 +100,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         val oldValue = tasksOutputReaders.put(event.message,
                                               BuildOutputInstantReaderImpl(buildId, eventId, this, parsers))
         if (oldValue != null) {  // multiple invocations of the same task during the build session
-          redefinedReaders.add(oldValue)
+          tasksOutputRedefinedReaders.add(oldValue)
         }
         tasksEventIds[event.message] = eventId
       }
@@ -116,15 +113,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun closeAndGetFuture(): CompletableFuture<*> {
       lineProcessor.close()
-      val futures = (tasksOutputReaders.values.asSequence()
-                     + redefinedReaders.asSequence()
-                     + sequenceOf(rootReader))
+      val futures = (tasksOutputReaders.values.asSequence() + tasksOutputRedefinedReaders.asSequence())
         .map { it.closeAndGetFuture() }
         .toList()
-
-      tasksOutputReaders.clear()
-      redefinedReaders.clear()
-      return CompletableFuture.allOf(*futures.toTypedArray())
+      return CompletableFuture.allOf(super.closeAndGetFuture(), *futures.toTypedArray())
     }
 
     override fun append(csq: CharSequence): Appendable {
@@ -165,7 +157,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
 
       val logLevel = list[1].drop(1).dropLast(1)
-      return if (enumValues<LogLevel>().none { it.name == logLevel }) {
+      return if (enumEntries<LogLevel>().none { it.name == logLevel }) {
         line
       }
       else {
