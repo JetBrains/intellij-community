@@ -210,7 +210,7 @@ public class ProjectViewDirectoryHelper {
     ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
       processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(psiDirectory, settings),
-                                  children, fileIndex, null, settings, withSubDirectories, filter);
+                                  children, fileIndex, false, settings, withSubDirectories, filter);
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
@@ -235,7 +235,8 @@ public class ProjectViewDirectoryHelper {
           children.add(new PsiDirectoryNode(project, subdir, settings, filter));
         }
       }
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, moduleFileIndex, settings,
+      boolean skipNonProjectContent = moduleFileIndex != null;
+      processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, skipNonProjectContent, settings,
                                   withSubDirectories, filter);
     }
     return children;
@@ -352,7 +353,7 @@ public class ProjectViewDirectoryHelper {
                                            PsiElement[] children,
                                            List<? super AbstractTreeNode<?>> container,
                                            ProjectFileIndex projectFileIndex,
-                                           @Nullable ModuleFileIndex moduleFileIndex,
+                                           boolean skipNonProjectContent,
                                            ViewSettings viewSettings,
                                            boolean withSubDirectories,
                                            @Nullable PsiFileSystemItemFilter filter) {
@@ -367,7 +368,11 @@ public class ProjectViewDirectoryHelper {
       if (vFile == null) {
         continue;
       }
-      if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
+      // BAZEL-3331
+      // Previously, module index was queried instead of project index.
+      // It was changed, because with the Bazel plugin a directory might be a part of a different module (dummy module) than its children.
+      // It results in confusing empty project view when Flatten Packages is switched on.
+      if (skipNonProjectContent && !projectFileIndex.isInContent(vFile)) {
         continue;
       }
       if (filter != null && !filter.shouldShow((PsiFileSystemItem)child)) {
@@ -382,7 +387,7 @@ public class ProjectViewDirectoryHelper {
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true, filter)) {
               processPsiDirectoryChildren(
-                dir, directoryChildrenInProject(dir, viewSettings), container, projectFileIndex, moduleFileIndex, viewSettings, true, filter
+                dir, directoryChildrenInProject(dir, viewSettings), container, projectFileIndex, skipNonProjectContent, viewSettings, true, filter
               ); // expand it recursively
               continue;
             }
