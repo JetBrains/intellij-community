@@ -4,6 +4,8 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -11,6 +13,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -85,16 +88,22 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
 
       final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-      final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(myField.getText(), scope);
-      final TreeClassChooser chooser =
-        factory.createNoInnerClassesScopeChooser(IntelliLangBundle.message("dialog.title.select.annotation.class"), scope,
-                                                 PsiClass::isAnnotationType, aClass);
-
-      chooser.showDialog();
-      final PsiClass psiClass = chooser.getSelected();
-      if (psiClass != null) {
-        myField.setText(psiClass.getQualifiedName());
-      }
+      ReadAction.nonBlocking(() -> JavaPsiFacade.getInstance(myProject).findClass(myField.getText(), scope))
+        .expireWhen(() -> myProject.isDisposed())
+        .finishOnUiThread(ModalityState.current(), aClass -> {
+          final TreeClassChooser chooser =
+            factory.createNoInnerClassesScopeChooser(IntelliLangBundle.message("dialog.title.select.annotation.class"), scope,
+                                                     PsiClass::isAnnotationType, aClass);
+          chooser.showDialog();
+          final PsiClass psiClass = chooser.getSelected();
+          if (psiClass != null) {
+            String name = psiClass.getQualifiedName();
+            if (name != null) {
+              myField.setText(name);
+            }
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 }
