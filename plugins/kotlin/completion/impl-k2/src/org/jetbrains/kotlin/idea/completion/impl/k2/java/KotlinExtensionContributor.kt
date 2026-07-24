@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy
 import org.jetbrains.kotlin.analysis.api.session.analysisScope
-import org.jetbrains.kotlin.analysis.api.components.asSignature
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
