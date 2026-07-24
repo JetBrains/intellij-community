@@ -131,6 +131,47 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  // IDEA-391836
+  public void testRunConfigurationModuleWithDotIsResolvedFromLegacyDottedName() throws Exception {
+    JavaApplicationRunConfigurationImporter appConfigImporter = new JavaApplicationRunConfigurationImporter();
+    maskRunImporter(appConfigImporter);
+
+    createSettingsFile("""
+                         rootProject.name = 'project'
+                         include 'sub.project'""");
+    createProjectSubFile("sub.project/build.gradle", "apply plugin: 'java'");
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPluginIfCan()
+        .addPostfix(
+          """
+            import org.jetbrains.gradle.ext.*
+            idea {
+              project.settings {
+                runConfigurations {
+                   app(Application) {
+                       mainClass = 'my.app.Class'
+                       moduleName = 'project.sub.project.main'
+                   }
+                }
+              }
+            }""")
+        .generate());
+
+    // The escaped module actually exists, the legacy dotted name does not.
+    assertNotNull(getModule("project.sub_project.main"));
+
+    final RunManager runManager = RunManager.getInstance(getMyProject());
+    final RunnerAndConfigurationSettings appSettings = runManager.findConfigurationByName("app");
+    assertNotNull(appSettings);
+    final ApplicationConfiguration app = assertInstanceOf(appSettings.getConfiguration(), ApplicationConfiguration.class);
+    Module module = app.getConfigurationModule().getModule();
+    assertNotNull("Module should be resolved from the legacy dotted name", module);
+    assertEquals("project.sub_project.main", module.getName());
+  }
+
+  @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testGradleRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
     maskRunImporter(testExtension);

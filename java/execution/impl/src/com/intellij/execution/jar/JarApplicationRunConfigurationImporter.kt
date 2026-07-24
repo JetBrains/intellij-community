@@ -4,8 +4,10 @@ package com.intellij.execution.jar
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolverService
 import com.intellij.openapi.project.Project
 
 class JarApplicationRunConfigurationImporter : RunConfigurationImporter {
@@ -19,8 +21,7 @@ class JarApplicationRunConfigurationImporter : RunConfigurationImporter {
     if (runConfiguration !is JarApplicationConfiguration) {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
-    val moduleName = cfg["moduleName"] as? String
-    val module = moduleName?.let(modelsProvider.modifiableModuleModel::findModuleByName)
+    val module = service<RunConfigurationModuleNameResolverService>().findModule(modelsProvider, cfg["moduleName"] as? String)
     if (module != null) {
       runConfiguration.module = module
     }
