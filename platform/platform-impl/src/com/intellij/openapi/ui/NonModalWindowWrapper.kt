@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -455,14 +454,7 @@ abstract class NonModalWindowWrapper(
       }
 
       override fun windowClosing(e: WindowEvent) {
-        // On Linux/Windows, the desktop sends WINDOW_CLOSING to every window simultaneously.
-        // The non-modal window may receive it before the IDE frame, so isExitInProgress is
-        // still false here. Defer via invokeLater so the IDE frame's handler runs first and
-        // sets isExitInProgress=true before we check.
-        EventQueue.invokeLater {
-          if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return@invokeLater
-          onWindowClosing(e)
-        }
+        onWindowClosing(e)
       }
     }
     windowListener = adapter
