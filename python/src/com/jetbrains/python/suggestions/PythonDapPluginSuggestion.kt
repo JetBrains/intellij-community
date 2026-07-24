@@ -53,7 +53,7 @@ internal class PythonDapPluginSuggestionProvider : PluginSuggestionProvider {
       val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.text = PyBundle.message("advertiser.python.dap.plugin")
 
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", "Python DAP Debugger")) {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", "")) {
         FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
         installPythonDapPlugin(project) {
           EditorNotifications.getInstance(project).updateAllNotifications()
