@@ -78,6 +78,16 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
       }
     }
+
+    suspend fun openFileAsync(file: VirtualFile, project: Project) {
+      if (!prepareFileTypeForOpening(project, file)) {
+        return
+      }
+
+      withContext(Dispatchers.EDT) {
+        openFile(file, project)
+      }
+    }
   }
 
   init {
@@ -214,13 +224,9 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
 
-    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
-
-    readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
-    ?: withContext(Dispatchers.EDT) {
-      FileTypeChooser.associateFileType(virtualFile.name)
+    if (!prepareFileTypeForOpening(project, virtualFile)) {
+      return
     }
-    ?: return
 
     if (project == null || project.isDefault) {
       PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
@@ -239,6 +245,18 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
   }
+}
+
+private suspend fun prepareFileTypeForOpening(project: Project?, virtualFile: VirtualFile): Boolean {
+  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+
+  if (readAction { virtualFile.fileType } != FileTypes.UNKNOWN) {
+    return true
+  }
+
+  return withContext(Dispatchers.EDT) {
+    FileTypeChooser.associateFileType(virtualFile.name)
+  } != null
 }
 
 private fun isFileEqualToProjectFile(file: Path, project: Project): Boolean {

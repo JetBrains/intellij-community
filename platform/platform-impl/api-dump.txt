@@ -738,6 +738,8 @@ c:com.intellij.ide.actions.OpenFileAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.actions.OpenFileAction$Companion
+- f:openFileAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
 - <init>(Z):V

@@ -594,12 +594,7 @@ object ProjectUtil {
       else {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
-          withContext(Dispatchers.EDT) {
-            //readaction is not enough
-            writeIntentReadAction {
-              OpenFileAction.openFile(virtualFile, projectToClose)
-            }
-          }
+          OpenFileAction.openFileAsync(virtualFile, projectToClose)
         }
         result = projectToClose
       }
