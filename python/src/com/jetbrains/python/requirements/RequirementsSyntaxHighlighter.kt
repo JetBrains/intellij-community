@@ -17,7 +17,7 @@ class RequirementsSyntaxHighlighter : SyntaxHighlighterBase() {
     return RequirementsLexerAdapter()
   }
 
-  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey?> {
+  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> {
     return when (tokenType) {
       TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS
       com.jetbrains.python.requirements.psi.RequirementsTypes.AND -> OPERATOR_KEYS

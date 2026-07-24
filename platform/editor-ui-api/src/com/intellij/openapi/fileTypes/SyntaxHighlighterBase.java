@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,32 +21,39 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   @Deprecated
   protected static final TextAttributesKey[] EMPTY = TextAttributesKey.EMPTY_ARRAY;
 
-  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key) {
     return key == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{key};
   }
 
-  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
     if (key1 == null) return pack(key2);
     if (key2 == null) return pack(key1);
     return new TextAttributesKey[]{key1, key2};
   }
 
-  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
-    if (key == null) return base;
+  public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
+    assertNoNulls(base);
+    if (key == null) {
+      return base;
+    }
     TextAttributesKey[] result = Arrays.copyOf(base, base.length + 1);
     result[base.length] = key;
     return result;
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey @NotNull [] base) {
-    if (key == null) return base;
+    assertNoNulls(base);
+    if (key == null) {
+      return base;
+    }
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
     result[0] = key;
     return result;
   }
 
-  public static @NotNull TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+    assertNoNulls(base);
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;
@@ -57,11 +65,17 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TokenSet keys, @NotNull TextAttributesKey value) {
+  private static void assertNoNulls(TextAttributesKey @NotNull [] base) {
+    if (ArrayUtil.contains(null, base)) {
+      throw new IllegalArgumentException("Must not pass nulls but got: " + Arrays.toString(base));
+    }
+  }
+
+  public static void fillMap(@NotNull Map<? super @NotNull IElementType, ? super @NotNull TextAttributesKey> map, @NotNull TokenSet keys, @NotNull TextAttributesKey value) {
     fillMap(map, value, keys.getTypes());
   }
 
-  protected static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TextAttributesKey value, @NotNull IElementType @NotNull ... types) {
+  protected static void fillMap(@NotNull Map<? super @NotNull IElementType, ? super @NotNull TextAttributesKey> map, @NotNull TextAttributesKey value, @NotNull IElementType @NotNull ... types) {
     for (IElementType type : types) {
       map.put(type, value);
     }
@@ -71,10 +85,10 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given keys with a given value.
    * Throws error if the map already contains different mapping for one of given keys.
    */
-  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
-                                final @NotNull TokenSet keys,
-                                final @NotNull TextAttributesKey value) {
-    for (final IElementType type : keys.getTypes()) {
+  protected static void safeMap(@NotNull Map<? super IElementType, TextAttributesKey> map,
+                                @NotNull TokenSet keys,
+                                @NotNull TextAttributesKey value) {
+    for (IElementType type : keys.getTypes()) {
       safeMap(map, type, value);
     }
   }
@@ -83,10 +97,10 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given key with a given value.
    * Throws error if the map already contains different mapping for given key.
    */
-  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
-                                final @NotNull IElementType type,
-                                final @NotNull TextAttributesKey value) {
-    final TextAttributesKey oldVal = map.put(type, value);
+  protected static void safeMap(@NotNull Map<? super IElementType, TextAttributesKey> map,
+                                @NotNull IElementType type,
+                                @NotNull TextAttributesKey value) {
+    TextAttributesKey oldVal = map.put(type, value);
     if (oldVal != null && !oldVal.equals(value)) {
       LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);
     }
