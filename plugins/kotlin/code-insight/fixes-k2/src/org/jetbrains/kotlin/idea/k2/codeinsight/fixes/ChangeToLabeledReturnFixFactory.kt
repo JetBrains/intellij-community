@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 
 internal object ChangeToLabeledReturnFixFactory {
 

@@ -53,7 +53,7 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
             return computeWithProgressIconIfNeeded(element.findExistingEditor()!!, caretOffset) {
                 analyze(contentElement) {
                     val resolveToCall = contentElement.getPossiblyQualifiedCallExpression()?.resolveToCall()
-                    resolveToCall?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol != null
+                    resolveToCall?.singleFunctionCallOrNull()?.symbol != null
                 }
             }
         }

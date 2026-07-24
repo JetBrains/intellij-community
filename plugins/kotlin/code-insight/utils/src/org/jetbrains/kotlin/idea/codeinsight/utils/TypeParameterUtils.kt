@@ -24,7 +24,7 @@ object TypeParameterUtils {
     context(_: KaSession)
     fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtElement): Set<KaTypeParameterSymbol> {
         val call = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySet()
-        val callSymbol = call.partiallyAppliedSymbol.symbol
+        val callSymbol = call.symbol
 
         @OptIn(KaExperimentalApi::class)
         val typeParameters = callSymbol.typeParameters

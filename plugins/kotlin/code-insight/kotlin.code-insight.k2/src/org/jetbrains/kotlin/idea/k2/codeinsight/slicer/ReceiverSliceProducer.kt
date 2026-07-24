@@ -5,11 +5,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.psi.PsiCall
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.KtExpression
@@ -59,6 +60,6 @@ object ReceiverSliceProducer : SliceProducer {
     override val testPresentation: String
         get() = "RECEIVER"
 
-    override fun equals(other: Any?) = other === this
-    override fun hashCode() = 0
+    override fun equals(other: Any?): Boolean = other === this
+    override fun hashCode(): Int = 0
 }

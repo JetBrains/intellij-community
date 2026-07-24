@@ -57,7 +57,7 @@ internal class SimplifyAssertNotNullInspection :
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
 
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return null
-        val functionSymbol = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+        val functionSymbol = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol
         if (functionSymbol?.callableId.toString() != "kotlin/assert") return null
 
         val prevDeclaration = findVariableDeclaration(element) ?: return null

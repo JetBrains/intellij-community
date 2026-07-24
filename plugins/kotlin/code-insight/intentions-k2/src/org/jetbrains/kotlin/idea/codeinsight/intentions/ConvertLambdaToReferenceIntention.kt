@@ -11,15 +11,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -27,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -34,10 +31,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -169,7 +169,7 @@ internal class ConvertLambdaToReferenceIntention :
             val callableReferenceExpr = psiFactory.createCallableReferenceExpression(referenceName) ?: return null
             return Context(callableReferenceExpr.createSmartPointer(), renderTypeForProperty, renderedTypeArguments)
         } else {
-            val symbol = outerCallExpression?.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
+            val symbol = outerCallExpression?.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return null
             val valueParameters = symbol.valueParameters
             val arguments = outerCallExpression.valueArguments.filter { it !is KtLambdaArgument }
             val hadDefaultValues = valueParameters.size - 1 > arguments.size
@@ -286,7 +286,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             val resolvedCall = singleStatement.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
             when (receiver) {
                 is KtNameReferenceExpression -> {
-                    val receiverSymbol = receiver.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol ?: return null
+                    val receiverSymbol = receiver.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return null
                     val lambdaValueParameters = lambdaExpression.functionLiteral.symbol.valueParameters
                     if (receiverSymbol is KaValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
                         val originalReceiverType = receiverSymbol.returnType
@@ -314,7 +314,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
 }
 
 private fun buildReferenceText(receiver: String, selector: String, call: KaCallableMemberCall<*, *>?): String {
-    val invokeReference = if (call?.partiallyAppliedSymbol?.symbol?.isInvokeOperator == true) "::invoke" else ""
+    val invokeReference = if (call?.symbol?.isInvokeOperator == true) "::invoke" else ""
     return if (receiver.isEmpty()) {
         "::$selector$invokeReference"
     } else {
@@ -337,7 +337,7 @@ context(_: KaSession)
 private fun KtLambdaExpression.lambdaParameterType(): KaType? {
     val argument = parentValueArgument() ?: return null
     val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
-    return callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping?.get(argument.getArgumentExpression())?.returnType
+    return callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping?.get(argument.getArgumentExpression())?.returnType
 }
 
 private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
@@ -397,7 +397,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
 
     // No references to Java synthetic properties
     if (!languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties) &&
-        partiallyAppliedSymbol.symbol is KaSyntheticJavaPropertySymbol
+        symbol is KaSyntheticJavaPropertySymbol
     ) return false
 
     val hasReceiver = with(partiallyAppliedSymbol) {
@@ -409,7 +409,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (noBoundReferences && hasReceiver && explicitReceiver == null) return false
 
     val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
-    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionSymbol)?.valueParameters?.none { it.hasDeclaredDefaultValue } == true)) return false
+    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || symbol.valueParameters.none { it.hasDeclaredDefaultValue } == true)) return false
 
     if (!lambdaExpression.isArgument() && symbol is KaNamedFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
         val property = lambdaExpression.getStrictParentOfType<KtProperty>()
@@ -420,12 +420,12 @@ private fun isConvertibleCallInLambdaByAnalyze(
 
     if (explicitReceiver != null && explicitReceiver !is KtSimpleNameExpression &&
         explicitReceiver.anyDescendantOfType<KtSimpleNameExpression> {
-            it.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol in lambdaValueParameterSymbols
+            it.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol in lambdaValueParameterSymbols
         }
     ) return false
 
     val explicitReceiverSymbol = (explicitReceiver as? KtNameReferenceExpression)?.resolveToCall()
-        ?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol
+        ?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
 
     if (explicitReceiverSymbol is KaValueParameterSymbol &&
         explicitReceiverSymbol in lambdaValueParameterSymbols && explicitReceiver.isObject()
@@ -490,7 +490,7 @@ private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaEx
 context(_: KaSession)
 private fun KtCallExpression.addTypeArgumentsIfNeeded(lambda: KtLambdaExpression): String? {
     val resolvedCall = lambda.singleStatementOrNull()?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-    val calledFunctionInLambda = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
+    val calledFunctionInLambda = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
     val overloadedFunctions = calledFunctionInLambda.overloadedFunctions(lambda)
 
     if (overloadedFunctions.count { it.valueParameters.size == calledFunctionInLambda.valueParameters.size } < 2

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol

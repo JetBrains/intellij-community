@@ -59,12 +59,12 @@ internal object ChangeToStarProjectionFixFactory {
                 is KtValueArgument -> {
                     val callExpr = parent.getStrictParentOfType<KtCallExpression>()
                     val functionCall = callExpr?.resolveToCall()?.successfulFunctionCallOrNull()
-                    functionCall?.argumentMapping?.get(parent.getArgumentExpression())?.symbol?.returnType
+                    functionCall?.valueArgumentMapping?.get(parent.getArgumentExpression())?.symbol?.returnType
                 }
 
                 is KtQualifiedExpression ->
                     if (KtPsiUtil.safeDeparenthesize(parent.receiverExpression) == binaryExpr)
-                        parent.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.receiverParameter?.returnType
+                        parent.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.receiverParameter?.returnType
                     else
                         null
 

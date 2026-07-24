@@ -53,7 +53,7 @@ internal fun KaSession.isLambdaWithSingleReturnedCallOnSingleParameter(
 
     val methodCall = singleReturnedExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
 
-    val explicitReceiverValue = methodCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue ?: return false
+    val explicitReceiverValue = methodCall.dispatchReceiver as? KaExplicitReceiverValue ?: return false
     val explicitReceiverAccessCall = explicitReceiverValue.expression.resolveToCall()?.successfulVariableAccessCall() ?: return false
 
     return methodCall.symbol.callableId == callableId &&
@@ -62,7 +62,7 @@ internal fun KaSession.isLambdaWithSingleReturnedCallOnSingleParameter(
 
 internal fun KaSession.isIterableForEachFunctionCall(element: KtCallExpression): Boolean {
     val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-    val actualReceiverType = functionCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
+    val actualReceiverType = functionCall.extensionReceiver?.type ?: return false
 
     return isIterableForEachFunction(functionCall.symbol) &&
             actualReceiverType.isSubtypeOf(StandardClassIds.Collection)
@@ -75,7 +75,7 @@ private fun KaSession.isIterableForEachFunction(symbol: KaFunctionSymbol): Boole
 
 internal fun KaSession.isIterableMapFunctionCall(element: KtCallExpression): Boolean {
     val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-    val actualReceiverType = functionCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
+    val actualReceiverType = functionCall.extensionReceiver?.type ?: return false
 
     return isIterableMapFunction(functionCall.symbol) &&
             actualReceiverType.isSubtypeOf(StandardClassIds.Collection)

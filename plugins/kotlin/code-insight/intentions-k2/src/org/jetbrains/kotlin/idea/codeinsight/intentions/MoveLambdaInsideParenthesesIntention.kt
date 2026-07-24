@@ -52,7 +52,7 @@ internal class MoveLambdaInsideParenthesesIntention :
             val callExpression = element.parent as KtCallExpression
             element.getArgumentExpression()?.let { expr ->
                 analyze(callExpression) {
-                    callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping[expr]?.name
+                    callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping[expr]?.name
                 }
             }
         } else {

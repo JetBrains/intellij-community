@@ -66,7 +66,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.util.match
 
 /**

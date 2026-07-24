@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.psi.KtCallElement
 

@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.arrayElementType
 import org.jetbrains.kotlin.analysis.api.components.containingModule
 import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SupertypeNotInitialized
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -44,7 +44,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeList
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.match
 

@@ -7,9 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -42,9 +43,9 @@ data class ArgumentSliceProducer(
 
                     val parameterIndexToUse = parameterIndex + (if (isExtension && (callInfo as? KaSimpleFunctionCall)?.isImplicitInvoke == true) 1 else 0)
 
-                    val variableSignature = callInfo.partiallyAppliedSymbol.signature.valueParameters[parameterIndexToUse]
+                    val variableSignature = callInfo.signature.valueParameters[parameterIndexToUse]
 
-                    callInfo.argumentMapping.entries.firstOrNull { (k, v) -> v == variableSignature }?.key ?: variableSignature.symbol.defaultValue
+                    callInfo.valueArgumentMapping.entries.firstOrNull { (k, v) -> v == variableSignature }?.key ?: variableSignature.symbol.defaultValue
                 }
             }
 

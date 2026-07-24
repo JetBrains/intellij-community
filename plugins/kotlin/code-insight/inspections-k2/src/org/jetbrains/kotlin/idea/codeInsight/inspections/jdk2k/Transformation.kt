@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.jdk2k
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -51,7 +51,7 @@ object ToKotlinPrint : Transformation {
 
     context(_: KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()?.resolveToCall()
-            ?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
+            ?.singleVariableAccessCall()?.symbol?.callableId?.asSingleFqName() == FqName("java.lang.System.out")
 }
 
 object ToExtensionFunctionWithNonNullableReceiver : Transformation {

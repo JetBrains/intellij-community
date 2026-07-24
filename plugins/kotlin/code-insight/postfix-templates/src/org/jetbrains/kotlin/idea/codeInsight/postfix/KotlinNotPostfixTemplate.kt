@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.NotPostfixTemplate
+import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression

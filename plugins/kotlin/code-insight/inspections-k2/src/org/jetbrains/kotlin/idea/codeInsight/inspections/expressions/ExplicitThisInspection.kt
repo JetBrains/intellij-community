@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle

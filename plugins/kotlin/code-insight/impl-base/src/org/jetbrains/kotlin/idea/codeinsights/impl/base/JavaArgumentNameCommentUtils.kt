@@ -9,7 +9,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -58,12 +58,12 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
 
     // Use `unwrapFakeOverrides` to handle `SUBSTITUTION_OVERRIDE` and `INTERSECTION_OVERRIDE` callee symbols. Also see the test
     // `genericSuperTypeMethodCall.kt`.
-    val calleeSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+    val calleeSymbol = resolvedCall.symbol
     if (!calleeSymbol.fakeOverrideOriginal.origin.isJavaSourceOrLibrary()) return null
 
     return arguments
         .mapNotNull { argument ->
-            val symbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return@mapNotNull null
+            val symbol = resolvedCall.valueArgumentMapping[argument.getArgumentExpression()]?.symbol ?: return@mapNotNull null
             argument to symbol
         }
         // Take arguments until and including the first vararg parameter. A name comment should be added to the first vararg only, not

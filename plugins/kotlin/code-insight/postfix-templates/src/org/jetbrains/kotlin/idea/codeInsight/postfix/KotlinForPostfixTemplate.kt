@@ -10,7 +10,8 @@ import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTem
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -159,7 +160,7 @@ private fun destructuringComponentNames(type: KaType): List<String>? {
         classId == StandardKotlinNames.Triple -> listOf("first", "second", "third")
         classId == StandardKotlinNames.Collections.IndexedValue -> listOf("index", "value")
         isMapEntry(classType) -> listOf("key", "value")
-        else -> session.extractDataClassParameters(classType)?.map {
+        else -> extractDataClassParameters(classType)?.map {
             // to keep backticks
             (it.psi as? KtParameter)?.nameIdentifier?.text ?: it.name.asString()
         }

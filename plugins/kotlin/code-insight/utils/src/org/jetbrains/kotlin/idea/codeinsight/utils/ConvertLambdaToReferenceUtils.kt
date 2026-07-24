@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 
 object ConvertLambdaToReferenceUtils {
 

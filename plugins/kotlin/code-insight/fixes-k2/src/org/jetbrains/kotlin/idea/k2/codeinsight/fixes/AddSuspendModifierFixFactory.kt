@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -61,7 +61,7 @@ internal fun KtElement.containingFunction(): KtNamedFunction? {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
             val resolvedCall = call?.resolveToCall()?.successfulFunctionCallOrNull()
-            if (resolvedCall?.partiallyAppliedSymbol?.symbol?.isInlineOrInsideInline() == true) {
+            if (resolvedCall?.symbol?.isInlineOrInsideInline() == true) {
                 containingFunction.containingFunction()
             } else {
                 null

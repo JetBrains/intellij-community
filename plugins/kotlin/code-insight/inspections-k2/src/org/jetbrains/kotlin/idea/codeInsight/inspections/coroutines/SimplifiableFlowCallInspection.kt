@@ -60,6 +60,6 @@ internal class SimplifiableFlowCallInspection : AbstractSimplifiableCallInspecti
 }
 
 private fun KaFunctionCall<*>.findArgumentExpressionByParameterName(parameterName: Name): KtExpression? {
-    val matchingEntry = argumentMapping.entries.find { (_, parameter) -> parameter.name == parameterName }
+    val matchingEntry = valueArgumentMapping.entries.find { (_, parameter) -> parameter.name == parameterName }
     return matchingEntry?.key
 }

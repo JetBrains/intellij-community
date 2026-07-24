@@ -32,7 +32,6 @@ class KotlinQuickFixService {
     fun KaSession.getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
         with(list) { getQuickFixesWithCatchingFor(diagnostic) }
 
-
     @ApiStatus.Experimental
     fun KaSession.canProduceLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
         with(lazyList) { canProduceQuickFixesFor(diagnostic) }

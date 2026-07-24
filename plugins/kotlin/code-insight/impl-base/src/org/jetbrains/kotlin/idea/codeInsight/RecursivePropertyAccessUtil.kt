@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -14,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -104,8 +108,8 @@ object RecursivePropertyAccessUtil {
             if (!anyRecursionTypes) {
                 val propertyContainer = propertySymbol.containingSymbol as? KaClassLikeSymbol
                 val propertyReceiverParameter = propertySymbol.receiverParameter
-                val callDispatchReceiver = getSymbolFor(variableAccessCall.partiallyAppliedSymbol.dispatchReceiver)
-                val callExtensionReceiver = getSymbolFor(variableAccessCall.partiallyAppliedSymbol.extensionReceiver)
+                val callDispatchReceiver = getSymbolFor(variableAccessCall.dispatchReceiver)
+                val callExtensionReceiver = getSymbolFor(variableAccessCall.extensionReceiver)
 
                 if (propertyContainer != callDispatchReceiver || propertyReceiverParameter != callExtensionReceiver)
                     return false
@@ -117,7 +121,8 @@ object RecursivePropertyAccessUtil {
     fun KaSession.isInsidePropertyAccessorWithBackingField(simpleNameExpression: KtSimpleNameExpression): Boolean =
         simpleNameExpression.getContainingPropertyAccessor()?.property?.symbol?.safeAs<KaPropertySymbol>()?.hasBackingField == true
 
-    private fun KaSession.getSymbolFor(receiverValue: KaReceiverValue?): KaSymbol? = when (receiverValue) {
+    context(session: KaSession)
+    private fun getSymbolFor(receiverValue: KaReceiverValue?): KaSymbol? = when (receiverValue) {
         is KaExplicitReceiverValue -> {
             val expression = receiverValue.expression
             val expressionSymbol = expression.resolveExpression()

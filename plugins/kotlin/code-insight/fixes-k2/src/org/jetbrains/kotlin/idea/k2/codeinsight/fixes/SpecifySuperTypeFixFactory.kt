@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperExpression
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 
 object SpecifySuperTypeFixFactory {
 

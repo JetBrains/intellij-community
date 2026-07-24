@@ -8,10 +8,13 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.FqName
@@ -31,14 +34,15 @@ internal class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolea
     private fun isExpressionApplicable(expression: KtExpression): Boolean =
         expression is KtCallExpression && (!standardOnly || expression.calleeExpression?.text in shortNames)
 
-    private fun KaSession.shouldReportCall(call: KaFunctionCall<*>): Boolean {
-        val callableId = call.partiallyAppliedSymbol.symbol.callableId?.asSingleFqName()
+    context(session: KaSession)
+    private fun shouldReportCall(call: KaFunctionCall<*>): Boolean {
+        val callableId = call.symbol.callableId?.asSingleFqName()
         if (callableId in fqNamesThatShouldNotBeReported) return false
 
         return if (standardOnly) {
             callableId in fqNamesAll
         } else {
-            val returnTypeClassId = call.partiallyAppliedSymbol.signature.returnType.expandedSymbol?.classId?.asSingleFqName()
+            val returnTypeClassId = call.signature.returnType.expandedSymbol?.classId?.asSingleFqName()
             returnTypeClassId == deferred || returnTypeClassId == deferredExperimental
         }
     }

@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isPrimitive
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
 import org.jetbrains.kotlin.analysis.api.components.isStringType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic

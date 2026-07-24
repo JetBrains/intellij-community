@@ -16,12 +16,14 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -270,7 +273,8 @@ abstract class ConvertScopeFunctionFix(protected val counterpartName: String) : 
      */
     protected abstract fun postprocessLambda(lambda: KtLambdaArgument)
 
-    protected abstract fun KaSession.analyzeLambda(
+    context(session: KaSession)
+    protected abstract fun analyzeLambda(
         lambda: KtLambdaArgument,
         replacements: ReplacementCollection
     )
@@ -352,7 +356,8 @@ private class ReceiverToParameterVisitor(
  */
 class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFunctionFix(counterpartName) {
 
-    override fun KaSession.analyzeLambda(
+    context(session: KaSession)
+    override fun analyzeLambda(
         lambda: KtLambdaArgument,
         replacements: ReplacementCollection
     ) {
@@ -382,7 +387,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         }
 
         // Process the lambda body to replace 'this' with the parameter name
-        val visitor = ReceiverToParameterVisitor(functionLiteral, replacements, parameterName, factory, this)
+        val visitor = ReceiverToParameterVisitor(functionLiteral, replacements, parameterName, factory, session)
         lambda.accept(visitor)
     }
 
@@ -578,7 +583,8 @@ private class ParameterToReceiverVisitor(
  * For example, converts 'let' to 'run' or 'also' to 'apply'.
  */
 class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunctionFix(counterpartName) {
-    override fun KaSession.analyzeLambda(
+    context(session: KaSession)
+    override fun analyzeLambda(
         lambda: KtLambdaArgument,
         replacements: ReplacementCollection
     ) {
@@ -592,7 +598,7 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         val functionLiteral = lambda.getLambdaExpression()?.functionLiteral
 
         // Process the lambda body to replace parameter references with 'this'
-        val visitor = ParameterToReceiverVisitor(functionLiteral, replacements, this)
+        val visitor = ParameterToReceiverVisitor(functionLiteral, replacements, session)
         lambda.accept(visitor)
     }
 

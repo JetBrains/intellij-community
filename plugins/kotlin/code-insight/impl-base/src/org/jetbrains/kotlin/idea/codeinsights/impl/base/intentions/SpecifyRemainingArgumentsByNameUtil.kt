@@ -12,7 +12,7 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -142,10 +142,10 @@ object SpecifyRemainingArgumentsByNameUtil {
     }
 
     /**
-     * Returns false if [argumentMapping] contains arguments whose type conflicts with the type of the parameter.
+     * Returns false if [valueArgumentMapping] contains arguments whose type conflicts with the type of the parameter.
      */
-    private fun KaSession.isValidArgumentMapping(argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>): Boolean {
-        return argumentMapping.all {
+    private fun KaSession.isValidArgumentMapping(valueArgumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>): Boolean {
+        return valueArgumentMapping.all {
             val expressionType = it.key.expressionType ?: return@all false
             it.value.returnType.hasCommonSubtypeWith(expressionType)
         }

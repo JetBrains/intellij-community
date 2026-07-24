@@ -13,9 +13,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceList
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject

@@ -21,9 +21,10 @@ import com.intellij.testIntegration.TestFinderHelper
 import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils
 import com.intellij.util.CommonProcessors
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName

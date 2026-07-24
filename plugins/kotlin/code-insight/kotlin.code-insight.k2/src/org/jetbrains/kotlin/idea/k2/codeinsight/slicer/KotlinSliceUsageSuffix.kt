@@ -5,8 +5,6 @@ import com.intellij.slicer.SliceUsage
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
@@ -16,6 +14,8 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -24,10 +24,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyGetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -39,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaExperimentalApi::class)
@@ -75,7 +77,6 @@ object KotlinSliceUsageSuffix {
 
             analyze(declaration) {
                 val symbol = declaration.symbol
-
 
                 if (!(symbol is KaCallableSymbol && symbol.isExtension) && symbol !is KaConstructorSymbol && !(symbol is KaClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT)) {
                     val containingClassifier = ((symbol as? KaPropertyAccessorSymbol)?.containingDeclaration ?: symbol).containingDeclaration as? KaClassSymbol

@@ -12,14 +12,16 @@ import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -55,7 +57,7 @@ object SuperDeclarationProvider {
             analyze(declaration) {
                 val symbol = declaration.symbol
                 val superSymbols = symbol.getExpectsForActual().asSequence() + when (symbol) {
-                    is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.directlyOverriddenSymbols ?: emptySequence()
+                    is KaValueParameterSymbol -> symbol.primaryConstructorProperty?.directlyOverriddenSymbols ?: emptySequence()
 
                     is KaCallableSymbol -> symbol.directlyOverriddenSymbols
                     is KaClassSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KaClassType)?.symbol }
