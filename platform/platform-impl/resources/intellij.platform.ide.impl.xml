@@ -100,6 +100,9 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="javax.imageio.spi.IIOServiceProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.rdct.remoteSettingProvider"
+                    interface="com.intellij.ide.settings.RemoteSettingInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
