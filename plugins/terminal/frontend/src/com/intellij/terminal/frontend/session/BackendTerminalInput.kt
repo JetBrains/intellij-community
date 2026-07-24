@@ -97,9 +97,6 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
         }
       }
     }
-    else -> {
-      // Ignore unknown event
-    }
   }
 }
 
