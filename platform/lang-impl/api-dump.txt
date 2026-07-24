@@ -2794,9 +2794,6 @@ f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Comp
 - f:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 a:com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy
 - <init>(java.util.List):V
-com.intellij.ide.actions.searcheverywhere.MergeableElement
-- a:mergeWith(com.intellij.ide.actions.searcheverywhere.MergeableElement):com.intellij.ide.actions.searcheverywhere.MergeableElement
-- a:shouldBeMergedIntoAnother():Z
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
@@ -3736,7 +3733,6 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel
 c:com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
 - getAction():com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue
-- com.intellij.ide.actions.searcheverywhere.MergeableElement
 - com.intellij.internal.inspector.UiInspectorContextProvider
 c:com.intellij.ide.util.gotoByName.GotoClassModel2
 - com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter

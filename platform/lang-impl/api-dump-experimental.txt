@@ -738,32 +738,15 @@ f:com.intellij.find.findUsages.FindUsagesManager
 a:com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
 - com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - *f:compareItemsCollection(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
-*:com.intellij.ide.actions.searcheverywhere.PromoAction
-- a:getCallToAction():java.lang.String
-- a:getPromotedProductIcon():javax.swing.Icon
 com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - *:compareItemsCollection(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
 f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.BigPopupUI
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
-- *:addSplitSearchListener(com.intellij.ide.actions.searcheverywhere.SplitSearchListener):V
 - *:selectFirstItem():V
 com.intellij.ide.actions.searcheverywhere.SearchListener
 - *:standardSearchFoundNoResults(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):V
-*a:com.intellij.ide.actions.searcheverywhere.SplitSearchAdapter
-- com.intellij.ide.actions.searcheverywhere.SplitSearchListener
-- <init>():V
-- elementsAdded(java.util.Map):V
-- elementsRemoved(I):V
-- searchFinished(I):V
-- searchStarted(java.lang.String,java.lang.String):V
-*:com.intellij.ide.actions.searcheverywhere.SplitSearchListener
-- a:elementsAdded(java.util.Map):V
-- elementsRemoved(I):V
-- a:searchFinished(I):V
-- a:searchStarted(java.lang.String,java.lang.String):V
-- toSearchListener():com.intellij.ide.actions.searcheverywhere.SearchListener
 *a:com.intellij.ide.fileTemplates.actions.CustomCreateFromTemplateAction
 - com.intellij.ide.actions.CreateFileFromTemplateAction
 - p:<init>(java.lang.String):V
