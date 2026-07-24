@@ -8,6 +8,7 @@ import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.LineProcessor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
@@ -38,6 +39,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers)
   }
 
+  @Internal
+  data class TaskNameId(val name: String)
+
   @VisibleForTesting
   class GradleOutputMessageDispatcher(
     private val buildId: Any,
@@ -46,8 +50,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     private val parsers: List<BuildOutputParser>,
   ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
 
-    private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
-    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksEventIds: MutableMap<TaskNameId, Any> = ConcurrentHashMap()
+    private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
     private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
     private val lineProcessor = object : LineProcessor() {
@@ -60,9 +64,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         if (cleanLine.startsWith("<ijLog>")) return
 
         if (cleanLine.startsWith("> Task :")) {
-          val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
-          val taskOutputReader = BuildOutputInstantReaderImpl(buildId, taskName, this@GradleOutputMessageDispatcher, parsers)
-          val oldTaskOutputReader = tasksOutputReaders.put(taskName, taskOutputReader)
+          val taskNameId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
+          val taskOutputReader = BuildOutputInstantReaderImpl(buildId, taskNameId, this@GradleOutputMessageDispatcher, parsers)
+          val oldTaskOutputReader = tasksOutputReaders.put(taskNameId, taskOutputReader)
           // multiple invocations of the same task during the build session
           tasksOutputRedefinedReaders.addIfNotNull(oldTaskOutputReader)
           currentReader = taskOutputReader
@@ -85,19 +89,37 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun onEvent(buildId: Any, event: BuildEvent) {
-      var buildEvent = event
-      val parentId = event.parentId
-      if (parentId != buildId && parentId is String) {
-        val taskEventId = tasksEventIds[parentId]
-        if (taskEventId != null) {
-          buildEvent = BuildEventInvocationHandler.wrap(event, taskEventId)
+      val buildEvent = when (val parentId = event.parentId) {
+        buildId -> event
+        is TaskNameId -> {
+          val taskEventId = tasksEventIds[parentId]
+          when (taskEventId != null) {
+            true -> BuildEventInvocationHandler.wrap(event, taskEventId)
+            else -> event
+          }
         }
+        is String -> {
+          val taskEventId = tasksEventIds[TaskNameId(parentId)]
+          if (taskEventId != null) {
+            LOG.error(
+              "The implicit API for the event redefinition via String parent event ID is deprecated. Use TaskNameId instead.",
+              Throwable()
+            )
+          }
+          when (taskEventId != null) {
+            true -> BuildEventInvocationHandler.wrap(event, taskEventId)
+            else -> event
+          }
+        }
+        else -> event
       }
 
       super.onEvent(buildId, buildEvent)
 
       if (event.parentId == buildId && event is StartEvent) {
-        tasksEventIds[event.message] = event.id
+        val taskEventId = event.id
+        val taskNameId = TaskNameId(event.message)
+        tasksEventIds[taskNameId] = taskEventId
       }
     }
 
@@ -179,6 +201,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           return Proxy.newProxyInstance(classLoader, interfaces, invocationHandler) as BuildEvent
         }
       }
+    }
+
+    companion object {
+      private val LOG = logger<GradleOutputMessageDispatcher>()
     }
   }
 }
