@@ -5,6 +5,7 @@ import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.java.coverage.JavaCoverageBundle;
@@ -12,7 +13,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -46,6 +46,7 @@ import org.jacoco.core.analysis.ILine;
 import org.jacoco.core.analysis.IMethodCoverage;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.ExecutionDataReader;
+import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.IExecutionDataVisitor;
 import org.jacoco.core.data.SessionInfoStore;
 import org.jacoco.core.tools.ExecFileLoader;
@@ -68,11 +69,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
@@ -83,30 +88,61 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   };
 
   @Override
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
+    CoverageBuilder coverageBuilder = new CoverageBuilder();
+    Analyzer analyzer = new Analyzer(new ExecutionDataStore(), coverageBuilder);
+    try {
+      byte[] classBytes = AnalysisUtils.loadClassBytes(classFile);
+      if (classBytes == null) return List.of();
+      analyzer.analyzeClass(classBytes, classFile.toString());
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      LOG.error("Fail to process class from: " + classFile, e);
+      return List.of();
+    }
+
+    List<Integer> uncoveredLines = new ArrayList<>();
+    for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
+      int firstLine = classCoverage.getFirstLine();
+      int lastLine = classCoverage.getLastLine();
+      if (firstLine < 0 || lastLine < firstLine) continue;
+      for (int line = firstLine; line <= lastLine; line++) {
+        if (classCoverage.getLine(line).getStatus() != ICounter.EMPTY) {
+          uncoveredLines.add(line - 1);
+        }
+      }
+    }
+    return uncoveredLines;
+  }
+
+  @Override
   public @NotNull CoverageLoadingResult loadCoverageData(
     @NotNull Path sessionDataFile,
-    @Nullable CoverageSuite baseCoverageSuite,
+    @Nullable CoverageSuite coverageSuite,
     @NotNull CoverageLoadErrorReporter reporter
   ) {
+    if (!(coverageSuite instanceof JavaCoverageSuite javaSuite)) {
+      return new FailedCoverageLoadingResult("Unsupported coverage suite: " + coverageSuite);
+    }
+    final Project project = javaSuite.getProject();
+    if (project == null) {
+      return new FailedCoverageLoadingResult("Failed to locate Project for coverage suite: " + coverageSuite);
+    }
     final ProjectData data = new ProjectData();
     try {
-      final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
-      if (project != null) {
-        var configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
-
-        Module mainModule = configuration instanceof ModuleBasedConfiguration
-                            ? ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule()
-                            : null;
-
-        loadExecutionData(sessionDataFile, data, mainModule, project, baseCoverageSuite, reporter);
-      }
+      ExecFileLoader loader = new ExecFileLoader();
+      final CoverageBuilder coverageBuilder = new CoverageBuilder();
+      Module mainModule = findMainModule(javaSuite.getConfiguration());
+      loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, javaSuite, reporter);
+      loadIntoProjectData(data, coverageBuilder);
     }
     catch (IOException e) {
       processError(sessionDataFile, e, reporter);
       return new FailedCoverageLoadingResult(e, true, data);
     }
     catch (Exception e) {
-      if (e instanceof ControlFlowException) throw e;
+      rethrowControlFlowException(e);
       LOG.error(e);
       return new FailedCoverageLoadingResult(e, false, data);
     }
@@ -143,16 +179,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  private static void loadExecutionData(final @NotNull Path sessionDataFile,
-                                        ProjectData data,
-                                        @Nullable Module mainModule,
-                                        @NotNull Project project,
-                                        CoverageSuite suite,
-                                        @NotNull CoverageLoadErrorReporter reporter) throws IOException {
-    ExecFileLoader loader = new ExecFileLoader();
-    final CoverageBuilder coverageBuilder = new CoverageBuilder();
-    loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite, reporter);
-
+  private static void loadIntoProjectData(@NotNull ProjectData data, @NotNull CoverageBuilder coverageBuilder) {
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
       String className = AnalysisUtils.internalNameToFqn(classCoverage.getName());
       final ClassData classData = data.getOrCreateClassData(className);
@@ -406,10 +433,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     Path targetDirectory = Path.of(settings.OUTPUT_DIRECTORY);
-    var runConfiguration = suite.getRunConfiguration();
-    Module module = runConfiguration instanceof ModuleBasedConfiguration
-                    ? ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule().getModule()
-                    : null;
+    Module module = findMainModule(suite.getRunConfiguration());
 
     ExecFileLoader loader = new ExecFileLoader();
     CoverageBuilder coverageBuilder = new CoverageBuilder();
@@ -443,6 +467,12 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     visitor.visitBundle(bundleCoverage, multiSourceFileLocator);
     visitor.visitEnd();
+  }
+
+  private static @Nullable Module findMainModule(RunConfigurationBase<?> configuration) {
+    return configuration instanceof ModuleBasedConfiguration<?, ?> moduleConfig
+           ? moduleConfig.getConfigurationModule().getModule()
+           : null;
   }
 
   @Override

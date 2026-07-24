@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -135,13 +133,16 @@ public final class PackageAnnotator {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
-      ClassData fullClassData = collectNonCoveredClassInfo(classFile, className, getUnloadedClassesProjectData());
-      if (fullClassData != null) {
-        if (classData == null) {
-          classData = fullClassData;
-        }
-        else {
-          classData.merge(fullClassData);
+      var bytes = loadClassBytes(classFile);
+      if (bytes != null) {
+        ClassData fullClassData = collectNonCoveredClassInfo(className, bytes, getUnloadedClassesProjectData());
+        if (fullClassData != null) {
+          if (classData == null) {
+            classData = fullClassData;
+          }
+          else {
+            classData.merge(fullClassData);
+          }
         }
       }
     }
@@ -229,12 +230,6 @@ public final class PackageAnnotator {
     return collectNonCoveredClassInfo(className, bytes, projectData);
   }
 
-  private @Nullable ClassData collectNonCoveredClassInfo(final Path classFile, String className, ProjectData projectData) {
-    var bytes = loadClassBytes(classFile);
-    if (bytes == null) return null;
-    return collectNonCoveredClassInfo(className, bytes, projectData);
-  }
-
   private @Nullable ClassData collectNonCoveredClassInfo(@NotNull String className,
                                                          byte @NotNull [] bytes,
                                                          @NotNull ProjectData projectData) {
@@ -245,29 +240,10 @@ public final class PackageAnnotator {
   private byte @Nullable [] loadClassBytes(@NotNull Path classFile) {
     AnalysisUtils.ArchiveEntryPath archiveEntryPath = AnalysisUtils.splitArchiveEntryPath(classFile);
     if (archiveEntryPath != null) {
-      return loadClassBytesFromArchivePath(archiveEntryPath);
+      ZipFile zip = getOrCreateArchive(archiveEntryPath.archivePath());
+      return zip == null ? null : AnalysisUtils.loadClassBytes(zip, archiveEntryPath.entryPath());
     }
-    try (InputStream stream = Files.newInputStream(classFile)) {
-      return stream.readAllBytes();
-    }
-    catch (IOException ignored) {
-      return null;
-    }
-  }
-
-  private byte @Nullable [] loadClassBytesFromArchivePath(@NotNull AnalysisUtils.ArchiveEntryPath archiveEntryPath) {
-    ZipFile zip = getOrCreateArchive(archiveEntryPath.archivePath());
-    if (zip == null) return null;
-    try {
-      var entry = zip.getEntry(archiveEntryPath.entryPath());
-      if (entry == null || entry.isDirectory()) return null;
-      try (var stream = zip.getInputStream(entry)) {
-        return stream.readAllBytes();
-      }
-    }
-    catch (IOException ignored) {
-      return null;
-    }
+    return AnalysisUtils.loadClassBytes(classFile);
   }
 
   private @Nullable ZipFile getOrCreateArchive(@NotNull String archivePath) {

@@ -24,6 +24,7 @@ import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
 import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,6 +71,11 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
   public boolean isBranchInfoAvailable(boolean branchCoverage) {
     return branchCoverage;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
+    return Collections.emptyList();
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {

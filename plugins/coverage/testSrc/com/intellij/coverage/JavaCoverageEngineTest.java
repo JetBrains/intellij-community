@@ -61,16 +61,20 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
         outputStream.closeEntry();
       }
 
-      JavaCoverageEngine engine = new JavaCoverageEngine();
-      JavaCoverageSuite javaSuite = new JavaCoverageSuite(engine);
-      javaSuite.setProject(getProject());
-      CoverageSuitesBundle suite = new CoverageSuitesBundle(javaSuite);
-      List<Integer> expectedLines = engine.collectSrcLinesForUntouchedFile(classFile, suite);
-      Assert.assertNotNull(expectedLines);
-      Assert.assertFalse(expectedLines.isEmpty());
       Path archiveEntry = Path.of(archiveRoot + archiveEntrySuffix);
+      Path missingArchiveEntry = Path.of(archiveRoot + "!/missing.class");
 
-      Assert.assertEquals(expectedLines, engine.collectSrcLinesForUntouchedFile(archiveEntry, suite));
+      for (JavaCoverageRunner runner : List.of(new IDEACoverageRunner(), new JaCoCoCoverageRunner())) {
+        JavaCoverageEngine engine = new JavaCoverageEngine();
+        CoverageSuitesBundle suite = createSuite(engine, runner);
+        List<Integer> expectedLines = engine.collectSrcLinesForUntouchedFile(classFile, suite);
+        Assert.assertNotNull(expectedLines);
+        Assert.assertFalse(runner.getPresentableName(), expectedLines.isEmpty());
+        Assert.assertEquals(runner.getPresentableName(), expectedLines, engine.collectSrcLinesForUntouchedFile(archiveEntry, suite));
+        Assert.assertEquals(runner.getPresentableName(),
+                            List.of(),
+                            engine.collectSrcLinesForUntouchedFile(missingArchiveEntry, suite));
+      }
     }
     finally {
       Files.deleteIfExists(classFile);
@@ -78,6 +82,17 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
       Files.deleteIfExists(archiveDir);
       Files.deleteIfExists(tempDir);
     }
+  }
+
+  private CoverageSuitesBundle createSuite(JavaCoverageEngine engine, JavaCoverageRunner runner) {
+    JavaCoverageSuite javaSuite = new JavaCoverageSuite(engine) {
+      @Override
+      public CoverageRunner getRunner() {
+        return runner;
+      }
+    };
+    javaSuite.setProject(getProject());
+    return new CoverageSuitesBundle(javaSuite);
   }
 
   private static byte[] loadTestClassContent() throws IOException {
