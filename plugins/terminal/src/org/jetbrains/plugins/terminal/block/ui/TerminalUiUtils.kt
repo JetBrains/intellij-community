@@ -555,7 +555,7 @@ private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMI
  * Indicates that **the user-triggered** action that modifies the editor viewport (scroll position and size) is in progress.
  *
  * It should be used only to indicate **user-triggered** scroll changes,
- * for example, [org.jetbrains.plugins.terminal.action.TerminalScrollingAction]
+ * for example, [com.intellij.terminal.frontend.action.TerminalScrollingAction]
  *
  * This property is used in `TerminalOutputScrollingModelImpl` to control the state of `shouldScrollToCursor` property.
  */

@@ -187,23 +187,6 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
 
-    <action id="Terminal.LineUp" class="org.jetbrains.plugins.terminal.action.TerminalLineUpAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
-    </action>
-    <action id="Terminal.LineDown" class="org.jetbrains.plugins.terminal.action.TerminalLineDownAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
-    </action>
-    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
-    </action>
-    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction">
-      <override-text place="GoToAction"/>
-      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
-    </action>
-
     <group id="Terminal.PromptStyle" popup="true">
       <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>
       <action id="Terminal.UseDoubleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseDoubleLinePromptAction"/>

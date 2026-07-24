@@ -173,6 +173,23 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
+    <action id="Terminal.LineUp" class="com.intellij.terminal.frontend.action.TerminalLineUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.LineDown" class="com.intellij.terminal.frontend.action.TerminalLineDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageUp" class="com.intellij.terminal.frontend.action.TerminalPageUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageDown" class="com.intellij.terminal.frontend.action.TerminalPageDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
+    </action>
+
     <group id="Terminal.Engine" popup="true">
       <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>
       <action id="Terminal.UseClassicEngine" class="com.intellij.terminal.frontend.action.TerminalClassicEngineAction"/>
