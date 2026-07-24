@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
+import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
