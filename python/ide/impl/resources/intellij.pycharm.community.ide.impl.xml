@@ -132,7 +132,6 @@
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmWhatsNewInVisionContentProvider"
                         overrides="true"/>
 
-
     <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PyToxExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PySitePackagesExcludeWorkspaceFileIndexContributor"/>
 
@@ -156,6 +155,8 @@
     <listener class="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyWelcomeScreenFreeModeTracker"
               topic="com.intellij.ui.LicensingFacade$LicenseStateListener"/>
     <listener class="com.intellij.pycharm.community.ide.impl.promo.CommunityToUnifiedListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.pycharm.community.ide.impl.whatsnew.HackyWhatsNewPatcher"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
