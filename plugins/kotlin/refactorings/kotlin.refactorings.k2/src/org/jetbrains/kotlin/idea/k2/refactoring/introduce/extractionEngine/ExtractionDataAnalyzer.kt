@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
+import org.jetbrains.kotlin.analysis.api.dataflow.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -174,7 +174,8 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         // FIXME: KTIJ-34278
         @OptIn(KaImplementationDetail::class)
         KaBaseIllegalPsiException.allowIllegalPsiAccess {
-            val exitSnapshot: KaDataFlowExitPointSnapshot = computeExitPointSnapshot(extractionData.expressions)
+            val exitSnapshot: KaDataFlowExitPointSnapshot =
+                org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot(extractionData.expressions)
 
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {

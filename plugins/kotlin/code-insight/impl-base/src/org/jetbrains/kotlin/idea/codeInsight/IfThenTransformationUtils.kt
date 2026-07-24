@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue

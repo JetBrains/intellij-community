@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol

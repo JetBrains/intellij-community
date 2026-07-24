@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.scopes.scope
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.types.withNullability
