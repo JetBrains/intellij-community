@@ -1267,6 +1267,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTestReturnTypeChanged(PsiTypes.intType());
   }
 
+  public void testReassignFinalFieldInsideWriteOnly() {
+    doTest();
+  }
+
   public void testShortenClassRefsInNewReturnType() {
     doTestReturnTypeChanged(PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_COLLECTION, getProject(), GlobalSearchScope.allScope(getProject())));
   }
