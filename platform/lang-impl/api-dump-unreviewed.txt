@@ -3800,7 +3800,6 @@ c:com.intellij.ide.actions.GotoFileAction
 - sf:ID:java.lang.String
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.GotoFileItemProvider
-- sf:EXACT_MATCH_DEGREE:I
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.ide.util.gotoByName.GotoFileModel):V
 - filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,com.intellij.util.indexing.FindSymbolParameters,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - s:getQualifiedNameMatcher(java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher

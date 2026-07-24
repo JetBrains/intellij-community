@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultAddedEvent
@@ -11,6 +12,7 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.isCommand
+import com.intellij.platform.searchEverywhere.isExactMatch
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
@@ -120,16 +122,39 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String):
   return firstIndexOrNull(false) { item ->
     if (item.isCommand) return@firstIndexOrNull false
 
-    val newItemProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0
-    val itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0
-
-    if (newItemProviderPriority == itemProviderPriority) {
-      newItem.weight > item.weight
-    }
-    else {
-      newItemProviderPriority > itemProviderPriority
-    }
+    shouldInsertAbove(
+      newProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0,
+      newIsExactMatch = newItem.isExactMatch,
+      newWeight = newItem.weight,
+      itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0,
+      itemIsExactMatch =  item.isExactMatch,
+      itemWeight = item.weight,
+      prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false)
+    )
   } ?: lastIndexToInsertItem
+}
+
+/**
+ * Decides whether a freshly arrived item should be inserted before an already displayed one, within the not-frozen
+ * region of the result list. Ordering, most-significant first:
+ *  1. provider priority (existing behavior — pinned providers such as Calculator/TopHit stay on top);
+ *  2. exact match of the search pattern (new: an exact match wins over a partial/fuzzy/ML-reweighted sibling);
+ *  3. item weight (existing behavior).
+ *
+ * Kept as a pure function so the ordering can be unit-tested without building the (DB-backed) [SeItemData] items.
+ */
+internal fun shouldInsertAbove(
+  newProviderPriority: Int,
+  newIsExactMatch: Boolean,
+  newWeight: Int,
+  itemProviderPriority: Int,
+  itemIsExactMatch: Boolean,
+  itemWeight: Int,
+  prioritizeExactMatch: Boolean
+): Boolean {
+  if (newProviderPriority != itemProviderPriority) return newProviderPriority > itemProviderPriority
+  if (prioritizeExactMatch && newIsExactMatch != itemIsExactMatch) return newIsExactMatch
+  return newWeight > itemWeight
 }
 
 private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {

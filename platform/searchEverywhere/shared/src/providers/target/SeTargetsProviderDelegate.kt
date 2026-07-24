@@ -24,7 +24,7 @@ import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
-import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessorWithExactMatch
 import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
@@ -47,6 +47,7 @@ class SeTargetItem(
   override val contributor: SearchEverywhereContributor<*>,
   val extendedInfo: SeExtendedInfo,
   val isMultiSelectionSupported: Boolean,
+  val isExactMatch: Boolean,
 ) : SeLegacyItem {
   override fun weight(): Int = weight
   override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentationBuilder()
@@ -80,13 +81,19 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
       }
     }
 
-    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
-      override suspend fun process(item: Any, weight: Int): Boolean {
+    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessorWithExactMatch<Any> {
+      override suspend fun process(item: Any, weight: Int, isExactMatch: Boolean): Boolean {
         val legacyItem = item as? ItemWithPresentation<*> ?: return true
         val matchers = (contributor as? PSIPresentationBgRendererWrapper)
           ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
-        return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
+        return collector.put(SeTargetItem(legacyItem,
+                                          matchers,
+                                          weight,
+                                          contributor,
+                                          contributor.getExtendedInfo(legacyItem),
+                                          isMultiSelectionSupported = contributorWrapper.contributor.isMultiSelectionSupported,
+                                          isExactMatch = isExactMatch))
       }
     }, operationDisposable)
   }

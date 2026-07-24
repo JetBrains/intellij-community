@@ -10,4 +10,5 @@ object SeItemDataKeys {
   const val REPORTABLE_PROVIDER_ID: String = "SeItemDataKeys.ReportableProviderId"
   const val IS_COMMAND: String = "SeItemDataKeys.IsCommand"
   const val PROVIDER_SORT_WEIGHT: String = "SeItemDataKeys.ProviderSortWeight"
+  const val IS_EXACT_MATCH: String = "SeItemDataKeys.IsExactMatch"
 }
