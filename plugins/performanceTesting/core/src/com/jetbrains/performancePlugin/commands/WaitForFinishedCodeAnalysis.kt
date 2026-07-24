@@ -53,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.measureTime
@@ -81,7 +82,7 @@ private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.
 private val LOG = logger<WaitForFinishedCodeAnalysis>()
 class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
+    const val PREFIX: String = CMD_PREFIX + "waitForFinishedCodeAnalysis"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -163,7 +164,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         while (true) {
           @Suppress("TestOnlyProblems")
           if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !FUSProjectHotStartUpMeasurer.isHandlingFinished() && !future.isDone) {
-            delay(500)
+            delay(500.milliseconds)
           }
           else {
             break
@@ -487,7 +488,7 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
   abstract val wasStartedInLimitedSetup: Boolean
 
   companion object {
-    val highlightingScopeName = "highlighting"
+    val highlightingScopeName: String = "highlighting"
 
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
       ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {
