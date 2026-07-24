@@ -186,9 +186,8 @@ class IjentEphemeralRootAwarePath(
     return result
   }
 
-  @OptIn(EelDelicateApi::class)
-  override fun toString(): String {
-    return if (isAbsolute) {
+  private val asString by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    if (isAbsolute) {
       when (fileSystem.eelDescriptor.osFamily) {
         EelOsFamily.Posix -> {
           val other = ijentToLocal(originalPath.pathString.removePrefix("/").replace("\\", fileSystem.separator))
@@ -203,6 +202,10 @@ class IjentEphemeralRootAwarePath(
     else {
       ijentToLocal(originalPath.toString())
     }
+  }
+
+  override fun toString(): String {
+    return asString
   }
 }
 
