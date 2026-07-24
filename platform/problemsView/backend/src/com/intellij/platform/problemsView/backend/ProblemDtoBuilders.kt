@@ -123,6 +123,8 @@ internal suspend fun buildProblemDto(problem: Problem, lifetime: ProblemLifetime
 }
 
 private suspend fun getQuickFixesOfProblem(problem: HighlightingProblem): List<IntentionActionWithOptions> = readAction {
+  if (!problem.file.isValid) return@readAction emptyList()
+
   val psiFile = PsiManager.getInstance(problem.provider.project).findFile(problem.file)
   if (psiFile == null) return@readAction emptyList()
 
