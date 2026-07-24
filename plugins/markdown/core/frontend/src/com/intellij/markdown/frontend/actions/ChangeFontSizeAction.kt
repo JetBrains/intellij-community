@@ -1,13 +1,14 @@
-package org.intellij.plugins.markdown.ui.actions
+package com.intellij.markdown.frontend.actions
 
+import com.intellij.markdown.frontend.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
+import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
-import org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 
 internal sealed class ChangeFontSizeAction(private val transform: (Int) -> Int): DumbAwareAction() {
   class Increase: ChangeFontSizeAction(transform = { it + 1 })

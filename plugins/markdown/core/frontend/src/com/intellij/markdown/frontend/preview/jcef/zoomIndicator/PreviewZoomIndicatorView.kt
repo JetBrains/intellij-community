@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator
+package com.intellij.markdown.frontend.preview.jcef.zoomIndicator
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -80,7 +80,7 @@ class PreviewZoomIndicatorView(private val preview: MarkdownPreviewBrowserAction
     update(event)
     fontSizeLabel.addPropertyChangeListener {
       if (it.propertyName == "text") {
-          update(event)
+        update(event)
       }
     }
 
