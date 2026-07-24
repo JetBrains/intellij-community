@@ -443,6 +443,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   public void insertTabForFrame(@NotNull IdeFrameImpl tab, int index) {
+    if (myIndexes.containsKey(tab)) {
+      return;
+    }
+
     createTabItem(tab, index, false);
     recalculateIndexes();
   }
