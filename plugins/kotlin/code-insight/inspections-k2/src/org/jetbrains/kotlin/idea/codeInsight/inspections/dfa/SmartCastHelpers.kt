@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.dfa
 import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.components.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.types.isNothingType
