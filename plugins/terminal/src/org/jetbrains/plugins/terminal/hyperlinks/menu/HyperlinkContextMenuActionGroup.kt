@@ -21,6 +21,9 @@ internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBeha
     // This excessive logging is to debug various strange remdev issues: "Why are there no remove actions?"
     LOG.trace { "getChildren(): event=$e" }
 
+    val project = e.project ?: return emptyArray()
+    LOG.trace { "getChildren(): project=$project" }
+
     val sessionId = e.dataContext.getData(TerminalHyperlinksSessionId.DATA_KEY) ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlinksSessionId=$sessionId" }
 
@@ -31,7 +34,7 @@ internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBeha
     LOG.trace { "getChildren(): hyperlinkInfoService=$hyperlinkInfoService" }
 
     val hyperlink = runBlockingMaybeCancellable {
-      hyperlinkInfoService.getHyperlinkInfo(sessionId, hyperlinkId)
+      hyperlinkInfoService.getHyperlinkInfo(project, sessionId, hyperlinkId)
     } ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlink=$hyperlink" }
 

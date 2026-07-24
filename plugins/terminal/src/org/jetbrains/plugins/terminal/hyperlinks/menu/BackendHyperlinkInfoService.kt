@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.hyperlinks.menu
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
@@ -20,7 +21,11 @@ interface BackendHyperlinkInfoService {
     @JvmStatic fun getInstance(): BackendHyperlinkInfoService = service()
   }
 
-  suspend fun getHyperlinkInfo(sessionId: TerminalHyperlinksSessionId, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo?
+  suspend fun getHyperlinkInfo(
+    project: Project,
+    sessionId: TerminalHyperlinksSessionId,
+    hyperlinkId: TerminalHyperlinkId,
+  ): BackendHyperlinkInfo?
 }
 
 /**

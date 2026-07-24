@@ -145,7 +145,7 @@ private suspend fun createHyperlinksSession(
   }
   coroutineScope.awaitCancellationAndInvoke(Dispatchers.Default) {
     try {
-      TerminalHyperlinksRemoteApi.getInstance().closeSession(sessionId)
+      TerminalHyperlinksRemoteApi.getInstance().closeSession(project.projectId(), sessionId)
     }
     catch (_: RpcClientDisconnectedException) {
       // The backend connection is already gone, so there is no remote session to close.
@@ -154,12 +154,13 @@ private suspend fun createHyperlinksSession(
 
   val sessionApi = TerminalHyperlinksSessionRemoteApi.getInstance()
   val inputEventsSink = durable {
-    sessionApi.getInputEventsSink(sessionId)
+    sessionApi.getInputEventsSink(project.projectId(), sessionId)
   }
   val hyperlinkUpdatesChannel = durable {
-    sessionApi.getHyperlinkUpdatesChannel(sessionId)
+    sessionApi.getHyperlinkUpdatesChannel(project.projectId(), sessionId)
   }
   return FrontendTerminalHyperlinksSession(
+    project = project,
     id = sessionId,
     inputEventsSink = inputEventsSink,
     hyperlinkUpdatesChannel = hyperlinkUpdatesChannel

@@ -17,7 +17,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessi
 interface TerminalHyperlinksRemoteApi : RemoteApi<Unit> {
   suspend fun createNewSession(request: TerminalCreateHyperlinksSessionRequest): TerminalHyperlinksSessionId
 
-  suspend fun closeSession(sessionId: TerminalHyperlinksSessionId)
+  suspend fun closeSession(projectId: ProjectId, sessionId: TerminalHyperlinksSessionId)
 
   companion object {
     suspend fun getInstance(): TerminalHyperlinksRemoteApi {
