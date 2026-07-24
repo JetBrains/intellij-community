@@ -20,7 +20,7 @@ interface BackendHyperlinkInfoService {
     @JvmStatic fun getInstance(): BackendHyperlinkInfoService = service()
   }
 
-  fun getHyperlinkInfo(sessionId: TerminalHyperlinksSessionId, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo?
+  suspend fun getHyperlinkInfo(sessionId: TerminalHyperlinksSessionId, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo?
 }
 
 /**

@@ -6,7 +6,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfoServic
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 
 internal class BackendHyperlinkInfoServiceImpl : BackendHyperlinkInfoService {
-  override fun getHyperlinkInfo(
+  override suspend fun getHyperlinkInfo(
     sessionId: TerminalHyperlinksSessionId,
     hyperlinkId: TerminalHyperlinkId,
   ): BackendHyperlinkInfo? {

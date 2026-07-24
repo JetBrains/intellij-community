@@ -24,6 +24,9 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Thread-safe wrapper around [TerminalHyperlinksModel] and [BackendTerminalHyperlinkHighlighter].
+ */
 internal class BackendTerminalHyperlinkFacade(
   private val debugName: String,
   private val project: Project,
@@ -85,14 +88,18 @@ internal class BackendTerminalHyperlinkFacade(
     }
   }
 
-  fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
-    return model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let { hyperlinkInfo ->
-      BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
+  suspend fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
+    return mutex.withLock {
+      model.getHyperlink(hyperlinkId)?.hyperlinkInfo?.let { hyperlinkInfo ->
+        BackendHyperlinkInfo(hyperlinkInfo, highlighter.fakeMouseEvent)
+      }
     }
   }
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
-    val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
+    val hyperlink = mutex.withLock {
+      model.getHyperlink(hyperlinkId)?.hyperlinkInfo
+    } ?: return
     TerminalHyperlinkNavigator.navigate(project, hyperlink, mouseEvent)
     ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 
@@ -29,7 +30,9 @@ internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBeha
     val hyperlinkInfoService = BackendHyperlinkInfoService.getInstance()
     LOG.trace { "getChildren(): hyperlinkInfoService=$hyperlinkInfoService" }
 
-    val hyperlink = hyperlinkInfoService.getHyperlinkInfo(sessionId, hyperlinkId) ?: return emptyArray()
+    val hyperlink = runBlockingMaybeCancellable {
+      hyperlinkInfoService.getHyperlinkInfo(sessionId, hyperlinkId)
+    } ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlink=$hyperlink" }
 
     val mouseEvent = hyperlink.fakeMouseEvent
