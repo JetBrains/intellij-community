@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.callableSymbol
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction

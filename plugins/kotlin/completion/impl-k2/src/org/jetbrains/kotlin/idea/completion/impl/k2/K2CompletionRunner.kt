@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandida
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.types.KaType

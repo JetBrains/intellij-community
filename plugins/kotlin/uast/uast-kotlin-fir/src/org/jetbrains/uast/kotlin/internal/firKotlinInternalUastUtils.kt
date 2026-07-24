@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.components.originalConstructorIfTypeAliased
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt

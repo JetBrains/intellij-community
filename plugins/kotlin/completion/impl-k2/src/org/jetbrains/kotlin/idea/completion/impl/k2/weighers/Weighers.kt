@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken

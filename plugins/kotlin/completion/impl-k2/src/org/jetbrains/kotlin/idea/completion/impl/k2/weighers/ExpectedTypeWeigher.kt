@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
