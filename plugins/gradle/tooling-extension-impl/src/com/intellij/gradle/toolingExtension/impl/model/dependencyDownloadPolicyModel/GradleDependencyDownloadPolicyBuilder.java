@@ -19,6 +19,7 @@ public class GradleDependencyDownloadPolicyBuilder extends AbstractModelBuilderS
 
   private static final String DOWNLOAD_SOURCES_FORCE_PROPERTY_NAME = "idea.gradle.download.sources.force";
   private static final String DOWNLOAD_SOURCES_PROPERTY_NAME = "idea.gradle.download.sources";
+  private static final String DOWNLOAD_JAVADOCS_FORCE_PROPERTY_NAME = "idea.gradle.download.javadocs.force";
 
   @Override
   public boolean canBuild(String modelName) {
@@ -80,6 +81,10 @@ public class GradleDependencyDownloadPolicyBuilder extends AbstractModelBuilderS
   }
 
   private static boolean shouldDownloadJavadocs(@NotNull ModelBuilderContext context, @NotNull Project project) {
+    String forcePropertyValue = System.getProperty(DOWNLOAD_JAVADOCS_FORCE_PROPERTY_NAME);
+    if (forcePropertyValue != null) {
+      return Boolean.parseBoolean(forcePropertyValue);
+    }
     IdeaModule ideaModule = GradleIdeaPluginUtil.getIdeaModule(project);
     if (ideaModule != null) {
       return ideaModule.isDownloadJavadoc();
