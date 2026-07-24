@@ -4,30 +4,20 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopes
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.configuration.AbstractKotlinCompilerProjectPostConfigurator
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KaptProcessorDependency
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtScriptInitializer
 import kotlin.io.path.relativeTo
 
 private const val KAPT_PLUGIN_ID = "kapt"
@@ -59,10 +49,9 @@ class KaptGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCo
 }
 
 private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfiguratorFiles) {
-    if (this !is KtFile) return
-
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val document = psiDocumentManager.getDocument(this)
+
     val fileText = if (document != null) {
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
         document.text
@@ -73,63 +62,13 @@ private fun PsiFile.configureKaptDependenciesIfNeeded(changedFiles: ChangedConfi
     val changes = findKaptDependencyChanges(fileText)
     if (changes.isEmpty) return
 
-    val dependenciesBlock = findTopLevelBlock("dependencies") ?: return
+    val dependenciesManipulator = GradleBuildScriptSupport.getManipulator(this).kaptDependenciesManipulator ?: return
 
     changedFiles.storeOriginalFileContent(this)
-    dependenciesBlock.addDependencies(changes.dependenciesToAdd)
-    dependenciesBlock.removeDependencies(changes.dependenciesToRemove)
 
-    val codeStyleManager = CodeStyleManager.getInstance(project)
-    codeStyleManager.reformat(dependenciesBlock, true)
-}
-
-private fun KtBlockExpression.removeDependencies(removedDependencies: List<KaptProcessorDependency>) {
-    val existingDependencies = statements.associateBy { it.text }
-    removedDependencies.forEach { dependency: KaptProcessorDependency ->
-        val dependencyText = kaptDependencyNotation(dependency.dependencyConfiguration, dependency.notation)
-        val expression = existingDependencies[dependencyText]
-        expression?.delete()
-    }
-}
-
-private fun KtBlockExpression.addDependencies(dependenciesToAdd: List<KaptProcessorDependency>) {
-    val sourceDependencyTexts = dependenciesToAdd.map { it.match.value.trim() }
-    val lastSourceDependency = this.statements.lastOrNull<KtExpression> { statement ->
-        sourceDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(statement.text, it) }
-    } ?: return
-    val psiFactory = KtPsiFactory(project)
-    var anchor: PsiElement = lastSourceDependency
-    val existingDependencyTexts = statements.map { it.text }
-
-    for (dependency in dependenciesToAdd) {
-        val dependencyText = kaptDependencyNotation(dependency.kaptConfiguration, dependency.notation)
-        if (existingDependencyTexts.any { StringUtil.equalsIgnoreWhitespaces(it, dependencyText) }) continue
-
-        anchor = addAfter(psiFactory.createExpression(dependencyText), anchor)
-            .apply { addNewLinesIfNeeded() }
-    }
-}
-
-private fun KtFile.findTopLevelBlock(name: String): KtBlockExpression? =
-    PsiTreeUtil.findChildrenOfType(this, KtScriptInitializer::class.java)
-        .find { it.text.startsWith(name) }
-        ?.getBlock()
-
-private fun KtScriptInitializer.getBlock(): KtBlockExpression? =
-    PsiTreeUtil.findChildOfType(this, KtCallExpression::class.java)?.getBlock()
-
-private fun KtCallExpression.getBlock(): KtBlockExpression? =
-    (valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
-        ?: lambdaArguments.lastOrNull()?.getLambdaExpression()?.bodyExpression
-
-private fun PsiElement.addNewLinesIfNeeded() {
-    if (prevSibling != null && prevSibling !is PsiWhiteSpace) {
-        parent.addBefore(KtPsiFactory(project).createNewLine(), this)
-    }
-
-    if (nextSibling != null && nextSibling !is PsiWhiteSpace) {
-        parent.addAfter(KtPsiFactory(project).createNewLine(), this)
-    }
+    dependenciesManipulator.addDependencies(changes.dependenciesToAdd)
+    dependenciesManipulator.removeDependencies(changes.dependenciesToRemove)
+    dependenciesManipulator.reformat()
 }
 
 class KaptGradleProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfigurator(KAPT_PLUGIN_ID) {
@@ -237,17 +176,6 @@ private fun MatchResult.toKaptProcessorDependency(): KaptProcessorDependency? {
 
 private fun kaptPluginExpression(forKotlinDsl: Boolean): String =
     if (forKotlinDsl) "kotlin(\"kapt\")" else "id \"org.jetbrains.kotlin.kapt\""
-
-private fun kaptDependencyNotation(configuration: String, dependency: String): String =
-    "$configuration(\"$dependency\")"
-
-private data class KaptProcessorDependency(
-    val match: MatchResult,
-    val dependencyConfiguration: String,
-    val kaptConfiguration: String,
-    val notation: String,
-    val dropOriginal: Boolean
-)
 
 private data class KaptDependency(val configuration: String, val notation: String)
 
