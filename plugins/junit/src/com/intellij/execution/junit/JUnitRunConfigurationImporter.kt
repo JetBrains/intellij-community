@@ -19,9 +19,11 @@ import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolverService
 import com.intellij.openapi.project.Project
 import com.intellij.rt.execution.junit.RepeatCount
 import com.intellij.util.ObjectUtils.consumeIfCast
@@ -88,7 +90,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
     consumeIfCast(cfg["envs"], Map::class.java) { runConfig.envs = it as Map<String, String> }
 
     consumeIfCast(cfg["moduleName"], String::class.java) {
-      val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
+      val module = service<RunConfigurationModuleNameResolverService>().findModule(modelsProvider, it)
       if (module != null) {
         runConfig.setModule(module)
       }

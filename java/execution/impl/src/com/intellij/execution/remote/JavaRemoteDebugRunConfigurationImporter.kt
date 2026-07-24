@@ -6,8 +6,10 @@ package com.intellij.execution.remote
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolverService
 import com.intellij.openapi.project.Project
 
 class JavaRemoteDebugRunConfigurationImporter : RunConfigurationImporter {
@@ -16,12 +18,9 @@ class JavaRemoteDebugRunConfigurationImporter : RunConfigurationImporter {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
-    (cfg["moduleName"] as? String)?.let {
-        val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
-        if (module != null) {
-          runConfiguration.setModule(module)
-        }
-      }
+    service<RunConfigurationModuleNameResolverService>().findModule(modelsProvider, cfg["moduleName"] as? String)?.let {
+      runConfiguration.setModule(it)
+    }
 
     with(runConfiguration) {
       USE_SOCKET_TRANSPORT = (cfg["transport"] as? String) != "SHARED_MEM"
