@@ -240,10 +240,7 @@ private suspend fun processHyperlinkResults(
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
-  val hyperlinksModel = TerminalHyperlinksModel(
-    debugName = debugName,
-    trimOffset = { outputModel.startOffset },
-  )
+  val hyperlinksModel = TerminalHyperlinksModel(debugName = debugName)
 
   for (event in hyperlinkUpdatesChannel) {
     try {
@@ -343,7 +340,11 @@ private fun processHyperlinksUpdatedEvent(
   val coveredRangeUnchanged = firstChangedOffset >= coveredEnd
   val reachesOutputEnd = coveredEnd >= modelEndOffset
   val removeUpToOffset = if (coveredRangeUnchanged && reachesOutputEnd) Long.MAX_VALUE else applyUpToOffset
-  val removed = hyperlinksModel.removeHyperlinks(coveredStart, removeUpToOffset)
+  val removed = hyperlinksModel.removeHyperlinks(
+    fromAbsoluteOffset = coveredStart,
+    toAbsoluteOffset = removeUpToOffset,
+    trimUntilOffset = modelStartOffset,
+  )
   applier.removeDecorations(removed.map { it.toPlatformId() })
 
   val newLinks = event.hyperlinks

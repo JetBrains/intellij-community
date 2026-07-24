@@ -41,10 +41,7 @@ internal class BackendTerminalHyperlinkFacade(
   private val highlighter = BackendTerminalHyperlinkHighlighter(filterWrapper, coroutineScope)
 
   private val trimOffset = AtomicReference(TerminalOffset.of(0))
-  private val model = TerminalHyperlinksModel(
-    debugName = debugName,
-    trimOffset = { trimOffset.get() }
-  )
+  private val model = TerminalHyperlinksModel(debugName = debugName)
 
   val heartbeatFlow: Flow<Unit> = flow {
     while (true) {
@@ -83,7 +80,11 @@ internal class BackendTerminalHyperlinkFacade(
 
   suspend fun updateModelState(event: TerminalHyperlinksOutputEvent.HyperlinksUpdated) {
     mutex.withLock {
-      model.removeHyperlinks(event.coveredStartOffset, event.coveredEndOffset)
+      model.removeHyperlinks(
+        fromAbsoluteOffset = event.coveredStartOffset,
+        toAbsoluteOffset = event.coveredEndOffset,
+        trimUntilOffset = trimOffset.get().toAbsolute(),
+      )
       model.addHyperlinks(event.hyperlinks.map { it.toFilterResultInfo() })
     }
   }
