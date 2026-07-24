@@ -34,6 +34,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.pom.java.JavaFeature;
@@ -62,8 +63,10 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,13 +108,11 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
         sink.accept(MigrateFromJavaLangIoInspection.createCanBeIOFix(ref));
       }
       registerReferenceFixes(ref, sink);
-      sink.accept(new ImportClassFix(ref));
     });
     fixes(JavaErrorKinds.TYPE_UNKNOWN_CLASS, (error, sink) -> {
       PsiJavaCodeReferenceElement element = error.psi().getInnermostComponentReferenceElement();
       if (element != null) {
         registerReferenceFixes(element, sink);
-        sink.accept(new ImportClassFix(element));
       }
     });
     fixes(JavaErrorKinds.REFERENCE_AMBIGUOUS, (error, sink) -> registerReferenceFixes(error.psi(), sink));
@@ -119,7 +120,6 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
       if (error.psi() instanceof PsiJavaCodeReferenceElement ref) {
         registerReferenceFixes(ref, sink);
-        sink.accept(new ImportClassFix(ref));
       }
     };
     fixes(JavaErrorKinds.CALL_AMBIGUOUS_NO_MATCH, (error, sink) -> registerReferenceFixes(error.psi().getMethodExpression(), sink));
@@ -127,6 +127,29 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     fixes(ACCESS_PRIVATE, accessFix);
     fixes(ACCESS_PROTECTED, accessFix);
     fixes(ACCESS_PACKAGE_LOCAL, accessFix);
+  }
+
+  @Override
+  public @Nullable Consumer<@NotNull Consumer<? super @NotNull CommonIntentionAction>> registerLazyFixes(@NotNull JavaCompilationError<?, ?> error) {
+    PsiJavaCodeReferenceElement ref = error.forKind(JavaErrorKinds.REFERENCE_UNRESOLVED, JavaErrorKinds.REFERENCE_AMBIGUOUS,
+                                                    JavaErrorKinds.EXPRESSION_EXPECTED, ACCESS_PRIVATE, ACCESS_PROTECTED,
+                                                    ACCESS_PACKAGE_LOCAL)
+      .map(err -> ObjectUtils.tryCast(err.psi(), PsiJavaCodeReferenceElement.class))
+      .or(() -> error.forKind(JavaErrorKinds.TYPE_UNKNOWN_CLASS)
+        .map(err -> err.psi().getInnermostComponentReferenceElement()))
+      .orElse(null);
+    if (ref == null) {
+      return null;
+    }
+    PsiFile containingFile = ref.getContainingFile();
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
+      return null;
+    }
+    return sink -> {
+      sink.accept(new StaticImportConstantFix(containingFile, ref));
+      sink.accept(new QualifyStaticConstantFix(containingFile, ref));
+      sink.accept(new ImportClassFix(ref));
+    };
   }
 
   private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
@@ -183,10 +206,6 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
       if (bringToScope != null) {
         sink.accept(bringToScope.asIntention());
       }
-    }
-    if (!(refParent instanceof PsiMethodCallExpression)) {
-      sink.accept(new StaticImportConstantFix(containingFile, ref));
-      sink.accept(new QualifyStaticConstantFix(containingFile, ref));
     }
     SurroundWithQuotesAnnotationParameterValueFix.register(sink, ref);
 
