@@ -1,6 +1,7 @@
 package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -34,6 +35,7 @@ private suspend fun processInputEvents(
       processInputEvent(hyperlinkFacade, event)
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       LOG.error("Error when processing input event $event", e)
     }
   }
@@ -79,6 +81,7 @@ private suspend fun collectResultsAndApplyToModel(facade: BackendTerminalHyperli
     facade.collectResultsAndMaybeStartNewTask()
   }
   catch (e: Exception) {
+    rethrowControlFlowException(e)
     LOG.error("Error when collecting hyperlink results", e)
     return emptyList()
   }
@@ -89,6 +92,7 @@ private suspend fun collectResultsAndApplyToModel(facade: BackendTerminalHyperli
         facade.updateModelState(event)
       }
       catch (e: Exception) {
+        rethrowControlFlowException(e)
         LOG.error("Error when updating model state: $event", e)
       }
     }
