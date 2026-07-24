@@ -10,3 +10,6 @@
 - name: lib/modules/intellij.yaml.helm.jar
   contentModules:
   - name: intellij.yaml.helm
+- name: lib/intellij.yaml.syntax.jar
+  contentModules:
+  - name: intellij.yaml.syntax

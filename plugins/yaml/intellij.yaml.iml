@@ -54,6 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
-    <orderEntry type="module" module-name="intellij.yaml.syntax" />
+    <orderEntry type="module" module-name="intellij.yaml.syntax" exported="" />
   </component>
 </module>
