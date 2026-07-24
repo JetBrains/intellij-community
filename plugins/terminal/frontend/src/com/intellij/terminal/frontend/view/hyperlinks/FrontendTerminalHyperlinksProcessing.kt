@@ -392,7 +392,7 @@ private fun TerminalFilterResultInfo.toEditorDecoration(
         endOffset = TerminalOffset.of(absoluteEndOffset).toRelative(outputModel),
         attributes = style,
       ) {
-        layer = layer
+        layer = this@toEditorDecoration.layer
       }
     }
     is TerminalInlayInfo -> inlayProvider?.let { inlayProvider ->
