@@ -13,7 +13,6 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -34,8 +33,8 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
   services: JediTermServices,
   shellIntegrationController: TerminalShellIntegrationController,
@@ -128,7 +127,7 @@ internal fun createTerminalOutputFlow(
         ensureActive = { ensureActive(); ensureEmulationActive(services.terminalStarter) }
       )
 
-      delay(20)
+      delay(20.milliseconds)
     }
   }
 
