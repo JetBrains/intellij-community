@@ -41,6 +41,7 @@ import javax.swing.ListCellRenderer
 
 private val LOG = Logger.getInstance(FileSearchEverywhereContributor::class.java)
 
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere (com.intellij.platform.searchEverywhere).")
 open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : AbstractGotoSEContributor(
   event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
   private val modelForRenderer: GotoFileModel
