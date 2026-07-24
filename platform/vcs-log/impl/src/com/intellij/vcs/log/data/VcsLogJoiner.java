@@ -47,99 +47,84 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
                                                          @NotNull Collection<? extends CommitId> newRefs) {
     StopWatch stopWatch = StopWatch.start("VcsLogJoiner.addCommits");
     try {
-      Pair<Integer, Set<Commit>> newCommitsAndSavedGreenIndex =
-        getNewCommitsAndSavedGreenIndex(savedLog, previousRefs, firstBlock, newRefs);
+      // Step 1: Build firstBlock lookup (used for overlap detection, replacement, and new commit tracking)
+      Map<CommitId, Commit> firstBlockMap = new HashMap<>();
+      for (Commit commit : firstBlock) {
+        firstBlockMap.put(commit.getId(), commit);
+      }
+
+      // Step 2: Classify red/green commits
       Pair<Integer, Set<CommitId>> redCommitsAndSavedRedIndex =
         getRedCommitsAndSavedRedIndex(savedLog, previousRefs, firstBlock, newRefs);
+      int redIndex = redCommitsAndSavedRedIndex.first;
+      Set<CommitId> redCommits = redCommitsAndSavedRedIndex.second;
 
-      Set<CommitId> removeCommits = redCommitsAndSavedRedIndex.second;
-      Set<Commit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
+      // Step 3: Find overlap depth and connection depth, and check for gaps.
+      // We need to ensure that:
+      // 1. We know how deep firstBlock overlaps with savedLog (overlapDepth).
+      // 2. Any commit we need to connect to (parents of firstBlock not in firstBlock, and new refs)
+      //    is present in savedLog (requiredDepth). If not, we have a gap and must abort.
+      StopWatch overlapWatch = StopWatch.start("VcsLogJoiner.addCommits.overlapScan");
+      int overlapDepth = 0;
+      int requiredDepth = 0;
+      Set<CommitId> remainingOverlap = new HashSet<>(firstBlockMap.keySet());
 
-      int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
-
-      StopWatch filteringWatch = StopWatch.start("VcsLogJoiner.addCommits.filtering");
-      List<Commit> unsafePartSavedLog = new ArrayList<>();
-      for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
-        if (!removeCommits.contains(commit.getId())) {
-          unsafePartSavedLog.add(commit);
+      Set<CommitId> requiredInSavedLog = new HashSet<>();
+      for (Commit commit : firstBlock) {
+        for (CommitId parent : commit.getParents()) {
+          if (!firstBlockMap.containsKey(parent)) {
+            requiredInSavedLog.add(parent);
+          }
         }
       }
-      filteringWatch.report(LOG);
+      for (CommitId newRef : newRefs) {
+        if (!previousRefs.contains(newRef) && !firstBlockMap.containsKey(newRef)) {
+          requiredInSavedLog.add(newRef);
+        }
+      }
+      Set<CommitId> remainingRequired = new HashSet<>(requiredInSavedLog);
 
-      unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, allNewsCommits).getResultList();
+      for (int i = 0; i < savedLog.size() && (!remainingOverlap.isEmpty() || !remainingRequired.isEmpty()); i++) {
+        CommitId id = savedLog.get(i).getId();
+        if (remainingOverlap.remove(id)) {
+          overlapDepth = i + 1;
+        }
+        if (remainingRequired.remove(id)) {
+          requiredDepth = i + 1;
+        }
+      }
+      overlapWatch.report(LOG);
+
+      if (!remainingRequired.isEmpty()) {
+        throw new VcsLogRefreshNotEnoughDataException();
+      }
+
+      int unsafeBlockSize = Math.max(redIndex, Math.max(overlapDepth, requiredDepth));
+
+      // Step 4: Reconstruct the unsafe zone in a single pass:
+      // - filter out red commits
+      // - replace overlapping commits with updated versions from firstBlock
+      // - track what's consumed; whatever remains in firstBlockMap = genuinely new commits
+      StopWatch reconstructWatch = StopWatch.start("VcsLogJoiner.addCommits.reconstruct");
+      List<Commit> unsafePartSavedLog = new ArrayList<>();
+      for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
+        if (redCommits.contains(commit.getId())) {
+          firstBlockMap.remove(commit.getId()); // don't re-add a removed commit
+          continue;
+        }
+        Commit updated = firstBlockMap.remove(commit.getId());
+        unsafePartSavedLog.add(updated != null ? updated : commit);
+      }
+      reconstructWatch.report(LOG);
+
+      // Whatever remains in firstBlockMap = genuinely new commits
+      Collection<Commit> newCommits = firstBlockMap.values();
+
+      // Step 5: Integrate new commits and concatenate with safe tail
+      unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, newCommits).getResultList();
 
       return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
                          unsafePartSavedLog.size() - unsafeBlockSize);
-    }
-    finally {
-      stopWatch.report(LOG);
-    }
-  }
-
-
-  private @NotNull Pair<Integer, Set<Commit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends Commit> savedLog,
-                                                                              @NotNull Collection<? extends CommitId> previousRefs,
-                                                                              @NotNull List<? extends Commit> firstBlock,
-                                                                              @NotNull Collection<? extends CommitId> newRefs) {
-    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getNewCommitsAndSavedGreenIndex");
-    try {
-      Set<CommitId> allUnresolvedLinkedHashes = new HashSet<>(newRefs);
-      allUnresolvedLinkedHashes.removeAll(previousRefs);
-      // at this moment allUnresolvedLinkedHashes contains only NEW refs
-      for (Commit commit : firstBlock) {
-        allUnresolvedLinkedHashes.add(commit.getId());
-        allUnresolvedLinkedHashes.addAll(commit.getParents());
-      }
-      for (Commit commit : firstBlock) {
-        if (!commit.getParents().isEmpty()) {
-          allUnresolvedLinkedHashes.remove(commit.getId());
-        }
-      }
-      int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
-
-      return new Pair<>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
-    }
-    finally {
-      stopWatch.report(LOG);
-    }
-  }
-
-  private int getFirstUnTrackedIndex(@NotNull List<? extends Commit> commits, @NotNull Set<CommitId> searchHashes) {
-    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getFirstUnTrackedIndex");
-    try {
-      int lastIndex;
-      for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
-        Commit commit = commits.get(lastIndex);
-        if (searchHashes.isEmpty()) {
-          return lastIndex;
-        }
-        searchHashes.remove(commit.getId());
-      }
-      if (!searchHashes.isEmpty()) {
-        throw new VcsLogRefreshNotEnoughDataException();
-      }
-      return lastIndex;
-    }
-    finally {
-      stopWatch.report(LOG);
-    }
-  }
-
-  private Set<Commit> getAllNewCommits(@NotNull List<? extends Commit> unsafeGreenPartSavedLog,
-                                       @NotNull List<? extends Commit> firstBlock) {
-    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getAllNewCommits");
-    try {
-      Set<CommitId> existedCommitHashes = new HashSet<>();
-      for (Commit commit : unsafeGreenPartSavedLog) {
-        existedCommitHashes.add(commit.getId());
-      }
-      Set<Commit> allNewsCommits = new HashSet<>();
-      for (Commit newCommit : firstBlock) {
-        if (!existedCommitHashes.contains(newCommit.getId())) {
-          allNewsCommits.add(newCommit);
-        }
-      }
-      return allNewsCommits;
     }
     finally {
       stopWatch.report(LOG);
@@ -155,11 +140,13 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       Set<CommitId> startRedCommits = new HashSet<>(previousRefs);
       startRedCommits.removeAll(newRefs);
       Set<CommitId> startGreenNodes = new HashSet<>(newRefs);
+      Map<CommitId, List<CommitId>> recentCommitParents = new HashMap<>();
       for (Commit commit : firstBlock) {
+        recentCommitParents.put(commit.getId(), commit.getParents());
         startGreenNodes.add(commit.getId());
         startGreenNodes.addAll(commit.getParents());
       }
-      RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog);
+      RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog, recentCommitParents);
       int saveRegIndex = sorter.getFirstSaveIndex();
 
       return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
@@ -175,11 +162,14 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
     private final Set<CommitId> allRedCommit = new HashSet<>();
 
     private final List<? extends Commit> savedLog;
+    private final Map<CommitId, List<CommitId>> recentCommitParents;
 
-    private RedGreenSorter(Set<? super CommitId> startRedNodes, Set<? super CommitId> startGreenNodes, List<? extends Commit> savedLog) {
+    private RedGreenSorter(Set<? super CommitId> startRedNodes, Set<? super CommitId> startGreenNodes,
+                           List<? extends Commit> savedLog, Map<CommitId, List<CommitId>> recentCommitParents) {
       this.currentRed = startRedNodes;
       this.currentGreen = startGreenNodes;
       this.savedLog = savedLog;
+      this.recentCommitParents = recentCommitParents;
     }
 
     private void markRealRedNode(@NotNull CommitId node) {
@@ -197,7 +187,21 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
           boolean isGreen = currentGreen.contains(commit.getId());
           if (isGreen) {
             currentRed.remove(commit.getId());
-            currentGreen.addAll(commit.getParents());
+            // For recently fetched commits, propagate their updated parents instead of
+            // the stale ones from savedLog. Parents that were dropped (in savedLog but not
+            // in firstBlock) become red candidates — they may be unreachable now.
+            List<CommitId> updatedParents = recentCommitParents.get(commit.getId());
+            if (updatedParents != null) {
+              currentGreen.addAll(updatedParents);
+              for (CommitId oldParent : commit.getParents()) {
+                if (!updatedParents.contains(oldParent)) {
+                  currentRed.add(oldParent);
+                }
+              }
+            }
+            else {
+              currentGreen.addAll(commit.getParents());
+            }
           }
           else {
             markRealRedNode(commit.getId());
