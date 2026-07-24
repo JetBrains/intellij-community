@@ -7,15 +7,21 @@ import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSession
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.toTerminalId
+import org.jetbrains.plugins.terminal.util.getNow
 
 @ApiStatus.Internal
 class FrontendTerminalHyperlinkFacade(
-  val sessionIdDeferred: Deferred<TerminalHyperlinksSessionId>,
+  private val sessionDeferred: Deferred<TerminalHyperlinksSession>,
   private val applier: EditorTextDecorationApplier,
   private val lastFinishedTaskStamp: Flow<Long>,
 ) {
+  /** Can be null if session is not initialized yet (for example, backend requests are not yet performed, or it is not available) */
+  val sessionId: TerminalHyperlinksSessionId?
+    get() = sessionDeferred.getNow()?.id
+
   fun getHoveredHyperlinkId(): TerminalHyperlinkId? {
     return applier.getHoveredHyperlink()?.id?.toTerminalId()
   }

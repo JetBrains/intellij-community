@@ -805,7 +805,7 @@ class TerminalViewImpl(
 
       // Hyperlinks data
       val hyperlinksFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinksFacade else outputBufferHyperlinksFacade
-      sink[TerminalHyperlinksSessionId.DATA_KEY] = hyperlinksFacade?.sessionIdDeferred?.getNow()
+      sink[TerminalHyperlinksSessionId.DATA_KEY] = hyperlinksFacade?.sessionId
       sink[TerminalHyperlinkId.KEY] = hyperlinksFacade?.getHoveredHyperlinkId()
     }
 
