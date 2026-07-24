@@ -69,7 +69,7 @@ class ToolWindowEditorTabTransferControllerTest {
     ExtensionTestUtil.maskExtensions(ContentTabActionProvider.EP_NAME, emptyList(), disposable)
     registerFakeToolWindowEditorTabSupport(
       toolWindowId,
-      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabDescriptor("Tab"))),
+      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabPresentation("Tab"))),
       disposable,
     )
   }
@@ -98,7 +98,7 @@ class ToolWindowEditorTabTransferControllerTest {
   }
 
   private fun createTabFile(content: Content = createTabContent()): ToolWindowEditorTabFile = ToolWindowEditorTabFile(
-    descriptorFlow = MutableStateFlow(ToolWindowEditorTabDescriptor("Tab")),
+    presentationFlow = MutableStateFlow(ToolWindowEditorTabPresentation("Tab")),
     toolWindowId = toolWindowId,
     component = JPanel(),
     preferredFocusedComponent = JPanel(),

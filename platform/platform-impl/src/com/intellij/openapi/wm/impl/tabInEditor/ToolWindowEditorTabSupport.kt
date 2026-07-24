@@ -16,14 +16,14 @@ interface ToolWindowEditorTabSupport {
   fun canCloseTab(project: Project, content: Content): Boolean = true
 
   /**
-   * Returns the current tab descriptor and subsequent presentation updates.
+   * Returns the current tab presentation and subsequent presentation updates.
    */
-  fun getTabDescriptorState(project: Project, content: Content): StateFlow<ToolWindowEditorTabDescriptor>
+  fun getTabPresentationState(project: Project, content: Content): StateFlow<ToolWindowEditorTabPresentation>
 }
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-data class ToolWindowEditorTabDescriptor(
+data class ToolWindowEditorTabPresentation(
   val title: @NlsContexts.TabTitle String,
   val icon: Icon? = null,
 )

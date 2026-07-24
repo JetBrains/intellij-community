@@ -38,9 +38,9 @@ class ToolWindowEditorTabFileTest {
   private val projectScope: CoroutineScope get() = (project as ComponentManagerEx).getCoroutineScope()
   private val manager: FileEditorManagerImpl get() = fileEditorManagerFixture.get()
 
-  private fun createFile(descriptor: ToolWindowEditorTabDescriptor): ToolWindowEditorTabFile {
+  private fun createFile(presentation: ToolWindowEditorTabPresentation): ToolWindowEditorTabFile {
     return ToolWindowEditorTabFile(
-      descriptorFlow = MutableStateFlow(descriptor),
+      presentationFlow = MutableStateFlow(presentation),
       toolWindowId = "TestToolWindow",
       component = JPanel(),
       preferredFocusedComponent = JPanel(),
@@ -52,7 +52,7 @@ class ToolWindowEditorTabFileTest {
 
   @Test
   fun `file exposes tool window tab defaults`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    val file = createFile(ToolWindowEditorTabDescriptor("Title", AllIcons.General.Gear))
+    val file = createFile(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
 
     assertThat(file.name).isEqualTo("Title")
     assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
@@ -66,7 +66,7 @@ class ToolWindowEditorTabFileTest {
 
   @Test
   fun `onEditorClosed invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    val file = createFile(ToolWindowEditorTabDescriptor("Title"))
+    val file = createFile(ToolWindowEditorTabPresentation("Title"))
     assertThat(file.isValid).isTrue()
 
     file.onEditorClosed()
@@ -77,7 +77,7 @@ class ToolWindowEditorTabFileTest {
   @Test
   fun `onEditorClosed keeps the file valid when closing to reopen`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val file = createFile(ToolWindowEditorTabDescriptor("Title"))
+      val file = createFile(ToolWindowEditorTabPresentation("Title"))
       // Set by the "return to tool window" path: the file is closed only to be moved, not invalidated.
       file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
 
@@ -88,7 +88,7 @@ class ToolWindowEditorTabFileTest {
 
   @Test
   fun `invalidateEditorTabFile marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-    val file = createFile(ToolWindowEditorTabDescriptor("Title"))
+    val file = createFile(ToolWindowEditorTabPresentation("Title"))
 
     file.invalidateEditorTabFile()
 
@@ -96,11 +96,11 @@ class ToolWindowEditorTabFileTest {
   }
 
   @Test
-  fun `descriptor flow updates the tab icon without renaming the file`(): Unit =
+  fun `presentation flow updates the tab icon without renaming the file`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val flow = MutableStateFlow(ToolWindowEditorTabDescriptor("Stable title", AllIcons.General.Gear))
+      val flow = MutableStateFlow(ToolWindowEditorTabPresentation("Stable title", AllIcons.General.Gear))
       val file = ToolWindowEditorTabFile(
-        descriptorFlow = flow,
+        presentationFlow = flow,
         toolWindowId = "TestToolWindow",
         component = JPanel(),
         preferredFocusedComponent = JPanel(),
@@ -113,7 +113,7 @@ class ToolWindowEditorTabFileTest {
       assertThat(file.name).isEqualTo("Stable title")
       assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
 
-      flow.value = ToolWindowEditorTabDescriptor("Stable title", AllIcons.General.Add)
+      flow.value = ToolWindowEditorTabPresentation("Stable title", AllIcons.General.Add)
 
       withTimeout(10.seconds) {
         while (file.tabIcon != AllIcons.General.Add) {
@@ -126,11 +126,11 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `descriptor flow renames the file on a title change`(): Unit =
+  fun `presentation flow renames the file on a title change`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val flow = MutableStateFlow(ToolWindowEditorTabDescriptor("Initial title", AllIcons.General.Gear))
+      val flow = MutableStateFlow(ToolWindowEditorTabPresentation("Initial title", AllIcons.General.Gear))
       val file = ToolWindowEditorTabFile(
-        descriptorFlow = flow,
+        presentationFlow = flow,
         toolWindowId = "TestToolWindow",
         component = JPanel(),
         preferredFocusedComponent = JPanel(),
@@ -141,7 +141,7 @@ class ToolWindowEditorTabFileTest {
       assertThat(file.name).isEqualTo("Initial title")
 
       // Only the title changes: this exercises the rename branch of updatePresentation.
-      flow.value = ToolWindowEditorTabDescriptor("Renamed title", AllIcons.General.Gear)
+      flow.value = ToolWindowEditorTabPresentation("Renamed title", AllIcons.General.Gear)
 
       withTimeout(10.seconds) {
         while (file.name != "Renamed title") {
@@ -155,11 +155,11 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `descriptor flow updates the title and icon together`(): Unit =
+  fun `presentation flow updates the title and icon together`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val flow = MutableStateFlow(ToolWindowEditorTabDescriptor("Initial title", AllIcons.General.Gear))
+      val flow = MutableStateFlow(ToolWindowEditorTabPresentation("Initial title", AllIcons.General.Gear))
       val file = ToolWindowEditorTabFile(
-        descriptorFlow = flow,
+        presentationFlow = flow,
         toolWindowId = "TestToolWindow",
         component = JPanel(),
         preferredFocusedComponent = JPanel(),
@@ -172,8 +172,8 @@ class ToolWindowEditorTabFileTest {
       assertThat(file.name).isEqualTo("Initial title")
       assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
 
-      // A single descriptor update changes both the title and the icon at once.
-      flow.value = ToolWindowEditorTabDescriptor("Renamed title", AllIcons.General.Add)
+      // A single presentation update changes both the title and the icon at once.
+      flow.value = ToolWindowEditorTabPresentation("Renamed title", AllIcons.General.Add)
 
       withTimeout(10.seconds) {
         while (file.name != "Renamed title" || file.tabIcon != AllIcons.General.Add) {

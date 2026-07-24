@@ -23,19 +23,19 @@ import javax.swing.JComponent
 /**
  * Represents a virtual file for displaying tool window content in an editor tab.
  *
- * @param descriptorFlow The state flow that provides the initial descriptor and subsequent presentation updates.
+ * @param presentationFlow The state flow that provides the initial presentation and subsequent presentation updates.
  * @param toolWindowId The ID of the associated tool window.
  * @param component The UI component displayed in the editor tab.
  * @param preferredFocusedComponent The component that should receive focus when the editor tab is selected.
  * @param content The tool window content represented by this editor tab.
  * @param project The project associated with the editor tab.
- * @param parentCoroutineScope The parent scope used to create a child scope for collecting descriptor updates.
+ * @param parentCoroutineScope The parent scope used to create a child scope for collecting presentation updates.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class ToolWindowEditorTabFile private constructor(
-  initialDescriptor: ToolWindowEditorTabDescriptor,
-  descriptorFlow: StateFlow<ToolWindowEditorTabDescriptor>,
+  initialPresentation: ToolWindowEditorTabPresentation,
+  presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
   val toolWindowId: String,
   val component: JComponent,
   internal val preferredFocusedComponent: JComponent,
@@ -43,13 +43,13 @@ class ToolWindowEditorTabFile private constructor(
   internal val project: Project,
   parentCoroutineScope: CoroutineScope,
 ) : LightVirtualFile(
-  initialDescriptor.title,
+  initialPresentation.title,
   ToolWindowEditorTabFileType,
   "",
 ), OptionallyIncluded {
 
   internal constructor(
-    descriptorFlow: StateFlow<ToolWindowEditorTabDescriptor>,
+    presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
     toolWindowId: String,
     component: JComponent,
     preferredFocusedComponent: JComponent,
@@ -57,8 +57,8 @@ class ToolWindowEditorTabFile private constructor(
     project: Project,
     parentCoroutineScope: CoroutineScope,
   ) : this(
-    initialDescriptor = descriptorFlow.value,
-    descriptorFlow = descriptorFlow,
+    initialPresentation = presentationFlow.value,
+    presentationFlow = presentationFlow,
     toolWindowId = toolWindowId,
     component = component,
     preferredFocusedComponent = preferredFocusedComponent,
@@ -71,20 +71,20 @@ class ToolWindowEditorTabFile private constructor(
     "ToolWindowEditorTabFile[$toolWindowId]",
   )
 
-  internal var tabIcon: Icon? = initialDescriptor.icon
+  internal var tabIcon: Icon? = initialPresentation.icon
     private set
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
 
-    descriptorFlow
-      .onEach { descriptor ->
+    presentationFlow
+      .onEach { presentation ->
         withContext(Dispatchers.EDT) {
           if (!isValid || project.isDisposed) {
             return@withContext
           }
 
-          if (updatePresentation(descriptor)) {
+          if (updatePresentation(presentation)) {
             FileEditorManagerEx.getInstanceEx(project)
               .updateFilePresentation(this@ToolWindowEditorTabFile)
           }
@@ -94,17 +94,17 @@ class ToolWindowEditorTabFile private constructor(
   }
 
   private fun updatePresentation(
-    descriptor: ToolWindowEditorTabDescriptor,
+    presentation: ToolWindowEditorTabPresentation,
   ): Boolean {
     var changed = false
 
-    if (name != descriptor.title) {
-      rename(null, descriptor.title)
+    if (name != presentation.title) {
+      rename(null, presentation.title)
       changed = true
     }
 
-    if (tabIcon != descriptor.icon) {
-      tabIcon = descriptor.icon
+    if (tabIcon != presentation.icon) {
+      tabIcon = presentation.icon
       changed = true
     }
 

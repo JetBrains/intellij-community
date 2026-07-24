@@ -30,16 +30,16 @@ import javax.swing.JPanel
 /**
  * A configurable [ToolWindowEditorTabSupport] used by the `tabInEditor` tests.
  *
- * [descriptorFlow] drives the tab presentation and [canClose] backs [canCloseTab].
+ * [presentationFlow] drives the tab presentation and [canClose] backs [canCloseTab].
  */
 internal class FakeToolWindowEditorTabSupport(
-  private val descriptorFlow: StateFlow<ToolWindowEditorTabDescriptor>,
+  private val presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
   private val canClose: Boolean = true,
 ) : ToolWindowEditorTabSupport {
   override fun canCloseTab(project: Project, content: Content): Boolean = canClose
 
-  override fun getTabDescriptorState(project: Project, content: Content): StateFlow<ToolWindowEditorTabDescriptor> =
-    descriptorFlow
+  override fun getTabPresentationState(project: Project, content: Content): StateFlow<ToolWindowEditorTabPresentation> =
+    presentationFlow
 }
 
 /**

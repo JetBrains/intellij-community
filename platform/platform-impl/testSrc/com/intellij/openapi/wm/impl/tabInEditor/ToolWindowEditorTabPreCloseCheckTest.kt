@@ -37,7 +37,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
   private val toolWindowId = "TestToolWindow"
 
   private fun createTabFile(): ToolWindowEditorTabFile = ToolWindowEditorTabFile(
-    descriptorFlow = MutableStateFlow(ToolWindowEditorTabDescriptor("Title")),
+    presentationFlow = MutableStateFlow(ToolWindowEditorTabPresentation("Title")),
     toolWindowId = toolWindowId,
     component = JPanel(),
     preferredFocusedComponent = JPanel(),
@@ -62,7 +62,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
   fun `tab file close is delegated to support - allowed`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     registerFakeToolWindowEditorTabSupport(
       toolWindowId,
-      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabDescriptor("Title")), canClose = true),
+      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabPresentation("Title")), canClose = true),
       disposable,
     )
     val check = ToolWindowEditorTabPreCloseCheck()
@@ -73,7 +73,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
   fun `tab file close is delegated to support - blocked`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     registerFakeToolWindowEditorTabSupport(
       toolWindowId,
-      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabDescriptor("Title")), canClose = false),
+      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabPresentation("Title")), canClose = false),
       disposable,
     )
     val check = ToolWindowEditorTabPreCloseCheck()
