@@ -22,7 +22,10 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}).
  */
+@Deprecated
 public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor,
                                                                                             SearchEverywherePreviewProvider {
 

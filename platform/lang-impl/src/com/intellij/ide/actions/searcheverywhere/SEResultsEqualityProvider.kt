@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus
  * - Different links/wrappers to the same [com.intellij.psi.PsiElement]
  * - etc.
  */
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere). This functionality is obsolete.")
 interface SEResultsEqualityProvider {
 
   /**

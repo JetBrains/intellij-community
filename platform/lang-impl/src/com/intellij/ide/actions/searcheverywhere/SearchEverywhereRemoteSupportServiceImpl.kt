@@ -7,6 +7,8 @@ import com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSu
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere). This functionality is obsolete.")
 class SearchEverywhereRemoteSupportServiceImpl: SearchEverywhereRemoteSupportService {
 
   override fun getConverters(contributorID: String?): List<RemoteSearchEverywhereConverter<*, *>> {
