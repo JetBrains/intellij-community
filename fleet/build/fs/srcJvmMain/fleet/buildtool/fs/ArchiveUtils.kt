@@ -174,7 +174,7 @@ fun extractTarZst(
   cleanDestination: Boolean,
   temporaryDir: Path,
   logger: Logger,
-) = extractCompressedTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.ZSTANDARD, temporaryDir, logger)
+) = extractTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.ZSTANDARD, temporaryDir, logger)
 
 fun extractTarGz(
   archive: Path,
@@ -184,7 +184,7 @@ fun extractTarGz(
   temporaryDir: Path,
   logger: Logger,
   encoding: String? = null,
-) = extractCompressedTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.GZIP, temporaryDir, logger, encoding)
+) = extractTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.GZIP, temporaryDir, logger, encoding)
 
 fun extractTarXz(
   archive: Path,
@@ -194,44 +194,15 @@ fun extractTarXz(
   temporaryDir: Path,
   logger: Logger,
   encoding: String? = null,
-) = extractCompressedTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.XZ, temporaryDir, logger, encoding)
+) = extractTar(archive, destination, stripTopLevelFolder, cleanDestination, CompressorStreamFactory.XZ, temporaryDir, logger, encoding)
 
-/**
- * Extracts an uncompressed `.tar` archive straight into [destination], applying each entry's recorded unix
- * mode and recreating symlinks. Unlike [extractTarGz] and friends (which stage into a temp dir and then
- * `copyToRecursively` into place, dropping permissions), this preserves file modes verbatim — so executable
- * markers survive — and needs no cross-filesystem copy.
- */
-@OptIn(ExperimentalPathApi::class)
+
 fun extractTar(
   archive: Path,
   destination: Path,
   stripTopLevelFolder: Boolean,
   cleanDestination: Boolean,
-  logger: Logger,
-  encoding: String? = null,
-) {
-  logger.info("Extracting '$archive' to '$destination'")
-  when {
-    cleanDestination -> destination.deleteRecursively()
-    else -> require(!destination.exists() || destination.isDirectory()) { "destination must be a directory if it exists" }
-  }
-  destination.createDirectories()
-  archive.inputStream().buffered().use { bufferedInputStream ->
-    TarArchiveInputStream(bufferedInputStream, encoding).use { archiveInputStream ->
-      archiveInputStream.extractEntriesTo(stripTopLevelFolder, destination, logger)
-    }
-  }
-  logger.info("Extracted '$archive' to '$destination'")
-}
-
-
-private fun extractCompressedTar(
-  archive: Path,
-  destination: Path,
-  stripTopLevelFolder: Boolean,
-  cleanDestination: Boolean,
-  compressorName: String,
+  compressorName: String? = null,
   temporaryDir: Path,
   logger: Logger,
   encoding: String? = null,
@@ -244,7 +215,7 @@ private fun extract(
   stripTopLevelFolder: Boolean,
   cleanDestination: Boolean,
   archiveType: ArchiveType,
-  compressorName: String,
+  compressorName: String?,
   temporaryDir: Path,
   logger: Logger,
   encoding: String? = null,
@@ -277,6 +248,7 @@ private fun extract(
         when (compressorName) {
           CompressorStreamFactory.ZSTANDARD -> ZstdCompressorInputStream(bufferedInputStream)
           CompressorStreamFactory.XZ -> XZCompressorInputStream(bufferedInputStream)
+          null -> bufferedInputStream
           else -> CompressorStreamFactory().createCompressorInputStream(compressorName, bufferedInputStream)
         }.use { `in` ->
           TarArchiveInputStream(`in`, encoding).use { archiveInputStream ->
