@@ -51,6 +51,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
 
     private val tasksEventIds: MutableMap<TaskNameId, Any> = ConcurrentHashMap()
+    private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
     private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
     private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
@@ -92,11 +93,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       val buildEvent = when (val parentId = event.parentId) {
         buildId -> event
         is TaskNameId -> {
-          val taskEventId = tasksEventIds[parentId]
-          when (taskEventId != null) {
-            true -> BuildEventInvocationHandler.wrap(event, taskEventId)
-            else -> event
+          val taskEventId = tasksEventIds[parentId] ?: run {
+            deferredTaskEvents.getOrPut(parentId) { ArrayList() }
+              .add(event)
+            return
           }
+          BuildEventInvocationHandler.wrap(event, taskEventId)
         }
         is String -> {
           val taskEventId = tasksEventIds[TaskNameId(parentId)]
@@ -120,6 +122,11 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         val taskEventId = event.id
         val taskNameId = TaskNameId(event.message)
         tasksEventIds[taskNameId] = taskEventId
+
+        val deferredEvents = deferredTaskEvents.remove(taskNameId) ?: emptyList()
+        for (deferredEvent in deferredEvents) {
+          onEvent(buildId, deferredEvent)
+        }
       }
     }
 
