@@ -1539,6 +1539,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     return object : AccessToken() {
       override fun finish() {
         myWriteActionPending.get()[state.level()].incrementAndGet()
+        val newThisLevelPermit = state.getThisThreadPermit()
+        require(newThisLevelPermit is ParallelizablePermit.WriteIntent) {
+          "When suspending write action is finishing, the thread must hold write-intent lock"
+        }
         val (newWritePermits, newWritePermit) = try {
           myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
             @Suppress("UNCHECKED_CAST")
@@ -1546,14 +1550,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
             castedListener.beforeWriteLockReacquired(data)
           }
           val newWritePermit = runSuspendMaybeConsuming(false) {
-            rootWriteIntentPermit.acquireWriteActionPermit()
+            newThisLevelPermit.writeIntentPermit.acquireWriteActionPermit()
           }
           myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
             @Suppress("UNCHECKED_CAST")
             val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
             castedListener.afterWriteLockReacquired(data)
           }
-          Thread.sleep(1000)
           hack_setThisLevelPermit(newWritePermit)
           val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
             runSuspendMaybeConsuming(false) {
@@ -1565,7 +1568,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         finally {
           myWriteActionPending.get()[state.level()].decrementAndGet()
         }
-        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
+        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit, originalWriteIntentPermit = newThisLevelPermit.writeIntentPermit, oldPermit = newThisLevelPermit.writeIntentPermit))
         myWriteAcquired = Thread.currentThread()
         myWriteStackBase = prevBase
       }
