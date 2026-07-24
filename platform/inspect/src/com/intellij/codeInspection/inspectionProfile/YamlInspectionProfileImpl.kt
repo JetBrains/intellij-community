@@ -21,6 +21,7 @@ import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.psi.search.scope.packageSet.PackageSet
@@ -252,7 +253,7 @@ class YamlInspectionProfileImpl private constructor(
           val oldScopes = collectOldScopes(tool)
           tool.defaultState.isEnabled = false
           tool.removeAllScopes()
-          val scope = HierarchyPackageSet(toApply.reversed() + oldScopes)
+          val scope = HierarchyPackageSet((toApply.reversed() + oldScopes).enableDefaultScope())
           tool.prependTool(NamedScope.UnnamedScope(scope), tool.defaultState.tool, true, tool.level)
         } else {
           toApply.forEach { (packageSet, enabled) ->
@@ -350,5 +351,11 @@ class YamlInspectionProfileImpl private constructor(
     override fun equals(other: Any?): Boolean {
       return packages == (other as? HierarchyPackageSet)?.packages
     }
+  }
+
+  private fun List<Pair<PackageSet, Boolean>>.enableDefaultScope(): List<Pair<PackageSet, Boolean>> {
+    val (scope, enabled) = lastOrNull() ?: return this
+    if (enabled || scope != CustomScopesProviderEx.getAllScope().value) return this
+    return dropLast(1) + (scope to true)
   }
 }
