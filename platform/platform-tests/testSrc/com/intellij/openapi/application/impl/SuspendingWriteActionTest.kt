@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.use
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +40,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private const val repetitions: Int = 100
 
@@ -229,5 +233,26 @@ class SuspendingWriteActionTest {
       }
     }
     checkpoint(3)
+  }
+
+  @Test
+  fun `release of WI inside suspending write action does not lead to broken IDE state`(): Unit = timeoutRunBlocking {
+    readAction {  } // init internal structures
+    edtWriteAction {
+      assertTrue { application.isWriteAccessAllowed }
+      ApplicationManagerEx.getApplicationEx().threadingSupport!!.executeSuspendingWriteAction {
+        assertFalse { application.isWriteAccessAllowed }
+        assertTrue { application.isWriteIntentLockAcquired }
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          assertFalse { application.isWriteAccessAllowed }
+          assertFalse { application.isWriteIntentLockAcquired }
+        }
+        assertFalse { application.isWriteAccessAllowed }
+        assertTrue { application.isWriteIntentLockAcquired }
+      }
+      assertTrue { application.isWriteAccessAllowed }
+      assertTrue { application.isWriteIntentLockAcquired }
+    }
+    withContext(Dispatchers.EDT) {} // check that WI can be acquired again
   }
 }
