@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Deprecated("The old Search Everywhere API is being sunset. " +
-            "Use com.intellij.platform.searchEverywhere.frontend.SeFilterEditor#getSearchFieldActions instead.")
+            "Use [com.intellij.platform.searchEverywhere.frontend.SeFilterEditor.getSearchFieldActions] instead.")
 interface SearchFieldActionsContributor {
   /**
    * Creates actions that are placed on the right side of SE search input field

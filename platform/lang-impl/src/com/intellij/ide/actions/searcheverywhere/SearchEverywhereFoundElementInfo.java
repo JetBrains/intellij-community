@@ -8,8 +8,8 @@ import java.util.Comparator;
 
 /**
  * Class containing info about found elements
- * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
- * ({@code com.intellij.platform.searchEverywhere}). Use com.intellij.platform.searchEverywhere.SeItem instead.
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ * Use {@link com.intellij.platform.searchEverywhere.SeItem} instead.
  */
 @Deprecated
 public class SearchEverywhereFoundElementInfo {

@@ -53,7 +53,7 @@ public interface SearchEverywhereManager {
 
   /**
    * @deprecated The old Search Everywhere is being sunset.
-   *             Use com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter#isEverywhere() instead.
+   *             Use {@link com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter#isEverywhere()} instead.
    */
   @Deprecated
   boolean isEverywhere();
