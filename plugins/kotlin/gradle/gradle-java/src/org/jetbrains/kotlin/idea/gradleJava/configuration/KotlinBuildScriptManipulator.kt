@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSuppor
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_IMPLEMENTATION
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport.Companion.TEST_LIB_ID
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleVersionProvider
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KaptGradleDependenciesManipulator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsRepositoriesMode
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.assertApplicableInMultiplatform
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.canBeConfigured
@@ -88,6 +89,10 @@ class KotlinBuildScriptManipulator(
     override val scriptFile: KtFile,
     override val preferNewSyntax: Boolean
 ) : GradleBuildScriptManipulator<KtFile> {
+    override val kaptDependenciesManipulator: KaptGradleDependenciesManipulator? by lazy {
+        KotlinKaptGradleDependenciesManipulator.createIfApplicable(scriptFile)
+    }
+
     override fun isApplicable(file: PsiFile): Boolean = file is KtFile
 
     private val gradleVersion = GradleVersionProvider.fetchGradleVersion(scriptFile)
