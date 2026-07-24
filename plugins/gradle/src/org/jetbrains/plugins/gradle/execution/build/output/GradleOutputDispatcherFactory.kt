@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.DuplicateMessageAware
 import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.impl.OutputBuildEventImpl
@@ -55,8 +54,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
     init {
-      val deferredRootEvents = mutableListOf<BuildEvent>()
-      myRootReader = object : BuildOutputInstantReaderImpl(buildId, buildId, BuildProgressListener { _: Any, event: BuildEvent ->
+      myRootReader = BuildOutputInstantReaderImpl(buildId, buildId, BuildProgressListener { _: Any, event: BuildEvent ->
         var buildEvent = event
         val parentId = buildEvent.parentId
         if (parentId != buildId && parentId is String) {
@@ -65,16 +63,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
             buildEvent = BuildEventInvocationHandler.wrap(event, taskEventId)
           }
         }
-        if (buildEvent is DuplicateMessageAware) {
-          deferredRootEvents += buildEvent
-        }
-        else {
-          myBuildProgressListener.onEvent(buildId, buildEvent)
-        }
-      }, parsers) {
-        override fun closeAndGetFuture(): CompletableFuture<Unit> =
-          super.closeAndGetFuture().whenComplete { _, _ -> deferredRootEvents.forEach { myBuildProgressListener.onEvent(buildId, it) } }
-      }
+        myBuildProgressListener.onEvent(buildId, buildEvent)
+      }, parsers)
 
       lineProcessor = object : LineProcessor() {
         private var myCurrentReader: BuildOutputInstantReaderImpl = myRootReader
