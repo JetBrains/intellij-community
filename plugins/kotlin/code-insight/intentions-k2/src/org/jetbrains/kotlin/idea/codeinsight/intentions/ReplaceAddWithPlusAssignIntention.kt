@@ -35,6 +35,8 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
         element.callExpression?.valueArguments?.size == 1 && element.calleeName in setOf("add", "addAll")
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+        if (element.isUsedAsExpression) return null
+
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
         val receiverType = receiver.type as? KaClassType ?: return null

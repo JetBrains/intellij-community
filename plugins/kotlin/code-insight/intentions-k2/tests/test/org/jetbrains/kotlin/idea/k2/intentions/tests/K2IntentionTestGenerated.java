@@ -13591,6 +13591,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addToVar.kt");
         }
 
+        @TestMetadata("booleanResultUsed.kt")
+        public void testBooleanResultUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/booleanResultUsed.kt");
+        }
+
         @TestMetadata("nonCollection.kt")
         public void testNonCollection() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/nonCollection.kt");
