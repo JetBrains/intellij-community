@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -61,6 +62,13 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
     targetEnvironmentType: TargetEnvironmentType<*>,
     targetSupplier: Supplier<TargetEnvironmentConfiguration>,
   ): Configurable
+
+  open fun createConfigurable(
+    module: Module,
+    config: C,
+    targetEnvironmentType: TargetEnvironmentType<*>,
+    targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+  ): Configurable = createConfigurable(module.project, config, targetEnvironmentType, targetSupplier)
 
   abstract fun findLanguageRuntime(target: TargetEnvironmentConfiguration): C?
 
