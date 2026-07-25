@@ -6,6 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentType.Companion.getTargetTy
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -40,6 +41,12 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
    */
   open fun createStepsForNewWizard(project: Project, configToConfigure: C, runtimeType: LanguageRuntimeType<*>?)
     : List<AbstractWizardStepEx>? = null
+
+  /**
+   * Prepares the wizard for setting up the new configuration instance of this type.
+   */
+  open fun createStepsForNewWizard(module: Module, configToConfigure: C, runtimeType: LanguageRuntimeType<*>?)
+    : List<AbstractWizardStepEx>? = createStepsForNewWizard(module.project, configToConfigure, runtimeType)
 
   /**
    * Instantiates a new environment factory for given prepared [configuration][config].

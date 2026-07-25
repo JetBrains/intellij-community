@@ -8,18 +8,19 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -29,10 +30,9 @@ import com.jetbrains.python.sdk.add.v2.PythonAddCustomInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.withProject
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -41,11 +41,12 @@ import java.nio.file.Path
 import java.util.function.Supplier
 
 internal class PythonLanguageRuntimeUI(
-  val project: Project,
+  val module: Module,
   val config: PythonLanguageRuntimeConfiguration,
   val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
 ) : BoundConfigurable(message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
-  private val module: Module = project.modules.first() // TODO get the real one, this behaviour was copied from legacy "createSdkForTarget"
+  private val project get() = module.project
+
   private var introspectable: LanguageRuntimeType.Introspectable? = null
   private var stateChangedCallback: (() -> Unit)? = null
 
@@ -56,7 +57,7 @@ internal class PythonLanguageRuntimeUI(
   override fun createPanel(): DialogPanel {
     val targetEnvironmentConfiguration = targetSupplier.get()
     val model = PythonLocalAddInterpreterModel(
-      ProjectPathFlows.create(Path.of(project.basePath!!)),
+      ProjectPathFlows.create(getProjectPath()),
       TargetFileSystem(
         targetEnvironmentConfiguration = targetEnvironmentConfiguration,
         pythonLanguageRuntimeConfiguration = config,
@@ -129,4 +130,8 @@ internal class PythonLanguageRuntimeUI(
   }
 
   override fun validate(): Collection<ValidationInfo> = validationErrors
+
+  private fun getProjectPath(): Path =
+    module.baseDir?.path?.toNioPathOrNull()
+    ?: project.basePath?.toNioPathOrNull()!!
 }

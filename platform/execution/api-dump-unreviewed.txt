@@ -700,6 +700,7 @@ f:com.intellij.execution.target.LanguageRuntimeConfiguration$VolumeState
 a:com.intellij.execution.target.LanguageRuntimeType
 - sf:Companion:com.intellij.execution.target.LanguageRuntimeType$Companion
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- createConfigurable(com.intellij.openapi.module.Module,com.intellij.execution.target.LanguageRuntimeConfiguration,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier):com.intellij.openapi.options.Configurable
 - a:createConfigurable(com.intellij.openapi.project.Project,com.intellij.execution.target.LanguageRuntimeConfiguration,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier):com.intellij.openapi.options.Configurable
 - createIntrospector(com.intellij.execution.target.LanguageRuntimeConfiguration):com.intellij.execution.target.LanguageRuntimeType$Introspector
 - a:findLanguageRuntime(com.intellij.execution.target.TargetEnvironmentConfiguration):com.intellij.execution.target.LanguageRuntimeConfiguration
@@ -835,6 +836,7 @@ a:com.intellij.execution.target.TargetEnvironmentType
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createConfigurable(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentConfiguration,com.intellij.execution.target.LanguageRuntimeType,com.intellij.openapi.options.Configurable):com.intellij.openapi.options.Configurable
 - a:createEnvironmentRequest(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentConfiguration):com.intellij.execution.target.TargetEnvironmentRequest
+- createStepsForNewWizard(com.intellij.openapi.module.Module,com.intellij.execution.target.TargetEnvironmentConfiguration,com.intellij.execution.target.LanguageRuntimeType):java.util.List
 - createStepsForNewWizard(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentConfiguration,com.intellij.execution.target.LanguageRuntimeType):java.util.List
 - sf:duplicateTargetConfiguration(com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.TargetEnvironmentConfiguration):com.intellij.execution.target.TargetEnvironmentConfiguration
 - sf:findInstance(java.lang.Class):com.intellij.execution.target.TargetEnvironmentType
