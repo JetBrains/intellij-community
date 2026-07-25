@@ -562,6 +562,7 @@ f:com.intellij.codeInsight.codeVision.ui.popup.layouter.RectangleUtilsKt
 - sf:getRight(java.awt.Rectangle):I
 - sf:getTop(java.awt.Rectangle):I
 c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+- sf:DIRECT_INSERTION_START_OFFSET:com.intellij.openapi.util.Key
 - <init>(com.intellij.codeInsight.completion.CompletionType):V
 - s:createHandler(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - s:setAutoInsertTimeout(I,com.intellij.openapi.Disposable):V
