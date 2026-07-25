@@ -14,7 +14,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.application
 import com.intellij.util.io.URLUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.groovy.LegacyGroovyService
 
 /**
@@ -32,7 +31,6 @@ import org.jetbrains.plugins.gradle.groovy.LegacyGroovyService
  *
  * Etc.
  */
-@ApiStatus.Internal
 internal class GradleTestEventConverter(
   private val project: Project,
   private val parent: SMTestProxy,

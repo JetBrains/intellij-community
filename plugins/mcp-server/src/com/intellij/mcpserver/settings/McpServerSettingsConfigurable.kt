@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
@@ -464,7 +463,6 @@ fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>,
   }
 }
 
-@ApiStatus.Internal
 internal fun openFileInEditor(filePath: Path, project: Project?) {
   if (project == null) {
     return

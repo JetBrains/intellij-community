@@ -81,7 +81,6 @@ class MavenProjectsTree(val project: Project) {
     project?.file
   }
 
-  @ApiStatus.Internal
   internal fun getTimeStamp(mavenProject: MavenProject): MavenProjectTimestamp? {
     return myTimestamps[mavenProject.file]
   }
@@ -95,7 +94,6 @@ class MavenProjectsTree(val project: Project) {
     }
   }
 
-  @ApiStatus.Internal
   internal fun putTimestamp(mavenProject: MavenProject, timestamp: MavenProjectTimestamp) {
     myTimestamps[mavenProject.file] = timestamp
   }
@@ -458,7 +456,6 @@ class MavenProjectsTree(val project: Project) {
     return updateContext.toUpdateResult()
   }
 
-  @ApiStatus.Internal
   internal fun doDelete(aggregator: MavenProject?, project: MavenProject, updateContext: MavenProjectsTreeUpdateContext) {
     for (each in getModules(project)) {
       doDelete(project, each, updateContext)

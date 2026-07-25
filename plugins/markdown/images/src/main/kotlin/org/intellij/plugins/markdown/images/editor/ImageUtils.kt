@@ -10,9 +10,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal object ImageUtils {
   @JvmStatic
   fun createMarkdownImageText(description: String = "", path: String, title: String = ""): String {

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import java.util.function.Function
 import javax.swing.JComponent
 
-private class SupportAvailabilityNotificationProvider: EditorNotificationProvider, DumbAware {
+internal class SupportAvailabilityNotificationProvider: EditorNotificationProvider, DumbAware {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile

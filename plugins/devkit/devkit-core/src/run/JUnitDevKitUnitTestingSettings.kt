@@ -10,9 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class JUnitDevKitUnitTestingSettings(
   private val project: Project,
 ) : SimplePersistentStateComponent<JUnitDevKitUnitTestingSettingsState>(JUnitDevKitUnitTestingSettingsState()) {
@@ -73,13 +71,11 @@ internal class JUnitDevKitUnitTestingSettings(
     }
 }
 
-@ApiStatus.Internal
 internal class JUnitDevKitUnitTestingSettingsState : BaseState() {
   @Property(description = "List of available runners")
   var runners by list<JUnitDevKitUnitTestingSettingsRunner>()
 }
 
-@ApiStatus.Internal
 internal class JUnitDevKitUnitTestingSettingsRunner : BaseState() {
   @Property(description = "Name")
   var name by string()

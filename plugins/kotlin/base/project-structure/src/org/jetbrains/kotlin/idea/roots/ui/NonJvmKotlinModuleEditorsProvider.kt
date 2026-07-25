@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-private class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
+internal class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
     override fun isCompleteEditorSet() = true
 
     override fun createEditors(state: ModuleConfigurationState): Array<ModuleConfigurationEditor> {

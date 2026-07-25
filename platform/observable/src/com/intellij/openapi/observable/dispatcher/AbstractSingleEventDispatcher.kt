@@ -7,7 +7,6 @@ import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
-@ApiStatus.Internal
 internal abstract class AbstractSingleEventDispatcher<T> : SingleEventDispatcher<T> {
 
   protected abstract fun addListener(ttl: Int?, parentDisposable: Disposable?, listener: ListenerWrapper<T, *>)

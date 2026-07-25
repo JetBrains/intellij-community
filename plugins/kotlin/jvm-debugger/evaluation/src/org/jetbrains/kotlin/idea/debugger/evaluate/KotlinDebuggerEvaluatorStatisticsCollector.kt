@@ -112,7 +112,7 @@ fun extractExceptionCauseClass(e: Throwable): Class<out Throwable> {
     }
 }
 
-private class StandardExceptionNameRuleValidator : CustomValidationRule() {
+internal class StandardExceptionNameRuleValidator : CustomValidationRule() {
     override fun getRuleId(): String = "standard_exception_name"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {

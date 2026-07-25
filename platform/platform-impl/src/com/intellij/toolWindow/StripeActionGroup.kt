@@ -310,7 +310,7 @@ internal class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWi
 
 @Service
 @State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml", roamingType = RoamingType.DISABLED)])
-private class ButtonsStateService: PersistentStateComponent<Element> {
+internal class ButtonsStateService: PersistentStateComponent<Element> {
   private val pinnedIds = linkedSetOf("Database", "Project", "Services", "AIAssistant")
 
   fun isPinned(id: String): Boolean = id in pinnedIds

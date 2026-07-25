@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 
 @InternalIgnoreDependencyViolation
-private class KotlinConsoleFilterProvider : ConsoleFilterProviderEx {
+internal class KotlinConsoleFilterProvider : ConsoleFilterProviderEx {
     override fun getDefaultFilters(project: Project): Array<Filter> {
         return getDefaultFilters(project, GlobalSearchScope.allScope(project))
     }

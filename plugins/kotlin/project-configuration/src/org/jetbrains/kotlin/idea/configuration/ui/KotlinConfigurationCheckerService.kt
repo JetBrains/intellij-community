@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.platform.idePlatformKind
 import java.util.concurrent.atomic.AtomicInteger
 
 @InternalIgnoreDependencyViolation
-private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
+internal class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         // do not show the `Configure Kotlin Language Settings` progress bar too early, await initial scanning and indexing
         project.waitForSmartMode()

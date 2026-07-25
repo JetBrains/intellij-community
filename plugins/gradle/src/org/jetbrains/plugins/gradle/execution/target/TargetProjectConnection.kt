@@ -15,10 +15,8 @@ import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.TestLauncher
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
 internal class TargetProjectConnection(
   val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
   val taskId: ExternalSystemTaskId?,

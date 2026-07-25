@@ -63,7 +63,6 @@ data class AnnotatedContainingDeclaration(
 /**
  * Utility functions for [UnstableApiUsageInspection] and [UnstableTypeUsedInSignatureInspection].
  */
-@ApiStatus.Internal
 internal object AnnotatedApiUsageUtil {
 
   /**

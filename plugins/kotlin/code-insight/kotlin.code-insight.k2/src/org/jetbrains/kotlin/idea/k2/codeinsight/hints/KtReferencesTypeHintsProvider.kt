@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -173,10 +172,8 @@ class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
     }
 }
 
-@ApiStatus.Internal
 internal fun KtNamedDeclaration.getReturnTypeReference() = getReturnTypeReferences().singleOrNull()
 
-@ApiStatus.Internal
 internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference> =
     when (this) {
         is KtCallableDeclaration -> listOfNotNull(typeReference)
@@ -185,11 +182,9 @@ internal fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference>
         else -> throw AssertionError("Unexpected declaration kind: $text")
     }
 
-@ApiStatus.Internal
 internal fun PsiElement.isNameReferenceInCall() =
     this is KtNameReferenceExpression && parent is KtCallExpression
 
-@ApiStatus.Internal
 internal fun KtExpression.isLambdaReturnValueHintsApplicable(allowOneLiner: Boolean = false): Boolean {
     //if (allowOneLiner && this.isOneLiner()) {
     //    val literalWithBody = this is KtBlockExpression && isFunctionalLiteralWithBody()

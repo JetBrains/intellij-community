@@ -16,7 +16,7 @@ import org.toml.lang.psi.TomlTable
  * This provider serves the same documentation as [RuffConfigOptionDocumentationProvider]
  * but for lookup elements in code completion.
  */
-private class RuffConfigOptionCompletionDocumentationProvider : LookupElementDocumentationTargetProvider {
+internal class RuffConfigOptionCompletionDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     val anchorElement = (if (offset - 1 >= 0) psiFile.findElementAt(offset - 1) else psiFile.findElementAt(offset))
     val anchorParent = anchorElement?.parent

@@ -1517,7 +1517,7 @@ const val PROJECT_RUN_MANAGER_COMPONENT_NAME: String = "ProjectRunConfigurationM
 @Service(Service.Level.PROJECT)
 @State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR,
 avoid relative cost call getState */)
-private class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
+internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
 
   override fun getState(): Element? {

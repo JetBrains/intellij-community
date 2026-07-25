@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.psi.fileTypes
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinLabelProviderService
 import org.jetbrains.kotlin.idea.base.psi.KotlinBasePsiBundle
 
-private class IdeKotlinLabelProviderService : KotlinLabelProviderService() {
+internal class IdeKotlinLabelProviderService : KotlinLabelProviderService() {
     override fun getLabelForBuiltInFileType(): String = KotlinBasePsiBundle.message("kotlin.built.in.file.type")
     override fun getLabelForKlibMetaFileType(): String = KotlinBasePsiBundle.message("klib.metadata.short")
     override fun getLabelForKotlinJavaScriptMetaFileType(): String = KotlinBasePsiBundle.message("kotlin.javascript.meta.file")
