@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
@@ -139,23 +140,6 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     return null
   }
 
-  private fun generateDataclassConstructorType(clsType: PyType?, context: TypeEvalContext): PyType? {
-    if (clsType !is PyClassType) return null
-    val genericClassType = clsType.takeIf { it.isParameterized }
-                           ?: PyTypeChecker.findGenericDefinitionType(clsType.pyClass, context)
-                           ?: clsType
-
-    val acc = collectDataclassInitFields(genericClassType, context, initOnly = true) ?: return null
-    val controlling = acc.controllingParameters ?: return null
-    val dataclassResolver = controlling.type.resolver
-    val paramsSets = dataclassResolver?.buildInitSignatureParameterSets(acc) ?: return null
-    if (paramsSets.isEmpty()) return null
-
-    return PyUnsafeUnionType.unsafeUnion(
-      paramsSets.map {PyCallableTypeImpl(it, genericClassType.toInstance())}
-    )
-  }
-
   private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
     val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
     val callee = call.callee as? PyReferenceExpression ?: return null
@@ -190,5 +174,30 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     dataclassParameters.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it.name, it.getType(context), ellipsis) }
 
     return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
+  }
+
+  companion object {
+    /**
+     * Returns the type of the synthesized constructor of the dataclass [clsType], or `null` if [clsType] is not a dataclass.
+     * A framework that accepts more than one signature gives a union of callable types.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun generateDataclassConstructorType(clsType: PyType?, context: TypeEvalContext): PyType? {
+      if (clsType !is PyClassType) return null
+      val genericClassType = clsType.takeIf { it.isParameterized }
+                             ?: PyTypeChecker.findGenericDefinitionType(clsType.pyClass, context)
+                             ?: clsType
+
+      val acc = collectDataclassInitFields(genericClassType, context, initOnly = true) ?: return null
+      val controlling = acc.controllingParameters ?: return null
+      val dataclassResolver = controlling.type.resolver
+      val paramsSets = dataclassResolver?.buildInitSignatureParameterSets(acc) ?: return null
+      if (paramsSets.isEmpty()) return null
+
+      return PyUnsafeUnionType.unsafeUnion(
+        paramsSets.map {PyCallableTypeImpl(it, genericClassType.toInstance())}
+      )
+    }
   }
 }

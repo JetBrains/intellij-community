@@ -1022,6 +1022,9 @@
     <extensionPoint qualifiedName="Pythonid.typeCheckerExtension"
                     interface="com.jetbrains.python.psi.types.PyTypeCheckerExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.dictLiteralPromotionExtension"
+                    interface="com.jetbrains.python.psi.types.PyDictLiteralPromotionExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyEnumMemberDeclarationProvider"
                     interface="com.jetbrains.python.psi.types.PyEnumMemberDeclarationProvider"
                     dynamic="true"/>
