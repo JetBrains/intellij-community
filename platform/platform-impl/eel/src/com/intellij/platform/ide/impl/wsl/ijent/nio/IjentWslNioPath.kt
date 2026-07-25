@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
+import com.intellij.platform.ide.impl.wsl.WSL_PREFIXES
 import com.intellij.platform.ijent.community.impl.nio.fs.IjentNioPosixFileAttributesWithDosAdapter
 import java.net.URI
 import java.nio.file.LinkOption
@@ -67,10 +68,11 @@ internal class IjentWslNioPath(
       return toAbsolutePath().toRealPath(*options)
     }
 
-    when (normalize().toString()) {
-      "\\\\wsl$\\${fileSystem.wslId}\\", "\\\\wsl.localhost\\${fileSystem.wslId}\\" -> {
-        return this
-      }
+    // Comparison is done on strings rather than on paths: `normalize()` returns an IjentWslNioPath, which is never equal to a path
+    // produced by any other filesystem.
+    val normalized = normalize().toString()
+    if (WSL_PREFIXES.any { normalized == "\\\\$it\\${fileSystem.wslId}\\" }) {
+      return this
     }
 
     val ijentNioPath = fileSystem.provider().toIjentNioPath(this)

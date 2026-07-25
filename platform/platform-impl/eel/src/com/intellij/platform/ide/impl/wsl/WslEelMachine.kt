@@ -20,9 +20,7 @@ private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPo
   return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
 }
 
-@VisibleForTesting
-@ApiStatus.Internal
-class WslEelMachineResolver : EelMachineResolver {
+internal class WslEelMachineResolver : EelMachineResolver {
   override suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): WslEelMachine? {
     return getResolvedEelMachine(eelDescriptor)
   }

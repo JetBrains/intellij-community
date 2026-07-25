@@ -45,12 +45,11 @@ private val useNewFileSystem = System.getProperty("wsl.use.new.filesystem") != n
 
 private val WSLDistribution.roots: Set<String>
   get() {
-    val localRoots = mutableSetOf(getWindowsPath("/"))
-    localRoots.single().let {
-      localRoots += it.replace("wsl.localhost", "wsl$")
-      localRoots += it.replace("wsl$", "wsl.localhost")
+    val localRoot = getWindowsPath("/")
+    // The same distribution is reachable under every known WSL host name, so report a root for each of them.
+    return WSL_PREFIXES.mapTo(mutableSetOf(localRoot)) { to ->
+      WSL_PREFIXES.fold(localRoot) { root, from -> root.replace(from, to) }
     }
-    return localRoots
   }
 
 @ApiStatus.Internal
@@ -197,19 +196,17 @@ class WslEelAlternativeRootProvider : EelAlternativeRootProvider {
     (descriptor as? WslEelDescriptor)?.distribution?.roots
 }
 
-@ApiStatus.Internal
-object WslPathParser {
+private val WSL_UNC_SERVER_NAMES: List<String> = WSL_PREFIXES.map { "//$it/" }
+
+internal object WslPathParser {
   // wsl root -> distribution id
   internal fun parsePath(sanitizedPath: String): Pair<String, String>? {
     @MultiRoutingFileSystemPath
     val wslRoot: String
     val distributionId: String
 
-    val serverNameEndIdx = when {
-      sanitizedPath.startsWith("//wsl.localhost/", ignoreCase = true) -> 16
-      sanitizedPath.startsWith("//wsl$/", ignoreCase = true) -> 7
-      else -> return null
-    }
+    val serverNameEndIdx = WSL_UNC_SERVER_NAMES.firstOrNull { sanitizedPath.startsWith(it, ignoreCase = true) }?.length
+                           ?: return null
 
     val shareNameEndIdx = sanitizedPath.indexOf('/', startIndex = serverNameEndIdx)
 
@@ -226,7 +223,8 @@ object WslPathParser {
   }
 }
 
-class WslEelDescriptor internal constructor(val distribution: WSLDistribution, fsRoot: String) : EelPathBoundDescriptor, EelDescriptorWithoutNativeFileChooserSupport {
+class WslEelDescriptor internal constructor(val distribution: WSLDistribution, fsRoot: String) : EelPathBoundDescriptor,
+                                                                                                 EelDescriptorWithoutNativeFileChooserSupport {
   internal val fsRoot = fsRoot.replace('/', '\\')
 
   constructor(distribution: WSLDistribution) : this(distribution, distribution.getUNCRootPath().pathString)
