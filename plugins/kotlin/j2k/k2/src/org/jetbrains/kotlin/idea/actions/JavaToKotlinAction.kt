@@ -47,7 +47,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -196,9 +195,6 @@ object JavaToKotlinActionHandler {
     @NlsSafe
     val title: String = KotlinBundle.message("action.j2k.name")
 
-    @Nls
-    private val phaseDescription: String = KotlinJ2KK2Bundle.message("j2k.phase.converting")
-
     suspend fun convertFiles(
         files: List<PsiJavaFile>,
         project: Project,
@@ -209,7 +205,7 @@ object JavaToKotlinActionHandler {
     ) {
         val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return }
 
-        val (result, usages) = withModalProgress(project, phaseDescription) {
+        val (result, usages) = withModalProgress(project, KotlinJ2KK2Bundle.message("j2k.phase.converting")) {
             reportRawProgress { reporter ->
                 val result = runConversion(
                     javaFiles = javaFiles,

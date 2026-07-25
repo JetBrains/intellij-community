@@ -5,9 +5,12 @@ package org.jetbrains.kotlin.j2k.k2
 // import removed: forbidAnalysis no longer used during application phase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
@@ -17,7 +20,8 @@ import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
 import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.j2k.PostProcessingTarget
-import org.jetbrains.kotlin.j2k.PostProcessor
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ConvertGettersAndSettersToPropertyProcessing
 import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ShortenReferenceProcessing
@@ -41,23 +45,42 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
-class K2J2KPostProcessor : PostProcessor {
-    companion object {
-        private val LOG = Logger.getInstance(/* category = */ "@org.jetbrains.kotlin.j2k.K2J2KPostProcessor")
+private val LOG = Logger.getInstance(PostProcessor::class.java)
+
+
+object PostProcessor {
+    val phasesCount: Int = processings.size
+
+    suspend fun run(
+        kotlinFile: KtFile,
+        converterContext: ConverterContext? = null,
+        range: TextRange? = null
+    ) {
+        val target =
+            if (range != null) PieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
+            else MultipleFilesPostProcessingTarget(listOf(kotlinFile))
+
+        doAdditionalProcessing(target, converterContext)
     }
 
-    override val phasesCount: Int = processings.size
+    private fun TextRange.toRangeMarker(file: KtFile): RangeMarker {
+        val rangeMarker = runReadAction { file.viewProvider.document!!.createRangeMarker(startOffset, endOffset) }
+        return rangeMarker.apply {
+            isGreedyToLeft = true
+            isGreedyToRight = true
+        }
+    }
 
-    override fun insertImport(file: KtFile, fqName: FqName) {
+    fun insertImport(file: KtFile, fqName: FqName) {
         runUndoTransparentActionInEdt(inWriteAction = true) {
             file.addImport(fqName)
         }
     }
 
-    override suspend fun doAdditionalProcessing(
+    suspend fun doAdditionalProcessing(
         target: PostProcessingTarget,
         converterContext: ConverterContext?,
-        onPhaseChanged: ((Int, String) -> Unit)?
+        onPhaseChanged: ((Int, String) -> Unit)? = null
     ) {
         if (converterContext == null) error("Invalid converter context for K2 J2K")
         val contextElement = target.files().firstOrNull() ?: return

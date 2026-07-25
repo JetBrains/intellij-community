@@ -36,12 +36,14 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ElementResult
 import org.jetbrains.kotlin.j2k.IdeaReferenceSearcher
+import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
+import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.Result
-import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
+import org.jetbrains.kotlin.j2k.k2.PostProcessor
 import org.jetbrains.kotlin.j2k.k2.getK2J2KConversions
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.J2kMemberKey
@@ -84,7 +86,7 @@ class JavaToKotlinConverter(
             }
         }
 
-        J2kExtensionsRunner.runPreProcessors(project, copiedFiles)
+        J2kPreprocessorExtension.runProcessors(project, copiedFiles)
 
         return filesToKotlin(
             files = files,
@@ -131,13 +133,12 @@ class JavaToKotlinConverter(
             }
         }
 
-        val postProcessor = K2J2KPostProcessor()
-        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
+        PostProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
             reporter?.text(description)
-            reporter?.fraction(phase.toDouble() / postProcessor.phasesCount.toDouble())
+            reporter?.fraction(phase.toDouble() / PostProcessor.phasesCount.toDouble())
         }
 
-        J2kExtensionsRunner.runPostProcessors(project, kotlinFiles)
+        J2kPostprocessorExtension.runProcessors(project, kotlinFiles)
 
         val (javaLines, kotlinLines) = readAction {
             files.sumOf { StringUtil.getLineBreakCount(it.text) } to kotlinFiles.sumOf { StringUtil.getLineBreakCount(it.text) }

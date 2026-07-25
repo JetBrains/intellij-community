@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.psi.KtFile
+import java.util.concurrent.CancellationException
 
 /**
  * The `org.jetbrains.kotlin.j2kPreprocessorExtension` extension point enables running custom preprocessing steps on copied in-memory Java
@@ -39,6 +42,13 @@ interface J2kPreprocessorExtension : J2kExtension<PsiJavaFile> {
 
     companion object {
         val EP_NAME = ExtensionPointName<J2kPreprocessorExtension>("org.jetbrains.kotlin.j2kPreprocessorExtension")
+
+        suspend fun runProcessors(project: Project, files: List<PsiJavaFile>) {
+            val processors = J2kPreprocessorExtension.EP_NAME.extensionList
+            for (processor in processors) {
+                executeProcessing(processor, project, files)
+            }
+        }
     }
 }
 
@@ -71,6 +81,28 @@ interface J2kPostprocessorExtension : J2kExtension<KtFile> {
 
     companion object {
         val EP_NAME = ExtensionPointName<J2kPostprocessorExtension>("org.jetbrains.kotlin.j2kPostprocessorExtension")
+
+        suspend fun runProcessors(project: Project, files: List<KtFile>) {
+            val processors = EP_NAME.extensionList
+            for (processor in processors) {
+                executeProcessing(processor, project, files)
+            }
+        }
+    }
+}
+
+private suspend fun <T : PsiFile> executeProcessing(
+    processor: J2kExtension<T>,
+    project: Project,
+    files: List<T>
+) {
+    checkCanceled()
+    try {
+        processor.processFiles(project, files)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (t: Throwable) {
+        Logger.getInstance(J2kExtension::class.java).error(t)
     }
 }
 

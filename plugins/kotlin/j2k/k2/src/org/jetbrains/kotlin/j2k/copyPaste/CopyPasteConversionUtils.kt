@@ -13,10 +13,9 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
-import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
+import org.jetbrains.kotlin.j2k.k2.PostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
@@ -145,6 +144,6 @@ fun runPostProcessing(
     converterContext: ConverterContext?
 ) {
     runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")) {
-        J2KPostProcessingRunner.run(K2J2KPostProcessor(), file, converterContext, bounds)
+        PostProcessor.run(file, converterContext, bounds)
     }
 }
