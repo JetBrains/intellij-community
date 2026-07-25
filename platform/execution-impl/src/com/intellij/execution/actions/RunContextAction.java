@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,16 +55,22 @@ public class RunContextAction extends BaseRunConfigurationAction {
     ReadAction
       .nonBlocking(() -> findExisting(context))
       .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
-        if (configuration != existingConfiguration) {
+        if (shouldAddNewConfiguration(runManager, configuration, existingConfiguration)) {
           RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
           runManager.setTemporaryConfiguration(configuration);
-          perform(runManager, configuration, dataContext);
         }
-        else {
-          perform(runManager, configuration, dataContext);
-        }
+        perform(runManager, configuration, dataContext);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @VisibleForTesting
+  static boolean shouldAddNewConfiguration(@NotNull RunManagerEx runManager,
+                                           @NotNull RunnerAndConfigurationSettings configuration,
+                                           @Nullable RunnerAndConfigurationSettings existingConfiguration) {
+    // onFirstRun may replace generated settings with a stored configuration after findExisting() cached a miss.
+    // Do not add those stored settings again as a temporary configuration.
+    return configuration != existingConfiguration && !runManager.hasSettings(configuration);
   }
 
   private void perform(RunManagerEx runManager,

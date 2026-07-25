@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Disposer;
@@ -28,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Objects;
 
@@ -173,6 +176,68 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     new RunContextAction(DefaultRunExecutor.getRunExecutorInstance()).update(event1);
     assertTrue(event1.getPresentation().isEnabledAndVisible());
     assertEquals("Run 'world_'", event1.getPresentation().getText());
+  }
+
+  public void testRunActionUsesConfigurationSelectedOnFirstRun() {
+    myFixture.configureByText(FileTypes.PLAIN_TEXT, "qq<caret>q");
+    ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
+    RunManager runManager = RunManager.getInstance(getProject());
+    RunnerAndConfigurationSettings initial = runManager.createConfiguration("initial", FakeConfigurationFactory.INSTANCE);
+    RunnerAndConfigurationSettings selected = runManager.createConfiguration("selected", FakeConfigurationFactory.INSTANCE);
+    Ref<RunnerAndConfigurationSettings> performed = Ref.create();
+    ConfigurationFromContext configurationFromContext = new ConfigurationFromContext() {
+      private RunnerAndConfigurationSettings mySettings = initial;
+
+      @Override
+      public @NotNull RunnerAndConfigurationSettings getConfigurationSettings() {
+        return mySettings;
+      }
+
+      @Override
+      public void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings) {
+        mySettings = configurationSettings;
+      }
+
+      @Override
+      public @NotNull PsiElement getSourceElement() {
+        return myFixture.getFile();
+      }
+
+      @Override
+      public void onFirstRun(ConfigurationContext configurationContext, Runnable startRunnable) {
+        setConfigurationSettings(selected);
+        startRunnable.run();
+      }
+    };
+    BaseRunConfigurationAction action = new BaseRunConfigurationAction(() -> "", () -> "", (Icon)null) {
+      @Override
+      protected void perform(@NotNull RunnerAndConfigurationSettings configurationSettings,
+                             @NotNull ConfigurationContext configurationContext) {
+        performed.set(configurationSettings);
+      }
+
+      @Override
+      protected void updatePresentation(@NotNull Presentation presentation,
+                                        @NotNull String actionText,
+                                        ConfigurationContext configurationContext) {
+      }
+    };
+
+    action.perform(configurationFromContext, context);
+
+    assertSame(selected, performed.get());
+    assertSame(selected, context.getConfiguration());
+  }
+
+  public void testManagedConfigurationIsNotAddedAgain() {
+    RunManager runManager = RunManager.getInstance(getProject());
+    RunnerAndConfigurationSettings managed = runManager.createConfiguration("managed", FakeConfigurationFactory.INSTANCE);
+    RunnerAndConfigurationSettings unmanaged = runManager.createConfiguration("unmanaged", FakeConfigurationFactory.INSTANCE);
+    addConfiguration(managed);
+
+    assertFalse(RunContextAction.shouldAddNewConfiguration((RunManagerEx)runManager, managed, null));
+    assertTrue(RunContextAction.shouldAddNewConfiguration((RunManagerEx)runManager, unmanaged, null));
+    assertFalse(RunContextAction.shouldAddNewConfiguration((RunManagerEx)runManager, unmanaged, unmanaged));
   }
 
   private @NotNull DataContext createDataContext() {

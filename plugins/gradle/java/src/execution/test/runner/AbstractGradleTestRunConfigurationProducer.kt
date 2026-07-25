@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager
 import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.util.Ref
@@ -58,7 +59,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
   override fun doSetupConfigurationFromContext(
     configuration: GradleRunConfiguration,
     context: ConfigurationContext,
-    sourceElement: Ref<PsiElement>
+    sourceElement: Ref<PsiElement>,
   ): Boolean {
     val project = context.project ?: return false
     val module = context.module ?: return false
@@ -81,14 +82,18 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   override fun doIsConfigurationFromContext(
     configuration: GradleRunConfiguration,
-    context: ConfigurationContext
+    context: ConfigurationContext,
   ): Boolean {
     val module = context.module ?: return false
     val externalProjectPath = resolveProjectPath(module) ?: return false
     val element = getElement(context) ?: return false
     val allTestsTaskToRun = allTestsTaskToRun(context, element)
     if (allTestsTaskToRun.map { it.tasksToRun.testName }.toSet().size > 1) {
-      return false
+      // Ignore, only if the configuration has been stored already, so the task chooser
+      // is shown again when `onFirstRun` executes. If the config new then it's accepted.
+      val runManager = RunManager.getInstance(configuration.project)
+      val stored = getConfigurationSettingsList(runManager).any { it.configuration === configuration }
+      if (stored) return false
     }
     val allTasksAndArguments = allTestsTaskToRun.map { it.toTasksAndArguments() }
     val tasksAndArguments = configuration.commandLine.tasks.tokens
@@ -99,12 +104,13 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
     val project = context.project
-    val element = getElement(context)
-    if (project == null || element == null) {
+    if (project == null) {
       LOG.warn("Cannot extract configuration data from context, uses raw run configuration")
       super.onFirstRun(configuration, context, startRunnable)
       return
     }
+    @Suppress("UNCHECKED_CAST")
+    val element = configuration.sourceElement as E
     val runConfiguration = configuration.configuration as GradleRunConfiguration
     val dataContext = contextWithLocationName(context.dataContext, getLocationName(context, element))
     chooseSourceElements(context, element) { elements ->
@@ -117,11 +123,15 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
           .mapValues { it.value.map(TestTasksToRun::testFilter).toSet() }
           .map { createTasksAndArguments(it.key, it.value) }
 
-        runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
-        runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
-        runConfiguration.name = suggestConfigurationName(context, element, elements)
-          .withGradleTestTaskName(chosenTestsToRun)
-        if (!hasSameExistingConfiguration(runConfiguration)) {
+        val existingConfiguration = findExistingConfigurationSettings(context, chosenTasksAndArguments)
+        if (existingConfiguration != null) {
+          configuration.configurationSettings = existingConfiguration
+        }
+        else {
+          runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
+          runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
+          runConfiguration.name = suggestConfigurationName(context, element, elements)
+            .withGradleTestTaskName(chosenTestsToRun)
           setUniqueNameIfNeeded(project, runConfiguration)
         }
 
@@ -142,18 +152,23 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     return "$this.$testTaskName"
   }
 
-  private fun hasSameExistingConfiguration(configuration: GradleRunConfiguration): Boolean {
-    val taskNames = configuration.commandLine.tasks.tokens
-    val scriptParameters = configuration.settings.scriptParameters
-    return RunManager.getInstance(configuration.project)
-      .getConfigurationSettingsList(configurationFactory.type)
-      .any { settings ->
-        val existingConfiguration = settings.configuration as? GradleRunConfiguration ?: return@any false
-        existingConfiguration !== configuration &&
-        existingConfiguration.name == configuration.name &&
-        existingConfiguration.settings.externalProjectPath == configuration.settings.externalProjectPath &&
-        existingConfiguration.commandLine.tasks.tokens == taskNames &&
-        existingConfiguration.settings.scriptParameters == scriptParameters
+  private fun findExistingConfigurationSettings(
+    context: ConfigurationContext,
+    tasksAndArguments: List<GradleCommandLineTasks>,
+  ): RunnerAndConfigurationSettings? {
+    val project = context.project ?: return null
+    val module = context.module ?: return null
+    val externalProjectPath = resolveProjectPath(module) ?: return null
+    return getConfigurationSettingsList(RunManager.getInstance(project))
+      .firstOrNull { runnerAndConfigurationSettings ->
+        val existingConfiguration = runnerAndConfigurationSettings.configuration as? GradleRunConfiguration ?: return@firstOrNull false
+        (existingConfiguration.settings.externalProjectPath == externalProjectPath
+         && existingConfiguration.commandLine.tasks.tokens.isNotEmpty()
+         // Use task tokens rather than the rest of the configuration to discriminate the task to run
+         && isConsistedFrom(
+          existingConfiguration.commandLine.tasks.tokens,
+          tasksAndArguments.map { it.tokens })
+        )
       }
   }
 

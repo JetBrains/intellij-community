@@ -232,26 +232,27 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
-  fun `test configuration with one of multiple test tasks keeps chosen existing configuration name`() {
+  fun `test configuration with one of multiple test tasks reuses edited configuration`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
     val projectData = generateAndImportTemplateProject()
     val testClass = projectData["project"]["AutomationTestCase"].element
     val existingTaskConfiguration = createAndAddRunConfiguration(""":automationTest --tests "AutomationTestCase"""")
-    existingTaskConfiguration.name = "AutomationTestCase.automationTest"
-    val runConfiguration = createAndAddRunConfiguration(""":test --tests "AutomationTestCase"""")
-    runConfiguration.name = "AutomationTestCase"
+    existingTaskConfiguration.name = "Custom automation tests"
+    existingTaskConfiguration.settings.scriptParameters = "-Dfoo=bar"
 
     runReadActionAndWait {
       val context = getContextByLocation(testClass)
       val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
-      assertFalse(producer.isConfigurationFromContext(runConfiguration, context))
       producer.setTestTasksChooser { it == "automationTest" }
 
       val configurationFromContext = getConfigurationFromContext(context)
       val configuration = configurationFromContext.configuration as GradleRunConfiguration
+      assertNotSame(existingTaskConfiguration, configuration)
       assertEquals("AutomationTestCase", configuration.name)
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEquals("AutomationTestCase.automationTest", configuration.name)
+      producer.onFirstRun(configurationFromContext, context) {}
+      assertSame(existingTaskConfiguration, configurationFromContext.configuration)
+      assertEquals("Custom automation tests", configurationFromContext.configuration.name)
+      assertEquals("-Dfoo=bar", existingTaskConfiguration.settings.scriptParameters)
     }
   }
 
