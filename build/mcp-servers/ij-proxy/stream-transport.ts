@@ -4,7 +4,6 @@ import type {IncomingHttpHeaders, IncomingMessage} from 'node:http'
 import {request as httpRequest} from 'node:http'
 import {request as httpsRequest} from 'node:https'
 import {Readable} from 'node:stream'
-import isPortReachable from 'is-port-reachable'
 import pRetry from 'p-retry'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
@@ -14,27 +13,16 @@ type FetchLike = (url: string | URL, init?: RequestInit) => Promise<Response>
 
 const SESSION_NOT_FOUND_RE = /session not found/i
 
-interface PortCandidate {
-  port: number
-  kind: 'preferred' | 'scan'
-}
-
 export interface StreamTransportOptions {
-  explicitUrl?: string
+  /** Full stream endpoint, e.g. `http://127.0.0.1:64342/stream`. Port discovery is `discovery.ts`' job. */
+  url: string
   requestHeaders?: HeadersInit
-  preferredPorts?: number[]
-  portScanStart: number
-  portScanLimit: number
-  connectTimeoutMs: number
-  scanTimeoutMs: number
   queueLimit: number
   queueWaitTimeoutMs: number
   retryAttempts: number
   retryBaseDelayMs: number
-  buildUrl: (port: number) => string
   note?: (message: string) => void
   warn?: (message: string) => void
-  probeHost?: string
 }
 
 export interface McpStreamTransport {
@@ -57,11 +45,6 @@ interface QueueEntry {
   timeout: NodeJS.Timeout | null
 }
 
-function resolveTimeout(timeoutMs: number | null | undefined): number | undefined {
-  if (timeoutMs === undefined || timeoutMs === null) return undefined
-  return timeoutMs > 0 ? timeoutMs : undefined
-}
-
 function isSessionNotFoundError(error: unknown): boolean {
   if (!error) return false
   const message = error instanceof Error ? error.message : String(error)
@@ -71,41 +54,6 @@ function isSessionNotFoundError(error: unknown): boolean {
     return code === -32000 || code === 400 || code === 404 || code === 410
   }
   return true
-}
-
-function normalizePortList(
-  preferredPorts: number[] | undefined,
-  portScanStart: number,
-  portScanLimit: number
-): PortCandidate[] {
-  const seen = new Set()
-  const candidates: PortCandidate[] = []
-
-  for (const port of preferredPorts || []) {
-    if (!Number.isFinite(port) || port <= 0) continue
-    if (seen.has(port)) continue
-    seen.add(port)
-    candidates.push({port, kind: 'preferred'})
-  }
-
-  const limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0
-  const start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0
-  for (let i = 0; i < limit; i += 1) {
-    const port = start + i
-    if (port <= 0 || seen.has(port)) continue
-    seen.add(port)
-    candidates.push({port, kind: 'scan'})
-  }
-
-  return candidates
-}
-
-function formatProbedPortList(candidates: PortCandidate[]): string {
-  return candidates.map((candidate) => String(candidate.port)).join(', ')
-}
-
-function buildEndpointNotFoundMessage(candidates: PortCandidate[]): string {
-  return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`
 }
 
 // Convert Fetch API headers into the plain object shape accepted by node:http.
@@ -345,36 +293,7 @@ class StreamTransportImpl implements McpStreamTransport {
 
     this._connectPromise = pRetry(
       async () => {
-        const {explicitUrl, note, warn, preferredPorts, portScanStart, portScanLimit, buildUrl, probeHost} = this._options
-
-        let targetUrl = explicitUrl
-        if (!targetUrl) {
-          const candidates = normalizePortList(preferredPorts, portScanStart, portScanLimit)
-          if (candidates.length === 0) {
-            throw new Error('No MCP stream ports configured')
-          }
-
-          for (const candidate of candidates) {
-            const timeoutMs = candidate.kind === 'preferred'
-              ? this._options.connectTimeoutMs
-              : this._options.scanTimeoutMs
-            const reachable = await isPortReachable(candidate.port, {
-              host: probeHost,
-              timeout: resolveTimeout(timeoutMs)
-            })
-            if (reachable) {
-              targetUrl = buildUrl(candidate.port)
-              break
-            }
-          }
-
-          if (!targetUrl) {
-            if (warn) {
-              warn(`No reachable MCP stream ports found during scan. Probed ports: ${formatProbedPortList(candidates)}`)
-            }
-            throw new Error(buildEndpointNotFoundMessage(candidates))
-          }
-        }
+        const {url: targetUrl, note} = this._options
 
         if (note) note(`Connecting to MCP stream ${targetUrl}`)
         const transport = new StreamableHTTPClientTransport(targetUrl, {
@@ -467,38 +386,6 @@ class StreamTransportImpl implements McpStreamTransport {
   }
 }
 
-export function createStreamTransport({
-  explicitUrl,
-  requestHeaders,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts,
-  retryBaseDelayMs,
-  buildUrl,
-  note,
-  warn,
-  probeHost = '127.0.0.1'
-}: StreamTransportOptions): McpStreamTransport {
-  return new StreamTransportImpl({
-    explicitUrl,
-    requestHeaders,
-    preferredPorts,
-    portScanStart,
-    portScanLimit,
-    connectTimeoutMs,
-    scanTimeoutMs,
-    queueLimit,
-    queueWaitTimeoutMs,
-    retryAttempts,
-    retryBaseDelayMs,
-    buildUrl,
-    note,
-    warn,
-    probeHost
-  })
+export function createStreamTransport(options: StreamTransportOptions): McpStreamTransport {
+  return new StreamTransportImpl(options)
 }

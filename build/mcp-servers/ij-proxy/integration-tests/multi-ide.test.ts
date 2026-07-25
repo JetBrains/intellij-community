@@ -96,6 +96,8 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       const names = response.result.tools.map((t) => t.name)
       ok(names.includes('rename'))
       ok(names.includes('search_text'))
+      ok(names.includes('lint_files'))
+      ok(!names.includes('get_file_problems'))
     })
   })
 
@@ -122,74 +124,6 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       // Both upstreams should have been called
       ok(ideaCalls.length > 0, 'IDEA should have been called')
       ok(riderCalls.length > 0, 'Rider should have been called')
-    })
-  })
-
-  it('falls back to get_file_problems when one upstream lacks lint_files', async () => {
-    const legacyLintTool = buildUpstreamTool('get_file_problems', {
-      filePath: {type: 'string'},
-      errorsOnly: {type: 'boolean'},
-      timeout: {type: 'number'}
-    }, ['filePath'])
-    const lintFilesTool = buildUpstreamTool('lint_files', {
-      files: {type: 'array', items: {type: 'string'}},
-      min_severity: {type: 'string'},
-      timeout: {type: 'number'}
-    }, ['files'])
-
-    await withConfiguredDualProxy({
-      ideaTools: [legacyLintTool],
-      riderTools: [lintFilesTool],
-      ideaOnToolCall({name, args}) {
-        ok(name === 'get_file_problems')
-        strictEqual(args.filePath, 'src/Main.kt')
-        strictEqual(args.errorsOnly, false)
-        return {
-          structuredContent: {
-            filePath: 'src/Main.kt',
-            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
-          },
-          text: JSON.stringify({
-            filePath: 'src/Main.kt',
-            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
-          })
-        }
-      },
-      riderOnToolCall({name, args}) {
-        ok(name === 'lint_files')
-        strictEqual(JSON.stringify(args.files), JSON.stringify(['Psi/Foo.cs']))
-        strictEqual(args.min_severity ?? 'warning', 'warning')
-        return {
-          structuredContent: {
-            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
-          },
-          text: JSON.stringify({
-            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
-          })
-        }
-      }
-    }, async ({proxyClient, ideaCalls, riderCalls}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const names = listResponse.result.tools.map((tool) => tool.name)
-      ok(names.includes('lint_files'))
-      ok(!names.includes('get_file_problems'))
-
-      const response = await proxyClient.send('tools/call', {
-        name: 'lint_files',
-        arguments: {files: ['src/Main.kt', 'dotnet/Psi/Foo.cs']}
-      })
-
-      const parsed = JSON.parse(response.result.content[0].text)
-      strictEqual(parsed.items.length, 2)
-      strictEqual(parsed.items[0].filePath, 'src/Main.kt')
-      strictEqual(parsed.items[0].problems[0].lineText, 'idea line')
-      strictEqual(parsed.items[1].filePath, 'dotnet/Psi/Foo.cs')
-      strictEqual(parsed.items[1].problems[0].lineText, 'rider line')
-
-      strictEqual(ideaCalls.length, 1)
-      strictEqual(ideaCalls[0].name, 'get_file_problems')
-      strictEqual(riderCalls.length, 1)
-      strictEqual(riderCalls[0].name, 'lint_files')
     })
   })
 

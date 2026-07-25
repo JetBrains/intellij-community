@@ -59,37 +59,37 @@ Environment variables (optional):
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
-- `JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH`: force legacy search tools when available; hides search_text/search_regex/search_file if only the new tools exist.
-- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS`: disable all version-gated workarounds (set to any non-empty value except `0` or `false`).
-- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS`: comma-separated list of workaround keys to disable (see `workarounds.ts`).
-- `JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG`: emit debug logs when workarounds are skipped or disabled (set to any non-empty value except `0` or `false`).
+
+## Supported IDE versions
+
+ij-proxy targets IntelliJ platform build **262 and newer**. That generation ships `search_text`,
+`search_regex`, `search_file`, `search_symbol`, `lint_files(files)` and `reformat_file(files)`, so the
+proxy forwards them unchanged instead of emulating older tool shapes.
 
 ## Proxy tool set
 
 The proxy is not a pure pass-through: it exposes a fixed proxy tool set (unless the upstream already provides the same tool name), filters out blocked tools, hides upstream tools that are replaced by proxy tools, and keeps the remaining upstream tools whose names do not collide with proxy tools.
 
-- Proxy tools include search compatibility tools, `lint_files`, `rename`, and `reformat_file`; container sessions additionally expose `bash`.
+- Proxy tools: `rename`; container sessions additionally expose `bash` and container-routed `search_text` / `search_regex` / `search_file`.
 - Upstream tools: all upstream tools except blocked names, replaced tools, and name collisions.
 
 Notes:
 - File reads, writes, patches, and directory listings use the agent harness's native tools, not MCP.
-- Current, legacy, and container JetBrains MCP file-operation tools are blocked until they are removed upstream.
-- If the upstream server exposes `search_*`, ij-proxy passes them through unchanged and does not expose proxy shims for those names.
+- JetBrains MCP file-operation tools, including the container variants, are blocked until they are removed upstream.
+- `search_*`, `lint_files` and `reformat_file` are upstream tools passed through unchanged; the proxy only normalizes their arguments and, in a dual-IDE setup, splits and merges them across IDEA and Rider.
+- `get_file_problems` is hidden: it is the per-file variant of `lint_files`, and exposing both invites the agent to lint one file at a time.
 - `lint_files` responses may include file entries with `timedOut: true` and empty `problems`; top-level `more: true` still means the overall batch is incomplete.
-- Search tools and their compatibility are documented in `search.md`.
+- Search tools are documented in `search.md`.
 
 ## Custom tool commands (name + behavior mapping)
 
 The proxy exposes a small, client-shaped search and IDE tool set. File operations stay with the agent harness.
 
-Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping and compatibility are documented in `search.md`.
-
 ### Proxy tools
 
-- `search_text`, `search_regex`, `search_file`, and `search_symbol`: Normalize legacy JetBrains MCP search tools when the equivalent upstream tools are unavailable.
-- `lint_files`: Normalizes single-file and legacy batch analysis tools to a batched file interface.
 - `rename`: Uses `rename_refactoring`.
-- `reformat_file`: Accepts `files` for batch formatting and falls back to older upstream `paths` or repeated legacy `path` calls internally.
+- `search_text`, `search_regex`, `search_file` (container sessions only): Route the search into the container instead of the host project. See `search.md`.
+- `bash` (container sessions only): Runs a shell command inside the container via `container_exec`.
 
 Example `.mcp.toml` entry (Codex):
 

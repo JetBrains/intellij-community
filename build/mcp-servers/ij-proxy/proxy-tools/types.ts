@@ -4,8 +4,6 @@ export type ToolArgs = Record<string, unknown>
 
 export type UpstreamToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
-export type WorkaroundChecker = (key: import('../workarounds').WorkaroundKey) => boolean
-
 export interface ToolContentItem {
   text?: string
   [key: string]: unknown
@@ -35,29 +33,14 @@ export interface SearchItem {
   [key: string]: unknown
 }
 
-export interface SearchCapabilities {
-  hasSearchText: boolean
-  hasSearchRegex: boolean
-  hasSearchFile: boolean
-  hasSearchSymbol: boolean
-  supportsSymbol: boolean
-  supportsText: boolean
-  supportsRegex: boolean
-  supportsFile: boolean
-}
-
-export interface AnalysisCapabilities {
+/**
+ * Which batch tools the connected IDE exposes with the modern `files: string[]` shape.
+ * ij-proxy supports IntelliJ platform 262+ only, where both are the sole shape — these
+ * flags just guard against an IDE that filtered the toolset out entirely (CLion, Rider).
+ */
+export interface UpstreamToolSupport {
   hasLintFiles: boolean
-  hasLintFilesFiles: boolean
-  hasLintFilesFilePaths: boolean
-  supportsLintFiles: boolean
-}
-
-export interface FormattingCapabilities {
   hasReformatFile: boolean
-  hasReformatFileFiles: boolean
-  hasReformatFilePaths: boolean
-  supportsReformatFile: boolean
 }
 
 export interface ToolInputSchema {

@@ -4,7 +4,7 @@ import {expect, test} from 'bun:test'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import {extractItems} from '../proxy-tools/shared'
-import {dirAAbs, dirARel, isUnder, projectRoot, REGEX_SCOPE_PATTERN, streamUrl, toAbsolute} from './jb-mcp-test-utils'
+import {dirAAbs, dirARel, dirBAbs, isUnder, projectRoot, REGEX_SCOPE_PATTERN, streamUrl, toAbsolute} from './jb-mcp-test-utils'
 
 const maybeTest = streamUrl ? test : test.skip
 
@@ -47,6 +47,8 @@ maybeTest('jb mcp search_text tool supports path filtering', async () => {
       .map(toAbsolute)
 
     expect(filePaths.some((filePath) => isUnder(dirAAbs, filePath))).toBe(true)
+    // dir-b holds the same pattern, so it is the control that proves `paths` actually scoped the search.
+    expect(filePaths.some((filePath) => isUnder(dirBAbs, filePath))).toBe(false)
   } finally {
     await client.close()
   }

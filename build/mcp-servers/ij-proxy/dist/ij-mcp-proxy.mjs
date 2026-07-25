@@ -5484,1232 +5484,8 @@ var require_dist = __commonJS((exports, module) => {
   exports.default = formatsPlugin;
 });
 
-// node_modules/picomatch/lib/constants.js
-var require_constants = __commonJS((exports, module) => {
-  var POSIX_CHARS = {
-    DOT_LITERAL: "\\.",
-    PLUS_LITERAL: "\\+",
-    QMARK_LITERAL: "\\?",
-    SLASH_LITERAL: "\\/",
-    ONE_CHAR: "(?=.)",
-    QMARK: "[^/]",
-    END_ANCHOR: "(?:\\/|$)",
-    DOTS_SLASH: "\\.{1,2}(?:\\/|$)",
-    NO_DOT: "(?!\\.)",
-    NO_DOTS: "(?!(?:^|\\/)\\.{1,2}(?:\\/|$))",
-    NO_DOT_SLASH: "(?!\\.{0,1}(?:\\/|$))",
-    NO_DOTS_SLASH: "(?!\\.{1,2}(?:\\/|$))",
-    QMARK_NO_DOT: "[^.\\/]",
-    STAR: "[^/]*?",
-    START_ANCHOR: "(?:^|\\/)",
-    SEP: "/"
-  }, WINDOWS_CHARS = {
-    ...POSIX_CHARS,
-    SLASH_LITERAL: "[\\\\/]",
-    QMARK: "[^\\\\/]",
-    STAR: "[^\\\\/]*?",
-    DOTS_SLASH: "\\.{1,2}(?:[\\\\/]|$)",
-    NO_DOT: "(?!\\.)",
-    NO_DOTS: "(?!(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))",
-    NO_DOT_SLASH: "(?!\\.{0,1}(?:[\\\\/]|$))",
-    NO_DOTS_SLASH: "(?!\\.{1,2}(?:[\\\\/]|$))",
-    QMARK_NO_DOT: "[^.\\\\/]",
-    START_ANCHOR: "(?:^|[\\\\/])",
-    END_ANCHOR: "(?:[\\\\/]|$)",
-    SEP: "\\"
-  }, POSIX_REGEX_SOURCE = {
-    __proto__: null,
-    alnum: "a-zA-Z0-9",
-    alpha: "a-zA-Z",
-    ascii: "\\x00-\\x7F",
-    blank: " \\t",
-    cntrl: "\\x00-\\x1F\\x7F",
-    digit: "0-9",
-    graph: "\\x21-\\x7E",
-    lower: "a-z",
-    print: "\\x20-\\x7E ",
-    punct: "\\-!\"#$%&'()\\*+,./:;<=>?@[\\]^_`{|}~",
-    space: " \\t\\r\\n\\v\\f",
-    upper: "A-Z",
-    word: "A-Za-z0-9_",
-    xdigit: "A-Fa-f0-9"
-  };
-  module.exports = {
-    DEFAULT_MAX_EXTGLOB_RECURSION: 0,
-    MAX_LENGTH: 65536,
-    POSIX_REGEX_SOURCE,
-    REGEX_BACKSLASH: /\\(?![*+?^${}(|)[\]])/g,
-    REGEX_NON_SPECIAL_CHARS: /^[^@![\].,$*+?^{}()|\\/]+/,
-    REGEX_SPECIAL_CHARS: /[-*+?.^${}(|)[\]]/,
-    REGEX_SPECIAL_CHARS_BACKREF: /(\\?)((\W)(\3*))/g,
-    REGEX_SPECIAL_CHARS_GLOBAL: /([-*+?.^${}(|)[\]])/g,
-    REGEX_REMOVE_BACKSLASH: /(?:\[.*?[^\\]\]|\\(?=.))/g,
-    REPLACEMENTS: {
-      __proto__: null,
-      "***": "*",
-      "**/**": "**",
-      "**/**/**": "**"
-    },
-    CHAR_0: 48,
-    CHAR_9: 57,
-    CHAR_UPPERCASE_A: 65,
-    CHAR_LOWERCASE_A: 97,
-    CHAR_UPPERCASE_Z: 90,
-    CHAR_LOWERCASE_Z: 122,
-    CHAR_LEFT_PARENTHESES: 40,
-    CHAR_RIGHT_PARENTHESES: 41,
-    CHAR_ASTERISK: 42,
-    CHAR_AMPERSAND: 38,
-    CHAR_AT: 64,
-    CHAR_BACKWARD_SLASH: 92,
-    CHAR_CARRIAGE_RETURN: 13,
-    CHAR_CIRCUMFLEX_ACCENT: 94,
-    CHAR_COLON: 58,
-    CHAR_COMMA: 44,
-    CHAR_DOT: 46,
-    CHAR_DOUBLE_QUOTE: 34,
-    CHAR_EQUAL: 61,
-    CHAR_EXCLAMATION_MARK: 33,
-    CHAR_FORM_FEED: 12,
-    CHAR_FORWARD_SLASH: 47,
-    CHAR_GRAVE_ACCENT: 96,
-    CHAR_HASH: 35,
-    CHAR_HYPHEN_MINUS: 45,
-    CHAR_LEFT_ANGLE_BRACKET: 60,
-    CHAR_LEFT_CURLY_BRACE: 123,
-    CHAR_LEFT_SQUARE_BRACKET: 91,
-    CHAR_LINE_FEED: 10,
-    CHAR_NO_BREAK_SPACE: 160,
-    CHAR_PERCENT: 37,
-    CHAR_PLUS: 43,
-    CHAR_QUESTION_MARK: 63,
-    CHAR_RIGHT_ANGLE_BRACKET: 62,
-    CHAR_RIGHT_CURLY_BRACE: 125,
-    CHAR_RIGHT_SQUARE_BRACKET: 93,
-    CHAR_SEMICOLON: 59,
-    CHAR_SINGLE_QUOTE: 39,
-    CHAR_SPACE: 32,
-    CHAR_TAB: 9,
-    CHAR_UNDERSCORE: 95,
-    CHAR_VERTICAL_LINE: 124,
-    CHAR_ZERO_WIDTH_NOBREAK_SPACE: 65279,
-    extglobChars(chars) {
-      return {
-        "!": { type: "negate", open: "(?:(?!(?:", close: `))${chars.STAR})` },
-        "?": { type: "qmark", open: "(?:", close: ")?" },
-        "+": { type: "plus", open: "(?:", close: ")+" },
-        "*": { type: "star", open: "(?:", close: ")*" },
-        "@": { type: "at", open: "(?:", close: ")" }
-      };
-    },
-    globChars(win32) {
-      return win32 === !0 ? WINDOWS_CHARS : POSIX_CHARS;
-    }
-  };
-});
-
-// node_modules/picomatch/lib/utils.js
-var require_utils2 = __commonJS((exports) => {
-  var {
-    REGEX_BACKSLASH,
-    REGEX_REMOVE_BACKSLASH,
-    REGEX_SPECIAL_CHARS,
-    REGEX_SPECIAL_CHARS_GLOBAL
-  } = require_constants();
-  exports.isObject = (val) => val !== null && typeof val === "object" && !Array.isArray(val);
-  exports.hasRegexChars = (str) => REGEX_SPECIAL_CHARS.test(str);
-  exports.isRegexChar = (str) => str.length === 1 && exports.hasRegexChars(str);
-  exports.escapeRegex = (str) => str.replace(REGEX_SPECIAL_CHARS_GLOBAL, "\\$1");
-  exports.toPosixSlashes = (str) => str.replace(REGEX_BACKSLASH, "/");
-  exports.isWindows = () => {
-    if (typeof navigator < "u" && navigator.platform) {
-      let platform = navigator.platform.toLowerCase();
-      return platform === "win32" || platform === "windows";
-    }
-    if (typeof process < "u" && process.platform)
-      return process.platform === "win32";
-    return !1;
-  };
-  exports.removeBackslashes = (str) => {
-    return str.replace(REGEX_REMOVE_BACKSLASH, (match) => {
-      return match === "\\" ? "" : match;
-    });
-  };
-  exports.escapeLast = (input, char, lastIdx) => {
-    let idx = input.lastIndexOf(char, lastIdx);
-    if (idx === -1)
-      return input;
-    if (input[idx - 1] === "\\")
-      return exports.escapeLast(input, char, idx - 1);
-    return `${input.slice(0, idx)}\\${input.slice(idx)}`;
-  };
-  exports.removePrefix = (input, state = {}) => {
-    let output = input;
-    if (output.startsWith("./"))
-      output = output.slice(2), state.prefix = "./";
-    return output;
-  };
-  exports.wrapOutput = (input, state = {}, options = {}) => {
-    let prepend = options.contains ? "" : "^", append = options.contains ? "" : "$", output = `${prepend}(?:${input})${append}`;
-    if (state.negated === !0)
-      output = `(?:^(?!${output}).*$)`;
-    return output;
-  };
-  exports.basename = (path4, { windows } = {}) => {
-    let segs = path4.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
-    if (last === "")
-      return segs[segs.length - 2];
-    return last;
-  };
-});
-
-// node_modules/picomatch/lib/scan.js
-var require_scan = __commonJS((exports, module) => {
-  var utils = require_utils2(), {
-    CHAR_ASTERISK,
-    CHAR_AT,
-    CHAR_BACKWARD_SLASH,
-    CHAR_COMMA,
-    CHAR_DOT,
-    CHAR_EXCLAMATION_MARK,
-    CHAR_FORWARD_SLASH,
-    CHAR_LEFT_CURLY_BRACE,
-    CHAR_LEFT_PARENTHESES,
-    CHAR_LEFT_SQUARE_BRACKET,
-    CHAR_PLUS,
-    CHAR_QUESTION_MARK,
-    CHAR_RIGHT_CURLY_BRACE,
-    CHAR_RIGHT_PARENTHESES,
-    CHAR_RIGHT_SQUARE_BRACKET
-  } = require_constants(), isPathSeparator = (code) => {
-    return code === CHAR_FORWARD_SLASH || code === CHAR_BACKWARD_SLASH;
-  }, depth = (token) => {
-    if (token.isPrefix !== !0)
-      token.depth = token.isGlobstar ? 1 / 0 : 1;
-  }, scan = (input, options) => {
-    let opts = options || {}, length = input.length - 1, scanToEnd = opts.parts === !0 || opts.scanToEnd === !0, slashes = [], tokens = [], parts = [], str = input, index = -1, start = 0, lastIndex = 0, isBrace = !1, isBracket = !1, isGlob = !1, isExtglob = !1, isGlobstar = !1, braceEscaped = !1, backslashes = !1, negated = !1, negatedExtglob = !1, finished = !1, braces = 0, prev, code, token = { value: "", depth: 0, isGlob: !1 }, eos = () => index >= length, peek = () => str.charCodeAt(index + 1), advance = () => {
-      return prev = code, str.charCodeAt(++index);
-    };
-    while (index < length) {
-      code = advance();
-      let next;
-      if (code === CHAR_BACKWARD_SLASH) {
-        if (backslashes = token.backslashes = !0, code = advance(), code === CHAR_LEFT_CURLY_BRACE)
-          braceEscaped = !0;
-        continue;
-      }
-      if (braceEscaped === !0 || code === CHAR_LEFT_CURLY_BRACE) {
-        braces++;
-        while (eos() !== !0 && (code = advance())) {
-          if (code === CHAR_BACKWARD_SLASH) {
-            backslashes = token.backslashes = !0, advance();
-            continue;
-          }
-          if (code === CHAR_LEFT_CURLY_BRACE) {
-            braces++;
-            continue;
-          }
-          if (braceEscaped !== !0 && code === CHAR_DOT && (code = advance()) === CHAR_DOT) {
-            if (isBrace = token.isBrace = !0, isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
-              continue;
-            break;
-          }
-          if (braceEscaped !== !0 && code === CHAR_COMMA) {
-            if (isBrace = token.isBrace = !0, isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
-              continue;
-            break;
-          }
-          if (code === CHAR_RIGHT_CURLY_BRACE) {
-            if (braces--, braces === 0) {
-              braceEscaped = !1, isBrace = token.isBrace = !0, finished = !0;
-              break;
-            }
-          }
-        }
-        if (scanToEnd === !0)
-          continue;
-        break;
-      }
-      if (code === CHAR_FORWARD_SLASH) {
-        if (slashes.push(index), tokens.push(token), token = { value: "", depth: 0, isGlob: !1 }, finished === !0)
-          continue;
-        if (prev === CHAR_DOT && index === start + 1) {
-          start += 2;
-          continue;
-        }
-        lastIndex = index + 1;
-        continue;
-      }
-      if (opts.noext !== !0) {
-        if ((code === CHAR_PLUS || code === CHAR_AT || code === CHAR_ASTERISK || code === CHAR_QUESTION_MARK || code === CHAR_EXCLAMATION_MARK) === !0 && peek() === CHAR_LEFT_PARENTHESES) {
-          if (isGlob = token.isGlob = !0, isExtglob = token.isExtglob = !0, finished = !0, code === CHAR_EXCLAMATION_MARK && index === start)
-            negatedExtglob = !0;
-          if (scanToEnd === !0) {
-            while (eos() !== !0 && (code = advance())) {
-              if (code === CHAR_BACKWARD_SLASH) {
-                backslashes = token.backslashes = !0, code = advance();
-                continue;
-              }
-              if (code === CHAR_RIGHT_PARENTHESES) {
-                isGlob = token.isGlob = !0, finished = !0;
-                break;
-              }
-            }
-            continue;
-          }
-          break;
-        }
-      }
-      if (code === CHAR_ASTERISK) {
-        if (prev === CHAR_ASTERISK)
-          isGlobstar = token.isGlobstar = !0;
-        if (isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
-          continue;
-        break;
-      }
-      if (code === CHAR_QUESTION_MARK) {
-        if (isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
-          continue;
-        break;
-      }
-      if (code === CHAR_LEFT_SQUARE_BRACKET) {
-        while (eos() !== !0 && (next = advance())) {
-          if (next === CHAR_BACKWARD_SLASH) {
-            backslashes = token.backslashes = !0, advance();
-            continue;
-          }
-          if (next === CHAR_RIGHT_SQUARE_BRACKET) {
-            isBracket = token.isBracket = !0, isGlob = token.isGlob = !0, finished = !0;
-            break;
-          }
-        }
-        if (scanToEnd === !0)
-          continue;
-        break;
-      }
-      if (opts.nonegate !== !0 && code === CHAR_EXCLAMATION_MARK && index === start) {
-        negated = token.negated = !0, start++;
-        continue;
-      }
-      if (opts.noparen !== !0 && code === CHAR_LEFT_PARENTHESES) {
-        if (isGlob = token.isGlob = !0, scanToEnd === !0) {
-          while (eos() !== !0 && (code = advance())) {
-            if (code === CHAR_LEFT_PARENTHESES) {
-              backslashes = token.backslashes = !0, code = advance();
-              continue;
-            }
-            if (code === CHAR_RIGHT_PARENTHESES) {
-              finished = !0;
-              break;
-            }
-          }
-          continue;
-        }
-        break;
-      }
-      if (isGlob === !0) {
-        if (finished = !0, scanToEnd === !0)
-          continue;
-        break;
-      }
-    }
-    if (opts.noext === !0)
-      isExtglob = !1, isGlob = !1;
-    let base = str, prefix = "", glob = "";
-    if (start > 0)
-      prefix = str.slice(0, start), str = str.slice(start), lastIndex -= start;
-    if (base && isGlob === !0 && lastIndex > 0)
-      base = str.slice(0, lastIndex), glob = str.slice(lastIndex);
-    else if (isGlob === !0)
-      base = "", glob = str;
-    else
-      base = str;
-    if (base && base !== "" && base !== "/" && base !== str) {
-      if (isPathSeparator(base.charCodeAt(base.length - 1)))
-        base = base.slice(0, -1);
-    }
-    if (opts.unescape === !0) {
-      if (glob)
-        glob = utils.removeBackslashes(glob);
-      if (base && backslashes === !0)
-        base = utils.removeBackslashes(base);
-    }
-    let state = {
-      prefix,
-      input,
-      start,
-      base,
-      glob,
-      isBrace,
-      isBracket,
-      isGlob,
-      isExtglob,
-      isGlobstar,
-      negated,
-      negatedExtglob
-    };
-    if (opts.tokens === !0) {
-      if (state.maxDepth = 0, !isPathSeparator(code))
-        tokens.push(token);
-      state.tokens = tokens;
-    }
-    if (opts.parts === !0 || opts.tokens === !0) {
-      let prevIndex;
-      for (let idx = 0;idx < slashes.length; idx++) {
-        let n = prevIndex ? prevIndex + 1 : start, i = slashes[idx], value = input.slice(n, i);
-        if (opts.tokens) {
-          if (idx === 0 && start !== 0)
-            tokens[idx].isPrefix = !0, tokens[idx].value = prefix;
-          else
-            tokens[idx].value = value;
-          depth(tokens[idx]), state.maxDepth += tokens[idx].depth;
-        }
-        if (idx !== 0 || value !== "")
-          parts.push(value);
-        prevIndex = i;
-      }
-      if (prevIndex && prevIndex + 1 < input.length) {
-        let value = input.slice(prevIndex + 1);
-        if (parts.push(value), opts.tokens)
-          tokens[tokens.length - 1].value = value, depth(tokens[tokens.length - 1]), state.maxDepth += tokens[tokens.length - 1].depth;
-      }
-      state.slashes = slashes, state.parts = parts;
-    }
-    return state;
-  };
-  module.exports = scan;
-});
-
-// node_modules/picomatch/lib/parse.js
-var require_parse = __commonJS((exports, module) => {
-  var constants = require_constants(), utils = require_utils2(), {
-    MAX_LENGTH,
-    POSIX_REGEX_SOURCE,
-    REGEX_NON_SPECIAL_CHARS,
-    REGEX_SPECIAL_CHARS_BACKREF,
-    REPLACEMENTS
-  } = constants, expandRange = (args, options) => {
-    if (typeof options.expandRange === "function")
-      return options.expandRange(...args, options);
-    args.sort();
-    let value = `[${args.join("-")}]`;
-    try {
-      new RegExp(value);
-    } catch (ex) {
-      return args.map((v) => utils.escapeRegex(v)).join("..");
-    }
-    return value;
-  }, syntaxError = (type, char) => {
-    return `Missing ${type}: "${char}" - use "\\\\${char}" to match literal characters`;
-  }, splitTopLevel = (input) => {
-    let parts = [], bracket = 0, paren = 0, quote = 0, value = "", escaped = !1;
-    for (let ch of input) {
-      if (escaped === !0) {
-        value += ch, escaped = !1;
-        continue;
-      }
-      if (ch === "\\") {
-        value += ch, escaped = !0;
-        continue;
-      }
-      if (ch === '"') {
-        quote = quote === 1 ? 0 : 1, value += ch;
-        continue;
-      }
-      if (quote === 0) {
-        if (ch === "[")
-          bracket++;
-        else if (ch === "]" && bracket > 0)
-          bracket--;
-        else if (bracket === 0) {
-          if (ch === "(")
-            paren++;
-          else if (ch === ")" && paren > 0)
-            paren--;
-          else if (ch === "|" && paren === 0) {
-            parts.push(value), value = "";
-            continue;
-          }
-        }
-      }
-      value += ch;
-    }
-    return parts.push(value), parts;
-  }, isPlainBranch = (branch) => {
-    let escaped = !1;
-    for (let ch of branch) {
-      if (escaped === !0) {
-        escaped = !1;
-        continue;
-      }
-      if (ch === "\\") {
-        escaped = !0;
-        continue;
-      }
-      if (/[?*+@!()[\]{}]/.test(ch))
-        return !1;
-    }
-    return !0;
-  }, normalizeSimpleBranch = (branch) => {
-    let value = branch.trim(), changed = !0;
-    while (changed === !0)
-      if (changed = !1, /^@\([^\\()[\]{}|]+\)$/.test(value))
-        value = value.slice(2, -1), changed = !0;
-    if (!isPlainBranch(value))
-      return;
-    return value.replace(/\\(.)/g, "$1");
-  }, hasRepeatedCharPrefixOverlap = (branches) => {
-    let values = branches.map(normalizeSimpleBranch).filter(Boolean);
-    for (let i = 0;i < values.length; i++)
-      for (let j = i + 1;j < values.length; j++) {
-        let a = values[i], b = values[j], char = a[0];
-        if (!char || a !== char.repeat(a.length) || b !== char.repeat(b.length))
-          continue;
-        if (a === b || a.startsWith(b) || b.startsWith(a))
-          return !0;
-      }
-    return !1;
-  }, parseRepeatedExtglob = (pattern, requireEnd = !0) => {
-    if (pattern[0] !== "+" && pattern[0] !== "*" || pattern[1] !== "(")
-      return;
-    let bracket = 0, paren = 0, quote = 0, escaped = !1;
-    for (let i = 1;i < pattern.length; i++) {
-      let ch = pattern[i];
-      if (escaped === !0) {
-        escaped = !1;
-        continue;
-      }
-      if (ch === "\\") {
-        escaped = !0;
-        continue;
-      }
-      if (ch === '"') {
-        quote = quote === 1 ? 0 : 1;
-        continue;
-      }
-      if (quote === 1)
-        continue;
-      if (ch === "[") {
-        bracket++;
-        continue;
-      }
-      if (ch === "]" && bracket > 0) {
-        bracket--;
-        continue;
-      }
-      if (bracket > 0)
-        continue;
-      if (ch === "(") {
-        paren++;
-        continue;
-      }
-      if (ch === ")") {
-        if (paren--, paren === 0) {
-          if (requireEnd === !0 && i !== pattern.length - 1)
-            return;
-          return {
-            type: pattern[0],
-            body: pattern.slice(2, i),
-            end: i
-          };
-        }
-      }
-    }
-  }, getStarExtglobSequenceOutput = (pattern) => {
-    let index = 0, chars = [];
-    while (index < pattern.length) {
-      let match = parseRepeatedExtglob(pattern.slice(index), !1);
-      if (!match || match.type !== "*")
-        return;
-      let branches = splitTopLevel(match.body).map((branch2) => branch2.trim());
-      if (branches.length !== 1)
-        return;
-      let branch = normalizeSimpleBranch(branches[0]);
-      if (!branch || branch.length !== 1)
-        return;
-      chars.push(branch), index += match.end + 1;
-    }
-    if (chars.length < 1)
-      return;
-    return `${chars.length === 1 ? utils.escapeRegex(chars[0]) : `[${chars.map((ch) => utils.escapeRegex(ch)).join("")}]`}*`;
-  }, repeatedExtglobRecursion = (pattern) => {
-    let depth = 0, value = pattern.trim(), match = parseRepeatedExtglob(value);
-    while (match)
-      depth++, value = match.body.trim(), match = parseRepeatedExtglob(value);
-    return depth;
-  }, analyzeRepeatedExtglob = (body, options) => {
-    if (options.maxExtglobRecursion === !1)
-      return { risky: !1 };
-    let max = typeof options.maxExtglobRecursion === "number" ? options.maxExtglobRecursion : constants.DEFAULT_MAX_EXTGLOB_RECURSION, branches = splitTopLevel(body).map((branch) => branch.trim());
-    if (branches.length > 1) {
-      if (branches.some((branch) => branch === "") || branches.some((branch) => /^[*?]+$/.test(branch)) || hasRepeatedCharPrefixOverlap(branches))
-        return { risky: !0 };
-    }
-    for (let branch of branches) {
-      let safeOutput = getStarExtglobSequenceOutput(branch);
-      if (safeOutput)
-        return { risky: !0, safeOutput };
-      if (repeatedExtglobRecursion(branch) > max)
-        return { risky: !0 };
-    }
-    return { risky: !1 };
-  }, parse5 = (input, options) => {
-    if (typeof input !== "string")
-      throw TypeError("Expected a string");
-    input = REPLACEMENTS[input] || input;
-    let opts = { ...options }, max = typeof opts.maxLength === "number" ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH, len = input.length;
-    if (len > max)
-      throw SyntaxError(`Input length: ${len}, exceeds maximum allowed length: ${max}`);
-    let bos = { type: "bos", value: "", output: opts.prepend || "" }, tokens = [bos], capture = opts.capture ? "" : "?:", PLATFORM_CHARS = constants.globChars(opts.windows), EXTGLOB_CHARS = constants.extglobChars(PLATFORM_CHARS), {
-      DOT_LITERAL,
-      PLUS_LITERAL,
-      SLASH_LITERAL,
-      ONE_CHAR,
-      DOTS_SLASH,
-      NO_DOT,
-      NO_DOT_SLASH,
-      NO_DOTS_SLASH,
-      QMARK,
-      QMARK_NO_DOT,
-      STAR,
-      START_ANCHOR
-    } = PLATFORM_CHARS, globstar = (opts2) => {
-      return `(${capture}(?:(?!${START_ANCHOR}${opts2.dot ? DOTS_SLASH : DOT_LITERAL}).)*?)`;
-    }, nodot = opts.dot ? "" : NO_DOT, qmarkNoDot = opts.dot ? QMARK : QMARK_NO_DOT, star = opts.bash === !0 ? globstar(opts) : STAR;
-    if (opts.capture)
-      star = `(${star})`;
-    if (typeof opts.noext === "boolean")
-      opts.noextglob = opts.noext;
-    let state = {
-      input,
-      index: -1,
-      start: 0,
-      dot: opts.dot === !0,
-      consumed: "",
-      output: "",
-      prefix: "",
-      backtrack: !1,
-      negated: !1,
-      brackets: 0,
-      braces: 0,
-      parens: 0,
-      quotes: 0,
-      globstar: !1,
-      tokens
-    };
-    input = utils.removePrefix(input, state), len = input.length;
-    let extglobs = [], braces = [], stack = [], prev = bos, value, eos = () => state.index === len - 1, peek = state.peek = (n = 1) => input[state.index + n], advance = state.advance = () => input[++state.index] || "", remaining = () => input.slice(state.index + 1), consume = (value2 = "", num = 0) => {
-      state.consumed += value2, state.index += num;
-    }, append = (token) => {
-      state.output += token.output != null ? token.output : token.value, consume(token.value);
-    }, negate = () => {
-      let count = 1;
-      while (peek() === "!" && (peek(2) !== "(" || peek(3) === "?"))
-        advance(), state.start++, count++;
-      if (count % 2 === 0)
-        return !1;
-      return state.negated = !0, state.start++, !0;
-    }, increment = (type) => {
-      state[type]++, stack.push(type);
-    }, decrement = (type) => {
-      state[type]--, stack.pop();
-    }, push = (tok) => {
-      if (prev.type === "globstar") {
-        let isBrace = state.braces > 0 && (tok.type === "comma" || tok.type === "brace"), isExtglob = tok.extglob === !0 || extglobs.length && (tok.type === "pipe" || tok.type === "paren");
-        if (tok.type !== "slash" && tok.type !== "paren" && !isBrace && !isExtglob)
-          state.output = state.output.slice(0, -prev.output.length), prev.type = "star", prev.value = "*", prev.output = star, state.output += prev.output;
-      }
-      if (extglobs.length && tok.type !== "paren")
-        extglobs[extglobs.length - 1].inner += tok.value;
-      if (tok.value || tok.output)
-        append(tok);
-      if (prev && prev.type === "text" && tok.type === "text") {
-        prev.output = (prev.output || prev.value) + tok.value, prev.value += tok.value;
-        return;
-      }
-      tok.prev = prev, tokens.push(tok), prev = tok;
-    }, extglobOpen = (type, value2) => {
-      let token = { ...EXTGLOB_CHARS[value2], conditions: 1, inner: "" };
-      token.prev = prev, token.parens = state.parens, token.output = state.output, token.startIndex = state.index, token.tokensIndex = tokens.length;
-      let output = (opts.capture ? "(" : "") + token.open;
-      increment("parens"), push({ type, value: value2, output: state.output ? "" : ONE_CHAR }), push({ type: "paren", extglob: !0, value: advance(), output }), extglobs.push(token);
-    }, extglobClose = (token) => {
-      let literal3 = input.slice(token.startIndex, state.index + 1), body = input.slice(token.startIndex + 2, state.index), analysis = analyzeRepeatedExtglob(body, opts);
-      if ((token.type === "plus" || token.type === "star") && analysis.risky) {
-        let safeOutput = analysis.safeOutput ? (token.output ? "" : ONE_CHAR) + (opts.capture ? `(${analysis.safeOutput})` : analysis.safeOutput) : void 0, open = tokens[token.tokensIndex];
-        open.type = "text", open.value = literal3, open.output = safeOutput || utils.escapeRegex(literal3);
-        for (let i = token.tokensIndex + 1;i < tokens.length; i++)
-          tokens[i].value = "", tokens[i].output = "", delete tokens[i].suffix;
-        state.output = token.output + open.output, state.backtrack = !0, push({ type: "paren", extglob: !0, value, output: "" }), decrement("parens");
-        return;
-      }
-      let output = token.close + (opts.capture ? ")" : ""), rest;
-      if (token.type === "negate") {
-        let extglobStar = star;
-        if (token.inner && token.inner.length > 1 && token.inner.includes("/"))
-          extglobStar = globstar(opts);
-        if (extglobStar !== star || eos() || /^\)+$/.test(remaining()))
-          output = token.close = `)$))${extglobStar}`;
-        if (token.inner.includes("*") && (rest = remaining()) && /^\.[^\\/.]+$/.test(rest)) {
-          let expression = parse5(rest, { ...options, fastpaths: !1 }).output;
-          output = token.close = `)${expression})${extglobStar})`;
-        }
-        if (token.prev.type === "bos")
-          state.negatedExtglob = !0;
-      }
-      push({ type: "paren", extglob: !0, value, output }), decrement("parens");
-    };
-    if (opts.fastpaths !== !1 && !/(^[*!]|[/()[\]{}"])/.test(input)) {
-      let backslashes = !1, output = input.replace(REGEX_SPECIAL_CHARS_BACKREF, (m, esc2, chars, first, rest, index) => {
-        if (first === "\\")
-          return backslashes = !0, m;
-        if (first === "?") {
-          if (esc2)
-            return esc2 + first + (rest ? QMARK.repeat(rest.length) : "");
-          if (index === 0)
-            return qmarkNoDot + (rest ? QMARK.repeat(rest.length) : "");
-          return QMARK.repeat(chars.length);
-        }
-        if (first === ".")
-          return DOT_LITERAL.repeat(chars.length);
-        if (first === "*") {
-          if (esc2)
-            return esc2 + first + (rest ? star : "");
-          return star;
-        }
-        return esc2 ? m : `\\${m}`;
-      });
-      if (backslashes === !0)
-        if (opts.unescape === !0)
-          output = output.replace(/\\/g, "");
-        else
-          output = output.replace(/\\+/g, (m) => {
-            return m.length % 2 === 0 ? "\\\\" : m ? "\\" : "";
-          });
-      if (output === input && opts.contains === !0)
-        return state.output = input, state;
-      return state.output = utils.wrapOutput(output, state, options), state;
-    }
-    while (!eos()) {
-      if (value = advance(), value === "\x00")
-        continue;
-      if (value === "\\") {
-        let next = peek();
-        if (next === "/" && opts.bash !== !0)
-          continue;
-        if (next === "." || next === ";")
-          continue;
-        if (!next) {
-          value += "\\", push({ type: "text", value });
-          continue;
-        }
-        let match = /^\\+/.exec(remaining()), slashes = 0;
-        if (match && match[0].length > 2) {
-          if (slashes = match[0].length, state.index += slashes, slashes % 2 !== 0)
-            value += "\\";
-        }
-        if (opts.unescape === !0)
-          value = advance();
-        else
-          value += advance();
-        if (state.brackets === 0) {
-          push({ type: "text", value });
-          continue;
-        }
-      }
-      if (state.brackets > 0 && (value !== "]" || prev.value === "[" || prev.value === "[^")) {
-        if (opts.posix !== !1 && value === ":") {
-          let inner = prev.value.slice(1);
-          if (inner.includes("[")) {
-            if (prev.posix = !0, inner.includes(":")) {
-              let idx = prev.value.lastIndexOf("["), pre = prev.value.slice(0, idx), rest2 = prev.value.slice(idx + 2), posix = POSIX_REGEX_SOURCE[rest2];
-              if (posix) {
-                if (prev.value = pre + posix, state.backtrack = !0, advance(), !bos.output && tokens.indexOf(prev) === 1)
-                  bos.output = ONE_CHAR;
-                continue;
-              }
-            }
-          }
-        }
-        if (value === "[" && peek() !== ":" || value === "-" && peek() === "]")
-          value = `\\${value}`;
-        if (value === "]" && (prev.value === "[" || prev.value === "[^"))
-          value = `\\${value}`;
-        if (opts.posix === !0 && value === "!" && prev.value === "[")
-          value = "^";
-        prev.value += value, append({ value });
-        continue;
-      }
-      if (state.quotes === 1 && value !== '"') {
-        value = utils.escapeRegex(value), prev.value += value, append({ value });
-        continue;
-      }
-      if (value === '"') {
-        if (state.quotes = state.quotes === 1 ? 0 : 1, opts.keepQuotes === !0)
-          push({ type: "text", value });
-        continue;
-      }
-      if (value === "(") {
-        increment("parens"), push({ type: "paren", value });
-        continue;
-      }
-      if (value === ")") {
-        if (state.parens === 0 && opts.strictBrackets === !0)
-          throw SyntaxError(syntaxError("opening", "("));
-        let extglob = extglobs[extglobs.length - 1];
-        if (extglob && state.parens === extglob.parens + 1) {
-          extglobClose(extglobs.pop());
-          continue;
-        }
-        push({ type: "paren", value, output: state.parens ? ")" : "\\)" }), decrement("parens");
-        continue;
-      }
-      if (value === "[") {
-        if (opts.nobracket === !0 || !remaining().includes("]")) {
-          if (opts.nobracket !== !0 && opts.strictBrackets === !0)
-            throw SyntaxError(syntaxError("closing", "]"));
-          value = `\\${value}`;
-        } else
-          increment("brackets");
-        push({ type: "bracket", value });
-        continue;
-      }
-      if (value === "]") {
-        if (opts.nobracket === !0 || prev && prev.type === "bracket" && prev.value.length === 1) {
-          push({ type: "text", value, output: `\\${value}` });
-          continue;
-        }
-        if (state.brackets === 0) {
-          if (opts.strictBrackets === !0)
-            throw SyntaxError(syntaxError("opening", "["));
-          push({ type: "text", value, output: `\\${value}` });
-          continue;
-        }
-        decrement("brackets");
-        let prevValue = prev.value.slice(1);
-        if (prev.posix !== !0 && prevValue[0] === "^" && !prevValue.includes("/"))
-          value = `/${value}`;
-        if (prev.value += value, append({ value }), opts.literalBrackets === !1 || utils.hasRegexChars(prevValue))
-          continue;
-        let escaped = utils.escapeRegex(prev.value);
-        if (state.output = state.output.slice(0, -prev.value.length), opts.literalBrackets === !0) {
-          state.output += escaped, prev.value = escaped;
-          continue;
-        }
-        prev.value = `(${capture}${escaped}|${prev.value})`, state.output += prev.value;
-        continue;
-      }
-      if (value === "{" && opts.nobrace !== !0) {
-        increment("braces");
-        let open = {
-          type: "brace",
-          value,
-          output: "(",
-          outputIndex: state.output.length,
-          tokensIndex: state.tokens.length
-        };
-        braces.push(open), push(open);
-        continue;
-      }
-      if (value === "}") {
-        let brace = braces[braces.length - 1];
-        if (opts.nobrace === !0 || !brace) {
-          push({ type: "text", value, output: value });
-          continue;
-        }
-        let output = ")";
-        if (brace.dots === !0) {
-          let arr = tokens.slice(), range = [];
-          for (let i = arr.length - 1;i >= 0; i--) {
-            if (tokens.pop(), arr[i].type === "brace")
-              break;
-            if (arr[i].type !== "dots")
-              range.unshift(arr[i].value);
-          }
-          output = expandRange(range, opts), state.backtrack = !0;
-        }
-        if (brace.comma !== !0 && brace.dots !== !0) {
-          let out = state.output.slice(0, brace.outputIndex), toks = state.tokens.slice(brace.tokensIndex);
-          brace.value = brace.output = "\\{", value = output = "\\}", state.output = out;
-          for (let t of toks)
-            state.output += t.output || t.value;
-        }
-        push({ type: "brace", value, output }), decrement("braces"), braces.pop();
-        continue;
-      }
-      if (value === "|") {
-        if (extglobs.length > 0)
-          extglobs[extglobs.length - 1].conditions++;
-        push({ type: "text", value });
-        continue;
-      }
-      if (value === ",") {
-        let output = value, brace = braces[braces.length - 1];
-        if (brace && stack[stack.length - 1] === "braces")
-          brace.comma = !0, output = "|";
-        push({ type: "comma", value, output });
-        continue;
-      }
-      if (value === "/") {
-        if (prev.type === "dot" && state.index === state.start + 1) {
-          state.start = state.index + 1, state.consumed = "", state.output = "", tokens.pop(), prev = bos;
-          continue;
-        }
-        push({ type: "slash", value, output: SLASH_LITERAL });
-        continue;
-      }
-      if (value === ".") {
-        if (state.braces > 0 && prev.type === "dot") {
-          if (prev.value === ".")
-            prev.output = DOT_LITERAL;
-          let brace = braces[braces.length - 1];
-          prev.type = "dots", prev.output += value, prev.value += value, brace.dots = !0;
-          continue;
-        }
-        if (state.braces + state.parens === 0 && prev.type !== "bos" && prev.type !== "slash") {
-          push({ type: "text", value, output: DOT_LITERAL });
-          continue;
-        }
-        push({ type: "dot", value, output: DOT_LITERAL });
-        continue;
-      }
-      if (value === "?") {
-        if (!(prev && prev.value === "(") && opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
-          extglobOpen("qmark", value);
-          continue;
-        }
-        if (prev && prev.type === "paren") {
-          let next = peek(), output = value;
-          if (prev.value === "(" && !/[!=<:]/.test(next) || next === "<" && !/<([!=]|\w+>)/.test(remaining()))
-            output = `\\${value}`;
-          push({ type: "text", value, output });
-          continue;
-        }
-        if (opts.dot !== !0 && (prev.type === "slash" || prev.type === "bos")) {
-          push({ type: "qmark", value, output: QMARK_NO_DOT });
-          continue;
-        }
-        push({ type: "qmark", value, output: QMARK });
-        continue;
-      }
-      if (value === "!") {
-        if (opts.noextglob !== !0 && peek() === "(") {
-          if (peek(2) !== "?" || !/[!=<:]/.test(peek(3))) {
-            extglobOpen("negate", value);
-            continue;
-          }
-        }
-        if (opts.nonegate !== !0 && state.index === 0) {
-          negate();
-          continue;
-        }
-      }
-      if (value === "+") {
-        if (opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
-          extglobOpen("plus", value);
-          continue;
-        }
-        if (prev && prev.value === "(" || opts.regex === !1) {
-          push({ type: "plus", value, output: PLUS_LITERAL });
-          continue;
-        }
-        if (prev && (prev.type === "bracket" || prev.type === "paren" || prev.type === "brace") || state.parens > 0) {
-          push({ type: "plus", value });
-          continue;
-        }
-        push({ type: "plus", value: PLUS_LITERAL });
-        continue;
-      }
-      if (value === "@") {
-        if (opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
-          push({ type: "at", extglob: !0, value, output: "" });
-          continue;
-        }
-        push({ type: "text", value });
-        continue;
-      }
-      if (value !== "*") {
-        if (value === "$" || value === "^")
-          value = `\\${value}`;
-        let match = REGEX_NON_SPECIAL_CHARS.exec(remaining());
-        if (match)
-          value += match[0], state.index += match[0].length;
-        push({ type: "text", value });
-        continue;
-      }
-      if (prev && (prev.type === "globstar" || prev.star === !0)) {
-        prev.type = "star", prev.star = !0, prev.value += value, prev.output = star, state.backtrack = !0, state.globstar = !0, consume(value);
-        continue;
-      }
-      let rest = remaining();
-      if (opts.noextglob !== !0 && /^\([^?]/.test(rest)) {
-        extglobOpen("star", value);
-        continue;
-      }
-      if (prev.type === "star") {
-        if (opts.noglobstar === !0) {
-          consume(value);
-          continue;
-        }
-        let prior = prev.prev, before = prior.prev, isStart = prior.type === "slash" || prior.type === "bos", afterStar = before && (before.type === "star" || before.type === "globstar");
-        if (opts.bash === !0 && (!isStart || rest[0] && rest[0] !== "/")) {
-          push({ type: "star", value, output: "" });
-          continue;
-        }
-        let isBrace = state.braces > 0 && (prior.type === "comma" || prior.type === "brace"), isExtglob = extglobs.length && (prior.type === "pipe" || prior.type === "paren");
-        if (!isStart && prior.type !== "paren" && !isBrace && !isExtglob) {
-          push({ type: "star", value, output: "" });
-          continue;
-        }
-        while (rest.slice(0, 3) === "/**") {
-          let after = input[state.index + 4];
-          if (after && after !== "/")
-            break;
-          rest = rest.slice(3), consume("/**", 3);
-        }
-        if (prior.type === "bos" && eos()) {
-          prev.type = "globstar", prev.value += value, prev.output = globstar(opts), state.output = prev.output, state.globstar = !0, consume(value);
-          continue;
-        }
-        if (prior.type === "slash" && prior.prev.type !== "bos" && !afterStar && eos()) {
-          state.output = state.output.slice(0, -(prior.output + prev.output).length), prior.output = `(?:${prior.output}`, prev.type = "globstar", prev.output = globstar(opts) + (opts.strictSlashes ? ")" : "|$)"), prev.value += value, state.globstar = !0, state.output += prior.output + prev.output, consume(value);
-          continue;
-        }
-        if (prior.type === "slash" && prior.prev.type !== "bos" && rest[0] === "/") {
-          let end = rest[1] !== void 0 ? "|$" : "";
-          state.output = state.output.slice(0, -(prior.output + prev.output).length), prior.output = `(?:${prior.output}`, prev.type = "globstar", prev.output = `${globstar(opts)}${SLASH_LITERAL}|${SLASH_LITERAL}${end})`, prev.value += value, state.output += prior.output + prev.output, state.globstar = !0, consume(value + advance()), push({ type: "slash", value: "/", output: "" });
-          continue;
-        }
-        if (prior.type === "bos" && rest[0] === "/") {
-          prev.type = "globstar", prev.value += value, prev.output = `(?:^|${SLASH_LITERAL}|${globstar(opts)}${SLASH_LITERAL})`, state.output = prev.output, state.globstar = !0, consume(value + advance()), push({ type: "slash", value: "/", output: "" });
-          continue;
-        }
-        state.output = state.output.slice(0, -prev.output.length), prev.type = "globstar", prev.output = globstar(opts), prev.value += value, state.output += prev.output, state.globstar = !0, consume(value);
-        continue;
-      }
-      let token = { type: "star", value, output: star };
-      if (opts.bash === !0) {
-        if (token.output = ".*?", prev.type === "bos" || prev.type === "slash")
-          token.output = nodot + token.output;
-        push(token);
-        continue;
-      }
-      if (prev && (prev.type === "bracket" || prev.type === "paren") && opts.regex === !0) {
-        token.output = value, push(token);
-        continue;
-      }
-      if (state.index === state.start || prev.type === "slash" || prev.type === "dot") {
-        if (prev.type === "dot")
-          state.output += NO_DOT_SLASH, prev.output += NO_DOT_SLASH;
-        else if (opts.dot === !0)
-          state.output += NO_DOTS_SLASH, prev.output += NO_DOTS_SLASH;
-        else
-          state.output += nodot, prev.output += nodot;
-        if (peek() !== "*")
-          state.output += ONE_CHAR, prev.output += ONE_CHAR;
-      }
-      push(token);
-    }
-    while (state.brackets > 0) {
-      if (opts.strictBrackets === !0)
-        throw SyntaxError(syntaxError("closing", "]"));
-      state.output = utils.escapeLast(state.output, "["), decrement("brackets");
-    }
-    while (state.parens > 0) {
-      if (opts.strictBrackets === !0)
-        throw SyntaxError(syntaxError("closing", ")"));
-      state.output = utils.escapeLast(state.output, "("), decrement("parens");
-    }
-    while (state.braces > 0) {
-      if (opts.strictBrackets === !0)
-        throw SyntaxError(syntaxError("closing", "}"));
-      state.output = utils.escapeLast(state.output, "{"), decrement("braces");
-    }
-    if (opts.strictSlashes !== !0 && (prev.type === "star" || prev.type === "bracket"))
-      push({ type: "maybe_slash", value: "", output: `${SLASH_LITERAL}?` });
-    if (state.backtrack === !0) {
-      state.output = "";
-      for (let token of state.tokens)
-        if (state.output += token.output != null ? token.output : token.value, token.suffix)
-          state.output += token.suffix;
-    }
-    return state;
-  };
-  parse5.fastpaths = (input, options) => {
-    let opts = { ...options }, max = typeof opts.maxLength === "number" ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH, len = input.length;
-    if (len > max)
-      throw SyntaxError(`Input length: ${len}, exceeds maximum allowed length: ${max}`);
-    input = REPLACEMENTS[input] || input;
-    let {
-      DOT_LITERAL,
-      SLASH_LITERAL,
-      ONE_CHAR,
-      DOTS_SLASH,
-      NO_DOT,
-      NO_DOTS,
-      NO_DOTS_SLASH,
-      STAR,
-      START_ANCHOR
-    } = constants.globChars(opts.windows), nodot = opts.dot ? NO_DOTS : NO_DOT, slashDot = opts.dot ? NO_DOTS_SLASH : NO_DOT, capture = opts.capture ? "" : "?:", state = { negated: !1, prefix: "" }, star = opts.bash === !0 ? ".*?" : STAR;
-    if (opts.capture)
-      star = `(${star})`;
-    let globstar = (opts2) => {
-      if (opts2.noglobstar === !0)
-        return star;
-      return `(${capture}(?:(?!${START_ANCHOR}${opts2.dot ? DOTS_SLASH : DOT_LITERAL}).)*?)`;
-    }, create = (str) => {
-      switch (str) {
-        case "*":
-          return `${nodot}${ONE_CHAR}${star}`;
-        case ".*":
-          return `${DOT_LITERAL}${ONE_CHAR}${star}`;
-        case "*.*":
-          return `${nodot}${star}${DOT_LITERAL}${ONE_CHAR}${star}`;
-        case "*/*":
-          return `${nodot}${star}${SLASH_LITERAL}${ONE_CHAR}${slashDot}${star}`;
-        case "**":
-          return nodot + globstar(opts);
-        case "**/*":
-          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${slashDot}${ONE_CHAR}${star}`;
-        case "**/*.*":
-          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${slashDot}${star}${DOT_LITERAL}${ONE_CHAR}${star}`;
-        case "**/.*":
-          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${DOT_LITERAL}${ONE_CHAR}${star}`;
-        default: {
-          let match = /^(.*?)\.(\w+)$/.exec(str);
-          if (!match)
-            return;
-          let source2 = create(match[1]);
-          if (!source2)
-            return;
-          return source2 + DOT_LITERAL + match[2];
-        }
-      }
-    }, output = utils.removePrefix(input, state), source = create(output);
-    if (source && opts.strictSlashes !== !0)
-      source += `${SLASH_LITERAL}?`;
-    return source;
-  };
-  module.exports = parse5;
-});
-
-// node_modules/picomatch/lib/picomatch.js
-var require_picomatch = __commonJS((exports, module) => {
-  var scan = require_scan(), parse5 = require_parse(), utils = require_utils2(), constants = require_constants(), isObject2 = (val) => val && typeof val === "object" && !Array.isArray(val), picomatch = (glob, options, returnState = !1) => {
-    if (Array.isArray(glob)) {
-      let fns = glob.map((input) => picomatch(input, options, returnState));
-      return (str) => {
-        for (let isMatch of fns) {
-          let state2 = isMatch(str);
-          if (state2)
-            return state2;
-        }
-        return !1;
-      };
-    }
-    let isState = isObject2(glob) && glob.tokens && glob.input;
-    if (glob === "" || typeof glob !== "string" && !isState)
-      throw TypeError("Expected pattern to be a non-empty string");
-    let opts = options || {}, posix = opts.windows, regex = isState ? picomatch.compileRe(glob, options) : picomatch.makeRe(glob, options, !1, !0), state = regex.state;
-    delete regex.state;
-    let isIgnored = () => !1;
-    if (opts.ignore) {
-      let ignoreOpts = { ...options, ignore: null, onMatch: null, onResult: null };
-      isIgnored = picomatch(opts.ignore, ignoreOpts, returnState);
-    }
-    let matcher = (input, returnObject = !1) => {
-      let { isMatch, match, output } = picomatch.test(input, regex, options, { glob, posix }), result = { glob, state, regex, posix, input, output, match, isMatch };
-      if (typeof opts.onResult === "function")
-        opts.onResult(result);
-      if (isMatch === !1)
-        return result.isMatch = !1, returnObject ? result : !1;
-      if (isIgnored(input)) {
-        if (typeof opts.onIgnore === "function")
-          opts.onIgnore(result);
-        return result.isMatch = !1, returnObject ? result : !1;
-      }
-      if (typeof opts.onMatch === "function")
-        opts.onMatch(result);
-      return returnObject ? result : !0;
-    };
-    if (returnState)
-      matcher.state = state;
-    return matcher;
-  };
-  picomatch.test = (input, regex, options, { glob, posix } = {}) => {
-    if (typeof input !== "string")
-      throw TypeError("Expected input to be a string");
-    if (input === "")
-      return { isMatch: !1, output: "" };
-    let opts = options || {}, format = opts.format || (posix ? utils.toPosixSlashes : null), match = input === glob, output = match && format ? format(input) : input;
-    if (match === !1)
-      output = format ? format(input) : input, match = output === glob;
-    if (match === !1 || opts.capture === !0)
-      if (opts.matchBase === !0 || opts.basename === !0)
-        match = picomatch.matchBase(input, regex, options, posix);
-      else
-        match = regex.exec(output);
-    return { isMatch: Boolean(match), match, output };
-  };
-  picomatch.matchBase = (input, glob, options) => {
-    return (glob instanceof RegExp ? glob : picomatch.makeRe(glob, options)).test(utils.basename(input));
-  };
-  picomatch.isMatch = (str, patterns, options) => picomatch(patterns, options)(str);
-  picomatch.parse = (pattern, options) => {
-    if (Array.isArray(pattern))
-      return pattern.map((p) => picomatch.parse(p, options));
-    return parse5(pattern, { ...options, fastpaths: !1 });
-  };
-  picomatch.scan = (input, options) => scan(input, options);
-  picomatch.compileRe = (state, options, returnOutput = !1, returnState = !1) => {
-    if (returnOutput === !0)
-      return state.output;
-    let opts = options || {}, prepend = opts.contains ? "" : "^", append = opts.contains ? "" : "$", source = `${prepend}(?:${state.output})${append}`;
-    if (state && state.negated === !0)
-      source = `^(?!${source}).*$`;
-    let regex = picomatch.toRegex(source, options);
-    if (returnState === !0)
-      regex.state = state;
-    return regex;
-  };
-  picomatch.makeRe = (input, options = {}, returnOutput = !1, returnState = !1) => {
-    if (!input || typeof input !== "string")
-      throw TypeError("Expected a non-empty string");
-    let parsed = { negated: !1, fastpaths: !0 };
-    if (options.fastpaths !== !1 && (input[0] === "." || input[0] === "*"))
-      parsed.output = parse5.fastpaths(input, options);
-    if (!parsed.output)
-      parsed = parse5(input, options);
-    return picomatch.compileRe(parsed, options, returnOutput, returnState);
-  };
-  picomatch.toRegex = (source, options) => {
-    try {
-      let opts = options || {};
-      return new RegExp(source, opts.flags || (opts.nocase ? "i" : ""));
-    } catch (err) {
-      if (options && options.debug === !0)
-        throw err;
-      return /$^/;
-    }
-  };
-  picomatch.constants = constants;
-  module.exports = picomatch;
-});
-
-// node_modules/picomatch/index.js
-var require_picomatch2 = __commonJS((exports, module) => {
-  var pico = require_picomatch(), utils = require_utils2();
-  function picomatch(glob, options, returnState = !1) {
-    if (options && (options.windows === null || options.windows === void 0))
-      options = { ...options, windows: utils.isWindows() };
-    return pico(glob, options, returnState);
-  }
-  Object.assign(picomatch, pico);
-  module.exports = picomatch;
-});
-
 // ij-mcp-proxy.ts
-import path8 from "path";
+import path6 from "path";
 import { cwd as cwd2, env as env2 } from "process";
 import { fileURLToPath as fileURLToPath2 } from "url";
 
@@ -21128,26 +19904,6 @@ import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
 import { Readable } from "stream";
 
-// node_modules/is-port-reachable/index.js
-import net from "net";
-async function isPortReachable(port, { host, timeout = 1000 } = {}) {
-  if (typeof host !== "string")
-    throw TypeError("Specify a `host`");
-  let promise3 = new Promise((resolve, reject) => {
-    let socket = new net.Socket, onError = () => {
-      socket.destroy(), reject();
-    };
-    socket.setTimeout(timeout), socket.once("error", onError), socket.once("timeout", onError), socket.connect(port, host, () => {
-      socket.end(), resolve();
-    });
-  });
-  try {
-    return await promise3, !0;
-  } catch {
-    return !1;
-  }
-}
-
 // node_modules/is-network-error/index.js
 var objectToString = Object.prototype.toString, isError = (value) => objectToString.call(value) === "[object Error]", errorMessages2 = /* @__PURE__ */ new Set([
   "network error",
@@ -22408,11 +21164,6 @@ class StreamableHTTPClientTransport {
 
 // stream-transport.ts
 var SESSION_NOT_FOUND_RE = /session not found/i;
-function resolveTimeout(timeoutMs) {
-  if (timeoutMs === void 0 || timeoutMs === null)
-    return;
-  return timeoutMs > 0 ? timeoutMs : void 0;
-}
 function isSessionNotFoundError(error51) {
   if (!error51)
     return !1;
@@ -22423,30 +21174,6 @@ function isSessionNotFoundError(error51) {
   if (typeof code === "number")
     return code === -32000 || code === 400 || code === 404 || code === 410;
   return !0;
-}
-function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
-  let seen = /* @__PURE__ */ new Set, candidates = [];
-  for (let port of preferredPorts || []) {
-    if (!Number.isFinite(port) || port <= 0)
-      continue;
-    if (seen.has(port))
-      continue;
-    seen.add(port), candidates.push({ port, kind: "preferred" });
-  }
-  let limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0, start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0;
-  for (let i = 0;i < limit; i += 1) {
-    let port = start + i;
-    if (port <= 0 || seen.has(port))
-      continue;
-    seen.add(port), candidates.push({ port, kind: "scan" });
-  }
-  return candidates;
-}
-function formatProbedPortList(candidates) {
-  return candidates.map((candidate) => String(candidate.port)).join(", ");
-}
-function buildEndpointNotFoundMessage(candidates) {
-  return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`;
 }
 function headersToObject(headers) {
   let result = {};
@@ -22620,27 +21347,7 @@ class StreamTransportImpl {
     if (this._connectPromise)
       return this._connectPromise;
     return this._connectPromise = pRetry(async () => {
-      let { explicitUrl, note, warn, preferredPorts, portScanStart, portScanLimit, buildUrl, probeHost } = this._options, targetUrl = explicitUrl;
-      if (!targetUrl) {
-        let candidates = normalizePortList(preferredPorts, portScanStart, portScanLimit);
-        if (candidates.length === 0)
-          throw Error("No MCP stream ports configured");
-        for (let candidate of candidates) {
-          let timeoutMs = candidate.kind === "preferred" ? this._options.connectTimeoutMs : this._options.scanTimeoutMs;
-          if (await isPortReachable(candidate.port, {
-            host: probeHost,
-            timeout: resolveTimeout(timeoutMs)
-          })) {
-            targetUrl = buildUrl(candidate.port);
-            break;
-          }
-        }
-        if (!targetUrl) {
-          if (warn)
-            warn(`No reachable MCP stream ports found during scan. Probed ports: ${formatProbedPortList(candidates)}`);
-          throw Error(buildEndpointNotFoundMessage(candidates));
-        }
-      }
+      let { url: targetUrl, note } = this._options;
       if (note)
         note(`Connecting to MCP stream ${targetUrl}`);
       let transport = new StreamableHTTPClientTransport(targetUrl, {
@@ -22707,40 +21414,8 @@ class StreamTransportImpl {
       this.onclose();
   }
 }
-function createStreamTransport({
-  explicitUrl,
-  requestHeaders,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts,
-  retryBaseDelayMs,
-  buildUrl,
-  note,
-  warn,
-  probeHost = "127.0.0.1"
-}) {
-  return new StreamTransportImpl({
-    explicitUrl,
-    requestHeaders,
-    preferredPorts,
-    portScanStart,
-    portScanLimit,
-    connectTimeoutMs,
-    scanTimeoutMs,
-    queueLimit,
-    queueWaitTimeoutMs,
-    retryAttempts,
-    retryBaseDelayMs,
-    buildUrl,
-    note,
-    warn,
-    probeHost
-  });
+function createStreamTransport(options) {
+  return new StreamTransportImpl(options);
 }
 
 // upstream.ts
@@ -23312,12 +21987,13 @@ function createProjectPathManager({
   };
 }
 
+// proxy-tools/handlers/rename.ts
+import path2 from "path";
+
 // proxy-tools/shared.ts
 import path from "path";
 var nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
-}), positiveIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
-  message: "must be a positive integer"
 });
 function parseWithMessage(schema, value, message) {
   let parsed = schema.safeParse(value);
@@ -23328,23 +22004,25 @@ function parseWithMessage(schema, value, message) {
 function requireString(value, label) {
   return parseWithMessage(nonEmptyStringSchema, value, `${label} must be a non-empty string`);
 }
-function toPositiveInt(value, fallback, label) {
-  if (value === void 0 || value === null)
-    return fallback;
-  return parseWithMessage(positiveIntSchema, value, `${label} must be a positive integer`);
-}
 function resolvePathInProject(projectPath, inputPath, label) {
   let rawPath = requireString(inputPath, label), absolute = path.isAbsolute(rawPath) ? path.normalize(rawPath) : path.resolve(projectPath, rawPath), relative = path.relative(projectPath, absolute);
   if (relative.startsWith("..") || path.isAbsolute(relative))
     throw Error(`${label} must be within the project root`);
   return { absolute, relative };
 }
-function normalizeEntryPath(projectPath, filePath) {
-  if (typeof filePath !== "string" || filePath === "")
-    return filePath;
-  if (path.isAbsolute(filePath))
-    return filePath;
-  return path.resolve(projectPath, filePath);
+function normalizeProjectRelativePath(projectPath, filePath) {
+  if (!filePath)
+    return "";
+  if (path.isAbsolute(filePath)) {
+    let relative = path.relative(projectPath, filePath);
+    if (!relative.startsWith("..") && !path.isAbsolute(relative))
+      return toPosixPath(relative);
+    return path.normalize(filePath);
+  }
+  return toPosixPath(path.normalize(filePath));
+}
+function toPosixPath(value) {
+  return value.replace(/\\/g, "/");
 }
 function extractTextFromResult(result) {
   if (!result)
@@ -23450,12 +22128,6 @@ function extractItemsFromValue(value) {
     return coerceItems(flattenResultsMap(resultsMap));
   return null;
 }
-function itemsToEntries(items) {
-  return items.map((item) => ({
-    filePath: item.filePath,
-    lineNumber: item.startLine
-  }));
-}
 function extractItems(result) {
   let structured = extractStructuredContent(result);
   return extractItemsFromValue(structured) ?? [];
@@ -23490,231 +22162,14 @@ function extractResultsMapFromValue(value) {
   }
   return results;
 }
-function extractResultsMap(result) {
-  let structured = extractStructuredContent(result);
-  return extractResultsMapFromValue(structured);
-}
-function extractFileList(result) {
-  let resultsMap = extractResultsMap(result);
-  if (resultsMap)
-    return extractFileListFromResults(resultsMap);
-  let structured = extractStructuredContent(result);
-  if (!structured)
-    return [];
-  if (Array.isArray(structured)) {
-    let items2 = extractItemsFromValue(structured);
-    if (items2)
-      return items2.map((item) => item.filePath);
-    return structured;
-  }
-  let structuredRecord = structured, items = extractItemsFromValue(structuredRecord);
-  if (items)
-    return items.map((item) => item.filePath);
-  if (Array.isArray(structuredRecord.files))
-    return structuredRecord.files;
-  return [];
-}
-function extractEntries(result) {
-  let resultsMap = extractResultsMap(result);
-  if (resultsMap)
-    return flattenResultsMap(resultsMap);
-  let structured = extractStructuredContent(result);
-  if (structured) {
-    let structuredRecord = structured;
-    if (Array.isArray(structuredRecord.entries))
-      return structuredRecord.entries;
-    if (Array.isArray(structuredRecord.results))
-      return structuredRecord.results;
-    let items = extractItemsFromValue(structuredRecord);
-    if (items)
-      return itemsToEntries(items);
-    if (Array.isArray(structured)) {
-      let fromItems = extractItemsFromValue(structured);
-      if (fromItems)
-        return itemsToEntries(fromItems);
-      return structured;
-    }
-  }
-  return [];
-}
 function flattenResultsMap(results) {
   let entries = [];
   for (let groupEntries of Object.values(results))
     entries.push(...groupEntries);
   return entries;
 }
-function extractFileListFromResults(results) {
-  let files = [];
-  for (let entry of flattenResultsMap(results))
-    if (typeof entry.filePath === "string" && entry.filePath.length > 0)
-      files.push(entry.filePath);
-  return files;
-}
-
-// proxy-tools/handlers/lint-files.ts
-async function handleLintFilesTool(args, callUpstreamTool, capabilities) {
-  let files = normalizeFiles(args), minSeverity = normalizeMinSeverity(args.min_severity), timeout = toPositiveInt(args.timeout, void 0, "timeout");
-  if (capabilities.hasLintFilesFiles) {
-    let result = await callUpstreamTool("lint_files", {
-      files,
-      min_severity: minSeverity,
-      ...timeout !== void 0 ? { timeout } : {}
-    }), structured = extractStructuredContent(result);
-    if (structured == null)
-      throw Error("Upstream lint_files returned unexpected result");
-    return JSON.stringify(structured);
-  }
-  if (capabilities.hasLintFilesFilePaths) {
-    let result = await callUpstreamTool("lint_files", {
-      file_paths: files,
-      min_severity: minSeverity,
-      ...timeout !== void 0 ? { timeout } : {}
-    }), structured = extractStructuredContent(result);
-    if (structured == null)
-      throw Error("Upstream lint_files returned unexpected result");
-    return JSON.stringify(structured);
-  }
-  if (!capabilities.supportsLintFiles)
-    throw Error("lint_files is not supported by this IDE version");
-  return await lintFilesLegacy(files, minSeverity, timeout, callUpstreamTool);
-}
-function normalizeFiles(args) {
-  if (Object.prototype.hasOwnProperty.call(args, "file_paths"))
-    throw Error("file_paths is no longer supported; use files");
-  let value = args.files;
-  if (!Array.isArray(value))
-    throw Error("files must be an array of non-empty strings");
-  let result = [], seen = /* @__PURE__ */ new Set;
-  for (let rawPath of value) {
-    if (typeof rawPath !== "string" || rawPath.trim().length === 0)
-      throw Error("files must contain non-empty strings");
-    let normalizedPath = rawPath.trim();
-    if (seen.has(normalizedPath))
-      continue;
-    seen.add(normalizedPath), result.push(normalizedPath);
-  }
-  if (result.length === 0)
-    throw Error("files must contain at least one path");
-  return result;
-}
-function normalizeMinSeverity(value) {
-  if (value === void 0 || value === null)
-    return "warning";
-  let normalized = requireString(value, "min_severity").trim().toLowerCase();
-  if (normalized === "warning" || normalized === "error")
-    return normalized;
-  throw Error("min_severity must be one of: warning, error");
-}
-async function lintFilesLegacy(filePaths, minSeverity, timeout, callUpstreamTool) {
-  let startedAt = Date.now(), items = [], more = !1;
-  for (let filePath of filePaths) {
-    let remainingTimeout = timeout === void 0 ? void 0 : Math.max(0, timeout - (Date.now() - startedAt));
-    if (remainingTimeout !== void 0 && remainingTimeout <= 0) {
-      more = !0;
-      break;
-    }
-    let result = await callUpstreamTool("get_file_problems", {
-      filePath,
-      errorsOnly: minSeverity === "error",
-      ...remainingTimeout !== void 0 ? { timeout: remainingTimeout } : {}
-    }), item = parseLegacyLintFileResult(result, filePath);
-    if (item.problems.length > 0)
-      items.push(item);
-    if (item.timedOut === !0) {
-      more = !0;
-      break;
-    }
-  }
-  return JSON.stringify(more ? { items, more: !0 } : { items });
-}
-function parseLegacyLintFileResult(result, fallbackPath) {
-  let structured = extractStructuredContent(result);
-  if (!isRecord2(structured))
-    throw Error("Upstream get_file_problems returned unexpected result");
-  let filePath = typeof structured.filePath === "string" && structured.filePath.length > 0 ? structured.filePath : fallbackPath, problems = (Array.isArray(structured.errors) ? structured.errors : []).map(coerceLegacyProblem).filter((problem) => problem != null), timedOut = structured.timedOut === !0 ? !0 : void 0;
-  return {
-    filePath,
-    problems,
-    ...timedOut ? { timedOut } : {}
-  };
-}
-function coerceLegacyProblem(value) {
-  if (!isRecord2(value))
-    return null;
-  let severity = typeof value.severity === "string" ? value.severity : "", description = typeof value.description === "string" ? value.description : "", lineText = typeof value.lineContent === "string" ? value.lineContent : typeof value.lineText === "string" ? value.lineText : "", problem = {
-    severity,
-    description,
-    lineText
-  };
-  if (typeof value.line === "number")
-    problem.line = value.line;
-  if (typeof value.column === "number")
-    problem.column = value.column;
-  return problem;
-}
-function isRecord2(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-// proxy-tools/handlers/reformat-file.ts
-async function handleReformatFileTool(args, callUpstreamTool, capabilities) {
-  if (!capabilities.supportsReformatFile)
-    throw Error("reformat_file is not supported by this IDE version");
-  let files = normalizeReformatFileFiles(args);
-  if (capabilities.hasReformatFileFiles)
-    return await callNativeFilesReformat(files, callUpstreamTool);
-  if (capabilities.hasReformatFilePaths)
-    return await callNativePathsReformat(files, callUpstreamTool);
-  return await callLegacyReformat(files, callUpstreamTool);
-}
-function normalizeReformatFileArgs(args) {
-  return {
-    ...args,
-    files: normalizeReformatFileFiles(args)
-  };
-}
-function normalizeReformatFileFiles(args) {
-  if (Object.prototype.hasOwnProperty.call(args, "path"))
-    throw Error("path is no longer supported; use files");
-  if (Object.prototype.hasOwnProperty.call(args, "paths"))
-    throw Error("paths is no longer supported; use files");
-  let rawFiles = args.files;
-  if (!Array.isArray(rawFiles))
-    throw Error("files must be an array of non-empty strings");
-  let result = [], seen = /* @__PURE__ */ new Set;
-  for (let rawFile of rawFiles)
-    addFile(rawFile, result, seen);
-  if (result.length === 0)
-    throw Error("files must contain at least one path");
-  return result;
-}
-function addFile(value, result, seen) {
-  let path2 = requireString(value, "files").trim();
-  if (path2.length === 0)
-    throw Error("files must contain non-empty strings");
-  if (seen.has(path2))
-    return;
-  seen.add(path2), result.push(path2);
-}
-async function callNativeFilesReformat(files, callUpstreamTool) {
-  let result = await callUpstreamTool("reformat_file", { files });
-  return extractTextFromResult(result) ?? "ok";
-}
-async function callNativePathsReformat(files, callUpstreamTool) {
-  let result = await callUpstreamTool("reformat_file", { paths: files });
-  return extractTextFromResult(result) ?? "ok";
-}
-async function callLegacyReformat(files, callUpstreamTool) {
-  let lastText = null;
-  for (let file2 of files) {
-    let result = await callUpstreamTool("reformat_file", { path: file2 });
-    lastText = extractTextFromResult(result) ?? lastText;
-  }
-  return lastText ?? "ok";
-}
 
 // proxy-tools/handlers/rename.ts
-import path2 from "path";
 async function handleRenameTool(args, projectPath, callUpstreamTool) {
   let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
     pathInProject: relative,
@@ -23726,550 +22181,18 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   return `Renamed ${symbolName} to ${newName} in ${path2.resolve(projectPath, relative)}`;
 }
 
-// proxy-tools/search-in-files.ts
-async function searchInFiles(args, callUpstreamTool) {
-  let toolName = typeof args.regexPattern === "string" ? "search_in_files_by_regex" : "search_in_files_by_text", result = await callUpstreamTool(toolName, args), entries = extractEntries(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
-  return {
-    entries,
-    probablyHasMoreMatchingEntries: structuredRecord?.probablyHasMoreMatchingEntries === !0,
-    timedOut: structuredRecord?.timedOut === !0
-  };
-}
-
-// workarounds.ts
-var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
-var WORKAROUND_FIXED_IN = {
-  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
-};
-function shouldApplyWorkaround(key, rawVersion) {
-  if (isWorkaroundDisabled(key))
-    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
-  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
-  if (!fixedInRaw)
-    return !0;
-  if (!rawVersion)
-    return !0;
-  let ideVersion = parseIdeVersion(rawVersion), fixedSpec = parseVersionSpec(fixedInRaw);
-  if (!fixedSpec)
-    return !0;
-  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
-  if (!currentParts)
-    return !0;
-  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
-    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
-  return !0;
-}
-function isWorkaroundDisabled(key) {
-  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
-  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
-    return !0;
-  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
-  if (!disabledKeys)
-    return !1;
-  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
-}
-function logDebug(message) {
-  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
-  if (!enabled || enabled === "0" || enabled === "false")
-    return;
-  process.stderr.write(`[ij-mcp-proxy] ${message}
-`);
-}
-function parseIdeVersion(raw) {
-  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
-  if (!build) {
-    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
-    if (snapshotMatch) {
-      let train = Number.parseInt(snapshotMatch[1], 10);
-      if (!Number.isNaN(train))
-        build = [train, SNAPSHOT_BUILD_PART];
-    }
-  }
-  return {
-    raw,
-    full: full ?? void 0,
-    build: build ?? void 0
-  };
-}
-function parseVersionSpec(version2) {
-  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
-  if (snapshotMatch) {
-    let train = Number.parseInt(snapshotMatch[1], 10);
-    if (!Number.isNaN(train))
-      return { parts: [train], kind: "build" };
-  }
-  let match = version2.match(ANY_VERSION_RE);
-  if (!match)
-    return null;
-  let parts = parseVersionParts(match[0]);
-  if (!parts)
-    return null;
-  let kind = parts[0] >= 1000 ? "full" : "build";
-  return { parts, kind };
-}
-function extractVersionParts(raw, regex) {
-  let match = raw.match(regex);
-  if (!match)
-    return null;
-  return parseVersionParts(match[0]);
-}
-function parseVersionParts(value) {
-  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.some((part) => Number.isNaN(part)))
-    return null;
-  return parts;
-}
-function deriveBuildFromFull(full) {
-  if (!full || full.length < 2)
-    return null;
-  let year = full[0], minor = full[1];
-  if (!Number.isFinite(year) || !Number.isFinite(minor))
-    return null;
-  if (year < 2000 || year > 2100)
-    return null;
-  return [(year - 2000) * 10 + minor];
-}
-function compareVersionParts(left, right) {
-  let maxLength = Math.max(left.length, right.length);
-  for (let i = 0;i < maxLength; i += 1) {
-    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
-    if (leftValue !== rightValue)
-      return leftValue - rightValue;
-  }
-  return 0;
-}
-
-// proxy-tools/handlers/search-shared.ts
-import path3 from "path";
-
-// proxy-tools/handlers/search-constants.ts
-var DEFAULT_MAX_RESULTS = 1000, MAX_RESULTS_UPPER_BOUND = 5000, SEARCH_SCOPE_MULTIPLIER = 5;
-
-// proxy-tools/handlers/search-shared.ts
-function normalizeLimit(value, fallback = DEFAULT_MAX_RESULTS) {
-  let parsed = toPositiveInt(value, fallback, "limit") ?? fallback;
-  return Math.min(parsed, MAX_RESULTS_UPPER_BOUND);
-}
-function serializeSearchResult(payload) {
-  let result = { items: payload.items };
-  if (payload.more)
-    result.more = !0;
-  return JSON.stringify(result);
-}
-function normalizeItems(items, projectPath, maxResults, includeDetails) {
-  let seen = /* @__PURE__ */ new Set, normalized = [];
-  for (let item of items) {
-    let rawPath = item.filePath;
-    if (!rawPath)
-      continue;
-    let normalizedPath = normalizeProjectRelativePath(projectPath, rawPath);
-    if (!normalizedPath)
-      continue;
-    let normalizedItem = { filePath: normalizedPath };
-    if (includeDetails && typeof item.startLine === "number") {
-      if (normalizedItem.startLine = item.startLine, typeof item.startColumn === "number")
-        normalizedItem.startColumn = item.startColumn;
-      if (typeof item.endLine === "number")
-        normalizedItem.endLine = item.endLine;
-      if (typeof item.endColumn === "number")
-        normalizedItem.endColumn = item.endColumn;
-    }
-    let key = JSON.stringify(normalizedItem);
-    if (seen.has(key))
-      continue;
-    if (seen.add(key), normalized.push(normalizedItem), normalized.length >= maxResults)
-      break;
-  }
-  return normalized;
-}
-function normalizeItemsFromEntries(entries, projectPath, maxResults, includeDetails) {
-  let items = [], seen = /* @__PURE__ */ new Set;
-  for (let entry of entries) {
-    if (!entry || typeof entry.filePath !== "string" || entry.filePath === "")
-      continue;
-    let normalizedPath = normalizeProjectRelativePath(projectPath, entry.filePath);
-    if (!normalizedPath)
-      continue;
-    let item = { filePath: normalizedPath };
-    if (includeDetails && typeof entry.lineNumber === "number")
-      item.startLine = entry.lineNumber;
-    let key = JSON.stringify(item);
-    if (seen.has(key))
-      continue;
-    if (seen.add(key), items.push(item), items.length >= maxResults)
-      break;
-  }
-  return items;
-}
-function normalizeItemsFromFiles(files, projectPath, maxResults) {
-  let items = [], seen = /* @__PURE__ */ new Set;
-  for (let file2 of files) {
-    if (file2 === "")
-      continue;
-    let normalizedPath = normalizeProjectRelativePath(projectPath, file2);
-    if (!normalizedPath)
-      continue;
-    if (seen.has(normalizedPath))
-      continue;
-    if (seen.add(normalizedPath), items.push({ filePath: normalizedPath }), items.length >= maxResults)
-      break;
-  }
-  return items;
-}
-function resolveMoreFlag(result, itemCount, maxResults) {
-  let structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
-  if (structuredRecord?.more === !0)
-    return !0;
-  if (structuredRecord?.more === !1)
-    return !1;
-  if (structuredRecord?.probablyHasMoreMatchingEntries === !0 || structuredRecord?.timedOut === !0)
-    return !0;
-  return itemCount >= maxResults;
-}
-function normalizeProjectRelativePath(projectPath, filePath) {
-  if (!filePath)
-    return "";
-  if (path3.isAbsolute(filePath)) {
-    let relative = path3.relative(projectPath, filePath);
-    if (!relative.startsWith("..") && !path3.isAbsolute(relative))
-      return toPosixPath(relative);
-    return path3.normalize(filePath);
-  }
-  return toPosixPath(path3.normalize(filePath));
-}
-function toPosixPath(value) {
-  return value.replace(/\\/g, "/");
-}
-
-// proxy-tools/handlers/search-scope.ts
-var import_picomatch = __toESM(require_picomatch2(), 1);
-import path4 from "path";
-import { statSync } from "fs";
-function buildPathScope(projectPath, rawPaths) {
-  if (rawPaths === void 0 || rawPaths === null)
-    return { scope: null, normalizedPaths: null };
-  if (!Array.isArray(rawPaths))
-    throw Error("paths must be an array of strings");
-  let normalizedEntries = [];
-  for (let entry of rawPaths) {
-    if (entry === void 0 || entry === null)
-      continue;
-    if (typeof entry !== "string")
-      throw Error("paths must be an array of strings");
-    let normalized = normalizePattern(entry, projectPath);
-    if (normalized)
-      normalizedEntries.push(normalized);
-  }
-  if (normalizedEntries.length === 0)
-    return { scope: null, normalizedPaths: null };
-  let normalizedPaths = normalizedEntries.map((entry) => entry.isExclude ? `!${entry.pattern}` : entry.pattern), includePatterns = normalizedEntries.filter((entry) => !entry.isExclude).map((entry) => entry.pattern), excludePatterns = normalizedEntries.filter((entry) => entry.isExclude).map((entry) => entry.pattern), effectiveIncludes = includePatterns.length > 0 ? includePatterns : ["**/*"], includeMatchers = effectiveIncludes.map(createMatcher), excludeMatchers = excludePatterns.map(createMatcher), commonDirectory = computeCommonDirectory(effectiveIncludes);
-  return {
-    scope: {
-      includeMatchers,
-      excludeMatchers,
-      commonDirectory
-    },
-    normalizedPaths
-  };
-}
-function normalizeGlobPattern(raw, projectPath, originalPattern = raw) {
-  let value = raw.trim();
-  if (value === "")
-    throw Error("Glob pattern is empty");
-  value = value.replace(/\\/g, "/");
-  while (value.startsWith("./"))
-    value = value.slice(2);
-  if (value.endsWith("/"))
-    value = value.replace(/\/+$/, ""), value = value === "" ? "**" : `${value}/**`;
-  if (!value.includes("/"))
-    value = `**/${value}`;
-  let normalized = normalizePathPattern(value, projectPath, originalPattern);
-  if (normalized === "")
-    throw Error(`Invalid glob pattern: ${originalPattern}`);
-  return normalized;
-}
-function resolveSearchRoot(projectPath, scope, globPattern) {
-  let candidates = [];
-  if (scope?.commonDirectory)
-    candidates.push(scope.commonDirectory);
-  if (globPattern) {
-    let prefix = extractDirectoryPrefix(globPattern);
-    if (prefix)
-      candidates.push(prefix);
-  }
-  for (let candidate of candidates) {
-    if (!candidate)
-      continue;
-    let absolute = path4.resolve(projectPath, candidate);
-    if (isDirectory(absolute))
-      return candidate;
-  }
-  return null;
-}
-function filterEntriesByScope(entries, projectPath, scope) {
-  return entries.filter((entry) => {
-    let relative = resolveRelativePath(projectPath, entry.filePath);
-    if (!relative)
-      return !1;
-    return matchesScope(scope, relative);
-  });
-}
-function filterEntriesByDirectory(entries, projectPath, directoryToSearch) {
-  let absoluteDir = path4.resolve(projectPath, directoryToSearch);
-  return entries.filter((entry) => {
-    let absolutePath = resolveAbsolutePath(projectPath, entry.filePath);
-    return absolutePath ? isWithinDirectory(absolutePath, absoluteDir) : !1;
-  });
-}
-function filterFilesByScope(files, projectPath, scope) {
-  return files.filter((filePath) => {
-    let relative = resolveRelativePath(projectPath, filePath);
-    if (!relative)
-      return !1;
-    return matchesScope(scope, relative);
-  });
-}
-function expandLimit(limit, scope) {
-  if (!scope)
-    return limit;
-  return Math.min(limit * SEARCH_SCOPE_MULTIPLIER, MAX_RESULTS_UPPER_BOUND);
-}
-function normalizePattern(raw, projectPath) {
-  let value = raw.trim();
-  if (value === "")
-    return null;
-  let isExclude = !1;
-  if (value.startsWith("!")) {
-    if (isExclude = !0, value = value.slice(1).trim(), value === "")
-      throw Error("Exclude pattern is empty");
-  }
-  return { pattern: normalizeGlobPattern(value, projectPath, raw), isExclude };
-}
-function normalizePathPattern(pattern, projectPath, originalPattern) {
-  let globIndex = indexOfGlobChar(pattern), prefix = globIndex < 0 ? pattern : pattern.slice(0, globIndex), prefixTrimmed = prefix.replace(/\/+$/, "");
-  if (prefixTrimmed === "") {
-    if (isAbsolutePattern(pattern))
-      throw Error(`Specified path '${originalPattern}' points outside the project directory`);
-    return pattern;
-  }
-  let absolutePrefix = path4.isAbsolute(prefixTrimmed) ? path4.normalize(prefixTrimmed) : path4.resolve(projectPath, prefixTrimmed);
-  if (!isWithinProject(projectPath, absolutePrefix))
-    throw Error(`Specified path '${originalPattern}' points outside the project directory`);
-  let relativePrefix = toPosixPath2(path4.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
-  if (relativePrefix === "")
-    return suffix;
-  if (suffix === "")
-    return relativePrefix;
-  return `${relativePrefix}/${suffix}`;
-}
-function isAbsolutePattern(pattern) {
-  if (pattern.startsWith("/"))
-    return !0;
-  return /^[A-Za-z]:\//.test(pattern);
-}
-function indexOfGlobChar(pattern) {
-  for (let i = 0;i < pattern.length; i += 1) {
-    let value = pattern[i];
-    if (value === "*" || value === "?" || value === "[" || value === "]" || value === "{" || value === "}")
-      return i;
-  }
-  return -1;
-}
-function computeCommonDirectory(patterns) {
-  let prefixes = patterns.map(extractDirectoryPrefix).filter((value) => Boolean(value));
-  if (prefixes.length === 0)
-    return null;
-  let segments = prefixes.map((value) => value.split("/").filter(Boolean)), common = segments[0];
-  for (let parts of segments.slice(1)) {
-    let max = Math.min(common.length, parts.length), index = 0;
-    while (index < max && common[index] === parts[index])
-      index += 1;
-    if (index === 0)
-      return null;
-    common = common.slice(0, index);
-  }
-  if (common.length === 0)
-    return null;
-  return path4.normalize(common.join("/"));
-}
-function extractDirectoryPrefix(pattern) {
-  let globIndex = indexOfGlobChar(pattern), trimmed = (globIndex < 0 ? pattern : pattern.slice(0, globIndex)).replace(/\/+$/, "");
-  if (trimmed === "")
-    return null;
-  if (globIndex < 0) {
-    let slashIndex = trimmed.lastIndexOf("/");
-    if (slashIndex < 0)
-      return null;
-    let dir = trimmed.slice(0, slashIndex);
-    return dir === "" ? null : dir;
-  }
-  return trimmed;
-}
-function createMatcher(pattern) {
-  let nocase = path4.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
-  return (candidate) => matcher(candidate);
-}
-function isDirectory(candidatePath) {
-  try {
-    return statSync(candidatePath).isDirectory();
-  } catch {
-    return !1;
-  }
-}
-function resolveRelativePath(projectPath, filePath) {
-  let absolute = resolveAbsolutePath(projectPath, filePath);
-  if (!absolute)
-    return null;
-  let relative = path4.relative(projectPath, absolute);
-  if (relative.startsWith("..") || path4.isAbsolute(relative))
-    return null;
-  return toPosixPath2(relative);
-}
-function resolveAbsolutePath(projectPath, filePath) {
-  let resolved = normalizeEntryPath(projectPath, filePath);
-  if (typeof resolved !== "string" || resolved === "")
-    return null;
-  return path4.normalize(resolved);
-}
-function matchesScope(scope, relativePosix) {
-  if (!scope.includeMatchers.some((matcher) => matcher(relativePosix)))
-    return !1;
-  return scope.excludeMatchers.every((matcher) => !matcher(relativePosix));
-}
-function isWithinProject(projectPath, candidatePath) {
-  let relative = path4.relative(projectPath, candidatePath);
-  return relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative);
-}
-function isWithinDirectory(filePath, directoryPath) {
-  let relative = path4.relative(directoryPath, filePath);
-  return relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative);
-}
-function toPosixPath2(value) {
-  return value.replace(/\\/g, "/");
-}
-
-// proxy-tools/handlers/search-text.ts
-async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabilities) {
-  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
-  if (capabilities.hasSearchText) {
-    let result = await callUpstreamTool("search_text", {
-      q: query,
-      ...normalizedPaths ? { paths: normalizedPaths } : {},
-      limit
-    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
-    return serializeSearchResult({ items, more });
-  }
-  if (!capabilities.supportsText)
-    throw Error("text search is not supported by this IDE version");
-  return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
-}
-async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities, shouldApplyWorkaround2 = () => !0) {
-  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
-  if (capabilities.hasSearchRegex) {
-    let result = await callUpstreamTool("search_regex", {
-      q: query,
-      ...normalizedPaths ? { paths: normalizedPaths } : {},
-      limit
-    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
-    return serializeSearchResult({ items, more });
-  }
-  if (!capabilities.supportsRegex)
-    throw Error("regex search is not supported by this IDE version");
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2);
-}
-async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
-  let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
-    searchText: query,
-    directoryToSearch: directoryToSearch ?? void 0,
-    caseSensitive: !0,
-    maxUsageCount: requestLimit
-  }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
-  return serializeSearchResult({ items, more });
-}
-async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2) {
-  let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
-    regexPattern: query,
-    directoryToSearch: directoryToSearch ?? void 0,
-    caseSensitive: !0,
-    maxUsageCount: requestLimit
-  }, callUpstreamTool), filtered = entries;
-  if (directoryToSearch && shouldApplyWorkaround2("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
-    filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
-  if (scope)
-    filtered = filterEntriesByScope(filtered, projectPath, scope);
-  let items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
-  return serializeSearchResult({ items, more });
-}
-// proxy-tools/handlers/search-file.ts
-async function handleSearchFileTool(args, projectPath, callUpstreamTool, capabilities) {
-  let query = requireString(args.q, "q").trim(), includeExcluded = resolveIncludeExcluded(args), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
-  if (capabilities.hasSearchFile) {
-    let result = await callUpstreamTool("search_file", {
-      q: query,
-      ...normalizedPaths ? { paths: normalizedPaths } : {},
-      ...includeExcluded ? { includeExcluded: !0 } : {},
-      limit
-    }), items = normalizeItems(extractItems(result), projectPath, limit, !1), more = resolveMoreFlag(result, items.length, limit);
-    return serializeSearchResult({ items, more });
-  }
-  if (!capabilities.supportsFile)
-    throw Error("file search is not supported by this IDE version");
-  return await searchFilesLegacy(query, scope, includeExcluded, limit, projectPath, callUpstreamTool);
-}
-async function searchFilesLegacy(query, scope, includeExcluded, limit, projectPath, callUpstreamTool) {
-  let normalizedPattern = normalizeGlobPattern(query, projectPath), requestLimit = expandLimit(limit, scope), basePath = resolveSearchRoot(projectPath, scope, normalizedPattern), result = await findFilesByGlob(normalizedPattern, requestLimit, basePath, callUpstreamTool, includeExcluded), filtered = scope ? filterFilesByScope(result.files, projectPath, scope) : result.files, items = normalizeItemsFromFiles(filtered, projectPath, limit), more = result.timedOut || result.probablyHasMoreMatchingFiles || filtered.length > limit;
-  return serializeSearchResult({ items, more });
-}
-async function findFilesByGlob(pattern, limit, basePath, callUpstreamTool, includeExcluded) {
-  let toolArgs = { globPattern: pattern, fileCountLimit: limit };
-  if (basePath)
-    toolArgs.subDirectoryRelativePath = basePath;
-  if (includeExcluded)
-    toolArgs.addExcluded = !0;
-  let result = await callUpstreamTool("find_files_by_glob", toolArgs);
-  return extractFilesResult(result);
-}
-function resolveIncludeExcluded(args) {
-  let raw = args.includeExcluded;
-  if (raw === void 0 || raw === null)
-    return !1;
-  if (typeof raw !== "boolean")
-    throw Error("includeExcluded must be a boolean");
-  return raw;
-}
-function extractFilesResult(result) {
-  let files = extractFileList(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
-  return {
-    files,
-    probablyHasMoreMatchingFiles: structuredRecord?.probablyHasMoreMatchingFiles === !0,
-    timedOut: structuredRecord?.timedOut === !0
-  };
-}
-// proxy-tools/handlers/search-symbol.ts
-async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capabilities) {
-  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { normalizedPaths } = buildPathScope(projectPath, args.paths);
-  if (capabilities.hasSearchSymbol) {
-    let result = await callUpstreamTool("search_symbol", {
-      q: query,
-      ...normalizedPaths ? { paths: normalizedPaths } : {},
-      limit
-    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
-    return serializeSearchResult({ items, more });
-  }
-  throw Error("symbol search is not supported by this IDE version");
-}
 // proxy-tools/container-handlers.ts
-import path6 from "path";
+import path4 from "path";
 
 // container-session.ts
 import { readFileSync } from "fs";
-import path5 from "path";
+import path3 from "path";
 import { cwd, env } from "process";
 import { fileURLToPath } from "url";
 var CONTAINER_SESSION_FILE = ".container-sessions.jsonl";
 function scriptDir() {
   try {
-    return path5.dirname(fileURLToPath(import.meta.url));
+    return path3.dirname(fileURLToPath(import.meta.url));
   } catch {
     return cwd();
   }
@@ -24285,7 +22208,7 @@ function detectContainerSession(projectPath) {
   return null;
 }
 function readSessionFromFile(dir, targetSessionId) {
-  let filePath = path5.join(dir, CONTAINER_SESSION_FILE);
+  let filePath = path3.join(dir, CONTAINER_SESSION_FILE);
   try {
     let lines = readFileSync(filePath, "utf-8").split(`
 `).filter((l) => l.trim()), lastConfig = null;
@@ -24331,7 +22254,7 @@ function resolveContainerFilePath(filePath, session, projectPath) {
     return session.workspacePath + "/" + posixFilePath.substring(posixProjectPath.length + 1);
   if (posixFilePath === posixProjectPath)
     return session.workspacePath;
-  if (!path6.isAbsolute(filePath))
+  if (!path4.isAbsolute(filePath))
     return toContainerPath(session.workspacePath, posixFilePath);
   throw Error(`Refusing to resolve absolute path '${filePath}' \u2014 not under session workspace '${session.workspacePath}' or project path '${projectPath}'. In container mode paths must remain inside the workspace mount.`);
 }
@@ -24446,39 +22369,6 @@ function createSearchFileSchema() {
     }
   }, base.required);
 }
-function createSearchSymbolSchema() {
-  return createSearchSchema("Symbol query text (class, method, field, etc.).");
-}
-function createLintFilesSchema() {
-  return objectSchema({
-    files: {
-      type: "array",
-      description: "List of project-relative file paths to analyze. Duplicate paths are ignored after normalization.",
-      items: {
-        type: "string"
-      }
-    },
-    min_severity: {
-      type: "string",
-      description: "Minimum severity to include: warning or error. Defaults to warning."
-    },
-    timeout: {
-      type: "number",
-      description: "Timeout in milliseconds for the full batch."
-    }
-  }, ["files"]);
-}
-function createReformatFileSchema() {
-  return objectSchema({
-    files: {
-      type: "array",
-      description: "List of project-relative file paths to reformat. Duplicate paths are ignored after normalization.",
-      items: {
-        type: "string"
-      }
-    }
-  }, ["files"]);
-}
 function createRenameSchema() {
   return objectSchema({
     pathInProject: {
@@ -24499,10 +22389,8 @@ function createRenameSchema() {
 // proxy-tools/registry.ts
 var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([
   "read_file",
-  "get_file_text_by_path",
   "apply_patch",
   "create_new_file",
-  "replace_text_in_file",
   "list_dir",
   "list_directory_tree",
   "container_read_file",
@@ -24512,11 +22400,7 @@ var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([
   "execute_tool",
   "skill_search"
 ]), EXTRA_REPLACED_TOOL_NAMES = [
-  "search_in_files_by_text",
-  "search_in_files_by_regex",
-  "find_files_by_glob",
-  "find_files_by_name_keyword",
-  "search"
+  "get_file_problems"
 ], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.", READ_ONLY_TOOL_ANNOTATIONS = { readOnlyHint: !0, openWorldHint: !1 };
 function resolveToolDescription(description, context) {
   return typeof description === "function" ? description(context) : description;
@@ -24553,66 +22437,37 @@ var TOOL_VARIANTS = [
     name: "search_text",
     description: "Search for a text substring in project files.",
     schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities);
+    handlerFactory: ({ projectPath, callUpstreamToolRaw, containerSession }) => {
+      if (!containerSession)
+        throw Error("search_text is proxied only in container mode");
+      return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession);
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["search_text"],
-    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchText && searchCapabilities.supportsText
+    expose: ({ containerSession }) => containerSession != null
   },
   {
     name: "search_regex",
     description: "Search for a regular expression in project files.",
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, shouldApplyWorkaround: shouldApplyWorkaround2, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround2);
+    handlerFactory: ({ projectPath, callUpstreamToolRaw, containerSession }) => {
+      if (!containerSession)
+        throw Error("search_regex is proxied only in container mode");
+      return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession);
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["search_regex"],
-    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+    expose: ({ containerSession }) => containerSession != null
   },
   {
     name: "search_file",
     description: "Search for files using a glob pattern.",
     schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession }) => {
-      if (containerSession)
-        return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession);
-      return (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities);
+    handlerFactory: ({ projectPath, callUpstreamToolRaw, containerSession }) => {
+      if (!containerSession)
+        throw Error("search_file is proxied only in container mode");
+      return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession);
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["search_file"],
-    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
-  },
-  {
-    name: "search_symbol",
-    description: "Search for symbols (classes, methods, fields) by name.",
-    schemaFactory: () => createSearchSymbolSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["search_symbol"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
-  },
-  {
-    name: "lint_files",
-    description: "Analyze several files and return per-file problems, including timed-out file entries when a batch is incomplete.",
-    schemaFactory: () => createLintFilesSchema(),
-    handlerFactory: ({ callUpstreamTool, analysisCapabilities }) => (args) => handleLintFilesTool(args, callUpstreamTool, analysisCapabilities),
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ["get_file_problems"],
-    expose: ({ analysisCapabilities }) => !analysisCapabilities.hasLintFilesFiles && analysisCapabilities.supportsLintFiles
-  },
-  {
-    name: "reformat_file",
-    description: "Reformats the specified files in the JetBrains IDE.",
-    schemaFactory: () => createReformatFileSchema(),
-    handlerFactory: ({ callUpstreamTool, formattingCapabilities }) => (args) => handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
-    upstreamNames: ["reformat_file"],
-    expose: ({ formattingCapabilities }) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
+    expose: ({ containerSession }) => containerSession != null
   },
   {
     name: "rename",
@@ -24668,94 +22523,25 @@ function getReplacedToolNames() {
 }
 
 // proxy-tools/tooling.ts
-var DISABLE_NEW_SEARCH_ENV = "JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH";
-function isEnvFlagEnabled(name) {
-  let raw = process.env[name];
-  if (!raw)
-    return !1;
-  let normalized = raw.trim().toLowerCase();
-  return normalized !== "" && normalized !== "0" && normalized !== "false";
-}
-function resolveSearchCapabilities(upstreamTools) {
-  let names = /* @__PURE__ */ new Set;
-  for (let tool of upstreamTools ?? []) {
-    let name = typeof tool?.name === "string" ? tool.name : "";
-    if (name)
-      names.add(name);
-  }
-  let disableNewSearch = isEnvFlagEnabled(DISABLE_NEW_SEARCH_ENV), hasToolInfo = (upstreamTools ?? []).length > 0, hasSearchText = !disableNewSearch && names.has("search_text"), hasSearchRegex = !disableNewSearch && names.has("search_regex"), hasSearchFile = !disableNewSearch && names.has("search_file"), hasSearchSymbol = names.has("search_symbol"), supportsText = hasSearchText || (hasToolInfo ? names.has("search_in_files_by_text") : !0), supportsRegex = hasSearchRegex || (hasToolInfo ? names.has("search_in_files_by_regex") : !0), supportsFile = hasSearchFile || (hasToolInfo ? names.has("find_files_by_glob") : !0);
-  return { capabilities: {
-    hasSearchText,
-    hasSearchRegex,
-    hasSearchFile,
-    hasSearchSymbol,
-    supportsSymbol: hasSearchSymbol,
-    supportsText,
-    supportsRegex,
-    supportsFile
-  } };
-}
-function resolveAnalysisCapabilities(upstreamTools) {
-  let names = /* @__PURE__ */ new Set, hasLintFiles = !1, hasLintFilesFiles = !1, hasLintFilesFilePaths = !1;
-  for (let tool of upstreamTools ?? []) {
-    let name = typeof tool?.name === "string" ? tool.name : "";
-    if (name)
-      names.add(name);
-    if (name !== "lint_files")
-      continue;
-    hasLintFiles = !0;
-    let properties = tool.inputSchema?.properties;
-    if (properties && typeof properties === "object")
-      hasLintFilesFiles = hasLintFilesFiles || Object.prototype.hasOwnProperty.call(properties, "files"), hasLintFilesFilePaths = hasLintFilesFilePaths || Object.prototype.hasOwnProperty.call(properties, "file_paths");
-  }
-  return {
-    capabilities: {
-      hasLintFiles,
-      hasLintFilesFiles,
-      hasLintFilesFilePaths,
-      supportsLintFiles: hasLintFiles || names.has("get_file_problems")
-    }
-  };
-}
-function resolveFormattingCapabilities(upstreamTools) {
-  let hasReformatFile = !1, hasReformatFileFiles = !1, hasReformatFilePaths = !1;
-  for (let tool of upstreamTools ?? []) {
-    if (tool?.name !== "reformat_file")
-      continue;
-    hasReformatFile = !0;
-    let properties = tool.inputSchema?.properties;
-    if (properties && typeof properties === "object" && Object.prototype.hasOwnProperty.call(properties, "files"))
-      hasReformatFileFiles = !0;
-    if (properties && typeof properties === "object" && Object.prototype.hasOwnProperty.call(properties, "paths"))
-      hasReformatFilePaths = !0;
-  }
-  return {
-    capabilities: {
-      hasReformatFile,
-      hasReformatFileFiles,
-      hasReformatFilePaths,
-      supportsReformatFile: hasReformatFile
-    }
-  };
+function resolveUpstreamToolSupport(upstreamTools) {
+  let hasLintFiles = !1, hasReformatFile = !1;
+  for (let tool of upstreamTools ?? [])
+    if (tool?.name === "lint_files")
+      hasLintFiles = !0;
+    else if (tool?.name === "reformat_file")
+      hasReformatFile = !0;
+  return { hasLintFiles, hasReformatFile };
 }
 function createProxyTooling({
   projectPath,
   callUpstreamTool,
   callUpstreamToolRaw,
-  searchCapabilities,
-  analysisCapabilities,
-  formattingCapabilities,
-  ideVersion,
   containerSession
 }) {
-  let boundVersion = ideVersion ?? null, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
+  let { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     callUpstreamToolRaw: callUpstreamToolRaw ?? callUpstreamTool,
-    searchCapabilities,
-    analysisCapabilities,
-    formattingCapabilities,
-    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
     containerSession: containerSession ?? null
   });
   async function runProxyToolCall(toolName, args) {
@@ -24793,9 +22579,7 @@ class UpstreamConnection {
   _warn;
   _connectedPromise = null;
   _tools = null;
-  searchCapabilities = resolveSearchCapabilities([]).capabilities;
-  analysisCapabilities = resolveAnalysisCapabilities([]).capabilities;
-  formattingCapabilities = resolveFormattingCapabilities([]).capabilities;
+  toolSupport = resolveUpstreamToolSupport([]);
   ideVersion = null;
   onStateChange;
   constructor(options) {
@@ -24816,13 +22600,6 @@ class UpstreamConnection {
       forceInject: this._forceInjectProjectPath
     }), this._reapplyToolScan();
   }
-  setForceInjectProjectPath(projectPath, forceInject) {
-    this._forceInjectProjectPath = forceInject, this._projectPathManager = createProjectPathManager({
-      projectPath,
-      defaultProjectPathKey: this._defaultProjectPathKey,
-      forceInject
-    }), this._reapplyToolScan();
-  }
   _reapplyToolScan() {
     if (this._tools)
       this._projectPathManager.updateProjectPathKeys(this._tools);
@@ -24840,7 +22617,7 @@ class UpstreamConnection {
     }), this._connectedPromise;
   }
   reset() {
-    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities, this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
+    this._connectedPromise = null, this._tools = null, this.toolSupport = resolveUpstreamToolSupport([]), this.ideVersion = null, this.onStateChange?.();
   }
   async withReconnect(label, fn) {
     try {
@@ -24861,7 +22638,7 @@ class UpstreamConnection {
     return await this.withReconnect("tools/list", async () => {
       await this.connect();
       let response = await this.client.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities, this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities, this.onStateChange?.(), tools;
+      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.toolSupport = resolveUpstreamToolSupport(tools), this.onStateChange?.(), tools;
     });
   }
   async getTools() {
@@ -24934,6 +22711,26 @@ class UpstreamConnection {
   }
 }
 
+// node_modules/is-port-reachable/index.js
+import net from "net";
+async function isPortReachable(port, { host, timeout = 1000 } = {}) {
+  if (typeof host !== "string")
+    throw TypeError("Specify a `host`");
+  let promise3 = new Promise((resolve, reject) => {
+    let socket = new net.Socket, onError = () => {
+      socket.destroy(), reject();
+    };
+    socket.setTimeout(timeout), socket.once("error", onError), socket.once("timeout", onError), socket.connect(port, host, () => {
+      socket.end(), resolve();
+    });
+  });
+  try {
+    return await promise3, !0;
+  } catch {
+    return !1;
+  }
+}
+
 // discovery.ts
 function buildCandidateList(preferredPorts, portScanStart, portScanLimit) {
   let seen = /* @__PURE__ */ new Set, candidates = [];
@@ -24973,7 +22770,7 @@ async function findReachablePorts(options) {
 }
 
 // routing.ts
-import path7 from "path";
+import path5 from "path";
 var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
   "search_text",
   "search_regex",
@@ -25027,10 +22824,10 @@ function resolveIdeForPath(args, projectRoot) {
 function isRiderPath(filePath, projectRoot) {
   if (!filePath)
     return !1;
-  let absolute = path7.isAbsolute(filePath) ? path7.normalize(filePath) : path7.resolve(projectRoot, filePath), relative = path7.relative(projectRoot, absolute);
-  if (relative.startsWith("..") || path7.isAbsolute(relative))
+  let absolute = path5.isAbsolute(filePath) ? path5.normalize(filePath) : path5.resolve(projectRoot, filePath), relative = path5.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path5.isAbsolute(relative))
     return !1;
-  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path7.sep);
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path5.sep);
 }
 function splitPathListArgsByIde(args, projectRoot, argName = "files") {
   let rawPaths = args[argName];
@@ -25062,6 +22859,37 @@ function extractPathArg(args) {
       return value;
   }
   return;
+}
+
+// proxy-tools/handlers/reformat-file.ts
+function normalizeReformatFileArgs(args) {
+  return {
+    ...args,
+    files: normalizeReformatFileFiles(args)
+  };
+}
+function normalizeReformatFileFiles(args) {
+  if (Object.prototype.hasOwnProperty.call(args, "path"))
+    throw Error("path is no longer supported; use files");
+  if (Object.prototype.hasOwnProperty.call(args, "paths"))
+    throw Error("paths is no longer supported; use files");
+  let rawFiles = args.files;
+  if (!Array.isArray(rawFiles))
+    throw Error("files must be an array of non-empty strings");
+  let result = [], seen = /* @__PURE__ */ new Set;
+  for (let rawFile of rawFiles)
+    addFile(rawFile, result, seen);
+  if (result.length === 0)
+    throw Error("files must contain at least one path");
+  return result;
+}
+function addFile(value, result, seen) {
+  let path6 = requireString(value, "files").trim();
+  if (path6.length === 0)
+    throw Error("files must contain non-empty strings");
+  if (seen.has(path6))
+    return;
+  seen.add(path6), result.push(path6);
 }
 
 // ij-mcp-proxy.ts
@@ -25096,25 +22924,25 @@ function buildStreamUrl(port) {
 }
 function resolveProjectPath(rawValue) {
   if (!rawValue)
-    return { projectPath: path8.resolve(cwd2()) };
+    return { projectPath: path6.resolve(cwd2()) };
   if (rawValue.startsWith("file://"))
     try {
-      return { projectPath: path8.resolve(fileURLToPath2(new URL(rawValue))) };
+      return { projectPath: path6.resolve(fileURLToPath2(new URL(rawValue))) };
     } catch (error51) {
       let message = error51 instanceof Error ? error51.message : String(error51);
       return {
-        projectPath: path8.resolve(rawValue),
+        projectPath: path6.resolve(rawValue),
         warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
       };
     }
-  return { projectPath: path8.resolve(rawValue) };
+  return { projectPath: path6.resolve(rawValue) };
 }
 var explicitProjectPath = env2.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "projectPath", containerSession = detectContainerSession(projectPath), explicitMcpUrlOverride;
 if (containerSession?.mcpStreamUrl)
   explicitMcpUrlOverride = containerSession.mcpStreamUrl;
 if (containerSession?.projectPath)
   projectPath = containerSession.projectPath;
-var REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolNames = /* @__PURE__ */ new Set, riderProxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+var REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
 function primaryUpstream() {
   let upstream = ideaUpstream ?? riderUpstream;
   if (!upstream)
@@ -25128,30 +22956,22 @@ function updateProxyTooling() {
       projectPath,
       callUpstreamTool: (name, args) => ideaUpstream.callTool(name, args),
       callUpstreamToolRaw: (name, args) => ideaUpstream.callToolRaw(name, args),
-      searchCapabilities: ideaUpstream.searchCapabilities,
-      analysisCapabilities: ideaUpstream.analysisCapabilities,
-      formattingCapabilities: ideaUpstream.formattingCapabilities,
-      ideVersion: ideaUpstream.ideVersion,
       containerSession
     });
-    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
+    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
   } else
-    ideaProxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null;
+    ideaProxyToolCall = null;
   let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
   if (riderUpstream) {
-    let riderProjectPath = path8.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+    let riderProjectPath = path6.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
       projectPath: riderProjectPath,
       callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
       callUpstreamToolRaw: (name, args) => riderUpstream.callToolRaw(name, args),
-      searchCapabilities: riderUpstream.searchCapabilities,
-      analysisCapabilities: riderUpstream.analysisCapabilities,
-      formattingCapabilities: riderUpstream.formattingCapabilities,
-      ideVersion: riderUpstream.ideVersion,
       containerSession
     });
-    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
+    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
   } else
-    riderProxyToolNames = /* @__PURE__ */ new Set, riderProxyToolCall = null;
+    riderProxyToolCall = null;
   proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
 }
 async function activateDetectedContainerSession() {
@@ -25170,9 +22990,7 @@ async function activateDetectedContainerSession() {
 function note(message) {
   logToFile(message), logProgress(message);
 }
-function warn(message) {
-  logToFile(message), logProgress(message);
-}
+var warn = note;
 function buildInstructions() {
   let ides = [];
   if (ideaUpstream) {
@@ -25189,7 +23007,7 @@ function buildInstructions() {
   if (ides.length > 0)
     parts.push(`Connected IDEs: ${ides.join(", ")}.`);
   if (containerSession)
-    parts.push(`CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`, "Search operations (search_text, search_regex, search_file) are routed to the container. Use the agent's native file tools for reads, writes, patches, and directory listing.", "Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.", 'Use the "bash" tool for ALL shell commands \u2014 it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.', "The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.", `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ""}. Fix any compilation errors before finishing.`);
+    parts.push(`CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`, "Search operations (search_text, search_regex, search_file) are routed to the container. Use the agent's native file tools for reads, writes, patches, and directory listing.", "Semantic tools (search_symbol, lint_files, rename) use the host IDE index.", 'Use the "bash" tool for ALL shell commands \u2014 it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.', "The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.", `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ""}. Fix any compilation errors before finishing.`);
   return parts.join(`
 `);
 }
@@ -25200,18 +23018,12 @@ if (containerSession)
   note(`Container session detected: id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`);
 function createUpstreamForUrl(url2) {
   let transport = createStreamTransport({
-    explicitUrl: url2,
+    url: url2,
     requestHeaders: containerSession ? { [IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}` } : void 0,
-    preferredPorts: [],
-    portScanStart: 0,
-    portScanLimit: 0,
-    connectTimeoutMs,
-    scanTimeoutMs,
     queueLimit,
     queueWaitTimeoutMs,
     retryAttempts: STREAM_RETRY_ATTEMPTS,
     retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-    buildUrl: buildStreamUrl,
     note,
     warn
   }), conn = new UpstreamConnection({
@@ -25316,7 +23128,7 @@ async function performDiscovery() {
       await conn.connect();
       let name = conn.client.getServerVersion()?.name ?? "";
       if (isRiderServerName(name))
-        conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+        conn.updateProjectPath(path6.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
       else
         ideaUpstream = conn;
       setupUpstreamClientHandlers(conn), updateProxyTooling();
@@ -25336,7 +23148,7 @@ async function performDiscovery() {
         await conn.connect();
         let name = conn.client.getServerVersion()?.name ?? "", candidate = { conn, url: url2, name };
         if (isRiderServerName(name))
-          conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderCandidates.push(candidate);
+          conn.updateProjectPath(path6.join(projectPath, RIDER_PROJECT_SUBPATH)), riderCandidates.push(candidate);
         else
           ideaCandidates.push(candidate);
       } catch (error51) {
@@ -25344,7 +23156,7 @@ async function performDiscovery() {
         warn(`Failed to connect to ${url2}: ${message}`);
       }
     }
-    let selectedIdea = await chooseUpstreamForProject(ideaCandidates, "IDEA", projectPath), selectedRider = await chooseUpstreamForProject(riderCandidates, "Rider", path8.join(projectPath, RIDER_PROJECT_SUBPATH));
+    let selectedIdea = await chooseUpstreamForProject(ideaCandidates, "IDEA", projectPath), selectedRider = await chooseUpstreamForProject(riderCandidates, "Rider", path6.join(projectPath, RIDER_PROJECT_SUBPATH));
     if (await closeUnusedUpstreams(ideaCandidates, selectedIdea), await closeUnusedUpstreams(riderCandidates, selectedRider), selectedIdea)
       ideaUpstream = selectedIdea.conn, setupUpstreamClientHandlers(selectedIdea.conn), note(`IDEA upstream: ${formatUpstream(selectedIdea)}`);
     if (selectedRider)
@@ -25401,10 +23213,6 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (ideaProxyToolCall && riderProxyToolCall) {
         if (isMergeTool(toolName))
           return await callMergedProxyTool(toolName, args);
-        if (toolName === "lint_files")
-          return await callSplitMergedProxyTool(toolName, args);
-        if (toolName === "reformat_file")
-          return await callSplitMergedProxyTool(toolName, args);
         let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
         try {
           return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
@@ -25416,10 +23224,6 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
       if (proxyCall)
         try {
-          if (toolName === "lint_files")
-            return await callSingleLintFilesTool(args);
-          if (toolName === "reformat_file")
-            return await callSingleReformatFileTool(args);
           return makeToolOutput(await proxyCall(toolName, args));
         } catch (error51) {
           let message = error51 instanceof Error ? error51.message : String(error51);
@@ -25432,7 +23236,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
         case "merge":
           return await callMergedPassthroughTool(toolName, args);
         case "split-merge":
-          return await callSplitMergedPassthroughTool(toolName, args);
+          return await callSplitMergedTool(toolName, args);
         case "target-idea":
         case "target-rider": {
           let target = route === "target-rider" ? riderUpstream : ideaUpstream;
@@ -25480,16 +23284,6 @@ async function callMergedProxyTool(toolName, args) {
   ]);
   return mergeSettledResults(results, "proxy", [void 0, riderItemTransformer]);
 }
-async function callSplitMergedProxyTool(toolName, args) {
-  switch (toolName) {
-    case "lint_files":
-      return await callSplitMergedLintFiles(args);
-    case "reformat_file":
-      return await callSplitMergedReformatFile(args);
-    default:
-      return makeToolError(`Tool '${toolName}' is not configured for split-merge proxy routing.`);
-  }
-}
 async function callMergedPassthroughTool(toolName, args) {
   let results = await Promise.allSettled([
     ideaUpstream.callToolForClient(toolName, { ...args }),
@@ -25497,7 +23291,7 @@ async function callMergedPassthroughTool(toolName, args) {
   ]);
   return mergeSettledResults(results, "passthrough", [void 0, riderItemTransformer]);
 }
-async function callSplitMergedPassthroughTool(toolName, args) {
+async function callSplitMergedTool(toolName, args) {
   switch (toolName) {
     case "lint_files":
       return await callSplitMergedLintFiles(args);
@@ -25507,40 +23301,23 @@ async function callSplitMergedPassthroughTool(toolName, args) {
       return makeToolError(`Tool '${toolName}' is not configured for split-merge routing.`);
   }
 }
-async function callLintFilesViaProxyOrNative(side, args) {
-  if (side === "idea") {
-    if (ideaProxyToolCall && ideaProxyToolNames.has("lint_files"))
-      return await ideaProxyToolCall("lint_files", { ...args });
-    if (ideaUpstream?.analysisCapabilities.hasLintFilesFiles)
-      return await ideaUpstream.callToolForClient("lint_files", { ...args });
-  } else {
-    if (riderProxyToolCall && riderProxyToolNames.has("lint_files"))
-      return await riderProxyToolCall("lint_files", { ...args });
-    if (riderUpstream?.analysisCapabilities.hasLintFilesFiles)
-      return await riderUpstream.callToolForClient("lint_files", { ...args });
-  }
-  throw Error(`Tool 'lint_files' is not supported by the ${side === "idea" ? "IDEA" : "Rider"} upstream.`);
+function upstreamForSide(side) {
+  return side === "idea" ? ideaUpstream : riderUpstream;
 }
-async function callReformatFileViaProxyOrNative(side, args) {
-  if (side === "idea") {
-    if (ideaProxyToolCall && ideaProxyToolNames.has("reformat_file"))
-      return String(await ideaProxyToolCall("reformat_file", { ...args }));
-    if (ideaUpstream?.formattingCapabilities.hasReformatFileFiles)
-      return extractTextFromResult(await ideaUpstream.callToolForClient("reformat_file", { ...args })) ?? "ok";
-    if (ideaUpstream?.formattingCapabilities.hasReformatFile)
-      return await handleReformatFileTool(args, (name, toolArgs) => ideaUpstream.callTool(name, toolArgs), ideaUpstream.formattingCapabilities);
-  } else {
-    if (riderProxyToolCall && riderProxyToolNames.has("reformat_file"))
-      return String(await riderProxyToolCall("reformat_file", { ...args }));
-    if (riderUpstream?.formattingCapabilities.hasReformatFileFiles)
-      return extractTextFromResult(await riderUpstream.callToolForClient("reformat_file", { ...args })) ?? "ok";
-    if (riderUpstream?.formattingCapabilities.hasReformatFile)
-      return await handleReformatFileTool(args, (name, toolArgs) => riderUpstream.callTool(name, toolArgs), riderUpstream.formattingCapabilities);
-  }
-  throw Error(`Tool 'reformat_file' is not supported by the ${side === "idea" ? "IDEA" : "Rider"} upstream.`);
+async function callNativeLintFiles(side, args) {
+  let upstream = upstreamForSide(side);
+  if (!upstream?.toolSupport.hasLintFiles)
+    throw Error(`Tool 'lint_files' is not supported by the ${side === "idea" ? "IDEA" : "Rider"} upstream.`);
+  return await upstream.callToolForClient("lint_files", { ...args });
+}
+async function callNativeReformatFile(side, args) {
+  let upstream = upstreamForSide(side);
+  if (!upstream?.toolSupport.hasReformatFile)
+    throw Error(`Tool 'reformat_file' is not supported by the ${side === "idea" ? "IDEA" : "Rider"} upstream.`);
+  return extractTextFromResult(await upstream.callToolForClient("reformat_file", { ...args })) ?? "ok";
 }
 async function callSingleLintFilesTool(args) {
-  let normalizedArgs = normalizeLintFilesArgs(args), side = getSingleLintFilesSide(), result = await callLintFilesForSide(side, normalizedArgs), items = side === "rider" ? riderItemTransformer(result.items) : result.items;
+  let normalizedArgs = normalizeLintFilesArgs(args), side = getSingleUpstreamSide("lint_files"), result = await callLintFilesForSide(side, normalizedArgs), items = side === "rider" ? riderItemTransformer(result.items) : result.items;
   return createLintFilesToolOutput(result.more === !0 ? { items, more: !0 } : { items });
 }
 async function callSplitMergedLintFiles(args) {
@@ -25573,7 +23350,7 @@ async function callSplitMergedLintFiles(args) {
   return createLintFilesToolOutput(more ? { items, more: !0 } : { items });
 }
 async function callSingleReformatFileTool(args) {
-  let side = getSingleReformatFileSide(), result = await callReformatFileForSide(side, args);
+  let side = getSingleUpstreamSide("reformat_file"), result = await callReformatFileForSide(side, args);
   return makeToolOutput(result);
 }
 async function callSplitMergedReformatFile(args) {
@@ -25599,25 +23376,18 @@ async function callSplitMergedReformatFile(args) {
 }
 async function callReformatFileForSide(side, args) {
   let normalizedArgs = normalizeReformatFileArgs(args);
-  return await callReformatFileViaProxyOrNative(side, normalizedArgs);
+  return await callNativeReformatFile(side, normalizedArgs);
 }
 async function callLintFilesForSide(side, args) {
-  let normalizedArgs = normalizeLintFilesArgs(args), result = parseLintFilesToolResult(await callLintFilesViaProxyOrNative(side, normalizedArgs)), filePaths = normalizedArgs.files, items = orderLintItems(filePaths, result.items);
+  let normalizedArgs = normalizeLintFilesArgs(args), result = parseLintFilesToolResult(await callNativeLintFiles(side, normalizedArgs)), filePaths = normalizedArgs.files, items = orderLintItems(filePaths, result.items);
   return result.more === !0 ? { items, more: !0 } : { items };
 }
-function getSingleLintFilesSide() {
-  if (ideaProxyToolCall || ideaUpstream)
+function getSingleUpstreamSide(toolName) {
+  if (ideaUpstream)
     return "idea";
-  if (riderProxyToolCall || riderUpstream)
+  if (riderUpstream)
     return "rider";
-  throw Error("Tool 'lint_files' is not available because no upstream is connected.");
-}
-function getSingleReformatFileSide() {
-  if (ideaProxyToolCall || ideaUpstream)
-    return "idea";
-  if (riderProxyToolCall || riderUpstream)
-    return "rider";
-  throw Error("Tool 'reformat_file' is not available because no upstream is connected.");
+  throw Error(`Tool '${toolName}' is not available because no upstream is connected.`);
 }
 function normalizeLintFilesArgs(args) {
   if (Object.prototype.hasOwnProperty.call(args, "file_paths"))
@@ -25665,14 +23435,14 @@ function extractClientTimeoutMs(args) {
 }
 function parseLintFilesToolResult(result) {
   let structured = extractStructuredContent(result);
-  if (!isRecord3(structured))
+  if (!isRecord2(structured))
     throw Error("Upstream lint_files returned unexpected result");
   let items = extractItems({ structuredContent: structured });
   return structured.more === !0 ? { items, more: !0 } : { items };
 }
 function lintItemPathKey(filePath) {
   let normalized = normalizeProjectRelativePath(projectPath, filePath);
-  return path8.sep === "\\" ? normalized.toLowerCase() : normalized;
+  return path6.sep === "\\" ? normalized.toLowerCase() : normalized;
 }
 function orderLintItems(filePaths, items) {
   let itemsByPath = /* @__PURE__ */ new Map;
@@ -25710,7 +23480,7 @@ function extractItemsFromResult(value, mode) {
 }
 function extractMoreFromResult(value, mode) {
   let structured = extractStructuredContentFromResult(value, mode);
-  return isRecord3(structured) && structured.more === !0;
+  return isRecord2(structured) && structured.more === !0;
 }
 function extractStructuredContentFromResult(value, mode) {
   if (mode === "proxy")
@@ -25720,7 +23490,7 @@ function extractStructuredContentFromResult(value, mode) {
     return null;
   return extractStructuredContent({ content: [{ type: "text", text }] });
 }
-function isRecord3(value) {
+function isRecord2(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function mergeSettledResults(results, mode, transformers = []) {
