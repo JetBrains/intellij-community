@@ -153,6 +153,13 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   @Override
+  public void refreshStructureView() {
+    if (myStructureViewWrapperImpl != null) {
+      myStructureViewWrapperImpl.rebuildNow("structure view refresh requested");
+    }
+  }
+
+  @Override
   public @NotNull StructureView createStructureView(FileEditor fileEditor, @NotNull StructureViewModel treeModel, @NotNull Project project) {
     return createStructureView(fileEditor, treeModel, project, true);
   }
