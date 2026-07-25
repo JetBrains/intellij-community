@@ -27,9 +27,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.k2.PostProcessor
 import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
-import org.jetbrains.kotlin.nj2k.PostprocessorExtensionsRunner
-import org.jetbrains.kotlin.nj2k.PreprocessorExtensionsRunner
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -46,10 +45,7 @@ private val originalPsiPointerKeyForTests = Key.create<SmartPsiElementPointer<Ps
 
 suspend fun JavaToKotlinConverter.filesToKotlinPartiallyInTests(
     files: List<PsiJavaFile>,
-    postProcessor: PostProcessor,
     selectedDeclaration: PsiElement,
-    preprocessorExtensions: List<J2kPreprocessorExtension>,
-    postprocessorExtensions: List<J2kPostprocessorExtension>,
 ): ConversionResult {
     if (files.isEmpty()) return ConversionResult(emptyMap(), null)
 
@@ -63,7 +59,8 @@ suspend fun JavaToKotlinConverter.filesToKotlinPartiallyInTests(
             anchorCopiedFilesToOriginalsForTests(files, copiedFiles)
         }
     }
-    PreprocessorExtensionsRunner.runProcessors(project, copiedFiles, preprocessorExtensions)
+
+    J2kPreprocessorExtension.runProcessors(project, files)
 
     val selectedCopiedDeclaration = readAction {
         partialDeclarationAnchors.resolveDeclarations(
@@ -121,8 +118,9 @@ suspend fun JavaToKotlinConverter.filesToKotlinPartiallyInTests(
         kotlinFiles += ktFile
     }
 
-    postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
-    PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+    PostProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
+    J2kPostprocessorExtension.runProcessors(project, kotlinFiles)
+
     for (kotlinFile in kotlinFiles) {
         rewriteVarargShadowPropertiesForPartialTests(kotlinFile)
     }

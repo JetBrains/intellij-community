@@ -36,14 +36,13 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ElementResult
 import org.jetbrains.kotlin.j2k.IdeaReferenceSearcher
-import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
-import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
-import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.Result
+import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
+import org.jetbrains.kotlin.j2k.k2.getK2J2KConversions
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.J2kMemberKey
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.OriginalJavaPsiContext
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.nj2k.externalCodeProcessing.buildLightMethodKey
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.buildMemberKey
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
+import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -71,11 +71,9 @@ class JavaToKotlinConverter(
 
     suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
-        postProcessor: PostProcessor,
-        preprocessorExtensions: List<J2kPreprocessorExtension>,
-        postprocessorExtensions: List<J2kPostprocessorExtension>,
         reporter: RawProgressReporter? = null,
     ): ConversionResult {
+
         if (files.isEmpty()) return ConversionResult(emptyMap(), null)
 
         val copiedFiles = readAction {
@@ -86,13 +84,11 @@ class JavaToKotlinConverter(
             }
         }
 
-        PreprocessorExtensionsRunner.runProcessors(project, copiedFiles, preprocessorExtensions)
+        J2kExtensionsRunner.runPreProcessors(project, copiedFiles)
 
         return filesToKotlin(
             files = files,
             copiedFiles = copiedFiles,
-            postProcessor = postProcessor,
-            postprocessorExtensions = postprocessorExtensions,
             reporter = reporter,
         )
     }
@@ -100,8 +96,6 @@ class JavaToKotlinConverter(
     private suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         copiedFiles: List<PsiJavaFile>,
-        postProcessor: PostProcessor,
-        postprocessorExtensions: List<J2kPostprocessorExtension>,
         reporter: RawProgressReporter?,
     ): ConversionResult {
         reporter?.text(KotlinJ2KK2Bundle.message("j2k.applying.conversions"))
@@ -137,11 +131,13 @@ class JavaToKotlinConverter(
             }
         }
 
+        val postProcessor = K2J2KPostProcessor()
         postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
             reporter?.text(description)
             reporter?.fraction(phase.toDouble() / postProcessor.phasesCount.toDouble())
         }
-        PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+
+        J2kExtensionsRunner.runPostProcessors(project, kotlinFiles)
 
         val (javaLines, kotlinLines) = readAction {
             files.sumOf { StringUtil.getLineBreakCount(it.text) } to kotlinFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
@@ -211,7 +207,7 @@ class JavaToKotlinConverter(
         )
 
         val treeRoots = elementsWithAsts.mapNotNull { it.value }
-        ConversionsRunner.doApply(treeRoots, context)
+        applyConversions(treeRoots, context)
 
         val results = elementsWithAsts.map { (element, ast) ->
             if (ast == null) return@map null
@@ -231,6 +227,23 @@ class JavaToKotlinConverter(
             externalCodeProcessing.takeIf { it.isExternalProcessingNeeded() },
             context
         )
+    }
+
+    fun applyConversions(
+        trees: List<JKTreeRoot>,
+        context: ConverterContext,
+    ) {
+        val conversions = getK2J2KConversions(context)
+
+        for (conversion in conversions) {
+            if (context.settings.basicMode && !conversion.isEnabledInBasicMode()) continue
+
+            try {
+                conversion.runForEach(trees.asSequence(), context)
+            } catch (ignored: UninitializedPropertyAccessException) {
+                // This should only happen on copy-pasting broken (incomplete) code
+            }
+        }
     }
 
     private fun List<PsiJavaFile>.buildMembersByKey(): Map<J2kMemberKey, PsiMember> {

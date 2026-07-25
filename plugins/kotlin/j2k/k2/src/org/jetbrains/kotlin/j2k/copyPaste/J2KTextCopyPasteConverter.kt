@@ -8,7 +8,8 @@ import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
+import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -49,9 +50,8 @@ internal class J2KTextCopyPasteConverter(
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-        val postProcessor = J2kConverterExtension.extension().createPostProcessor()
         for (fqName in conversionResult.importsToAdd) {
-            postProcessor.insertImport(targetData.file, fqName)
+            K2J2KPostProcessor().insertImport(targetData.file, fqName)
         }
 
         runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext)
@@ -60,7 +60,7 @@ internal class J2KTextCopyPasteConverter(
     private fun tryToResolveImports(conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
         return runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.adding.imports")) {
             val resolver = readAction {
-                J2kConverterExtension.extension().createPlainTextPasteImportResolver(conversionData, targetFile)
+                K2PlainTextPasteImportResolver(conversionData, targetFile)
             }
             val imports = resolver.generateRequiredImports()
             val newlineSeparatedImports = imports.flatMap { importStatement ->

@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
-internal class K2J2KPostProcessor : PostProcessor {
+class K2J2KPostProcessor : PostProcessor {
     companion object {
         private val LOG = Logger.getInstance(/* category = */ "@org.jetbrains.kotlin.j2k.K2J2KPostProcessor")
     }

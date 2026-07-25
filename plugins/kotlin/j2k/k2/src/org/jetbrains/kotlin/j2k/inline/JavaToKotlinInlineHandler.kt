@@ -26,8 +26,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
-import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.PropertyUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
@@ -38,11 +36,14 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.refactoring.inline.createReplacementStrategyForProperty
 import org.jetbrains.kotlin.idea.refactoring.inline.findCallableConflictForUsage
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
+import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
+import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter.Companion.addImports
+import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
@@ -115,10 +116,9 @@ private fun JavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
-    val converterExtension = J2kConverterExtension.extension()
-    val postProcessor = converterExtension.createPostProcessor()
-    val processor = converterExtension.createWithProgressProcessor(
-        progress = ProgressManager.getInstance().progressIndicator,
+    val postProcessor = K2J2KPostProcessor()
+    val processor = NewJ2kWithProgressProcessor(
+        progressIndicator = ProgressManager.getInstance().progressIndicator,
         files = listOf(referenced.containingFile as PsiJavaFile),
         phasesCount = phasesCount + postProcessor.phasesCount,
     )

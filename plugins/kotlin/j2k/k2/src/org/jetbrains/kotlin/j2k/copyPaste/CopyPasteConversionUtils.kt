@@ -14,11 +14,12 @@ import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.k2.K2J2KPostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
@@ -39,7 +40,7 @@ fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
     targetFile: KtFile
 ): ConversionResult {
-    val converter = J2kConverterExtension.extension().createJavaToKotlinConverter(
+    val converter = JavaToKotlinConverter(
         project,
         targetFile.module,
         ConverterSettings.defaultSettings,
@@ -143,8 +144,7 @@ fun runPostProcessing(
     bounds: TextRange?,
     converterContext: ConverterContext?
 ) {
-    val postProcessor = J2kConverterExtension.extension().createPostProcessor()
     runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")) {
-        J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
+        J2KPostProcessingRunner.run(K2J2KPostProcessor(), file, converterContext, bounds)
     }
 }

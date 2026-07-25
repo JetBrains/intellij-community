@@ -65,7 +65,7 @@ import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConversionResult
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
 import org.jetbrains.kotlin.j2k.J2KKotlinConfigurationService
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.ExternalUsagesFixer
 import org.jetbrains.kotlin.psi.KtFile
@@ -257,11 +257,12 @@ object JavaToKotlinActionHandler {
     ): ConversionResult {
         val (result, conversionTime) = measureTimedValue {
             withCommandOnEdt(project) {
-                J2kConverterExtension.convertJavaFilesToKotlin(
-                    files = javaFiles,
+                JavaToKotlinConverter(
                     project = project,
-                    module = module,
-                    settings = settings,
+                    targetModule = module,
+                    settings = settings
+                ).filesToKotlin(
+                    files = javaFiles,
                     reporter = reporter,
                 )
             }

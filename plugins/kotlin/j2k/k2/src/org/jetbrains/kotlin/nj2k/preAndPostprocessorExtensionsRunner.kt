@@ -13,31 +13,33 @@ import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.psi.KtFile
 
-/**
- * Before conversion, runs all registered custom preprocessor extensions (i.e., classes implementing `J2kPreprocessorExtension` and
- * registered in their parent plugin's xml file).
- */
-object PreprocessorExtensionsRunner :
-    J2kExtensionsRunner<PsiJavaFile, J2kPreprocessorExtension>()
-
-/**
- * After conversion, runs all registered custom postprocessor extensions (i.e., classes implementing `J2kPostprocessorExtension` and
- * registered in their parent plugin's xml file).
- */
-object PostprocessorExtensionsRunner :
-    J2kExtensionsRunner<KtFile, J2kPostprocessorExtension>()
-
-abstract class J2kExtensionsRunner<T : PsiFile, U : J2kExtension<T>> {
-    suspend fun runProcessors(project: Project, files: List<T>, processors: List<U>) {
+object J2kExtensionsRunner {
+    suspend fun runPostProcessors(project: Project, files: List<KtFile>) {
+        val processors = J2kPostprocessorExtension.EP_NAME.extensionList
         for (processor in processors) {
-            checkCanceled()
-            try {
-                processor.processFiles(project, files)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                Logger.getInstance(J2kExtensionsRunner::class.java).error(t)
-            }
+            executeProcessing(processor, project, files)
+        }
+    }
+
+    suspend fun runPreProcessors(project: Project, files: List<PsiJavaFile>) {
+        val processors = J2kPreprocessorExtension.EP_NAME.extensionList
+        for (processor in processors) {
+            executeProcessing(processor, project, files)
+        }
+    }
+
+    private suspend fun <T : PsiFile> executeProcessing(
+        processor: J2kExtension<T>,
+        project: Project,
+        files: List<T>
+    ) {
+        checkCanceled()
+        try {
+            processor.processFiles(project, files)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (t: Throwable) {
+            Logger.getInstance(J2kExtensionsRunner::class.java).error(t)
         }
     }
 }

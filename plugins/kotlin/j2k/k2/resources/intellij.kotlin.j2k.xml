@@ -28,10 +28,6 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.j2kNullabilityInferenceExtension"
             interface="org.jetbrains.kotlin.nj2k.J2KNullabilityInferenceExtension"
             dynamic="true"/>
@@ -45,7 +41,6 @@
             dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>
     <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.k2.preProcessings.K2TypeArgumentsExpander"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
