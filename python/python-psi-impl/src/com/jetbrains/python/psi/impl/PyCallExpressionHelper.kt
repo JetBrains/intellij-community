@@ -577,8 +577,14 @@ object PyCallExpressionHelper {
         val callable = it.callable
         ScopeUtil.getScopeOwner(callable) to (callable != null && PyiUtil.isOverload(callable, context))
       }
-      .values.flatMap {
-        getSameScopeCallablesCallTypes(it, callSite, context)
+      .values.flatMap { sameScopeTypes ->
+        val firstCallable = sameScopeTypes[0].callable
+        if (firstCallable != null && PyiUtil.isOverload(firstCallable, context)) {
+          listOf(resolveOverloadsCallType(sameScopeTypes, callSite, context).type)
+        }
+        else {
+          sameScopeTypes.map { it.getCallType(context, callSite) }
+        }
       }
       .let(PyUnionType::union)
   }
@@ -618,18 +624,6 @@ object PyCallExpressionHelper {
     else {
       getCallType(matchingCallableTypes.ifEmpty { callableTypes }, expression, context)
     }
-  }
-
-  private fun getSameScopeCallablesCallTypes(
-    types: List<PyCallableType>,
-    callSite: PyCallSiteOwner,
-    context: TypeEvalContext,
-  ): List<PyType?> {
-    val firstCallable = types[0].callable
-    if (firstCallable != null && PyiUtil.isOverload(firstCallable, context)) {
-      return listOf(resolveOverloadsCallType(types, callSite, context).type)
-    }
-    return types.map { it.getCallType(context, callSite) }
   }
 
   @JvmStatic
