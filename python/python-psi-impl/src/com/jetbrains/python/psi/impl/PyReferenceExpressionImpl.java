@@ -499,24 +499,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     List<? extends RatedResolveResult> resolveResults =
       classType.resolveMember(name, null, AccessDirection.READ, resolveContext.withoutProperties());
-    if (resolveResults == null || resolveResults.isEmpty()) {
+    if (ContainerUtil.isEmpty(resolveResults)) {
       PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
       return PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GETATTR, classType, Collections.singletonList(nameArg), context);
     }
 
-    List<PyType> providedTypes = StreamEx.of(resolveResults)
-      .map(RatedResolveResult::getElement)
-      .nonNull()
-      .remove(element -> element instanceof PyTargetExpression)
-      .map(element -> getReferenceTypeFromProviders(element, context, anchor))
-      .nonNull()
-      .map(r -> Objects.requireNonNull(r).get())
-      .toList();
-
-    PyType memberType = providedTypes.isEmpty()
-                        ? PyTypeUtil.getTypeOfMember(resolveResults, context)
-                        : PyUnionType.union(providedTypes);
-
+    PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);
     PyType specializedMemberType = PyTypeUtil.specializeMemberType(classType, selfType, memberType, context);
 
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(anchor, selfType, specializedMemberType, context);
