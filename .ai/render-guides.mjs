@@ -267,6 +267,24 @@ function normalizeEdition(value) {
   return normalized;
 }
 
+const toolsDirByEdition = new Map([
+  ["ULTIMATE", "./community/tools"],
+  ["COMMUNITY", "./tools"],
+]);
+
+/**
+ * Resolves the `{{TOOLS_DIR}}` placeholder: the `fd.cmd`/`rg.cmd` directory relative to the
+ * workspace root the rendered guide lives in. Keeping it a placeholder instead of paired
+ * IF_EDITION blocks means a search rule is written once and cannot drift between editions.
+ */
+export function resolveToolsDir(edition) {
+  const toolsDir = toolsDirByEdition.get(normalizeEdition(edition));
+  if (toolsDir === undefined) {
+    throw new Error(`No tools directory configured for edition "${edition}".`);
+  }
+  return toolsDir;
+}
+
 async function detectEdition() {
   const envEdition = process.env["AI_GUIDE_EDITION"] ?? process.env["RENDER_EDITION"];
   if (envEdition) {
@@ -770,7 +788,12 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
       throw new Error(`${target.name} rendered output still has {{FORBIDDEN_TOOLS_SUFFIX}} placeholder.`);
     }
 
-    const withToolBlocks = applyToolBlocks(withForbiddenTools, target.tool);
+    const withToolsDir = replaceAll(withForbiddenTools, "{{TOOLS_DIR}}", resolveToolsDir(edition));
+    if (withToolsDir.includes("{{TOOLS_DIR}}")) {
+      throw new Error(`${target.name} rendered output still has {{TOOLS_DIR}} placeholder.`);
+    }
+
+    const withToolBlocks = applyToolBlocks(withToolsDir, target.tool);
     const withEditionBlocks = applyEditionBlocks(withToolBlocks, edition);
     const withoutTemplateBlocks = stripTemplateBlocks(withEditionBlocks);
     assertNoUnresolvedTemplateDirectives(withoutTemplateBlocks, target.name);

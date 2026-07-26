@@ -14,7 +14,6 @@ repository: monorepo
 
 ## Project Invariants
 
-- The repository is a large monorepo with multiple IDE products and plugins.
 - Module/plugin directories may contain their own AGENTS/CLAUDE instructions; follow them when present.
 - `*.iml` files are the source of truth and auto-generate `BUILD.bazel` files.
 - When adding or editing a JPS module `.iml`, run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` before `./build/jpsModelToBazel.cmd`. This keeps `.idea/modules.xml` and `community/.idea/modules.xml` in canonical order.
@@ -52,7 +51,7 @@ Special handling applies to the directories below. If a file you touch lives und
 
 ### After Writing Code
 
-- Use `lint_files` to check files for warnings.
+- Use `lint_files` to check files for warnings when ijproxy or JetBrains MCP is available.
   Fix any warnings related to the code changes made. You may ignore unrelated warnings.
 
 ## Repository-wide rules
@@ -68,11 +67,9 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module registration and `.iml` EOF cleanup instead of hand-editing `.idea/modules.xml`. The canonical `modules.xml` order is by `.iml` basename without the `.iml` suffix, matching `org.jetbrains.intellij.build.ModulesXml`.
 
-## Tools (use in this order)
+## Tools
 
-## Skills
-
-Never use the `search-tools-instructions` skill. See ijproxy for search tools.
+Never use the `search-tools-instructions` skill; the search tools below replace it.
 
 ### File operations (read / edit / write / list)
 
@@ -83,35 +80,36 @@ Use the file-operation mechanism supported by the active harness. ijproxy is res
 
 ### Search & navigation (ijproxy preferred)
 
-- Inspect the deferred tool catalog (`ALL_TOOLS`) for `mcp__ijproxy__*` tools before using a shell or non-ijproxy fallback.
-- **Search symbols (preferred):** `mcp__ijproxy__search_symbol`
-- Find files (glob): `mcp__ijproxy__search_file`
-- Search text: `mcp__ijproxy__search_text`
-- Search regex: `mcp__ijproxy__search_regex`
+Default to `search_symbol` for classes, methods, and fields; use `search_text` and `search_regex` mainly for strings, comments, and other non-symbol matches.
+
+Codex exposes these as `mcp__ijproxy__<name>`; inspect the deferred tool catalog (`ALL_TOOLS`) for them before using a shell or non-ijproxy fallback.
+
+- Search symbols: `search_symbol`
+- Find files (glob): `search_file`
+- Search text: `search_text`
+- Search regex: `search_regex`
 
 ### Client fallback (no MCP)
 
 - **No MCP:** use `./tools/fd.cmd` (file search) and `./tools/rg.cmd` (text/regex search) as shell search fallbacks.
 
 ### IDE-backed semantic tools
-Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid manual search/replace when a refactor exists.
 
-- **Default to `search_symbol` (if available) for classes/methods/fields; use `search_text`/`search_regex` mainly for strings, comments, and non-symbol matches.**
+Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual search/replace.
+
 - Inspections & symbol info: `lint_files`, `get_symbol_info`
-- Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP); use for renames and avoid manual search/replace.
+- Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP)
 - Formatting: `reformat_file`
 - Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
 - Project structure & VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`, `git_status`
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
-- For content/symbol **search** and semantic operations, use ijproxy when available; use JetBrains MCP or the client fallback below only when ijproxy is unavailable.
-- For file **read / edit / write / directory listing**, follow the active harness guidance above; do not look for ijproxy file-operation tools.
 
-- Don't shell for file **search** (`find`, `grep`) on repo paths — use ijproxy search, or the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
-
+- For content/symbol **search** and semantic operations, prefer ijproxy; fall back to JetBrains MCP, then to the client fallback, only when ijproxy is unavailable.
+- For file **read / edit / write / directory listing**, use the active harness tools; ijproxy has none.
+- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are disabled, and a `PreToolUse` hook denies `grep` and `find` as the primary shell command (piping them is allowed). Use ijproxy search, or `./tools/fd.cmd` and `./tools/rg.cmd` when no MCP is available.
 - Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
-
 - Outside repo: native shell permitted, except for text/file search — use `./tools/rg.cmd` and `./tools/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
 
 ## Individual Preferences
