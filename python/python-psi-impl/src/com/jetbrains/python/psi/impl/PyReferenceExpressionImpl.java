@@ -270,11 +270,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public static @Nullable PyType getQualifiedReferenceType(@NotNull PyReferenceExpression refExpr,
                                                            @NotNull TypeEvalContext context,
                                                            @Nullable List<ProblemMessage> errors) {
-    final PyExpression qualifier = Objects.requireNonNull(refExpr.getQualifier());
+    if (AccessDirection.of(refExpr) != AccessDirection.READ) return PyAnyType.getUnknown();
 
     final String attrName = refExpr.getName();
     if (attrName == null) return PyAnyType.getUnknown();
 
+    final PyExpression qualifier = Objects.requireNonNull(refExpr.getQualifier());
     PyType qualifierType = PyLiteralType.getLiteralType(qualifier, context);
     if (qualifierType == null) {
       qualifierType = context.getType(qualifier);
@@ -488,9 +489,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PropertyResolveResult propertyResult = findProperty(classType, name, context);
     if (propertyResult != null) {
-      if (AccessDirection.of(anchor) != AccessDirection.READ) {
-        return PyAnyType.getUnknown();
-      }
       if (!classType.isDefinition() || propertyResult.onMetaclass()) {
         return propertyResult.property().getType(propertyResult.selfType(), context);
       }
