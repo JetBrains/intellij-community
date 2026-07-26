@@ -281,11 +281,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       qualifierType = context.getType(qualifier);
     }
 
-    PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-
     // Skip type narrowing for properties.
     if (resolvesToProperty(qualifierType, attrName, context)) {
-      return getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
+      return getTypeOfMember(qualifierType, null, attrName, refExpr, context, errors);
     }
 
     // This code performs a backwards traversal through the Control Flow Graph to analyze assignments.
@@ -314,7 +312,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (!isUnknown(typeByControlFlow)) {
       if (controlFlowResult.foundPrefixCall()) {
         // A call with prefix as receiver/argument may or may not mutate it, so return UnsafeUnion of narrowed and declared types (PY-88265)
-        PyType declaredType = getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
+        PyType declaredType = getTypeOfMember(qualifierType, null, attrName, refExpr, context, errors);
         if (isNoneType(declaredType)) {
           declaredType = PyAnyType.getUnknown();
         }
@@ -323,7 +321,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return typeByControlFlow;
     }
 
-    return getTypeOfMember(qualifierType, null, attrName, refExpr, resolveContext, errors);
+    return getTypeOfMember(qualifierType, null, attrName, refExpr, context, errors);
   }
 
   private static boolean resolvesToProperty(@Nullable PyType type,
@@ -424,11 +422,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                   @Nullable PyInstantiableType<?> selfType,
                                                   @NotNull String attrName,
                                                   @NotNull PyQualifiedExpression anchor,
-                                                  @NotNull PyResolveContext resolveContext,
+                                                  @NotNull TypeEvalContext context,
                                                   @Nullable List<ProblemMessage> errors) {
     if (type instanceof PyCompositeType compositeType) {
       StreamEx<@Nullable PyType> types = StreamEx.of(compositeType.getMembers())
-        .map(it -> getTypeOfMember(it, selfType, attrName, anchor, resolveContext, errors));
+        .map(it -> getTypeOfMember(it, selfType, attrName, anchor, context, errors));
       return switch (compositeType) {
         case PyIntersectionType ignored -> types.filter(t -> !isUnknown(t)).findFirst().orElse(PyAnyType.getUnknown());
         case PyUnsafeUnionType ignored -> PyUnsafeUnionType.unsafeUnion(types.toList());
@@ -450,28 +448,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     if (type instanceof PyClassType classType) {
-      return getTypeOfClassMember(classType, selfType == null ? classType : selfType, attrName, anchor, resolveContext, errors);
+      return getTypeOfClassMember(classType, selfType == null ? classType : selfType, attrName, anchor, context, errors);
     }
     if (type instanceof PyTypeVarType typeVarType) {
       // Use type var bound/constraints for attribute resolution. Bind to type var itself.
       if (!typeVarType.getConstraints().isEmpty()) {
         return PyUnionType.union(
           ContainerUtil.map(typeVarType.getConstraints(),
-                            it -> getTypeOfMember(it, typeVarType, attrName, anchor, resolveContext, errors))
+                            it -> getTypeOfMember(it, typeVarType, attrName, anchor, context, errors))
         );
       }
       else if (typeVarType.getBound() != null) {
-        return getTypeOfMember(typeVarType.getBound(), typeVarType, attrName, anchor, resolveContext, errors);
+        return getTypeOfMember(typeVarType.getBound(), typeVarType, attrName, anchor, context, errors);
       }
       return PyAnyType.getUnknown();
     }
     if (PyTypeUtilKt.isAny(type)) {
       return PyAnyType.getAny();
     }
-    var resolveResults = type.resolveMember(attrName, anchor, AccessDirection.READ, resolveContext);
+    var resolveResults = type.resolveMember(attrName, anchor, AccessDirection.READ, PyResolveContext.defaultContext(context));
     if (resolveResults != null) {
       List<PsiElement> resolvedElements = PyUtil.filterTopPriorityElements(resolveResults);
-      Ref<PyType> result = getTypeFromTargets(resolvedElements, resolveContext.getTypeEvalContext(), anchor);
+      Ref<PyType> result = getTypeFromTargets(resolvedElements, context, anchor);
       if (result != null) {
         return result.get();
       }
@@ -483,10 +481,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                        @NotNull PyInstantiableType<?> selfType,
                                                        @NotNull String name,
                                                        @NotNull PyQualifiedExpression anchor,
-                                                       @NotNull PyResolveContext resolveContext,
+                                                       @NotNull TypeEvalContext context,
                                                        @Nullable List<ProblemMessage> errors) {
-    TypeEvalContext context = resolveContext.getTypeEvalContext();
-
     final PropertyResolveResult propertyResult = findProperty(classType, name, context);
     if (propertyResult != null) {
       if (!classType.isDefinition() || propertyResult.onMetaclass()) {
@@ -496,7 +492,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     List<? extends RatedResolveResult> resolveResults =
-      classType.resolveMember(name, null, AccessDirection.READ, resolveContext.withoutProperties());
+      classType.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noProperties(context));
     if (ContainerUtil.isEmpty(resolveResults)) {
       PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
       return PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GETATTR, classType, Collections.singletonList(nameArg), context);
