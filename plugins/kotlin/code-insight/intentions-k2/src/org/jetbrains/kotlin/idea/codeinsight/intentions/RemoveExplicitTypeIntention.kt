@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -81,7 +82,7 @@ internal class RemoveExplicitTypeIntention :
     override fun isApplicableByPsi(element: KtDeclarationWithReturnType): Boolean = canExplicitTypeBeRemoved(element)
 
     override fun KaSession.prepareContext(element: KtDeclarationWithReturnType): Unit? = when (element) {
-        is KtParameter -> true
+        is KtParameter, is KtDestructuringDeclarationEntry -> true
         is KtNamedFunction if element.hasBlockBody() -> element.returnType.isUnitType
         is KtNamedFunction if element.isRecursive() -> false
         is KtCallableDeclaration if publicReturnTypeShouldBePresentInApiMode(element) -> false
