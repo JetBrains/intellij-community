@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.DumbService
@@ -37,7 +37,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
                 return listOf(content.getTransferData(CopiedJavaCode.DATA_FLAVOR) as TextBlockTransferableData)
             }
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            rethrowControlFlowException(e)
             LOG.error(e)
         }
         return listOf()
