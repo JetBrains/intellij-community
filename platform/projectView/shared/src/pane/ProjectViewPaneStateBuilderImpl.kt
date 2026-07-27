@@ -21,10 +21,12 @@ import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpd
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
-  private class State : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
+internal class ProjectViewPaneStateBuilderImpl(
+  paneId: ProjectViewPaneId,
+) : ProjectViewPaneStateBuilder {
+  private class State(private val paneId: ProjectViewPaneId) : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
-    private val superRoot = Node(SuperRootModel as ProjectViewNodeModelImpl<*>)
+    private val superRoot = Node(null, SuperRootModel as ProjectViewNodeModelImpl<*>)
     private val nodeById = ConcurrentHashMap<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     private val nodeByUserObject = hashMapOf<Any, Node>()
 
@@ -40,7 +42,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         }
         is ProjectViewChildrenLoaded -> {
           val parent = nodeById[update.parentId] ?: return null
-          val children = update.children.mapTo(mutableListOf()) { Node(it) }
+          val children = update.children.mapTo(mutableListOf()) { Node(parent, it) }
           parent.children = children
           for (child in children) {
             addNode(child.model.id, child)
@@ -48,7 +50,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         }
         is ProjectViewNodeAdded -> {
           val parent = nodeById[update.parentId] ?: return null
-          val newNode = Node(update.model, mutableListOf())
+          val newNode = Node(parent, update.model, mutableListOf())
           parent.children?.add(update.index, newNode)
           addNode(newNode.model.id, newNode)
         }
@@ -148,7 +150,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     }
 
     fun <T> asSuspendingBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
-      return SuspendingBackendProjectViewPaneStateAccessorImpl(flowProducer)
+      return SuspendingBackendProjectViewPaneStateAccessorImpl(paneId, flowProducer)
     }
 
     fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor {
@@ -165,6 +167,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     }
 
     private class SuspendingBackendProjectViewPaneStateAccessorImpl<T>(
+      private val paneId: ProjectViewPaneId,
       private val flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>,
     ) : SuspendingBackendProjectViewPaneStateAccessor<T> {
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
@@ -172,9 +175,24 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         state.nodeById[id]?.model as BackendProjectViewNodeModel<T>?
       }
 
+      override suspend fun getNodePathById(id: Long): ProjectViewNodePath? = withState { state ->
+        val ids = mutableListOf<Long>()
+        var nodeId = id
+        while (nodeId != SUPER_ROOT_ID) {
+          ids += nodeId
+          nodeId = state.nodeById[nodeId]?.parent?.model?.id ?: return@withState null // was removed
+        }
+        projectViewNodePath(paneId, ids.reversed())
+      }
+
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
       override suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>? = withState { state ->
         state.nodeByUserObject[userObject as Any]?.model as BackendProjectViewNodeModel<T>?
+      }
+
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override suspend fun getParentByChildId(childId: Long): BackendProjectViewNodeModel<T>? = withState { state ->
+        state.nodeById[childId]?.parent?.model as BackendProjectViewNodeModel<T>?
       }
 
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
@@ -188,7 +206,7 @@ internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     }
   }
   
-  private val state = State()
+  private val state = State(paneId)
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
@@ -271,6 +289,6 @@ private class ProjectViewPaneSettingsAccessorImpl(
   }
 }
 
-private data class Node(var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null)
+private data class Node(val parent: Node?, var model: ProjectViewNodeModelImpl<*>, var children: MutableList<Node>? = null)
 
 private val LOG = logger<ProjectViewPaneStateBuilder>()

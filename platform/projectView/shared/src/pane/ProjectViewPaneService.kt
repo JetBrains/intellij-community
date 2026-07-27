@@ -122,7 +122,7 @@ private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val 
     get() = descriptor.id
 
   private val subscriberCount = MutableStateFlow(0)
-  private val stateBuilder = ProjectViewPaneStateBuilderImpl()
+  private val stateBuilder = ProjectViewPaneStateBuilderImpl(id)
   private val manageScopeDeferred = CompletableDeferred<CoroutineScope>()
 
   suspend fun manage() {

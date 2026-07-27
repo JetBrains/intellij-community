@@ -44,13 +44,20 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBu
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
 import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.containers.nullize
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -62,7 +69,9 @@ interface ProjectViewTreeNodeProvider<T> {
 
 @ApiStatus.Experimental
 abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
-  private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.BUFFERED)
+  private val stateUpdateRequests = Channel<StateUpdateRequest>(capacity = Channel.UNLIMITED)
+  private val updateEpoch = MutableStateFlow(0L)
+
   private val currentSuspendingState = AtomicReference<SuspendingBackendProjectViewPaneStateAccessor<T>?>(null)
   private val currentState = AtomicReference<BackendProjectViewPaneStateAccessor<T>?>(null)
   val suspendingState: SuspendingBackendProjectViewPaneStateAccessor<T>?
@@ -71,6 +80,8 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     get() = currentState.load()
   
   protected abstract val psi: ProjectViewPsiExtractor<T>
+  
+  private val pendingUpdates = ConcurrentHashMap<Long, ProjectViewNodeUpdateOptions>()
 
   protected open suspend fun isDefault(): Boolean = false
 
@@ -78,8 +89,8 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   protected abstract suspend fun presentableName(): @NlsSafe String
   protected abstract suspend fun order(): Int
 
-  private suspend fun scheduleStateUpdate(stateUpdateRequest: StateUpdateRequest) {
-    stateUpdateRequests.send(stateUpdateRequest)
+  private fun scheduleStateUpdate(stateUpdateRequest: StateUpdateRequest) {
+    stateUpdateRequests.trySend(stateUpdateRequest)
   }
 
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
@@ -89,9 +100,13 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
   protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>
 
+  protected abstract suspend fun createUpdater(): ProjectViewUpdater
+
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
+    val id = id()
     val stateAccessor = builder.asSuspendingBackendStateAccessor<T>()
     try {
+      pendingUpdates.clear() // possible leftovers from the previous session
       currentState.store(builder.asBackendStateAccessor())
       currentSuspendingState.store(stateAccessor)
       updateSettings(builder)
@@ -99,21 +114,37 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
       val state = ProjectViewPaneTreeState(nodeProvider, builder, stateAccessor)
       state.initialize()
       onStateChanged(stateAccessor)
-      for (stateUpdateRequest in stateUpdateRequests) {
-        when (stateUpdateRequest) {
-          is LoadChildrenRequest -> {
-            state.updateChildren(stateUpdateRequest.parentId)
-          }
-          is UpdateSettingsRequest -> {
-            updateSettings(builder)
+      coroutineScope {
+        launch(CoroutineName("Collect updates for the PV pane $id")) {
+          createUpdater().continuouslyUpdatePane(this@TreeBasedProjectViewPaneModel)
+        }
+        launch(CoroutineName("Flush updates for the PV pane $id")) {
+          updateEpoch.throttle(timeMs = 50).collect {
+            scheduleStateUpdate(ProcessPendingUpdatesRequest)
           }
         }
-        onStateChanged(stateAccessor)
+        launch(CoroutineName("Update requests for the PV pane $id")) {
+          for (stateUpdateRequest in stateUpdateRequests) {
+            when (stateUpdateRequest) {
+              is LoadChildrenRequest -> {
+                state.updateChildren(stateUpdateRequest.parentId, allowLoading = true, deep = false)
+              }
+              is ProcessPendingUpdatesRequest -> {
+                state.processPendingUpdates(pendingUpdates)
+              }
+              is UpdateSettingsRequest -> {
+                updateSettings(builder)
+              }
+            }
+            onStateChanged(stateAccessor)
+          }
+        }
       }
     }
     finally {
       currentSuspendingState.store(null)
       currentState.store(null)
+      pendingUpdates.clear()
     }
   }
 
@@ -123,7 +154,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     }
   }
 
-  protected suspend fun updateSettings() {
+  protected fun updateSettings() {
     scheduleStateUpdate(UpdateSettingsRequest)
   }
 
@@ -212,6 +243,16 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     }
     return null
   }
+  
+  fun updateNode(nodeId: Long, options: ((ProjectViewNodeUpdateOptionsBuilder) -> Unit)? = null) {
+    val newUpdate = ProjectViewNodeUpdateOptionsBuilderImpl()
+    options?.invoke(newUpdate)
+    // remove-reinsert ensures no concurrent access from the update routine
+    val existingUpdate = pendingUpdates.remove(nodeId)
+    val resultingUpdate = existingUpdate?.merge(newUpdate) ?: newUpdate
+    pendingUpdates[nodeId] = resultingUpdate
+    updateEpoch.update { it + 1L }
+  }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: emptyList()
@@ -284,6 +325,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
 private sealed class StateUpdateRequest
 private data class LoadChildrenRequest(val parentId: Long) : StateUpdateRequest()
+private data object ProcessPendingUpdatesRequest : StateUpdateRequest()
 private data object UpdateSettingsRequest : StateUpdateRequest()
 
 private class ProjectViewPaneTreeState<T>(
@@ -296,7 +338,7 @@ private class ProjectViewPaneTreeState<T>(
   suspend fun initialize() {
     val root = updateRoot()
     if (root != null) {
-      updateChildren(root)
+      updateChildren(root, allowLoading = true, deep = false)
     }
   }
 
@@ -312,15 +354,68 @@ private class ProjectViewPaneTreeState<T>(
     return rootModel
   }
 
-  suspend fun updateChildren(parentId: Long) {
-    val parentModel = state.getNodeById(parentId) ?: return
-    updateChildren(parentModel)
+  suspend fun processPendingUpdates(pendingUpdates: ConcurrentHashMap<Long, ProjectViewNodeUpdateOptions>) {
+    while (pendingUpdates.isNotEmpty()) {
+      for (nodeId in pendingUpdates.keys) {
+        val nodePath = state.getNodePathById(nodeId)
+        if (nodePath == null) { // the node was removed (possibly by a previous update right here)
+          pendingUpdates.remove(nodeId)
+          continue
+        }
+        processPendingUpdatesForPath(pendingUpdates, nodePath)
+      }
+    }
   }
 
-  private suspend fun updateChildren(parentModel: BackendProjectViewNodeModel<T>) {
+  private suspend fun processPendingUpdatesForPath(
+    pendingUpdates: ConcurrentHashMap<Long, ProjectViewNodeUpdateOptions>,
+    nodePath: ProjectViewNodePath,
+  ) {
+    // Consider the following scenario:
+    // 1. We iterate over the IDs.
+    // 2. At some point we run into a deep update at the level L of our path.
+    // 3. The node and all its children are updated recursively, including levels from L+1 and onwards.
+    // 4. At the same time, in parallel, someone request another update of some child at level > L.
+    // 5. At this point, we have no way to know whether that node is recent enough:
+    // it could be that the update was requested after we updated it.
+    // To avoid this scenario, we first remove all existing requests, then process it.
+    // This guarantees that all our updates will be at least as recent as the requests are.
+    val updatesForPath = nodePath.nodeIds.map { nodeId -> nodeId to pendingUpdates.remove(nodeId) }
+    for ((nodeId, updateOptions) in updatesForPath) {
+      if (updateOptions == null) continue
+      updateNode(nodeId, updateOptions)
+      if (updateOptions.deep) break // we've just updated all deeper nodes
+    }
+  }
+
+  private suspend fun updateNode(nodeId: Long, updateOptions: ProjectViewNodeUpdateOptions) {
+    val node = state.getNodeById(nodeId) ?: return
+    val newNodeModel = createUpdatedModel(node)
+    if (newNodeModel == null) { // the node was removed/invalidated
+      val parent = state.getParentByChildId(nodeId) ?: return
+      val siblings = state.getChildren(parent) ?: return
+      val childIndex = siblings.indexOf(node).takeIf { it != -1 } ?: return
+      builder.removeNodeChild(parent.id, childIndex)
+    }
+    else {
+      builder.updateNode(newNodeModel)
+      if (updateOptions.deep) { // update recursively, but only already loaded children
+        updateChildren(parentId = nodeId, allowLoading = false, deep = true)
+      }
+    }
+  }
+
+  suspend fun updateChildren(parentId: Long, allowLoading: Boolean, deep: Boolean) {
+    val parentModel = state.getNodeById(parentId) ?: return
+    updateChildren(parentModel, allowLoading, deep)
+  }
+
+  private suspend fun updateChildren(parentModel: BackendProjectViewNodeModel<T>, allowLoading: Boolean, deep: Boolean) {
     parentModel as ProjectViewNodeModelImpl<T>
     val newChildren = nodeProvider.getChildren(parentModel.userObject) ?: return
     val oldModels = state.getChildren(parentModel)
+    
+    if (oldModels == null && !allowLoading) return
 
     if (oldModels == null) { // first time loaded, must send even if empty
       setChildren(parentModel, newChildren)
@@ -389,6 +484,12 @@ private class ProjectViewPaneTreeState<T>(
         builder.addNode(parentModel.id, index, newModel)
       }
     }
+    
+    if (deep) {
+      for (newChild in newModels) { // update recursively, but don't load unless already loaded
+        updateChildren(newChild, allowLoading = false, deep = true)
+      }
+    }
   }
 
   private suspend fun getOrCreateNodeModel(node: T): BackendProjectViewNodeModel<T>? {
@@ -400,6 +501,10 @@ private class ProjectViewPaneTreeState<T>(
   private suspend fun createNewModel(node: T): BackendProjectViewNodeModel<T>? {
     val id = nextId++
     return nodeProvider.createNodeModel(id, node)
+  }
+
+  private suspend fun createUpdatedModel(node: BackendProjectViewNodeModel<T>): BackendProjectViewNodeModel<T>? {
+    return nodeProvider.createNodeModel(node.id, node.userObject)
   }
 
   private suspend fun updateModel(oldModel: BackendProjectViewNodeModel<T>, newNode: T): BackendProjectViewNodeModel<T>? {

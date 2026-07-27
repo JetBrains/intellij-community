@@ -10,6 +10,9 @@
 - extractPsiElements(java.util.List):java.util.List
 - extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
 - extractUnloadedModules(java.util.List):java.util.List
+*:com.intellij.platform.projectView.impl.ProjectViewNodeUpdateOptionsBuilder
+- a:getDeep():Z
+- a:setDeep(Z):V
 *c:com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 - com.intellij.ide.projectView.ViewSettings
 - <init>(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
@@ -38,10 +41,13 @@
 *:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - a:createNodeModel(J,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:getChildren(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.impl.ProjectViewUpdater
+- a:continuouslyUpdatePane(com.intellij.platform.projectView.pane.ProjectViewPaneModel,kotlin.coroutines.Continuation):java.lang.Object
 *a:com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 - com.intellij.platform.projectView.pane.ProjectViewPaneModel
 - <init>(com.intellij.openapi.project.Project):V
 - pa:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
+- pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - pf:getProject():com.intellij.openapi.project.Project
@@ -64,7 +70,9 @@
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
 - p:uiDataSnapshotForSelection(java.util.List,com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
-- pf:updateSettings(kotlin.coroutines.Continuation):java.lang.Object
+- f:updateNode(J,kotlin.jvm.functions.Function1):V
+- bs:updateNode$default(com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel,J,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- pf:updateSettings():V
 - f:visitTree(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *a:com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 - com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
@@ -72,6 +80,7 @@
 - p:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createTreeStructure(com.intellij.ide.projectView.ViewSettings):com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - p:createTreeStructureViewSettings(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- p:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
 - p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 *:com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
@@ -101,6 +110,9 @@
 - a:setIsDirectory(Z):V
 *f:com.intellij.platform.projectView.pane.ProjectViewNodeModelKt
 - *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+*:com.intellij.platform.projectView.pane.ProjectViewNodePath
+- a:getNodeIds():java.util.List
+- a:getPaneId():com.intellij.platform.projectView.pane.ProjectViewPaneId
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 - a:addSelectInTarget(java.lang.String,java.lang.String,F):V
@@ -154,6 +166,7 @@
 - a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 - a:getNodeById(J,kotlin.coroutines.Continuation):java.lang.Object
 - a:getNodeByUserObject(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodePathById(J,kotlin.coroutines.Continuation):java.lang.Object
 - a:getParentByChildId(J,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 - a:getNestingRules():java.util.List

@@ -5,8 +5,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 
-@ApiStatus.Internal
-@Serializable
+@ApiStatus.Experimental
 sealed interface ProjectViewNodePath {
   val paneId: ProjectViewPaneId
   val nodeIds: List<Long>
@@ -15,8 +14,9 @@ sealed interface ProjectViewNodePath {
 @ApiStatus.Internal
 fun projectViewNodePath(paneId: ProjectViewPaneId, nodeIds: List<Long>): ProjectViewNodePath = ProjectViewNodePathImpl(paneId, nodeIds)
 
+@ApiStatus.Internal
 @Serializable
-private data class ProjectViewNodePathImpl(
+data class ProjectViewNodePathImpl(
   override val paneId: ProjectViewPaneId,
   override val nodeIds: List<Long>,
 ) : ProjectViewNodePath

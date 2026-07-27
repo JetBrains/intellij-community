@@ -5,7 +5,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
-import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewNodePathImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -49,14 +49,14 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     }
   }
 
-  override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
-    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice)
+  override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePathImpl? {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice) as ProjectViewNodePathImpl?
   }
 
   override suspend fun findNodeForSelectIn(
       projectId: ProjectId,
       selectInRequest: SelectInRequestDTO,
-  ): ProjectViewNodePath? {
-    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForSelectIn(selectInRequest)
+  ): ProjectViewNodePathImpl? {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForSelectIn(selectInRequest) as ProjectViewNodePathImpl?
   }
 }

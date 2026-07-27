@@ -31,6 +31,10 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
 
   protected abstract fun createTreeStructure(viewSettings: ViewSettings): AbstractProjectTreeStructure
 
+  override suspend fun createUpdater(): ProjectViewUpdater {
+    return TreeStructureProjectViewUpdater(project)
+  }
+
   override fun supportsOption(option: ProjectViewPaneOption): Boolean {
     // Because tree structure based panes are derived from the respective legacy implementations,
     // the defaults here are also chosen to match AbstractProjectViewPane.
