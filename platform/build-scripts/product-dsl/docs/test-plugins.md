@@ -175,6 +175,18 @@ Only **unresolvable** modules are auto-added to the test plugin content.
 
 For dependencies declared directly on the DSL test plugin main target, `RUNTIME`-scoped `.iml` dependencies on valid content modules are generated as explicit `<dependencies><module name="..."/>` entries, even if the module is owned by a resolvable bundled plugin. This lets test plugins request a specific content module in their own plugin classloader without duplicating that module in `<content>`. Compile-scope plugin-owned content still normalizes to the owning `<plugin id="..."/>` dependency, and plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error unless another graph source makes the same module resolvable in the DSL test plugin scope.
 
+### Test-Only Content Modules Never Add a New `<plugin>` Dependency
+
+Content modules whose name ends with `.tests` are **test-only**: their JPS dependencies are test-runtime-only. When such
+a module is the *sole* reason a plugin would be pulled in, the generator drops that plugin from the generated test plugin
+descriptor instead of writing `<plugin id="..."/>` — otherwise a single test module drags in a whole plugin and duplicates
+its test roots (IJPL-241684). A `<plugin>` dependency already declared in the descriptor is always kept, and a plugin
+required by at least one non-`.tests` content module is written as usual.
+
+This suffix check (`isTestOnlyContentModule` in `TestPluginDependencyPlanner`) is the **only** place where the `.tests`
+name matters. In particular it does not affect how a `*.tests.xml` module descriptor's own `<dependencies>` are generated
+— see [dependency_generation.md](dependency_generation.md#testsxml-is-not-_testxml).
+
 ### Source of Truth and Transitive Closure
 
 Auto-add uses **PluginGraph** as the single source of truth for module descriptors and resolvable modules, but reads JPS dependencies from the declared content modules. Project library dependencies are mapped to library modules via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules, not the graph), so library modules don't need to be present in module sets to be discovered.

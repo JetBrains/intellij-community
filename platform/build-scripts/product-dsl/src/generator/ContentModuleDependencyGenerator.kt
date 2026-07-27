@@ -290,25 +290,6 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
   val existingXmlPluginsAsPluginId = existingXmlPlugins.mapTo(HashSet(), ::PluginId)
 
-  if (isPreservedTestsDescriptorModule(contentModuleName)) {
-    return ContentModuleDependencyPlan(
-      contentModuleName = contentModuleName,
-      descriptorPath = prodInfo.descriptorPath,
-      descriptorContent = prodInfo.content,
-      moduleDependencies = prodInfo.existingModuleDependencies.map(::ContentModuleName),
-      pluginDependencies = prodInfo.existingPluginDependencies.map(::PluginId),
-      testDependencies = prodInfo.existingModuleDependencies.map(::ContentModuleName),
-      existingXmlModuleDependencies = existingXmlModulesAsContentModuleName,
-      existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
-      preserveExistingPluginDependencies = emptySet(),
-      writtenPluginDependencies = prodInfo.existingPluginDependencies.map(::PluginId),
-      allJpsPluginDependencies = emptySet(),
-      suppressedModules = emptySet(),
-      suppressedPlugins = emptySet(),
-      suppressionUsages = emptyList(),
-    )
-  }
-
   val prodModuleDeps: List<String>
   val testModuleDeps = ArrayList<String>()
   val pluginDeps = ArrayList<String>()
@@ -316,8 +297,8 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val suppressionUsages = ArrayList<SuppressionUsage>()
 
   // Compute dependencies written to XML using graph EDGE_TARGET_DEPENDS_ON.
-  // Include TEST scope deps only for test descriptors. Production descriptors may be owned by plugins
-  // marked as test plugins, but their generated XML must still follow production JPS runtime scope.
+  // Whether TEST scope deps are included is decided by shouldIncludeTestScopeForWrittenDeps. Production descriptors may be
+  // owned by plugins marked as test plugins, but their generated XML must still follow production JPS runtime scope.
   val includeTestScopeForWrittenDeps = shouldIncludeTestScopeForWrittenDeps(
     graph = graph,
     outputProvider = outputProvider,
@@ -440,6 +421,16 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   )
 }
 
+/**
+ * Decides whether TEST-scope JPS deps belong in the descriptor's generated `<dependencies>`.
+ *
+ * True in exactly three cases:
+ * 1. the descriptor is a test descriptor (`foo._test.xml`);
+ * 2. the module is test support (`*.testFramework`, IDE starter, …) and has no production content source;
+ * 3. the descriptor file itself lies under a JPS test source root (e.g. `testResources/foo.tests.xml`).
+ *
+ * Case 3 is what makes test-only modules work; it is deliberately based on descriptor location, not on the module name.
+ */
 private fun shouldIncludeTestScopeForWrittenDeps(
   graph: PluginGraph,
   outputProvider: ModuleOutputProvider?,
@@ -466,19 +457,18 @@ private fun hasProductionContentSource(graph: PluginGraph, contentModuleName: Co
 
 private fun isTestSupportContentModule(moduleName: ContentModuleName, descriptorPath: Path): Boolean {
   val name = moduleName.value
-  return !isPreservedTestsDescriptorModule(moduleName) &&
-         (name.endsWith(".testFramework") ||
-          name.contains(".testFramework.") ||
-          name.endsWith("TestFramework") ||
-          name.endsWith(".testGuiFramework") ||
-          name.contains(".test.framework") ||
-          name.startsWith("intellij.rider.test.framework") ||
-          name == "intellij.tools.testsBootstrap" ||
-          name == "intellij.idea.tools.launch" ||
-          name.startsWith("intellij.ide.starter.") ||
-          name.startsWith("intellij.tools.ide.starter.") ||
-          name.startsWith("intellij.tools.ide.metrics.") ||
-          descriptorPath.toString().contains("/testFramework/"))
+  return name.endsWith(".testFramework") ||
+         name.contains(".testFramework.") ||
+         name.endsWith("TestFramework") ||
+         name.endsWith(".testGuiFramework") ||
+         name.contains(".test.framework") ||
+         name.startsWith("intellij.rider.test.framework") ||
+         name == "intellij.tools.testsBootstrap" ||
+         name == "intellij.idea.tools.launch" ||
+         name.startsWith("intellij.ide.starter.") ||
+         name.startsWith("intellij.tools.ide.starter.") ||
+         name.startsWith("intellij.tools.ide.metrics.") ||
+         descriptorPath.toString().contains("/testFramework/")
 }
 
 /**

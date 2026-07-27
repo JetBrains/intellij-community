@@ -211,7 +211,7 @@ private fun buildTestPluginDependencyPlan(
 
   val filteredRequiredByPlugin = requiredByPlugin
     .filter { (pluginId, modules) ->
-      pluginId in existingPluginDependencies || modules.any { !isPreservedTestsDescriptorModule(it) }
+      pluginId in existingPluginDependencies || modules.any { !isTestOnlyContentModule(it) }
     }
     .mapValues { it.value.toSet() }
   val computedPluginDependencies = LinkedHashSet<PluginId>().apply {
@@ -266,6 +266,13 @@ private fun buildTestPluginDependencyPlan(
     unresolvedDependencies = mergedUnresolvedDependencies,
   )
 }
+
+/**
+ * Test-only content modules (`*.tests`) must not, on their own, introduce a *new* `<plugin>` dependency into a generated
+ * DSL test plugin descriptor: their JPS deps are test-runtime-only, and pulling in whole plugins duplicates test roots
+ * (IJPL-241684). Plugin dependencies already declared in the descriptor are kept regardless.
+ */
+private fun isTestOnlyContentModule(moduleName: ContentModuleName): Boolean = moduleName.value.endsWith(".tests")
 
 private fun collectTargetDependencies(
   graph: PluginGraph,

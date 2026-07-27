@@ -587,7 +587,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `preserved tests descriptor dependency does not add new test plugin plugin dependency`(@TempDir tempDir: Path) {
+  fun `test-only content module dependency does not add new test plugin plugin dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
@@ -648,7 +648,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `preserved tests descriptor dependency keeps existing test plugin plugin dependency`(@TempDir tempDir: Path) {
+  fun `test-only content module dependency keeps existing test plugin plugin dependency`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
