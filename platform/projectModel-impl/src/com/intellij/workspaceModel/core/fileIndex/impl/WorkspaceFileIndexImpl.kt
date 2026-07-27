@@ -197,7 +197,16 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
   ): Boolean {
-    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, 0)
+    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, true, 0)
+  }
+
+  override fun processIndexableContentUnderDirectory(
+    fileOrDir: VirtualFile,
+    processor: ContentIteratorEx,
+    customFilter: VirtualFileFilter?,
+    fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
+  ): Boolean {
+    return processContentUnderDirectory(fileOrDir, processor, customFilter, fileSetFilter, false, 0)
   }
 
   private fun processContentUnderDirectory(
@@ -205,20 +214,33 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     processor: ContentIteratorEx,
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
+    includeContentNonIndexableSets: Boolean,
     numberOfExcludedParentDirectories: Int,
   ): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         val fileInfo = getFileInfo(
-          file, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
-          includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
+          file,
+          honorExclusion = true,
+          includeContentSets = true,
+          includeContentNonIndexableSets = includeContentNonIndexableSets,
+          includeExternalSets = false,
+          includeExternalSourceSets = false,
+          includeExternalNonIndexableSets = false,
+          includeCustomKindSets = false
         )
 
         if (file.isDirectory && fileInfo is NonWorkspace) {
           return when (fileInfo) {
             NonWorkspace.EXCLUDED, NonWorkspace.NOT_UNDER_ROOTS -> {
               processContentFilesUnderExcludedDirectory(
-                file, processor, customFilter, fileSetFilter, fileOrDir, numberOfExcludedParentDirectories
+                file,
+                processor,
+                customFilter,
+                fileSetFilter,
+                fileOrDir,
+                includeContentNonIndexableSets,
+                numberOfExcludedParentDirectories,
               )
             }
             NonWorkspace.IGNORED, NonWorkspace.INVALID -> {
@@ -254,6 +276,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     customFilter: VirtualFileFilter?,
     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
     rootDir: VirtualFile,
+    includeContentNonIndexableSets: Boolean,
     numberOfExcludedParentDirectories: Int,
   ): VirtualFileVisitor.Result {
     if (numberOfExcludedParentDirectories > 5) {
@@ -272,11 +295,22 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     val processed = virtualFileUrlManager.processChildrenRecursively(dir.url) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
       val isChildInContent = findFileSet(
-        childFile, honorExclusion = true, includeContentSets = true, includeContentNonIndexableSets = true, includeExternalSets = false,
-        includeExternalSourceSets = false, includeExternalNonIndexableSets = false, includeCustomKindSets = false
+        childFile,
+        honorExclusion = true,
+        includeContentSets = true,
+        includeContentNonIndexableSets = includeContentNonIndexableSets,
+        includeExternalSets = false,
+        includeExternalSourceSets = false,
+        includeExternalNonIndexableSets = false,
+        includeCustomKindSets = false
       ) != null
       return@processChildrenRecursively if (isChildInContent) {
-        if (processContentUnderDirectory(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
+        if (processContentUnderDirectory(childFile,
+                                         processor,
+                                         customFilter,
+                                         fileSetFilter,
+                                         includeContentNonIndexableSets,
+                                         numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
         }
         else {
