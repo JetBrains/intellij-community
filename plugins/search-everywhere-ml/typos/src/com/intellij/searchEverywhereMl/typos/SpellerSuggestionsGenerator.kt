@@ -3,13 +3,11 @@ package com.intellij.searchEverywhereMl.typos
 import ai.grazie.spell.GrazieSpeller
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.searchEverywhereMl.typos.models.NGramModelProvider
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Generates possible spelling corrections for a sentence.
  * Each full-sentence combination is then scored and sorted by probability.
  */
-@ApiStatus.Internal
 internal class SpellerSuggestionsGenerator(
   private val speller: GrazieSpeller,
   private val nGramModelProvider: NGramModelProvider = NGramModelProvider(),

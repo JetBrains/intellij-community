@@ -3,11 +3,15 @@
   <dependencies>
     <module name="intellij.java"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.refactorings.base"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>

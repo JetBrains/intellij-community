@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -22,7 +22,7 @@ class SeActionsFilter(val includeDisabled: Boolean, val isAutoTogglePossible: Bo
       when (state) {
         is SeFilterState.Data -> {
           val includeDisabled = state.getBoolean(KEY_INCLUDE_DISABLED)
-                                ?: SeEverywhereFilter.isEverywhere(state)
+                                ?: SeEverywhereFilterImpl.isEverywhere(state)
                                 ?: false
 
           val isAutoTogglePossible = state.getBoolean(IS_AUTO_TOGGLE_POSSIBLE) ?: false

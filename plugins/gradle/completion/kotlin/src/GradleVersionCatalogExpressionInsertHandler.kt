@@ -8,7 +8,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 /** Unlike the default insert handler, removes the rest of the KtDotQualifiedExpression after the <caret>.
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
  * - `libs.junit.jupiter<caret>.ju` for the default handler (keeps `.ju`).
  * - `libs.junit.jupiter<caret>` for this handler.
  */
-@ApiStatus.Internal
 internal object GradleVersionCatalogExpressionInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     context.commitDocument()

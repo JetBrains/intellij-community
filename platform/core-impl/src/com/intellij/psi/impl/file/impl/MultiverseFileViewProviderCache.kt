@@ -134,10 +134,7 @@ internal class MultiverseFileViewProviderCache(
       }
     }
 
-    val firstEntry = fileMap.entries.firstOrNull()
-    if (firstEntry == null ||
-        !evaluator.isRecreatedViewProviderIsIdentical(vFile, firstEntry.value as AbstractFileViewProvider, firstEntry.key)
-    ) {
+    if (!canFileMapBeResurrected(vFile, fileMap)) {
       dropPossibleInvalidation(fileMap)
       remove(vFile)
       return null
@@ -268,6 +265,20 @@ internal class MultiverseFileViewProviderCache(
         }
       }
     }
+  }
+
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    val vFile = viewProvider.virtualFile
+    val fileMap = cache[vFile] ?: return false
+
+    return canFileMapBeResurrected(vFile, fileMap)
+  }
+
+  private fun canFileMapBeResurrected(vFile: VirtualFile, fileMap: FileProviderMap): Boolean {
+    if (!vFile.isValid()) return false
+
+    val firstEntry = fileMap.entries.firstOrNull()
+    return firstEntry != null && evaluator.isRecreatedViewProviderIdentical(vFile, firstEntry.value as AbstractFileViewProvider, firstEntry.key)
   }
 
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {

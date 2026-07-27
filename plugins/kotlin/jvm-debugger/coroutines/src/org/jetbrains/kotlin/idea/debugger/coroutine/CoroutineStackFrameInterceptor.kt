@@ -45,7 +45,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.isInvokeSuspend
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.threadAndContextSupportsEvaluation
 
 
-private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
+internal class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override suspend fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl

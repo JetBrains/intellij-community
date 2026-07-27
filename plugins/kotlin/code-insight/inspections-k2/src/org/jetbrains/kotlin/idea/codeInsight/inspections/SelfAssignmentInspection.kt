@@ -114,7 +114,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
 
     context(_: KaSession)
     private fun KtExpression.getImplicitReceiverSymbolIfExists(): KaSymbol? {
-        val implicitReceiver = this.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.let {
+        val implicitReceiver = this.resolveToCall()?.singleVariableAccessCall()?.let {
             it.dispatchReceiver ?: it.extensionReceiver
         }
 

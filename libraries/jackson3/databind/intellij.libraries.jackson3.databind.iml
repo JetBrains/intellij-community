@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-databind" type="repository">
-        <properties maven-id="tools.jackson.core:jackson-databind:3.1.4">
+        <properties maven-id="tools.jackson.core:jackson-databind:3.2.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4.jar">
-              <sha256sum>14034bfdf392b6ebec1b4bb6c1de29d604f0aa97251259a19d5f19af8719bb20</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1.jar">
+              <sha256sum>8d005c5626b1839e2eea6bd33a437287e7a24d54e1bb3746b8f861193262b519</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -21,11 +21,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.4/jackson-databind-3.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

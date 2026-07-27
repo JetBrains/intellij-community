@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.PredefinedCodeStyle
 
+@Suppress("SplitModeApiUsage")
 abstract class KotlinPredefinedCodeStyle(@NlsContexts.ListItem name: String, language: Language) : PredefinedCodeStyle(name, language) {
     abstract val codeStyleId: String
 }

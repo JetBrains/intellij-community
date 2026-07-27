@@ -5702,7 +5702,6 @@
     <module>sunaudio</module>
     <module>symbol</module>
     <module>telnetlib</module>
-    <module>test</module>
     <module>thread</module>
     <module>tkColorChooser</module>
     <module>tkCommonDialog</module>

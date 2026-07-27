@@ -20,6 +20,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.uv.UvCli
+import com.jetbrains.python.uv.UV_LOCK
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +55,7 @@ private suspend fun <P : PathHolder> runUv(
     venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toString()) }
   }
   val bin = fileSystem.getBinaryToExec(uv, workingDir)
-  val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf(PY_PROJECT_TOML, "uv.lock")) else null
+  val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf(PY_PROJECT_TOML, UV_LOCK.value)) else null
   return runExecutableWithProgress(bin,
                                    env = env,
                                    timeout = 10.minutes,

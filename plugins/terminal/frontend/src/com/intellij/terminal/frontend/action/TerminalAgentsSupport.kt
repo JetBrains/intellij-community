@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.agent.TERMINAL_AI_AGENTS_REGISTRY_KEY
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
@@ -40,19 +39,15 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.time.Duration.Companion.seconds
 
-
-@ApiStatus.Internal
 internal data class TerminalAvailableAgentEntry(
   val terminalAgent: TerminalAgent,
   val mode: TerminalAgentMode,
 )
 
-@ApiStatus.Internal
 internal fun isTerminalAgentsEnabled(): Boolean {
   return RegistryManager.getInstance().`is`(TERMINAL_AI_AGENTS_REGISTRY_KEY)
 }
 
-@ApiStatus.Internal
 internal fun getAvailableTerminalAgentEntries(project: Project): List<TerminalAvailableAgentEntry> {
   val availableByKey = TerminalAgentsAvailabilityService.getInstance(project)
     .getAvailableAgents()
@@ -62,14 +57,12 @@ internal fun getAvailableTerminalAgentEntries(project: Project): List<TerminalAv
   }
 }
 
-@ApiStatus.Internal
 internal fun findAvailableTerminalAgentEntry(project: Project, agentKey: TerminalAgent.AgentKey?): TerminalAvailableAgentEntry? {
   return agentKey?.let { key ->
     getAvailableTerminalAgentEntries(project).firstOrNull { it.terminalAgent.agentKey == key }
   }
 }
 
-@ApiStatus.Internal
 internal fun launchTerminalAgent(
   project: Project,
   agentKey: TerminalAgent.AgentKey,

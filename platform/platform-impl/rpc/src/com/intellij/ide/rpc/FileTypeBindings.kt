@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  * This method is useful when you want all the editors created for this [Document] to have backend features.
  */
 // TODO: it is not ok to attach Document to fileType
-@ApiStatus.Internal
 internal fun Document.bindEditorsToBackend() {
   this.putUserData(BIND_DOCUMENT_EDITORS, true)
 }

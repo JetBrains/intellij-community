@@ -31,8 +31,8 @@ internal class WslTargetLanguageStep(model: WslTargetWizardModel) : WslTargetSte
     model.applyChanges()
     val targetSupplier: () -> TargetEnvironmentConfiguration = { model.subject }
 
-    languagesPanel = TargetEnvironmentLanguagesPanel(model.project, model.subject.getTargetType(),
-                                                     targetSupplier, languagesForEditing) {
+    languagesPanel = TargetEnvironmentLanguagesPanel(model.project, model.module,
+                                                     model.subject.getTargetType(), targetSupplier, languagesForEditing) {
       forceMainPanelLayout()
     }.also {
       mainPanel.addToCenter(it.component)

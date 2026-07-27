@@ -44,8 +44,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
 
-    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
-
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
@@ -98,6 +96,6 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
-    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
+
   </extensions>
 </idea-plugin>

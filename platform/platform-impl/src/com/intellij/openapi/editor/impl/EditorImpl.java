@@ -6057,9 +6057,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public void assertOrDumpState(boolean condition, String message) {
-    if (!condition) {
-      throw new RuntimeExceptionWithAttachments(message, AttachmentFactory.createContext(dumpState()));
-    }
+  public void throwEditorInvariantBroken(@NotNull String message) {
+    throw new RuntimeExceptionWithAttachments(message, AttachmentFactory.createContext(dumpState()));
   }
 }

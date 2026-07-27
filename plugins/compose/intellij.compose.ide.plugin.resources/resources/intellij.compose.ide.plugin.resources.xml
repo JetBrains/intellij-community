@@ -8,10 +8,13 @@
     <module name="intellij.compose.ide.plugin.shared"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.xml.impl"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -11,13 +12,17 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
@@ -59,7 +64,7 @@ abstract class Slicer(
 
     protected val analysisScope: SearchScope = parentUsage.scope.toSearchScope()
     protected val mode: KotlinSliceAnalysisMode = parentUsage.mode
-    protected val project = element.project
+    protected val project: Project = element.project
 
     protected fun PsiElement.passToProcessor(mode: KotlinSliceAnalysisMode = this@Slicer.mode) {
         processor.process(KotlinSliceUsage(this, parentUsage, mode, forcedExpressionMode = false))
@@ -236,7 +241,7 @@ abstract class Slicer(
         }
     }
 
-    protected fun canProcessParameter(parameter: KtParameter) = !parameter.isVarArg
+    protected fun canProcessParameter(parameter: KtParameter): Boolean = !parameter.isVarArg
 
     protected fun processExtensionReceiverUsages(
         declaration: KtCallableDeclaration,

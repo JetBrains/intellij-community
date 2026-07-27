@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import com.intellij.openapi.module.ModuleUtilCore
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -45,7 +45,7 @@ object JavaCollectionsStaticMethodInspectionUtils {
         if (!isValidFirstArgument(firstArgType)) return null
 
         val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-        val callableId = call.partiallyAppliedSymbol.symbol.callableId ?: return null
+        val callableId = call.symbol.callableId ?: return null
         val fqName = callableId.asSingleFqName().asString()
 
         if (!canReplaceWithStdLib(expression, fqName, args)) return null

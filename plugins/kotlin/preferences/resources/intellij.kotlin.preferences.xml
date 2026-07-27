@@ -1,0 +1,25 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.plugin.updater"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.experimentalFeature"
+            interface="org.jetbrains.kotlin.idea.configuration.ExperimentalFeature"
+            dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
+    <applicationConfigurable
+            groupId="language"
+            bundle="messages.KotlinPreferencesBundle"
+            key="kotlin.language.configurable"
+            id="preferences.language.Kotlin"
+            instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
+
+  </extensions>
+</idea-plugin>

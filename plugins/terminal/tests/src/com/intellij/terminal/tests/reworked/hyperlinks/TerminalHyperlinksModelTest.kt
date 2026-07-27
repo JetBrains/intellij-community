@@ -6,18 +6,13 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHighlightingInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksModel
-import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 internal class TerminalHyperlinksModelTest {
-  private var trimOffset: Long = 0L
-  private val model = TerminalHyperlinksModel(
-    debugName = "Test",
-    trimOffset = { TerminalOffset.of(trimOffset) },
-  )
+  private val model = TerminalHyperlinksModel(debugName = "Test")
 
   /** Links with end offsets 10, 20, 30, 40, 50 (ids 1..5), each spanning `[end - 5, end]`. */
   private fun addFiveLinks() {
@@ -70,7 +65,10 @@ internal class TerminalHyperlinksModelTest {
       link(id = 2, end = 20),
       link(id = 4, end = 40),
     ))
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 25, toAbsoluteOffset = 45).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 25,
+      toAbsoluteOffset = 45
+    ).ids()
     // End offsets within [25, 45] are 30 and 40.
     assertThat(removed).containsExactlyInAnyOrder(3L, 4L)
     assertPresent(1L, 2L, 5L)
@@ -197,9 +195,12 @@ internal class TerminalHyperlinksModelTest {
   @Test
   fun `trimmed links are removed regardless of the bounds`() {
     addFiveLinks()
-    trimOffset = 15L
     // The bounded range catches no link, but the trimmed head (end offset <= 15) must still be removed.
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 100, toAbsoluteOffset = 100).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 100,
+      toAbsoluteOffset = 100,
+      trimUntilOffset = 15L,
+    ).ids()
     assertThat(removed).containsExactly(1L)
     assertPresent(2L, 3L, 4L, 5L)
     assertAbsent(1L)
@@ -208,8 +209,11 @@ internal class TerminalHyperlinksModelTest {
   @Test
   fun `trimming removes every link ending within the trimmed region`() {
     addFiveLinks()
-    trimOffset = 35L
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 100, toAbsoluteOffset = 100).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 100,
+      toAbsoluteOffset = 100,
+      trimUntilOffset = 35L,
+    ).ids()
     // End offsets <= 35 are 10, 20, 30.
     assertThat(removed).containsExactlyInAnyOrder(1L, 2L, 3L)
     assertPresent(4L, 5L)
@@ -222,8 +226,11 @@ internal class TerminalHyperlinksModelTest {
       link(id = 1, start = 0, end = 10),   // ends before the trim offset
       link(id = 2, start = 10, end = 25),  // straddles the trim offset: starts at 10, ends at 25
     ))
-    trimOffset = 15L
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 100, toAbsoluteOffset = 100).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 100,
+      toAbsoluteOffset = 100,
+      trimUntilOffset = 15L,
+    ).ids()
     // Only link 1 (end 10 <= 15) is trimmed; link 2 is kept because its end offset (25) is past the
     // trim offset, even though it starts inside the trimmed region.
     assertThat(removed).containsExactly(1L)
@@ -234,8 +241,11 @@ internal class TerminalHyperlinksModelTest {
   @Test
   fun `a link ending exactly at the trim offset is trimmed`() {
     model.addHyperlinks(listOf(link(id = 1, end = 15), link(id = 2, end = 25)))
-    trimOffset = 15L
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 100, toAbsoluteOffset = 100).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 100,
+      toAbsoluteOffset = 100,
+      trimUntilOffset = 15L,
+    ).ids()
     // Trimming is inclusive of the trim offset itself.
     assertThat(removed).containsExactly(1L)
     assertPresent(2L)
@@ -245,8 +255,11 @@ internal class TerminalHyperlinksModelTest {
   @Test
   fun `trimming and range removal apply together in a single call`() {
     addFiveLinks()
-    trimOffset = 15L  // trims id 1 (end 10)
-    val removed = model.removeHyperlinks(fromAbsoluteOffset = 35, toAbsoluteOffset = 45).ids()
+    val removed = model.removeHyperlinks(
+      fromAbsoluteOffset = 35,
+      toAbsoluteOffset = 45,
+      trimUntilOffset = 15L, // trims id 1 (end 10)
+    ).ids()
     // Trim removes id 1 (end 10 <= 15); the range [35, 45] removes id 4 (end 40).
     assertThat(removed).containsExactlyInAnyOrder(1L, 4L)
     assertPresent(2L, 3L, 5L)

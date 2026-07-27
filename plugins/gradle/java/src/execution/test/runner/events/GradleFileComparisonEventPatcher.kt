@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.task.event.FailureResult
 import com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
 import com.intellij.openapi.externalSystem.model.task.event.TestFailure
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
-import org.jetbrains.annotations.ApiStatus
 import java.util.StringJoiner
 
 typealias TestFinishEvent = ExternalSystemFinishEvent<out TestOperationDescriptor>
@@ -19,7 +18,6 @@ typealias TestFinishEvent = ExternalSystemFinishEvent<out TestOperationDescripto
  * Also, see Gradle feature request for FileComparisonFailure
  * `https://github.com/gradle/gradle/issues/24801`
  */
-@ApiStatus.Internal
 internal class GradleFileComparisonEventPatcher {
 
   private var isBuiltInTestEventsUsed: Boolean = false

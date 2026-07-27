@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor.toc
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -92,10 +93,11 @@ class GenerateTableOfContentsAction: AnAction() {
 
     private fun buildToc(file: MarkdownFile): String {
       val headers = collectHeaders(file)
+      val indentSize = CodeStyle.getIndentSize(file)
       return buildString {
         appendLine(sectionDelimiter)
         for (header in headers) {
-          appendHeader(header)
+          appendHeader(header, indentSize)
           appendLine()
         }
         append(sectionDelimiter)
@@ -104,7 +106,12 @@ class GenerateTableOfContentsAction: AnAction() {
 
     fun obtainToc(file: MarkdownFile): String {
       return CachedValuesManager.getCachedValue(file) {
-        CachedValueProvider.Result.create(buildToc(file), PsiModificationTracker.MODIFICATION_COUNT)
+        val settings = CodeStyle.getSettings(file)
+        CachedValueProvider.Result.create(
+          buildToc(file),
+          PsiModificationTracker.MODIFICATION_COUNT,
+          settings.modificationTracker,
+        )
       }
     }
 
@@ -118,11 +125,11 @@ class GenerateTableOfContentsAction: AnAction() {
       return topLevelElements.filterIsInstance<MarkdownHeader>()
     }
 
-    private fun StringBuilder.appendHeader(header: MarkdownHeader) {
+    private fun StringBuilder.appendHeader(header: MarkdownHeader, indentSize: Int) {
       val text = header.buildVisibleText(hideImages = false) ?: return
       val reference = header.anchorText ?: return
-      repeat(header.level - 1) {
-        append("  ")
+      repeat((header.level - 1) * indentSize) {
+        append(' ')
       }
       append("* [")
       append(text)

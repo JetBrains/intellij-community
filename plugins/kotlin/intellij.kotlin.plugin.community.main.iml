@@ -66,7 +66,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.powerAssert.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.api" exported="" />
-    <orderEntry type="module" module-name="kotlin.completion.impl.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.impl" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
@@ -82,7 +81,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" exported="" />
-    <orderEntry type="module" module-name="kotlin.inspections" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />

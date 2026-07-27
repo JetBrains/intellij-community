@@ -26,11 +26,13 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
@@ -215,7 +217,7 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
 
     fun convertExtendsImplementsList(entries: List<KtSuperTypeListEntry>): Array<PsiJavaCodeReferenceElement> =
             entries.mapNotNull {
-                val typeText = toJavaTypeText(klass, it.typeReference,)
+                val typeText = toJavaTypeText(klass, it.typeReference)
                 if (typeText != null) factory.createReferenceFromText(typeText, javaClass) else null
             }.toTypedArray()
 

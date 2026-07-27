@@ -10,7 +10,7 @@ Groovy script
     Built in type
       PsiElement(float)('float')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('val')
+    PsiElement(val)('val')
     PsiWhiteSpace(' ')
     Parameter list
       PsiElement(()('(')

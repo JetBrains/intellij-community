@@ -4184,6 +4184,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
         }
 
+        @TestMetadata("destructuringDeclarationEntry.kt")
+        public void testDestructuringDeclarationEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntry.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryInLoop.kt")
+        public void testDestructuringDeclarationEntryInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryInLoop.kt");
+        }
+
         @TestMetadata("dotQualifiedInitializer.kt")
         public void testDotQualifiedInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/dotQualifiedInitializer.kt");
@@ -13589,6 +13599,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("addToVar.kt")
         public void testAddToVar() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addToVar.kt");
+        }
+
+        @TestMetadata("booleanResultUsed.kt")
+        public void testBooleanResultUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/booleanResultUsed.kt");
         }
 
         @TestMetadata("nonCollection.kt")

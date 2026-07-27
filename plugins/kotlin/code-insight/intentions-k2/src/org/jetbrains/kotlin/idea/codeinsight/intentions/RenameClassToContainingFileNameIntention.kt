@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 
 internal class RenameClassToContainingFileNameIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java, KotlinBundle.messagePointer("rename.class.to.containing.file.name")

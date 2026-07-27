@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
@@ -538,24 +539,25 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
+  @JvmOverloads
   fun getTypeOfMember(
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
+    anchor: PsiElement? = null,
   ): PyType? {
     val resolvedElements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
     if (resolvedElements.isEmpty()) return PyAnyType.unknown
 
     // Element with a declared type takes precedence.
-    val elementsWithDeclaredType = resolvedElements
-      .filter {
-        it is PyClass ||
-        it is PyFunction ||
-        it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
-      }
+    val elementsWithDeclaredType = resolvedElements.filter {
+      it is PyClass ||
+      it is PyFunction ||
+      it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
+    }
     val elements = elementsWithDeclaredType.ifEmpty { resolvedElements }
 
     val last = elements.last()
-    val lastType = context.getType(last)
+    val lastType = getResolvedElementType(last, context, anchor)
     if (lastType !is PyFunctionType) {
       val memberType = if (last is PyTargetExpression && last.isQualified && !PyTypingTypeProvider.isFinal(last, context)) {
         PyLiteralType.upcastLiteralToClass(lastType)
@@ -598,7 +600,7 @@ object PyTypeUtil {
     for (i in elements.lastIndex - 1 downTo 0) {
       val el = elements[i]
       if (PyiUtil.isOverload(el, context)) {
-        val type = context.getType(el)
+        val type = getResolvedElementType(el, context, anchor)
         if (type is PyCallableType) {
           overloads.add(type)
           continue
@@ -610,6 +612,15 @@ object PyTypeUtil {
 
     overloads.reverse()
     return PyOverloadType(overloads, impl)
+  }
+
+  private fun getResolvedElementType(element: PyTypedElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
+    // `PyTargetExpression.getType()` will call `PyTypeProvider.getReferenceType()` itself
+    if (element !is PyTargetExpression) {
+      val type = PyTypeProvider.EP_NAME.computeSafeIfAny { it.getReferenceType(element, context, anchor) }
+      if (type != null) return type.get()
+    }
+    return context.getType(element)
   }
 
   @ApiStatus.Internal

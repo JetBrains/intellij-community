@@ -6,9 +6,7 @@ import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class JavaRefactoringIntentionCommandSkipper : IntentionCommandSkipper {
   override fun skip(action: CommonIntentionAction, psiFile: PsiFile, offset: Int): Boolean {
     if (action !is IntentionAction) return false

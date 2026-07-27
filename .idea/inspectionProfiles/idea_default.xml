@@ -26,6 +26,7 @@
     <inspection_tool class="4ed1243f-91f1-388d-ba02-4dbef1721d3a" enabled="true" level="WEAK WARNING" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES">
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="60175927-3d94-3de3-bbe6-54353bd28bc6" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Fleet" level="WARNING" enabled="false" />
       <scope name="Rider Build Scripts" level="WARNING" enabled="false" />

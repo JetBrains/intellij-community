@@ -8,9 +8,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -64,7 +63,7 @@ internal class ReplaceWithOperatorAssignmentInspection :
         val operatorAssignment = buildOperatorAssignment(element) ?: return null
 
         analyze(operatorAssignment) {
-            if (operatorAssignment.operationReference.mainReference.resolveToSymbol() == null) return null
+            if (with(contextOf<KaSession>()) { operatorAssignment.operationReference.mainReference.resolveToSymbol() } == null) return null
         }
 
         val problemHighlightType = getProblemHighlightType(element)

@@ -51,7 +51,7 @@ internal object AddDataModifierFixFactory {
 
         if (!ctorParams.all {
                 if (it.isVararg) return@all false
-                val property = it.generatedPrimaryConstructorProperty ?: return@all false
+                val property = it.primaryConstructorProperty ?: return@all false
                 return@all property.isVisible(element)
             }
         ) return@ModCommandBased emptyList()

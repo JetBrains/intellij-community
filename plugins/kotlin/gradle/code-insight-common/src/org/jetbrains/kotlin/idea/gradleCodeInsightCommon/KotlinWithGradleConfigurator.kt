@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_I
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
@@ -500,7 +499,7 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
             Messages.showErrorDialog(
                 module.project,
                 KotlinIdeaGradleBundle.message("error.text.support.requires.version", feature.presentableName, sinceVersion),
-                AbstractChangeFeatureSupportLevelFix.getFixText(state, feature.presentableName)
+                getFixText(state, feature.presentableName)
             )
             return
         }

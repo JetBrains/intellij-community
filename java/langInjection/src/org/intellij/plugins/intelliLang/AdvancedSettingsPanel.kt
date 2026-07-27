@@ -13,9 +13,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.intellij.plugins.intelliLang.util.PsiUtilEx
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class AdvancedSettingsPanel(project: Project, configuration: Configuration.AdvancedConfiguration) {
 
   private val annotationField = ReferenceEditorWithBrowseButton(null, project, { s: String? -> PsiUtilEx.createDocument(s, project) }, configuration.languageAnnotationClass)

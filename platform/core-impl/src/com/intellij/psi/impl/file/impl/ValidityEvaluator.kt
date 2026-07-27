@@ -5,15 +5,22 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
+import org.jetbrains.annotations.Contract
 
 internal interface ValidityEvaluator {
-  fun isRecreatedViewProviderIsIdentical(
+
+  @Contract(pure = true)
+  fun isRecreatedViewProviderIdentical(
     virtualFile: VirtualFile,
     provider: AbstractFileViewProvider,
     context: CodeInsightContext,
   ): Boolean
 
+  @Contract(pure = false)
   fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean
+
+  @Contract(pure = true)
+  fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean
 
   fun reanimateProviderIfNecessary(vFile: VirtualFile, viewProvider: FileViewProvider?): FileViewProvider?
 }

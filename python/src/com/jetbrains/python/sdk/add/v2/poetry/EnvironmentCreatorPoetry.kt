@@ -14,12 +14,12 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -161,7 +161,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
 @Service(Service.Level.APP)
 @State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
-private class PoetryConfigService :
+internal class PoetryConfigService :
   SerializablePersistentStateComponent<PoetryConfigService.PyPoetrySettingsState>(PyPoetrySettingsState()) {
   class PyPoetrySettingsState : BaseState() {
     var isInProjectEnv = false

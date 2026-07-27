@@ -242,13 +242,19 @@ private class TargetProcessCommands(
 
   private suspend fun downloadAfterExecution() {
     if (downloadConfig == null) return
+    val workingDirOnTarget = info.cwd ?: return
 
     targetEnv.downloadVolumes.forEach { (_, volume) ->
+      if (!workingDirOnTarget.startsWith(volume.targetRoot)) return@forEach
+      val downloadRelativeDir = if (workingDirOnTarget != volume.targetRoot) {
+        workingDirOnTarget.substringAfter(volume.targetRoot + "/") + "/"
+      }
+      else workingDirOnTarget
       val paths = downloadConfig.relativePaths.takeIf { it.isNotEmpty() } ?: listOf(".")
       for (path in paths) {
         coroutineToIndicator {
           try {
-            volume.download(path, it)
+            volume.download(downloadRelativeDir + path, it)
           }
           catch (e: IOException) {
             fileLogger().warn("Could not download $path: ${e.message}")
@@ -326,7 +332,7 @@ private fun mapDownloadRoots(
 
   if (matchingUpload != null) {
     TargetEnvironment.DownloadRoot(
-      localRootPath = localDir,
+      localRootPath = matchingUpload.localRootPath,
       targetRootPath = matchingUpload.targetRootPath,
     )
   }

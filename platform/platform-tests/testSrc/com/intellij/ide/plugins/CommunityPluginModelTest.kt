@@ -35,10 +35,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   skipServicesOverridesCheck = true,
   pluginsToOptionalDepends = existingOptionalDependsTagInCommunityPlugins,
   filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
-    "intellij.platform.project.xml",
-    "intellij.platform.ide.progress.xml",
-    "intellij.platform.syntax.psi.xml",
-    "kotlin.plugin.k2.xml",
+    "kotlin.plugin.k2.xml", // KTIJ-39613
   ),
   referencedPluginIdsOfExternalPlugins = setOf(
     // These modules are defined in the Ultimate part.

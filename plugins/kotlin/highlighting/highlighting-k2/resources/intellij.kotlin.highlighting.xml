@@ -5,13 +5,17 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.highlighting.minimal"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
     <module name="intellij.kotlin.searching.base"/>
   </dependencies>

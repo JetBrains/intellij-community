@@ -15,6 +15,13 @@
   </extensions>
 
   <actions resource-bundle="messages.MarkdownBundle">
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
     <action id="Markdown.InsertEmptyTable"
             class="com.intellij.markdown.frontend.actions.InsertEmptyTableAction"
             icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table">

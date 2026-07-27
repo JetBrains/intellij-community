@@ -9,7 +9,7 @@ import java.util.Set;
 
 /**
  * @deprecated The old Search Everywhere API is being sunset.
- * Use {@code com.intellij.platform.searchEverywhere.SeItem} instead.
+ * Use {@link com.intellij.platform.searchEverywhere.SeItem} instead.
  */
 @Deprecated
 public class ContributorSearchResult<T> {

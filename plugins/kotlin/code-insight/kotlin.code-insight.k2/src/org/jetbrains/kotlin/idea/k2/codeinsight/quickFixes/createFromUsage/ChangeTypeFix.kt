@@ -9,7 +9,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -73,9 +74,9 @@ private fun typeName(declaration: KtCallableDeclaration): String? {
     if ((declaration !is KtNamedFunction) && (declaration !is KtProperty)) return null
     return allowAnalysisFromWriteActionInEdt(declaration) {
         analyze(declaration) {
-            val symbol = declaration.symbol as? KaCallableSymbol ?: return null
+            val symbol = with(contextOf<KaSession>()) { declaration.symbol } as? KaCallableSymbol ?: return null
             val returnType = symbol.returnType
-            returnType.render(position = Variance.IN_VARIANCE)
+            with(contextOf<KaSession>()) { returnType.render(position = Variance.IN_VARIANCE) }
         }
     }
 }

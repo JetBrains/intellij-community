@@ -18,11 +18,6 @@ fun runInspection(
 ): InspectionToolPresentation {
     val wrapper = LocalInspectionToolWrapper(inspection)
 
-    val tool = wrapper.tool
-    if (tool is PluginVersionDependentInspection) {
-        tool.testVersionMessage = "\$PLUGIN_VERSION"
-    }
-
     val scope = if (files != null) AnalysisScope(project, files) else AnalysisScope(project)
     scope.invalidate()
     val globalContext = createGlobalContextForTool(scope, project, listOf(wrapper))

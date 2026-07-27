@@ -9,11 +9,14 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.GenericsUtil
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiAssignmentExpression
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDisjunctionType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
@@ -59,6 +62,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.Empt
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.UnconditionalFlow
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.util.Processor
+import com.siyeh.ig.psiutils.VariableAccessUtils
 import java.util.Collections
 
 fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true): ExtractOptions {
@@ -118,11 +122,17 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
     .filter { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) && localUsage.member.hasModifierProperty(PsiModifier.FINAL) }
 
   val fieldViolations = localWriteViolations.mapNotNull { it.member as? PsiField }.distinct()
-  val field = fieldViolations.singleOrNull()
+  val outputField = fieldViolations.singleOrNull()?.takeIf { extractOptions.dataOutput is EmptyOutput }
+  if (outputField != null) {
+    val reassignedValue = findReassignedFinalFieldValue(elements, outputField)
+    if (reassignedValue != null) {
+      return findExtractOptions(listOf(reassignedValue), inferNullity)
+    }
+  }
   extractOptions = when {
     fieldViolations.isEmpty() -> extractOptions
-    field != null && extractOptions.dataOutput is EmptyOutput ->
-      extractOptions.copy(dataOutput = VariableOutput(field.type, field, false), requiredVariablesInside = listOf(field))
+    outputField != null ->
+      extractOptions.copy(dataOutput = VariableOutput(outputField.type, outputField, false), requiredVariablesInside = listOf(outputField))
     else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), localWriteViolations.map { it.reference })
   }
 
@@ -136,6 +146,17 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
 
 private fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
   return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
+}
+
+private fun findReassignedFinalFieldValue(elements: List<PsiElement>, field: PsiField): PsiExpression? {
+  val statement = elements.singleOrNull() as? PsiExpressionStatement ?: return null
+  val assignment = statement.expression as? PsiAssignmentExpression ?: return null
+  if (assignment.operationTokenType != JavaTokenType.EQ) return null
+  val target = assignment.lExpression as? PsiReferenceExpression ?: return null
+  if (target.resolve() != field) return null
+  val value = assignment.rExpression ?: return null
+  if (VariableAccessUtils.getVariableReferences(field, value).isNotEmpty()) return null
+  return value
 }
 
 private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, elements: List<PsiElement>, reservedNames: List<String>): DataOutput {

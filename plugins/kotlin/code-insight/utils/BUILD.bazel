@@ -20,6 +20,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_utils",
     module_name = "intellij.kotlin.codeInsight.utils",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

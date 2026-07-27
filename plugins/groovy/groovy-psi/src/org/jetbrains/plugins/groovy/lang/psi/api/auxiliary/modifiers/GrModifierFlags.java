@@ -27,4 +27,5 @@ public interface GrModifierFlags {
   int SEALED_MASK = 0x80000;
   int NON_SEALED_MASK = 0x100000;
   int VAR_MASK = 0x200000;
+  int VAL_MASK = 0x400000;
 }

@@ -9,9 +9,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class GuiDesignerUI(project: Project) {
 
   @JvmField

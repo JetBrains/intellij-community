@@ -506,7 +506,7 @@ internal class CreateExpectedCallableMemberFix(
             generateMember(
                 project = declaration.project,
                 ktClassMember = null,
-                symbol = (callableSymbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: callableSymbol,
+                symbol = (callableSymbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: callableSymbol,
                 targetClass = targetExpectedClass,
                 copyDoc = false,
                 mode = MemberGenerateMode.EXPECT,

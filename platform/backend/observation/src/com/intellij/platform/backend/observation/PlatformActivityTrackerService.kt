@@ -30,7 +30,6 @@ import kotlin.coroutines.CoroutineContext
  * @see ActivityKey for high-level explanations
  */
 @Service(Service.Level.PROJECT)
-@Internal
 internal class PlatformActivityTrackerService(private val scope: CoroutineScope) {
 
   companion object {

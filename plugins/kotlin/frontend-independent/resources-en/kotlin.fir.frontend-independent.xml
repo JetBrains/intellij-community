@@ -9,17 +9,22 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
   </dependencies>
   <!-- endregion -->
-  <extensionPoints>
+<extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.codeInsight.unambiguousImports"
             interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"

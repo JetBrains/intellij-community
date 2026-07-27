@@ -43,7 +43,7 @@ class PluginManagerFilters {
 
 @Service(Service.Level.APP)
 @State(name = "plugin-filter", storages = [Storage(value = "orgPluginsFilter.xml")])
-private class PluginManagerConfigurableForOrgConfig : SimplePersistentStateComponent<PluginManagerConfigurableForOrgState>(PluginManagerConfigurableForOrgState())
+internal class PluginManagerConfigurableForOrgConfig : SimplePersistentStateComponent<PluginManagerConfigurableForOrgState>(PluginManagerConfigurableForOrgState())
 
 internal class PluginManagerConfigurableForOrgState : BaseState() {
   var allowInstallFromDisk by property(true)

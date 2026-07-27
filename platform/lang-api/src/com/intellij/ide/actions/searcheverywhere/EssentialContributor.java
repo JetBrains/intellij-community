@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * (or have completed processing with no results).
  *
  * @deprecated The old Search Everywhere API is being sunset.
- * Use {@code com.intellij.platform.searchEverywhere.frontend.SeTab#essentialProviderIds} instead.
+ * Use {@link com.intellij.platform.searchEverywhere.frontend.SeTab#essentialProviderIds} instead.
  */
 @ApiStatus.Internal
 @Deprecated

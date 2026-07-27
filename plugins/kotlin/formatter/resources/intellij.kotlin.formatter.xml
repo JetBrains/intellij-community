@@ -3,14 +3,18 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.formatter.minimal"/>
     <module name="intellij.kotlin.highlighting.minimal"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
     <codeStyleSettingsProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinGenerationSettingsProvider"/>
 
+    <!--suppress SplitModeXmlApiUsage -->
     <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
 

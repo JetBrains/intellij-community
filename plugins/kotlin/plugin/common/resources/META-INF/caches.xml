@@ -11,8 +11,6 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache"/>
 
-    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducerCacheInvalidator"/>
-
     <registryKey
             key="kotlin.caches.fine.grained.entity.validation"
             description="Allow a fine grained cache entity validation"

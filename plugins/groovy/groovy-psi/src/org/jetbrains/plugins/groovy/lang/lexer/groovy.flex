@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
@@ -137,6 +137,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "static"        { return storeToken(KW_STATIC); }
   "def"           { return storeToken(KW_DEF); }
   "var"           { return storeToken(KW_VAR); }
+  "val"           { return storeToken(KW_VAL); }
   "class"         { return storeToken(KW_CLASS); }
   "interface"     { return storeToken(KW_INTERFACE); }
   "enum"          { return storeToken(KW_ENUM); }

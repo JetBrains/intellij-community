@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.Nullability
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -157,8 +158,8 @@ class MethodExtractor {
         val methodName = guessedNames.first()
         val extractor = readAction {
           val targetClass = PsiTreeUtil.findSameElementInCopy(options.targetClass, file)
-          val range = createGreedyRangeMarker(editor.document, range)
-          DuplicatesMethodExtractor(options.copy(methodName = methodName), targetClass, range)
+          val rangeMarker = createGreedyRangeMarker(editor.document, rangeToReplaceFor(options, range))
+          DuplicatesMethodExtractor(options.copy(methodName = methodName), targetClass, rangeMarker)
         }
         if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val templateStart = System.currentTimeMillis()
@@ -395,4 +396,9 @@ class MethodExtractor {
       }
     }
   }
+}
+
+private fun rangeToReplaceFor(options: ExtractOptions, selection: TextRange): TextRange {
+  val narrowedRange = (options.elements.singleOrNull() as? PsiExpression)?.textRange
+  return if (narrowedRange != null && narrowedRange in selection && narrowedRange != selection) narrowedRange else selection
 }

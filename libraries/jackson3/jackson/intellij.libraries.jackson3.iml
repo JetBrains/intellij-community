@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3" type="repository">
-        <properties maven-id="tools.jackson.core:jackson-core:3.1.4">
+        <properties maven-id="tools.jackson.core:jackson-core:3.2.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4.jar">
-              <sha256sum>3bda1cd6eff0a8d47bdfcaeae7c2bd5311d6c8ed494ef5f3e51029bb44aa9bdf</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.2.1/jackson-core-3.2.1.jar">
+              <sha256sum>2688aaa60b207403287e16a71fb5644bf2f9cfc464cc601ae95c6c86a5af1f94</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.2.1/jackson-core-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.1.4/jackson-core-3.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-core/3.2.1/jackson-core-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

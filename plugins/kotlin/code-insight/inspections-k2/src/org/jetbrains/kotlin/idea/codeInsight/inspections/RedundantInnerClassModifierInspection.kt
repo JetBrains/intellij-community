@@ -23,12 +23,13 @@ import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
@@ -101,7 +102,8 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         }
     }
 
-    private fun KaSession.hasIgnorableAnnotations(klass: KtClass): Boolean {
+    context(session: KaSession)
+    private fun hasIgnorableAnnotations(klass: KtClass): Boolean {
         if (ignorableAnnotations.isEmpty()) return false
         val ignorableAnnotationFqNames = ignorableAnnotations.associate {
             val fqName = FqName(it)
@@ -117,7 +119,8 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.hasOuterClassMemberReference(targetClass: KtClass, outerClasses: Set<KtClass>): Boolean {
+    context(session: KaSession)
+    private fun hasOuterClassMemberReference(targetClass: KtClass, outerClasses: Set<KtClass>): Boolean {
         val outerClassSymbols by lazy {
             outerClasses.mapNotNull { it.symbol as? KaClassSymbol }
         }

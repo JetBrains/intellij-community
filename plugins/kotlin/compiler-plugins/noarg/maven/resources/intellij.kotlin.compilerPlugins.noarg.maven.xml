@@ -1,9 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.maven"/>
-    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.base.jps"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.compilerPlugins.support"/>
     <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+    <module name="intellij.kotlin.maven"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.maven.NoArgMavenProjectImportHandler"/>

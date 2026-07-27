@@ -11,10 +11,15 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
   </dependencies>
   <!-- endregion -->

@@ -5,9 +5,6 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
                         serviceImplementation="com.intellij.execution.wsl.GatewayNativeWslProjectOpenerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider"
-                        serviceImplementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMovedFileProvider"/>
-
     <applicationService
       serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
       serviceImplementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.IdeStartUpPerformanceService"
@@ -1226,8 +1223,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                     testServiceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.HeadlessPluginAdvertiserServiceImpl"/>
     <applicationService
       serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.GlobalIgnoredPluginSuggestionState"/>
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider" open="true"
-                        serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultUpdateRequestParametersProvider"/>
     <applicationService serviceInterface="com.intellij.frontend.HostIdeInfoService" open="true"
                         serviceImplementation="com.intellij.frontend.DefaultHostIdeInfoService"/>
     <dependencyCollector kind="executable"

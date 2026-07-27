@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -18,6 +19,7 @@ import javax.swing.Icon
  */
 
 @ApiStatus.Internal
+@PyInternalExecApi
 object PyPoetrySdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon(): Icon = PythonCommunityImplPoetryCommonIcons.Poetry
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java

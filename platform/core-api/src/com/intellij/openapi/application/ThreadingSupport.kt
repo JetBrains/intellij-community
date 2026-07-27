@@ -54,6 +54,8 @@ interface ThreadingSupport {
   @RequiresBlockingContext
   fun <T> runReadAction(computation: () -> T): T
 
+  fun setAllowanceForReadActions(provider: () -> Boolean)
+
   /**
    * Runs the specified computation synchronously with a _Read_ lock.
    * - If no _Write_ action is currently running, [action] runs immediately, and this method returns `true`

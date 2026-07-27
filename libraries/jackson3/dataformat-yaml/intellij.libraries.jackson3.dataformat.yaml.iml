@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-dataformat-yaml" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-yaml:3.1.4">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-yaml:3.2.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.4/jackson-dataformat-yaml-3.1.4.jar">
-              <sha256sum>f583bd16b6d39a0ec900e37948507616bb651caea58fb882560d7e63efbe56db</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.1/jackson-dataformat-yaml-3.2.1.jar">
+              <sha256sum>b6a748ca9aab640f647079b6bfa53f16a5b65b815a19581c4afe0601e754854e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.4/jackson-dataformat-yaml-3.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.1/jackson-dataformat-yaml-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.1.4/jackson-dataformat-yaml-3.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3.2.1/jackson-dataformat-yaml-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

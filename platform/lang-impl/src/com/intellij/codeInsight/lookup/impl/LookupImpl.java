@@ -774,6 +774,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
     if (item.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null) {
+      item.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION_START_OFFSET, getLookupStart());
       hideWithItemSelected(item, completionChar);
       return;
     }

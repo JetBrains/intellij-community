@@ -6,8 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.classVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParameter, ArrayInDataClassInspection.Context>() {
     class Context(
@@ -104,7 +104,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
             if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue
             if (declaration.nameAsName == OperatorNameConventions.EQUALS && declaration.valueParameters.size == 1) {
                 analyze(declaration) {
-                    val parameterType = declaration.symbol.safeAs<KaFunctionSymbol>()?.valueParameters?.singleOrNull()?.returnType
+                    val parameterType = (declaration.symbol as? KaFunctionSymbol)?.valueParameters?.singleOrNull()?.returnType
                     if (parameterType?.isNullableAnyType() == true) {
                         overriddenEquals = true
                     }

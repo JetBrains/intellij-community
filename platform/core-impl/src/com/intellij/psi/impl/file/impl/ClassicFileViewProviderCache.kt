@@ -122,6 +122,10 @@ internal class ClassicFileViewProviderCache(
     return cacheOrGet(vFile, context, viewProvider)
   }
 
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    return evaluator.canViewProviderBeResurrected(viewProvider)
+  }
+
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {
     return evaluator.evaluateValidity(viewProvider)
   }

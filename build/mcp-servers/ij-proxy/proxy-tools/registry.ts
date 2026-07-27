@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {handleLintFilesTool} from './handlers/lint-files'
-import {handleReformatFileTool} from './handlers/reformat-file'
 import {handleRenameTool} from './handlers/rename'
-import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {
   handleContainerBash,
   handleContainerSearchFile,
@@ -11,25 +8,18 @@ import {
   handleContainerSearchText
 } from './container-handlers'
 import {
-  createLintFilesSchema,
-  createReformatFileSchema,
   createRenameSchema,
   createSearchFileSchema,
   createSearchRegexSchema,
-  createSearchSymbolSchema,
   createSearchTextSchema
 } from './schemas'
 import type {
-  AnalysisCapabilities,
   ContainerSessionConfig,
-  FormattingCapabilities,
-  SearchCapabilities,
   ToolAnnotationsLike,
   ToolArgs,
   ToolInputSchema,
   ToolSpecLike,
-  UpstreamToolCaller,
-  WorkaroundChecker
+  UpstreamToolCaller
 } from './types'
 
 interface ToolContext {
@@ -37,10 +27,6 @@ interface ToolContext {
   callUpstreamTool: UpstreamToolCaller
   /** Calls upstream WITHOUT projectPath injection — for container tools that don't need project context. */
   callUpstreamToolRaw: UpstreamToolCaller
-  searchCapabilities: SearchCapabilities
-  analysisCapabilities: AnalysisCapabilities
-  formattingCapabilities: FormattingCapabilities
-  shouldApplyWorkaround: WorkaroundChecker
   containerSession: ContainerSessionConfig | null
 }
 
@@ -61,10 +47,8 @@ interface ToolVariant {
 
 export const BLOCKED_TOOL_NAMES = new Set([
   'read_file',
-  'get_file_text_by_path',
   'apply_patch',
   'create_new_file',
-  'replace_text_in_file',
   'list_dir',
   'list_directory_tree',
   'container_read_file',
@@ -75,12 +59,13 @@ export const BLOCKED_TOOL_NAMES = new Set([
   'skill_search'
 ])
 
+/**
+ * Upstream tools hidden from the client without a proxy replacement of the same name.
+ * `get_file_problems` is the per-file variant of `lint_files`; exposing both invites the
+ * agent to lint one file at a time.
+ */
 const EXTRA_REPLACED_TOOL_NAMES = [
-  'search_in_files_by_text',
-  'search_in_files_by_regex',
-  'find_files_by_glob',
-  'find_files_by_name_keyword',
-  'search'
+  'get_file_problems'
 ]
 const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use text replacement for renames.'
 const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotationsLike = {readOnlyHint: true, openWorldHint: false}
@@ -125,71 +110,44 @@ function withTimeoutDeclared(inputSchema: ToolInputSchema): ToolInputSchema {
   }
 }
 
+/**
+ * Proxy tools. The IDE's own `search_*`, `lint_files` and `reformat_file` (262+) are passed
+ * through untouched, so the search entries here exist only to reroute search into a Docker
+ * container when a container session is active.
+ */
 const TOOL_VARIANTS: ToolVariant[] = [
   {
     name: 'search_text',
     description: 'Search for a text substring in project files.',
     schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession}) => {
-      if (containerSession) return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities)
+    handlerFactory: ({projectPath, callUpstreamToolRaw, containerSession}) => {
+      if (!containerSession) throw new Error('search_text is proxied only in container mode')
+      return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession)
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['search_text'],
-    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchText && searchCapabilities.supportsText)
+    expose: ({containerSession}) => containerSession != null
   },
   {
     name: 'search_regex',
     description: 'Search for a regular expression in project files.',
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, shouldApplyWorkaround, containerSession}) => {
-      if (containerSession) return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround)
+    handlerFactory: ({projectPath, callUpstreamToolRaw, containerSession}) => {
+      if (!containerSession) throw new Error('search_regex is proxied only in container mode')
+      return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession)
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['search_regex'],
-    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex)
+    expose: ({containerSession}) => containerSession != null
   },
   {
     name: 'search_file',
     description: 'Search for files using a glob pattern.',
     schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession}) => {
-      if (containerSession) return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession)
-      return (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities)
+    handlerFactory: ({projectPath, callUpstreamToolRaw, containerSession}) => {
+      if (!containerSession) throw new Error('search_file is proxied only in container mode')
+      return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession)
     },
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['search_file'],
-    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchFile && searchCapabilities.supportsFile)
-  },
-  {
-    name: 'search_symbol',
-    description: 'Search for symbols (classes, methods, fields) by name.',
-    schemaFactory: () => createSearchSymbolSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['search_symbol'],
-    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
-  },
-  {
-    name: 'lint_files',
-    description: 'Analyze several files and return per-file problems, including timed-out file entries when a batch is incomplete.',
-    schemaFactory: () => createLintFilesSchema(),
-    handlerFactory: ({callUpstreamTool, analysisCapabilities}) => (args) =>
-      handleLintFilesTool(args, callUpstreamTool, analysisCapabilities),
-    annotations: READ_ONLY_TOOL_ANNOTATIONS,
-    upstreamNames: ['get_file_problems'],
-    expose: ({analysisCapabilities}) => !analysisCapabilities.hasLintFilesFiles && analysisCapabilities.supportsLintFiles
-  },
-  {
-    name: 'reformat_file',
-    description: 'Reformats the specified files in the JetBrains IDE.',
-    schemaFactory: () => createReformatFileSchema(),
-    handlerFactory: ({callUpstreamTool, formattingCapabilities}) => (args) =>
-      handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
-    upstreamNames: ['reformat_file'],
-    expose: ({formattingCapabilities}) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
+    expose: ({containerSession}) => containerSession != null
   },
   {
     name: 'rename',

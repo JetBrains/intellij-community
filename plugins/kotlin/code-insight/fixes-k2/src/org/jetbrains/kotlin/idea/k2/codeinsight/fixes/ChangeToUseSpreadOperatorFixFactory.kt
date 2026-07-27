@@ -29,7 +29,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         val functionCall = (callExpression.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.singleOrNull() as? KaFunctionCall<*>
             ?: return@ModCommandBased emptyList()
 
-        if (functionCall.argumentMapping[element]?.symbol?.isVararg != true &&
+        if (functionCall.valueArgumentMapping[element]?.symbol?.isVararg != true &&
             functionCall.symbol.callableId?.asSingleFqName() != FqName("kotlin.collections.mapOf")
         ) {
             return@ModCommandBased emptyList()

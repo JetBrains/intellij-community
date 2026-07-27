@@ -12,8 +12,12 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.calleeName
@@ -477,9 +481,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     }
 
     private fun KtCallElement.resolveParameters(): List<KtParameter> {
-        return analyze(this) {
+        analyze(this) {
             val callInfo = resolveToCall()?.successfulFunctionCallOrNull() ?: return emptyList()
-            return callInfo.partiallyAppliedSymbol.signature.valueParameters.mapNotNull { it.symbol.psi as? KtParameter? }
+            return callInfo.signature.valueParameters.mapNotNull { it.symbol.psi as? KtParameter? }
         }
     }
 

@@ -100,10 +100,29 @@ internal class TerminalOutputModelChangesTrackerTest : BasePlatformTestCase() {
     // The document changes (line 0 rewritten) but the flush has NOT run yet.
     model.updateContent(0, "CHANGED\nline1\nline2")
 
-    // The pending change must still be visible: not converged, offset at the start of the change.
-    val firstChanged = tracker.getFirstChangedOffsetSinceStamp(snapshotStamp)
+    // The pending change must still be visible: not dropped, not converged, offset at the start of the change.
+    val firstChanged = requireNotNull(tracker.getFirstChangedOffsetSinceStamp(snapshotStamp))
     assertThat(firstChanged).isEqualTo(model.startOffset)
     assertThat(firstChanged).isLessThan(model.endOffset)
+  }
+
+  @Test
+  fun `a change at a smaller offset supersedes several later-offset changes`() = withFixture {
+    model.updateContent(0, "l0\nl1\nl2\nl3\nl4") // line starts: 0, 3, 6, 9, 12
+    val stamp0 = model.modificationStamp
+    tracker.getFirstChangedLineAndReset()
+
+    model.updateContent(0, "l0\nl1\nX2\nl3\nl4") // change line 2 -> offset 6
+    tracker.getFirstChangedLineAndReset()
+    model.updateContent(0, "l0\nl1\nX2\nl3\nX4") // change line 4 -> offset 12
+    tracker.getFirstChangedLineAndReset()
+
+    // A change that jumps back before BOTH previously recorded changes must supersede them (multiple entries dropped),
+    // not just the most recent one. Otherwise, the reported minimum would be stale.
+    model.updateContent(0, "X0\nl1\nX2\nl3\nX4") // change line 0 -> offset 0
+    tracker.getFirstChangedLineAndReset()
+
+    assertThat(tracker.getFirstChangedOffsetSinceStamp(stamp0)).isEqualTo(TerminalOffset.of(0))
   }
 
   @Test
@@ -127,19 +146,42 @@ internal class TerminalOutputModelChangesTrackerTest : BasePlatformTestCase() {
   // --- edges -------------------------------------------------------------------------------------------------------
 
   @Test
-  fun `stays correct after more changes than the bounded history holds`() = withFixture {
-    // MAX_CHANGES_HISTORY_LENGTH is 100; push well past it to exercise eviction of the oldest entries.
+  fun `repeated changes in the same region collapse instead of evicting, so old snapshots still resolve`() = withFixture {
+    // Many changes rewriting the same region (like a console progress bar) all share offset 0, so the monotonic
+    // history collapses them to a single entry and never overflows. No eviction => no dropped batches.
     var lastStamp = 0L
-    repeat(250) { i ->
+    val count = (TerminalOutputModelChangesTracker.MAX_CHANGES_HISTORY_LENGTH * 1.5).toInt()
+    repeat(count) { i ->
       model.updateContent(0, "v$i")
       lastStamp = model.modificationStamp
       tracker.getFirstChangedLineAndReset()
     }
 
-    // The most recent snapshot is up to date.
+    // The most recent snapshot is up to date (converged).
     assertThat(tracker.getFirstChangedOffsetSinceStamp(lastStamp)).isEqualTo(model.endOffset)
-    // A snapshot older than everything the history still holds is treated as changed (safe direction), never converged.
-    assertThat(tracker.getFirstChangedOffsetSinceStamp(0L)).isLessThan(model.endOffset)
+    // An ancient snapshot is still resolvable (not dropped): the single retained change starts at the model start.
+    assertThat(tracker.getFirstChangedOffsetSinceStamp(0L)).isEqualTo(model.startOffset)
+  }
+
+  @Test
+  fun `drops the batch when a change newer than the stamp was evicted from the bounded history`() = withFixture {
+    // Strictly increasing offsets (like `cat`-ing a large file): nothing collapses, so the bounded history
+    // (MAX_CHANGES_HISTORY_LENGTH = 200) overflows and the oldest changes are evicted.
+    var staleStamp = 0L
+    var latestStamp = 0L
+    val count = (TerminalOutputModelChangesTracker.MAX_CHANGES_HISTORY_LENGTH * 1.5).toInt()
+    repeat(count) { i -> // well past the history limit to force eviction
+      model.updateContent(i.toLong(), "x") // append one line at a strictly greater offset
+      tracker.getFirstChangedLineAndReset()
+      if (i == 0) staleStamp = model.modificationStamp
+      latestStamp = model.modificationStamp
+    }
+
+    // The stale snapshot predates changes that have since been evicted: the true first-changed offset can no longer
+    // be computed, so the batch must be dropped (null) rather than risk applying stale links.
+    assertThat(tracker.getFirstChangedOffsetSinceStamp(staleStamp)).isNull()
+    // A recent snapshot is still fully covered by the retained history and resolves normally.
+    assertThat(tracker.getFirstChangedOffsetSinceStamp(latestStamp)).isEqualTo(model.endOffset)
   }
 
   @Test

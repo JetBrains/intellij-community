@@ -224,15 +224,28 @@ object UniversalFileChooser {
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
+      val projectContrib = projectContributor(project)
+      val localContrib = localContributor(contributors)
+      val restrictedContributors: Set<UniversalFileChooserContributor>
       effectiveContributors = if (descriptor.isEnvironmentRestricted) {
-        val restricted = projectContributor(project) ?: localContributor(contributors)
-        restricted?.let { listOf(it) } ?: contributors
+        val restricted = projectContrib ?: localContrib
+        val primary = restricted?.let { listOf(it) } ?: contributors
+        if (descriptor.isLocalFileSystem && localContrib != null && localContrib !in primary) {
+          restrictedContributors = primary.toSet()
+          primary + localContrib
+        }
+        else {
+          restrictedContributors = primary.toSet()
+          primary
+        }
       }
       else {
+        restrictedContributors = emptySet()
         contributors
       }
       for (contributor in effectiveContributors) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled)
+        val restrictRoots = contributor in restrictedContributors
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled, restrictRoots)
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
@@ -629,11 +642,12 @@ object UniversalFileChooser {
       private val topToolbar: ActionToolbar,
       popupActionGroup: ActionGroup,
       private val okEnabledUpdater: () -> Unit = {},
+      restrictRootsToProjectEnvironment: Boolean = descriptor.isEnvironmentRestricted,
     ) {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
-      private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
+      private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
 
       var fileToSelect: Path? = null

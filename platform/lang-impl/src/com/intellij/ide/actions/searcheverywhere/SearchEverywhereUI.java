@@ -335,7 +335,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @Override
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public void addSplitSearchListener(@NotNull SplitSearchListener listener) {
     addSearchListener(listener.toSearchListener());
   }

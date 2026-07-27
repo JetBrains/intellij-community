@@ -118,7 +118,6 @@ class LintMainPassesRunnerRequest internal constructor(
   @JvmField val attempt: Int,
 )
 
-@Internal
 internal suspend fun collectLintFiles(
   project: Project,
   request: LintFilesCollectorRequest,

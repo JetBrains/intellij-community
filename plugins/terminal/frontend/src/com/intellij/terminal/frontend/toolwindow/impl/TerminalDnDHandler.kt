@@ -40,16 +40,19 @@ import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
 import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
+import java.awt.datatransfer.DataFlavor
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
 /**
  * Handles terminal drag-and-drop behavior
  *
- * - Drop on the terminal view: inserts dropped file/directory paths into the active terminal
+ * - Drop on the terminal view: inserts dropped file/directory paths into the active terminal;
+ *   a drop that carries no files but provides plain text (e.g. text dragged from an editor
+ *   or a custom tree exporting a string) inserts that text as is
  * - Drop on the tab bar: creates a new terminal tab using the first item's directory as the working directory
  *
- * Supports drops from Project View (PSI elements) and native OS file managers
+ * Supports drops from Project View (PSI elements), native OS file managers, and plain-text drag sources
  */
 internal object TerminalDnDHandler {
   fun installHandler(window: ToolWindowEx, coroutineScope: CoroutineScope) {
@@ -94,7 +97,7 @@ internal object TerminalDnDHandler {
       val text = when {
         data.virtualFiles.isNotEmpty() -> getVirtualFilesAsText(data.virtualFiles, context, project.getEelDescriptor())
         data.paths.isNotEmpty() -> getPathAsText(data.paths, context)
-        else -> null
+        else -> data.text
       }
 
       if (text.isNullOrBlank()) {
@@ -201,7 +204,7 @@ internal object TerminalDnDHandler {
   }
 
   /**
-   * It is expected that passed [TerminalDropData] contains it least one file.
+   * It is expected that passed [TerminalDropData] contains at least one file or non-null text.
    */
   private fun getDroppedContentType(data: TerminalDropData): TerminalInsertedContentType {
     return if (data.virtualFiles.isNotEmpty()) {
@@ -218,7 +221,10 @@ internal object TerminalDnDHandler {
         else -> TerminalInsertedContentType.FILE
       }
     }
-    else error("It is expected that passed TerminalDropData contains it least one file")
+    else if (data.text != null) {
+      TerminalInsertedContentType.TEXT
+    }
+    else error("It is expected that passed TerminalDropData contains at least one file or non-null text")
   }
 }
 
@@ -232,4 +238,23 @@ internal class TerminalDropData(event: DnDEvent) {
     getFileListFromAttachedObject(event.attachedObject).map { it.toPath() }
   }
   else emptyList()
+
+  /** Plain text payload of a drop that carries no files; inserted into the terminal as is. */
+  val text: String? = if (virtualFiles.isEmpty() && paths.isEmpty()) {
+    getDroppedText(event.attachedObject)
+  }
+  else null
+}
+
+private fun getDroppedText(attachedObject: Any?): String? {
+  val transferable = (attachedObject as? DnDNativeTarget.EventInfo)?.transferable ?: return null
+  return try {
+    if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      transferable.getTransferData(DataFlavor.stringFlavor) as? String
+    }
+    else null
+  }
+  catch (_: Exception) {
+    null
+  }
 }

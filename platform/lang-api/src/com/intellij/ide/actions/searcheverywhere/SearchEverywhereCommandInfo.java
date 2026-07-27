@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nls;
 
 /**
  * @deprecated The old Search Everywhere API is being sunset.
- * Use {@code com.intellij.platform.searchEverywhere.SeCommandInfo} and
- * {@code com.intellij.platform.searchEverywhere.SeCommandInfoFactory} instead.
+ * Use {@link com.intellij.platform.searchEverywhere.SeCommandInfo} and
+ * {@link com.intellij.platform.searchEverywhere.SeCommandInfoFactory} instead.
  */
 @Deprecated
 public final class SearchEverywhereCommandInfo {

@@ -31,7 +31,7 @@ import java.nio.file.Path
  *
  * The actual functionality is provided through the CommandLineProjectOpenProcessor interface methods.
  */
-private abstract class DummyProjectOpenProcessor(override val name: String) : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
+internal abstract class DummyProjectOpenProcessor(override val name: String) : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   override fun canOpenProject(file: VirtualFile): Boolean = false
 
   /**
@@ -43,7 +43,7 @@ private abstract class DummyProjectOpenProcessor(override val name: String) : Pr
     throw UnsupportedOperationException()
 }
 
-private class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenProcessor("WelcomeScreenCommandLineProjectOpenProcessor") {
+internal class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenProcessor("WelcomeScreenCommandLineProjectOpenProcessor") {
   override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
     val provider = getWelcomeScreenProjectProvider() ?: return null
     if (!provider.canOpenFilesFromSystemFileManager(file)) {
@@ -52,7 +52,7 @@ private class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenPro
     val shouldPreferExistingProject = !provider.shouldOpenInWelcomeScreenIfFileBelongsToProject(file)
     if (shouldPreferExistingProject && fileBelongsToExistingProject(file)) {
       // If the file already belongs to an existing project,
-      // fallback to default behaviour,
+      // fallback to default behavior,
       // do not open welcome screen project
       return null
     }

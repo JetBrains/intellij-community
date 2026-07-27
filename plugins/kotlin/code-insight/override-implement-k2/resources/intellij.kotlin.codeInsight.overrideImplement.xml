@@ -3,8 +3,11 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.kdoc"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="kotlin.fir.frontend-independent"/>

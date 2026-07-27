@@ -1,11 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.completion.ml.ranking"/>
     <module name="intellij.platform.ide.internal"/>
     <module name="intellij.kotlin.base.codeInsight"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.preferences"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.ml.model implementation="org.jetbrains.kotlin.idea.mlCompletion.KotlinMLRankingProvider"/>

@@ -5,14 +5,14 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
@@ -237,7 +237,7 @@ private fun KtNamedDeclaration.propertyHasBackingField(): Boolean {
     return when (val symbol = symbol) {
         is KaPropertySymbol -> symbol.hasBackingField
         is KaValueParameterSymbol -> {
-            symbol.generatedPrimaryConstructorProperty?.hasBackingField == true
+            symbol.primaryConstructorProperty?.hasBackingField == true
         }
         else -> false
     }

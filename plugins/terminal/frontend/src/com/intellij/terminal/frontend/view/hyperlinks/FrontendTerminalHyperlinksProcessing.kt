@@ -23,12 +23,12 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.client.durable
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
@@ -36,7 +36,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -56,7 +55,6 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkClicke
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSession
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.session.toDto
 import org.jetbrains.plugins.terminal.hyperlinks.session.toFilterResultInfo
 import org.jetbrains.plugins.terminal.hyperlinks.toPlatformId
@@ -82,32 +80,28 @@ fun installHyperlinksProcessing(
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
-  val sessionIdDeferred = CompletableDeferred<TerminalHyperlinksSessionId>(coroutineScope.coroutineContext.job)
   val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
-  coroutineScope.launch {
-    processHyperlinks(project, outputModel, sessionModel, eelDescriptor, sessionIdDeferred, applier, lastFinishedTaskStamp)
+  val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
+    createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))
   }
 
-  return FrontendTerminalHyperlinkFacade(sessionIdDeferred, applier, lastFinishedTaskStamp)
+  coroutineScope.launch(CoroutineName("processHyperlinks")) {
+    processHyperlinks(outputModel, sessionModel, sessionDeferred, applier, lastFinishedTaskStamp)
+  }
+
+  return FrontendTerminalHyperlinkFacade(sessionDeferred, applier, lastFinishedTaskStamp)
 }
 
 private suspend fun processHyperlinks(
-  project: Project,
   outputModel: TerminalOutputModel,
   sessionModel: TerminalSessionModel,
-  eelDescriptor: EelDescriptor,
-  sessionIdDeferred: CompletableDeferred<TerminalHyperlinksSessionId>,
+  sessionDeferred: Deferred<TerminalHyperlinksSession>,
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
 ) = coroutineScope {
   val scope = this
-  val session = createHyperlinksSession(
-    project = project,
-    eelDescriptor = eelDescriptor,
-    coroutineScope = scope.childScope("FrontendTerminalHyperlinksSession")
-  )
-  sessionIdDeferred.complete(session.id)
+  val session = sessionDeferred.await()
 
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
@@ -144,22 +138,20 @@ private suspend fun createHyperlinksSession(
     TerminalHyperlinksRemoteApi.getInstance().createNewSession(request)
   }
   coroutineScope.awaitCancellationAndInvoke(Dispatchers.Default) {
-    try {
-      TerminalHyperlinksRemoteApi.getInstance().closeSession(sessionId)
-    }
-    catch (_: RpcClientDisconnectedException) {
-      // The backend connection is already gone, so there is no remote session to close.
+    durable {
+      TerminalHyperlinksRemoteApi.getInstance().closeSession(project.projectId(), sessionId)
     }
   }
 
   val sessionApi = TerminalHyperlinksSessionRemoteApi.getInstance()
   val inputEventsSink = durable {
-    sessionApi.getInputEventsSink(sessionId)
+    sessionApi.getInputEventsSink(project.projectId(), sessionId)
   }
   val hyperlinkUpdatesChannel = durable {
-    sessionApi.getHyperlinkUpdatesChannel(sessionId)
+    sessionApi.getHyperlinkUpdatesChannel(project.projectId(), sessionId)
   }
   return FrontendTerminalHyperlinksSession(
+    project = project,
     id = sessionId,
     inputEventsSink = inputEventsSink,
     hyperlinkUpdatesChannel = hyperlinkUpdatesChannel
@@ -248,10 +240,7 @@ private suspend fun processHyperlinkResults(
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
-  val hyperlinksModel = TerminalHyperlinksModel(
-    debugName = debugName,
-    trimOffset = { outputModel.startOffset },
-  )
+  val hyperlinksModel = TerminalHyperlinksModel(debugName = debugName)
 
   for (event in hyperlinkUpdatesChannel) {
     try {
@@ -335,7 +324,17 @@ private fun processHyperlinksUpdatedEvent(
   val coveredStart = event.coveredStartOffset
   val coveredEnd = event.coveredEndOffset
 
-  val firstChangedOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp).toAbsolute()
+  val firstChangedTerminalOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp)
+  if (firstChangedTerminalOffset == null) {
+    // The change history no longer covers this stamp (too many changes happened while the result was being computed),
+    // so we can't tell which part of the result is still valid. Drop the batch rather than risk showing stale links.
+    LOG.trace {
+      "processHyperlinksUpdatedEvent skip stale: stamp=${event.documentModificationStamp} predates the tracked change history"
+    }
+    return
+  }
+
+  val firstChangedOffset = firstChangedTerminalOffset.toAbsolute()
   val applyUpToOffset = minOf(coveredEnd, firstChangedOffset)
   LOG.trace {
     "processHyperlinksUpdatedEvent: modelStart=$modelStartOffset modelEnd=$modelEndOffset covered=[$coveredStart,$coveredEnd) " +
@@ -351,7 +350,11 @@ private fun processHyperlinksUpdatedEvent(
   val coveredRangeUnchanged = firstChangedOffset >= coveredEnd
   val reachesOutputEnd = coveredEnd >= modelEndOffset
   val removeUpToOffset = if (coveredRangeUnchanged && reachesOutputEnd) Long.MAX_VALUE else applyUpToOffset
-  val removed = hyperlinksModel.removeHyperlinks(coveredStart, removeUpToOffset)
+  val removed = hyperlinksModel.removeHyperlinks(
+    fromAbsoluteOffset = coveredStart,
+    toAbsoluteOffset = removeUpToOffset,
+    trimUntilOffset = modelStartOffset,
+  )
   applier.removeDecorations(removed.map { it.toPlatformId() })
 
   val newLinks = event.hyperlinks
@@ -399,7 +402,7 @@ private fun TerminalFilterResultInfo.toEditorDecoration(
         endOffset = TerminalOffset.of(absoluteEndOffset).toRelative(outputModel),
         attributes = style,
       ) {
-        layer = layer
+        layer = this@toEditorDecoration.layer
       }
     }
     is TerminalInlayInfo -> inlayProvider?.let { inlayProvider ->

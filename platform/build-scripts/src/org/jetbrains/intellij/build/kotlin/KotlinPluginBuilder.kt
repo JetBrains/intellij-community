@@ -29,30 +29,8 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     val MODULES: List<String> = java.util.List.of(
       "kotlin.plugin.common",
       "kotlin.plugin.k2",
-      "intellij.kotlin.base.util",
-      "intellij.kotlin.base.indices",
-      "intellij.kotlin.base.compilerConfiguration",
-      "intellij.kotlin.base.plugin",
-      "intellij.kotlin.base.kdoc",
-      "intellij.kotlin.base.platforms",
-      "intellij.kotlin.base.jps",
-      "intellij.kotlin.base.analysis.utils",
-      "intellij.kotlin.base.compilerConfiguration.ui",
-      "intellij.kotlin.compilerPlugins.support",
-      "intellij.kotlin.completion.api",
-      "kotlin.completion.impl.shared",
-      "intellij.kotlin.native",
       "kotlin.scripting",
-      "intellij.kotlin.plugin.updater",
-      "intellij.kotlin.preferences",
-      "intellij.kotlin.references",
-      "intellij.kotlin.jvm.debugger.eval4j",
-      "kotlin.inspections",
-      "intellij.kotlin.codeInsight.utils",
-      "intellij.kotlin.codeInsight.descriptions",
-      "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
-      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(

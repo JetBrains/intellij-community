@@ -37,7 +37,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). This functionality is obsolete.
+ */
 @ApiStatus.Internal
+@Deprecated
 public final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);

@@ -5,12 +5,18 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.descriptions"/>
     <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.migration"/>
     <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.xml.analysis"/>
   </dependencies>
   <!-- endregion -->
@@ -92,23 +98,6 @@
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.different.kotlin.maven.version.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DeprecatedMavenDependencyInspection"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     language="XML"
-                     hasStaticDescription="true"
-                     level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
-                     groupPathKey="group.path.kotlin.migration"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
-                     enabledByDefault="false"
-                     language="XML"
-                     cleanupTool="true"
-                     hasStaticDescription="true"
-                     level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
     <intentionAction>
       <language>XML</language>

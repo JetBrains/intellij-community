@@ -30,7 +30,7 @@ internal fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int)
     return element
 }
 
-private class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
+internal class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
     override fun preprocessEnter(
         file: PsiFile,
         editor: Editor,

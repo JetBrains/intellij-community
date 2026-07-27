@@ -12,9 +12,6 @@ export interface ResolvedPath {
 const nonEmptyStringSchema = z.string().refine((value) => value.trim() !== '', {
   message: 'must be a non-empty string'
 })
-const positiveIntSchema = z.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
-  message: 'must be a positive integer'
-})
 function parseWithMessage<T>(schema: ZodType<T>, value: unknown, message: string): T {
   const parsed = schema.safeParse(value)
   if (!parsed.success) {
@@ -27,11 +24,6 @@ export function requireString(value: unknown, label: string): string {
   return parseWithMessage(nonEmptyStringSchema, value, `${label} must be a non-empty string`)
 }
 
-export function toPositiveInt(value: unknown, fallback: number | undefined, label: string): number | undefined {
-  if (value === undefined || value === null) return fallback
-  return parseWithMessage(positiveIntSchema, value, `${label} must be a positive integer`)
-}
-
 export function resolvePathInProject(projectPath: string, inputPath: unknown, label: string): ResolvedPath {
   const rawPath = requireString(inputPath, label)
   const absolute = path.isAbsolute(rawPath) ? path.normalize(rawPath) : path.resolve(projectPath, rawPath)
@@ -42,10 +34,25 @@ export function resolvePathInProject(projectPath: string, inputPath: unknown, la
   return {absolute, relative}
 }
 
-export function normalizeEntryPath<T>(projectPath: string, filePath: T): T extends string ? string : T {
-  if (typeof filePath !== 'string' || filePath === '') return filePath as T extends string ? string : T
-  if (path.isAbsolute(filePath)) return filePath as T extends string ? string : T
-  return path.resolve(projectPath, filePath) as T extends string ? string : T
+/**
+ * Render a path the way the client sees it: project-relative with POSIX separators when the
+ * file is inside the project, otherwise a normalized absolute path. Used to key lint results
+ * so the two IDEs of a dual-IDE setup agree on identity.
+ */
+export function normalizeProjectRelativePath(projectPath: string, filePath: string): string {
+  if (!filePath) return ''
+  if (path.isAbsolute(filePath)) {
+    const relative = path.relative(projectPath, filePath)
+    if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
+      return toPosixPath(relative)
+    }
+    return path.normalize(filePath)
+  }
+  return toPosixPath(path.normalize(filePath))
+}
+
+function toPosixPath(value: string): string {
+  return value.replace(/\\/g, '/')
 }
 
 export function extractTextFromResult(result: unknown): string | null {
@@ -137,13 +144,6 @@ function extractItemsFromValue(value: unknown): SearchItem[] | null {
   return null
 }
 
-function itemsToEntries(items: SearchItem[]): SearchEntry[] {
-  return items.map((item) => ({
-    filePath: item.filePath,
-    lineNumber: item.startLine,
-  }))
-}
-
 export function extractItems(result: unknown): SearchItem[] {
   const structured = extractStructuredContent(result)
   const fromStructured = extractItemsFromValue(structured)
@@ -180,63 +180,10 @@ function extractResultsMapFromValue(value: unknown): Record<string, SearchEntry[
   return results
 }
 
-export function extractResultsMap(result: unknown): Record<string, SearchEntry[]> | null {
-  const structured = extractStructuredContent(result)
-  return extractResultsMapFromValue(structured)
-}
-
-export function extractFileList(result: unknown): string[] {
-  const resultsMap = extractResultsMap(result)
-  if (resultsMap) {
-    return extractFileListFromResults(resultsMap)
-  }
-  const structured = extractStructuredContent(result)
-  if (!structured) return []
-  if (Array.isArray(structured)) {
-    const items = extractItemsFromValue(structured)
-    if (items) return items.map((item) => item.filePath)
-    return structured as string[]
-  }
-  const structuredRecord = structured as Record<string, unknown>
-  const items = extractItemsFromValue(structuredRecord)
-  if (items) return items.map((item) => item.filePath)
-  if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
-  return []
-}
-
-export function extractEntries(result: unknown): SearchEntry[] {
-  const resultsMap = extractResultsMap(result)
-  if (resultsMap) return flattenResultsMap(resultsMap)
-  const structured = extractStructuredContent(result)
-  if (structured) {
-    const structuredRecord = structured as Record<string, unknown>
-    if (Array.isArray(structuredRecord.entries)) return structuredRecord.entries as SearchEntry[]
-    if (Array.isArray(structuredRecord.results)) return structuredRecord.results as SearchEntry[]
-    const items = extractItemsFromValue(structuredRecord)
-    if (items) return itemsToEntries(items)
-    if (Array.isArray(structured)) {
-      const fromItems = extractItemsFromValue(structured)
-      if (fromItems) return itemsToEntries(fromItems)
-      return structured as SearchEntry[]
-    }
-  }
-  return []
-}
-
 function flattenResultsMap(results: Record<string, SearchEntry[]>): SearchEntry[] {
   const entries: SearchEntry[] = []
   for (const groupEntries of Object.values(results)) {
     entries.push(...groupEntries)
   }
   return entries
-}
-
-function extractFileListFromResults(results: Record<string, SearchEntry[]>): string[] {
-  const files: string[] = []
-  for (const entry of flattenResultsMap(results)) {
-    if (typeof entry.filePath === 'string' && entry.filePath.length > 0) {
-      files.push(entry.filePath)
-    }
-  }
-  return files
 }

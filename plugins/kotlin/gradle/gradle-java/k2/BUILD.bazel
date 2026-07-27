@@ -199,8 +199,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
-        "//plugins/kotlin/inspections",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//libraries/junit5",

@@ -11,7 +11,9 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
 
   public enum QuickFilterButtons {

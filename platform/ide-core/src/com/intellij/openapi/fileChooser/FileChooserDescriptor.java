@@ -67,6 +67,7 @@ public class FileChooserDescriptor {
   private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
   private boolean myEnvironmentRestricted = false;
+  private boolean myLocalFileSystem = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
 
@@ -117,6 +118,7 @@ public class FileChooserDescriptor {
     myFileFilter = d.myFileFilter;
     myForcedToUseIdeaFileChooser = false;
     myEnvironmentRestricted = d.myEnvironmentRestricted;
+    myLocalFileSystem = d.myLocalFileSystem;
     myUserData.putAll(d.myUserData);
   }
 
@@ -424,6 +426,41 @@ public class FileChooserDescriptor {
    */
   public FileChooserDescriptor withEnvironmentRestricted(boolean environmentRestricted) {
     myEnvironmentRestricted = environmentRestricted;
+    return this;
+  }
+
+  /**
+   * When {@code true}, the file chooser also exposes the local file system roots in addition
+   * to whatever environment the descriptor is otherwise restricted to. Effective only when combined
+   * with {@link #withEnvironmentRestricted(boolean)}; without environment restriction all contributors
+   * (including local) are shown anyway, and this flag has no effect. Works only with {@code UniversalFileChooser}.
+   *
+   * @see #withLocalFileSystem()
+   * @see #withEnvironmentRestricted(boolean)
+   */
+  public boolean isLocalFileSystem() {
+    return myLocalFileSystem;
+  }
+
+  /**
+   * Requests that the local file system is shown by the file chooser in addition to the environment
+   * selected via {@link #withEnvironmentRestricted(boolean)}. When {@code withEnvironmentRestricted(true)}
+   * is used alone, only the current project's context environment is shown. When {@code withLocalFileSystem()}
+   * is used together with it, the local file system roots are shown too, <em>in addition</em> to the project
+   * context environment. Works only with {@code UniversalFileChooser}.
+   *
+   * @see #isLocalFileSystem()
+   * @see #withEnvironmentRestricted(boolean)
+   */
+  public FileChooserDescriptor withLocalFileSystem() {
+    return withLocalFileSystem(true);
+  }
+
+  /**
+   * @see #withLocalFileSystem()
+   */
+  public FileChooserDescriptor withLocalFileSystem(boolean localFileSystem) {
+    myLocalFileSystem = localFileSystem;
     return this;
   }
 

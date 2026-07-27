@@ -29,7 +29,6 @@ import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
-import com.intellij.grazie.rule.SentenceTokenizer
 import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.spellcheck.SpellingTextChecker
@@ -49,7 +48,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
@@ -130,7 +128,7 @@ private fun buildProblemMap(
 fun getLanguageIfAvailable(text: TextContent, strippedOffset: Int? = null): Language? {
   val offset = strippedOffset ?: HighlightingUtil.stripPrefix(text)
   // Rider `ExternalTextContent` doesn't support view providers, hence batch detection is not available
-  if (text is TextContentImpl && Registry.`is`("grazie.batch.language.detector", false)) {
+  if (text is TextContentImpl) {
     return BatchLangDetector.getLanguage(text, offset)?.takeIf { findInstalledLang(it) != null }
   } else {
     @Suppress("DEPRECATION")

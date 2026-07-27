@@ -2,7 +2,7 @@
 @file:JvmName("ResolutionUtils")
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -13,7 +13,7 @@ fun KtReferenceExpression.resolveMainReference(): PsiElement? =
     try {
         mainReference.resolve()
     } catch (e: Exception) {
-        if (e is ControlFlowException) throw e
+        rethrowControlFlowException(e)
         throw KotlinExceptionWithAttachments("Unable to resolve reference", e)
             .withPsiAttachment("reference.txt", this)
             .withPsiAttachment("file.kt", containingFile)

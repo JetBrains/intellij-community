@@ -92,9 +92,6 @@ internal class BackendTerminalHyperlinkHighlighter(
   val fakeMouseEvent: MouseEvent
     get() = fakeMouseEventJob.getCompleted()
 
-  // If we have nothing to do, then both of these will be null.
-  // If either is not null, it's possible that there will be no results,
-  // but we may have to do some cleanup nevertheless or start a new task.
   fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
 
   init {
@@ -297,6 +294,11 @@ private data class TaskState(
   val currentTaskRunner: HighlightTaskRunner?,
   val pendingTask: HighlightTask?,
 ) {
+  /**
+   * If we have nothing to do, then both of these will be null.
+   * If either is not null, it's possible that there will be no results,
+   * but we may have to do some cleanup nevertheless or start a new task.
+   */
   fun mayHaveWorkToDo(): Boolean = currentTaskRunner != null || pendingTask != null
 }
 

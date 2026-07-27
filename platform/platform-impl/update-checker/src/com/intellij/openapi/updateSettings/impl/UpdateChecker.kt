@@ -237,9 +237,8 @@ object UpdateChecker {
 
   @JvmOverloads
   @JvmStatic
-  @JvmName("getPlatformUpdates")
   @ApiStatus.Internal
-  internal fun getPlatformUpdates(
+  fun getPlatformUpdates(
     settings: UpdateSettings = UpdateSettings.getInstance(),
     indicator: ProgressIndicator? = null,
   ): PlatformUpdates {

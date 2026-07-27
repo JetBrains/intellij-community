@@ -675,12 +675,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   private static final VirtualFile TOMBSTONE = new LightVirtualFile("TOMBSTONE");
 
+  protected void onScheduledFilesCounted(int scheduledFilesCount) {
+  }
+
   private @NotNull Future<?> startIterateScopeInBackground(@NotNull AnalysisScope scope,
                                                            @NotNull ProgressIndicator progressIndicator,
                                                            boolean headlessEnvironment,
                                                            @Nullable Collection<? super VirtualFile> localScopeFiles,
                                                            @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect) {
     Task.Backgroundable task = new Task.Backgroundable(getProject(), InspectionsBundle.message("scanning.files.to.inspect.progress.text")) {
+      private int totalScheduledFiles;
+
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -709,6 +714,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                   throw new IllegalStateException("Must not have read action");
                 }
                 outFilesToInspect.put(file);
+                totalScheduledFiles++;
               }
               catch (InterruptedException e) {
                 LOG.error(e);
@@ -722,6 +728,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           // ignore, but put tombstone
         }
         finally {
+          onScheduledFilesCounted(totalScheduledFiles);
           try {
             outFilesToInspect.put(TOMBSTONE);
           }

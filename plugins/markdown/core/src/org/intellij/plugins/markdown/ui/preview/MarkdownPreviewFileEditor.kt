@@ -355,6 +355,7 @@ class MarkdownPreviewFileEditor(
     val PREVIEW_BROWSER: Key<WeakReference<MarkdownHtmlPanel>> = Key.create("PREVIEW_BROWSER")
 
     internal val PREVIEW_POPUP_POINT: DataKey<RelativePoint> = DataKey.create("PREVIEW_POPUP_POINT")
-    internal val PREVIEW_BROWSER_ACTIONS: DataKey<WeakReference<MarkdownPreviewBrowserActions>> = DataKey.create("PREVIEW_BROWSER_ACTIONS")
+    @Internal
+    val PREVIEW_BROWSER_ACTIONS: DataKey<WeakReference<MarkdownPreviewBrowserActions>> = DataKey.create("PREVIEW_BROWSER_ACTIONS")
   }
 }

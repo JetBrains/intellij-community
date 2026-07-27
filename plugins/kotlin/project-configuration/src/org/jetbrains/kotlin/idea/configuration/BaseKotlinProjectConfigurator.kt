@@ -16,7 +16,9 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.base.projectStructure.allModules
@@ -322,4 +324,15 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         }
     }
 
+    @Nls
+    protected fun getFixText(state: LanguageFeature.State, featureShortName: String): String {
+        return when (state) {
+            LanguageFeature.State.ENABLED -> {
+                KotlinProjectConfigurationBundle.message("fix.change.feature.support.enabled", featureShortName)
+            }
+            LanguageFeature.State.DISABLED -> {
+                KotlinProjectConfigurationBundle.message("fix.change.feature.support.disabled", featureShortName)
+            }
+        }
+    }
 }

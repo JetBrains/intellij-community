@@ -1,0 +1,15 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.references"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

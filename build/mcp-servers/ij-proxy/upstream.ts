@@ -4,20 +4,10 @@ import {AsyncLocalStorage} from 'node:async_hooks'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
-import {
-  resolveAnalysisCapabilities,
-  resolveFormattingCapabilities,
-  resolveSearchCapabilities
-} from './proxy-tools/tooling'
+import {resolveUpstreamToolSupport} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {McpStreamTransport} from './stream-transport'
-import type {
-  AnalysisCapabilities,
-  FormattingCapabilities,
-  SearchCapabilities,
-  ToolArgs,
-  ToolSpecLike
-} from './proxy-tools/types'
+import type {ToolArgs, ToolSpecLike, UpstreamToolSupport} from './proxy-tools/types'
 
 export interface RequestContext {
   /**
@@ -68,7 +58,7 @@ export class UpstreamConnection {
   private readonly _transport: McpStreamTransport
   private _projectPathManager: ReturnType<typeof createProjectPathManager>
   private readonly _defaultProjectPathKey: 'project_path' | 'projectPath' | 'rootFolder'
-  private _forceInjectProjectPath: boolean
+  private readonly _forceInjectProjectPath: boolean
   private readonly _connectTimeoutMs: number
   private readonly _toolCallTimeoutMs: number
   private readonly _buildTimeoutMs: number
@@ -77,9 +67,7 @@ export class UpstreamConnection {
   private _connectedPromise: Promise<void> | null = null
   private _tools: ToolSpecLike[] | null = null
 
-  searchCapabilities: SearchCapabilities = resolveSearchCapabilities([]).capabilities
-  analysisCapabilities: AnalysisCapabilities = resolveAnalysisCapabilities([]).capabilities
-  formattingCapabilities: FormattingCapabilities = resolveFormattingCapabilities([]).capabilities
+  toolSupport: UpstreamToolSupport = resolveUpstreamToolSupport([])
   ideVersion: string | null = null
 
   /** Called when internal state (capabilities, tools) resets or refreshes. */
@@ -118,16 +106,6 @@ export class UpstreamConnection {
     this._reapplyToolScan()
   }
 
-  setForceInjectProjectPath(projectPath: string, forceInject: boolean): void {
-    this._forceInjectProjectPath = forceInject
-    this._projectPathManager = createProjectPathManager({
-      projectPath,
-      defaultProjectPathKey: this._defaultProjectPathKey,
-      forceInject
-    })
-    this._reapplyToolScan()
-  }
-
   /**
    * Re-run the `project_path` / `projectPath` / `rootFolder` tool-schema scan on the already-known
    * tool list. Recreating the project-path manager loses its scan state, which would
@@ -160,9 +138,7 @@ export class UpstreamConnection {
   reset(): void {
     this._connectedPromise = null
     this._tools = null
-    this.searchCapabilities = resolveSearchCapabilities([]).capabilities
-    this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities
-    this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities
+    this.toolSupport = resolveUpstreamToolSupport([])
     this.ideVersion = null
     this.onStateChange?.()
   }
@@ -192,9 +168,7 @@ export class UpstreamConnection {
       this._projectPathManager.updateProjectPathKeys(tools)
       this._projectPathManager.stripProjectPathFromTools(tools)
       this._tools = tools
-      this.searchCapabilities = resolveSearchCapabilities(tools).capabilities
-      this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities
-      this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities
+      this.toolSupport = resolveUpstreamToolSupport(tools)
       this.onStateChange?.()
       return tools
     })

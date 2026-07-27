@@ -578,13 +578,6 @@
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
             icon="AllIcons.Actions.GC"/>
 
-    <action id="Markdown.Preview.IncreaseFontSize"
-            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"
-            use-shortcut-of="ExpandAll"/>
-    <action id="Markdown.Preview.DecreaseFontSize"
-            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"
-            use-shortcut-of="CollapseAll"/>
-
     <action id="Markdown.Preview.ResetFontSize"
             class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
 

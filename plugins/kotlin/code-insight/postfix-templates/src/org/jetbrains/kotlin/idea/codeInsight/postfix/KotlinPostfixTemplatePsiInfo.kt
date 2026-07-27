@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -142,10 +143,11 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         return factory.createExpression("!" + element.text)
     }
 
-    private fun KaSession.resolveToMappedCallableId(element: KtElement): CallableId? {
+    context(session: KaSession)
+    private fun resolveToMappedCallableId(element: KtElement): CallableId? {
         val call = element.resolveToCall()?.singleCallOrNull<KaCall>()
         if (call is KaSimpleFunctionCall) {
-            val functionSymbol = call.partiallyAppliedSymbol.symbol
+            val functionSymbol = call.symbol
             val callableId = functionSymbol.callableId
             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
                 for (overriddenSymbol in functionSymbol.allOverriddenSymbolsWithSelf) {

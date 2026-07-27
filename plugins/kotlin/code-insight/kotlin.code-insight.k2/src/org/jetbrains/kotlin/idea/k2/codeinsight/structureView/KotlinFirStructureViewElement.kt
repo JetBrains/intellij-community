@@ -12,14 +12,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
 import org.jetbrains.kotlin.idea.structureView.getStructureViewChildren
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
@@ -122,7 +124,7 @@ class KotlinFirStructureViewElement(
             else -> runReadAction {
                 if (!DumbService.isDumb(element.getProject())) {
                     analyze(element) {
-                        modifier.invoke(this, element.symbol)
+                        modifier.invoke(contextOf<KaSession>(), element.symbol)
                     }
                 } else {
                     null
@@ -133,7 +135,7 @@ class KotlinFirStructureViewElement(
 
     class Visibility(symbol: KaSymbol?) {
         private val visibility: KaSymbolVisibility? =
-            (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty?.visibility
+            (symbol as? KaValueParameterSymbol)?.primaryConstructorProperty?.visibility
                 ?: (symbol as? KaDeclarationSymbol)?.visibility
 
         val isPublic: Boolean

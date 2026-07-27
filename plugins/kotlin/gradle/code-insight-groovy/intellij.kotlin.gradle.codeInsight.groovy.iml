@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" />
-    <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />

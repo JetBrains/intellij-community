@@ -4,6 +4,7 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.wizard.AbstractWizardEx
 import com.intellij.ide.wizard.AbstractWizardStepEx
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
@@ -47,6 +48,18 @@ class TargetEnvironmentWizard(val project: Project,
     @JvmStatic
     fun <C : TargetEnvironmentConfiguration> createWizard(
       project: Project, targetType: TargetEnvironmentType<C>, runtimeType: LanguageRuntimeType<*>?
+    ): TargetEnvironmentWizard? = createWizard(project, null, targetType, runtimeType)
+
+    @JvmStatic
+    fun <C : TargetEnvironmentConfiguration> createWizard(
+      module: Module, targetType: TargetEnvironmentType<C>, runtimeType: LanguageRuntimeType<*>?
+    ): TargetEnvironmentWizard? = createWizard(module.project, module, targetType, runtimeType)
+
+    private fun <C : TargetEnvironmentConfiguration> createWizard(
+      project: Project,
+      module: Module?,
+      targetType: TargetEnvironmentType<C>,
+      runtimeType: LanguageRuntimeType<*>?,
     ): TargetEnvironmentWizard? {
 
       if (!targetType.providesNewWizard(project, runtimeType)) {
@@ -54,7 +67,12 @@ class TargetEnvironmentWizard(val project: Project,
       }
 
       val config = targetType.createDefaultConfig()
-      val steps = targetType.createStepsForNewWizard(project, config, runtimeType) ?: return null
+      val steps = if (module == null) {
+        targetType.createStepsForNewWizard(project, config, runtimeType)
+      }
+      else {
+        targetType.createStepsForNewWizard(module, config, runtimeType)
+      } ?: return null
 
       return TargetEnvironmentWizard(
         project, ExecutionBundle.message("run.on.targets.wizard.title.new.target"), config, steps)

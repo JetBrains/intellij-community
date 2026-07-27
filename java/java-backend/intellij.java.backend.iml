@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.core" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.indexing.serializers" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" exported="" scope="RUNTIME" />

@@ -163,8 +163,6 @@ jvm_library(
         "//plugins/kotlin/base/platforms:platforms_test_lib",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
-        "//plugins/kotlin/inspections",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
         "//plugins/gradle/java:java-tests",

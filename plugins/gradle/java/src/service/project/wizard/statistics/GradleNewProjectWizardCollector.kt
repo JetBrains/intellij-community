@@ -10,11 +10,9 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.settings.DistributionType
 
-@ApiStatus.Internal
 internal object GradleNewProjectWizardCollector {
 
   private val gradleDslField = EventFields.Enum<GradleDsl>("gradle_dsl")

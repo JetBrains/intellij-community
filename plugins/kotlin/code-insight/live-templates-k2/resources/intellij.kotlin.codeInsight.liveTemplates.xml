@@ -3,14 +3,17 @@
   <dependencies>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.overrideImplement"/>
     <module name="intellij.kotlin.completion.impl"/>
     <module name="intellij.kotlin.highlighting.minimal"/>
+    <module name="intellij.kotlin.references"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
+<extensions defaultExtensionNs="com.intellij">
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedAnonymousSuperMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedSuggestVariableNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedKotlinAnyVariableMacro"/>

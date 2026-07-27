@@ -2,7 +2,10 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.uast"/>
     <module name="intellij.kotlin.uast.base"/>
     <module name="intellij.kotlin.uast.idea.base"/>

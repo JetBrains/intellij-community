@@ -8,6 +8,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.indexing.serializers"/>
     <!-- endregion -->
   </dependencies>
 

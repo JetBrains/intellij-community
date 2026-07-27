@@ -96,7 +96,7 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
         }
       }
       localDirs.filterNot { localPath ->
-        request.uploadVolumes.any { it.localRootPath == localPath }
+        request.uploadVolumes.any { localPath.startsWith(it.localRootPath) }
       }.associateWith { localPath ->
         val localPathToTargetRes = localPathToTarget(localPath)
         val root = TargetEnvironment.UploadRoot(

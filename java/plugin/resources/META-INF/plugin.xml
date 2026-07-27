@@ -41,6 +41,7 @@
 
     <module name="intellij.jsp.spi" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.indexing.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.indexing.serializers" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.analysis.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 

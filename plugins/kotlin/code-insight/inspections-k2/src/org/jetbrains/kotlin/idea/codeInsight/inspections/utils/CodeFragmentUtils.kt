@@ -4,14 +4,19 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.restore
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.k2.refactoring.util.findContextToAnalyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -124,7 +129,7 @@ internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: Stri
             else -> {
                 // Handle other expressions
                 val resolvedFragmentCall = fragmentExpression?.resolveToCall()?.successfulCallOrNull<KaCall>()
-                (resolvedFragmentCall as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.symbol
+                (resolvedFragmentCall as? KaCallableMemberCall<*, *>)?.symbol
             }
         }
 
@@ -149,7 +154,7 @@ internal fun buildCodeFragmentWithCollectionLiteral(
     return codeFragment.findElementAt(startIndex)?.parentOfType()
 }
 
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaExperimentalApi::class)
 internal fun isCollectionLiteralSafeAsArgument(
     element: KtCallExpression,
     expressionType: KaType,
@@ -160,7 +165,7 @@ internal fun isCollectionLiteralSafeAsArgument(
 
     val expressionTypePointer = expressionType.createPointer()
     return analyze(literal) {
-        val restoredType = expressionTypePointer.restore(this) ?: return false
+        val restoredType = expressionTypePointer.restore() ?: return false
         val literalType = literal.expressionType ?: return false
         if (!literalType.semanticallyEquals(restoredType)) return false
         val outerCall = literal.getParentOfType<KtCallExpression>(strict = true) ?: return true

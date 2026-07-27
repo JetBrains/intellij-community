@@ -8,12 +8,14 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -24,7 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirL
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 
 abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext): Result? {
@@ -80,7 +82,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
                       .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
                       .filter { matcher == null || matcher. match(it.returnType) }
 
-                    return mapper(this@analyze, file, variables)
+                    return mapper(file, variables)
                 }
             }
         }

@@ -63,7 +63,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 /**
  * @deprecated The old Search Everywhere is being sunset.
- * Use {@code com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane} instead.
+ * Use {@link com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane} instead.
  */
 @Deprecated
 @ApiStatus.Internal

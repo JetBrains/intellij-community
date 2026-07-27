@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.HintHelper
 import com.intellij.ide.actions.searcheverywhere.SEResultsListFactory
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereLanguage
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
@@ -1081,6 +1082,7 @@ class SePopupContentPane(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
     sink[CommonDataKeys.PROJECT] = project
+    sink[CommonDataKeys.LANGUAGE] = SearchEverywhereLanguage
 
     vmState.value?.let { vm ->
       sink[SeDataKeys.SPLIT_SE_SESSION] = vm.session

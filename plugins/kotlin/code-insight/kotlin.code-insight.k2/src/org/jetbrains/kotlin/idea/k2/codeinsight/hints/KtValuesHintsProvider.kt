@@ -6,12 +6,15 @@ import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_KOTLIN_TIME
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RANGES
@@ -89,7 +92,8 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun KaSession.isApplicableForRanges(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isApplicableForRanges(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
         val functionCallOrNull = binaryExpression.resolveToCall()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
             val packageName = it.callableId?.packageName
@@ -99,7 +103,8 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         return isComparable(leftExp) && isComparable(rightExp)
     }
 
-    private fun KaSession.isComparable(expression: KtExpression): Boolean =
+    context(session: KaSession)
+    private fun isComparable(expression: KtExpression): Boolean =
         with(this) {
             when (expression) {
                 is KtConstantExpression -> true

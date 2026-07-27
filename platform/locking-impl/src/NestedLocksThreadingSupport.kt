@@ -3,6 +3,7 @@ package com.intellij.platform.locking.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.core.rwmutex.Permit
 import com.intellij.core.rwmutex.RWMutexIdea
 import com.intellij.core.rwmutex.ReadPermit
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.getComputationClassForListener
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.reportInvalidActionChains
+import com.intellij.openapi.application.stallReadActionsIfThereIsPendingWrite
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -36,6 +38,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -239,6 +242,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private var myLockAcquisitionListener: LockAcquisitionListener<*>? = null
   private val myWriteLockReacquisitionListener: CopyOnWriteArrayList<WriteLockReacquisitionListener<*>> = CopyOnWriteArrayList()
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
+  @Volatile
+  private var allowPrioritizationOfReadActionsHere: (() -> Boolean)? = null
 
   @Volatile
   private var errorHandler: ErrorHandler? = null
@@ -809,8 +814,29 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun smartAcquireReadPermit(state: ComputationState): ReadPermit {
-    var permit = state.tryAcquireReadPermit()
-    if (permit != null) {
+    var permit: ReadPermit?
+
+    while (true) {
+      permit = state.tryAcquireReadPermit()
+      if (permit == null) {
+        // acquisition failed, which means there is a running write action. We will continue with slow path
+        break
+      }
+      val allowance = allowPrioritizationOfReadActionsHere
+      if (stallReadActionsIfThereIsPendingWrite
+          // We should not abort read actions that are pending on EDT -- they are prioritized
+          && allowance != null && allowance()
+          // Some write action listeners launch read actions.
+          // Write action is naturally pending when listeners are running, so such read actions should not be aborted
+          && !isWaListenerRunning()
+          // the main check -- if write action is pending, we need to retry the read acquisition
+          && isWriteActionPending()) {
+        // acquisition succeeded, but there is a pending write action. Let's give it priority while it is not too late
+        state.releaseReadPermit(permit)
+        unblockThisThreadWhenWriteActionIsNotPending()
+        continue
+      }
+      // acquisition succeeded and there is no pending write action. We can freely proceed with our read action
       return permit
     }
 
@@ -852,6 +878,18 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     else {
       throw exception
     }
+  }
+
+  private fun unblockThisThreadWhenWriteActionIsNotPending() {
+    val job = Job(currentThreadContext()[Job])
+    runWhenWriteActionIsCompleted {
+      job.complete()
+    }
+    job.asCompletableFuture().join()
+  }
+
+  override fun setAllowanceForReadActions(provider: () -> Boolean) {
+    allowPrioritizationOfReadActionsHere = provider
   }
 
   override fun <T> runReadAction(computation: () -> T): T {
@@ -1501,6 +1539,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     return object : AccessToken() {
       override fun finish() {
         myWriteActionPending.get()[state.level()].incrementAndGet()
+        val newThisLevelPermit = state.getThisThreadPermit()
+        require(newThisLevelPermit is ParallelizablePermit.WriteIntent) {
+          "When suspending write action is finishing, the thread must hold write-intent lock"
+        }
         val (newWritePermits, newWritePermit) = try {
           myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
             @Suppress("UNCHECKED_CAST")
@@ -1508,14 +1550,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
             castedListener.beforeWriteLockReacquired(data)
           }
           val newWritePermit = runSuspendMaybeConsuming(false) {
-            rootWriteIntentPermit.acquireWriteActionPermit()
+            newThisLevelPermit.writeIntentPermit.acquireWriteActionPermit()
           }
           myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
             @Suppress("UNCHECKED_CAST")
             val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
             castedListener.afterWriteLockReacquired(data)
           }
-          Thread.sleep(1000)
           hack_setThisLevelPermit(newWritePermit)
           val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
             runSuspendMaybeConsuming(false) {
@@ -1527,7 +1568,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         finally {
           myWriteActionPending.get()[state.level()].decrementAndGet()
         }
-        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
+        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit, originalWriteIntentPermit = newThisLevelPermit.writeIntentPermit, oldPermit = newThisLevelPermit.writeIntentPermit))
         myWriteAcquired = Thread.currentThread()
         myWriteStackBase = prevBase
       }
@@ -1673,9 +1714,19 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
+  private val listenerRunning: ThreadLocal<Any?> = ThreadLocal.withInitial { null }
+  private object SENTINEL_LISTENER_RUNNING : Any()
+
+  fun isWaListenerRunning(): Boolean {
+    return listenerRunning.get() != null
+  }
+
+
   private fun fireBeforeWriteActionStart(listeners: List<WriteActionListener>, clazz: Class<*>) {
-    listeners.traverse {
-      it.beforeWriteActionStart(clazz)
+    withThreadLocal(listenerRunning, { SENTINEL_LISTENER_RUNNING }).use {
+      listeners.traverse {
+        it.beforeWriteActionStart(clazz)
+      }
     }
   }
 
@@ -1692,11 +1743,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun fireAfterWriteActionFinished(listeners: List<WriteActionListener>, newlyArrivedListeners: AtomicReference<List<WriteActionListener>>, clazz: Class<*>) {
-    newlyArrivedListeners.get().traverseBackwards {
-      it.afterWriteActionFinished(clazz)
-    }
-    listeners.traverseBackwards {
-      it.afterWriteActionFinished(clazz)
+    withThreadLocal(listenerRunning) { SENTINEL_LISTENER_RUNNING }.use {
+      newlyArrivedListeners.get().traverseBackwards {
+        it.afterWriteActionFinished(clazz)
+      }
+      listeners.traverseBackwards {
+        it.afterWriteActionFinished(clazz)
+      }
     }
   }
 

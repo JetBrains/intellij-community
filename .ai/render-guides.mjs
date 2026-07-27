@@ -24,7 +24,6 @@ const validEditions = new Set(["ULTIMATE", "COMMUNITY"]);
  * @property {string} [template]
  * @property {string} [templatePath]
  * @property {string} output
- * @property {string} [forbiddenToolsSuffix]
  * @property {string} [generatedHeader]
  * @property {string} [generatedHeaderPosition]
  * @property {string} [edition]
@@ -38,7 +37,6 @@ const outputs = [
     tool: "CODEX",
     template: "guide.md",
     output: "AGENTS.md",
-    forbiddenToolsSuffix: "",
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
   },
@@ -47,7 +45,6 @@ const outputs = [
     tool: "CODEX",
     template: "guide.md",
     output: "community/AGENTS.md",
-    forbiddenToolsSuffix: "",
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
     edition: "COMMUNITY",
@@ -58,7 +55,6 @@ const outputs = [
     tool: "CLAUDE",
     template: "guide.md",
     output: "CLAUDE.md",
-    forbiddenToolsSuffix: "",
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
     edition: "ULTIMATE",
@@ -69,7 +65,6 @@ const outputs = [
     tool: "JUNIE",
     template: "guide.md",
     output: ".junie/AGENTS.md",
-    forbiddenToolsSuffix: "",
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
   },
@@ -265,6 +260,24 @@ function normalizeEdition(value) {
     throw new Error(`Unknown edition "${value}". Use community or ultimate.`);
   }
   return normalized;
+}
+
+const toolsDirByEdition = new Map([
+  ["ULTIMATE", "./community/tools"],
+  ["COMMUNITY", "./tools"],
+]);
+
+/**
+ * Resolves the `{{TOOLS_DIR}}` placeholder: the `fd.cmd`/`rg.cmd` directory relative to the
+ * workspace root the rendered guide lives in. Keeping it a placeholder instead of paired
+ * IF_EDITION blocks means a search rule is written once and cannot drift between editions.
+ */
+export function resolveToolsDir(edition) {
+  const toolsDir = toolsDirByEdition.get(normalizeEdition(edition));
+  if (toolsDir === undefined) {
+    throw new Error(`No tools directory configured for edition "${edition}".`);
+  }
+  return toolsDir;
 }
 
 async function detectEdition() {
@@ -761,16 +774,12 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
       throw new Error(`${target.name} rendered output still has {{PARTIAL:...}} placeholders.`);
     }
 
-    const withForbiddenTools = replaceAll(
-      withPartials,
-      "{{FORBIDDEN_TOOLS_SUFFIX}}",
-      target.forbiddenToolsSuffix,
-    );
-    if (withForbiddenTools.includes("{{FORBIDDEN_TOOLS_SUFFIX}}")) {
-      throw new Error(`${target.name} rendered output still has {{FORBIDDEN_TOOLS_SUFFIX}} placeholder.`);
+    const withToolsDir = replaceAll(withPartials, "{{TOOLS_DIR}}", resolveToolsDir(edition));
+    if (withToolsDir.includes("{{TOOLS_DIR}}")) {
+      throw new Error(`${target.name} rendered output still has {{TOOLS_DIR}} placeholder.`);
     }
 
-    const withToolBlocks = applyToolBlocks(withForbiddenTools, target.tool);
+    const withToolBlocks = applyToolBlocks(withToolsDir, target.tool);
     const withEditionBlocks = applyEditionBlocks(withToolBlocks, edition);
     const withoutTemplateBlocks = stripTemplateBlocks(withEditionBlocks);
     assertNoUnresolvedTemplateDirectives(withoutTemplateBlocks, target.name);

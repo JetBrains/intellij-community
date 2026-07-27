@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
   </component>
 </module>

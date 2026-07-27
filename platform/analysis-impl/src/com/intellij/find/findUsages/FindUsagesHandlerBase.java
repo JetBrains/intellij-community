@@ -27,7 +27,7 @@ public class FindUsagesHandlerBase {
   protected final @NotNull PsiElement myPsiElement;
   private final Project myProject;
   @ApiStatus.Internal
-  public @Nullable Boolean precomputedIsInFileOnly = null;
+  public @Nullable Boolean precomputedIsInFileOnly;
 
   public FindUsagesHandlerBase(@NotNull PsiElement psiElement) {
     this(psiElement, psiElement.getProject());
@@ -58,23 +58,23 @@ public class FindUsagesHandlerBase {
     return getFindUsagesOptions(null);
   }
 
-  public @NotNull FindUsagesOptions getFindUsagesOptions(final @Nullable DataContext dataContext) {
+  public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
     FindUsagesOptions options = createFindUsagesOptions(getProject(), dataContext);
     options.isSearchForTextOccurrences &= isSearchForTextOccurrencesAvailable(getPsiElement(), false);
     return options;
   }
 
-  public boolean processElementUsages(final @NotNull PsiElement element,
-                                      final @NotNull Processor<? super UsageInfo> processor,
-                                      final @NotNull FindUsagesOptions options) {
-    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
+  public boolean processElementUsages(@NotNull PsiElement element,
+                                      @NotNull Processor<? super UsageInfo> processor,
+                                      @NotNull FindUsagesOptions options) {
+    ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
       @Override
-      public boolean processInReadAction(final PsiReference ref) {
+      public boolean processInReadAction(PsiReference ref) {
         return processor.process(new UsageInfo(ref));
       }
     };
 
-    final SearchScope scope = options.searchScope;
+    SearchScope scope = options.searchScope;
 
     if (options.isUsages) {
       boolean success =
@@ -84,7 +84,7 @@ public class FindUsagesHandlerBase {
 
     if (options.isSearchForTextOccurrences && scope instanceof GlobalSearchScope globalSearchScope) {
       if (options.fastTrack != null) {
-        options.fastTrack.searchCustom(consumer -> processUsagesInText(element, processor, globalSearchScope));
+        options.fastTrack.searchCustom(_ -> processUsagesInText(element, processor, globalSearchScope));
       }
       else {
         return processUsagesInText(element, processor, globalSearchScope);
@@ -93,15 +93,15 @@ public class FindUsagesHandlerBase {
     return true;
   }
 
-  public boolean processUsagesInText(final @NotNull PsiElement element,
+  public boolean processUsagesInText(@NotNull PsiElement psiElement,
                                      @NotNull Processor<? super UsageInfo> processor,
                                      @NotNull GlobalSearchScope searchScope) {
-    Collection<String> stringToSearch = ReadAction.computeBlocking(() -> getStringsToSearch(element));
+    Collection<String> stringToSearch = ReadAction.computeBlocking(() -> getStringsToSearch(psiElement));
     if (stringToSearch == null) return true;
-    return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
+    return FindUsagesHelper.processUsagesInText(psiElement, stringToSearch, false, searchScope, processor);
   }
 
-  protected @Unmodifiable @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
+  protected @Unmodifiable @Nullable Collection<String> getStringsToSearch(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement namedElement) {
       return ContainerUtil.createMaybeSingletonList(namedElement.getName());
     }
@@ -144,7 +144,7 @@ public class FindUsagesHandlerBase {
                                                  : findUsagesOptions.fastTrack);
   }
 
-  public static @NotNull FindUsagesOptions createFindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
+  public static @NotNull FindUsagesOptions createFindUsagesOptions(@NotNull Project project, @Nullable DataContext dataContext) {
     FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, dataContext);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isSearchForTextOccurrences = true;

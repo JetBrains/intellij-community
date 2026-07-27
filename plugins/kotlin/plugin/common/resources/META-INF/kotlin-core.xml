@@ -2,69 +2,21 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
-            interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
-            interface="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinFacetValidatorCreator"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.experimentalFeature"
-            interface="org.jetbrains.kotlin.idea.configuration.ExperimentalFeature"
-            dynamic="true"/>
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
-            interface="org.jetbrains.kotlin.idea.compiler.configuration.FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.supportAvailability"
             interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
             dynamic="true"/>
 
-      <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
-                      interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
-                      dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
-                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
-                    dynamic="true"/>
-
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
-    <applicationConfigurable
-            groupId="language"
-            bundle="messages.KotlinPreferencesBundle"
-            key="kotlin.language.configurable"
-            id="preferences.language.Kotlin"
-            instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
-
-    <projectConfigurable
-            instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
-            id="project.kotlinCompiler"
-            bundle="messages.KotlinBundle"
-            key="kotlin.compiler.configurable"
-            parentId="project.propCompiler"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
-
-      <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
 
     <lang.floatingToolbar language="kotlin"/>
 
@@ -75,71 +27,15 @@
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
-
     <advancedSetting
             id="kotlin.enable.autoconfiguration"
             default="true"
             groupKey="advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
-    <registryKey
-            key="kotlin.disable.auto.completion.inside.expression"
-            description="Disables auto-completion inside expressions"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.prefer.vararg.to.noargs"
-            description="For functions show vararg variant before no argruments variant"
-            defaultValue="true"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.insert.constructor.parenthesis"
-            description="Insert constructor parenthesis on class autocompletion"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
-            description="Use PSI based completion when indexing"
-            defaultValue="true"
-            restartRequired="false"/>
-    <completion.contributor
-            language="kotlin"
-            id="KotlinDumbCompletionContributor"
-            order="first, after KotlinCompletionContributor"
-            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
-
-    <completion.plainTextSymbol
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
-
-    <codeInsight.wordCompletionFilter language="kotlin"
-                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
                  description="Enables dedicated Sealed class/interface templates in File-New-Kotlin File"/>
-
-    <completion.confidence
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
-    <completion.confidence
-            language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
-            id="kotlinSkipAutopopupInStrings"
-            order="after propertyKeys"/>
-
-  </extensions>
-
-  <!-- Templates -->
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
-
-    </extensions>
-
-  <!-- Line markers -->
-
-  <!-- Editing -->
-  <extensions defaultExtensionNs="com.intellij">
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"
@@ -210,13 +106,6 @@
     />
   </extensions>
 
-  <!-- Declaration search and Find Usages -->
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService
-      serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
-      serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
-    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl$LibraryKindScanner"/>
-  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- test frameworks integration -->

@@ -10,9 +10,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -64,7 +64,7 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
         val callableId = analyze(element) {
-            val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
+            val resolvedCall = with(contextOf<KaSession>()) { element.resolveToCall()?.singleFunctionCallOrNull() }
             resolvedCall?.symbol?.callableId
         } ?: return null
         if (callableId.packageName != StandardKotlinNames.KOTLIN_IO_PACKAGE || callableId.callableName != readLineName) return null

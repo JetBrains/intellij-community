@@ -146,9 +146,33 @@ export function buildUpstreamTool(
 
 const DEFAULT_UPSTREAM_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...getReplacedToolNames()])
 
-export const defaultUpstreamTools = [...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) =>
-  buildUpstreamTool(name, {project_path: {type: 'string'}}, ['project_path'])
-)
+/**
+ * Tools an IntelliJ platform 262+ MCP server always advertises and the proxy passes straight
+ * through. Declared here so the fake upstream matches the only supported IDE generation.
+ */
+const MODERN_UPSTREAM_TOOLS: ToolSpecLike[] = [
+  buildUpstreamTool('search_text', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path']),
+  buildUpstreamTool('search_regex', {pattern: {type: 'string'}, project_path: {type: 'string'}}, ['pattern', 'project_path']),
+  buildUpstreamTool('search_file', {pattern: {type: 'string'}, project_path: {type: 'string'}}, ['pattern', 'project_path']),
+  buildUpstreamTool('search_symbol', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path']),
+  buildUpstreamTool('lint_files', {
+    files: {type: 'array', items: {type: 'string'}},
+    min_severity: {type: 'string'},
+    timeout: {type: 'number'},
+    project_path: {type: 'string'}
+  }, ['files', 'project_path']),
+  buildUpstreamTool('reformat_file', {
+    files: {type: 'array', items: {type: 'string'}},
+    project_path: {type: 'string'}
+  }, ['files', 'project_path'])
+]
+
+export const defaultUpstreamTools = [
+  ...[...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) =>
+    buildUpstreamTool(name, {project_path: {type: 'string'}}, ['project_path'])
+  ),
+  ...MODERN_UPSTREAM_TOOLS
+]
 
 export async function startFakeMcpServer(
   {tools = defaultUpstreamTools, onToolCall, responseMode = 'json', sessionId = 'test-session', port: requestedPort, serverName}: FakeServerOptions = {}

@@ -4,5 +4,5 @@
 
 <caret><!-- TOC -->
 * [Some primary header with link](#some-primary-header-with-link)
-  * [Some secondary header with link and plain text suffix](#some-secondary-header-with-link-and-plain-text-suffix)
+    * [Some secondary header with link and plain text suffix](#some-secondary-header-with-link-and-plain-text-suffix)
 <!-- TOC -->

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -18,7 +18,8 @@ public interface GroovyProjectDescriptors {
   TestLibrary LIB_GROOVY_2_5 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.5.23");
   TestLibrary LIB_GROOVY_3_0 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:3.0.20");
   TestLibrary LIB_GROOVY_4_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:4.0.18");
-  TestLibrary LIB_GROOVY_5_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:5.0.0-beta-1");
+  TestLibrary LIB_GROOVY_5_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:5.0.7");
+  TestLibrary LIB_GROOVY_6_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:6.0.0-alpha-2");
 
   LightProjectDescriptor GROOVY_1_6 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_6);
   LightProjectDescriptor GROOVY_1_7 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_7);
@@ -29,6 +30,7 @@ public interface GroovyProjectDescriptors {
   LightProjectDescriptor GROOVY_3_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_3_0);
   LightProjectDescriptor GROOVY_4_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_4_0);
   LightProjectDescriptor GROOVY_5_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_5_0);
+  LightProjectDescriptor GROOVY_6_0 = new LibraryLightProjectDescriptor(LIB_GROOVY_6_0);
 
   TestLibrary LIB_GROOVY_LATEST = LIB_GROOVY_2_4;
   LightProjectDescriptor GROOVY_LATEST = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST);

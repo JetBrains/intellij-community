@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
-import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
@@ -17,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 
-class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDependentInspection {
-    override var testVersionMessage: String? = null
-        @TestOnly set
-
+class DifferentKotlinGradleVersionInspection : BaseInspection() {
     override fun buildVisitor(): BaseInspectionVisitor = MyVisitor()
 
     override fun getGroupDisplayName(): String = getProbableBugs()
@@ -58,7 +54,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
             val projectLanguageVersion = kotlinPluginVersion.languageVersion
 
             if (latestSupportedLanguageVersion < projectLanguageVersion || projectLanguageVersion < LanguageVersion.FIRST_SUPPORTED) {
-                registerError(kotlinPluginStatement, kotlinPluginVersion, testVersionMessage ?: latestSupportedLanguageVersion)
+                registerError(kotlinPluginStatement, kotlinPluginVersion, latestSupportedLanguageVersion)
             }
         }
     }

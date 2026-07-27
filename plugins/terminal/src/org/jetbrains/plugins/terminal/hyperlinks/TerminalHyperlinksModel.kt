@@ -6,10 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 
 @ApiStatus.Internal
-class TerminalHyperlinksModel(
-  private val debugName: String,
-  private val trimOffset: () -> TerminalOffset,
-) {
+class TerminalHyperlinksModel(private val debugName: String) {
   // ordered by absoluteEndOffset because that's what removeHyperlinksFromOffset() needs
   private var hyperlinks: MutableList<TerminalFilterResultInfo> = mutableListOf()
   private val hyperlinksById = hashMapOf<TerminalHyperlinkId, TerminalFilterResultInfo>()
@@ -44,24 +41,25 @@ class TerminalHyperlinksModel(
   /**
    * Removes hyperlinks whose end offset falls into `[fromAbsoluteOffset, toAbsoluteOffset]`,
    * as well as any hyperlinks trimmed from the start of the output.
+   * Also, removes all hyperlinks that end before the [trimUntilOffset].
    */
   fun removeHyperlinks(
     fromAbsoluteOffset: Long,
     toAbsoluteOffset: Long = Long.MAX_VALUE,
+    trimUntilOffset: Long = 0,
   ): Collection<TerminalHyperlinkId> {
     if (hyperlinks.isEmpty()) return emptyList()
     val removedIds = mutableListOf<TerminalHyperlinkId>()
-    removeTrimmedHyperlinks(removedIds)
+    removeTrimmedHyperlinks(trimUntilOffset, removedIds)
     removeHyperlinksInOffsetRange(fromAbsoluteOffset, toAbsoluteOffset, removedIds)
-    logHyperlinksRemoved(fromAbsoluteOffset, removedIds)
+    logHyperlinksRemoved(trimUntilOffset, fromAbsoluteOffset, removedIds)
     return removedIds
   }
 
-  private fun removeTrimmedHyperlinks(removedIds: MutableList<TerminalHyperlinkId>) {
+  private fun removeTrimmedHyperlinks(trimUntilOffset: Long, removedIds: MutableList<TerminalHyperlinkId>) {
     // We use absoluteEndOffset here because the list is sorted by it,
     // so we can end up with a partially removed link, but that's OK, it'll be removed later.
-    val trimOffset = trimOffset().toAbsolute()
-    val removeUntilIndex = hyperlinks.binarySearch { it.absoluteEndOffset.compareTo(trimOffset) }.let {
+    val removeUntilIndex = hyperlinks.binarySearch { it.absoluteEndOffset.compareTo(trimUntilOffset) }.let {
       if (it >= 0) it + 1 else -it - 1
     }
     removeHyperlinksInRange(0, removeUntilIndex, removedIds)
@@ -114,12 +112,13 @@ class TerminalHyperlinksModel(
   }
 
   private fun logHyperlinksRemoved(
+    trimUntilOffset: Long,
     fromAbsoluteOffset: Long,
     removedIds: List<TerminalHyperlinkId>,
   ) {
     if (!LOG.isDebugEnabled) return
     LOG.debug("$debugName Hyperlinks removed from offset $fromAbsoluteOffset " +
-              "and trimmed until ${trimOffset()}: " +
+              "and trimmed until $trimUntilOffset: " +
               "removed IDs ${removedIds.minOfOrNull { it.value }}-${removedIds.maxOfOrNull { it.value }}, " +
               "now ${hyperlinks.size} links ${hyperlinks.loggableRange()}")
   }

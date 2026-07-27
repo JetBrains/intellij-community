@@ -5,8 +5,12 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -33,5 +37,7 @@
             implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
     <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
   </extensions>
 </idea-plugin>
