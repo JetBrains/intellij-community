@@ -1,15 +1,6 @@
 ---
 name: platform-coroutines-structured-concurrency
-description: >-
-  Write and review Kotlin coroutine code in IntelliJ Platform products for structured-concurrency
-  correctness: lifecycle-bound scopes (childScope, service scopes, Disposer), Job hierarchy,
-  cooperative cancellation, ProcessCanceledException, blocking/progress bridges, ModalityState
-  context capture, and invokeOnCompletion. Use when changing suspend functions, launch/async,
-  CoroutineScope construction, cancellation handling, Flow collection, or diagnosing leaked
-  coroutines, uncancellable loops, swallowed cancellation, GlobalScope, launch-in-init, detached
-  scopes, or promise/callback cancellation bridges. Not for coroutine internals (use
-  platform-deep-dives) or Swing/EDT component architecture (use
-  kotlin-ui-swing-component-architecture).
+description: Write or review IntelliJ Kotlin coroutine code for structured concurrency: scope ownership, cancellation, failure propagation, leaked coroutines.
 ---
 
 # Coroutines: structured concurrency
@@ -21,6 +12,12 @@ IntelliJ-based product module. Three rules govern every decision:
 2. **Propagation** — what a cancellation or failure does to parents, siblings, and children.
 3. **Don't be creative** — prefer standard primitives (`coroutineScope`, `supervisorScope`, a
    lifecycle-bound scope) over hand-rolled scope wiring, the most common source of leaks.
+
+Reach for this skill when changing suspend functions, `launch`/`async`, `CoroutineScope`
+construction, cancellation handling, or `Flow` collection — and when diagnosing leaked coroutines,
+uncancellable loops, swallowed cancellation, `GlobalScope`, launch-in-`init`, detached scopes,
+`invokeOnCompletion`, `ProcessCanceledException`, blocking/progress bridges, `ModalityState`
+context capture, or promise/callback cancellation bridges.
 
 Related skills: **platform-deep-dives** (coroutine internals, dispatchers, read/write actions);
 **kotlin-ui-swing-component-architecture** (Swing UI and EDT ownership).
