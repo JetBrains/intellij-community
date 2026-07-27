@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>wasmjs_test</title>
+  <script type="importmap">
+    {"imports":{"@js-joda/core":"/node_modules/@js-joda/core/dist/js-joda.esm.js","@js-joda/core/":"/node_modules/@js-joda/core/","/my-module-js/skiko.mjs":"/_runtime/skiko.mjs"}}
+  </script>
+  <script src="/_config/first.js"></script>
+  <script src="/_config/second.js"></script>
+</head>
+<body>
+<script type="module">
+  const includes = new URLSearchParams(window.location.search).getAll("include");
+  const filterArguments = includes.length === 0 ? [] : ["--include", includes.join(",")];
+  globalThis.process = { argv: ["NEVER_PROCESSED", "NEVER_PROCESSED", ...filterArguments], env: {}, release: {} };
+  globalThis.addEventListener("error", (event) => {
+    console.error(`wasmjs_test page error: ${event.message}`);
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    console.error(`wasmjs_test page error: ${event.reason}`);
+  });
+  const awaitedExport = (module, path, member) => {
+    if (!(member in module)) {
+      throw new Error(`awaited import ${path} has no export '${member}'`);
+    }
+    return module[member];
+  };
+  globalThis.__kotlinTestRun = (async () => {
+    await awaitedExport(await import("/_runtime/skiko.mjs"), "/_runtime/skiko.mjs", "awaitSkiko");
+    await awaitedExport(await import("/_runtime/second.mjs"), "/_runtime/second.mjs", "ready");
+    return (await import("./my-module-js/my-module.mjs")).startUnitTests?.();
+  })();
+</script>
+</body>
+</html>

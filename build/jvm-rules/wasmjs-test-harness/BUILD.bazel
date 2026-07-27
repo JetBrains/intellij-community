@@ -1,0 +1,157 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_import")
+load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
+
+# The browser the _wasmjs_browser_test rule runs tests in; provisioned hermetically by
+# rules_playwright from the vendored //:playwright-browsers.json manifest.
+alias(
+    name = "chromium-headless-shell",
+    actual = "@playwright//:chromium-headless-shell",
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "wasmjs-test-harness",
+    main_class = "org.jetbrains.bazel.wasmjs.test.harness.MainKt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":wasmjs-test-harness-lib"],
+)
+
+kt_jvm_library(
+    name = "wasmjs-test-harness-lib",
+    srcs = glob(["src/**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    runtime_deps = [
+        ":slf4j-nop_import",
+    ],
+    deps = [
+        ":amper-async-processes_import",
+        ":chrome-devtools-kotlin_import",
+        ":kotlinx-atomicfu-jvm_import",
+        ":kotlinx-coroutines-jdk8_import",
+        ":kotlinx-coroutines-slf4j_import",
+        ":kotlinx-io-bytestring-jvm_import",
+        ":kotlinx-io-core-jvm_import",
+        ":kotlinx-serialization-core-jvm_import",
+        ":kotlinx-serialization-json-io-jvm_import",
+        ":kotlinx-serialization-json-jvm_import",
+        ":ktor-client-content-negotiation-jvm_import",
+        ":ktor-client-core-jvm_import",
+        ":ktor-client-java-jvm_import",
+        ":ktor-events-jvm_import",
+        ":ktor-http-cio-jvm_import",
+        ":ktor-http-jvm_import",
+        ":ktor-io-jvm_import",
+        ":ktor-network-jvm_import",
+        ":ktor-serialization-jvm_import",
+        ":ktor-serialization-kotlinx-json-jvm_import",
+        ":ktor-serialization-kotlinx-jvm_import",
+        ":ktor-sse-jvm_import",
+        ":ktor-utils-jvm_import",
+        ":ktor-websocket-serialization-jvm_import",
+        ":ktor-websockets-jvm_import",
+        ":slf4j-api_import",
+        ":teamcity-service-messages_import",
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+        "@bazel_tools//tools/java/runfiles",
+    ],
+)
+
+kt_jvm_library(
+    name = "wasmjs-test-harness-tests-lib",
+    testonly = True,
+    srcs = glob(["tests/**/*.kt"]),
+    associates = [":wasmjs-test-harness-lib"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    # Expected-output fixtures, on the classpath next to the test class that reads them.
+    resource_strip_prefix = "tests",
+    resources = glob(["tests/**/fixtures/*"]),
+    deps = [
+        ":kotlinx-serialization-json-jvm_import",
+        "//:junit4",
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+    ],
+)
+
+java_test(
+    name = "wasmjs-test-harness-tests",
+    size = "small",
+    test_class = "org.jetbrains.bazel.wasmjs.test.harness.AllTests",
+    runtime_deps = [":wasmjs-test-harness-tests-lib"],
+)
+
+jvm_import(
+    name = "teamcity-service-messages_import",
+    jar = "@teamcity-service-messages_http//file",
+    source_jar = "@teamcity-service-messages-sources_http//file",
+    # Version must match the http_file URL in MODULE.bazel — verified at analysis
+    # time by `:teamcity-service-messages_import_coords_check`.
+    tags = ["maven_coordinates=org.jetbrains.teamcity:serviceMessages:2024.07"],
+)
+
+assert_maven_coordinates_match_jar(
+    name = "teamcity-service-messages_import_coords_check",
+    target = ":teamcity-service-messages_import",
+)
+
+jvm_import(
+    name = "amper-async-processes_import",
+    jar = "@amper-async-processes_http//file",
+    source_jar = "@amper-async-processes-sources_http//file",
+    tags = ["maven_coordinates=org.jetbrains.amper:async-processes:0.12.0-dev-4182"],
+)
+
+assert_maven_coordinates_match_jar(
+    name = "amper-async-processes_import_coords_check",
+    target = ":amper-async-processes_import",
+)
+
+jvm_import(
+    name = "chrome-devtools-kotlin_import",
+    jar = "@chrome-devtools-kotlin_http//file",
+    tags = ["maven_coordinates=org.hildan.chrome:chrome-devtools-kotlin-jvm:8.3.0-1589152"],
+)
+
+assert_maven_coordinates_match_jar(
+    name = "chrome-devtools-kotlin_import_coords_check",
+    target = ":chrome-devtools-kotlin_import",
+)
+
+# The ktor/kotlinx/slf4j closure of the imports above; repo names match
+# WASMJS_TEST_HARNESS_JARS in MODULE.bazel.
+[
+    jvm_import(
+        name = "%s_import" % name,
+        jar = "@%s_http//file" % name,
+    )
+    for name in [
+        "kotlinx-atomicfu-jvm",
+        "kotlinx-coroutines-jdk8",
+        "kotlinx-coroutines-slf4j",
+        "kotlinx-io-bytestring-jvm",
+        "kotlinx-io-core-jvm",
+        "kotlinx-serialization-core-jvm",
+        "kotlinx-serialization-json-io-jvm",
+        "kotlinx-serialization-json-jvm",
+        "ktor-client-content-negotiation-jvm",
+        "ktor-client-core-jvm",
+        "ktor-client-java-jvm",
+        "ktor-events-jvm",
+        "ktor-http-cio-jvm",
+        "ktor-http-jvm",
+        "ktor-io-jvm",
+        "ktor-network-jvm",
+        "ktor-serialization-jvm",
+        "ktor-serialization-kotlinx-json-jvm",
+        "ktor-serialization-kotlinx-jvm",
+        "ktor-sse-jvm",
+        "ktor-utils-jvm",
+        "ktor-websocket-serialization-jvm",
+        "ktor-websockets-jvm",
+        "slf4j-api",
+        "slf4j-nop",
+    ]
+]

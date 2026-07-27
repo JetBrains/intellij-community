@@ -71,7 +71,7 @@ wasmjs_library = rule(
             allow_files = True,
             doc = """Runtime NPM package dependencies.
               Propagated transitively into final linked Wasm module.
-              
+
               Dict of "bare import specifier" String to "pointing to NPM package files" Label
 
               e.g. "@js-joda/core": "@npm-_js-joda_core-1_2_3_http//:files"

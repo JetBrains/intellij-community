@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>wasmjs_test</title>
+</head>
+<body>
+<script type="module">
+  const includes = new URLSearchParams(window.location.search).getAll("include");
+  const filterArguments = includes.length === 0 ? [] : ["--include", includes.join(",")];
+  globalThis.process = { argv: ["NEVER_PROCESSED", "NEVER_PROCESSED", ...filterArguments], env: {}, release: {} };
+  globalThis.addEventListener("error", (event) => {
+    console.error(`wasmjs_test page error: ${event.message}`);
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    console.error(`wasmjs_test page error: ${event.reason}`);
+  });
+  const awaitedExport = (module, path, member) => {
+    if (!(member in module)) {
+      throw new Error(`awaited import ${path} has no export '${member}'`);
+    }
+    return module[member];
+  };
+  globalThis.__kotlinTestRun = (async () => {
+    return (await import("./my-module-js/my-module.mjs")).startUnitTests?.();
+  })();
+</script>
+</body>
+</html>
