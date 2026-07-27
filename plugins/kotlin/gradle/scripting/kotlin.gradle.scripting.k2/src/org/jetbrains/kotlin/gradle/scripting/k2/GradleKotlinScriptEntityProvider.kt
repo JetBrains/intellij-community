@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity
@@ -32,17 +33,21 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntit
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.map
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.shared.smartRefineScriptCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
-import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
+import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
+import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import java.io.File
 import java.util.function.Predicate
+import kotlin.script.experimental.api.ScriptCollectedData
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.dependencies
@@ -77,36 +82,50 @@ class GradleKotlinScriptEntityProvider(val project: Project) {
             }
         }
 
-        val javaHomePath = javaHome.resolveSdk()?.homePath
-
         for (model in models) {
             val sourceCode = VirtualFileScriptSource(model.virtualFile)
             val definition = definitions.firstOrNull { it.isScript(sourceCode) } ?: continue
 
             val configuration = definition.compilationConfiguration.with {
-                if (javaHomePath != null) {
-                    jvm.jdkHome(File(javaHomePath))
+                if (javaHome != null) {
+                    withResolvedJdk(javaHome)
                 }
                 defaultImports(model.imports)
                 dependencies(JvmDependency(model.classPath.map { File(it) }))
                 ide.dependenciesSources(JvmDependency(model.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
-            val configurationResult = smartRefineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+
+            val configurationResult = resolveConfiguration(sourceCode, definition, configuration)
             updateStorage(storage, entitySource, model.virtualFile.toVirtualFileUrl(urlManager), configurationResult, model.classpathModel)
         }
 
         return storage.toSnapshot()
     }
 
-    private fun String?.resolveSdk(): Sdk? {
-        if (this == null) {
-            scriptingWarnLog("Gradle javaHome is null")
-            return null
+    private suspend fun resolveConfiguration(
+        sourceCode: VirtualFileScriptSource,
+        definition: ScriptDefinition,
+        providedConfiguration: ScriptCompilationConfiguration,
+    ): ScriptCompilationConfigurationResult {
+        val collectedData = readAction {
+            val ktFile = PsiManager.getInstance(project).findFile(sourceCode.virtualFile) as? KtFile ?: error("Unable to load PSI from ${sourceCode.virtualFile.path}")
+            getScriptCollectedData(ktFile, providedConfiguration, definition.contextClassLoader)
         }
-        return ExternalSystemJdkUtil.lookupJdkByPath(project, this).also {
-            scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
-        }
+
+        return refineScriptCompilationConfiguration(
+            compilationConfiguration = providedConfiguration,
+            sourceCode = sourceCode,
+            collectedData = collectedData,
+            knownVirtualFileSources = null,
+            definition = definition
+        )
+    }
+
+    private fun ScriptCompilationConfiguration.Builder.withResolvedJdk(javaHome: String) {
+        val sdk = ExternalSystemJdkUtil.lookupJdkByPath(project, javaHome)
+        jvm.jdkHome(File(sdk.homePath))
+        scriptingInfoLog("resolved gradle sdk=$sdk, javaHome=$javaHome")
     }
 
     private fun updateStorage(
