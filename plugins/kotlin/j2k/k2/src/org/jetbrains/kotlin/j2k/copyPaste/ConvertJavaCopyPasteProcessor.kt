@@ -16,7 +16,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 

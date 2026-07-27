@@ -27,8 +27,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
-import org.jetbrains.kotlin.j2k.k2.PostProcessor
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.J2kMemberKey
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.OriginalJavaPsiContext
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.buildLightMethodKey
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.buildMemberKey
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -94,10 +96,12 @@ suspend fun JavaToKotlinConverter.filesToKotlinPartiallyInTests(
     )
 
     val result = readAction {
-        partialConverter.elementsToKotlinWithOriginalContextForTests(
-            files = files,
-            copiedFiles = copiedFiles,
-            originalMembersByKey = files.buildMembersByJ2kKeyForTests(),
+        partialConverter.elementsToKotlin(
+            contextElement = files.first(),
+            inputElements = copiedFiles,
+            conversionContextElements = files,
+            forInlining = false,
+            OriginalJavaPsiContext(files.buildMembersByJ2kKeyForTests(), files.buildClassesByQualifiedName())
         )
     }
     val context = requireNotNull(result.converterContext)
@@ -132,12 +136,11 @@ suspend fun JavaToKotlinConverter.filesToKotlinPartiallyInTests(
     return ConversionResult(files.zip(kotlinFiles.map(KtFile::getText)).toMap(), result.externalCodeProcessing, javaLines, kotlinLines)
 }
 
-@OptIn(KaExperimentalApi::class)
 private suspend fun rewriteToPartialSemantics(
     ktFile: KtFile,
     partialSemantics: PartialSemanticsForTests,
     selectedFieldInitializerTexts: Map<KotlinFieldKeyForTests, String>,
-): Unit {
+) {
     val (psiFactory, propertiesToStub, propertyTypes, propertiesNeedingImplicitInitializer, implicitInitializers, selectedFieldInitializersToRestore, selectedParameterShadowProperties, functionsToStub, constructorsToStub, initializersToStub, classesNeedingInit) = readAction {
         val psiFactory = KtPsiFactory(ktFile.project)
         val propertiesToStub = ktFile.collectDescendantsOfType<KtProperty>().filter {
@@ -329,28 +332,6 @@ private data class PartialSemanticsForTests(
                 klass.secondaryConstructors.isEmpty()
 }
 
-private fun JavaToKotlinConverter.elementsToKotlinWithOriginalContextForTests(
-    files: List<PsiJavaFile>,
-    copiedFiles: List<PsiJavaFile>,
-    originalMembersByKey: Map<Any, PsiMember>,
-): Result {
-    val method = JavaToKotlinConverter::class.java.declaredMethods.single { candidate ->
-        candidate.name == "elementsToKotlin" && candidate.parameterCount == 5
-    }
-    method.isAccessible = true
-    val contextClass = Class.forName("org.jetbrains.kotlin.nj2k.externalCodeProcessing.OriginalJavaPsiContext")
-    val contextConstructor = contextClass.declaredConstructors.single { it.parameterCount == 2 }
-    contextConstructor.isAccessible = true
-    return method.invoke(
-        this,
-        files.first(),
-        copiedFiles,
-        files,
-        false,
-        contextConstructor.newInstance(originalMembersByKey, files.buildClassesByQualifiedName()),
-    ) as Result
-}
-
 @OptIn(KaExperimentalApi::class)
 private fun KtProperty.renderTypeForPartialTests(): String =
     typeReference?.text ?: analyze(this) {
@@ -513,48 +494,29 @@ private fun List<PsiJavaFile>.buildMembersByKey(): Map<TestMemberKey, PsiMember>
     return membersByKey
 }
 
-private fun List<PsiJavaFile>.buildMembersByJ2kKeyForTests(): Map<Any, PsiMember> {
-    val membersByKey = mutableMapOf<Any, PsiMember>()
+private fun List<PsiJavaFile>.buildMembersByJ2kKeyForTests(): Map<J2kMemberKey, PsiMember> {
+    val membersByKey = mutableMapOf<J2kMemberKey, PsiMember>()
     for (file in this) {
         file.accept(object : JavaRecursiveElementWalkingVisitor() {
             override fun visitField(field: PsiField) {
                 super.visitField(field)
-                field.buildJ2kMemberKeyForTests()?.let { membersByKey[it] = field }
+                field.buildMemberKey()?.let { membersByKey[it] = field }
             }
 
             override fun visitMethod(method: PsiMethod) {
                 super.visitMethod(method)
-                method.buildJ2kMemberKeyForTests()?.let { membersByKey[it] = method }
+                method.buildMemberKey()?.let { membersByKey[it] = method }
             }
 
             override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
                 super.visitRecordComponent(recordComponent)
                 val accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent) ?: return
-                accessor.buildJ2kLightMethodKeyForTests()?.let { membersByKey[it] = accessor }
+                accessor.buildLightMethodKey()?.let { membersByKey[it] = accessor }
             }
         })
     }
     return membersByKey
 }
-
-private fun PsiMember.buildJ2kMemberKeyForTests(): Any? {
-    val method = externalCodeProcessingKtClass.declaredMethods.single { candidate ->
-        candidate.name == "buildMemberKey" && candidate.parameterCount == 1 && PsiMember::class.java.isAssignableFrom(candidate.parameterTypes.single())
-    }
-    method.isAccessible = true
-    return method.invoke(null, this)
-}
-
-private fun PsiMethod.buildJ2kLightMethodKeyForTests(): Any? {
-    val method = externalCodeProcessingKtClass.declaredMethods.single { candidate ->
-        candidate.name == "buildLightMethodKey" && candidate.parameterCount == 1 && PsiMethod::class.java.isAssignableFrom(candidate.parameterTypes.single())
-    }
-    method.isAccessible = true
-    return method.invoke(null, this)
-}
-
-private val externalCodeProcessingKtClass: Class<*> =
-    Class.forName("org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessingKt")
 
 private enum class SelectedFieldInitializerKindForTests {
     BOOLEAN,

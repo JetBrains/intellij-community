@@ -32,10 +32,10 @@ import org.jetbrains.kotlin.j2k.resolve
 import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.descendantsOfType
-import org.jetbrains.kotlin.nj2k.escaped
-import org.jetbrains.kotlin.nj2k.getExplicitLabelComment
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.j2k.descendantsOfType
+import org.jetbrains.kotlin.j2k.escaped
+import org.jetbrains.kotlin.j2k.getExplicitLabelComment
+import org.jetbrains.kotlin.j2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -71,7 +71,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>) {
         val ktElement = elements.firstIsInstanceOrNull<KtElement>() ?: return
         val context = runReadAction {
             allowAnalysisOnEdt {
@@ -86,7 +86,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         }
     }
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>): PostProcessingApplier {
         val context = prepareContext(elements)
         return Applier(context)
     }

@@ -22,7 +22,5 @@ data class ConverterSettings(
             publicByDefault = false,
             basicMode = false,
         )
-
-        val publicByDefault: ConverterSettings = defaultSettings.copy(publicByDefault = true)
     }
 }

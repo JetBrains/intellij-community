@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment

@@ -13,7 +13,6 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.GO_INSIDE
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.PROCESS
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.SKIP
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.mapToIndex
@@ -140,8 +139,6 @@ abstract class InspectionLikeProcessing {
     // Running it in outer write action may lead to UI freezes,
     // so we let those post-processings handle write actions by themselves.
     open val writeActionNeeded = true
-
-    val processingOptions: PostProcessingOptions = PostProcessingOptions.DEFAULT
 }
 
 abstract class InspectionLikeProcessingForElement<E : PsiElement>(private val classTag: Class<E>) : InspectionLikeProcessing() {

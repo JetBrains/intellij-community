@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import org.jetbrains.kotlin.idea.actions.withCommandOnEdt
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.actions.withCommandOnEdt
 
 abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterSingleFileTest() {
     override fun fileToKotlin(

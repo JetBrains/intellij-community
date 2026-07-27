@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.j2k
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.ExternalUsagesFixer
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.ExternalUsagesFixer
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal

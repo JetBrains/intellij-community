@@ -74,17 +74,17 @@ abstract class FileBasedPostProcessing : PostProcessing {
 
 abstract class ElementsBasedPostProcessing : PostProcessing {
     final override fun runProcessing(target: PostProcessingTarget, converterContext: ConverterContext) {
-        runProcessing(target.elements(), converterContext)
+        runProcessing(target.elements())
     }
 
-    abstract fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext)
+    abstract fun runProcessing(elements: List<PsiElement>)
 
     final override fun computeAppliers(
         target: PostProcessingTarget,
         converterContext: ConverterContext
-    ): List<PostProcessingApplier> = listOf(computeApplier(target.elements(), converterContext))
+    ): List<PostProcessingApplier> = listOf(computeApplier(target.elements()))
 
-    abstract fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier
+    abstract fun computeApplier(elements: List<PsiElement>): PostProcessingApplier
 }
 
 data class NamedPostProcessingGroup(val description: String, val processings: List<PostProcessing>)

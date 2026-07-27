@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
-import org.jetbrains.kotlin.nj2k.isInSingleLine
+import org.jetbrains.kotlin.j2k.isInSingleLine
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate

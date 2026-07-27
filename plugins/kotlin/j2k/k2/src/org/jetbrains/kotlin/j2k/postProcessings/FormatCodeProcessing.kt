@@ -9,7 +9,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.j2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
 class FormatCodeProcessing : FileBasedPostProcessing() {

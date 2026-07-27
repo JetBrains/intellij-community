@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -35,15 +36,14 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.refactoring.inline.createReplacementStrategyForProperty
 import org.jetbrains.kotlin.idea.refactoring.inline.findCallableConflictForUsage
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter.Companion.addImports
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.j2k.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
-import org.jetbrains.kotlin.j2k.k2.PostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter.Companion.addImports
-import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
-import org.jetbrains.kotlin.nj2k.WithProgressProcessor
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
@@ -210,6 +210,25 @@ class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val
                 fallbackToSuperCall = javaMember.containingClass?.hasModifier(JvmModifier.FINAL) == true,
             )?.also { javaMember.setUsageReplacementStrategy(it) }
         }
+    }
+}
+
+class WithProgressProcessor(
+    private val progressIndicator: ProgressIndicator?,
+    private val phasesCount: Int
+) {
+
+    init {
+        progressIndicator?.isIndeterminate = false
+    }
+
+    fun updateState(phase: Int, description: String) {
+        ProgressManager.checkCanceled()
+        progressIndicator?.checkCanceled()
+
+        progressIndicator?.fraction = (phase + 1) * (1.0 / phasesCount.toDouble())
+        progressIndicator?.text = KotlinJ2kBundle.message("progress.text", description, phase + 1, phasesCount)
+        progressIndicator?.text2 = ""
     }
 }
 

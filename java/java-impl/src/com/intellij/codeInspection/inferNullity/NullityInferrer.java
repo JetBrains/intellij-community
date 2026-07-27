@@ -69,7 +69,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.nj2k.J2KNullityInferrer
+@SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.j2k.J2KNullityInferrer
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   private int numAnnotationsAdded;

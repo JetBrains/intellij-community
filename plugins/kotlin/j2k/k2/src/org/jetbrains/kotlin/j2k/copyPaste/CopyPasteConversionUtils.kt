@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
-import org.jetbrains.kotlin.j2k.k2.PostProcessor
+import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
-import org.jetbrains.kotlin.nj2k.KotlinJ2KK2Bundle
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -49,7 +49,7 @@ fun ElementAndTextList.convertCodeToKotlin(
     val inputElements = this.toList().filterIsInstance<PsiElement>()
     val (results, _, converterContext) = runWithModalProgressBlocking(
         project,
-        KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")
+        KotlinJ2kBundle.message("copy.text.convert.java.to.kotlin.title")
     ) {
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
@@ -143,7 +143,7 @@ fun runPostProcessing(
     bounds: TextRange?,
     converterContext: ConverterContext?
 ) {
-    runWithModalProgressBlocking(project, KotlinJ2KK2Bundle.message("copy.text.convert.java.to.kotlin.title")) {
+    runWithModalProgressBlocking(project, KotlinJ2kBundle.message("copy.text.convert.java.to.kotlin.title")) {
         PostProcessor.run(file, converterContext, bounds)
     }
 }

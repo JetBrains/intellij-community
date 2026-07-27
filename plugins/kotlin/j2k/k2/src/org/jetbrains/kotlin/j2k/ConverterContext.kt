@@ -4,19 +4,14 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
-import org.jetbrains.kotlin.nj2k.JKImportStorage
-import org.jetbrains.kotlin.nj2k.JKSymbolProvider
-import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
-import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.NewExternalCodeProcessing
+import org.jetbrains.kotlin.j2k.types.JKTypeFactory
 
 class ConverterContext(
     val symbolProvider: JKSymbolProvider,
     val typeFactory: JKTypeFactory,
     val converter: JavaToKotlinConverter,
     val importStorage: JKImportStorage,
-    val elementsInfoStorage: JKElementInfoStorage,
     val externalCodeProcessor: NewExternalCodeProcessing,
     val languageVersionSettings: LanguageVersionSettings,
     val settings: ConverterSettings
