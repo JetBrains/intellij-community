@@ -123,7 +123,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    R copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
+    R copy = ImportFixPreviewUtil.findSameElementInPreview(psiFile, getElement());
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
     T element = candidates.getFirst();
