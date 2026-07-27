@@ -24,4 +24,19 @@ class MarkdownEmbeddedHtmlHighlightingTest : BasePlatformTestCase() {
 
     EditorTestUtil.testFileSyntaxHighlighting(file, "$testDataPath/${getTestName(true)}.txt", true)
   }
+
+  fun testMultilineHtmlComment() {
+    val text = """
+        Some text.
+
+        <!--
+        multiline
+        comment
+        -->
+
+        Trailing text.
+      """.trimIndent()
+    val file = myFixture.configureByText("test.md", text)
+    EditorTestUtil.testFileSyntaxHighlighting(file, "$testDataPath/${getTestName(true)}.txt", true)
+  }
 }
