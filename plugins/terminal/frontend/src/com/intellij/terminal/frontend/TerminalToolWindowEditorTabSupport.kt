@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPresentation
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
@@ -46,7 +47,7 @@ private val LOG = logger<TerminalToolWindowEditorTabSupport>()
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
     val terminalContents = contents.mapNotNull { content ->
-      findTerminalContent(content)?.let { content to it }
+      content.asTerminalContent
     }
     if (terminalContents.isEmpty()) {
       return contents
@@ -66,11 +67,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       return contents
     }
 
-    if (confirmTermination(project, contentsToConfirm.map(ContentToConfirm::title))) {
+    if (confirmTermination(project, contentsToConfirm.map(ConfirmationDetails::title))) {
       return contents
     }
 
-    val contentsToKeepOpen = contentsToConfirm.mapTo(HashSet(contentsToConfirm.size), ContentToConfirm::content)
+    val contentsToKeepOpen = contentsToConfirm.mapTo(HashSet(contentsToConfirm.size), ConfirmationDetails::content)
     return contents.filterNot(contentsToKeepOpen::contains)
   }
 
@@ -89,7 +90,7 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
 
       merge(
         titleUpdatesFlow(content),
-        contentIconUpdatesFlow(content),
+        content.propertyUpdatesFlow(Content.PROP_ICON),
       ).collect {
         emit(buildState())
       }
@@ -110,103 +111,93 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   private fun getTabTitle(content: Content): @NlsContexts.TabTitle String {
-    return when (val terminalContent = findTerminalContent(content)) {
-      is TerminalContent.Reworked -> terminalContent.view.getTitleText()
-      is TerminalContent.Classic -> terminalContent.widget.terminalTitle.buildSettingsAwareTitle()
-      null -> content.displayName
-    }
+    return content.asTerminalContent?.getTabTitle() ?: content.displayName
   }
 
   private fun titleUpdatesFlow(content: Content): Flow<Unit> {
-    return when (val terminalContent = findTerminalContent(content)) {
-      is TerminalContent.Reworked -> terminalContent.view.titleStateFlow().map { }
-      is TerminalContent.Classic -> {
-        terminalContent.widget.terminalTitle.stateFlow(
-          buildCroppedTitle = { it.buildSettingsAwareTitle() },
-          buildFullTitle = { it.buildSettingsAwareFullTitle() },
-        ).map { }
-      }
-
-      null -> {
-        LOG.debug("Terminal title state is unavailable; falling back to Content.displayName")
-        contentDisplayNameUpdatesFlow(content)
-      }
-    }
-  }
-
-  private fun contentDisplayNameUpdatesFlow(content: Content): Flow<Unit> {
-    return callbackFlow {
-      val listener = PropertyChangeListener { event ->
-        if (event.propertyName == Content.PROP_DISPLAY_NAME) {
-          trySend(Unit)
-        }
-      }
-      content.addPropertyChangeListener(listener)
-      awaitClose {
-        content.removePropertyChangeListener(listener)
-      }
-    }
-  }
-
-  private fun contentIconUpdatesFlow(content: Content): Flow<Unit> {
-    return callbackFlow {
-      val listener = PropertyChangeListener { event ->
-        if (event.propertyName == Content.PROP_ICON) {
-          trySend(Unit)
-        }
-      }
-      content.addPropertyChangeListener(listener)
-      awaitClose {
-        content.removePropertyChangeListener(listener)
-      }
+    return content.asTerminalContent?.getTitleUpdatesFlow() ?: run {
+      LOG.debug("Terminal title state is unavailable; falling back to Content.displayName")
+      content.propertyUpdatesFlow(Content.PROP_DISPLAY_NAME)
     }
   }
 
   private suspend fun collectContentsToConfirm(
-    contents: List<Pair<Content, TerminalContent>>,
-  ): List<ContentToConfirm> = coroutineScope {
-    contents.map { (content, terminalContent) ->
-      async {
-        when (terminalContent) {
-          is TerminalContent.Reworked ->
-            if (TerminalTabCloseListenerImpl.shouldConfirmClosing(terminalContent.view)) {
-              ContentToConfirm(content, terminalContent.view.getFullTitleText())
-            } else {
-              null
-            }
-
-          is TerminalContent.Classic ->
-            withContext(Dispatchers.IO) {
-              if (terminalContent.widget.isCommandRunning()) {
-                ContentToConfirm(content, terminalContent.widget.terminalTitle.buildFullTitle())
-              } else {
-                null
-              }
-            }
-        }
-      }
+    terminalContents: List<TerminalContent>,
+  ): List<ConfirmationDetails> = coroutineScope {
+    terminalContents.map { terminalContent ->
+      async { terminalContent.getConfirmationDetails() }
     }.awaitAll().filterNotNull()
   }
 }
 
 private sealed interface TerminalContent {
-  data class Reworked(val view: TerminalView) : TerminalContent
-  data class Classic(val widget: TerminalWidget) : TerminalContent
-}
+  val content: Content
 
-private fun findTerminalContent(content: Content): TerminalContent? {
-  content.getTerminalTab()?.view?.let {
-    return TerminalContent.Reworked(it)
+  @NlsSafe
+  fun getTabTitle(): String
+  fun getTitleUpdatesFlow(): Flow<Unit>
+  suspend fun getConfirmationDetails(): ConfirmationDetails?
+
+  class Reworked(override val content: Content, val view: TerminalView) : TerminalContent {
+    override fun getTabTitle(): String = view.getTitleText()
+
+    override fun getTitleUpdatesFlow(): Flow<Unit> = view.titleStateFlow().map { }
+
+    override suspend fun getConfirmationDetails(): ConfirmationDetails? {
+      return if (TerminalTabCloseListenerImpl.shouldConfirmClosing(view)) {
+        ConfirmationDetails(content, view.getFullTitleText())
+      }
+      else {
+        null
+      }
+    }
   }
 
-  TerminalToolWindowManager.findWidgetByContent(content)?.let {
-    return TerminalContent.Classic(it)
-  }
+  class Classic(override val content: Content, val widget: TerminalWidget) : TerminalContent {
+    override fun getTabTitle(): String = widget.terminalTitle.buildSettingsAwareTitle()
 
-  return null
+    override fun getTitleUpdatesFlow(): Flow<Unit> = widget.terminalTitle.stateFlow(
+      buildCroppedTitle = { it.buildSettingsAwareTitle() },
+      buildFullTitle = { it.buildSettingsAwareFullTitle() },
+    ).map { }
+
+    override suspend fun getConfirmationDetails(): ConfirmationDetails? = withContext(Dispatchers.IO) {
+      if (widget.isCommandRunning()) {
+        ConfirmationDetails(content, widget.terminalTitle.buildFullTitle())
+      }
+      else {
+        null
+      }
+    }
+  }
 }
 
-private data class ContentToConfirm(
+private val Content.asTerminalContent: TerminalContent?
+  get() {
+    getTerminalTab()?.view?.let {
+      return TerminalContent.Reworked(this, it)
+    }
+
+    TerminalToolWindowManager.findWidgetByContent(this)?.let {
+      return TerminalContent.Classic(this, it)
+    }
+
+    return null
+  }
+
+private fun Content.propertyUpdatesFlow(targetPropertyName: String): Flow<Unit> = callbackFlow {
+  val listener = PropertyChangeListener { event ->
+    if (event.propertyName == targetPropertyName) {
+      trySend(Unit)
+    }
+  }
+  addPropertyChangeListener(listener)
+  awaitClose {
+    removePropertyChangeListener(listener)
+  }
+}
+
+private data class ConfirmationDetails(
   val content: Content,
   val title: String,
 )
