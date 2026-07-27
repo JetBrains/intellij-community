@@ -1,4 +1,4 @@
-package org.jetbrains.yaml.syntax
+package com.intellij.yaml.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet

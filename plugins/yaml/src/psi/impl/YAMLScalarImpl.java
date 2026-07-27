@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.lexer.YamlGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 

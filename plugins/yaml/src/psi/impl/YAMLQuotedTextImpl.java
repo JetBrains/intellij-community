@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.lexer.YamlGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 

@@ -4,8 +4,8 @@ package org.jetbrains.yaml
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.ElementTypeConverterFactory
 import com.intellij.platform.syntax.psi.elementTypeConverterOf
-import org.jetbrains.yaml.syntax.YamlSyntaxElementTypes
-import org.jetbrains.yaml.syntax.YamlSyntaxTokenTypes
+import com.intellij.yaml.syntax.YamlSyntaxElementTypes
+import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 
 internal class YamlElementTypeConverterFactory : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = yamlElementTypeConverter

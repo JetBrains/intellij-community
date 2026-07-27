@@ -9,7 +9,7 @@ import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLParserDefinition;
 import org.jetbrains.yaml.YamlElementTypeConverterFactory;
 import org.jetbrains.yaml.YamlFileElementTypeConverterFactory;
-import org.jetbrains.yaml.syntax.YamlSyntaxDefinitionExtension;
+import com.intellij.yaml.syntax.YamlSyntaxDefinitionExtension;
 
 import java.io.IOException;
 

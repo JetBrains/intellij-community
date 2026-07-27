@@ -1,4 +1,4 @@
-package org.jetbrains.yaml.syntax
+package com.intellij.yaml.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -541,7 +541,7 @@ class YamlParser(private val builder: SyntaxTreeBuilder) {
   private fun rollBackToEol() {
     if (wasEolSeen && markerAfterLastEol != null) {
       wasEolSeen = false
-      markerAfterLastEol!!.rollbackTo()
+      markerAfterLastEol?.rollbackTo()
       markerAfterLastEol = null
     }
   }

@@ -1,9 +1,9 @@
-package org.jetbrains.yaml.syntax.lexer
+package com.intellij.yaml.syntax.lexer
 
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.platform.syntax.util.lexer.FlexAdapter
 import com.intellij.platform.syntax.util.lexer.MergingLexerAdapter
-import org.jetbrains.yaml.syntax.YamlSyntaxTokenTypes
+import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 
 class YamlLexer : MergingLexerAdapter(MyFlexAdapter(_YamlLexer()), TOKENS_TO_MERGE)
 

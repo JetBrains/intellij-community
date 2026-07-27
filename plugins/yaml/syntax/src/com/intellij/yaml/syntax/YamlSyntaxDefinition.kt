@@ -1,12 +1,11 @@
-package org.jetbrains.yaml.syntax
+package com.intellij.yaml.syntax
 
 import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.SyntaxElementTypeSet
-import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
-import org.jetbrains.yaml.syntax.lexer.YamlLexer
+import com.intellij.yaml.syntax.lexer.YamlLexer
 
 object YamlSyntaxDefinition : LanguageSyntaxDefinition {
   override fun parse(builder: SyntaxTreeBuilder) {

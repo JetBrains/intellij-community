@@ -1,10 +1,8 @@
-package org.jetbrains.yaml.syntax.lexer
+package com.intellij.yaml.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.lexer.FlexLexer
-import org.jetbrains.yaml.syntax.YamlSyntaxTokenTypes
-
-import kotlin.jvm.JvmStatic
+import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
 
 /* Auto generated File */
 %%

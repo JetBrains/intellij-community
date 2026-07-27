@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.lexer.YamlGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;

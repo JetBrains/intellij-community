@@ -1,4 +1,4 @@
-package org.jetbrains.yaml.syntax
+package com.intellij.yaml.syntax
 
 import com.intellij.platform.syntax.i18n.ResourceBundle
 import org.jetbrains.annotations.Nls

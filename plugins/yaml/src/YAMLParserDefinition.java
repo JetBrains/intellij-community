@@ -31,7 +31,7 @@ import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 import org.jetbrains.yaml.psi.impl.YAMLScalarListImpl;
 import org.jetbrains.yaml.psi.impl.YAMLScalarTextImpl;
 import org.jetbrains.yaml.psi.impl.YAMLSequenceItemImpl;
-import org.jetbrains.yaml.syntax.YamlSyntaxDefinition;
+import com.intellij.yaml.syntax.YamlSyntaxDefinition;
 
 import static org.jetbrains.yaml.YamlElementTypeConverterKt.getYamlElementTypeConverter;
 import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
