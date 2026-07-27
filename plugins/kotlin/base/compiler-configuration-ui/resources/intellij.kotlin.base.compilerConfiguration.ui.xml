@@ -33,6 +33,5 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
-    <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 </idea-plugin>

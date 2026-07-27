@@ -94,6 +94,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider
             implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
+    <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
