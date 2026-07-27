@@ -4,6 +4,8 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serializeObjectInto
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -17,6 +19,8 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.xmlb.Constants
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge
 import org.jdom.Element
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 
 private const val COMPONENT_ELEMENT: String = "component"
 
@@ -26,11 +30,24 @@ internal class CustomImlComponentServiceImpl(
 
   private val legacyBridge = WorkspaceModelLegacyBridge.getInstance(project)
 
+  /** Guards against log spam: [getComponentValue] re-deserializes on every read, so a corrupt component is reported once. */
+  private val reportedDeserializationFailures = ConcurrentHashMap.newKeySet<String>()
+
   override fun <T> getComponentValue(module: Module, componentName: String, componentClass: Class<T>): T? {
     val moduleEntity = legacyBridge.findModuleEntity(module) ?: return null
     val entity = moduleEntity.customImlComponent ?: return null
     val component = entity.components[componentName] ?: return null
-    return JDOMUtil.load(component).deserialize(componentClass)
+    // A corrupt or outdated stored value must not break every reader.
+    return try {
+      JDOMUtil.load(component).deserialize(componentClass)
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      if (reportedDeserializationFailures.add("${module.name}#$componentName")) {
+        thisLogger().warn("Cannot deserialize custom iml component '$componentName' for module '${module.name}'; falling back to default", e)
+      }
+      null
+    }
   }
 
   override suspend fun <T> setComponentValue(module: Module, componentName: String, component: T) {

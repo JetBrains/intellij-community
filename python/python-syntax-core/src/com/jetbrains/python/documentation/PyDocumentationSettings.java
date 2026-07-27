@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.ast.PyAstElsePart;
@@ -186,20 +187,12 @@ public abstract class PyDocumentationSettings
       return myDocStringFormat;
     }
 
-    public void setFormat(@NotNull DocStringFormat format) {
-      myDocStringFormat = format;
-    }
-
-    // Legacy name of the field to preserve settings format
-    @SuppressWarnings("unused")
-    @OptionTag("myDocStringFormat")
-    public @NotNull String getFormatName() {
-      return myDocStringFormat.getName();
-    }
-
-    @SuppressWarnings("unused")
-    public void setFormatName(@NotNull String name) {
-      myDocStringFormat = DocStringFormat.fromNameOrPlain(name);
+    public void setFormat(@Nullable DocStringFormat format) {
+      if (format == null) {
+        myDocStringFormat = DocStringFormat.PLAIN;
+      } else {
+        myDocStringFormat = format;
+      }
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Files
@@ -150,6 +151,32 @@ class CustomImlComponentServiceTest {
     }
   }
 
+  @Test
+  fun `returns null instead of throwing when stored component cannot be deserialized`() {
+    registerContributor(SecondTestModuleService.COMPONENT_NAME, disposable)
+
+    val projectPath = tempDir.newPath("corrupt-component-project")
+    Files.createDirectories(projectPath)
+
+    openProject(projectPath) { project, _ ->
+      runWriteAction {
+        ModuleManager.getInstance(project).newModule(projectPath.resolve(MODULE_FILE_NAME), EmptyModuleType.EMPTY_MODULE)
+      }
+      saveProject(project)
+    }
+
+    openProject(projectPath) { project, _ ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      val componentService = project.service<CustomImlComponentService>()
+
+      runBlocking {
+        componentService.setComponentValue(module, SecondTestModuleService.COMPONENT_NAME, CorruptTestState("not-a-number"))
+      }
+
+      assertNull(componentService.getComponentValue<SecondTestModuleService.State>(module, SecondTestModuleService.COMPONENT_NAME))
+    }
+  }
+
   private fun registerContributor(componentName: String, disposable: Disposable) {
     BaseIdeSerializationContext.CUSTOM_IML_COMPONENT_NAME_CONTRIBUTOR_EP.point
       .registerExtension(TestCustomImlComponentNameContributor(componentName), disposable)
@@ -193,6 +220,12 @@ class CustomImlComponentServiceTest {
 private class TestCustomImlComponentNameContributor(
   override val componentName: String,
 ) : CustomImlComponentNameContributor
+
+/**
+ * Serializes a `count` that is not an `Int`, so deserializing it back into [SecondTestModuleService.State]
+ * (whose `count` is an `Int`) fails — mimicking a stored value incompatible with the current state schema.
+ */
+internal data class CorruptTestState(var count: String = "")
 
 internal class FirstTestModuleService(private val module: Module) {
   data class State(
