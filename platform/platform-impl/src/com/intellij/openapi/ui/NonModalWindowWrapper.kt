@@ -628,6 +628,7 @@ abstract class NonModalWindowWrapper(
       }
       activeWindow.toFront()
       activeWindow.requestFocus()
+      getPreferredFocusComponent()?.requestFocusInWindow()
       return
     }
     showActiveWindow()
