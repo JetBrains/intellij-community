@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -105,6 +106,41 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
     assertEquals("test text", VfsUtilCore.loadText(vFile));
+  }
+
+  @Test
+  public void testFindFileByUrlIfCachedReturnsNullForUrlWithoutScheme() {
+    assertNull(VfsUtil.findFileByUrlIfCached("/tmp/file.txt"));
+  }
+
+  @Test
+  public void testFindFileByUrlIfCachedReturnsNullForUnknownFileSystem() {
+    assertNull(VfsUtil.findFileByUrlIfCached("unknown:///tmp/file.txt"));
+  }
+
+  @Test
+  public void testFindFileByUrlIfCachedFindsCachedFile() {
+    var file = tempDir.newFileNio("file.txt");
+    var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    assertNotNull(virtualFile);
+
+    var cachedFile = VfsUtil.findFileByUrlIfCached(file.toUri().toString());
+    assertNotNull(cachedFile);
+    assertEquals(virtualFile.getUrl(), cachedFile.getUrl());
+  }
+
+  @Test
+  public void testFindFileByUrlIfCachedDoesNotFindUncachedFile() {
+    var file = tempDir.newFileNio("file.txt");
+    assertNull(VfsUtil.findFileByUrlIfCached(file.toUri().toString()));
+  }
+
+  @Test
+  public void testFindFileByUrlIfCachedReturnsNullForNonNewVirtualFileSystem() {
+    var fileSystem = VirtualFileManager.getInstance().getFileSystem("http");
+    assertNotNull(fileSystem);
+    assertFalse(fileSystem instanceof NewVirtualFileSystem);
+    assertNotNull(VfsUtil.findFileByUrlIfCached("http://example.com/file.txt"));
   }
 
   @Test
