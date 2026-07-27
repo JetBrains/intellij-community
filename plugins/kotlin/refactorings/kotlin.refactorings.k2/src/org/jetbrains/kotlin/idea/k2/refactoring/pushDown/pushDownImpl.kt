@@ -3,11 +3,17 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.createSuperTypeEntryForAddition
@@ -30,7 +36,8 @@ internal data class MemberContext(
 )
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.createPushDownAction(
+context(session: KaSession)
+internal fun createPushDownAction(
     sourceClass: KtClass,
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
@@ -55,7 +62,8 @@ internal fun KaSession.createPushDownAction(
     else -> null
 }
 
-internal fun KaSession.getSuperTypeEntryBySymbol(
+context(session: KaSession)
+internal fun getSuperTypeEntryBySymbol(
     sourceClass: KtClassOrObject,
     symbol: KaClassSymbol,
 ): KtSuperTypeListEntry? = sourceClass.superTypeListEntries.firstOrNull {
@@ -64,7 +72,8 @@ internal fun KaSession.getSuperTypeEntryBySymbol(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.createPushDownActionForCallableMember(
+context(session: KaSession)
+private fun createPushDownActionForCallableMember(
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
@@ -140,7 +149,8 @@ private fun addCallableMember(
 } as KtCallableDeclaration
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.createPushDownActionForClassLikeMember(
+context(session: KaSession)
+private fun createPushDownActionForClassLikeMember(
     memberInfo: KotlinMemberInfo,
     sourceClass: KtClassOrObject,
     targetClass: KtClassOrObject,

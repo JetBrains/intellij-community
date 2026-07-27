@@ -14,7 +14,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -81,7 +81,7 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
 
                 // Separate `analyze` call for every class, because they may be actuals from non-dependency modules
                 analyze(klass) {
-                    val symbol = klass.symbol as? KaClassSymbol ?: return@analyze
+                    val symbol = with(contextOf<KaSession>()) { klass.symbol } as? KaClassSymbol ?: return@analyze
                     val classInfo = ClassInfo(symbol.isExpect, symbol.isActual, symbol.classId?.asFqNameString())
                     this@buildMap[klass.createSmartPointer()] = classInfo
                 }

@@ -8,9 +8,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
 import org.jetbrains.kotlin.config.LanguageFeature.EnableNameBasedDestructuringShortForm
 import org.jetbrains.kotlin.config.LanguageFeature.NameBasedDestructuring
@@ -75,7 +75,9 @@ class AddForLoopIndicesIntention :
         ).getContentElement() ?: return null
 
         analyze(potentialExpression) {
-            val potentialResolvedCall = potentialExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+            val potentialResolvedCall = with(contextOf<KaSession>()) {
+                potentialExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+            }
             if (potentialResolvedCall !in WITH_INDEX_FQ_NAMES) return null
         }
 

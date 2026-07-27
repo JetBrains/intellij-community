@@ -4,26 +4,27 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.createSmartPointer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.findContextParameterInChangeInfo
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isAnonymousParameter
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
@@ -120,7 +121,8 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
         return function.contextParameters.getOrNull(index)
     }
 
-    private fun KaSession.suggestParameterNameByType(ktParameter: KtParameter, ownerFunction: KtNamedFunction): String? {
+    context(session: KaSession)
+    private fun suggestParameterNameByType(ktParameter: KtParameter, ownerFunction: KtNamedFunction): String? {
         val type = ktParameter.symbol.returnType
 
         val nameValidator = KotlinDeclarationNameValidator(

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -115,7 +116,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(singleFunction) {
-                    var callableSymbol = singleFunction.symbol as? KaCallableSymbol ?: return null
+                    val callableSymbol = singleFunction.symbol as? KaCallableSymbol ?: return null
                     val allOverriddenSymbol = callableSymbol.directlyOverriddenSymbols.singleOrNull() ?: return null
                     if (allOverriddenSymbol.modality != KaSymbolModality.ABSTRACT) return null
                 }
@@ -133,7 +134,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
                 allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(instanceReference) {
-                            var containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
+                            val containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
                             val resolveToSymbol = instanceReference.mainReference.resolveToSymbol()
 
                             resolveToSymbol.equalsOrEqualsByPsi(containingSymbol)
@@ -153,7 +154,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
                 allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(expression) {
-                            var containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
+                            val containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
                             val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze false
                             functionCall.getImplicitReceivers().any {
                                 it.symbol == containingSymbol

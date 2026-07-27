@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ConvertToConcatenatedStringIntentionBase
 import org.jetbrains.kotlin.psi.KtExpression
 

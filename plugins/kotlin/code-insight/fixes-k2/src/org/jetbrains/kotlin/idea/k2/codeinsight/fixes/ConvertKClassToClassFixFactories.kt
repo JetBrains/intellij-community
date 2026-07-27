@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix
@@ -50,9 +50,11 @@ internal object ConvertKClassToClassFixFactories {
         val contentElement = codeFragment.getContentElement() ?: return null
         val expectedTypePointer = expectedType.createPointer()
         analyze(contentElement) {
-            val javaLangClassType = contentElement.expressionType ?: return null
-            val expectedType = expectedTypePointer.restore() ?: return null
-            if (!javaLangClassType.isSubtypeOf(expectedType)) return null
+            with(contextOf<KaSession>()) {
+                val javaLangClassType = contentElement.expressionType ?: return null
+                val expectedType = expectedTypePointer.restore() ?: return null
+                if (!javaLangClassType.isSubtypeOf(expectedType)) return null
+            }
         }
 
         return ConvertKClassToClassFix(element)

@@ -5,11 +5,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -39,7 +46,8 @@ private var KtElement.replaceWithTargetThis: Boolean? by CopyablePsiUserDataProp
 private var KtElement.newTypeTextByTargetClass: MutableMap<FqName, () -> String?>? by CopyablePsiUserDataProperty(Key.create("NEW_TYPE_TEXT_MAP"))
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.markElements(
+context(session: KaSession)
+internal fun markElements(
     declaration: KtNamedDeclaration,
     sourceClass: KtClassOrObject,
     targetClass: KtClassOrObject,

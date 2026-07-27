@@ -24,7 +24,6 @@ import com.intellij.util.containers.reverse
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -160,7 +159,7 @@ internal class K2PullUpHelper(
                     symbol = symbol.containingDeclaration
                 }
                 symbol is KaPackageSymbol || isSubClassOf(
-                    subClass = data.getTargetClassSymbol(analysisSession = this),
+                    subClass = data.getTargetClassSymbol(),
                     superClass = symbol,
                 )
             }
@@ -418,7 +417,7 @@ internal class K2PullUpHelper(
                         addSuperTypeEntry(
                             currentSpecifier,
                             data.targetClass,
-                            data.getSourceToTargetClassSubstitutor(analysisSession = this),
+                            data.getSourceToTargetClassSubstitutor(),
                         )
                     }
                 }
@@ -438,7 +437,7 @@ internal class K2PullUpHelper(
                 allowAnalysisFromWriteActionInEdt(data.sourceClass) {
                     analyze(data.sourceClass) {
                         val classSymbol = member.symbol as KaClassSymbol
-                        val targetClassSymbol = data.getTargetClassSymbol(analysisSession = this)
+                        val targetClassSymbol = data.getTargetClassSymbol()
                         if (targetClassSymbol.isSubClassOf(classSymbol)) return
                     }
                 }
@@ -553,7 +552,7 @@ internal class K2PullUpHelper(
                     member,
                     data.sourceClass,
                     targetClass,
-                    data.getSourceToTargetClassSubstitutor(analysisSession = this),
+                    data.getSourceToTargetClassSubstitutor(),
                 )
             }
         }
@@ -597,7 +596,7 @@ internal class K2PullUpHelper(
                             computeAndRenderReturnType(
                                 member.symbol as KaCallableSymbol,
                                 memberCopy,
-                                data.getSourceToTargetClassSubstitutor(analysisSession = this),
+                                data.getSourceToTargetClassSubstitutor(),
                             )
                         }
                     }
@@ -624,7 +623,7 @@ internal class K2PullUpHelper(
 
                     allowAnalysisFromWriteActionInEdt(data.sourceClass) {
                         analyze(data.sourceClass) {
-                            val superEntry = data.getSuperEntryForTargetClass(analysisSession = this)
+                            val superEntry = data.getSuperEntryForTargetClass()
                             val superResolvedCall = superEntry?.resolveToCall()?.singleFunctionCallOrNull()
                             if (superResolvedCall != null) {
                                 val superCall = if (superEntry !is KtSuperTypeCallEntry || superEntry.valueArgumentList == null) {
@@ -729,7 +728,7 @@ internal class K2PullUpHelper(
 
                     val renderedType = analyze(it) {
                         val originalType = it.symbol.returnType
-                        data.getSourceToTargetClassSubstitutor(analysisSession = this)
+                        data.getSourceToTargetClassSubstitutor()
                             .substitute(originalType)
                             .render(position = Variance.INVARIANT)
                     }

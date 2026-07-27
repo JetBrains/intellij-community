@@ -9,12 +9,15 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionWithDemorgansLawIntention.ConvertFunctionWithDemorgansLawContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeInverted
@@ -24,7 +27,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.codeinsight.utils.plus
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionWithDemorgansLawIntention.ConvertFunctionWithDemorgansLawContext
 import org.jetbrains.kotlin.idea.refactoring.appendCallOrQualifiedExpression
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.lexer.KtSingleValueToken

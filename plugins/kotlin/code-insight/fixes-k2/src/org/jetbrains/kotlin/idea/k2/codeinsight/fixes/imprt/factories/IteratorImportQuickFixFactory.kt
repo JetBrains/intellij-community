@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
@@ -64,7 +64,7 @@ internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() 
             psiFactory.createExpressionCodeFragment("${iteratedExpression.text}.iterator()", iteratedExpression).getContentElement()
                 ?: return null
 
-        return analyze(iteratorCallExpression) { iteratorCallExpression.expressionType?.createPointer() }?.restore()
+        return analyze(iteratorCallExpression) { with(contextOf<KaSession>()) { iteratorCallExpression.expressionType?.createPointer() } }?.restore()
     }
 
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportContext): Set<Name> = 

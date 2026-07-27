@@ -3,9 +3,14 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -25,8 +30,10 @@ internal object ConstFixFactories {
             } ?: return@ModCommandBased emptyList()
 
             val property: KtProperty = analyze(expression) {
-                val propertySymbol = expression.mainReference.resolveToSymbol() ?: return@analyze null
-                (propertySymbol.psi as? KtProperty)?.takeIf(::constModifierApplicable)
+                with(contextOf<KaSession>()) {
+                    val propertySymbol = expression.mainReference.resolveToSymbol() ?: return@with null
+                    (propertySymbol.psi as? KtProperty)?.takeIf { constModifierApplicable(it) }
+                }
             } ?: return@ModCommandBased emptyList()
 
             val action = AddConstModifierFix(property).asIntention().asModCommandAction() ?: return@ModCommandBased emptyList()
@@ -34,7 +41,8 @@ internal object ConstFixFactories {
         }
 }
 
-private fun KaSession.constModifierApplicable(property: KtProperty): Boolean {
+context(session: KaSession)
+private fun constModifierApplicable(property: KtProperty): Boolean {
     val isInsideObject = property.getStrictParentOfType<KtObjectDeclaration>() != null
     val type = property.returnType
     val initializer = property.initializer

@@ -5,15 +5,22 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.commonSupertype
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.getSuperTypeEntryBySymbol
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -26,15 +33,16 @@ internal class K2PullUpData(
     val targetClass: PsiNamedElement,
     val membersToMove: Collection<KtNamedDeclaration>,
 ) {
-    fun getTargetClassSymbol(analysisSession: KaSession): KaClassSymbol = with(analysisSession) {
+    context(session: KaSession)
+    fun getTargetClassSymbol(): KaClassSymbol =
         (targetClass as? PsiClass)?.namedClassSymbol ?: (targetClass as KtClass).symbol as KaClassSymbol
-    }
 
-    fun getSuperEntryForTargetClass(analysisSession: KaSession): KtSuperTypeListEntry? = with(analysisSession) {
-        getSuperTypeEntryBySymbol(sourceClass, getTargetClassSymbol(analysisSession))
-    }
+    context(session: KaSession)
+    fun getSuperEntryForTargetClass(): KtSuperTypeListEntry? =
+        getSuperTypeEntryBySymbol(sourceClass, getTargetClassSymbol())
 
-    private fun KaSession.collectVisibleTypeParameters(klass: KtClassOrObject): List<KaTypeParameterSymbol> =
+    context(session: KaSession)
+    private fun collectVisibleTypeParameters(klass: KtClassOrObject): List<KaTypeParameterSymbol> =
         klass.containingKtFile.scopeContext(klass).scopes
             .filter { it.kind is KaScopeKind.TypeParameterScope }
             .flatMap { scopeWithKind ->
@@ -42,14 +50,15 @@ internal class K2PullUpData(
             }
 
     @OptIn(KaExperimentalApi::class)
-    fun getSourceToTargetClassSubstitutor(analysisSession: KaSession): KaSubstitutor = with(analysisSession) {
+    context(session: KaSession)
+    fun getSourceToTargetClassSubstitutor(): KaSubstitutor =
         buildSubstitutor {
             collectVisibleTypeParameters(sourceClass).forEach { typeParam ->
                 val upperBound = typeParam.upperBounds.ifNotEmpty { commonSupertype } ?: builtinTypes.nullableAny
                 substitution(typeParam, upperBound)
             }
 
-            val targetClassSymbol = getTargetClassSymbol(analysisSession)
+            val targetClassSymbol = getTargetClassSymbol()
 
             val inheritanceSubstitutor = createInheritanceTypeSubstitutor(
                 subClass = sourceClass.symbol as KaClassSymbol,
@@ -70,7 +79,6 @@ internal class K2PullUpData(
                 }
             }
         }
-    }
 
     val isInterfaceTarget: Boolean = (targetClass as? KtClassOrObject)?.let { klass ->
         analyze(targetClass) {

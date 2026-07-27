@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
@@ -25,8 +26,8 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-@OptIn(KaExperimentalApi::class)
-internal fun KaSession.createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
+context(session: KaSession)
+internal fun createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
     return when (val symbol = (receiverValue.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol) {
         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
 
@@ -50,18 +51,20 @@ internal fun KaSession.createReplacementForContextArgument(receiverValue: KaRece
     }
 }
 
-internal fun KaSession.createContextArgumentReplacementMapForVariableAccess(
+context(session: KaSession)
+internal fun createContextArgumentReplacementMapForVariableAccess(
     callElement: KtSimpleNameExpression
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? =
     createContextArgumentReplacementMap<KaVariableAccessCall>(callElement)
 
-internal fun KaSession.createContextArgumentReplacementMapForFunctionCall(
+context(session: KaSession)
+internal fun createContextArgumentReplacementMapForFunctionCall(
     callElement: KtCallElement
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? =
     createContextArgumentReplacementMap<KaFunctionCall<*>>(callElement)
 
-@OptIn(KaExperimentalApi::class)
-private inline fun <reified T : KaCallableMemberCall<*, *>> KaSession.createContextArgumentReplacementMap(
+context(session: KaSession)
+private inline fun <reified T : KaCallableMemberCall<*, *>> createContextArgumentReplacementMap(
     callElement: KtElement
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? {
     val callInfo = callElement.resolveToCall()

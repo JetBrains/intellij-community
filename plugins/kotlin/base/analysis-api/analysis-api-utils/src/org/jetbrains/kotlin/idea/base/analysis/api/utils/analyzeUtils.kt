@@ -6,13 +6,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -46,7 +46,7 @@ inline fun <T : KtElement, R> allowAnalysisFromWriteActionInEdt(
 ): R = allowAnalysisOnEdt {
     allowAnalysisFromWriteAction {
         analyze(useSiteElement) {
-            action(useSiteElement)
+            useSiteSession.action(useSiteElement)
         }
     }
 }

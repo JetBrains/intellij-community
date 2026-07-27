@@ -88,24 +88,23 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val receiver = element.receiverExpression
         val argument = callExpression.singleArgumentExpression() ?: return null
 
-        analyze(element) {
-            val resolvedCall =
-                with(contextOf<KaSession>()) { callExpression.resolveToCall()?.successfulFunctionCallOrNull() } ?: return null
-            if (resolvedCall.symbol.valueParameters.size != 1) return null
-            if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
-            if (!element.isReceiverExpressionWithValue()) return null
+        val resolvedCall =
+            callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        if (resolvedCall.symbol.valueParameters.size != 1) return null
+        if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
+        if (!element.isReceiverExpressionWithValue()) return null
 
-            val operationToken = getOperationToken(calleeExpression) ?: return null
-            val isFloatingPointEquals =
-                operationToken == KtTokens.EQEQ && receiver.hasDoubleOrFloatType() && argument.hasDoubleOrFloatType()
+        val operationToken = getOperationToken(calleeExpression) ?: return null
+        val isFloatingPointEquals =
+            operationToken == KtTokens.EQEQ && receiver.hasDoubleOrFloatType() && argument.hasDoubleOrFloatType()
 
-            if (!isFloatingPointEquals) {
-                if (operationToken in floatUnfriendlyTokens
-                    && (receiver.hasDoubleOrFloatType() || argument.hasDoubleOrFloatType())) return null
-            }
-
-            return Context(operationToken, isFloatingPointEquals)
+        if (!isFloatingPointEquals) {
+            if (operationToken in floatUnfriendlyTokens
+                && (receiver.hasDoubleOrFloatType() || argument.hasDoubleOrFloatType())
+            ) return null
         }
+
+        return Context(operationToken, isFloatingPointEquals)
     }
 
     override fun createQuickFix(

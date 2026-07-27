@@ -25,12 +25,20 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.implementationState
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -225,7 +233,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 }
 
                 @OptIn(KaExperimentalApi::class)
-                private fun KaSession.findExistingImplementation(
+                context(session: KaSession)
+                private fun findExistingImplementation(
                     targetClass: KaClassSymbol,
                     abstractMember: KtNamedDeclaration,
                 ): KaCallableSymbol? {
@@ -264,7 +273,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 }
 
                 @OptIn(KaExperimentalApi::class)
-                private fun KaSession.getCallableMemberToImplement(
+                context(session: KaSession)
+                private fun getCallableMemberToImplement(
                     abstractMember: KtNamedDeclaration,
                     subClass: KaDeclarationContainerSymbol,
                 ): KaCallableSymbol? {
@@ -276,7 +286,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 }
 
                 @OptIn(KaExperimentalApi::class)
-                private fun KaSession.createKtClassMember(
+                context(session: KaSession)
+                private fun createKtClassMember(
                     symbolToImplement: KaCallableSymbol,
                     preferConstructorParameters: Boolean,
                 ): KtClassMember = KtClassMember(

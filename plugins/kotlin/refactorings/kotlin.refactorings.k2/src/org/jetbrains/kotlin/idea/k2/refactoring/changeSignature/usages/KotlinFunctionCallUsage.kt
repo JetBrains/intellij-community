@@ -517,7 +517,8 @@ internal class KotlinFunctionCallUsage(
         return newElement
     }
 
-    private fun KaSession.isProvidedByEnclosingContext(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isProvidedByEnclosingContext(expression: KtExpression): Boolean {
         val containingLambda = PsiTreeUtil.getParentOfType(expression, KtLambdaArgument::class.java, true, KtClassLikeDeclaration::class.java) ?: return false
         val referencedDeclaration = expression.mainReference?.resolve() ?: return false
         return generateSequence(containingLambda) {

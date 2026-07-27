@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -38,13 +37,11 @@ internal class ConvertVarargParameterToArrayIntention :
 
     override fun KaSession.prepareContext(element: KtParameter): Context? {
         val typeReference = element.getChildOfType<KtTypeReference>() ?: return null
-        val renderedParameterType = analyze(element) {
-            val parameterType = element.symbol.returnType
-            if (parameterType.isPrimitive) {
-                "${typeReference.text}Array"
-            } else {
-                "Array<${typeReference.text}>"
-            }
+        val parameterType = element.symbol.returnType
+        val renderedParameterType = if (parameterType.isPrimitive) {
+            "${typeReference.text}Array"
+        } else {
+            "Array<${typeReference.text}>"
         }
         return Context(renderedParameterType)
     }

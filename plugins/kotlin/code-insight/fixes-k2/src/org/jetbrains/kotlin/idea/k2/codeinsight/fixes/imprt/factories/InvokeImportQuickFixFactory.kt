@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRangeInThis
@@ -60,7 +60,7 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                 val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
 
                 val invokeCallReceiverTypePointer = analyze(invokeCallReceiverCopy) {
-                    invokeCallReceiverCopy.expressionType?.createPointer()
+                    with(contextOf<KaSession>()) { invokeCallReceiverCopy.expressionType?.createPointer() }
                 }
 
                 invokeCallReceiverTypePointer?.restore()
