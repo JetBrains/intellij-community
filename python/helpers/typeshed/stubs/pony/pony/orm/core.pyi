@@ -6,8 +6,8 @@ from _typeshed import Incomplete
 from collections import defaultdict
 from collections.abc import Callable, Generator
 from logging import Logger
-from typing import Literal, NoReturn, TypeAlias, TypeVar
-from typing_extensions import Self, deprecated
+from typing import Literal, TypeAlias, TypeVar
+from typing_extensions import Never, Self, deprecated
 
 import pony as pony
 from pony.orm.asttranslation import TranslationError as TranslationError
@@ -296,7 +296,7 @@ class SQLDebuggingContextManager:
 
 sql_debugging: SQLDebuggingContextManager
 
-def throw_db_session_is_over(action: str, obj: Entity, attr: Attribute | None = None) -> NoReturn: ...
+def throw_db_session_is_over(action: str, obj: Entity, attr: Attribute | None = None) -> Never: ...
 @deprecated("@with_transaction decorator is deprecated, use @db_session decorator instead.")
 def with_transaction(*args, **kwargs): ...
 
@@ -762,7 +762,7 @@ del_statuses: set[str]
 created_or_deleted_statuses: set[str]
 saved_statuses: set[str]
 
-def throw_object_was_deleted(obj: Entity) -> NoReturn: ...
+def throw_object_was_deleted(obj: Entity) -> Never: ...
 def unpickle_entity(d): ...
 def safe_repr(obj: Entity) -> str: ...
 def make_proxy(obj: Entity) -> EntityProxy: ...
@@ -872,7 +872,7 @@ class QueryResultIterator:
     __next__ = next
     def __length_hint__(self) -> int: ...
 
-def make_query_result_method_error_stub(name: str, title: str | None = None) -> Callable[..., NoReturn]: ...
+def make_query_result_method_error_stub(name: str, title: str | None = None) -> Callable[..., Never]: ...
 
 class QueryResult:
     __slots__ = ("_query", "_limit", "_offset", "_items", "_expr_type", "_col_names")

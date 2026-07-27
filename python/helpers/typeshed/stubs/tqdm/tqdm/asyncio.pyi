@@ -1,8 +1,8 @@
 from _typeshed import SupportsWrite
 from asyncio import Future
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Iterator, Mapping
-from typing import NoReturn, TypeVar, overload
-from typing_extensions import Self
+from typing import TypeVar, overload
+from typing_extensions import Never, Self
 
 from .std import tqdm as std_tqdm
 
@@ -117,7 +117,7 @@ class tqdm_asyncio(std_tqdm[_T]):
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm_asyncio[NoReturn],
+        self: tqdm_asyncio[Never],
         iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,

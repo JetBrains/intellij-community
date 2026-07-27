@@ -2,7 +2,8 @@ from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from re import Match, Pattern
 from types import ModuleType, SimpleNamespace as Struct
-from typing import Any, ClassVar, Final, NoReturn, TypeAlias
+from typing import Any, ClassVar, Final, TypeAlias
+from typing_extensions import Never
 
 from docutils import ApplicationError, DataError, nodes
 from docutils.nodes import Node, system_message
@@ -249,7 +250,7 @@ class RFC2822Body(Body):
 class SpecializedBody(Body):
     def invalid_input(
         self, match: Match[str] | None = None, context: list[str] | None = None, next_state: str | None = None
-    ) -> NoReturn: ...
+    ) -> Never: ...
     indent = invalid_input  # type: ignore[assignment]
     bullet = invalid_input
     enumerator = invalid_input
@@ -345,7 +346,7 @@ class SpecializedText(Text):
     def eof(self, context): ...
     def invalid_input(
         self, match: Match[str] | None = None, context: list[str] | None = None, next_state: str | None = None
-    ) -> NoReturn: ...
+    ) -> Never: ...
     blank = invalid_input
     indent = invalid_input
     underline = invalid_input
@@ -377,7 +378,7 @@ class QuotedLiteralBlock(RSTState):
     def __init__(self, state_machine, debug: bool = False) -> None: ...
     def blank(self, match, context, next_state): ...
     def eof(self, context): ...
-    def indent(self, match: Match[str] | None, context: list[str], next_state: str | None) -> NoReturn: ...
+    def indent(self, match: Match[str] | None, context: list[str], next_state: str | None) -> Never: ...
     def initial_quoted(
         self, match: Match[str], context: list[str] | None, next_state: str | None
     ) -> tuple[list[str], str | None, list[str]]: ...

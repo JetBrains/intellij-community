@@ -2,8 +2,8 @@ import datetime as dt
 from _typeshed import ConvertibleToInt, Incomplete, SupportsRead, SupportsReadline, SupportsWrite, Unused
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import TracebackType
-from typing import Any, Literal, NoReturn, Protocol, TextIO, TypeAlias, TypeVar, overload, type_check_only
-from typing_extensions import Self, disjoint_base
+from typing import Any, Literal, Protocol, TextIO, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Never, Self, disjoint_base
 
 from psycopg2.extras import ReplicationCursor as extras_ReplicationCursor
 from psycopg2.sql import Composable
@@ -153,7 +153,7 @@ class cursor:
     def fetchmany(self, size: int | None = None) -> list[tuple[Any, ...]]: ...
     def fetchone(self) -> tuple[Any, ...] | None: ...
     def mogrify(self, query: str | bytes | Composable, vars: _Vars | None = None) -> bytes: ...
-    def nextset(self) -> NoReturn: ...  # not supported
+    def nextset(self) -> Never: ...  # not supported
     def scroll(self, value: int, mode: Literal["absolute", "relative"] = "relative") -> None: ...
     def setinputsizes(self, sizes: Unused) -> None: ...
     def setoutputsize(self, size: int, column: int = ..., /) -> None: ...

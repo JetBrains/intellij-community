@@ -1,6 +1,7 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, Protocol, type_check_only
+from typing import Protocol, type_check_only
+from typing_extensions import Never
 
 from paramiko.auth_strategy import AuthStrategy
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
@@ -79,7 +80,7 @@ class AutoAddPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> None: ...
 
 class RejectPolicy(MissingHostKeyPolicy):
-    def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> NoReturn: ...
+    def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> Never: ...
 
 class WarningPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> None: ...

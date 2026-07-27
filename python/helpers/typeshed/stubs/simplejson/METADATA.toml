@@ -1,2 +1,2 @@
-version = "3.20.*"
+version = "4.1.*"
 upstream-repository = "https://github.com/simplejson/simplejson"

@@ -6,8 +6,8 @@ from multiprocessing.queues import Queue
 from multiprocessing.synchronize import Event
 from signal import Signals
 from types import FrameType, TracebackType
-from typing import IO, Any, NoReturn
-from typing_extensions import Self
+from typing import IO, Any
+from typing_extensions import Never, Self
 
 __version__: str
 aliases: dict[str, Any]
@@ -28,7 +28,7 @@ class MultiProcessHelper:
     def stop_children(self) -> None: ...
     def wait_for_children(self) -> None: ...
     def enable_graceful_shutdown(self) -> None: ...
-    def raise_shutdown_request(self, signum: int, frame: FrameType | None) -> NoReturn: ...
+    def raise_shutdown_request(self, signum: int, frame: FrameType | None) -> Never: ...
 
 class CaptureOutput(MultiProcessHelper):
     chunk_size: int

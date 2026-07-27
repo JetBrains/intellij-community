@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Literal, NoReturn, Protocol, TypeAlias, type_check_only
-from typing_extensions import Self
+from typing import Any, Literal, Protocol, TypeAlias, type_check_only
+from typing_extensions import Never, Self
 
 from reportlab.lib.colors import Color
 from reportlab.lib.styles import ListStyle, ParagraphStyle, PropertySet
@@ -219,10 +219,10 @@ class ParagraphAndImage(Flowable):
     def draw(self) -> None: ...
 
 class FailOnWrap(NullDraw):
-    def wrap(self, aW: float, aH: float) -> NoReturn: ...
+    def wrap(self, aW: float, aH: float) -> Never: ...
 
 class FailOnDraw(Flowable):
-    def draw(self) -> NoReturn: ...
+    def draw(self) -> Never: ...
 
 class HRFlowable(Flowable):
     width: float | str  # type: ignore[assignment]

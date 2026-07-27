@@ -27,7 +27,7 @@ class Serialisable(metaclass=MetaSerialisable):
     idx_base: int
     # Needs overrides in many sub-classes. But a lot of subclasses are instantiated without overriding it, so can't be abstract
     # Subclasses "overrides" this property with a ClassVar, and Serialisable is too widely used,
-    # so it can't be typed as NoReturn either without introducing many false-positives.
+    # so it can't be typed as Never either without introducing many false-positives.
     @property
     def tagname(self) -> str: ...
     namespace: ClassVar[str | None]

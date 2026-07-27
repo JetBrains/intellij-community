@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, NoReturn, TypedDict, TypeVar, type_check_only
-from typing_extensions import NotRequired
+from typing import Any, TypedDict, TypeVar, type_check_only
+from typing_extensions import Never, NotRequired
 
 @type_check_only
 class _DeprecateProperty(TypedDict):
@@ -20,7 +20,7 @@ def raise_for_error(
     errors: Iterable[str] | str | None = None,
     text: str | None = None,
     json: object | None = None,
-) -> NoReturn: ...
+) -> Never: ...
 def aliased_parameter(
     name: str, *aliases: str, removed_in_version: str | None, position: int | None = None, raise_on_multiple: bool = True
 ) -> Callable[..., Any]: ...

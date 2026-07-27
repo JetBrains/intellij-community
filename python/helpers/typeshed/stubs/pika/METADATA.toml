@@ -5,6 +5,7 @@ extra-description = """\
 The `types-pika` package contains alternate, more complete type stubs, that \
 are maintained outside of typeshed.\
 """
+optional-dependencies = ["types-gevent"]
 
 [tool.stubtest]
 stubtest-dependencies = ["gevent", "tornado", "twisted"]

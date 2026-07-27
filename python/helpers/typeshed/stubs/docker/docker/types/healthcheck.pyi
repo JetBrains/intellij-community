@@ -6,16 +6,16 @@ class Healthcheck(DictType[Any]):
     def __init__(
         self,
         *,
-        test: str | list[str] | None = ...,
-        Test: str | list[str] | None = ...,
-        interval: int | None = ...,
-        Interval: int | None = ...,
-        timeout: int | None = ...,
-        Timeout: int | None = ...,
-        retries: int | None = ...,
-        Retries: int | None = ...,
-        start_period: int | None = ...,
-        StartPeriod: int | None = ...,
+        test: str | list[str] | None = None,
+        Test: str | list[str] | None = None,
+        interval: int | None = None,
+        Interval: int | None = None,
+        timeout: int | None = None,
+        Timeout: int | None = None,
+        retries: int | None = None,
+        Retries: int | None = None,
+        start_period: int | None = None,
+        StartPeriod: int | None = None,
     ) -> None: ...
 
     @property
