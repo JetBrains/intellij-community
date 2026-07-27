@@ -58,6 +58,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -71,6 +72,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.UnindexedFilesScanner;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -689,6 +691,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     VirtualFile aTxt = createFile(myModule, excluded, "a.txt", "foo bar foo").getVirtualFile();
     PsiTestUtil.addExcludedRoot(myModule, excluded);
 
+    // It is kind-of a 'barrier' to ensure new excluded root propagates through indexing pipeline.
+    // It is needed because it is OK for Searchers to return excluded files for some time after the exclusion was added
+    // -- such files will be filtered out upper the stack -- but in this test we specifically check no excluded files
+    // returned, so we must ensure the change in excluded files is propagated through indexing pipeline.
+    // For that we queue the 'dummy' scan explicitlyL
+    new UnindexedFilesScanner(getProject(), "Test excluded roots").queue();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+
     FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
     findModel.setWholeWordsOnly(true);
     findModel.setProjectScope(false);
@@ -702,10 +712,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(fileIndex.isExcluded(excluded));
     assertFalse(fileIndex.isExcluded(root));
     assertFalse(Registry.is("find.search.in.excluded.dirs"));
+    //TODO: Should searchForOccurrences() NOT return files in 'excluded' dirs -- or it _could_ return excluded files sometimes,
+    // and it is up to the calling code to re-check and filter those files out?
+    // It is not 100% clear:
+    // 1) According to searchForOccurrences() _docs_, searchForOccurrences() return _candidates_, not 100% matches -- which kind-of
+    //    suggests that returning excluded files is also possible, and calling code should double-check for that -- but it is not
+    //    100% clear that this is that docs intended to specify.
+    // 2) Current _implementation_ (IdeaIndexBasedFindInProjectSearchEngine) accesses indexes under DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE,
+    //    which clearly permits stale index data to be returned -- again, suggesting that delivering 'excluded' files should be treated
+    //    as a legit possibility, and calling code should be ready to filter them out.
+    // Nevertheless: we should specify that explicitly and clearly in searchForOccurrences() docs, if not for our colleagues, than for
+    // AI to know.
     assertEmpty(
       FindInProjectSearchEngine.EP_NAME.getExtensionList().stream()
         .map(it -> it.createSearcher(findModel, getProject()))
-        .filter(it -> it != null)
+        .filter(Objects::nonNull)
         .flatMap(it -> it.searchForOccurrences().stream())
         .collect(Collectors.toList())
     );
