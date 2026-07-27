@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -45,10 +45,12 @@ import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
@@ -207,7 +209,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           argumentList.accept(this);
         }
         for (PsiMethod psiMethod : aClass.getMethods()) {
-          targets.add(0, new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
+          if (isSteppableMethod(psiMethod)) {
+            targets.addFirst(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
+          }
         }
       }
 
@@ -228,8 +232,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         PsiElement element = expression.resolve();
         if (matchLine(expression) && element instanceof PsiMethod) {
           PsiElement navMethod = element.getNavigationElement();
-          if (navMethod instanceof PsiMethod) {
-            targets.add(0, new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
+          if (navMethod instanceof PsiMethod method && isSteppableMethod(method)) {
+            targets.addFirst(new MethodSmartStepTarget(method, null, expression, true, null));
           }
         }
       }
@@ -371,7 +375,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                       : expression instanceof PsiNewExpression newExpr
                                         ? newExpr.getClassOrAnonymousClassReference()
                                         : expression;
-          if (psiMethod != null && (callExpression == null || matchLine(callExpression))) {
+          if (psiMethod != null && isSteppableMethod(psiMethod) && (callExpression == null || matchLine(callExpression))) {
             MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
               null,
@@ -622,6 +626,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   private static boolean isInsideLambda(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class) != null;
+  }
+
+  private static boolean isSteppableMethod(@NotNull PsiMethod method) {
+    return !method.hasModifierProperty(PsiModifier.NATIVE) || PsiUtil.canBeOverridden(method);
   }
 
   private static boolean isImmediateMethodCall(SmartStepTarget target) {
