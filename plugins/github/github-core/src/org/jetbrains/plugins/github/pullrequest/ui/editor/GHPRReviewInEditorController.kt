@@ -139,7 +139,7 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
       val activeRangesTracker = CodeReviewActiveRangesTracker()
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { inlayModel ->
-        createRenderer(inlayModel, userIcon, activeRangesTracker).also { inlayRenderer ->
+        createRenderer(editor, inlayModel, userIcon, activeRangesTracker).also { inlayRenderer ->
           launch {
             CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
           }
