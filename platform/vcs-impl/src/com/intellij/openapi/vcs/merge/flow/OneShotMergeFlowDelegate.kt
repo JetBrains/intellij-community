@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.merge.flow
 
 import com.intellij.CommonBundle
+import com.intellij.diff.statistics.FileOpenedFrom
+import com.intellij.diff.statistics.SideAppliedFrom
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
 import com.intellij.openapi.ui.DialogWrapper.createJButtonForAction
@@ -37,8 +39,8 @@ internal class OneShotMergeFlowDelegate(
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
-  private val acceptForResolution: (MergeSession.Resolution) -> Unit,
-  private val showMergeDialog: () -> Unit,
+  private val acceptForResolution: (MergeSession.Resolution, SideAppliedFrom) -> Unit,
+  private val showMergeDialog: (FileOpenedFrom) -> Unit,
   private val toggleGroupByDirectory: (Boolean) -> Unit,
   private val getGroupByDirectory: () -> Boolean,
 ) : MergeFlowDelegate {
@@ -80,20 +82,20 @@ internal class OneShotMergeFlowDelegate(
         panel {
           row {
             acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedYours)
+              acceptForResolution(MergeSession.Resolution.AcceptedYours, SideAppliedFrom.BUTTON)
             }.align(AlignX.FILL)
               .component
           }
           row {
             acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
+              acceptForResolution(MergeSession.Resolution.AcceptedTheirs, SideAppliedFrom.BUTTON)
             }.align(AlignX.FILL)
               .component
           }
           row {
             val mergeAction = object : AbstractAction(VcsBundle.message("multiple.file.merge.merge")) {
               override fun actionPerformed(e: ActionEvent) {
-                showMergeDialog()
+                showMergeDialog(FileOpenedFrom.RESOLVE_BUTTON)
               }
             }
             mergeAction.putValue(DEFAULT_ACTION, true)

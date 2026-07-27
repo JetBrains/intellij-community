@@ -9,8 +9,11 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.statistics.MergeAction;
+import com.intellij.diff.statistics.MergeFlow;
 import com.intellij.diff.statistics.MergeResultSource;
+import com.intellij.diff.statistics.MergeSide;
 import com.intellij.diff.statistics.MergeStatisticsCollector;
+import com.intellij.diff.statistics.SideAppliedFrom;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
@@ -288,6 +291,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return group;
   }
 
+  /** Which multi-file merge flow opened this viewer, or {@link MergeFlow#STANDALONE} when it was opened on its own. */
+  @ApiStatus.Internal
+  @NotNull MergeFlow getMergeFlow() {
+    MergeFlow flow = myMergeRequest.getUserData(MergeStatisticsCollector.MERGE_FLOW_KEY);
+    return flow != null ? flow : MergeFlow.STANDALONE;
+  }
+
   private @NotNull Action getResolveAction(final @NotNull MergeResult result) {
     String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
     return new AbstractAction(caption) {
@@ -298,6 +308,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
         if (!actionResult.shouldProceed) {
           return;
+        }
+
+        if (result == MergeResult.LEFT || result == MergeResult.RIGHT) {
+          MergeStatisticsCollector.logSideAppliedInViewer(myProject,
+                                                          result == MergeResult.LEFT ? MergeSide.LEFT : MergeSide.RIGHT,
+                                                          SideAppliedFrom.BUTTON,
+                                                          getMergeFlow());
         }
 
         doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
@@ -1125,25 +1142,30 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                boolean byEsc
   ) {
     MergeAction action = switch (result) {
-      case CANCEL -> MergeAction.CANCEL;
+      // In the iterative flow the CANCEL button is actually "Save and Close" and preserves the partial resolution.
+      case CANCEL -> isSaveAndClose() ? MergeAction.SAVE_AND_CLOSE : MergeAction.CANCEL;
       case LEFT -> MergeAction.LEFT;
       case RIGHT -> MergeAction.RIGHT;
       case RESOLVED -> MergeAction.APPLY;
     };
 
-    MergeStatisticsCollector.logMergeDialogEvent(myProject, action, confirmationShown, discardChanges, byEsc);
+    MergeStatisticsCollector.logMergeDialogEvent(myProject, action, confirmationShown, discardChanges, byEsc, getMergeFlow());
+  }
+
+  private boolean isSaveAndClose() {
+    return IterativeResolveSupport.hasIterativeData(myMergeRequest);
   }
 
   private void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
     MergeStatisticsCollector.MergeResult statsResult = switch (mergeResult) {
-      case CANCEL -> MergeStatisticsCollector.MergeResult.CANCELED;
+      case CANCEL -> isSaveAndClose() ? MergeStatisticsCollector.MergeResult.SAVED : MergeStatisticsCollector.MergeResult.CANCELED;
       case RESOLVED -> MergeStatisticsCollector.MergeResult.SUCCESS;
       case LEFT, RIGHT -> null;
     };
     if (statsResult == null) return;
     if (myAggregator != null) {
       myAggregator.setUnresolved(getChanges().size());
-      MergeStatisticsCollector.logMergeFinished(myProject, statsResult, source, myAggregator);
+      MergeStatisticsCollector.logMergeFinished(myProject, statsResult, source, myAggregator, getMergeFlow());
     }
   }
 
