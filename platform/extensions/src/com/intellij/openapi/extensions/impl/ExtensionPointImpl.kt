@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointAdapter
@@ -1077,9 +1078,7 @@ private inline fun runSafely(
     block()
   }
   catch (e: Throwable) {
-    if (e is CancellationException) {
-      throw e
-    }
+    rethrowControlFlowException(e)
 
     LOG.error(loggingErrorAdapter(e))
   }

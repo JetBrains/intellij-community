@@ -4,8 +4,8 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
@@ -61,7 +61,7 @@ internal data class UnknownSdkDownloadTask
         try {
           runImpl(indicator)
         } catch (t: Throwable) {
-          if (t is ControlFlowException) throw t
+          rethrowControlFlowException(t)
           LOG.warn(t.message, t)
           invokeLater {
             Messages.showErrorDialog(t.localizedMessage, title)
@@ -86,7 +86,8 @@ internal data class UnknownSdkDownloadTask
     invokeAndWaitIfNeeded { onCompleted.accept(sdk.getOrNull()) }
 
     return sdk.getOrElse { t ->
-      if (t is ControlFlowException) throw t
+      rethrowControlFlowException(t)
+
       throw object : RuntimeException("Failed to download ${info.sdkType.presentableName} ${fix.downloadDescription} for $info. ${t.message}", t) {
         override fun getLocalizedMessage() = ProjectBundle.message("dialog.message.failed.to.download.0.1", fix.downloadDescription, t.message)
       }

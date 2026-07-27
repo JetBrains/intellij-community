@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -37,7 +38,6 @@ import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.ui.DebuggerColors
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +68,7 @@ class XBreakpointVisualRepresentation(
               internalUpdateUI(event.callOnUpdate)
             }
             catch (e: Throwable) {
-              if (e is CancellationException) throw e
+              rethrowControlFlowException(e)
               fileLogger().error(e)
             }
           }

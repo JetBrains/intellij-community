@@ -2,7 +2,6 @@
 
 package com.intellij.psi.impl.include;
 
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -42,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
@@ -108,7 +109,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
           try {
             includeInfos = provider.getIncludeInfos(inputData);
           } catch (Exception e) {
-            if (e instanceof ControlFlowException) throw e;
+            rethrowControlFlowException(e);
             throw new MapReduceIndexMappingException(e, provider.getClass());
           }
           for (FileIncludeInfo info : includeInfos) {

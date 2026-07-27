@@ -5,6 +5,7 @@ import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -181,7 +182,7 @@ class SeLocalItemDataProvider(
         }
       }
       catch (e: Throwable) {
-        if (e is CancellationException) throw e
+        rethrowControlFlowException(e)
         SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {

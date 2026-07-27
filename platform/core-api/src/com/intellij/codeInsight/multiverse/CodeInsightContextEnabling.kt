@@ -6,13 +6,13 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal fun isSharedSourceSupportEnabledImpl(project: Project): Boolean {
@@ -72,7 +72,7 @@ private inline fun <T : Any> runSafely(block: () -> T): T? {
     return block()
   }
   catch (e: Throwable) {
-    if (e is CancellationException) throw e
+    rethrowControlFlowException(e)
     log.error(e)
     return null
   }

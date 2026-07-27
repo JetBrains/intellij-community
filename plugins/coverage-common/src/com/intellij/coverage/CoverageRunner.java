@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -12,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 /**
  * Represents coverage framework inside IntelliJ.
@@ -60,7 +61,7 @@ public abstract class CoverageRunner {
         loadCoverageData(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporterImplementation(listener, sessionDataFile));
     }
     catch (Exception e) {
-      if (e instanceof ControlFlowException) throw e;
+      rethrowControlFlowException(e);
       LOG.warn(e);
       result = new FailedCoverageLoadingResult(e, true);
     }

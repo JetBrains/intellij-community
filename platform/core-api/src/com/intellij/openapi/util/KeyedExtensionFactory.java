@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.util.ReflectionUtil;
@@ -12,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 public abstract class KeyedExtensionFactory<T, KeyT> {
   private final Class<T> myInterfaceClass;
@@ -79,9 +80,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         }
       }
       catch (RuntimeException e) {
-        if (e instanceof ControlFlowException) {
-          throw e;
-        }
+        rethrowControlFlowException(e);
         throw componentManager.createError(e, epBean.getPluginDescriptor().getPluginId());
       }
       catch (Exception e) {
