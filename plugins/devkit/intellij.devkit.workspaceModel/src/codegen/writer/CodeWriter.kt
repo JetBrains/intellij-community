@@ -15,6 +15,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.fatalErrorWithWarnDetails
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
@@ -216,13 +217,13 @@ object CodeWriter {
   }
 
   private data class ApiVersion(val major: Int, val minor: Int, val patch: Int) : Comparable<ApiVersion> {
-    
+
     fun compatible(other: ApiVersion): Boolean {
       return major == other.major && minor == other.minor
     }
 
     override fun toString(): String = "$major.$minor.$patch"
-    
+
     override fun compareTo(other: ApiVersion): Int {
       return when {
         major != other.major -> major - other.major
@@ -231,9 +232,14 @@ object CodeWriter {
       }
     }
   }
-  
+
   private fun parseCodegenApi(codegenApiVersion: String): ApiVersion {
-    val (major, minor, patch) = codegenApiVersion.split(".", "-").take(3).map { it.toInt() }
+    val (major, minor, patch) = try {
+      codegenApiVersion.split(".", "-").take(3).map { it.toInt() }
+    }
+    catch (e: IndexOutOfBoundsException) {
+      LOG.fatalErrorWithWarnDetails(DevKitWorkspaceModelBundle.message("error.workspace.invalid.codegen.api.version"), codegenApiVersion, e)
+    }
     return ApiVersion(major, minor, patch)
   }
 
