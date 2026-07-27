@@ -879,7 +879,7 @@
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
     <registryKey key="devkit.module.hyperlink.show.chooser" defaultValue="false"
                  description="Show file chooser when clicking module names in console (iml + descriptor xml)"/>
-    <registryKey key="devkit.ide.starter.run.modes.enabled" defaultValue="true"
+    <registryKey key="devkit.ide.starter.run.modes.enabled" defaultValue="false"
                  description="Show 'Use Installer' / 'Split Mode' toggles in gutter popup and apply env variables for IDE Starter tests"/>
 
     <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
