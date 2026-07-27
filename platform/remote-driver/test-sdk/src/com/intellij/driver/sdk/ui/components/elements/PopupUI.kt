@@ -3,8 +3,8 @@ package com.intellij.driver.sdk.ui.components.elements
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
@@ -28,12 +28,13 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   private val menuItems =
     xx("//div[@class='ActionMenuItem' or @class='ActionMenu']", PopupItemUiComponent::class.java)
 
+  fun getMenuItems(): List<PopupItemUiComponent> = menuItems.list()
   fun getSelectedPath(): List<String> =
     driver.utility(MenuSelectionManager::class).defaultManager().getSelectedPath().mapNotNull {
       it.getComponent().getAccessibleContext()?.getAccessibleName()
     }
 
-  fun findMenuItemByText(text: String) = menuItems.list().firstOrNull { it.getText() == text}
+  fun findMenuItemByText(text: String) = menuItems.list().firstOrNull { it.getText() == text }
                                          ?: throw AssertionError("No item with text '$text' found in popup '${this.searchContext}'")
 
   fun select(vararg items: String) {
@@ -54,7 +55,7 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun itemsList() = menuItems.list().map { it.getText() }
+  fun itemsList() = getMenuItems().map { it.getText() }
 
   @Remote("javax.swing.MenuSelectionManager")
   private interface MenuSelectionManager {

@@ -298,6 +298,11 @@ open class IDETestContext(
     }
   }
 
+  // Removing this file allows to run IDE with Safe Mode dialog.
+  fun deleteTrustedPathsXml(): IDETestContext = apply {
+    paths.configDir.resolve("options/trusted-paths.xml").deleteRecursivelyQuietly()
+  }
+
   fun wipeProjectsDir(): IDETestContext = apply {
     val path = paths.systemDir / "projects"
     logOutput("Cleaning project cache dir for $this at $path")

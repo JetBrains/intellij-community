@@ -20,6 +20,9 @@ fun Finder.tabbedContentTabLabel(labelText: String, contains: Boolean = false): 
         if (contains) contains(byAccessibleName(labelText)) else byAccessibleName(labelText))
   }
 
+fun Finder.actionHyperlinkLabel(accessibleName: String): JLabelUiComponent =
+  x(JLabelUiComponent::class.java) { and(byClass("ActionHyperlinkLabel"), byAccessibleName(accessibleName)) }
+
 class JLabelUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val fixture by lazy { driver.cast(component, JLabelRef::class) }
