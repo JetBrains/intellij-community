@@ -102,11 +102,19 @@ public final class FileManagerImpl implements FileManagerEx {
     myConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        LOG.warn("Signalling possible invalidation in `beforePluginLoaded`: " + pluginDescriptor);
         PossibleInvalidationKt.signalBulkInvalidationNeeded();
       }
 
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `beforePluginUnload`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `pluginUnloaded`: " + pluginDescriptor);
         PossibleInvalidationKt.signalBulkInvalidationNeeded();
       }
     });
