@@ -77,7 +77,7 @@ val allowUsingFrozenPsi: Boolean = System.getProperty("ide.allow.using.frozen.ps
  * - `true` means that the write-bias in the Read/Write lock will be strengthened, and read actions will not start while there is a pending write.
  */
 @get:ApiStatus.Internal
-val stallReadActionsIfThereIsPendingWrite: Boolean = System.getProperty("ide.stall.read.actions.while.there.is.pending.write", "false").toBoolean()
+val stallReadActionsIfThereIsPendingWrite: Boolean = System.getProperty("ide.stall.read.actions.while.there.is.pending.write", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
