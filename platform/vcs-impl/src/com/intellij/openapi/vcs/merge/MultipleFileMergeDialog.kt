@@ -10,8 +10,13 @@ import com.intellij.diff.merge.MergeConflictModel
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
-import com.intellij.diff.statistics.MergeAction
+import com.intellij.diff.statistics.FileOpenedFrom
+import com.intellij.diff.statistics.FileOpenedHow
+import com.intellij.diff.statistics.FileOpenedOn
+import com.intellij.diff.statistics.MergeFlow
+import com.intellij.diff.statistics.MergeSide
 import com.intellij.diff.statistics.MergeStatisticsCollector
+import com.intellij.diff.statistics.SideAppliedFrom
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.util.treeView.TreeState
@@ -110,7 +115,7 @@ open class MultipleFileMergeDialog(
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, event)) return false
-        showMergeDialog()
+        showMergeDialog(FileOpenedFrom.ROW_CLICK)
         return false
       }
     }.installOn(this)
@@ -130,7 +135,13 @@ open class MultipleFileMergeDialog(
   private val iterativeDataHolder =
     if (MergeConflictIterativeResolution.isEnabled()) MergeConflictIterativeDataHolder(project, disposable) else null
 
+  /** Which flow this dialog runs, reported on every merge statistics event so the two flows can be told apart. */
+  private val mergeFlow: MergeFlow = if (iterativeDataHolder != null) MergeFlow.ITERATIVE else MergeFlow.ONE_SHOT
+
   private var popupCloseListener: ComponentAdapter? = null
+
+  /** How many times each file has been opened in the three-side viewer (1 on the first open). */
+  private val fileOpenCounts = mutableMapOf<VirtualFile, Int>()
 
   private val mergeFlowDelegate: MergeFlowDelegate = if (project != null && iterativeDataHolder != null) IterativeMergeFlowDelegate(
     project = project,
@@ -276,9 +287,11 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresEdt
-  private fun acceptForResolution(resolution: MergeSession.Resolution) {
+  private fun acceptForResolution(resolution: MergeSession.Resolution, from: SideAppliedFrom) {
     assert(resolution.yoursOrTheirs())
     val files = table.selectedFiles
+    val side = if (resolution == MergeSession.Resolution.AcceptedYours) MergeSide.LEFT else MergeSide.RIGHT
+    MergeStatisticsCollector.logSideAppliedOnTable(project, side, from, files.size, mergeFlow)
     runWithErrorHandling {
       runWithModalProgressBlocking(getModalTaskOwner(),
                                    VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
@@ -315,8 +328,6 @@ open class MultipleFileMergeDialog(
 
   private suspend fun acceptRevision(resolution: MergeSession.Resolution, files: List<VirtualFile>) {
     if (files.isEmpty()) return
-    val side = if (resolution == MergeSession.Resolution.AcceptedYours) MergeAction.LEFT else MergeAction.RIGHT
-    MergeStatisticsCollector.logButtonClickOnTable(project, side)
 
     if (!beforeResolve(files)) {
       return
@@ -454,6 +465,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun doCancelAction() {
+    MergeStatisticsCollector.logDialogClosed(project, mergeFlow)
     finishResolution()
     super.doCancelAction()
   }
@@ -484,7 +496,10 @@ open class MultipleFileMergeDialog(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun showMergeDialog() {
+  private fun showMergeDialog(from: FileOpenedFrom) {
+    // Only the files the user explicitly selected count as "intentionally" opened;
+    // the rest are auto-advanced to by the dialog.
+    val selected = table.selectedFiles.toHashSet()
     val files = getFilesToOpen()
     if (files.isEmpty()) return
     if (!beforeResolve(files)) {
@@ -493,7 +508,8 @@ open class MultipleFileMergeDialog(
 
     runWithErrorHandling {
       for (file in files) {
-        val result = showMergeDialogForFile(file)
+        val howOpened = if (file in selected) FileOpenedHow.INTENTIONALLY else FileOpenedHow.AUTOMATICALLY
+        val result = showMergeDialogForFile(file, from, howOpened)
         if (result == MergeResult.CANCEL) return@runWithErrorHandling
       }
     }
@@ -503,7 +519,7 @@ open class MultipleFileMergeDialog(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun showMergeDialogForFile(file: VirtualFile): MergeResult {
+  private fun showMergeDialogForFile(file: VirtualFile, from: FileOpenedFrom, howOpened: FileOpenedHow): MergeResult {
     var mergeResult: MergeResult? = null
     val request = runWithModalProgressBlocking(getModalTaskOwner(),
                                                VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
@@ -535,6 +551,13 @@ open class MultipleFileMergeDialog(
       }
     }
 
+    val times = fileOpenCounts.getOrDefault(file, 0) + 1
+    fileOpenCounts[file] = times
+    val usedOn = if (iterativeDataHolder?.isFileResolved(file) == true) FileOpenedOn.RESOLVED else FileOpenedOn.UNRESOLVED
+    MergeStatisticsCollector.logFileOpened(project, times, from, usedOn, howOpened, mergeFlow)
+
+    // Tag the request so the three-side merge viewer reports the same flow for its own events (side.applied / revert.used in the viewer).
+    request.putUserData(MergeStatisticsCollector.MERGE_FLOW_KEY, mergeFlow)
     DiffManager.getInstance().showMerge(project, request)
     return mergeResult!!
   }
