@@ -91,7 +91,7 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
 
     if (index == null) return false
     if (roots == null) {
-      return index.iterateContent(fileIterator, fileFilter)
+      return index.iterateIndexableContent(fileIterator, fileFilter)
     }
     else {
       val recursiveResult = roots.all { root -> index.iterateContentUnderDirectory(root, fileIterator, fileFilter) }

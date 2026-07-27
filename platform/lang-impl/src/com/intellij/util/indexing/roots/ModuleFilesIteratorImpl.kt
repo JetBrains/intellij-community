@@ -65,12 +65,8 @@ class ModuleFilesIteratorImpl(
     val myWorkspaceFileIndex = getInstance(project) as WorkspaceFileIndexEx
 
     return if (recursive) {
-      val customFilter = VirtualFileFilter { file ->
-        val info = myWorkspaceFileIndex.getFileInfo(file, true, true, false, false, false ,false, false)
-        info.findFileSet { it.kind.isIndexable && (it.data as? ModuleRelatedRootData)?.module == module } != null
-      }.and(fileFilter) // run `fileFilter` second, so if it is deduplication filter, it won't be invoked on files outside module
-      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && fileSet.kind.isContent }
-      myWorkspaceFileIndex.processContentUnderDirectory(root, processorEx, customFilter, fileSetFilter)
+      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+      myWorkspaceFileIndex.processIndexableContentUnderDirectory(root, processorEx, fileFilter, fileSetFilter)
     }
     else {
       fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
