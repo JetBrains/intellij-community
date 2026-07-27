@@ -31,8 +31,8 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
     val previous = remoteApis.putIfAbsent(apiFqn, serviceImplementation)
     if (previous != null) {
-      LOG.error(
-        "Remote API '$apiFqn' is already registered. Each remote api must be registered exactly once: " +
+      LOG.warn(
+        "Remote API '$apiFqn' is already registered. Each remote api should be registered exactly once: " +
         "either via the 'com.intellij.platform.rpc.backend.remoteApi' extension point or a " +
         "'${RemoteApiProvider::class.java.simpleName}', not both and not more than once."
       )
