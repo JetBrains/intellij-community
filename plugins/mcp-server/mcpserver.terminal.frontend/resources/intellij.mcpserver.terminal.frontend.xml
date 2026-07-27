@@ -2,9 +2,18 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.mcpserver"/>
     <module name="intellij.mcpserver.frontend"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->

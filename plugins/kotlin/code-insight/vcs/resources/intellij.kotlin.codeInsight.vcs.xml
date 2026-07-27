@@ -3,6 +3,11 @@
   <dependencies>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

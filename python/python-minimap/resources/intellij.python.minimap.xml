@@ -1,12 +1,15 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.minimap.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.parser"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <minimapInteractionPolicy implementation="com.intellij.python.minimap.PyMinimapInteractionPolicy"/>
   </extensions>

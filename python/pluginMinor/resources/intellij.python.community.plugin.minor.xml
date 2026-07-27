@@ -6,9 +6,16 @@
     <plugin id="com.intellij.modules.python-in-mini-ide-capable"/>
     <!-- and compatible with Python -->
     <plugin id="com.intellij.modules.python-core-capable"/>
-
     <!-- for library facet etc -->
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community.plugin.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

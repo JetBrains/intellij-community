@@ -8,4 +8,9 @@
   <description><![CDATA[
     Provides Kotlin JSR223 Scripting support to the IDE: kotlin scripting console and other features depending on Kotlin JSR223 Scripting.
     ]]></description>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

@@ -1,15 +1,29 @@
 <idea-plugin>
   <resource-bundle>messages.GitFrontendBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.vcs.git.shared"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.kernel"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <module name="intellij.platform.vcs.impl.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <actions resource-bundle="messages.GitFrontendBundle">
     <action id="main.toolbar.git.Branches" class="com.intellij.vcs.git.frontend.widget.GitToolbarWidgetAction">

@@ -5,6 +5,9 @@
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.jvm.analysis"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.uast"/>
   </dependencies>
   <!-- endregion -->

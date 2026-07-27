@@ -4,6 +4,14 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.plugin.updater"/>
+    <module name="intellij.libraries.swingx"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

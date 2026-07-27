@@ -3,6 +3,11 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.textmate.common"/>
     <module name="intellij.spellchecker"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>

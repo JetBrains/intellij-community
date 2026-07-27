@@ -10,6 +10,11 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->

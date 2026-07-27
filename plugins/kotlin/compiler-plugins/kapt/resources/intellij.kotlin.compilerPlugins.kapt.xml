@@ -5,6 +5,9 @@
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->

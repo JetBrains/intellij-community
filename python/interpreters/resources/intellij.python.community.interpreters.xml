@@ -1,12 +1,16 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.python.community.services.shared"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.community.execService.python"/>
-    <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.parser"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

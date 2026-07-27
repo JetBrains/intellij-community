@@ -15,6 +15,14 @@
 
   <dependencies>
     <module name="intellij.json.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <!-- endregion -->
   </dependencies>
   <content namespace="jetbrains">
     <module name="intellij.platform.ml.logs"/>

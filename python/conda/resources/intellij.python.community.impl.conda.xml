@@ -1,14 +1,20 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.yaml"/>
-    <!-- endregion -->
-    <module name="intellij.json.backend"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>
     <!-- Claim environment.yml/environment.yaml as YAML files belonging to the Python plugin so that the

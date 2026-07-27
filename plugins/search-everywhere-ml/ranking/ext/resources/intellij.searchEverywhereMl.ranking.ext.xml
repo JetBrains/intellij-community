@@ -1,4 +1,9 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.searchEverywhereElementKeyProvider"
                     interface="com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider"

@@ -6,11 +6,25 @@
     <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="fleet.rhizomedb"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
   </dependencies>
   <!-- endregion -->

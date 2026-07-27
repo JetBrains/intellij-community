@@ -5,6 +5,13 @@
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 <extensionPoints>

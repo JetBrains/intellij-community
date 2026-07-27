@@ -30,6 +30,24 @@
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
     <module name="intellij.kotlin.searching.base"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->

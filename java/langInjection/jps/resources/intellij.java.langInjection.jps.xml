@@ -2,9 +2,12 @@
   <dependencies>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.java.compiler.instrumentationUtil"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.platform.jps.build"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <jps.plugin/>

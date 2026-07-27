@@ -1,13 +1,19 @@
 <idea-plugin package="org.jetbrains.idea.dev.kotlin">
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.dev.codeInsight"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.dev">
     <lang.goodCodeRedVisitor language="kotlin" implementationClass="org.jetbrains.idea.dev.kotlin.internal.KotlinGoodCodeRedVisitor"/>

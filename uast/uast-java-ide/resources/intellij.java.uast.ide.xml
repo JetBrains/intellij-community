@@ -3,10 +3,14 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.java.psi"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.uast"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
   </dependencies>
   <!-- endregion -->
 

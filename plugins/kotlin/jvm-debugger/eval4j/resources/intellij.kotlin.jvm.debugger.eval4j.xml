@@ -3,6 +3,8 @@
   <dependencies>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

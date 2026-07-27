@@ -5,6 +5,12 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
 

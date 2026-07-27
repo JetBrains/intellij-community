@@ -2,6 +2,13 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle.toolingExtension"/>
+    <module name="intellij.libraries.commons.io"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.ion"/>
+    <module name="intellij.libraries.kryo5"/>
+    <module name="intellij.libraries.opentelemetry"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

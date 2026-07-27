@@ -4,6 +4,11 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.libraries.kotlin.tooling.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

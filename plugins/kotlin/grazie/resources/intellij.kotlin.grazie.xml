@@ -4,6 +4,9 @@
     <plugin id="tanvd.grazi"/>
     <module name="intellij.grazie.core"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 

@@ -2,8 +2,16 @@
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
     <plugin id="com.intellij.modules.idea"/>
-    <module name="intellij.kotlin.featuresTrainer"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.kotlin.featuresTrainer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

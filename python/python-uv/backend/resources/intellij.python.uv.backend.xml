@@ -3,6 +3,10 @@
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.remote.core"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>

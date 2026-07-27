@@ -31,5 +31,8 @@
 
   <dependencies>
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core.ui"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

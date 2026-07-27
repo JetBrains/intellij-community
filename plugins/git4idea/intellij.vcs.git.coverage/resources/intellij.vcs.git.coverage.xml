@@ -2,11 +2,17 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.coverage"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.shared"/>
     <module name="intellij.vcs.git.backend"/>
   </dependencies>
   <!-- endregion -->

@@ -1,9 +1,12 @@
 <!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.editorconfig.backend"/>
     <module name="intellij.editorconfig.common"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.spellchecker"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,10 +1,17 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jackson.annotations"/>
+    <module name="intellij.libraries.jackson3.dataformat.yaml"/>
     <module name="intellij.libraries.joni"/>
-    <!-- endregion -->
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.ide"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.jetbrains.jsonSchema.impl.NetworkntValidationBridge"
                     serviceImplementation="com.intellij.json.networknt.wrapper.NetworkntValidationBridgeImpl"/>

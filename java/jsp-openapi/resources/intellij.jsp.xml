@@ -5,6 +5,8 @@
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

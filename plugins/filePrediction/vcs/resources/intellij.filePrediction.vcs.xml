@@ -1,10 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.filePrediction"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.vcs"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.vcs.FilePredictionVcsFilesProvider"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.vcs.FilePredictionVcsFeatures"/>
