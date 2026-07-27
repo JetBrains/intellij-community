@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
@@ -10,9 +12,11 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -25,6 +29,9 @@ import org.junit.jupiter.api.extension.RegisterExtension
 internal class IterateContentUnderExcludedDirectoryTest {
   @RegisterExtension
   private val projectExtension = ProjectModelExtension()
+  @RegisterExtension
+  private val rootDir = TempDirectoryExtension()
+
   private val project: Project get() = projectExtension.project
 
   @Test
@@ -60,6 +67,31 @@ internal class IterateContentUnderExcludedDirectoryTest {
       .processContentUnderDirectory(contentRoot, processor, VirtualFileFilter.ALL) { true }
 
     assertThat(files).containsExactlyInAnyOrder(contentRoot, contentFile, contentUnderExclude, innerContentFile)
+  }
+
+  @Test
+  fun `does not resolve uncached virtual files under excluded directory`(): Unit = runBlocking {
+    val contentRootPath = rootDir.newDirectoryPath("content")
+    val uncachedPath = rootDir.newDirectoryPath("content/excluded/uncached")
+    val contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(contentRootPath)!!
+
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val contentRootUrl = contentRootPath.toVirtualFileUrl(urlManager)
+    val uncachedUrl = uncachedPath.toVirtualFileUrl(urlManager)
+
+    project.workspaceModel.update("create content root") { storage ->
+      storage.addEntity(ModuleEntity("module", emptyList(), NonPersistentEntitySource) {
+        contentRoots = listOf(ContentRootEntity(contentRootUrl, listOf("excluded"), NonPersistentEntitySource))
+      })
+    }
+
+    assertThat(VfsUtil.findFileByUrlIfCached(uncachedUrl.url)).isNull()
+
+    val processor = ContentIteratorEx { _ -> TreeNodeProcessingResult.CONTINUE }
+    WorkspaceFileIndexEx.getInstance(project)
+      .processContentUnderDirectory(contentRoot, processor, VirtualFileFilter.ALL) { true }
+
+    assertThat(VfsUtil.findFileByUrlIfCached(uncachedUrl.url)).isNull()
   }
 
   private fun VirtualFile.toVirtualFileUrl(): VirtualFileUrl =
