@@ -63,7 +63,7 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
@@ -230,7 +230,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   fun serializeCommunityProject(testInfo: TestInfo) {
     val storageBuilder = MutableEntityStorage.create()
     val projectDir = Path.of(PathManagerEx.getCommunityHomePath())
-    val manager = IdeVirtualFileUrlManagerImpl()
+    val manager = createIdeVirtualFileUrlManager()
     runBlocking {
       loadProject(toConfigLocation(projectDir, manager), storageBuilder, manager)
     }
@@ -274,7 +274,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun rbsNewOnManyContentRoots(testInfo: TestInfo) {
-    val manager = IdeVirtualFileUrlManagerImpl()
+    val manager = createIdeVirtualFileUrlManager()
     val newFolder = tempFolder.newRandomDirectory()
 
     val storageBuilder = MutableEntityStorage.create()

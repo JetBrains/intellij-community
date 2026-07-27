@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneParentEntity
@@ -25,7 +25,7 @@ class MoveEntitiesBetweenStoragesTest {
   @Test
   fun `move entity`() {
     val snapshot = createEmptyBuilder().also {
-      it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+      it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                 SampleEntitySource("test"))
     }.toSnapshot()
 

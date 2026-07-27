@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Assert
@@ -22,7 +22,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropsOrderEntity"
         Start comparing cache: Own property "list"     with current: Own property "data"
@@ -44,7 +44,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedValueTypeEntity"
         Start comparing cache: Own property "someKey"     with current: Own property "someKey"
@@ -84,7 +84,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       parentEntity = oneToManyRefEntity
     }
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToManyRefEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefEntity"
         Start comparing cache: Own property "anotherEntity"     with current: Own property "anotherEntity"
@@ -110,7 +110,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimplePropsEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimplePropsEntity"
         Start comparing cache: Own property "map"     with current: Own property "map"
@@ -147,7 +147,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       parentEntity = oneToOneRefEntity
     }
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToOneRefEntity"
         Start comparing cache: Own property "anotherEntity"     with current: Own property "anotherEntity"
@@ -180,7 +180,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
       parentEntity = oneToOneRefEntity
     }
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.OneToOneRefEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToOneRefEntity"
         Start comparing cache: Own property "anotherEntity"     with current: Own property "anotherEntity"
@@ -196,7 +196,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
   @Ignore("Disabled while the hash is naively counted")
   @Test //cache version and current version should be the same
   fun `key prop entity`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val virtualFileManager = ConcurrentVirtualFileUrlManager()
     val builder = createEmptyBuilder()
 
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity(

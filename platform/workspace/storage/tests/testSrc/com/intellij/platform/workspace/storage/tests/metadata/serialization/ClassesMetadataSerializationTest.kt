@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Assert
@@ -20,7 +20,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClassEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClassEntity"
         Start comparing cache: Own property "someData"     with current: Own property "someData"
@@ -47,7 +47,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
 
@@ -62,7 +62,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
        Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEntity"
          Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"
@@ -86,7 +86,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
   //TODO("Fix it")
@@ -99,7 +99,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEntity"
         Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"

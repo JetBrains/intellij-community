@@ -30,7 +30,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.junit.Before
@@ -52,7 +52,7 @@ class JpsSplitModuleAndContentRootTest {
 
   @Before
   fun setUp() {
-    virtualFileManager = IdeVirtualFileUrlManagerImpl()
+    virtualFileManager = createIdeVirtualFileUrlManager()
   }
 
   @Test

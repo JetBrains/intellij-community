@@ -34,7 +34,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
@@ -55,7 +55,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = IdeVirtualFileUrlManagerImpl()
+    virtualFileManager = createIdeVirtualFileUrlManager()
   }
 
   @ParameterizedTest(name = "unloaded = {0}")
