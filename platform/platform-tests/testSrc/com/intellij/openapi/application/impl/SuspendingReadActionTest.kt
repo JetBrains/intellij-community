@@ -591,10 +591,11 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       }
     }
     checkpoint(3)
-    delay(10.milliseconds)
     launch {
       checkpoint(4)
-      assertTrue { ApplicationManagerEx.getApplicationEx().isWriteActionPending() }
+      while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+        yield()
+      }
       assertFalse { ApplicationManagerEx.getApplicationEx().isWriteActionInProgress() }
       runReadActionBlocking {
         assertTrue(writeActionExecuted.get(), "Write action should be executed at this point")
