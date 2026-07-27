@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.editor
+package com.intellij.markdown.frontend.editor
 
+import com.intellij.markdown.frontend.editor.MarkdownLineWrapPositionStrategy.Companion.MAX_LEXING_CONTEXT_LENGTH
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme
@@ -8,7 +9,6 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
-import org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy.Companion.MAX_LEXING_CONTEXT_LENGTH
 import org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 

@@ -90,6 +90,8 @@
 
       <codeInsight.lineMarkerProvider
         language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MermaidLineMarkerAdvertisementProvider"/>
 
       <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
 

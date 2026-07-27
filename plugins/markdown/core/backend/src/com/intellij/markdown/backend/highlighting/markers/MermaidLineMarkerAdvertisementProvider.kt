@@ -1,20 +1,25 @@
-package org.intellij.plugins.markdown.extensions.jcef.mermaid
+package com.intellij.markdown.backend.highlighting.markers
 
+import com.intellij.codeInsight.daemon.GutterName
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.jcef.mermaid.installMermaidPlugin
+import org.intellij.plugins.markdown.extensions.jcef.mermaid.isMermaidPluginInstalled
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.jetbrains.annotations.Nls
 
-internal class MermaidLineMarkerAdvertisementProvider: LineMarkerProvider {
+internal class MermaidLineMarkerAdvertisementProvider: LineMarkerProviderDescriptor() {
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
   private val tooltipText: @Nls String
     get() = MarkdownBundle.message("markdown.line.marker.mermaid.advertisement.tooltip.text")
+
+  override fun getName(): @GutterName String = tooltipText
 
   override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     if (isMermaidPluginInstalled()) {

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.ui.actions
+package com.intellij.markdown.frontend.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -12,8 +12,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_POPUP_POINT
+import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_POPUP_POINT
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles.fontSizeOptions
 import java.awt.FlowLayout
 import javax.swing.BorderFactory
