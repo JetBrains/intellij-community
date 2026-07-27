@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class RefFileImpl extends RefElementImpl implements RefFile {
   private final RefModule myRefModule;
 
-  public RefFileImpl(PsiFile elem, RefManager manager) {
+  public RefFileImpl(@NotNull PsiFile elem, @NotNull RefManager manager) {
     super(elem, manager);
     myRefModule = getRefManager().getRefModule(ModuleUtilCore.findModuleForFile(getPsiElement()));
   }
