@@ -49,7 +49,7 @@ fun addEnvFile(component: Component, toSelect: VirtualFile? = null, consumer: (s
 }
 
 fun addEnvFile(component: Component, toSelect: VirtualFile? = null, project: Project? = null, consumer: (s: String) -> Unit) {
-  FileChooser.chooseFiles(FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor(), project, component, toSelect,
+  FileChooser.chooseFiles(FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor().withEnvironmentRestricted(true), project, component, toSelect,
                           { files ->
                             files.forEach { consumer(it.path) }
                           })
