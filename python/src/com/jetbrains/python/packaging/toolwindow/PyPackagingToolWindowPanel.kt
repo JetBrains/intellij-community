@@ -4,7 +4,11 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.application.EDT
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.openapi.components.service
@@ -18,8 +22,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
@@ -37,6 +44,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Cursor
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -174,21 +182,39 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   }
 
   private fun createSearchBar(): JComponent {
-    packageSearchController.addExtension(
-      ExtendableTextComponent.Extension.create(
-        PyPackageIcons.AddPackage,
-        message("action.PyInstallPackageAction.text"),
-        Runnable {
-          PyInstallPackageDialog(project).show(packageSearchController.text.trim().takeIf { it.isNotEmpty() })
-        }
-      )
-    )
+    val bundledAction = ActionManager.getInstance().getAction("PyInstallPackageAction")
+    val installAction = object : DumbAwareAction(
+      message("action.PyInstallPackageAction.text"),
+      null,
+      PyPackageIcons.AddPackage,
+    ) {
+      override fun actionPerformed(e: AnActionEvent) {
+        PyInstallPackageDialog(project).show(packageSearchController.text.trim().takeIf { it.isNotEmpty() })
+      }
+    }.apply {
+      bundledAction?.shortcutSet?.let { shortcutSet = it }
+    }
+    val toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      DefaultActionGroup(installAction),
+      true,
+    ).apply {
+      setReservePlaceAutoPopupIcon(false)
+      component.border = JBUI.Borders.empty()
+      component.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    }
     val hPad = UIUtil.getListCellHPadding()
     val vPad = UIUtil.getListCellVPadding()
-    return JPanel(BorderLayout()).apply {
-      border = JBUI.Borders.empty(vPad, hPad)
-      add(packageSearchController, BorderLayout.CENTER)
+    val searchBarPanel = panel {
+      row {
+        cell(packageSearchController).align(AlignX.FILL).resizableColumn().customize(UnscaledGaps.EMPTY)
+        cell(toolbar.component).customize(UnscaledGaps.EMPTY)
+      }.customize(UnscaledGapsY.EMPTY)
+    }.apply {
+      border = JBUI.Borders.empty(vPad, hPad, vPad, hPad)
     }
+    toolbar.targetComponent = searchBarPanel
+    return searchBarPanel
   }
 
   private fun trackModules() {

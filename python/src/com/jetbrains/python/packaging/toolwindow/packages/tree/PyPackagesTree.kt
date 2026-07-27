@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.packaging.toolwindow.ui.showChangeVersionPopup
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -187,7 +188,7 @@ internal class PyPackagesTree(
     val row = getClosestRowForLocation(event.x, event.y).takeIf { it >= 0 } ?: return null
     val rowBounds = getRowBounds(row) ?: return null
     if (event.y < rowBounds.y || event.y >= rowBounds.y + rowBounds.height) return null
-    val pkg = packageAtRow(row).asInstalledPackageOrNull() ?: return null
+    val pkg = packageAtRow(row) ?: return null
     val node = getPathForRow(row).lastPathComponent as DefaultMutableTreeNode
     val renderer = cellRenderer.getTreeCellRendererComponent(
       this, node, isPathSelected(getPathForRow(row)), isExpanded(row), model.isLeaf(node), row, hasFocus()
@@ -195,25 +196,25 @@ internal class PyPackagesTree(
     renderer.setSize(rowBounds.width, rowBounds.height)
     val relativeX = event.x - rowBounds.x
 
-    val changeIconX = renderer.inlineChangeVersionIconX
-    val changeIcon = renderer.inlineChangeVersionIcon
-    if (changeIconX > 0 && changeIcon != null && relativeX in changeIconX..(changeIconX + changeIcon.iconWidth)) {
-      val next = pkg.nextVersion?.presentableText
-      return if (next != null && pkg.canBeUpdated) {
-        PyBundle.message("python.toolwindow.packages.tooltip.update.to", next)
-      }
-      else {
-        PyBundle.message("python.toolwindow.packages.tooltip.change.version")
+    val installedPkg = pkg.asInstalledPackageOrNull()
+    if (installedPkg != null) {
+      val changeIconX = renderer.inlineChangeVersionIconX
+      val changeIcon = renderer.inlineChangeVersionIcon
+      if (changeIconX > 0 && changeIcon != null && relativeX in changeIconX..(changeIconX + changeIcon.iconWidth)) {
+        val next = installedPkg.nextVersion?.presentableText
+        return if (next != null && installedPkg.canBeUpdated) {
+          PyBundle.message("python.toolwindow.packages.tooltip.update.to", next)
+        }
+        else {
+          PyBundle.message("python.toolwindow.packages.tooltip.change.version")
+        }
       }
     }
 
     val trailingIconX = renderer.trailingIconX
     val trailingIcon = renderer.trailingIcon
-    if (trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)) {
-      return PyBundle.message("python.toolwindow.packages.tooltip.uninstall")
-    }
-
-    return null
+    val overTrailingIcon = trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)
+    return if (overTrailingIcon) pkg.trailingIconTooltip() else null
   }
 
   private val hoverHandler = PyPackagesTreeHoverHandler(this)

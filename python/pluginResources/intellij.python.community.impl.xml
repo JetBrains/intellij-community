@@ -164,7 +164,6 @@
     <pluginSuggestionProvider implementation="com.jetbrains.python.suggestions.PythonDapPluginSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
     <postStartupActivity implementation="com.jetbrains.python.psi.resolve.PyPartialStubMarkersInvalidatorActivity"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowDefaultAnchorMigration"/>
     <postStartupActivity implementation="com.jetbrains.python.debugger.PyDebuggerBackendToolWindowSetup"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
@@ -755,7 +754,7 @@
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
 
-    <toolWindow id="Python Packages" anchor="right" secondary="true"
+    <toolWindow id="Python Packages" anchor="bottom" secondary="true"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>

@@ -25,7 +25,9 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -68,7 +70,22 @@ internal class PyDependencyGroupInlayHintsProvider : InlayHintsProvider<NoSettin
     val module = ModuleUtilCore.findModuleForFile(file) ?: return null
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return null
     if (!isDependencyGroupSupported(sdk)) return null
+    if (hasParseErrors(file)) return null
     return Collector(editor)
+  }
+
+  companion object {
+    /**
+     * Whether [file] carries any TOML parse errors. The inlay resolver runs on segments that
+     * survive the TOML parser's error recovery (a bare `test` line under `[dependency-groups]`
+     * still produces a valid `TomlKeySegment`), so it cannot tell an incomplete entry from a
+     * finished one on its own. We hide the "+ Add package" inlay whenever the file has *any*
+     * `PsiErrorElement` — the click handler eventually shells out to `uv add` / `poetry add`,
+     * both of which refuse malformed TOML with a raw stderr trace at the user (PY-91037).
+     */
+    @JvmStatic
+    fun hasParseErrors(file: PsiFile): Boolean =
+      PsiTreeUtil.findChildOfType(file, PsiErrorElement::class.java) != null
   }
 
   private class Collector(editor: Editor) : FactoryInlayHintsCollector(editor) {
