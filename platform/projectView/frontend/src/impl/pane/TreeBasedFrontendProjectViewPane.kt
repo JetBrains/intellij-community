@@ -52,6 +52,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewSelectNodeEvent
 import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
@@ -274,6 +275,16 @@ internal class TreeBasedFrontendProjectViewPane(
       }
       is ProjectViewSettingsStateEvent -> {
         optionSupport.updateActionState(event.settingsState)
+      }
+      is ProjectViewSelectNodeEvent -> {
+        // The event is emitted after all pending updates, so the target node is already in the tree.
+        val node = getNodeById(event.nodePath.nodeIds.last())
+        if (node != null) {
+          TreeUtil.selectPath(tree, CachingTreePath(node.path))
+        }
+        else {
+          LOG.debug { "Cannot select ${event.nodePath}: the target node is not loaded" }
+        }
       }
     }
     updateEpoch.update { it + 1 }

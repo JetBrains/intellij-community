@@ -83,6 +83,18 @@ data class ProjectViewChildRemoved(
   val index: Int,
 ) : ProjectViewPaneStateSerializableEvent()
 
+/**
+ * A transient request to select the node identified by [nodePath] in the Swing tree on the frontend.
+ *
+ * Unlike the other events, it doesn't mutate the persistent tree state, so it's forwarded to currently
+ * connected frontends but is never part of a snapshot, and therefore not replayed to reconnecting ones.
+ */
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewSelectNodeEvent(
+  val nodePath: ProjectViewNodePathImpl,
+) : ProjectViewPaneStateSerializableEvent()
+
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewChildrenRemoved(val parentId: Long) : ProjectViewPaneStateSerializableEvent()

@@ -51,14 +51,15 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class TreeStructureProjectViewUpdater(
   private val project: Project,
 ) : ProjectViewUpdater {
-  override suspend fun continuouslyUpdatePane(pane: ProjectViewPaneModel) {
-    UpdateSession(project, pane as TreeStructureBasedProjectViewPaneModel).continuouslyUpdatePane()
+  override suspend fun continuouslyUpdatePane(pane: ProjectViewPaneModel, progressReporter: ProjectViewUpdaterProgressReporter) {
+    UpdateSession(project, pane as TreeStructureBasedProjectViewPaneModel, progressReporter).continuouslyUpdatePane()
   }
 }
 
 private class UpdateSession(
   private val project: Project,
   private val model: TreeStructureBasedProjectViewPaneModel,
+  private val progressReporter: ProjectViewUpdaterProgressReporter,
 ) {
   private val events = Channel<UpdateEvent>(capacity = Channel.UNLIMITED)
 
@@ -185,36 +186,42 @@ private class UpdateSession(
     }
   }
 
+  private fun send(event: UpdateEvent) {
+    // Report before sending, so the submitted count is never lower than what's actually in the queue.
+    progressReporter.eventSubmitted()
+    events.trySend(event)
+  }
+
   private fun emitFromRoot() {
-    events.trySend(FromRoot)
+    send(FromRoot)
   }
 
   private fun emitAllPresentations() {
-    events.trySend(AllPresentations)
+    send(AllPresentations)
   }
 
   private fun emitPresentationsFromRootTo(file: VirtualFile) {
-    events.trySend(PresentationsFromRootTo(file))
+    send(PresentationsFromRootTo(file))
   }
 
   private fun emitElementChanged(element: PsiElement, deep: Boolean) {
-    events.trySend(ElementChanged(SmartPointerManager.createPointer(element), deep))
+    send(ElementChanged(SmartPointerManager.createPointer(element), deep))
   }
 
   private fun emitFileChanged(file: VirtualFile, deep: Boolean) {
-    events.trySend(FileChanged(file, deep = deep))
+    send(FileChanged(file, deep = deep))
   }
 
   private fun emitStructural(file: VirtualFile?) {
     if (file == null) return
-    events.trySend(StructuralChange(file))
+    send(StructuralChange(file))
   }
 
   private fun emitPsiChange(element: PsiElement?) {
     if (element == null) return
     val file = PsiUtilCore.getVirtualFile(element)
     if (file != null) {
-      events.trySend(StructuralChange(file))
+      send(StructuralChange(file))
     }
     else {
       emitElementChanged(element, deep = true)
@@ -232,6 +239,8 @@ private class UpdateSession(
         batch.add(next)
       }
       process(batch)
+      // Report after processing, so the resulting updateNode calls have already bumped the node epoch.
+      progressReporter.eventsProcessed(batch.size)
     }
   }
 

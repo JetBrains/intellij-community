@@ -60,6 +60,10 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
         .requestFocus(options.requestFocus),
     )
   }
+
+  override fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
+    return TreeStructureSelectNodeVisitorProvider()
+  }
 }
 
 @ApiStatus.Experimental

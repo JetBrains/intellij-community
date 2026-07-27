@@ -73,6 +73,9 @@ internal class ProjectViewPaneStateBuilderImpl(
         is ProjectViewSettingsStateEvent -> {
           actionState = update.settingsState
         }
+        is ProjectViewSelectNodeEvent -> {
+          // A transient event: no persistent state to mutate, just forward it to the subscribers.
+        }
       }
       LOG.debug { "Handled update: $update" }
       if (LOG.isTraceEnabled) {
@@ -238,6 +241,10 @@ internal class ProjectViewPaneStateBuilderImpl(
 
   override suspend fun removeNodeChild(parentId: Long, index: Int) {
     updateState(ProjectViewChildRemoved(parentId, index))
+  }
+
+  override suspend fun selectNode(nodePath: ProjectViewNodePath) {
+    updateState(ProjectViewSelectNodeEvent(nodePath as ProjectViewNodePathImpl))
   }
 
   override suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit) {
