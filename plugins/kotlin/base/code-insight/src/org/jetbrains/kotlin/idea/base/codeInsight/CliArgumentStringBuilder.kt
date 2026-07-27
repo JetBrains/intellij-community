@@ -4,15 +4,11 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature.PropertyParamAnnotationDefaultTargetMode
 import org.jetbrains.kotlin.config.toKotlinVersion
-import org.jetbrains.kotlin.diagnostics.rendering.buildRuntimeFeatureToFlagMap
+import org.jetbrains.kotlin.diagnostics.rendering.featureToEnablingFlagMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 
 object CliArgumentStringBuilder {
     const val LANGUAGE_FEATURE_FLAG_PREFIX: String = "-XXLanguage:"
-
-    private val dedicatedFeatureFlags: Map<LanguageFeature, String> by lazy {
-        buildRuntimeFeatureToFlagMap(this::class.java.classLoader)
-    }
 
     private val featuresWithComplexArguments: Map<Pair<LanguageFeature, LanguageFeature.State>, String> = mapOf(
         (PropertyParamAnnotationDefaultTargetMode to LanguageFeature.State.ENABLED) to "-Xannotation-default-target=param-property",
@@ -21,7 +17,7 @@ object CliArgumentStringBuilder {
 
     private val LanguageFeature.dedicatedFlagInfo: Pair<String, KotlinVersion?>?
         get()  {
-            val flag = dedicatedFeatureFlags[this] ?: return null
+            val flag = featureToEnablingFlagMap[this] ?: return null
             return flag to this.sinceVersion?.toKotlinVersion()
         }
 

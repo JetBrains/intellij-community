@@ -139,7 +139,7 @@ val defaultScratchJavaHome: String?
         .firstOrNull { JavaSdk.getInstance().isValidSdkHome(it) }
 
 fun scratchModuleSdkHome(project: Project, virtualFile: VirtualFile): String? {
-    val moduleName = ScratchFileOptionsByFile[project, virtualFile]?.selectedModule ?: return null
+    val moduleName = ScratchFileOptionsByFile[project, virtualFile].selectedModule ?: return null
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     val sdk = ModuleRootManager.getInstance(module).sdk ?: return null
     return sdk.takeIf { it.sdkType is JavaSdkType }?.homePath
