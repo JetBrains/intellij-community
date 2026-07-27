@@ -27,6 +27,10 @@ object TeamCityReporter {
    *
    * - [IDE_EXCEPTION]: unhandled IDE exception / freeze / timeout captured from the IDE
    *   under test.
+   * - [PRODUCT_EXCEPTION]: an exception logged inside an external product process the IDE
+   *   relies on - for example the JetBrains Daemon (`jetbrainsd`), scraped from that
+   *   product's own log files. These are bugs of that product, not IDE bugs, so they are
+   *   grouped/muted/owned separately from [IDE_EXCEPTION].
    * - [TEST_INFRA_EXCEPTION]: failure of the test infrastructure itself - port
    *   allocation, leftover processes, VM options validation, missing IDE directories,
    *   etc. These are harness bugs, not IDE bugs, and should be muted / owned separately.
@@ -36,6 +40,7 @@ object TeamCityReporter {
    */
   enum class SyntheticTestKind(val prefix: String) {
     IDE_EXCEPTION("IdeException"),
+    PRODUCT_EXCEPTION("ProductException"),
     TEST_INFRA_EXCEPTION("TestInfraException"),
     SOFT_ASSERT_FAILURE("SoftAssertFailure"),
   }

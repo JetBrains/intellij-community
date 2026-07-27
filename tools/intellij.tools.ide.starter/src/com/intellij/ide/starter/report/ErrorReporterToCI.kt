@@ -130,7 +130,8 @@ object ErrorReporterToCI : ErrorReporter {
     throw Exception("Thread dump file without methods!")
   }
 
-  private fun reportErrors(ideReportingData: IDEReportingData) {
+  private fun reportErrors(ideReportingData: IDEReportingData,
+                           kind: TeamCityReporter.SyntheticTestKind = TeamCityReporter.SyntheticTestKind.IDE_EXCEPTION) {
     val failureDetailsProvider = DetailsOnCI.instance
     for (error in collectErrors(ideReportingData)) {
       reportError(
@@ -138,6 +139,7 @@ object ErrorReporterToCI : ErrorReporter {
         failureDetailsMessage = failureDetailsProvider.getDetails(ideReportingData),
         urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(ideReportingData),
         allureContextName = ideReportingData.humanReadableTestName,
+        kind = kind,
       )
     }
   }
@@ -147,6 +149,7 @@ object ErrorReporterToCI : ErrorReporter {
     failureDetailsMessage: String,
     urlToLogs: String? = null,
     allureContextName: String? = null,
+    kind: TeamCityReporter.SyntheticTestKind = TeamCityReporter.SyntheticTestKind.IDE_EXCEPTION,
   ) {
     val messageText = error.messageText
     val stackTraceContent = error.stackTraceContent
@@ -164,14 +167,14 @@ object ErrorReporterToCI : ErrorReporter {
     if (CIServer.instance.isTestFailureShouldBeIgnored(messageText) || CIServer.instance.isTestFailureShouldBeIgnored(stackTraceContent)) {
       CIServer.instance.ignoreTestFailure(testName = syntheticTestName,
                                           message = failureDetailsMessage,
-                                          kind = TeamCityReporter.SyntheticTestKind.IDE_EXCEPTION)
+                                          kind = kind)
     }
     else {
       CIServer.instance.reportTestFailure(testName = syntheticTestName,
                                           message = failureDetailsMessage + linkToMuteArticle,
                                           details = stackTraceContent,
                                           linkToLogs = urlToLogs,
-                                          kind = TeamCityReporter.SyntheticTestKind.IDE_EXCEPTION)
+                                          kind = kind)
       if (allureContextName != null) {
         AllureReport.reportFailure(allureContextName, messageText + linkToMuteArticle,
                                    stackTraceContent,
