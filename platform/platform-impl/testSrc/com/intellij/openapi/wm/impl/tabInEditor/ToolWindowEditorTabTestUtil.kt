@@ -23,22 +23,30 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
  * A configurable [ToolWindowEditorTabSupport] used by the `tabInEditor` tests.
  *
- * [presentationFlow] drives the tab presentation and [canClose] backs [canCloseTab].
+ * [presentationFlow] drives the tab presentation, [canClose] controls the default
+ * [filterTabsToClose] behavior, and [filterTabsToCloseAction] can emulate partial close decisions.
+ * [filterTabsToCloseInvocations] records the [Content] groups passed to [filterTabsToClose].
  */
 internal class FakeToolWindowEditorTabSupport(
-  private val presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
+  private val presentationFlow: Flow<ToolWindowEditorTabPresentation>,
   private val canClose: Boolean = true,
+  private val filterTabsToCloseAction: ((List<Content>) -> List<Content>)? = null,
 ) : ToolWindowEditorTabSupport {
-  override fun canCloseTab(project: Project, content: Content): Boolean = canClose
+  val filterTabsToCloseInvocations: MutableList<List<Content>> = mutableListOf()
 
-  override fun getTabPresentationState(project: Project, content: Content): StateFlow<ToolWindowEditorTabPresentation> =
+  override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
+    filterTabsToCloseInvocations += contents
+    return filterTabsToCloseAction?.invoke(contents) ?: if (canClose) contents else emptyList()
+  }
+
+  override fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation> =
     presentationFlow
 }
 

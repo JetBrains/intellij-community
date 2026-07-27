@@ -29,7 +29,7 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -69,7 +69,7 @@ class ToolWindowEditorTabTransferControllerTest {
     ExtensionTestUtil.maskExtensions(ContentTabActionProvider.EP_NAME, emptyList(), disposable)
     registerFakeToolWindowEditorTabSupport(
       toolWindowId,
-      FakeToolWindowEditorTabSupport(MutableStateFlow(ToolWindowEditorTabPresentation("Tab"))),
+      FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Tab"))),
       disposable,
     )
   }
@@ -98,7 +98,7 @@ class ToolWindowEditorTabTransferControllerTest {
   }
 
   private fun createTabFile(content: Content = createTabContent()): ToolWindowEditorTabFile = ToolWindowEditorTabFile(
-    presentationFlow = MutableStateFlow(ToolWindowEditorTabPresentation("Tab")),
+    presentationFlow = flowOf(ToolWindowEditorTabPresentation("Tab")),
     toolWindowId = toolWindowId,
     component = JPanel(),
     preferredFocusedComponent = JPanel(),
