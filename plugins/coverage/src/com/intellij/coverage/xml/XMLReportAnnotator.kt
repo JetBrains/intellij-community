@@ -19,15 +19,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.coverage.report.XMLProjectData
 
 @Service(Service.Level.PROJECT)
-class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
-  override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager) = Runnable {
+internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
+  override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager): Runnable = Runnable {
     annotate(suite, dataManager, JavaCoverageInfoCollector(this))
     myStructure = CoverageClassStructure(project, this, suite)
     Disposer.register(this, myStructure)
     dataManager.triggerPresentationUpdate()
   }
 
-  fun annotate(suite: CoverageSuitesBundle, dataManager: CoverageDataManager, collector: CoverageInfoCollector) {
+  internal fun annotate(suite: CoverageSuitesBundle, dataManager: CoverageDataManager, collector: CoverageInfoCollector) {
     val classCoverage = hashMapOf<String, ClassCoverageInfo>()
     val flattenPackageCoverage = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectoryCoverage = hashMapOf<VirtualFile, PackageCoverageInfo>()

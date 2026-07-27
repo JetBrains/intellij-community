@@ -108,7 +108,7 @@ public class CoverageSuitesBundle {
 
     ProjectData data;
     if (dataList.size() == 1) {
-      data = dataList.get(0);
+      data = dataList.getFirst();
     }
     else {
       data = new ProjectData();

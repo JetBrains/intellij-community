@@ -25,15 +25,17 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 private val LOG = logger<CoverageClassStructure>()
 
-data class CoverageNodeInfo(val id: String,
-                            val name: String,
-                            val value: PsiNamedElement,
-                            val counter: PackageAnnotator.ClassCoverageInfo = PackageAnnotator.ClassCoverageInfo()) {
-  override fun toString() = name
+internal data class CoverageNodeInfo(
+  val id: String,
+  val name: String,
+  val value: PsiNamedElement,
+  val counter: PackageAnnotator.ClassCoverageInfo = PackageAnnotator.ClassCoverageInfo(),
+) {
+  override fun toString(): String = name
 }
 
 
-class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator,
+internal class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator,
                              private val suite: CoverageSuitesBundle) : Disposable {
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
@@ -144,7 +146,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
   }
 
   private fun collapseNode(node: CoverageTreeNode) {
-    val parent = node.parent as CoverageTreeNode? ?: return
+    val parent = node.parent as? CoverageTreeNode ?: return
     if (node.childCount != 1) return
     val child = node.getChildAt(0) as CoverageTreeNode
     if (child.isLeaf) return
@@ -182,17 +184,17 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
   }
 
   companion object {
-    const val ROOT_ID = "<root>"
+    const val ROOT_ID: String = "<root>"
   }
 }
 
-class TypedTreeNode<E>(userObject: E) : DefaultMutableTreeNode(userObject) {
+private class TypedTreeNode<E>(userObject: E) : DefaultMutableTreeNode(userObject) {
   override fun getUserObject(): E {
     return super.getUserObject() as E
   }
 }
 
-typealias CoverageTreeNode = TypedTreeNode<CoverageNodeInfo>
+private typealias CoverageTreeNode = TypedTreeNode<CoverageNodeInfo>
 
 private fun logSkippedPackage(packageName: String) {
   LOG.warn("Failed to locate package $packageName, skip it in coverage results")

@@ -18,9 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -33,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,10 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disposable.Default {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
-  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
-    new HashMap<>();
+  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
-  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
   protected CoverageClassStructure myStructure;
 
   public JavaCoverageAnnotator(final Project project) {
@@ -104,7 +99,6 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myFlattenPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
-    myExtensionCoverageInfos.clear();
     if (myStructure != null) {
       Disposer.dispose(myStructure);
     }
@@ -295,22 +289,5 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
   private static boolean shouldSkipUnloadedClassesAnalysis(CoverageSuitesBundle bundle) {
     return ContainerUtil.and(bundle.getSuites(), suite -> suite instanceof JavaCoverageSuite javaSuite && javaSuite.isSkipUnloadedClassesAnalysis());
-  }
-
-  public final @Nullable PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
-    if (value == null) return null;
-    PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
-    if (cachedInfo != null) {
-      return cachedInfo;
-    }
-
-    return JavaCoverageEngineExtension.EP_NAME.computeSafeIfAny(extension -> {
-      PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
-      if (info != null) {
-        myExtensionCoverageInfos.put(value, info);
-        return info;
-      }
-      return null;
-    });
   }
 }
