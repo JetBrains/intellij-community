@@ -12,6 +12,12 @@ import javax.swing.Icon
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
+  /**
+   * Filters the provided list of tool window tab [contents], returning only those that are allowed to be closed.
+   *
+   * This method is called before closing one or multiple tool window tabs in the editor.
+   * Implementations can use this to perform pre-close checks.
+   */
   @RequiresEdt
   fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> = contents
 
