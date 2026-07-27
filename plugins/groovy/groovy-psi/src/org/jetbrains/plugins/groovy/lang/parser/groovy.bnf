@@ -1294,7 +1294,7 @@ left map_argument_label ::= &':'
  elementType = argument_label
  consumeTokenMethod = 'consumeTokenFast'
 }
-left map_argument ::= ':' expression
+left map_argument ::= ':' mb_nl expression
 {
  pin = 1
  consumeTokenMethod = 'consumeTokenFast'
@@ -1302,7 +1302,7 @@ left map_argument ::= ':' expression
 }
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-private named_argument_tail ::= ':' (mb_nl expression)
+private named_argument_tail ::= ':' mb_nl expression
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
