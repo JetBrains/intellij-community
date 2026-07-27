@@ -475,7 +475,7 @@ fun KaDeclarationRenderer.Builder.withoutLabel() {
 }
 
 //todo rewrite after KT-66192 is implemented
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaExperimentalApi::class)
 object ContextParametersListRenderer: KaContextReceiverListRenderer {
     override fun renderContextReceivers(
         analysisSession: KaSession,
@@ -484,7 +484,7 @@ object ContextParametersListRenderer: KaContextReceiverListRenderer {
         typeRenderer: KaTypeRenderer,
         printer: PrettyPrinter
     ) {
-        if (owner is KaCallableSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+        if (owner is KaCallableSymbol && owner.contextParameters.isNotEmpty()) {
             printer {
                 append("context(")
                 printCollection(owner.contextParameters) { contextParameter ->
