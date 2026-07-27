@@ -54,7 +54,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
   }
 
   private fun createRevisionFilter(values: List<String>): VcsLogRevisionFilter {
-    val pattern = Pattern.compile("\\[(.*)\\](" + VcsLogUtil.HASH_REGEX.pattern() + ")")
+    val pattern = Pattern.compile("\\[(.*)\\](" + VcsLogUtil.GIT_HASH_REGEX.pattern() + ")")
     return VcsLogFilterObject.fromCommits(values.mapNotNull { s: String ->
       val matcher = pattern.matcher(s)
       if (!matcher.matches()) {

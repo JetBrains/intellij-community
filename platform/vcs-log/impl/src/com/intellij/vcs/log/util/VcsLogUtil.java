@@ -51,6 +51,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,8 +82,17 @@ import static java.util.Collections.singletonList;
 public final class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int SHORT_HASH_LENGTH = com.intellij.platform.vcs.VcsUtil.SHORT_HASH_LENGTH;
-  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
-  public static final Pattern HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,64}");
+
+  /**
+   * VCS Log should not make any assumptions about vcs-specific hash format
+   *
+   * @see git4idea.GitUtil#isPossibleHash(String)
+   */
+  @ApiStatus.Obsolete
+  public static final Pattern GIT_HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
+  @ApiStatus.Obsolete
+  public static final Pattern GIT_HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,64}");
+
   public static final @NlsSafe String HEAD = "HEAD";
 
   public static @NotNull Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
