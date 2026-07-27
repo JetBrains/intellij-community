@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -18,7 +18,7 @@ interface ToolWindowEditorTabSupport {
   /**
    * Returns the current tab presentation and subsequent presentation updates.
    */
-  fun getTabPresentationState(project: Project, content: Content): StateFlow<ToolWindowEditorTabPresentation>
+  fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation>
 }
 
 @ApiStatus.Experimental

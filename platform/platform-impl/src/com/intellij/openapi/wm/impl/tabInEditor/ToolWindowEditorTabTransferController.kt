@@ -117,7 +117,7 @@ internal class ToolWindowEditorTabTransferController(
   ): ToolWindowEditorTabFile {
     val component = content.component
     return ToolWindowEditorTabFile(
-      presentationFlow = support.getTabPresentationState(project, content),
+      presentationFlow = support.getTabPresentationFlow(project, content),
       toolWindowId = toolWindow.id,
       component = component,
       preferredFocusedComponent =

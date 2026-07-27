@@ -14,7 +14,7 @@ import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
@@ -25,7 +25,7 @@ import javax.swing.JComponent
 /**
  * Represents a virtual file for displaying tool window content in an editor tab.
  *
- * @param presentationFlow The state flow that provides the initial presentation and subsequent presentation updates.
+ * @param presentationFlow The cold flow that emits the current presentation and subsequent presentation updates.
  * @param toolWindowId The ID of the associated tool window.
  * @param component The UI component displayed in the editor tab.
  * @param preferredFocusedComponent The component that should receive focus when the editor tab is selected.
@@ -35,9 +35,8 @@ import javax.swing.JComponent
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class ToolWindowEditorTabFile private constructor(
-  initialPresentation: ToolWindowEditorTabPresentation,
-  presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
+class ToolWindowEditorTabFile internal constructor(
+  presentationFlow: Flow<ToolWindowEditorTabPresentation>,
   val toolWindowId: String,
   val component: JComponent,
   internal val preferredFocusedComponent: JComponent,
@@ -45,35 +44,16 @@ class ToolWindowEditorTabFile private constructor(
   internal val project: Project,
   parentCoroutineScope: CoroutineScope,
 ) : LightVirtualFile(
-  initialPresentation.title,
+  "",
   ToolWindowEditorTabFileType,
   "",
 ), OptionallyIncluded {
-
-  internal constructor(
-    presentationFlow: StateFlow<ToolWindowEditorTabPresentation>,
-    toolWindowId: String,
-    component: JComponent,
-    preferredFocusedComponent: JComponent,
-    content: Content,
-    project: Project,
-    parentCoroutineScope: CoroutineScope,
-  ) : this(
-    initialPresentation = presentationFlow.value,
-    presentationFlow = presentationFlow,
-    toolWindowId = toolWindowId,
-    component = component,
-    preferredFocusedComponent = preferredFocusedComponent,
-    content = content,
-    project = project,
-    parentCoroutineScope = parentCoroutineScope,
-  )
 
   private val coroutineScope = parentCoroutineScope.childScope(
     "ToolWindowEditorTabFile[$toolWindowId]",
   )
 
-  internal var tabIcon: Icon? = initialPresentation.icon
+  internal var tabIcon: Icon? = null
     private set
 
   init {
