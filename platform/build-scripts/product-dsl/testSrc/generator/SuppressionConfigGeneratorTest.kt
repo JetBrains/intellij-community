@@ -170,7 +170,7 @@ class SuppressionConfigGeneratorTest {
           existingXmlPluginDependencies = setOf(aliasId),
           preserveExistingPluginDependencies = setOf(aliasId),
           writtenPluginDependencies = listOf(aliasId),
-          allJpsPluginDependencies = emptySet(),
+          requiredPluginDependencies = emptySet(),
           suppressedModules = emptySet(),
           suppressedPlugins = emptySet(),
           suppressionUsages = emptyList(),

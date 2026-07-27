@@ -169,10 +169,10 @@ data class DependencyFileResult(
   val testDependencies: List<ContentModuleName> = emptyList(),
   /** Module dependencies that were already in XML before generation (from parsing existing file) */
   val existingXmlModuleDependencies: Set<ContentModuleName> = emptySet(),
-  /** Plugin dependencies written to the XML descriptor (always written, no filter) */
+  /** Effective plugin dependencies written to the XML descriptor. */
   val writtenPluginDependencies: List<PluginId> = emptyList(),
-  /** All JPS deps that are main plugin modules (for validation: IML deps → XML plugin deps) */
-  @JvmField val allJpsPluginDependencies: Set<PluginId> = emptySet(),
+  /** Plugin deps required by descriptor policy (for validation: IML deps → XML plugin deps) */
+  @JvmField val requiredPluginDependencies: Set<PluginId> = emptySet(),
   /** Suppression usages recorded during generation (for unified stale detection) */
   @JvmField val suppressionUsages: List<SuppressionUsage> = emptyList(),
 ) : HasFileChangeStatus

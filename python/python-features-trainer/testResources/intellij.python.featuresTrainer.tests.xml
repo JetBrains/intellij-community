@@ -4,8 +4,6 @@
     <module name="intellij.featuresTrainer.tests"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.python.featuresTrainer"/>
-    <plugin id="PythonCore"/>
-    <plugin id="training"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>

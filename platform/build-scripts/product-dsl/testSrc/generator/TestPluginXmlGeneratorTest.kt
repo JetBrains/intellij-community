@@ -875,7 +875,7 @@ class TestPluginXmlGeneratorTest {
       existingXmlPluginDependencies = emptySet(),
       preserveExistingPluginDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressedModules = emptySet(),
       suppressedPlugins = emptySet(),
       suppressionUsages = emptyList(),

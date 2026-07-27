@@ -31,7 +31,8 @@ Validates runtime dependency correctness for plugin content modules and plugin-l
   - On-demand check: on-demand deps must exist globally.
   - Filtered dependency check: implicit dependencies (JPS deps missing from XML) must resolve unless suppressed or allowlisted.
 - Content module plugin dependency check (ContentModulePluginDependencyValidator):
-  - For each content module descriptor, ensure plugin IDs for JPS deps on plugin main modules are declared in XML `<dependencies><plugin id=.../>`, excluding containing plugins.
+  - For each content module descriptor, ensure plugin IDs required by descriptor policy are declared in XML `<dependencies><plugin id=.../>`, excluding containing plugins.
+  - A descriptor generated with test scope requires only JPS plugin dependencies already declared in its XML, because it must not introduce a new `<plugin>` gate (see [dependency_generation.md](../dependency_generation.md#dual-edge-types-for-production-vs-test)).
 
 ## Suppression and allowlists
 

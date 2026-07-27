@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.platform.testFramework.junit5.eel.tests"/>
     <module name="intellij.python.community.execService"/>
-    <plugin id="PythonCore"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.hamcrest"/>
     <module name="intellij.libraries.junit5"/>

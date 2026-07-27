@@ -58,7 +58,7 @@ private fun writeContentModuleXml(
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressionUsages = emptyList(),
     )
   }
@@ -87,7 +87,7 @@ private fun writeContentModuleXml(
     testDependencies = plan.testDependencies,
     existingXmlModuleDependencies = plan.existingXmlModuleDependencies,
     writtenPluginDependencies = plan.writtenPluginDependencies,
-    allJpsPluginDependencies = plan.allJpsPluginDependencies,
+    requiredPluginDependencies = plan.requiredPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
   )
 }

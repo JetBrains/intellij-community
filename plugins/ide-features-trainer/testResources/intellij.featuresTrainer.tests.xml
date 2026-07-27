@@ -1,9 +1,6 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="intellij.testRunner.plugin"/>
-    <plugin id="intellij.todo.plugin"/>
-    <plugin id="intellij.vcs.plugin"/>
     <plugin id="training"/>
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.guava"/>
