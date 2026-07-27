@@ -185,10 +185,13 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
         try {
           val escaper = host.createLiteralTextEscaper()
-          val decode = escaper.decode(segmentRange, StringBuilder())
-          if (decode) {
-            val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-            val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+          val decoded = StringBuilder()
+          if (escaper.decode(segmentRange, decoded)) {
+            val decodedLength = decoded.length
+            val clampedStart = inSegmentStart.coerceIn(0, decodedLength)
+            val clampedEnd = inSegmentEnd.coerceIn(clampedStart, decodedLength)
+            val start = escaper.getOffsetInHost(clampedStart, segmentRange)
+            val end = escaper.getOffsetInHost(clampedEnd, segmentRange)
             if (start != -1 && end != -1 && start <= end)
               return TextRange(start, end)
             else {
