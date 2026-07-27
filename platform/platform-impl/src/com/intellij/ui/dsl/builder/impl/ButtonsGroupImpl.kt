@@ -2,11 +2,9 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.layout.ComponentPredicate
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 import javax.swing.JRadioButton
 
@@ -44,9 +42,8 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {
-    if (groupBinding != null) {
-      throw UiDslException("The group is bound already")
-    }
+    checkNull(groupBinding) { "The group is bound already" }
+
     groupBinding = GroupBinding(prop, type)
     return this
   }
@@ -67,9 +64,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   private fun postInitBound(groupBinding: GroupBinding<*>) {
     val buttonGroup = ButtonGroup()
     for ((cell, value) in radioButtons) {
-      if (value == null) {
-        throw UiDslException("Radio button '${cell.component.text}' is used without value for binding")
-      }
+      checkNotNull(value) { "Radio button '${cell.component.text}' is used without value for binding" }
 
       groupBinding.validate(value)
       buttonGroup.add(cell.component)
@@ -95,9 +90,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   private fun postInitUnbound() {
     val buttonGroup = ButtonGroup()
     for ((cell, value) in radioButtons) {
-      if (value != null) {
-        throw UiDslException("Radio button '${cell.component.text}' is used without ButtonsGroup.bind")
-      }
+      checkNull(value) { "Radio button '${cell.component.text}' is used without ButtonsGroup.bind" }
 
       buttonGroup.add(cell.component)
     }
@@ -111,8 +104,6 @@ private class GroupBinding<T>(val prop: MutableProperty<T>, val type: Class<T>) 
   }
 
   fun validate(value: Any) {
-    if (!type.isInstance(value)) {
-      throw UiDslException("Value $value is incompatible with button group binding class ${type.simpleName}")
-    }
+    check(type.isInstance(value)) { "Value $value is incompatible with button group binding class ${type.simpleName}" }
   }
 }

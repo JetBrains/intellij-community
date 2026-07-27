@@ -5,7 +5,9 @@ import com.intellij.execution.Platform
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.Result
@@ -83,12 +85,22 @@ data class ToolCommandExecutor(
     dirPath: Path?,
     vararg args: String,
     env: Map<String, String> = emptyMap(),
+    uploadConfig: UploadConfig? = null,
+    downloadConfig: DownloadConfig? = null,
     transformer: ProcessOutputTransformer<T>,
   ): PyResult<T> {
     val executable = getToolExecutable(fileSystem, pathFromSdk)
                      ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, fileSystem.userReadableName))
     val bin = fileSystem.getBinaryToExec(executable, dirPath)
-    return runExecutableWithProgress(bin, 10.minutes, env = env, args = args, transformer = transformer)
+    return runExecutableWithProgress(
+      binaryToExec = bin,
+      timeout = 10.minutes,
+      env = env,
+      args = args,
+      uploadConfig = uploadConfig,
+      downloadConfig = downloadConfig,
+      transformer = transformer,
+    )
   }
 }
 
@@ -102,5 +114,16 @@ suspend fun <P : PathHolder> ToolCommandExecutor.runTool(
   dirPath: Path?,
   vararg args: String,
   env: Map<String, String> = emptyMap(),
+  uploadConfig: UploadConfig? = null,
+  downloadConfig: DownloadConfig? = null,
 ): PyResult<String> =
-  runTool(fileSystem, pathFromSdk, dirPath, args = args, env = env, transformer = ZeroCodeStdoutTransformer)
+  runTool(
+    fileSystem,
+    pathFromSdk,
+    dirPath,
+    args = args,
+    env = env,
+    uploadConfig = uploadConfig,
+    downloadConfig = downloadConfig,
+    transformer = ZeroCodeStdoutTransformer,
+  )

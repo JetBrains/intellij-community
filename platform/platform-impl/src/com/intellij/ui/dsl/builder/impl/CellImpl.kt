@@ -454,12 +454,6 @@ internal class CellImpl<T : JComponent>(
       return null
     }
   }
-
-  companion object {
-    internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
-      CellValidationImpl.installDefaultValidationRequestor(component.interactiveComponent, property)
-    }
-  }
 }
 
 /**

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 
-private class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderService {
+internal class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderService {
     override fun isSupportedFile(file: KtFile): Boolean {
         val virtualFile = file.virtualFile
         return virtualFile == null || !isOutsiderFile(virtualFile)

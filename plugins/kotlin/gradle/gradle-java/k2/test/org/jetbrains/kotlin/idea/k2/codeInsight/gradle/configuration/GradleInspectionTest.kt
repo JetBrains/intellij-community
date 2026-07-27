@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -67,48 +68,11 @@ class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
     @Test
     fun testDifferentKotlinGradleVersion() {
         val tool = DifferentKotlinGradleVersionInspection()
-        tool.testVersionMessage = $$"$PLUGIN_VERSION"
         val problems = getInspectionResultFromTestDataProject(tool)
 
         assertEquals(
             problems.joinToString(separator = "\n"),
-            $$"Kotlin version that is used for building with Gradle (1.9.0) is not properly supported in the IDE plugin ($PLUGIN_VERSION)",
-            problems.single()
-        )
-    }
-
-    @Test
-    @TargetVersions("6.8.3")
-    fun testJreIsDeprecated() {
-        val problems = getInspectionResultFromTestDataProject()
-
-        assertEquals(1, problems.size)
-        assertEquals(
-            "kotlin-stdlib-jre7 is deprecated since 1.2.0 and should be replaced with kotlin-stdlib-jdk7",
-            problems.single()
-        )
-    }
-
-    @Test
-    @TargetVersions("7.6.5")
-    fun testJreIsDeprecatedWithImplementation() {
-        val problems = getInspectionResultFromTestDataProject()
-
-        assertEquals(1, problems.size)
-        assertEquals(
-            "kotlin-stdlib-jre7 is deprecated since 1.2.0 and should be replaced with kotlin-stdlib-jdk7",
-            problems.single()
-        )
-    }
-
-    @Test
-    @TargetVersions("6.8.3")
-    fun testJreIsDeprecatedWithoutImplicitVersion() {
-        val problems = getInspectionResultFromTestDataProject()
-
-        assertEquals(1, problems.size)
-        assertEquals(
-            "kotlin-stdlib-jre8 is deprecated since 1.2.0 and should be replaced with kotlin-stdlib-jdk8",
+            "Kotlin version that is used for building with Gradle (1.9.0) is not properly supported in the IDE plugin (${KotlinPluginLayout.ideCompilerVersion.languageVersion})",
             problems.single()
         )
     }

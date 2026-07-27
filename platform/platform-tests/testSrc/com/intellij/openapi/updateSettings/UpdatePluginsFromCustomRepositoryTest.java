@@ -31,7 +31,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
         .readDescriptorFromBytesForTest(base.resolve(name), false, Files.readAllBytes(base.resolve(name)),
                                         PluginId.getId("UpdatePluginsFromCustomRepositoryTest"));
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate);
+      UpdateChecker.checkDownloader(downloader, new InstalledPluginsState(), toUpdate);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 

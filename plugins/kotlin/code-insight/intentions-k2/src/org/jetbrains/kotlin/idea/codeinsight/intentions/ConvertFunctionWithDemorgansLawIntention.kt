@@ -76,7 +76,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =
-            element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.importableFqName ?: return null
+            element.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.importableFqName ?: return null
         if (targetFunctionName !in fqNames) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null

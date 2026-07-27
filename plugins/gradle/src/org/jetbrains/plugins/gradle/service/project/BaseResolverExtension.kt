@@ -13,10 +13,8 @@ import com.intellij.util.net.HttpConfigurable
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
-import org.jetbrains.annotations.ApiStatus
 import kotlin.Int.Companion.MAX_VALUE
 
-@ApiStatus.Internal
 @Order(MAX_VALUE)
 internal class BaseResolverExtension : GradleProjectResolverExtension {
   override fun setProjectResolverContext(projectResolverContext: ProjectResolverContext) {}

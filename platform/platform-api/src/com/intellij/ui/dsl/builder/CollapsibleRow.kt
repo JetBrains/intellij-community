@@ -14,7 +14,7 @@ interface CollapsibleRow : Row {
   var expanded: Boolean
 
   /**
-   * Packs windows height on expand and collapse
+   * Packs the window's height on expand and collapse
    */
   var packWindowHeight: Boolean
 

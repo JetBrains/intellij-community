@@ -89,11 +89,6 @@ private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> 
   }.toSet()
 }
 
-fun GitRepository.currentRemoteBranchFlow(): Flow<GitRemoteBranch?> =
-  infoFlow()
-    .map { it.findFirstRemoteBranchTrackedByCurrent() }
-    .distinctUntilChanged()
-
 fun GitRepoInfo.findFirstRemoteBranchTrackedByCurrent(): GitRemoteBranch? {
   val currentBranch = currentBranch ?: return null
   return branchTrackInfos.find { it.localBranch == currentBranch }?.remoteBranch

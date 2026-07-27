@@ -71,8 +71,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//plugins/kotlin/j2k/shared",
-        "//plugins/kotlin/j2k/shared:shared_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//platform/testFramework",
@@ -99,6 +97,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/kotlin/j2k/k2:kotlin-j2k",
+        "//plugins/kotlin/j2k/k2:kotlin-j2k_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.j2k.shared.tests` end

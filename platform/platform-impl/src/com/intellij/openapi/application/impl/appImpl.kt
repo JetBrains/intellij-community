@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction
@@ -33,6 +34,8 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -200,18 +203,21 @@ object InternalThreading {
     }
     assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action to EDT is permitted only on background thread" }
     val exceptionRef = Ref.create<Throwable?>()
-    val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
-      try {
-        // we can appear here if someone tries to acquire a read action in a forced slow-op section
-        // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
-        SlowOperations.startSection(SlowOperations.RESET).use {
-          lock.withLockingProhibitionCleared {
-            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+    val currentContext = currentThreadContext()
+    val capturedRunnable = Runnable {
+      installThreadContext(currentContext, true) {
+        try {
+          // we can appear here if someone tries to acquire a read action in a forced slow-op section
+          // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
+          SlowOperations.startSection(SlowOperations.RESET).use {
+            lock.withLockingProhibitionCleared {
+              (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+            }
           }
         }
-      }
-      catch (e: Throwable) {
-        exceptionRef.set(e)
+        catch (e: Throwable) {
+          exceptionRef.set(e)
+        }
       }
     }
     lock.transferWriteActionAndBlock({ toRun: RunnableWithTransferredWriteAction ->
@@ -294,17 +300,19 @@ object InternalThreading {
   @ApiStatus.Internal
   class TransferredWriteActionEvent private constructor(
     val action: AtomicReference<RunnableWithTransferredWriteAction>,
-    val job: CompletableJob = Job(currentThreadContext()[Job])) : InvocationEvent(InternalThreading, {
-    execute(action, job)
+    val job: CompletableJob = Job(currentThreadContext()[Job]),
+    val completionSemaphore: CompletableJob = Job()) : InvocationEvent(InternalThreading, {
+    execute(action, job, completionSemaphore)
   }) {
 
     companion object {
-      fun execute(action: AtomicReference<RunnableWithTransferredWriteAction>, job: CompletableJob) {
+      fun execute(action: AtomicReference<RunnableWithTransferredWriteAction>, job: CompletableJob, completionSemaphore: CompletableJob) {
         val action = action.getAndSet(null) ?: return
         try {
           action.run()
         } finally {
           job.complete()
+          completionSemaphore.complete()
         }
       }
     }
@@ -312,11 +320,20 @@ object InternalThreading {
     constructor(action: RunnableWithTransferredWriteAction) : this(AtomicReference(action))
 
     fun execute() {
-      execute(action, job)
+      execute(action, job, completionSemaphore)
     }
 
     fun blockingWait() {
-      job.asCompletableFuture().join()
+      try {
+        job.asCompletableFuture().join()
+      } catch (e: Throwable) {
+        val storedAction = action.getAndSet(null)
+        if (storedAction == null) {
+          // action is in progress; we must block until all its finally blocks are executed before returning
+          completionSemaphore.asCompletableFuture().join()
+        }
+        throw e
+      }
     }
   }
 }

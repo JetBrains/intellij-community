@@ -87,16 +87,6 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
-# --@rules_jvm//:wasm-opt-default
-# Default for wasmjs_binary targets with optimize = "auto": when True, `bazel build` of a
-# wasmjs_binary produces the binaryen-optimized output; when False, the plain linked output.
-# Off by default so local dev builds skip the slow wasm-opt pass; CI/dist enables it.
-bool_flag(
-    name = "wasm-opt-default",
-    build_setting_default = False,
-    visibility = ["//visibility:public"],
-)
-
 # used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],

@@ -670,10 +670,6 @@ public class PersistentFSStoragesBenchmarks {
 
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
-      .jvmArgs(//to enable 'new' API:
-               "-Dvfs.lock-free-impl.enable=true",
-               "-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5"
-      )
       //.include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
       .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*ReadAccessTest.*Buffer.*SingleInt32.*")
       .threads(4)

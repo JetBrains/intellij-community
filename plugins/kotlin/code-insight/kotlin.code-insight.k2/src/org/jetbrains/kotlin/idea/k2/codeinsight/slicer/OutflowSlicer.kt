@@ -10,18 +10,22 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -188,6 +192,7 @@ class OutflowSlicer(
         processCalls(function, includeOverriders = false, CallSliceProducer)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun processExpression(expression: KtExpression) {
         val expressionWithValue = when (expression) {
             is KtFunctionLiteral -> expression.parent as KtLambdaExpression
@@ -256,7 +261,7 @@ class OutflowSlicer(
                 analyze(callExpression) {
                     val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
                     val parameterSymbol =
-                        functionCall.argumentMapping.filter { entry -> entry.key == expressionWithValue }.values.firstOrNull()?.symbol
+                        functionCall.valueArgumentMapping.filter { entry -> entry.key == expressionWithValue }.values.firstOrNull()?.symbol
                     val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol
                     if (functionSymbol?.isBuiltinFunctionInvoke == true) {
                         processImplicitInvokeCall(
@@ -288,7 +293,7 @@ class OutflowSlicer(
 
             is KtReturnExpression -> {
                 analyze(parent) {
-                    val target = parent.targetSymbol?.psi
+                    val target = parent.resolveSymbol()?.psi
                     if (target is KtNamedFunction) {
                         val (newMode, callElement) = mode.popInlineFunctionCall(target)
                         if (newMode != null) {
@@ -326,7 +331,7 @@ class OutflowSlicer(
     fun processSelectorExpression(selectorExpression: KtExpression, expressionWithValue: KtExpression) {
         analyze(selectorExpression) {
             val functionalCall = selectorExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
-            val symbol = functionalCall?.partiallyAppliedSymbol?.symbol
+            val symbol = functionalCall?.symbol
             if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) {
                 if ((functionalCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue.safeDeparenthesize()) {
                     if (mode.currentBehaviour is LambdaCallsBehaviour) {
@@ -350,7 +355,7 @@ class OutflowSlicer(
         val receiverValue = functionCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue ?: return
         var receiverType: KaType? = receiverValue.type
         var receiverExpression = receiverValue.expression
-        if (receiverExpression is KtReferenceExpression && functionCall is KaSimpleFunctionCall && functionCall.isImplicitInvoke) {
+        if (receiverExpression is KtReferenceExpression && functionCall is KaSimpleFunctionCall && functionCall is KaImplicitInvokeCall) {
             val target = receiverExpression.mainReference.resolve()
             if (target is KtCallableDeclaration) {
                 receiverType = (target.symbol as? KaCallableSymbol)?.returnType

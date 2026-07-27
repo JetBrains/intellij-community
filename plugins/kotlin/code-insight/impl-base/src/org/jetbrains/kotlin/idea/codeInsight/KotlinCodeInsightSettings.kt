@@ -27,6 +27,7 @@ class KotlinCodeInsightWorkspaceSettings : PersistentStateComponent<KotlinCodeIn
     }
 }
 
+@Service(Service.Level.APP)
 @State(name = "KotlinCodeInsightSettings", storages = [Storage("editor.codeinsight.xml")], category = SettingsCategory.CODE)
 class KotlinCodeInsightSettings : PersistentStateComponent<KotlinCodeInsightSettings> {
     @JvmField

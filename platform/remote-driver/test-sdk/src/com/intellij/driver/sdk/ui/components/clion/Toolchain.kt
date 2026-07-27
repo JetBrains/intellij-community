@@ -5,7 +5,7 @@ import com.intellij.util.system.OS
 
 data class Toolset(
   val kind: String,
-  val path: String? = null
+  val path: String? = null,
 )
 
 data class RemoteConnection(
@@ -26,6 +26,15 @@ sealed class Toolchain(
     return if (compiler == Compiler.DEFAULT) "${name}_$debugger"
     else "${name}_${compiler}_$debugger"
   }
+
+  /**
+   * Path of the GDB executable shipped with the MinGW toolset ("MinGW-w64 GDB" in the toolchain settings UI).
+   *
+   * It is better to specify not from the debugger Path to test that non bundled GDB is found, but this strategy only works from UI.
+   * From XML setup, the full path must be specified.
+   */
+  val mingwToolsetGdbPath: String
+    get() = "${toolset.path}/bin/gdb.exe"
 
   class Default(
     compiler: Compiler = Compiler.DEFAULT,
@@ -67,7 +76,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "BUNDLED_MINGW")
+    toolset: Toolset = Toolset(kind = "MINGW", path = "BUNDLED_MINGW"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class CustomMingw(
@@ -75,7 +84,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.MINGW_CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64")
+    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MingwCustomGDB(
@@ -83,7 +92,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "\"C:\\Tools\\msys2\\mingw64\"")
+    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MSVC(
@@ -91,7 +100,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MSVC,
-    toolset: Toolset = Toolset(kind = "MSVC", path = "C:/Program Files (x86)/Microsoft Visual Studio/2026/BuildTools")
+    toolset: Toolset = Toolset(kind = "MSVC", path = "C:/Program Files (x86)/Microsoft Visual Studio/2026/BuildTools"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Cygwin(
@@ -99,7 +108,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.CYGWIN_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.CYGWIN,
-    toolset: Toolset = Toolset(kind = "CYGWIN", path = "C:/Tools/cygwin")
+    toolset: Toolset = Toolset(kind = "CYGWIN", path = "C:/Tools/cygwin"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class WSL(
@@ -107,7 +116,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.WSL_DEBUGGER,
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.WSL,
-    toolset: Toolset = Toolset(kind = "WSL", path = "ubuntu2204wsl2")
+    toolset: Toolset = Toolset(kind = "WSL", path = "ubuntu2204wsl2"),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Docker(
@@ -196,6 +205,7 @@ enum class Debugger {
       OS.Windows -> "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
       else -> "/usr/bin/gdb"
     }
+
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom GDB"
     override fun type(): String = "GDB"

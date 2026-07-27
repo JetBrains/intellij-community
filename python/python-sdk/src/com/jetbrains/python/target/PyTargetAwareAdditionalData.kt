@@ -26,9 +26,12 @@ internal const val PYCHARM_HELPERS: String = ".pycharm_helpers"
 
 open class PyTargetAwareAdditionalData private constructor(
   private val b: RemoteSdkPropertiesHolder,
-  flavorAndData: PyFlavorAndData<*, *>?,
+  flavorAndData: PyFlavorAndData<*, *>,
+  workingDirectory: Path,
+  requirementsFile: String?,
   targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
-) : PythonSdkAdditionalData(flavorAndData), TargetBasedSdkAdditionalData, RemoteSdkProperties by b, PyRemoteSdkAdditionalDataMarker {
+) : PythonSdkAdditionalData(flavorAndData, workingDirectory), TargetBasedSdkAdditionalData, RemoteSdkProperties by b,
+    PyRemoteSdkAdditionalDataMarker {
   /**
    * The source of truth for the target configuration.
    */
@@ -47,14 +50,28 @@ open class PyTargetAwareAdditionalData private constructor(
     }
 
   init {
+    this.requirementsFile = requirementsFile
     notifyTargetEnvironmentConfigurationChanged()
   }
 
-  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
-    RemoteSdkPropertiesHolder(
-      PYCHARM_HELPERS),
+  @ApiStatus.Internal
+  constructor(
+    flavorAndData: PyFlavorAndData<*, *>,
+    workingDirectory: Path,
+    targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
+    requirementsFile: String? = null,
+  ) : this(
+    RemoteSdkPropertiesHolder(PYCHARM_HELPERS),
     flavorAndData,
-    targetEnvironmentConfiguration)
+    workingDirectory,
+    requirementsFile,
+    targetEnvironmentConfiguration,
+  )
+
+  @ApiStatus.Internal
+  constructor(additionalData: PythonSdkAdditionalData, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
+    additionalData.flavorAndData, additionalData.workingDirectory, targetEnvironmentConfiguration, additionalData.requirementsFile
+  )
 
   override fun save(rootElement: Element) { // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement) // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
@@ -136,7 +153,8 @@ open class PyTargetAwareAdditionalData private constructor(
       }
 
       // TODO Python flavor identifier must be stored in `element` and taken from it here
-      val data = PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()))
+      val data = PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
+                                             workingDirectory = Path.of(""))
       data.interpreterPath = homePath
       data.load(element)
       // TODO [targets] Load `SKELETONS_PATH` for Target-based Python SDK from `Element`
@@ -149,7 +167,8 @@ open class PyTargetAwareAdditionalData private constructor(
     }
 
     private class DummyTargetAwareAdditionalData(base: Element) :
-      PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance())),
+      PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
+                                  workingDirectory = Path.of("")),
       PyRemoteSdkAdditionalDataMarker {
       val element: Element = base.clone()
 

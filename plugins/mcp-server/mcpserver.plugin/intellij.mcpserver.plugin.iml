@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.mcpserver" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.stdio" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.terminal.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.vcs" scope="RUNTIME" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

@@ -13,10 +13,13 @@ import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.popupMenu
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.settings.SettingsDialogUiComponent
+import com.intellij.driver.sdk.ui.should
+import com.intellij.driver.sdk.ui.shouldBeEqualTo
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.wait
 import java.awt.event.KeyEvent
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.toolchainPanel(action: ToolchainPanel.() -> Unit = {}) = x(ToolchainPanel::class.java) { byClass("CPPToolchainsPanel") }.apply(action)
@@ -82,10 +85,14 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
   }
 
   fun setToolset(path: String) {
+    should("Toolset installations search did not finish", timeout = 1.minutes) {
+      getToolsetField().getAllTexts().none { it.text.contains("Searching") }
+    }
     getToolsetField().click()
     keyboard { key(KeyEvent.VK_DOWN) }
     getToolsetField().text = path
     keyboard { enter() }
+    getToolsetField().shouldBeEqualTo(path, timeout = 15.seconds)
   }
 
   fun setupCMake(cmakePath: String) {

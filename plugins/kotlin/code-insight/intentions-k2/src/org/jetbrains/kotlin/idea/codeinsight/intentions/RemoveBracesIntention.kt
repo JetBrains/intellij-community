@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDoWhileExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStatementExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
@@ -85,7 +84,10 @@ internal class RemoveBracesIntention: KotlinApplicableModCommandAction.Simple<Kt
             if (singleStatement is KtLambdaExpression && singleStatement.functionLiteral.arrow == null) return false
             when (val container = block.parent) {
                 is KtContainerNode -> {
-                    if (singleStatement is KtProperty || singleStatement is KtClass) return false
+                    if (
+                        singleStatement is KtNamedDeclaration ||
+                        singleStatement is KtDestructuringDeclaration
+                    ) return false
                     if (singleStatement is KtIfExpression) {
                         val elseExpression = (container.parent as? KtIfExpression)?.`else`
                         if (elseExpression != null && elseExpression != block) return false
@@ -93,7 +95,8 @@ internal class RemoveBracesIntention: KotlinApplicableModCommandAction.Simple<Kt
                     return true
                 }
                 is KtWhenEntry -> {
-                    return singleStatement !is KtNamedDeclaration
+                    return singleStatement !is KtNamedDeclaration &&
+                            singleStatement !is KtDestructuringDeclaration
                 }
                 else -> return false
             }

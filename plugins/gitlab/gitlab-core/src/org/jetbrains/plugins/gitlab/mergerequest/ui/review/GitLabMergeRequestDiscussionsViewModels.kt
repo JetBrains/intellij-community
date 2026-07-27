@@ -148,7 +148,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
     val newDiscussionsData = _newDiscussions
       .mapStatefulToStateful { note ->
-        IntermediateDiscussionData(note.trackingId, Date(), 0, MutableStateFlow(note.position.value.position))
+        IntermediateDiscussionData(note.trackingId, Date(), 0, note.position.mapState { it.position })
       }
 
     val allDiscussions =

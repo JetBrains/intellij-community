@@ -49,6 +49,10 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                      BreakpointBasedFlatMappingOperation("flatMapToInt"),
                                      BreakpointBasedFlatMappingOperation("flatMapToLong"),
                                      BreakpointBasedFlatMappingOperation("flatMapToDouble"),
+                                     BreakpointBasedFlatMappingOperation("mapMulti"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToInt"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToLong"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToDouble"),
                                      BreakpointBasedDistinctOperation("distinct"),
                                      BreakpointBasedSortedOperation("sorted"),
                                      BreakpointBasedParallelOperation("parallel"))

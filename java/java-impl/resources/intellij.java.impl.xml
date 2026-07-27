@@ -16,12 +16,14 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.indexing.serializers"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.structureView"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.jsp"/>
     <module name="intellij.jsp.spi"/>
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.todo"/>
     <module name="intellij.spellchecker"/>

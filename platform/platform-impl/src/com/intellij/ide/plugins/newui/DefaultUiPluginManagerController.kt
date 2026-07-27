@@ -743,8 +743,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         requiredPlugins.add(result)
       }
     }
-    return enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY,
-                              buildPluginIdMap(), getPluginSet().buildContentModuleIdMap()).pluginsIdsToSwitch
+    val result = enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY,
+                                    buildPluginIdMap(), getPluginSet().buildContentModuleIdMap())
+    return result.changedStates.filterValues { it }.keys
   }
 
   override suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {

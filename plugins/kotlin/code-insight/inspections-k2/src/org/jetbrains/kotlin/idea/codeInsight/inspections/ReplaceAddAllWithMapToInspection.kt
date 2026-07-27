@@ -134,7 +134,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
 
     private fun KaSession.replacementOperation(argument: KtExpression?): Name? {
         val argumentCall = argument?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        return when (argumentCall.partiallyAppliedSymbol.symbol.callableId) {
+        return when (argumentCall.symbol.callableId) {
             mapCallableId -> mapToName
             filterCallableId -> filterToName
             else -> null

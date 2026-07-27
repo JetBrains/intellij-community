@@ -1,16 +1,83 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.psi"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.serialization"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.completion.api"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+
+    <registryKey key="kotlin.k2.dot.add.enabled"
+                 description="Allow adding '.' to completion lookup"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
+             id="kotlin.preferKotlinx"
+             order="after sameModule, before knownElement"/>
+
+    <registryKey
+            key="kotlin.disable.auto.completion.inside.expression"
+            description="Disables auto-completion inside expressions"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.prefer.vararg.to.noargs"
+            description="For functions show vararg variant before no argruments variant"
+            defaultValue="true"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.insert.constructor.parenthesis"
+            description="Insert constructor parenthesis on class autocompletion"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
+            description="Use PSI based completion when indexing"
+            defaultValue="true"
+            restartRequired="false"/>
+    <completion.contributor
+            language="kotlin"
+            id="KotlinDumbCompletionContributor"
+            order="first, after KotlinCompletionContributor"
+            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+
+    <completion.plainTextSymbol
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
+
+    <codeInsight.wordCompletionFilter language="kotlin"
+                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
+
+    <completion.confidence
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
+    <completion.confidence
+            language="kotlin"
+            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
+            id="kotlinSkipAutopopupInStrings"
+            order="after propertyKeys"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"

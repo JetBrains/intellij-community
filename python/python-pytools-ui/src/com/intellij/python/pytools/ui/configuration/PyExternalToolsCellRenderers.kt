@@ -73,13 +73,27 @@ private fun renderChainText(host: ModeCellHost?, table: JTable, value: Any?, row
   return modeChainLabel(mode) { host.modeStatusFor(toolRow, it) }
 }
 
-/** Renders the enabled state as an [OnOffButton] toggle switch. */
-internal class OnOffCellRenderer : TableCellRenderer {
+/**
+ * Renders the enabled state as an [OnOffButton] toggle switch — except for a tool that is the
+ * project's selected type engine, where it renders a non-interactive dash. The dash signals that
+ * the tool's enabled state is governed by the Type Engine settings (you can't toggle it as a
+ * standalone tool while it acts as the engine); the matching tooltip explains why.
+ */
+internal class OnOffCellRenderer(private val project: Project) : TableCellRenderer {
   private val button = OnOffButton().apply { isOpaque = true }
+  private val lockedLabel = JBLabel("—", SwingConstants.CENTER).apply {
+    isOpaque = true
+    foreground = UIUtil.getInactiveTextColor()
+  }
 
   override fun getTableCellRendererComponent(
     table: JTable, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int,
   ): Component {
+    val toolRow = (table.model as? ListTableModel<*>)?.getRowValue(row) as? ToolRow
+    if (toolRow != null && toolRow.tool.isSelectedAsTypeEngine(project)) {
+      lockedLabel.background = table.background
+      return lockedLabel
+    }
     button.isSelected = value == true
     button.background = table.background
     return button

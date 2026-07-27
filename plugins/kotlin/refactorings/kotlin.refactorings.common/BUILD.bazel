@@ -24,6 +24,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-refactorings-base",
     module_name = "intellij.kotlin.refactorings.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

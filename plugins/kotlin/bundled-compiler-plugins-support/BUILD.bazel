@@ -19,6 +19,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_compilerPlugins-support-bundled",
     module_name = "intellij.kotlin.compilerPlugins.support.bundled",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

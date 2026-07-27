@@ -1,5 +1,5 @@
 // "Explicitly ignore return value" "true"
-// LANGUAGE_VERSION: 2.2
+// LANGUAGE_VERSION: 2.3
 // COMPILER_ARGUMENTS: -Xreturn-value-checker=full
 // RUN_PIPELINE_TILL: BACKEND
 // WITH_STDLIB

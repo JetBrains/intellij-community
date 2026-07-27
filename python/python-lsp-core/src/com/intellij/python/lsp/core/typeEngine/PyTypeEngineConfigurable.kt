@@ -6,10 +6,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.python.lsp.core.PyLspCoreBundle
+import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.ui.dsl.builder.toNullableProperty
@@ -44,6 +46,13 @@ class PyTypeEngineConfigurable(
     if (!isSingleModule) {
       row {
         icon(AllIcons.General.Information).commentRight(PyLspCoreBundle.message("comment.multimodule.not.warning"))
+      }
+      // The engine is single-module only, but Pyrefly/ty can still be used as an LSP tool in
+      // multi-module (workspace) projects — point the user there.
+      row {
+        link(PyLspCoreBundle.message("comment.multimodule.use.tool.link")) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, PyExternalToolsConfigurable::class.java)
+        }
       }
 
       return

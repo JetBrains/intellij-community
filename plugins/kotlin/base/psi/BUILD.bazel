@@ -32,6 +32,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
+        "//java/java-psi-impl:psi-impl",
     ],
 )
 
@@ -58,6 +59,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.psi` end

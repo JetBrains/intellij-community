@@ -109,14 +109,18 @@ object SuvorovProgress {
    *
    * See IJPL-211485
    */
-  fun tryProgressWithPendingBackgroundWriteAction() {
+  fun tryProgressWithPendingBackgroundWriteAction(awaitedValue: Deferred<*>) {
+    val application = ApplicationManager.getApplication()
+    val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
     if (Thread.holdsLock(awtComponentLock)) {
-      val application = ApplicationManager.getApplication()
-      val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
       @Suppress("TestOnlyProblems")
       if (rwService is PlatformReadWriteActionSupport) {
-        rwService.signalWriteActionNeedsToBeRetried()
+        rwService.signalBackgroundWriteActionNeedsToBeRetried()
       }
+    }
+    @Suppress("TestOnlyProblems")
+    if (rwService is PlatformReadWriteActionSupport) {
+      rwService.signalSuspendedEdtWriteActionNeedsToBeRetried()
     }
   }
 
@@ -133,7 +137,7 @@ object SuvorovProgress {
     try {
       val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
 
-      tryProgressWithPendingBackgroundWriteAction()
+      tryProgressWithPendingBackgroundWriteAction(awaitedValue)
 
       processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
 

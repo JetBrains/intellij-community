@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.mcpserver.testFramework` start
+jvm_provided_library(
+    name = "plugins_mcp-server_mcpserver-plugin_provided",
+    lib = "//plugins/mcp-server/mcpserver.plugin",
+)
+
 jvm_library(
     name = "mcpserver.testFramework",
     srcs = glob(
@@ -39,6 +44,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/util",
         "//platform/util-ex",
+        ":plugins_mcp-server_mcpserver-plugin_provided",
     ],
 )
 
@@ -62,6 +68,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/ktor/client:client_test_lib",
+        "//plugins/mcp-server/mcpserver.plugin",
+        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//plugins/mcp-server:mcpserver_test_lib",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//platform/core-api:core_test_lib",

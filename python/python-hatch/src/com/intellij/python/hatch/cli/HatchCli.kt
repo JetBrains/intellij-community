@@ -12,13 +12,14 @@ import com.intellij.python.pytools.runtime.executeAndHandleErrors
 import com.intellij.python.pytools.runtime.executeAndMatch
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-sealed class HatchCommand(private val command: Array<String>, protected val runtime: PyToolRuntime) {
+sealed class HatchCommand<P : PathHolder>(private val command: Array<String>, protected val runtime: PyToolRuntime) {
   @Suppress("unused")
   constructor(command: String, runtime: PyToolRuntime) : this(arrayOf(command), runtime)
 
@@ -26,12 +27,16 @@ sealed class HatchCommand(private val command: Array<String>, protected val runt
     return runtime.executeAndHandleErrors(*command, *arguments, transformer = transformer)
   }
 
-  protected suspend fun <T> executeAndMatch(vararg arguments: String, expectedOutput: Regex, transformer: (MatchResult) -> Result<T, @NlsSafe String?>): PyResult<T> {
+  protected suspend fun <T> executeAndMatch(
+    vararg arguments: String,
+    expectedOutput: Regex,
+    transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+  ): PyResult<T> {
     return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
   }
 }
 
-class HatchCli(private val runtime: PyToolRuntime) {
+class HatchCli<P : PathHolder>(internal val runtime: PyToolRuntime) {
   /**
    * Build a project
    */
@@ -45,17 +50,17 @@ class HatchCli(private val runtime: PyToolRuntime) {
   /**
    * Manage the config file
    */
-  fun config(): HatchConfig = HatchConfig(runtime)
+  fun config(): HatchConfig<P> = HatchConfig(runtime)
 
   /**
    * Manage environment dependencies
    */
-  fun dep(): HatchDep = HatchDep(runtime)
+  fun dep(): HatchDep<P> = HatchDep(runtime)
 
   /**
    * Manage project environments
    */
-  fun env(): HatchEnv = HatchEnv(runtime)
+  fun env(): HatchEnv<P> = HatchEnv(runtime)
 
   /**
    * Format and lint source code
@@ -63,45 +68,9 @@ class HatchCli(private val runtime: PyToolRuntime) {
   fun fmt(): PyResult<Unit> = TODO()
 
   /**
-   * Create or initialize a project.
-   * Returns projects tree structure in human-readable ascii view:
-   *
-   * {projectName}
-   * ├── src
-   * │   └── {projectName}
-   * │       ├── __about__.py
-   * │       └── __init__.py
-   * ├── tests
-   * │   └── __init__.py
-   * ├── LICENSE.txt
-   * ├── README.md
-   * └── pyproject.toml
-   *
-   * @param[initExistingProject] Initialize an existing project
-   */
-  suspend fun new(projectName: String, location: Path? = null, initExistingProject: Boolean = false): PyResult<String> {
-    val options = listOf(
-      initExistingProject to "--init",
-      true to projectName,
-      (location != null) to location,
-    ).makeOptions()
-    return runtime.executeInteractive("new", *options) { eelProcess, _ ->
-      if (initExistingProject) {
-        try {
-          eelProcess.sendWholeText("$projectName\n")
-        }
-        catch (error: IOException) {
-          return@executeInteractive Result.failure("Failed to write to process: ${error.localizedMessage}")
-        }
-      }
-      Result.success("Created")
-    }
-  }
-
-  /**
    * View project information
    */
-  fun project(): HatchProject = HatchProject(runtime)
+  fun project(): HatchProject<P> = HatchProject(runtime)
 
   /**
    * Publish build artifacts
@@ -111,7 +80,7 @@ class HatchCli(private val runtime: PyToolRuntime) {
   /**
    * Manage Python installations
    */
-  fun python(): HatchPython = HatchPython(runtime)
+  fun python(): HatchPython<P> = HatchPython(runtime)
 
   /**
    * Run commands within project environments
@@ -132,7 +101,7 @@ class HatchCli(private val runtime: PyToolRuntime) {
   /**
    * Manage Hatch
    */
-  fun self(): HatchSelf = HatchSelf(runtime)
+  fun self(): HatchSelf<P> = HatchSelf(runtime)
 
   /**
    * Enter a shell within a project's environment
@@ -189,7 +158,10 @@ class HatchCli(private val runtime: PyToolRuntime) {
   suspend fun setVersion(desiredVersion: String): PyResult<Pair<Version, Version>> {
     val expectedOutput = """^(?:.*\n)*Old: (.*)\nNew: (.*)\n?$""".toRegex()
 
-    return runtime.executeAndMatch("version", desiredVersion, expectedOutput = expectedOutput, outputContentSupplier = { it.stderrString }) { matchResult ->
+    return runtime.executeAndMatch("version",
+                                   desiredVersion,
+                                   expectedOutput = expectedOutput,
+                                   outputContentSupplier = { it.stderrString }) { matchResult ->
       val (oldVersion, newVersion) = matchResult.destructured
       try {
         Result.success(Version.parse(oldVersion) to Version.parse(newVersion))
@@ -198,6 +170,34 @@ class HatchCli(private val runtime: PyToolRuntime) {
         Result.failure(e.localizedMessage)
       }
     }
+  }
+}
+
+/**
+ * Create or initialize a project. This is intentionally available only for EEL-backed Hatch CLIs.
+ *
+ * @param[initExistingProject] Initialize an existing project
+ */
+suspend fun HatchCli<PathHolder.Eel>.new(
+  projectName: String,
+  location: Path? = null,
+  initExistingProject: Boolean = false,
+): PyResult<String> {
+  val options = listOf(
+    initExistingProject to "--init",
+    true to projectName,
+    (location != null) to location,
+  ).makeOptions()
+  return runtime.executeInteractive("new", *options) { eelProcess, _ ->
+    if (initExistingProject) {
+      try {
+        eelProcess.sendWholeText("$projectName\n")
+      }
+      catch (error: IOException) {
+        return@executeInteractive Result.failure("Failed to write to process: ${error.localizedMessage}")
+      }
+    }
+    Result.success("Created")
   }
 }
 

@@ -1,6 +1,6 @@
 ---
 name: registry
-description: Guidelines for using the IntelliJ Registry API. Use when working with registry keys or feature flags.
+description: Use the IntelliJ Registry API for registry keys and feature flags.
 ---
 
 # Working with Registry

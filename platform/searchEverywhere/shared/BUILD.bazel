@@ -44,6 +44,7 @@ jvm_library(
         "//platform/execution",
         "//platform/lang-api:lang",
         "//fleet/rhizomedb",
+        "//platform/projectModel-api:projectModel",
     ],
 )
 
@@ -86,6 +87,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere` end

@@ -13,6 +13,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
     <module name="intellij.platform.statistics"/>

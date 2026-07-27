@@ -19,11 +19,8 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
-import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.isEnabledOn
 import com.intellij.python.pytools.ui.getInstalledToolPackage
-import com.intellij.python.ty.TyPyTool
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PythonVersionValue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -89,8 +86,10 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
       val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
 
-      val wasEnabled = PyreflyPyTool.getInstance().isEnabledOn(project)
-      if (!wasEnabled && typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY) {
+      // The type engine no longer force-enables the matching LSP tool: the two capabilities are
+      // independent (PY-90550). We still auto-install Pyrefly when it becomes the selected engine;
+      // the per-module "already installed?" check makes this a no-op when it is up to date.
+      if (typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY) {
         project.modules.forEach { module ->
           val pythonSdk = module.getSdk() ?: return@forEach
           val managerUI = PythonPackageManagerUI.forSdk(project, pythonSdk)
@@ -109,10 +108,6 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
             PyreflyUsageCollector.logPyreflyAutoInstalled(result != null)
           }
         }
-      }
-      with(PyToolsState.getInstance(project)) {
-        setEnabled(PyreflyPyTool.getInstance(), typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY)
-        setEnabled(TyPyTool.getInstance(), typeEngineProjectSettings.typeEngine == PyTypeEngineType.TY)
       }
       updateLspServers()
     }

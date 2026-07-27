@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout
 
-import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.checkNonNegative
-import com.intellij.ui.dsl.checkPositive
+import com.intellij.ui.dsl.builder.impl.checkNonNegative
+import com.intellij.ui.dsl.builder.impl.checkPositive
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -98,9 +97,6 @@ data class Constraints(
     checkNonNegative("y", y)
     checkPositive("width", width)
     checkPositive("height", height)
-
-    if (widthGroup != null && horizontalAlign == HorizontalAlign.FILL) {
-      throw UiDslException("Width group cannot be used with horizontal align FILL: $widthGroup")
-    }
+    check(!(widthGroup != null && horizontalAlign == HorizontalAlign.FILL)) { "Width group cannot be used with horizontal align FILL: $widthGroup" }
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere). This functionality is obsolete.")
 object PreviewExperiment {
   @JvmStatic
   val isExperimentEnabled: Boolean

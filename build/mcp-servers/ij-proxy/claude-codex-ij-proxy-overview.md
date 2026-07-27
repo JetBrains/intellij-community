@@ -13,11 +13,10 @@ January 21, 2026 and may differ from current builds.
 ## Blocked JetBrains MCP tools
 
 JetBrains MCP still exposes file-operation tools that overlap the native agent
-surface. ij-proxy filters their current, legacy, and container variants:
+surface. ij-proxy filters both the project and container variants:
 
-- Reads: `read_file`, `get_file_text_by_path`, `container_read_file`.
-- Writes and patches: `apply_patch`, `create_new_file`,
-  `replace_text_in_file`, `container_write_file`.
+- Reads: `read_file`, `container_read_file`.
+- Writes and patches: `apply_patch`, `create_new_file`, `container_write_file`.
 - Directory listing: `list_dir`, `list_directory_tree`,
   `container_list_dir`.
 
@@ -27,8 +26,10 @@ JetBrains MCP tools are removed upstream.
 
 ## Remaining proxy behavior
 
-- Search tools are passed through when the upstream has the current
-  `search_*` interface and adapted from legacy tools otherwise.
+- ij-proxy supports IntelliJ platform build 262+, where `search_*`,
+  `lint_files(files)` and `reformat_file(files)` are the only tool shapes, so
+  they are passed through untouched.
+- `get_file_problems` is hidden in favor of the batched `lint_files`.
 - Multi-IDE search results are merged; path-scoped analysis, formatting, and
   refactoring calls are routed between IDEA and Rider.
 - Container mode routes search through container tools and retains the

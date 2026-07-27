@@ -2,7 +2,7 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import com.intellij.icons.AllIcons
-import com.intellij.internal.InternalActionsBundle
+import com.intellij.internal.inspector.IdeUiInspectorBundle
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -13,8 +13,9 @@ interface UiInspectorAccessibilityInspection {
   val description: String
     get() {
       val key = "ui.inspector.accessibility.audit.${this.javaClass.simpleName}.description"
-      return if (accessibleRole != null) InternalActionsBundle.message(key, accessibleRole)
-      else InternalActionsBundle.message(key)
+      val role = accessibleRole
+      return if (role != null) IdeUiInspectorBundle.message(key, role)
+      else IdeUiInspectorBundle.message(key)
     }
 
   //  Inspections that need to include the information about accessible role in the description can override this property

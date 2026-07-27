@@ -4,7 +4,10 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` start
 create_kotlinc_options(
     name = "custom_kotlin-compilerPlugins-parcelize",
-    opt_in = ["org.jetbrains.kotlin.analysis.api.KaContextParameterApi"],
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    ],
     x_context_parameters = True,
 )
 
@@ -34,7 +37,6 @@ jvm_library(
         "@lib//:kotlinc-analysis-api-k2",
         "@lib//:kotlinc-parcelize-compiler-plugin",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/compiler-plugins/parcelize/common",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/frontend-independent",
         "//java/java-psi-api:psi",
@@ -43,6 +45,11 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//plugins/kotlin/base/psi",
     ],
 )
 
@@ -60,7 +67,6 @@ jvm_library(
         # do not sort,
         ":kotlin-compilerPlugins-parcelize",
         "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/compiler-plugins/parcelize/common:common_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//java/java-psi-api:psi_test_lib",
@@ -69,6 +75,11 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` end

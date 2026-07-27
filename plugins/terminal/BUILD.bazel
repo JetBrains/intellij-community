@@ -90,6 +90,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//fleet/rhizomedb",
         "//platform/ijent",
+        "//platform/util/diff",
         ":libraries_opentelemetry_provided",
         ":libraries_opentelemetry-semconv_provided",
         ":libraries_opentelemetry-extension-kotlin_provided",
@@ -167,6 +168,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/ijent:ijent_test_lib",
+        "//platform/util/diff:diff_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal` end

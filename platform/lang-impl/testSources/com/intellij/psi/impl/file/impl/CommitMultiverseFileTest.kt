@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
@@ -42,13 +43,12 @@ internal class CommitMultiverseFileTest {
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
 
     private val project by projectFixture
-
-    private val psiManager by lazy { PsiManagerEx.getInstanceEx(project) }
-
-    private val contextBridge by lazy { ProjectModelContextBridge.getInstance(project) }
-    private val context1 by lazy { contextBridge.getContext(module1.get())!! }
-    private val context2 by lazy { contextBridge.getContext(module2.get())!! }
   }
+
+  private val psiManager get() = PsiManagerEx.getInstanceEx(project)
+  private val contextBridge get() = ProjectModelContextBridge.getInstance(project)
+  private val context1 get() = contextBridge.getContext(module1.get())!!
+  private val context2 get() = contextBridge.getContext(module2.get())!!
 
   private val virtualFile by sourceRoot.virtualFileFixture("TestCommon.java", "class A {}")
   private val files by sourceRoot.fileFixtures(50)
@@ -101,9 +101,19 @@ internal class CommitMultiverseFileTest {
   fun `test commit document and requesting psi for another context at the same time`() = timeoutRunBlocking(20.seconds) {
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
+    val (contextA, contextB) = readAction {
+      val preferredContext = CodeInsightContextManager.getInstance(project).getPreferredContext(files.first())
+      val otherContext = when (preferredContext) {
+        context1 -> context2
+        context2 -> context1
+        else -> error("Expected a context of one of the modules, got $preferredContext")
+      }
+      preferredContext to otherContext
+    }
+
     // preparing psi files
     val psiFiles1 = readAction {
-      files.map { psiManager.findFile(it, context1)!! }
+      files.map { psiManager.findFile(it, contextA)!! }
     }
 
     readAction {
@@ -119,7 +129,11 @@ internal class CommitMultiverseFileTest {
     // adding long suffix to all files
     edtWriteAction {
       for (file in files) {
-        Assertions.assertEquals(1, psiManager.fileManagerEx.findCachedViewProviders(file).size)
+        Assertions.assertEquals(
+          1,
+          psiManager.fileManagerEx.findCachedViewProviders(file).size,
+          "The commit race requires exactly one provider before requesting context B",
+        )
       }
 
       documents.forEach {
@@ -134,7 +148,7 @@ internal class CommitMultiverseFileTest {
       async {
         delay(index.milliseconds) // waiting a bit to increase the chance of clashing between async commit and file request
         readAction {
-          val psi = psiManager.findFile(file, context2)!!
+          val psi = psiManager.findFile(file, contextB)!!
           ensureParsed(psi)
           psi
         }

@@ -3,7 +3,6 @@ package com.intellij.tasks.generic;
 
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum ResponseType {
 
-  XML("application/xml", XmlFileType.INSTANCE, findXPathFileType()),
+  XML("application/xml", XmlFileType.INSTANCE, findFileTypePlainDefault("XPath")),
   JSON("application/json", findFileTypePlainDefault("JSON"), PlainTextFileType.INSTANCE),
   // TODO: think about possible selector type if it needed at all (e.g. CSS selector)
   HTML("text/html", HtmlFileType.INSTANCE, PlainTextFileType.INSTANCE),
@@ -29,9 +28,6 @@ public enum ResponseType {
   private final String myMimeType;
   private final FileType myContentFileType;
   private final FileType mySelectorFileType;
-
-  private static Logger LOG = Logger.getInstance(ResponseType.class);
-
 
   ResponseType(@NotNull String s, @NotNull FileType contentFileType, @NotNull FileType selectorFileType) {
     myMimeType = s;
@@ -46,24 +42,6 @@ public enum ResponseType {
   private static @NotNull FileType findFileTypePlainDefault(final @NotNull String name) {
     FileType fileType = FileTypeManager.getInstance().findFileTypeByName(name);
     return fileType == null ? PlainTextFileType.INSTANCE : fileType;
-  }
-
-  /**
-   * Temporary workaround for IDEA-112605
-   */
-  private static @NotNull FileType findXPathFileType() {
-    if (LOG == null) {
-      LOG = Logger.getInstance(ResponseType.class);
-    }
-    try {
-      Class<?> xPathClass = Class.forName("org.intellij.lang.xpath.XPathFileType");
-      LOG.debug("XPathFileType class loaded successfully");
-      return (FileType)xPathClass.getField("XPATH").get(null);
-    }
-    catch (Exception e) {
-      LOG.debug("XPathFileType class not found. Using PlainText.INSTANCE instead");
-      return PlainTextFileType.INSTANCE;
-    }
   }
 
   public @NotNull String getMimeType() {

@@ -8,10 +8,22 @@
     <module name="intellij.libraries.jgoodies.forms"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.javax.annotation"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
+    <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.netty.codec.protobuf"/>
+    <module name="intellij.libraries.protobuf"/>
     <module name="intellij.platform.jps.build.dependencyGraph"/>
   </dependencies>
   <!-- endregion -->
 
 </idea-plugin>
-

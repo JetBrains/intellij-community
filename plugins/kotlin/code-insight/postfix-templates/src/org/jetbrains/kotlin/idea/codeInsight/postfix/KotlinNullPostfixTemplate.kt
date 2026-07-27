@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 
 internal class KotlinNullPostfixTemplate : StringBasedPostfixTemplate {
     @Suppress("ConvertSecondaryConstructorToPrimary")

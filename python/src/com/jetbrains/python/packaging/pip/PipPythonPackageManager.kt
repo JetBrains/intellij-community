@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.application.EDT
@@ -24,6 +24,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.management.DependenciesExporter
 import com.intellij.python.pyproject.PyDependencyGroup
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -45,6 +46,7 @@ import java.nio.file.Path
  * This class will be internal soon, please do not use it outside of this module, even in monorepo
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(

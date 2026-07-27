@@ -43,6 +43,29 @@ fun throwAlreadyDisposedError(serviceDescription: String, componentManager: Comp
   throw AlreadyDisposedException("Cannot create $serviceDescription because container is already disposed (container=${componentManager})")
 }
 
+/**
+ * Puts a freshly created [disposable] under [ComponentManagerImpl.serviceParentDisposable], which is the only path
+ * by which service and component instances are disposed. [disposable] may be the instance itself or a lifecycle wrapper
+ * for [instanceClass].
+ *
+ * If the container has already disposed its services, the registration is rejected and nobody would ever dispose
+ * [disposable] — so dispose it here instead of leaking it together with everything it has registered in the Disposer
+ * tree, and report the container state to the caller.
+ */
+internal fun registerDisposableWithServiceParent(
+  componentManager: ComponentManagerImpl,
+  disposable: Disposable,
+  instanceClass: Class<*>,
+) {
+  if (Disposer.tryRegister(componentManager.serviceParentDisposable, disposable)) {
+    return
+  }
+
+  // `Disposer.dispose` is idempotent and handles instances which never made it into the tree
+  Disposer.dispose(disposable)
+  throwAlreadyDisposedError(instanceClass.name, componentManager)
+}
+
 internal fun doNotUseConstructorInjectionsMessage(where: String): String {
   return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where). " +
          "See https://plugins.jetbrains.com/docs/intellij/plugin-services.html for details."
@@ -50,7 +73,7 @@ internal fun doNotUseConstructorInjectionsMessage(where: String): String {
 
 internal suspend fun initializeComponentOrLightService(component: Any, pluginId: PluginId, componentManager: ComponentManagerImpl) {
   if (component is Disposable) {
-    Disposer.register(componentManager.serviceParentDisposable, component)
+    registerDisposableWithServiceParent(componentManager, component, component.javaClass)
   }
 
   @Suppress("DEPRECATION")

@@ -321,7 +321,7 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
 }
 
 private fun printBasicHelp() {
-  println("""
+  println(@Suppress("GrazieInspection") """
     Basic commands and options:
     --help           prints the short list of basic commands and options
     --list-commands  prints the full list of commands available in this installation

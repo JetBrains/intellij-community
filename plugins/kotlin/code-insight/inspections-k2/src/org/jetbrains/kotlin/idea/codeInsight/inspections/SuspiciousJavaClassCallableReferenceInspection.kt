@@ -89,7 +89,7 @@ internal class SuspiciousJavaClassCallableReferenceInspection :
 
         if (resolvedCall.symbol.callableId != JvmStandardClassIds.Callables.JavaClass) return null
 
-        val receiverKind = if (resolvedCall.partiallyAppliedSymbol.extensionReceiver != null) {
+        val receiverKind = if (resolvedCall.extensionReceiver != null) {
             // receiver value is present, the receiver is an expression
             ReceiverKind.EXPRESSION
         } else {

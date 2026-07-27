@@ -61,10 +61,10 @@ public final class TokenSet {
    *
    * @return the contents of the set.
    */
-  public IElementType @NotNull [] getTypes() {
+  public @NotNull IElementType @NotNull [] getTypes() {
     if (myOrCondition != null) {
       // don't cache, since new element types matching the given condition can be registered at any moment
-      return IElementType.enumerate(this::contains);
+      return IElementType.enumerate(t -> contains(t));
     }
 
     IElementType[] types = myTypes;
@@ -76,8 +76,9 @@ public final class TokenSet {
       else {
         List<IElementType> list = new ArrayList<>();
         for (short i = (short)Math.max(1, myShift << 6); i <= myMax; i++) {
-          if (!get(i)) continue;
-          list.add(IElementType.find(i));
+          if (get(i)) {
+            list.add(IElementType.find(i));
+          }
         }
         types = list.toArray(IElementType.EMPTY_ARRAY);
       }

@@ -9,6 +9,7 @@ import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.execService.execute
 import com.jetbrains.python.Result
@@ -37,9 +38,16 @@ suspend fun <T> runExecutableWithProgress(
   transformer: ProcessOutputTransformer<T>,
   execService: ExecService = ExecService(),
   processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
+  uploadConfig: UploadConfig? = null,
   downloadConfig: DownloadConfig? = null,
 ): PyResult<T> {
-  val execOptions = ExecOptions(timeout = timeout, env = env, weight = processWeight, downloadAfterExecution = downloadConfig)
+  val execOptions = ExecOptions(
+    timeout = timeout,
+    env = env,
+    weight = processWeight,
+    uploadBeforeExecution = uploadConfig,
+    downloadAfterExecution = downloadConfig,
+  )
 
   val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
     when {

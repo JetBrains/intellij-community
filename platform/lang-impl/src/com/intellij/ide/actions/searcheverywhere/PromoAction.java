@@ -7,7 +7,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). This functionality is obsolete.
+ */
+@ApiStatus.Internal
+@Deprecated
 public interface PromoAction {
   @Nullable
   Icon getPromotedProductIcon();

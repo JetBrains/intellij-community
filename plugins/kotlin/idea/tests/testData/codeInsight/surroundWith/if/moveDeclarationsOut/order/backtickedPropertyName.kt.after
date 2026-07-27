@@ -1,0 +1,10 @@
+fun foo() {
+    val `when`: String
+    val b = if (<caret>) {
+        `when` = "aaa"
+        `when`
+    }
+
+    `when`[1]
+    b[1]
+}

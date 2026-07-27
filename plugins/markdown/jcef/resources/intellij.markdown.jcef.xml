@@ -4,6 +4,8 @@
     <plugin id="com.intellij.modules.jcef"/>
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.markdown.frontend"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ui.jcef"/>
   </dependencies>
   <!-- endregion -->

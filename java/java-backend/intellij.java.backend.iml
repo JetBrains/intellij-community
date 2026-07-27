@@ -27,17 +27,16 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.core" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.indexing.serializers" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.compiler.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.refactoring" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
 </module>

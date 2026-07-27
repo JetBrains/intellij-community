@@ -4,7 +4,6 @@ package com.intellij.openapi.observable.dispatcher
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal abstract class AbstractSingleEventDispatcher0 : SingleEventDispatcher0 {
 
   protected abstract val delegate: SingleEventDispatcher<Nothing?>

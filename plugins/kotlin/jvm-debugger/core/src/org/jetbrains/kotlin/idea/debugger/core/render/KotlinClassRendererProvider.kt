@@ -7,7 +7,7 @@ import com.sun.jdi.Type
 import org.jetbrains.kotlin.idea.debugger.KotlinClassRenderer
 import java.util.function.Function
 
-private class KotlinClassRendererProvider : CompoundRendererProvider() {
+internal class KotlinClassRendererProvider : CompoundRendererProvider() {
     private val classRenderer = KotlinClassRenderer()
 
     override fun getName() = "Kotlin class"

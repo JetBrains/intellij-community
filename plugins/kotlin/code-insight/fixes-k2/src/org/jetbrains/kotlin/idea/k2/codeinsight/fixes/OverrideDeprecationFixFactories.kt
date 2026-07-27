@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.quickfix.MESSAGE_ARGUMENT
 import org.jetbrains.kotlin.idea.quickfix.REPLACE_WITH_ARGUMENT
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal object OverrideDeprecationFixFactories {

@@ -62,7 +62,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
     propertiesEncoding(props, null);
 
     checkHighlighting(javaFile);
-    applyFix(javaFile, "Convert to escape sequences");
+    applyFix("Convert to escape sequences");
     checkFile(props, "key1=Java + \\u2615");
   }
 
@@ -106,7 +106,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
     propertiesEncoding(props, null);
 
     checkHighlighting(javaFile);
-    applyFix(javaFile, "Convert to escape sequences");
+    applyFix("Convert to escape sequences");
     checkFile(props, "key1=Java + \\u2615");
   }
 
@@ -214,8 +214,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void applyFix(PsiFile file, String fixName) {
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+  private void applyFix(String fixName) {
     myFixture.launchAction(myFixture.findSingleIntention(fixName));
   }
 

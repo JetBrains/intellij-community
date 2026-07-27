@@ -248,7 +248,7 @@ jvm_library(
         "//plugins/maven/maven3-server-impl:server-m3-impl",
         "//plugins/maven/maven36-server-impl:server-m36-impl",
         "//plugins/maven/maven40-server-impl:server-m40",
-        "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.plugin",
         "//python/pluginCore:community-plugin",
     ],
 )
@@ -439,7 +439,7 @@ jvm_library(
         "//plugins/maven/maven3-server-impl:server-m3-impl_test_lib",
         "//plugins/maven/maven36-server-impl:server-m36-impl_test_lib",
         "//plugins/maven/maven40-server-impl:server-m40_test_lib",
-        "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//python/python-process-output/common",
         "//python/python-process-output/common:common_test_lib",
         "//python/pluginCore:community-plugin_test_lib",

@@ -57,6 +57,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/ktor/client",
         "//libraries/ktor/client:client_test_lib",
+        "//plugins/mcp-server/mcpserver.plugin",
+        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//plugins/mcp-server/mcpserver.testFramework",

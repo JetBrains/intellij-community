@@ -424,14 +424,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
  */
 @Suppress("INVISIBLE_REFERENCE")
 private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {//
-  val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
-  ThreadLocalEventLoop.resetEventLoop()
+  val existingEventLoop = kotlinx.coroutines.ThreadLocalEventLoop.currentOrNull()
+  kotlinx.coroutines.ThreadLocalEventLoop.resetEventLoop()
   try {
     return action()
   }
   finally {
     if (existingEventLoop != null) {
-      ThreadLocalEventLoop.setEventLoop(existingEventLoop)
+      kotlinx.coroutines.ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
 }

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -129,6 +130,7 @@ fun canExplicitTypeBeRemoved(element: KtDeclaration): Boolean {
     return when {
         !canBeRemovedByTypeReference(element, typeReference) -> false
         element is KtParameter -> element.isLoopParameter || element.isSetterParameter
+        element is KtDestructuringDeclarationEntry -> true
         element is KtNamedFunction -> true
         element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
         else -> false

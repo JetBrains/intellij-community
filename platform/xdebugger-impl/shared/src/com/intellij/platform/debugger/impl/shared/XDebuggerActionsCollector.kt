@@ -2,7 +2,6 @@
 package com.intellij.platform.debugger.impl.shared
 
 import com.intellij.ide.actions.ToolwindowFusEventFields
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
@@ -18,6 +17,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule
 import com.intellij.xdebugger.frame.XStackFrame
 import org.jetbrains.annotations.ApiStatus
 
@@ -93,7 +93,7 @@ object XDebuggerActionsCollector : CounterUsagesCollector() {
 }
 
 internal class FrameTypeValidator : CustomValidationRule() {
-  private val fileTypeValidator = FileTypeUsagesCollector.ValidationRule()
+  private val fileTypeValidator = FileTypeValidationRule()
 
   override fun getRuleId(): String = "frame_type"
 

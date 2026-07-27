@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.UIComponentFileEditor;
 import com.intellij.ide.plugins.UIComponentVirtualFile;
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,14 +27,16 @@ import javax.swing.JComponent;
 final class ShowPluginManagerAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    PluginManagerOpenSourceEnum openSource = PluginManagerOpenSourceEnum.fromActionPlace(e.getPlace());
     Project project = e.getProject();
     if (project != null && Registry.is("ide.show.plugins.in.editor")) {
-      showPluginsInEditor(project);
+      showPluginsInEditor(project, openSource);
       return;
     }
     ShowSettingsUtil.getInstance().showSettingsDialog(
       ProjectUtil.currentOrDefaultProject(project),
-      PluginManagerConfigurable.class
+      PluginManagerConfigurable.class,
+      c -> c.setOpenSource(openSource)
     );
   }
 
@@ -41,28 +45,37 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
     return ActionUpdateThread.BGT;
   }
 
-  private static void showPluginsInEditor(@NotNull Project project) {
-    var file = new PluginVirtualFile();
+  private static void showPluginsInEditor(@NotNull Project project, @NotNull PluginManagerOpenSourceEnum openSource) {
+    var file = new PluginVirtualFile(openSource);
     FileEditorManager.getInstance(project).openFile(file, true);
   }
 
   private static final class PluginVirtualFile extends UIComponentVirtualFile {
-    PluginVirtualFile() {
+    private final PluginManagerOpenSourceEnum openSource;
+
+    PluginVirtualFile(@NotNull PluginManagerOpenSourceEnum openSource) {
       super("Plugins", AllIcons.Nodes.Plugin);
+      this.openSource = openSource;
     }
 
     @Override
     public @NotNull Content createContent(@NotNull UIComponentFileEditor editor) {
-      return new ShowPluginManagerAction.Content();
+      return new ShowPluginManagerAction.Content(openSource);
     }
   }
 
   private static final class Content implements UIComponentVirtualFile.Content {
+    private final PluginManagerOpenSourceEnum openSource;
     PluginManagerConfigurable configurable;
+
+    Content(@NotNull PluginManagerOpenSourceEnum openSource) {
+      this.openSource = openSource;
+    }
 
     @Override
     public @NotNull JComponent createComponent() {
       configurable = new PluginManagerConfigurable();
+      configurable.setOpenSource(openSource);
       return PluginsTabFactory.createPluginsPanel(configurable);
     }
 

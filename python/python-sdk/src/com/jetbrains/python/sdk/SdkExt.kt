@@ -109,6 +109,7 @@ val Sdk.isSdkSeemsValid: Boolean
     }
 
     val pythonSdkAdditionalData = pySdkAdditionalData
+    if (!pythonSdkAdditionalData.hasValidWorkingDirectory()) return false
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
 

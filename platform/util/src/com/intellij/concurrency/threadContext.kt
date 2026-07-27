@@ -214,10 +214,6 @@ private val VIOLATORS : List<String> = listOf(
    */
   "com.intellij.openapi.wm.impl.WindowCloseListener.windowClosing",
   "com.intellij.ide.ApplicationActivationStateManager.updateState",
-  /*
-   * Gentle flusher's initialization is scheduled before app loads completely, so we do not have context on the moment of scheduling
-   */
-  "com.intellij.openapi.util.io.GentleFlusherBase",
 )
 
 private fun isKnownViolator() : Boolean {

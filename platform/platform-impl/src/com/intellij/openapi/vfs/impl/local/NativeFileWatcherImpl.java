@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
@@ -291,7 +290,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
-    @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
     @Override public boolean sendIncompleteLines() { return false; }
     @Override public boolean withSeparators() { return false; }
   };

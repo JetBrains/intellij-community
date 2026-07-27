@@ -84,7 +84,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -208,7 +207,7 @@ class FrontendXDebuggerSession(
   override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
 
   private val consoleViewDeferred: Deferred<ConsoleView?> = scope.async {
-    sessionDto.consoleViewData?.consoleView(processHandler)
+    sessionDto.consoleViewData?.consoleView(tabScope, processHandler)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -407,18 +406,6 @@ class FrontendXDebuggerSession(
     val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
-    suspend fun onTabClosed() {
-      try {
-        tabInfo.tabClosedCallback.send(Unit)
-      }
-      catch (_: ClosedSendChannelException) {
-        // closed on the backend
-      }
-      finally {
-        tabScope.cancel()
-      }
-    }
-
     val proxy = this@FrontendXDebuggerSession
     val contentToReuse = tabInfo.contentToReuse
     val tab = withContext(Dispatchers.EDT) {
@@ -445,12 +432,12 @@ class FrontendXDebuggerSession(
     }
     val runContentDescriptor = tab.runContentDescriptor
     if (runContentDescriptor == null) {
-      onTabClosed()
+      tabScope.cancel()
       thisLogger().error("Run content descriptor is not set for tab")
       return
     }
     runContentDescriptor.coroutineScope.awaitCancellationAndInvoke {
-      onTabClosed()
+      tabScope.cancel()
     }
 
     val executionEnvDto = tabInfo.executionEnvironmentProxyDto
@@ -459,11 +446,6 @@ class FrontendXDebuggerSession(
       // Set actual content in monolith.
       // see com.intellij.execution.impl.ExecutionManagerImpl.doStartRunProfile
       executionEnvDto.executionEnvironment?.contentToReuse = runContentDescriptor
-    }
-
-    tabScope.launch(Dispatchers.EDT) {
-      tabInfo.showTab.await()
-      tab.showTab(contentToReuse)
     }
 
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
@@ -480,6 +462,8 @@ class FrontendXDebuggerSession(
     }
 
     tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab(contentToReuse)
       pausedFlow.toFlow().collectLatest { paused ->
         tab.onPause(paused.pausedByUser, paused.topFrameIsAbsent)
       }

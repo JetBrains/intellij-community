@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -89,7 +89,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection :
         } ?: return null
 
         // Check if the receiver is an implicit receiver
-        val callReceiver = resolvedCall.partiallyAppliedSymbol.run { extensionReceiver ?: dispatchReceiver }
+        val callReceiver = resolvedCall.run { extensionReceiver ?: dispatchReceiver }
         if (callReceiver !is KaImplicitReceiverValue) return null
 
         // Check if the receiver type is CoroutineScope

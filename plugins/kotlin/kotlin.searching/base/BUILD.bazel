@@ -22,6 +22,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_base",
     module_name = "intellij.kotlin.searching.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

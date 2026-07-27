@@ -13,21 +13,30 @@ import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.updateUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 private typealias AnalyzerCacheKey<T> = Key<Cache<LlmIssue<T>>>
 
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
+data class Costs(val credits: Double, val since: LocalDateTime = LocalDateTime.now()) {
+  operator fun plus(other: Double): Costs = Costs(credits + other, since)
+}
+
 @ApiStatus.Experimental
 internal object SpecificationAnalyzer {
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
+  private val costKey = Key.create<Costs>("cost key for analyzers")
+
+  fun getCosts(file: PsiFile): Costs? = file.viewProvider.virtualFile.getUserData(costKey)
 
   @RequiresBackgroundThread
   fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
@@ -52,7 +61,7 @@ internal object SpecificationAnalyzer {
           log.info("$analyzerName starts executing request with lock")
           val analysis = analyzer.analyze(specifications, client)
           val timeMs = System.currentTimeMillis() - start
-          val credits = analysis.spentCredits / Credit.CREDITS_IN_DOLLAR
+          val credits = analysis.spentCredits() / Credit.CREDITS_IN_DOLLAR
           log.info("""
             Analyzing text with $analyzerName took $timeMs ms on
             text with length ${textLength} and used $credits credits.
@@ -64,6 +73,10 @@ internal object SpecificationAnalyzer {
               analyzerKey,
               Cache(storage.text, dependencies, storage.stamp, analysis.data[storage.name].orEmpty())
             )
+            (storage.file.viewProvider.virtualFile as UserDataHolderEx).updateUserData(costKey) {
+              // Split costs equally across files
+              (it ?: Costs(0.0)) + credits / newStorages.size
+            }
           }
           analysis.data[file.viewProvider.virtualFile.path].orEmpty()
         }
@@ -117,10 +130,10 @@ internal object SpecificationAnalyzer {
 
 private data class Storage<T>(val file: PsiFile, val name: String, val text: String, val stamp: Long, val cache: Cache<LlmIssue<T>>?) {
   constructor(file: PsiFile, analyzerKey: AnalyzerCacheKey<T>) :
-    this(file, file.viewProvider.virtualFile.path, file.text, file.viewProvider.modificationStamp, file.getUserData(analyzerKey))
+    this(file, file.viewProvider.virtualFile.path, file.text, file.modificationStamp, file.getUserData(analyzerKey))
 
   fun isOutdated(dependencies: Set<String>): Boolean =
-    cache == null || cache.stamp < this.stamp || cache.dependencies != dependencies
+    cache == null || cache.stamp != this.stamp || cache.dependencies != dependencies
 }
 
 private data class Cache<T>(val text: String, val dependencies: Set<String>, val stamp: Long, val data: List<T>)

@@ -20,7 +20,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -91,8 +90,6 @@ final class ActivityMonitorAction extends DumbAwareAction {
 
     "com.intellij.openapi.vfs.newvfs.persistent.PersistentFS",
     "com.intellij.openapi.vfs.newvfs.persistent.FSRecords",
-    "com.intellij.util.io.pagecache",
-    FilePageCacheLockFree.class.getName(),
 
     "com.intellij.openapi.roots.impl",
     "javax."
@@ -218,7 +215,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
                         .filter(p -> p.second > 10)
                         .sorted(Comparator.comparing((Pair<String, Long> p) -> p.second).reversed())
                         .limit(8)
-                        .map(p -> String.format("%5.1f  %s", (double) p.second*100 / sinceLastUpdate, p.first))
+                        .map(p -> String.format("%5.1f  %s", (double)p.second * 100 / sinceLastUpdate, p.first))
                         .joining("\n");
         ApplicationManager.getApplication().invokeLater(() -> {
           textArea.setText(text);
@@ -253,7 +250,6 @@ final class ActivityMonitorAction extends DumbAwareAction {
 
         return times;
       }
-
     }, 0, 20, TimeUnit.MILLISECONDS);
     DialogWrapper dialog = new DialogWrapper(false) {
       {

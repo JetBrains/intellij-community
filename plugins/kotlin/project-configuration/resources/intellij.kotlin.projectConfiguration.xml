@@ -1,0 +1,92 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="repo.with.kotlin.versions.url"
+            description="URL of a JSON file with Kotlin versions"
+            defaultValue="https://central.sonatype.com/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-stdlib&amp;core=gav&amp;rows=20&amp;wt=json&amp;sort=v+desc"
+            restartRequired="false"/>
+
+    <localInspection language="kotlin" implementationClass="org.jetbrains.kotlin.idea.configuration.inspections.KaptKotlinCompilerPluginInspection"
+                     shortName="KaptKotlinCompilerPlugin"
+                     key="kapt.kotlin.compiler.plugin.inspection.problem.display.name"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     level="WARNING" enabledByDefault="true" bundle="messages.KotlinProjectConfigurationBundle"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.versions.KotlinJvmMetadataVersionIndex"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.LanguageFeatureValidationRule"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
+    <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
+    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
+    <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
+  </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.buildSystemDependencyManager"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
+            dynamic="true"/>
+    <!--
+   Core project configuration is also packaged into Kotlin Language Server, where VCS UI is intentionally absent.
+   This EP lets the full Kotlin plugin contribute the VCS-backed "view applied changes" dialog from a separate content module.
+     -->
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.configuratorChangesViewer"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinConfiguratorChangesViewer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.libraryVersionProvider"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider"
+                    dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.kotlin.projectConfigurator"
+      interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
+      dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
+            dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

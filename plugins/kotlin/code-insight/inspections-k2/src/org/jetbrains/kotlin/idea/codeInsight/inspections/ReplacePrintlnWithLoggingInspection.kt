@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplacePrintlnWithLoggingInspection.Util.isPrintFunction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -38,7 +39,7 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         val identifier = call.calleeExpression?.text ?: return
 
         val callableId = analyze(call) {
-            call.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId
+            call.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId
         } ?: return
 
         if (!callableId.isPrintFunction()) return

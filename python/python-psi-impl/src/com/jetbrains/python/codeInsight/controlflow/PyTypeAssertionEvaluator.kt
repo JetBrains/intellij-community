@@ -452,6 +452,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
 
       if ((type1 !is PyLiteralType) &&
           type1 is PyClassType &&
+          !type1.isDefinition &&
           PyStdlibTypeProvider.isCustomEnum(type1.pyClass, context)
       ) {
         if (type1.pyClass.getAncestorClasses(context)

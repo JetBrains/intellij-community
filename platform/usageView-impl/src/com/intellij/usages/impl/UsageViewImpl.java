@@ -440,6 +440,15 @@ public class UsageViewImpl implements UsageViewEx {
           updateImmediately();
         }
       });
+    scheduleUpdateTargetNodes();
+  }
+
+  private void scheduleUpdateTargetNodes() {
+    addUpdateRequest(() -> {
+      ReadAction.runBlocking(() -> {
+        myModel.updateTargetNodes(edtFireTreeNodesChangedQueue);
+      });
+    });
   }
 
   @Override
@@ -1414,6 +1423,7 @@ public class UsageViewImpl implements UsageViewEx {
     synchronized (modelToSwingNodeChanges) {
       modelToSwingNodeChanges.clear();
     }
+    scheduleUpdateTargetNodes();
   }
 
   @ApiStatus.Internal

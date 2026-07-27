@@ -66,8 +66,10 @@ import java.util.Set;
 public class MapExternalResourceDialog extends DialogWrapper {
 
   private static final FileChooserDescriptor FILE_CHOOSER_DESCRIPTOR =
-    new FileChooserDescriptor(true, false, false, false, true, false).withTitle(
-      XmlBundle.message("choose.schema.file"));
+    new FileChooserDescriptor(true, false, false, false, true, false)
+      .withTitle(XmlBundle.message("choose.schema.file"))
+      .withEnvironmentRestricted(true)
+      .withLocalFileSystem();
 
   private final JTextField myUri;
   private final JPanel myMainPanel;

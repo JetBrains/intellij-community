@@ -87,8 +87,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds a component-related comment below the cell, aligned by the left edge, with the appropriate color and font size.
    * * [comment] can contain HTML tags except `<html>`, which is added automatically
-   * * `\n` does not work as new line in html, use `<br>` instead
-   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * `\n` does not work as a new line in HTML, use `<br>` instead
+   * * Links with href to http/https are automatically marked with an additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    * * The related component uses the comment as part of its accessible description if the accessible description
    * is not explicitly specified by the [accessibleDescription] method
@@ -96,8 +96,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * The comment occupies the available width before the next comment (if present) or
    * the whole remaining width. Visibility and enabled state of the cell affect the comment as well.
    *
-   * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
-   * can be implemented later)
+   * For layout [RowLayout.LABEL_ALIGNED] comment after the second column is always placed in the second column (there are
+   * technical problems, can be implemented later)
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
    * @see MAX_LINE_LENGTH_NO_WRAP
@@ -111,12 +111,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds a component-related comment on the right side, with the appropriate color and font size.
    * * [comment] can contain HTML tags except `<html>`, which is added automatically
-   * * `\n` does not work as new line in html, use `<br>` instead
-   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * `\n` does not work as a new line in HTML, use `<br>` instead
+   * * Links with href to http/https are automatically marked with an additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    * * The related component uses the comment as part of its accessible description if the accessible description
    * is not explicitly specified by the [accessibleDescription] method
-   * * Text is not wrapped and uses only html markup like `<br>`, similar to [MAX_LINE_LENGTH_NO_WRAP]
+   * * Text is not wrapped and uses only HTML markup like `<br>`, similar to [MAX_LINE_LENGTH_NO_WRAP]
    *
    * Visibility and enabled state of the cell affect the comment as well.
    */
@@ -129,7 +129,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Adds a context help button related to the component. [title] and [description] are used for the tooltip.
    *
    * * [title] and [description] can contain HTML tags except `<html>`, which is added automatically
-   * * `\n` does not work as new line in html, use `<br>` instead
+   * * `\n` does not work as a new line in HTML, use `<br>` instead
    * * The related component uses the [description] as part of its accessible description if the accessible description
    * is not explicitly specified by the [accessibleDescription] method
    *
@@ -138,7 +138,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<T>
 
   /**
-   * Adds the label with optional mnemonic related to the cell component.
+   * Adds the label with an optional mnemonic related to the cell component.
    * See also doc for overloaded method
    */
   fun label(@NlsContexts.Label label: String, position: LabelPosition = LabelPosition.LEFT): Cell<T>
@@ -154,7 +154,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun label(label: JLabel, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
   /**
-   * All components from the same width group will have the same width equals to maximum width from the group.
+   * All components from the same width group will have the same width equals to the maximum width from the group.
    */
   fun widthGroup(group: String): Cell<T>
 
@@ -265,12 +265,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun validationOnApply(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
 
   /**
-   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply].
+   * Shows error [message] if [condition] is true. Short version for a particular case of [validationOnApply].
    */
   fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
   /**
-   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply].
+   * Shows error [message] if [condition] is true. Short version for a particular case of [validationOnApply].
    */
   fun addValidationRule(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
@@ -293,7 +293,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Adds [listener] to cell component data modification.
    * If the component is not supported yet, UiDslException is thrown.
    *
-   * See below description of some non-trivial cases:
+   * See below for a description of some non-trivial cases:
    * * Non-editable [JComboBox] sets selected item to the first element while initialization,
    * so for this event onChange is not called (because not installed yet)
    * * Editable [JComboBox] sets selected item after focus is lost, so there are no onChange events while typing

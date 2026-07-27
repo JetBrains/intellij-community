@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface NavigationService {
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): NavigationService {
       return project.service<NavigationService>()
     }

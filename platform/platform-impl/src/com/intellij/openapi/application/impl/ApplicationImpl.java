@@ -42,7 +42,6 @@ import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -1460,6 +1459,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     app.lock.addWriteActionListener(app.appListenerDispatcherWrapper);
     app.lock.setLegacyIndicatorProvider(myLegacyIndicatorProvider);
     app.lock.setErrorHandler(lockingErrorHandler);
+    app.lock.setAllowanceForReadActions(() -> !EDT.isCurrentThreadEdt());
     SwingUtilities.invokeLater(() -> {
       SuvorovProgress.INSTANCE.init(app);
       app.lock.setLockAcquisitionInterceptor((deferred) -> {

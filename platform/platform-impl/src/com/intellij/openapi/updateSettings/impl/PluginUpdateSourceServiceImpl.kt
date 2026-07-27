@@ -13,7 +13,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService.Companion.isFunctionalitySupported
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.util.UriUtil
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -52,6 +57,14 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
       return
     }
     updateState({ copy(sources = state.sources - pluginId.idString) }) { "Plugin uninstalled: $pluginId" }
+  }
+
+  override fun createMarketplacePluginUpdateSourceId(): PluginUpdateSourceId {
+    return createRepository(null)
+  }
+
+  override fun createCustomRepositoryPluginUpdateSourceId(host: String): PluginUpdateSourceId {
+    return createRepository(host)
   }
 
   private fun updateState(
@@ -114,7 +127,7 @@ internal data class XmlSerializableRepository(
   fun toPluginSourceId(): PluginUpdateSourceId = Repository(hostToSerialize, isMarketplaceToSerialize)
 }
 
-internal fun createRepository(initialHost: String?): PluginUpdateSourceId {
+private fun createRepository(initialHost: String?): PluginUpdateSourceId {
   val isMarketplace = initialHost == null
   var host = initialHost ?: MarketplaceCustomizationService.getInstance().getPluginDownloadUrl()
   host = UriUtil.trimParameters(host).trimEnd('/')

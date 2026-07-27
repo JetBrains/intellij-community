@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.runToolbar
 import com.intellij.execution.ExecutorActionStatus
 import com.intellij.execution.InlineResumeCreator
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.fullRunAccess
 import com.intellij.execution.runToolbar.RTBarAction
 import com.intellij.execution.runToolbar.RunToolbarMainSlotState
 import com.intellij.execution.runToolbar.RunToolbarProcess
@@ -18,8 +17,6 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ide.core.permissions.Permission
-import com.intellij.platform.ide.core.permissions.RequiresPermissions
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.CurrentSessionXDebuggerResumeHandler
@@ -89,7 +86,7 @@ internal class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction(), Act
   }
 }
 
-internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RequiresPermissions {
+internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -132,10 +129,6 @@ internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false), Requ
         presentation.text = config?.let{IdeBundle.message("description.text.pause", it)} ?: IdeBundle.message("comment.text.pause")
       }
     }
-  }
-
-  override fun getRequiredPermissions(): Collection<Permission> {
-    return listOf(fullRunAccess)
   }
 }
 

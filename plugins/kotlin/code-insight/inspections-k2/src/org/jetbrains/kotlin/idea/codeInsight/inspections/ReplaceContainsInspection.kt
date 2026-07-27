@@ -69,7 +69,7 @@ class ReplaceContainsInspection :
         if (!symbol.returnType.isBooleanType) return null
 
         val valueArgument = selectorExpression.valueArguments.singleOrNull()?.getArgumentExpression() ?: return null
-        val variableSignature = resolvedCall.argumentMapping[valueArgument] ?: return null
+        val variableSignature = resolvedCall.valueArgumentMapping[valueArgument] ?: return null
         if (symbol.valueParameters.indexOf(variableSignature.symbol) != 0) return null
 
         // Check if the receiver expression has a value

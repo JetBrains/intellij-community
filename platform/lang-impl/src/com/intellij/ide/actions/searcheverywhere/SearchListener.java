@@ -11,7 +11,10 @@ import java.util.Map;
 
 /**
  * Search process listener interface
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). Use com.intellij.ide.actions.searcheverywhere.SplitSearchListener.
  */
+@Deprecated
 public interface SearchListener {
   void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
 

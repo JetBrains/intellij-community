@@ -15,6 +15,8 @@
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.statistics"/>
@@ -37,5 +39,10 @@
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSelectedItemsDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSessionDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeIsAllTabDataContextSerializer" />
+
+    <!-- We need "goto file" in monolith, light and RD backend.
+         This declaration here will also bring the provider to ThinClient where it will be de-prioritized in favor of BE implementation -->
+    <searchEverywhere.itemsProviderFactory
+      implementation="com.intellij.platform.searchEverywhere.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
   </extensions>
 </idea-plugin>

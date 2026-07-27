@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isDenotable
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.types.Variance
 context(_: KaSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
     val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-    val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
+    val typeParameterSymbols = resolvedCall.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
     val renderedTypeParameters = buildList {
         for (symbol in typeParameterSymbols) {

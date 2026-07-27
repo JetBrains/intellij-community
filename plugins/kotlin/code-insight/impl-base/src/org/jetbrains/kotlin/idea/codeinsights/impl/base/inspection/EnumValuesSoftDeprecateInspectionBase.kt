@@ -10,16 +10,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.codeInsight.getEntriesPropertyOfEnumClass
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
@@ -65,7 +65,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
 
             analyze(callExpression) {
                 val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
-                val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+                val resolvedCallSymbol = resolvedCall.symbol
 
                 if (!isSoftDeprecatedEnumValuesCall(resolvedCallSymbol)) return
 
@@ -156,7 +156,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
     context(_: KaSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()
+        return resolvedCall?.symbol?.callableId?.toString()
     }
 
     protected enum class ReplaceFixType {

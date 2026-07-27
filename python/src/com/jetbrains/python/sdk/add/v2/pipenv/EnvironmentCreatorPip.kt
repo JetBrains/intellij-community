@@ -8,7 +8,6 @@ import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.intellij.python.pytools.PyTool
 import com.intellij.platform.util.progress.withProgressText
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -34,16 +33,19 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
 
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
+                               ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
+    val pipenvExecutable = model.pipenvViewModel.pipenvExecutable.get()?.pathHolder
+                           ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
 
-    return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> withProgressText(message("python.sdk.progress.pipenv.creating")) {
-        setupPipEnvSdkWithProgressReport(
-          moduleBasePath = moduleBasePath,
-          basePythonBinaryPath = basePythonBinaryPath.path,
-          installPackages = false
-        )
-      }
-      else -> PyResult.localizedError(message("target.is.not.supported", basePythonBinaryPath))
+    return withProgressText(message("python.sdk.progress.pipenv.creating")) {
+      setupPipEnvSdkWithProgressReport(
+        moduleBasePath = moduleBasePath,
+        basePythonBinaryPath = basePythonBinaryPath,
+        fileSystem = model.fileSystem,
+        pipenvExecutable = pipenvExecutable,
+        installPackages = false,
+        targetPanelExtension = model.state.targetPanelExtension.get(),
+      )
     }
   }
 }

@@ -286,16 +286,6 @@ object PyTypeInferenceCspFactory {
     }
     ivSubstitutions.qualifierType = PyTypeChecker.substitutePlainly(ivSubstitutions.qualifierType, ivSubstitutions, context) // LOL
 
-    // self argument
-    if (receiverType != null && mapping.implicitParameters.getOrNull(0)?.isSelf == true) {
-      val selfParameterType = mapping.implicitParameters[0].getArgumentType(context)
-      if (!selfParameterType.isUnknown && (hasGenericsOrIVs(receiverType, context) || hasGenericsOrIVs(selfParameterType, context))) {
-        val receiverIV = PyTypeChecker.substitutePlainly(receiverType, ivSubstitutions, context)
-        val selfParameterIV = PyTypeChecker.substitutePlainly(selfParameterType, ivSubstitutions, context)
-        builder.addConstraint(receiverIV, selfParameterIV, Variance.INVARIANT, ConstraintPriority.HIGH)
-      }
-    }
-
     // function arguments
     for ((argument, parameter) in mappedParameters) {
       if (parameter.isPositionalContainer || parameter.isKeywordContainer) {

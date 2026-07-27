@@ -89,11 +89,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
       .transformConsecutiveSuccesses { filterInFile(change) }
       .stateInNow(cs, ComputedResult.loading())
   override val newDiscussions: StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>> =
-    discussionsContainer.newDiscussions.map { newDiscussions ->
-      newDiscussions.map { vm ->
-        GitLabMergeRequestDiffNewDiscussionViewModel(vm, diffData, discussionsViewOption)
-    }
-  }.stateInNow(cs, emptyList())
+    diffVm.newDiscussions.filterInFile(change).stateInNow(cs, emptyList())
 
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> = GitLabMergeRequestDiscussionUtil
     .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {

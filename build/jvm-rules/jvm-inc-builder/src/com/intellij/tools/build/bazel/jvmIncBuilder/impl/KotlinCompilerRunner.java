@@ -21,6 +21,7 @@ import kotlin.metadata.jvm.KmPackageParts;
 import kotlin.metadata.jvm.KotlinModuleMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.LookupNameUsage;
@@ -434,7 +435,8 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
+  @TestOnly
+  public K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
     // todo: hash compiler configuration
     K2JVMCompilerArguments arguments = new K2JVMCompilerArguments();
     parseCommandLineArguments(context.getBuilderOptions().getKotlinOptions(), arguments, true);
@@ -479,6 +481,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
     if (!isEmpty(friends)) {
       arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
+    }
+    Iterable<String> pluginOrder = CLFlags.X_COMPILER_PLUGIN_ORDER.getValue(flags);
+    if (!isEmpty(pluginOrder)) {
+      arguments.setPluginOrderConstraints(ensureCollection(pluginOrder).toArray(String[]::new));
     }
     NodeSourcePathMapper pathMapper = context.getPathMapper();
     arguments.setFreeArgs(collect(flat(map(sources, ns -> pathMapper.toPath(ns).toString()), myJavaSources), new ArrayList<>()));

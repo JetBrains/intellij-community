@@ -205,8 +205,6 @@ jvm_library(
         "//plugins/kotlin/run-configurations/junit:junit_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared_test_lib",
         "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",
         "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
         "//plugins/kotlin/base/code-insight",

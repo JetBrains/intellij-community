@@ -4,11 +4,11 @@ package com.intellij.mcpserver.settings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpserverIcons
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
+import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
@@ -464,7 +463,6 @@ fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>,
   }
 }
 
-@ApiStatus.Internal
 internal fun openFileInEditor(filePath: Path, project: Project?) {
   if (project == null) {
     return

@@ -12,9 +12,11 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.isPartOfQualifiedExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -131,7 +133,7 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
 
         analyze(klass) {
             val constructorPropertySymbol =
-                (parameter.symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: return true
+                (parameter.symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: return true
 
             for (element in initializersAndDelegates) {
                 val nameReferenceExpressions = element.collectDescendantsOfType<KtNameReferenceExpression> {

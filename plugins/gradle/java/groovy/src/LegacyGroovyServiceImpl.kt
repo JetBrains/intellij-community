@@ -4,12 +4,9 @@ package com.intellij.gradle.java.groovy
 import com.intellij.gradle.java.groovy.config.GradleFileType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.groovy.LegacyGroovyService
 import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
 
-
-@ApiStatus.Internal
 @Deprecated("This service exists for compatibility reasons. Please don't use it in new code.")
 internal class LegacyGroovyServiceImpl : LegacyGroovyService {
   override fun isGradleFile(file: PsiFile): Boolean {

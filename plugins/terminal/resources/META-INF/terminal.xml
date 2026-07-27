@@ -69,6 +69,10 @@
                   Open a new terminal after enabling this option to take effect."/>
     <registryKey key="terminal.generic.hyperlinks.for.relative.path" defaultValue="true"
                  description="Show generic file hyperlinks for relative paths in the reworked terminal. Requires enabled `terminal.generic.hyperlinks`."/>
+    <registryKey key="terminal.minimal.document.edits" defaultValue="true"
+                 description="When updating the terminal document, try to perform minimal edits,
+                  to preserve range markers (hyperlink highlighters) over unchanged lines so they blink less.
+                  When disabled, the changed range is always replaced in a single edit."/>
     <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
                  description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilterProvider"/>

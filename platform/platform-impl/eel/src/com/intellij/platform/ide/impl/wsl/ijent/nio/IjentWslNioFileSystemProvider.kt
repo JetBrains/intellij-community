@@ -8,6 +8,7 @@ import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
+import com.intellij.platform.ide.impl.wsl.WSL_PREFIXES
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.fs.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.platform.ijent.community.impl.nio.fs.getFileAttributeViewUsingDosAttributesAdapter
@@ -90,7 +91,7 @@ internal class IjentWslNioFileSystemProvider(
 
   private tailrec fun Path.toOriginalPath(notation: String): Path {
     val notationLowerCase = notation.lowercase()
-    assert(notationLowerCase == "wsl.localhost" || notationLowerCase == "wsl$") { notation }
+    assert(notationLowerCase in WSL_PREFIXES) { notation }
     return when (this) {
       is IjentNioPath -> fold(originalFs.getPath("\\\\$notation\\$wslId\\")) { parent, file -> parent.resolve(file.toString()) }
       is IjentWslNioPath -> presentablePath.toOriginalPath(notation)

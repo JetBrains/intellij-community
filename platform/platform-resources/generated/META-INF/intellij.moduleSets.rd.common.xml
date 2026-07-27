@@ -10,5 +10,6 @@
     <module name="intellij.platform.split.protocol"/>
     <module name="intellij.rd.client"/>
     <module name="intellij.rd.client.base"/>
+    <module name="intellij.rd.client.internal"/>
   </content>
 </idea-plugin>

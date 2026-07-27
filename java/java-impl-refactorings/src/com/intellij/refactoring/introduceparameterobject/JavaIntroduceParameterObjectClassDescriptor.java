@@ -71,7 +71,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
                                                      boolean createInnerClass,
                                                      String newVisibility,
                                                      ParameterInfoImpl[] paramsToMerge,
-                                                     PsiMethod method, boolean generateAccessors) {
+                                                     PsiMethod method,
+                                                     boolean generateAccessors) {
     super(className, calcPackageName(packageName, createInnerClass, method), useExistingClass, createInnerClass,
           newVisibility, generateAccessors, paramsToMerge);
     myMoveDestination = moveDestination;
@@ -111,7 +112,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
     return text;
   }
-
 
   @Override
   public PsiClass getExistingClass() {
@@ -166,7 +166,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final String qualifiedName = StringUtil.getQualifiedName(getPackageName(), getClassName());
     final PsiClass existingClass = psiFacade.findClass(qualifiedName, method.getResolveScope());
     setExistingClass(existingClass);
-    return findCompatibleConstructor(existingClass);
+    return existingClass == null ? null : findCompatibleConstructor(existingClass);
   }
 
   public @Nullable PsiField getField(ParameterInfoImpl parameter) {
@@ -194,9 +194,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         }
       }
     }
-    final PsiMethod[] constructors = aClass.getConstructors();
     PsiMethod compatibleConstructor = null;
-    for (PsiMethod constructor : constructors) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
       if (isConstructorCompatible(constructor, paramsToMerge, aClass)) {
         compatibleConstructor = constructor;
         break;
@@ -303,8 +302,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
     try {
       final PsiFileFactory factory = PsiFileFactory.getInstance(method.getProject());
-      final PsiJavaFile newFile =
-        (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
+      final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
       if (isCreateInnerClass()) {
         assert containingClass != null;
         final PsiClass[] classes = newFile.getClasses();
@@ -325,12 +323,11 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         }
         else {
           final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
-          directory =
-            PackageUtil.findOrCreateDirectoryForPackage(module, getPackageName(), containingDirectory, true, true);
+          assert module != null;
+          directory = PackageUtil.findOrCreateDirectoryForPackage(module, getPackageName(), containingDirectory, true, true);
         }
 
         if (directory != null) {
-
           PsiFile file = directory.findFile(newFile.getName());
           if (file == null) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(method.getManager().getProject());
@@ -348,7 +345,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
     return null;
   }
-
 
   private static class ParamAssignmentFinder extends JavaRecursiveElementWalkingVisitor {
     private PsiParameter myParameter;

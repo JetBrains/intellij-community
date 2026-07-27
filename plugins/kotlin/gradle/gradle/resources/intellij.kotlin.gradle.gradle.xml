@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradle">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
@@ -6,6 +6,20 @@
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.native"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
   </dependencies>
   <!-- endregion -->
 

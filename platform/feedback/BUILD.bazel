@@ -37,7 +37,6 @@ jvm_library(
         "//platform/statistics",
         "//platform/core-ui",
         "//platform/util:util-ui",
-        "//platform/platform-impl/internal",
         "//platform/progress/shared:ide-progress",
         "@lib//:jna",
     ],
@@ -73,7 +72,6 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
     ],
 )

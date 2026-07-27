@@ -12,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.mcpserver.stdio",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,

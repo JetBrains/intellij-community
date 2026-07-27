@@ -242,6 +242,38 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `nested rules do not match inside the prefix consumed by a while condition`() {
+    // after a while-condition matches, the scan continues past its match,
+    // so the nested patterns never see the consumed prefix
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "quote.block",
+            "begin": "> ",
+            "while": "> ",
+            "patterns": [
+              { "match": "> ", "name": "bad.requote" },
+              { "match": "x", "name": "content.x" }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "> x\n> x\n", """
+      source.test quote.block: [0, 2], {> }
+      source.test quote.block content.x: [2, 3], {x}
+      source.test quote.block: [3, 4], {
+      }
+      source.test quote.block: [4, 6], {> }
+      source.test quote.block content.x: [6, 7], {x}
+      source.test quote.block: [7, 8], {
+      }
+    """.trimIndent())
+  }
+
+  @Test
   fun `while captures of an outer rule are emitted without the scopes of nested rules`() {
     val grammar = """
       {
@@ -332,6 +364,40 @@ class TextMateLexerCoreTest {
   }
 
   @Test
+  fun `a plain match rule does not move the anchor`() {
+    // \G is anchored at the end of the enclosing rule's begin match;
+    // a plain match rule must not move it (only begin matches do)
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          {
+            "name": "outer",
+            "begin": "a",
+            "end": "z",
+            "patterns": [
+              { "match": "x", "name": "plain.x" },
+              { "match": "\\Gy", "name": "anchored.y" }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    // directly after the begin match, \G matches
+    assertTokenize(grammar, "ayz", """
+      source.test outer: [0, 1], {a}
+      source.test outer anchored.y: [1, 2], {y}
+      source.test outer: [2, 3], {z}
+    """.trimIndent())
+    // after an intervening match rule, \G no longer matches
+    assertTokenize(grammar, "axyz", """
+      source.test outer: [0, 1], {a}
+      source.test outer plain.x: [1, 2], {x}
+      source.test outer: [2, 4], {yz}
+    """.trimIndent())
+  }
+
+  @Test
   fun `left injection wins the tie against the end pattern`() {
     // "L:" injection matching at the same offset as the end pattern should
     // win over it, so the rule is not closed while the injection consumes its end characters
@@ -374,6 +440,44 @@ class TextMateLexerCoreTest {
       source.test inj.b: [2, 3], {b}
       source.test: [3, 4], {
       }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `a rule pushed and popped without advancing stays on the stack`() {
+    // when a rule is pushed and immediately popped without advancing,
+    // the grammar is assumed to have meant to stay in that state: the rest
+    // of the line and the following lines keep the rule's scope
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "name": "loop.r", "begin": "(?=x)", "end": "(?=x)" }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "x\nx", """
+      source.test loop.r: [0, 2], {x
+      }
+      source.test loop.r: [2, 3], {x}
+    """.trimIndent())
+  }
+
+  @Test
+  fun `re-pushing the same rule without advancing does not grow the stack`() {
+    // a rule that recursively pushes itself at the same position is cut off:
+    // the duplicated frame is reverted before the line is finished,
+    // so the tail of the line is not scoped with the rule's name twice
+    val grammar = """
+      {
+        "scopeName": "source.test",
+        "patterns": [
+          { "name": "r.block", "begin": "(?=x)", "end": "q", "patterns": [ { "include": "${'$'}self" } ] }
+        ]
+      }
+    """.trimIndent()
+    assertTokenize(grammar, "x", """
+      source.test r.block: [0, 1], {x}
     """.trimIndent())
   }
 

@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -126,20 +126,20 @@ internal sealed class CoroutineContextJobStatus {
 
         context(_: KaSession)
         private fun handleContextPlusCall(resolvedCall: KaFunctionCall<*>): CoroutineContextJobStatus {
-            val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue
+            val dispatchReceiver = resolvedCall.dispatchReceiver as? KaExplicitReceiverValue
 
             val leftStatus = dispatchReceiver?.expression.detectStatus()
-            val rightStatus = resolvedCall.argumentMapping.keys.singleOrNull().detectStatus()
+            val rightStatus = resolvedCall.valueArgumentMapping.keys.singleOrNull().detectStatus()
 
             return leftStatus.append(rightStatus)
         }
 
         context(_: KaSession)
         private fun handleContextMinusKeyCall(resolvedCall: KaFunctionCall<*>): CoroutineContextJobStatus {
-            val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue
+            val dispatchReceiver = resolvedCall.dispatchReceiver as? KaExplicitReceiverValue
 
             val originalStatus = dispatchReceiver?.expression.detectStatus()
-            val keyToRemove = resolvedCall.argumentMapping.keys.singleOrNull()
+            val keyToRemove = resolvedCall.valueArgumentMapping.keys.singleOrNull()
 
             return if (keyToRemove?.expressionType?.isSubtypeOf(CoroutinesIds.Job.Key.ID) == true) {
                 NoJob

@@ -10,10 +10,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.ClassId
@@ -55,8 +61,10 @@ private class ImplementReadResolveQuickFix : PsiUpdateModCommandQuickFix() {
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val objectDeclaration =
             (element as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return
-        val readResolveDeclaration =
-            KtPsiFactory(project).createDeclarationByPattern<KtFunction>("private fun readResolve(): Any = $0", objectDeclaration.name ?: return)
+        val readResolveDeclaration = KtPsiFactory(project).createDeclarationByPattern<KtFunction>(
+            "private fun readResolve(): Any = $0",
+            objectDeclaration.nameAsSafeName
+        )
         val body = objectDeclaration.getOrCreateBody()
         body.addAfter(readResolveDeclaration, body.lBrace)
     }

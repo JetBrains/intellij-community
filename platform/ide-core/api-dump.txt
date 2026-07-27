@@ -692,6 +692,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isEnvironmentRestricted():Z
 - F:isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
 - isHideIgnored():Z
+- isLocalFileSystem():Z
 - isShowHiddenFiles():Z
 - setDescription(java.lang.String):V
 - setEnvironmentRestricted(Z):V
@@ -708,6 +709,8 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withExtensionFilter(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withFileFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withHideIgnored(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withLocalFileSystem():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withLocalFileSystem(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(com.intellij.openapi.vfs.VirtualFile[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withShowFileSystemRoots(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor

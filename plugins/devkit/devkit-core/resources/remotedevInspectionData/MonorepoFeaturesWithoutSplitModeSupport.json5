@@ -1,6 +1,9 @@
 // Monorepo features that are not inspected by DevKit split-mode inspections yet.
 // This file is the source of truth for SplitModeExcludedModules.xml IDE scopes.
-// Use pathPatterns for repository paths and moduleNames for IntelliJ module names.
+// Use pathPatterns for repository paths and moduleNames for IntelliJ module names.\
+
+// After making changes to this file run the SplitModeExcludedModulesScopeConsistencyTest
+// and apply changes to the config files generated from the MonorepoFeaturesWithoutSplitModeSupport.json5
 {
   pathPatterns: [
     "plugins/llm//*",
@@ -8,6 +11,7 @@
     "plugins/llm-installer//*",
     "plugins/llm-sandbox//*",
     "community/python//*",
+    "language-server//*"
   ],
 
   moduleNames: [

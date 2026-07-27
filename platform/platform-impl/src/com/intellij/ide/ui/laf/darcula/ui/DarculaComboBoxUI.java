@@ -991,14 +991,22 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       //IJPL-249224 Combobox popup items are not horizontally aligned with the combobox content
       int shift = comboBox.getUI() instanceof DarculaComboBoxUI darculaUi ? darculaUi.getPopupHorizontalShift() : 0;
-      if (comboBox instanceof ComboBoxWithWidePopup<?> comboBoxWithWidePopup) {
-        Dimension popupSize = comboBox.getSize();
-        int minPopupWidth = comboBoxWithWidePopup.getMinimumPopupWidth();
+      // Apply the width treatment to every combo (incl. plain JComboBox), not only ComboBoxWithWidePopup.
+      // When the popup is shifted, its default width (set by BasicComboPopup.getPopupLocation) would leave it
+      // narrow and skewed to one side, so recompute the width here as well.
+      if (shift != 0 || comboBox instanceof ComboBoxWithWidePopup<?>) {
         Insets insets = getInsets();
+        int comboWidth = comboBox.getSize().width;
+        int minPopupWidth = comboBox instanceof ComboBoxWithWidePopup<?> comboBoxWithWidePopup
+                            ? comboBoxWithWidePopup.getMinimumPopupWidth() : 0;
 
-        popupSize.width = Math.max(popupSize.width, minPopupWidth);
-        popupSize.setSize(popupSize.width - (insets.right + insets.left) - 2 * shift,
-                          getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
+        // Width needed to fit the widest item (wide-popup case).
+        int wideWidth = Math.max(comboWidth, minPopupWidth) - (insets.right + insets.left);
+        // The popup's left edge is placed at `shift` (negative => left of the combo) to align its content
+        // with the combo. Mirror that overhang on the right so the popup stays symmetric around the combo:
+        // width = comboWidth - 2 * shift. Fall back to the content width when the items don't fit.
+        int width = shift == 0 ? wideWidth : Math.max(wideWidth, comboWidth - 2 * shift);
+        Dimension popupSize = new Dimension(width, getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
         scroller.setMaximumSize(popupSize);
         scroller.setPreferredSize(popupSize);

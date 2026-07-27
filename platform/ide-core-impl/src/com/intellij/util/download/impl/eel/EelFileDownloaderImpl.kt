@@ -16,7 +16,6 @@ import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.eel.EelFileDownloader
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.progress.ConcurrentTasksProgressManager
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,7 +26,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicLong
 
-@ApiStatus.Internal
 internal class EelFileDownloaderImpl(
   private val myFileDescriptions: MutableList<out DownloadableFileDescription>,
 ) : EelFileDownloader {

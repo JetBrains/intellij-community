@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -128,7 +128,6 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     JLabel iconLabel = new JLabel();
     iconLabel.setIcon(AllIcons.General.Warning);
     myBottomPanel.add(iconLabel);
-    myBottomPanel.add(Box.createRigidArea(new JBDimension(5,0)));
     myBottomLabel = new JLabel();
     myBottomPanel.add(myBottomLabel);
     ActionLink disableHyperLink = new ActionLink(LangBundle.message("action.link.disable"), e -> {

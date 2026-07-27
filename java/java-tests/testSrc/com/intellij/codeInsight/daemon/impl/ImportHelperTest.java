@@ -544,7 +544,8 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
 
   public void testAutoImportAfterUncomment() {
-    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
+    assertOneElement(JavaPsiFacade.getInstance(getProject()).findClasses("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
+    assertOneElement(JavaPsiFacade.getInstance(getProject()).findClasses("java.util.HashMap", GlobalSearchScope.allScope(getProject())));
     @Language("JAVA")
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(text);

@@ -419,10 +419,6 @@
                     interface="com.intellij.execution.configurations.OngoingRunConfigurationProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="executionActionSuppressor"
-                    interface="com.intellij.execution.ExecutionActionSuppressor"
-                    dynamic="true"/>
-
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"

@@ -264,9 +264,7 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  * @see com.intellij.openapi.command.writeCommandAction
  */
 suspend fun <T> edtWriteAction(action: () -> T): T {
-  return withContext(Dispatchers.EDT) {
-    ApplicationManager.getApplication().runWriteAction(lambdaToComputable<T>(action))
-  }
+  return readWriteActionSupport().runEdtWriteAction(action)
 }
 
 private class ComputableWrapper<T,E : Throwable>(val lambda: ()->T) : Computable<T>, ThrowableComputable<T,E> {

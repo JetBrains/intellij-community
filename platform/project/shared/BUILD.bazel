@@ -28,7 +28,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util/coroutines",
         "//platform/core-api:core",
-        "//platform/platform-impl/rpc",
         "//fleet/rhizomedb",
     ],
 )
@@ -53,7 +52,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/core-api:core_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )

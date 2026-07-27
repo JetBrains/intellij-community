@@ -93,7 +93,7 @@ object FoldIfOrWhenToFunctionCallUtils {
     private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KaVariableSignature<KaValueParameterSymbol>>>? {
         val functionCall = resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val fqName = functionCall.symbol.callableId?.asSingleFqName() ?: return null
-        val parameters = valueArguments.mapNotNull { functionCall.argumentMapping[it.getArgumentExpression()] }
+        val parameters = valueArguments.mapNotNull { functionCall.valueArgumentMapping[it.getArgumentExpression()] }
         return fqName to parameters
     }
 

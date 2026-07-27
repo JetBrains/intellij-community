@@ -22,6 +22,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl",
         "//platform/indexing-api:indexing",
         "//platform/indexing-impl",
+        "//java/java-indexing-serializers:indexing-serializers",
     ],
     deps = [
         # do not sort,
@@ -40,6 +41,7 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//java/java-indexing-api:indexing",
+        "//java/java-indexing-serializers:indexing-serializers",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
         "//java/codeserver/core",
@@ -69,6 +71,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/indexing-impl",
         "//platform/indexing-impl:indexing-impl_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -88,6 +92,7 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//java/codeserver/core:core_test_lib",
         "//java/java-syntax:syntax_test_lib",

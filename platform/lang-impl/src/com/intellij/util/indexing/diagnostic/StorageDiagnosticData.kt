@@ -26,7 +26,6 @@ import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.impl.MapIndexStorageCacheProvider
 import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.FileChannelInterruptsRetryer
-import com.intellij.util.io.PageCacheUtils
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.delete
 import com.intellij.util.io.stats.FilePageCacheStatistics
@@ -295,10 +294,6 @@ object StorageDiagnosticData {
     setupFilePageCacheReporting(storageOtelMeter)
     setupWriteAheadLogReporting(storageOtelMeter)
 
-    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-      setupFilePageCacheLockFreeReporting(storageOtelMeter)
-    }
-
     storageOtelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
       it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
     }
@@ -367,97 +362,6 @@ object StorageDiagnosticData {
     otelMeter.counterBuilder("Indexing.cache.totalCacheEvicted").buildWithCallback {
       it.record(indexCacheProvider.totalEvicted())
     }
-  }
-
-  private fun setupFilePageCacheLockFreeReporting(otelMeter: Meter) {
-    val totalNativeBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalNativeBytesAllocated").buildObserver()
-    val totalNativeBytesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalNativeBytesReclaimed").buildObserver()
-    val totalHeapBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesAllocated").buildObserver()
-    val totalHeapBytesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesReclaimed").buildObserver()
-
-    val totalNativeBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.nativeBytesInUse").ofLongs().buildObserver()
-    val totalHeapBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.heapBytesInUse").ofLongs().buildObserver()
-
-    val totalPagesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesAllocated").buildObserver()
-    val totalPagesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReclaimed").buildObserver()
-    val totalPagesHandedOver = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesHandedOver").buildObserver()
-    val totalPageAllocationsWaited = otelMeter.counterBuilder("FilePageCacheLockFree.totalPageAllocationsWaited").buildObserver()
-
-    val totalBytesRead = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRead").buildObserver()
-    val totalBytesWritten = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesWritten").buildObserver()
-
-    val totalPagesWritten = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWritten").buildObserver()
-    val totalPagesRequested = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequested").buildObserver()
-
-    val totalBytesRequested = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRequested").buildObserver()
-
-    val totalPagesRequestsMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequestsMs").buildObserver()
-    val totalPagesReadMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReadMs").buildObserver()
-    val totalPagesWriteMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWriteMs").buildObserver()
-
-    val housekeeperTurnsDone = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsDone").buildObserver()
-    val housekeeperTimeSpentMs = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTimeSpentMs").buildObserver()
-    val housekeeperTurnsSkipped = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsSkipped").buildObserver()
-
-    val totalClosedStoragesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalClosedStoragesReclaimed").buildObserver()
-
-    otelMeter.batchCallback(
-      {
-        try {
-          StorageLockContext.getNewCacheStatistics()?.let {
-            totalNativeBytesAllocated.record(it.totalNativeBytesAllocated())
-            totalNativeBytesReclaimed.record(it.totalNativeBytesReclaimed())
-
-            totalHeapBytesAllocated.record(it.totalHeapBytesAllocated())
-            totalHeapBytesReclaimed.record(it.totalHeapBytesReclaimed())
-
-            totalHeapBytesInUse.record(it.heapBytesCurrentlyUsed())
-            totalNativeBytesInUse.record(it.nativeBytesCurrentlyUsed())
-
-            totalPagesAllocated.record(it.totalPagesAllocated().toLong())
-            totalPagesReclaimed.record(it.totalPagesReclaimed().toLong())
-            totalPagesHandedOver.record(it.totalPagesHandedOver().toLong())
-            totalPageAllocationsWaited.record(it.totalPageAllocationsWaited().toLong())
-
-            totalBytesRead.record(it.totalBytesRead())
-            totalBytesWritten.record(it.totalBytesWritten())
-
-            totalPagesWritten.record(it.totalPagesWritten())
-            totalPagesRequested.record(it.totalPagesRequested())
-
-            totalBytesRequested.record(it.totalBytesRequested())
-
-            totalPagesRequestsMs.record(it.totalPagesRequests(MILLISECONDS))
-            totalPagesReadMs.record(it.totalPagesRead(MILLISECONDS))
-            totalPagesWriteMs.record(it.totalPagesWrite(MILLISECONDS))
-
-            totalClosedStoragesReclaimed.record(it.totalClosedStoragesReclaimed().toLong())
-
-            housekeeperTurnsSkipped.record(it.housekeeperTurnsSkipped())
-            housekeeperTurnsDone.record(it.housekeeperTurnsDone())
-            housekeeperTimeSpentMs.record(it.housekeeperTimeSpent(MILLISECONDS))
-          }
-        }
-        catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
-        }
-      },
-      totalNativeBytesAllocated, totalNativeBytesReclaimed,
-      totalHeapBytesAllocated, totalHeapBytesReclaimed,
-
-      totalHeapBytesInUse, totalNativeBytesInUse,
-
-      totalPagesAllocated, totalPagesReclaimed, totalPagesHandedOver, totalPageAllocationsWaited,
-
-      totalBytesRead, totalBytesWritten, totalPagesWritten,
-
-      totalPagesRequested, totalBytesRequested,
-      totalPagesRequestsMs, totalPagesReadMs, totalPagesWriteMs,
-
-      totalClosedStoragesReclaimed,
-
-      housekeeperTurnsDone, housekeeperTurnsSkipped, housekeeperTimeSpentMs
-    )
-
   }
 
   private fun setupWriteAheadLogReporting(otelMeter: Meter) {

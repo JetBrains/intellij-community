@@ -25,7 +25,6 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
@@ -33,7 +32,6 @@ import com.jetbrains.python.statistics.PipfileWatcherIdsHolder.Companion.RUN_PIP
 import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 
 /**
  * Watches for edits in Pipfiles inside modules with a pipenv SDK set.
@@ -114,7 +112,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
     PyPackageCoroutine.launch(module.project) {
       withBackgroundProgress(module.project, description) {
         val sdk = module.pythonSdk ?: return@withBackgroundProgress
-        runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()).onFailure {
+        runPipEnvWithSdk(sdk, *args.toTypedArray()).onFailure {
           ErrorSink().emit(it, module.project)
         }
 

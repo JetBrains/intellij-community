@@ -15,10 +15,8 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
-import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -82,7 +80,6 @@ data class XDebuggerSessionTabInfo(
   val executionEnvironmentId: ExecutionEnvironmentIdImpl?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
-  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
   @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
   @Serializable(with = DeferredSerializer::class) val showTab: Deferred<Unit>,
   @Serializable(with = DeferredSerializer::class) val tabLayouterDto: Deferred<XDebugTabLayouterDto>,

@@ -10,6 +10,7 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
   </dependencies>
   <!-- endregion -->
 

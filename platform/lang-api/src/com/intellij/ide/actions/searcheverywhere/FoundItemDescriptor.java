@@ -3,7 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 /**
  * @deprecated The old Search Everywhere API is being sunset.
- * Use {@code com.intellij.platform.searchEverywhere.SeItem} instead.
+ * Use {@link com.intellij.platform.searchEverywhere.SeItem} instead.
  */
 @Deprecated
 public class FoundItemDescriptor<I> {

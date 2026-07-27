@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.project.modules
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 
-private class BuildProcessSatisfactionExternalSystemListener: ExternalSystemTaskNotificationListener {
+internal class BuildProcessSatisfactionExternalSystemListener: ExternalSystemTaskNotificationListener {
     override fun onSuccess(proojecPath: String, id: ExternalSystemTaskId) {
         if (id.projectSystemId.id != "GRADLE") return
         val project = id.findProject() ?: return

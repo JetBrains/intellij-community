@@ -186,6 +186,7 @@ _WORKER_OPTION_NAMES = [
     "x_allow_kotlin_package",
     "x_allow_result_return_type",
     "x_allow_unstable_dependencies",
+    "x_compiler_plugin_order",
     "x_consistent_data_class_copy_visibility",
     "x_context_parameters",
     "x_context_receivers",

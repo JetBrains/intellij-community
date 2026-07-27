@@ -50,9 +50,19 @@ internal val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
         kotlincArtifactCoordinates
     }
 
+/**
+ * Returns KGP version, intended to be used in Kotlin Gradle import tests.
+ * By default, should roll together with the kotlinc version [GeneratorPreferences.kotlincArtifactCoordinates]
+ *
+ * Note: Should not be used in tests, included in quality gates because of rolling nature
+ */
 internal val GeneratorPreferences.kotlinGradlePluginArtifactVersion: String
     get() = kotlinGradlePluginVersion ?: kotlincArtifactCoordinates.version
 
+/**
+ * Returns KGP version, intended to be used in Kotlin plugin tests, which use Gradle import as part of setup.
+ * Unlike [kotlinGradlePluginArtifactVersion] should be fixed, because tests are included in quality gates
+ */
 internal val GeneratorPreferences.kotlinNativeArtifactVersion: String
     get() = kotlinNativeVersion ?: kotlincArtifactCoordinates.version
 

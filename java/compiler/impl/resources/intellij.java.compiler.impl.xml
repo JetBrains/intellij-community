@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin  visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
@@ -18,6 +18,13 @@
     <module name="intellij.platform.jps.build"/>
   </dependencies>
   <!-- endregion -->
+
+  <projectListeners>
+    <listener class="com.intellij.compiler.server.impl.BuildProcessPreloadedStateClearer"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.compiler.server.impl.BuildProcessPreloadedStateClearer"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+  </projectListeners>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter"
@@ -49,8 +56,100 @@
                     interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlExtensionRegistration -->
+    <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+
+    <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
+
+    <!--suppress PluginXmlExtensionRegistration -->
+    <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration"
+                    serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
+    <projectService serviceInterface="com.intellij.compiler.ProblemsView"
+                    serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+    <backgroundPostStartupActivity implementation="com.intellij.compiler.backwardRefs.IsUpToDateCheckStartupActivity"/>
+    <!--suppress PluginXmlExtensionRegistration -->
+    <projectService serviceInterface="com.intellij.compiler.CompilerReferenceService"
+                    serviceImplementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl"
+                    preload="notHeadless"/>
+
+    <projectService serviceImplementation="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
+    <buildProcess.parametersProvider implementation="com.intellij.compiler.server.impl.CustomBuildProcessPluginsClasspathProvider"/>
+    <vfs.asyncListener implementation="com.intellij.compiler.impl.TranslatingCompilerFilesMonitor"/>
+
+    <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
+
+    <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
+                    serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
+    <projectService serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
+                    serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
+
+    <projectService serviceImplementation="com.intellij.compiler.CompilerConfigurationSettings" configurationSchemaKey="compiler"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.compiler.CompilerSettingsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.compiler.impl.BuildUsageCollector"/>
+
+    <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
+    <projectService serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.KotlinCompilerArgumentsMacroFilter"/>
+
+    <projectConfigurable groupId="build" instance="com.intellij.compiler.options.CompilerConfigurable"
+                         id="project.propCompiler"
+                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle">
+      <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
+                    id="reference.projectsettings.compiler.excludes"
+                    key="reference.projectsettings.compiler.excludes"
+                    bundle="messages.JavaCompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
+                    key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
+                    id="reference.projectsettings.compiler.annotationProcessors"
+                    key="reference.projectsettings.compiler.annotationProcessors"
+                    bundle="messages.JavaCompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
+                    bundle="messages.JavaCompilerBundle"/>
+      <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
+                    key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
+    </projectConfigurable>
+
+    <projectConfigurable provider="com.intellij.compiler.cache.ui.CompilerCacheConfigurableProvider"
+                         id="reference.projectsettings.compiler.compilercache"
+                         key="compiler.cache.description" bundle="messages.JavaCompilerBundle" parentId="project.propCompiler"/>
+
+    <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
+                              implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"
+                              order="after FormatOnSaveInfoProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveInfoProvider, after UploadOnSaveInfoProvider"/>
+
+    <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.lower.process.priority" groupKey="advanced.settings.group.compiler" default="true"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.unified.ic.implementation" groupKey="advanced.settings.group.compiler" default="true"
+                     bundle="messages.JavaBundle"/>
+    <advancedSetting id="compiler.inMemoryLogger" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
+
+    <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
+    <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
+    <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
+
+    <languageCompilerRefAdapter implementation="com.intellij.compiler.backwardRefs.JavaCompilerRefAdapter"/>
+    <compiler.isUpToDateCheckConsumer
+      implementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase$JCRIIsUpToDateConsumer"/>
+
     <projectSettings service="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
     <projectSettings service="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
     <projectSettings service="com.intellij.compiler.ExternalCompilerConfigurationStorage"/>
+    <projectSettings service="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
+    <projectSettings service="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
+    <projectSettings service="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
+    <projectSettings service="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
+    <projectSettings service="com.intellij.compiler.options.ValidationConfiguration"/>
+    <projectSettings service="com.intellij.compiler.CompilerConfigurationImpl"/>
   </extensions>
 </idea-plugin>

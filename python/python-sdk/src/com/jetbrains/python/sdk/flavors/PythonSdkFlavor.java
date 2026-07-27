@@ -84,6 +84,35 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getEmptyFlavorForBackwardCompatibility();
   }
 
+  @ApiStatus.Internal
+  public static final class AdditionalDataMigration<D extends PyFlavorData> {
+    private final @NotNull D myFlavorData;
+    private final @Nullable Path myWorkingDirectory;
+
+    public AdditionalDataMigration(@NotNull D flavorData, @Nullable Path workingDirectory) {
+      myFlavorData = flavorData;
+      myWorkingDirectory = workingDirectory;
+    }
+
+    public @NotNull D getFlavorData() {
+      return myFlavorData;
+    }
+
+    public @Nullable Path getWorkingDirectory() {
+      return myWorkingDirectory;
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull AdditionalDataMigration<D> migrateAdditionalData(@NotNull PythonSdkAdditionalData additionalData, @NotNull D data) {
+    return new AdditionalDataMigration<>(data, null);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull D withWorkingDirectory(@NotNull D data, @NotNull Path workingDirectory) {
+    return data;
+  }
+
   /**
    * Some plugins didn't implement {@link #getFlavorDataClass()}
    */

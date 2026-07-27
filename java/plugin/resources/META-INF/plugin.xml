@@ -41,6 +41,7 @@
 
     <module name="intellij.jsp.spi" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.indexing.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.indexing.serializers" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.analysis.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 
@@ -102,6 +103,7 @@
     <module name="intellij.java.jam.impl"/>
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.profiler.ultimate.vcs"/>
     <module name="intellij.debugger.jvm.advanced.java"/>
     <module name="intellij.debugger.logpoints.shared"/>
     <module name="intellij.debugger.logpoints.backend"/>

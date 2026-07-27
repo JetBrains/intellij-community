@@ -23,8 +23,8 @@ open class PyTracebackParser : TraceBackParserAdapter(Pattern.compile(
     val lineNumber = (lineNumber1 ?: lineNumber2).toInt()
 
     if (file1 != null && lineNumber1 != null) {
-      val startPos = line.indexOf('\"') + 1
-      val endPos = line.indexOf('\"', startPos)
+      val startPos = matchedMatcher.start("file")
+      val endPos = matchedMatcher.end("file")
       return LinkInTrace(fileName, lineNumber, startPos, endPos)
     }
     else {

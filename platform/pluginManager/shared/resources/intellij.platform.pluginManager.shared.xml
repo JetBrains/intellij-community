@@ -6,7 +6,9 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc"/>
   </dependencies>
   <!-- endregion -->

@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -48,6 +49,10 @@ public final class AnnotateLocalFileAction {
   private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return false;
+
+    // Inside a merge viewer, annotations are handled by AnnotateDiffViewerAction for the sides that can be annotated.
+    // In particular, don't offer "Annotate" on the merge result/output editor, where there is nothing meaningful to annotate.
+    if (e.getData(DiffDataKeys.MERGE_VIEWER) != null) return false;
 
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file == null || file.isDirectory() || file.getFileType().isBinary()) return false;

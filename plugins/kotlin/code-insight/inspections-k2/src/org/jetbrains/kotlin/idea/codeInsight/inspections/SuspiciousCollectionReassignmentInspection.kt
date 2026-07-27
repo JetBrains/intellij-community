@@ -11,14 +11,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -60,7 +67,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
 
                 // TODO there are no tests for this check; add the tests or remove it
                 @OptIn(KaExperimentalApi::class)
-                val diagnostics = binaryExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                val diagnostics = binaryExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 if (diagnostics.any { it.severity == KaSeverity.ERROR }) return
 
                 val fixes = mutableListOf<LocalQuickFix>()
@@ -124,7 +131,8 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
 
         companion object {
-            fun KaSession.isApplicable(binaryExpression: KtBinaryExpression, leftType: KaClassType): Boolean {
+            context(session: KaSession)
+            fun isApplicable(binaryExpression: KtBinaryExpression, leftType: KaClassType): Boolean {
                 if (binaryExpression.operationToken != KtTokens.MINUSEQ) return false
                 if (leftType.classId == StandardClassIds.Map) return false
 
@@ -149,14 +157,15 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val emptyCollectionFactoryMethods =
                 listOf("emptyList", "emptySet", "emptyMap", "listOf", "setOf", "mapOf").map { "kotlin.collections.$it" }
 
-            fun KaSession.isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty): Boolean {
+            context(session: KaSession)
+            fun isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty): Boolean {
                 if (binaryExpression.operationToken != KtTokens.PLUSEQ) return false
 
                 if (!property.isLocal) return false
                 val initializer = property.initializer as? KtCallExpression ?: return false
 
                 if (initializer.valueArguments.isNotEmpty()) return false
-                val initializerResultingSymbol = initializer.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+                val initializerResultingSymbol = initializer.resolveToCall()?.singleFunctionCallOrNull()?.symbol
                 val fqName = initializerResultingSymbol?.callableId?.asSingleFqName()?.asString()
                 if (fqName !in emptyCollectionFactoryMethods) return false
 

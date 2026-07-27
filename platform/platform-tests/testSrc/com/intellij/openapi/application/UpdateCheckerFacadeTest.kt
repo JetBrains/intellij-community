@@ -3,94 +3,36 @@
 
 package com.intellij.openapi.application
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.ide.plugins.IdeaPluginDependency
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.InstalledPluginsState
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.TestIdeaPluginDescriptor
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
-import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.updateSettings.PluginUpdateCheckService
 import com.intellij.openapi.updateSettings.PluginUpdateInfo
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
-import com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.utils.io.deleteChildrenRecursively
 import com.intellij.util.application
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.queryParameters
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
-import com.sun.net.httpserver.HttpServer
-import org.apache.http.client.utils.URLEncodedUtils
-import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
-import java.net.InetSocketAddress
 import java.net.URI
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @TestApplication
-class UpdateCheckerFacadeTest {
-  private val testDisposable = disposableFixture()
-  private val objectMapper = ObjectMapper()
-
-  private fun createTestServer(disposable: Disposable): HttpServer {
-    val server = HttpServer.create()!!
-    server.bind(InetSocketAddress(0), 1)
-    server.start()
-    disposable.whenDisposed { server.stop(0) }
-    return server
-  }
-
-  lateinit var server: HttpServer
-
-  var receivedUpdatesRequestUri: URI? = null
-
-  @BeforeEach
-  fun setup() {
-    server = createTestServer(testDisposable.get())
-
-    application.replaceService(InstalledPluginsState::class.java, InstalledPluginsState(), testDisposable.get())
-    application.replaceService(UpdateCheckerPluginsFacade::class.java, TestUpdateCheckerPluginsFacade(), testDisposable.get())
-    application.replaceService(MarketplaceCustomizationService::class.java, TestMarketplaceCustomizationService(server.url),
-                               testDisposable.get())
-
-    server.createContext("/plugins/files/brokenPlugins.json") { handler ->
-      handler.sendResponseHeaders(200, 0)
-      handler.responseBody.writer().use {
-        it.write("[]")
-      }
-    }
-  }
-
-  @AfterEach
-  fun tearDown() {
-    updateBrokenPlugins(emptyMap())
-
-    val pluginTempPath = Path.of(PathManager.getPluginTempPath())
-    pluginTempPath.deleteChildrenRecursively { true }
-  }
+@RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "false")
+internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `no plugins have no updates`() {
@@ -107,16 +49,11 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
-        RepositoryPluginMock("ImageView", "502", "102", "0.5"),
-      ),
-      """
-      [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "0.1"},
-      {"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "0.5"}] 
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
+      RepositoryPluginMock("ImageView", "502", "102", "0.5"),
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     server.removeContext("/plugins/files/brokenPlugins.json")
     server.createContext("/plugins/files/brokenPlugins.json") { handler ->
@@ -145,15 +82,11 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
-        RepositoryPluginMock("ImageView", "502", "102", "0.1"),
-      ),
-      """
-      []
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
+      RepositoryPluginMock("ImageView", "502", "102", "0.1"),
     )
+    setServerPlugins(serverPlugins, emptyList())
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates().pluginUpdates
     assertTrue(result.all.isEmpty())
@@ -192,15 +125,11 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
-        RepositoryPluginMock("ImageView", "502", "102", "0.1"),
-      ),
-      """
-      []
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
+      RepositoryPluginMock("ImageView", "502", "102", "0.1"),
     )
+    setServerPlugins(serverPlugins, emptyList())
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates().pluginUpdates
     assertTrue(result.all.isEmpty())
@@ -222,16 +151,11 @@ class UpdateCheckerFacadeTest {
       // no ImageView installed, but we ask for its versions
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
-        RepositoryPluginMock("ImageView", "502", "102", "2.1"),
-      ),
-      """
-      [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"},
-       {"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
+      RepositoryPluginMock("ImageView", "502", "102", "2.1"),
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     val result = UpdateCheckerFacade.getInstance().getPluginUpdates(
       plugins = listOf(PluginId.getId("ColourChooser"), PluginId.getId("ImageView"))
@@ -250,23 +174,18 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        // incompatible with build number > 251.250
-        RepositoryPluginMock(
-          "ColourChooser", "501", "101", "2.0",
-          getMetaJson("ColourChooser", "501", "2.0", "251.200", "251.250")
-        ),
-        RepositoryPluginMock(
-          "ImageView", "502", "102", "2.1",
-          getMetaJson("ImageView", "502", "2.1", "251.100", "251.450")
-        ),
+    val serverPlugins = listOf(
+      // incompatible with build number > 251.250
+      RepositoryPluginMock(
+        "ColourChooser", "501", "101", "2.0",
+        getMetaJson("ColourChooser", "501", "2.0", "251.200", "251.250")
       ),
-      """
-        [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"},
-       {"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
-      """.trimIndent()
+      RepositoryPluginMock(
+        "ImageView", "502", "102", "2.1",
+        getMetaJson("ImageView", "502", "2.1", "251.100", "251.450")
+      ),
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
       buildNumber = BuildNumber.fromString("251.300")
@@ -284,21 +203,21 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
+    val colourChooserPlugin = RepositoryPluginMock(
+      "ColourChooser", "501", "101", "1.0",
+      getMetaJson("ColourChooser", "501", "2.0", "251.200", "251.250")
+    )
+    val imageViewPlugin = RepositoryPluginMock(
+      "ImageView", "502", "102", "2.1",
+      getMetaJson("ImageView", "502", "2.1", "251.100", "251.400")
+    )
     setServerPlugins(
       listOf(
         // incompatible with build number > 251.250
-        RepositoryPluginMock(
-          "ColourChooser", "501", "101", "1.0",
-          getMetaJson("ColourChooser", "501", "2.0", "251.200", "251.250")
-        ),
-        RepositoryPluginMock(
-          "ImageView", "502", "102", "2.1",
-          getMetaJson("ImageView", "502", "2.1", "251.100", "251.400")
-        ),
+        colourChooserPlugin,
+        imageViewPlugin,
       ),
-      """
-        [{"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
-      """.trimIndent()
+      listOf(imageViewPlugin)
     )
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
@@ -318,14 +237,10 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
-      ),
-      """
-        [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"}] 
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     installedPluginsFacade.setHosts(listOf(server.url + "/custom-repository"))
 
@@ -399,7 +314,7 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(emptyList(), "[]")
+    setServerPlugins(emptyList(), emptyList())
 
     installedPluginsFacade.setHosts(listOf(server.url + "/custom-repository"))
 
@@ -435,16 +350,11 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", false),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
-        RepositoryPluginMock("ImageView", "502", "102", "2.1"),
-      ),
-      """
-      [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"},
-       {"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
-      """.trimIndent()
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
+      RepositoryPluginMock("ImageView", "502", "102", "2.1"),
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
       buildNumber = BuildNumber.fromString("251.300")
@@ -462,7 +372,8 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true)
     ))
 
-    setServerPlugins(listOf(RepositoryPluginMock("ColourChooser", "501", "101", "1.0")), "")
+    val serverPlugins = listOf(RepositoryPluginMock("ColourChooser", "501", "101", "1.0"))
+    setServerPlugins(serverPlugins, emptyList())
 
     server.removeContext("/plugins/api/search/updates/compatible")
     server.createContext("/plugins/api/search/updates/compatible") { handler ->
@@ -487,13 +398,11 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
-    setServerPlugins(
-      listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
-        // No ImageView plugin in repository
-      ),
-      ""
+    val serverPlugins = listOf(
+      RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
+      // No ImageView plugin in repository
     )
+    setServerPlugins(serverPlugins, serverPlugins)
 
     server.removeContext("/plugins/api/search/updates/compatible")
     server.createContext("/plugins/api/search/updates/compatible") { handler ->
@@ -501,10 +410,7 @@ class UpdateCheckerFacadeTest {
 
       handler.sendResponseHeaders(200, 0)
       handler.responseBody.writer().use {
-        it.write(
-          """
-        [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"}]
-        """.trimIndent())
+        it.write(getUpdatesResponseJson(serverPlugins))
       }
     }
 
@@ -524,14 +430,14 @@ class UpdateCheckerFacadeTest {
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
     ))
 
+    val colourChooserPlugin = RepositoryPluginMock("ColourChooser", "501", "101", "2.0")
+    val imageViewPlugin = RepositoryPluginMock("ImageView", "502", "102", "2.1")
     setServerPlugins(
       listOf(
-        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
-        RepositoryPluginMock("ImageView", "502", "102", "2.1"),
+        colourChooserPlugin,
+        imageViewPlugin,
       ),
-      """
-        [{"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
-      """.trimIndent()
+      listOf(imageViewPlugin)
     )
 
     val result = PluginUpdateCheckService.getInstance().getPluginUpdate(PluginId.getId("ImageView"))
@@ -540,164 +446,4 @@ class UpdateCheckerFacadeTest {
     assertEquals("ImageView", result.update.id.idString)
   }
 
-  private fun setServerPlugins(
-    plugins: List<RepositoryPluginMock>,
-    @Language("JSON") updatesResponse: String,
-  ) {
-    server.createContext("/plugins/files/pluginsXMLIds.json") { handler ->
-      handler.sendResponseHeaders(200, 0)
-      handler.responseBody.writer().use { out ->
-        out.write(objectMapper.writeValueAsString(plugins.map { it.pluginId }))
-      }
-    }
-
-    for (mock in plugins) {
-      server.createContext("/plugins/files/${mock.externalPluginId}/${mock.externalUpdateId}/meta.json") { handler ->
-        handler.sendResponseHeaders(200, 0)
-        handler.responseBody.writer().use {
-          if (mock.customModelResponse != null) {
-            it.write(mock.customModelResponse)
-          }
-          else {
-            it.write(getMetaJson(mock.pluginId, mock.externalPluginId, mock.version, "1.0", "999.9999"))
-          }
-        }
-      }
-    }
-
-    server.createContext("/plugins/api/search/updates/compatible") { handler ->
-      receivedUpdatesRequestUri = handler.requestURI
-
-      handler.sendResponseHeaders(200, 0)
-      handler.responseBody.writer().use {
-        it.write(updatesResponse)
-      }
-    }
-  }
-
-  private fun getMetaJson(pluginId: String, externalPluginId: String, version: String, sinceBuild: String, untilBuild: String): String {
-    return """
-              {
-                "id": "${externalPluginId}",
-                "xmlId": "${pluginId}",
-                "name": "${pluginId} Plugin",
-                "description": "${pluginId} Helps You!",
-                "organization": "${pluginId} Company",
-                "tags": ["Productivity"],
-                "version": "${version}",
-                "notes": "Fixed bugs",
-                "dependencies": ["com.intellij.modules.lang"],
-                "since": "${sinceBuild}",
-                "until": "${untilBuild}",
-                "size": 86085,
-                "vendor": "YourCompany",
-                "sourceCodeUrl": "https://example.com/plugin/${pluginId}"
-              }
-          """.trimIndent()
-  }
-
-  private fun getPluginIdsFromQuery(uri: URI?): List<String?> {
-    // Java URI does not support repeatable names for pluginXmlId
-    val parsedQuery = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8)
-    val pluginIds = parsedQuery
-      .filter { it.name.equals("pluginXmlId", true) }
-      .map { it.value }
-    return pluginIds
-  }
-}
-
-private class TestMarketplaceCustomizationService(private val mockHost: String, private val byJetBrains: Boolean = true) : MarketplaceCustomizationService {
-  override fun usesJetBrainsPluginRepository(): Boolean = byJetBrains
-  override fun getPluginManagerUrl(): String = "$mockHost/plugins"
-  override fun getPluginDownloadUrl(): String = "$mockHost/download"
-  override fun getPluginsListUrl(): String = "$mockHost/list"
-  override fun getPluginHomepageUrl(pluginId: PluginId): String = "$mockHost/plugin/$pluginId"
-}
-
-private data class RepositoryPluginMock(
-  val pluginId: String,
-  val externalPluginId: String,
-  val externalUpdateId: String,
-  val version: String,
-  @param:Language("JSON") val customModelResponse: String? = null,
-)
-
-private data class InstalledPluginMock(
-  val id: String,
-  val name: String,
-  val company: String,
-  val version: String?,
-  val sinceBuild: String?,
-  val untilBuild: String?,
-  val enabled: Boolean,
-)
-
-private val installedPluginsFacade: TestUpdateCheckerPluginsFacade
-  get() = application.getService(UpdateCheckerPluginsFacade::class.java) as TestUpdateCheckerPluginsFacade
-
-private class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
-  private val plugins = mutableListOf<InstalledPluginMock>()
-  private val descriptors = mutableMapOf<PluginId, TestIdeaPluginDescriptor>()
-
-  private val hosts = mutableListOf<String>()
-
-  fun setPlugins(plugins: List<InstalledPluginMock>) {
-    this.plugins.clear()
-    this.plugins.addAll(plugins)
-
-    this.descriptors.clear()
-    this.descriptors.putAll(
-      plugins.map { mock ->
-        object : TestIdeaPluginDescriptor() {
-          override fun getPluginId(): PluginId = PluginId.getId(mock.id)
-          override fun getName(): @NlsSafe String = pluginId.idString
-          override fun getSinceBuild(): @NlsSafe String? = mock.sinceBuild
-          override fun getUntilBuild(): @NlsSafe String? = mock.untilBuild
-          override fun getVersion(): @NlsSafe String? = mock.version
-          override fun getDependencies(): List<IdeaPluginDependency> = listOf()
-
-          @Suppress("OVERRIDE_DEPRECATION")
-          override fun isEnabled(): Boolean = mock.enabled
-          override fun isBundled(): Boolean = false
-          override fun allowBundledUpdate(): Boolean = false
-        }
-      }
-        .associateBy { it.pluginId }
-    )
-  }
-
-  fun setHosts(repositories: List<String>) {
-    this.hosts.clear()
-    this.hosts.addAll(repositories)
-  }
-
-  override fun getPlugin(id: PluginId): IdeaPluginDescriptor? {
-    return descriptors[id]
-  }
-
-  override fun getInstalledPlugins(): Collection<IdeaPluginDescriptor> {
-    return descriptors.values
-  }
-
-  override fun getOnceInstalledIfExists(): Path? = null
-
-  override fun isDisabled(id: PluginId): Boolean {
-    return plugins.find { it.id == id.idString }
-      ?.enabled == false
-  }
-
-  override fun isCompatible(
-    descriptor: IdeaPluginDescriptor,
-    buildNumber: BuildNumber?,
-  ): Boolean {
-    return PluginManagerCore.isCompatible(descriptor, buildNumber)
-  }
-
-  // See RepositoryHelper.getPluginHosts
-  override fun getPluginHosts(): List<String?> {
-    val data = mutableListOf<String?>()
-    data.addAll(hosts)
-    data.add(null)
-    return data
-  }
 }

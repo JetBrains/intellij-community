@@ -4,17 +4,18 @@ package com.intellij.openapi.vcs.configurable
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
+import javax.swing.JEditorPane
 
 @ApiStatus.Internal
 class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurable(
@@ -25,8 +26,8 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
   override fun createPanel(): DialogPanel {
     val vcsConfig = VcsConfiguration.getInstance(project)
     val shelveManager = ShelveChangesManager.getInstance(project)
+    lateinit var shelfLocation: JEditorPane
 
-    val shelfLocation = ComponentPanelBuilder.createCommentComponent(createPresentableShelfLocation(), true, -1, false)
     return panel {
       row {
         checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"))
@@ -45,7 +46,8 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
             shelfLocation.text = createPresentableShelfLocation()
           }
         }.enabled(!project.isDefault)
-        cell(shelfLocation)
+
+        shelfLocation = comment(createPresentableShelfLocation(), maxLineLength = MAX_LINE_LENGTH_NO_WRAP).component
       }
     }
   }

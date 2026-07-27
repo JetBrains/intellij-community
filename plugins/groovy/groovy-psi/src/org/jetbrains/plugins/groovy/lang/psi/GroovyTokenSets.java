@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -41,6 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THROWS
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRAIT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRUE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_WHILE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_YIELD;
@@ -121,7 +122,7 @@ public interface GroovyTokenSets {
   /**
    * http://docs.groovy-lang.org/latest/html/documentation/core-syntax.html#_keywords. Reserved + Contextual keywords.
    */
-  TokenSet KEYWORDS = orSet(RESERVED_KEYWORDS, create(KW_PERMITS, KW_RECORD, KW_VAR, KW_YIELD));
+  TokenSet KEYWORDS = orSet(RESERVED_KEYWORDS, create(KW_PERMITS, KW_RECORD, KW_VAL, KW_VAR, KW_YIELD));
 
 
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);

@@ -1,0 +1,27 @@
+// FILE: test.before.kt
+// "Change function signature to 'fun `when`(`object`: String)'" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+
+class KotlinClass : JavaClass() {
+    <caret>override fun `when`() {
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix
+
+// FILE: JavaClass.java
+public class JavaClass {
+    void when(String object) {
+    }
+}
+
+// FILE: test.after.kt
+// "Change function signature to 'fun `when`(`object`: String)'" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+
+class KotlinClass : JavaClass() {
+    <caret>override fun `when`(`object`: String) {
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

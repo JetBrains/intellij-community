@@ -19,13 +19,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.GraphicsUtil
-import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
@@ -57,6 +58,10 @@ internal class VerticalBarPresentation(
 
   private var boundsState = initialState
 
+  private val tableRangePointer: SmartPsiFileRange? = TableUtils.findTable(row)?.let { table ->
+    SmartPointerManager.getInstance(table.project).createSmartPsiFileRangePointer(table.containingFile, table.textRange)
+  }
+
   init {
     PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
       invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
@@ -73,13 +78,8 @@ internal class VerticalBarPresentation(
     if (editor.isDisposed) {
       return false
     }
-    SlowOperations.knownIssue("IJPL-162791").use {
-      if (!row.isValid) {
-        return false
-      }
-    }
-    val table = TableUtils.findTable(row) ?: return false
-    return !table.isSoftWrapping(editor)
+    val tableRange = tableRangePointer?.range ?: return false
+    return editor.softWrapModel.getSoftWrapsForRange(tableRange.startOffset, tableRange.endOffset).isEmpty()
   }
 
   override val width

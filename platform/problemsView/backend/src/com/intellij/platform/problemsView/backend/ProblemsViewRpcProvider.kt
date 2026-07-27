@@ -5,7 +5,7 @@ import com.intellij.platform.problemsView.shared.ProblemsViewApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class ProblemsViewRpcProvider : RemoteApiProvider {
+internal class ProblemsViewRpcProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<ProblemsViewApi>()) {
       BackendProblemsViewApi()

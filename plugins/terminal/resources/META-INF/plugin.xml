@@ -41,6 +41,9 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.internal"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">

@@ -8,18 +8,14 @@ import com.intellij.ide.TooltipTitle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
-import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -47,50 +43,6 @@ import javax.swing.JTree
 import javax.swing.text.JTextComponent
 
 /**
- * Internal component properties for UI DSL
- */
-@ApiStatus.Internal
-enum class DslComponentPropertyInternal {
-  /**
-   * A mark that component is a cell label, see [Cell.label]
-   *
-   * Value: true
-   */
-  CELL_LABEL,
-
-  /**
-   * Range of allowed integer values in text fields
-   *
-   * Value: IntRange
-   */
-  INT_TEXT_RANGE,
-
-  /**
-   * Place where the component was added into Kotlin UI DSL builder (for example [Row.cell]). Used in internal mode only
-   *
-   * Value: Throwable
-   */
-  CREATION_STACKTRACE,
-
-  /**
-   * Preferred columns width for DslLabel when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
-   * A temporary workaround of IJPL-62164 will be removed later.
-   *
-   * Value: Int
-   */
-  @Deprecated("Not needed anymore, because IJPL-62164 has been implemented")
-  @ApiStatus.ScheduledForRemoval
-  PREFERRED_COLUMNS_LABEL_WORD_WRAP
-}
-
-/**
- * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
- */
-private const val FAIL_ON_WARN = false
-
-private val LOG = Logger.getInstance("JetBrains UI DSL")
-
-/**
  * Components that can have assigned labels
  */
 private val ALLOWED_LABEL_COMPONENTS = listOf(
@@ -106,22 +58,12 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   EditorTextField::class
 )
 
-/**
- * See [DslComponentProperty.INTERACTIVE_COMPONENT]
- */
-val JComponent.interactiveComponent: JComponent
-  @ApiStatus.Internal
-  get() {
-    val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
-    return interactiveComponent ?: this
-  }
-
 internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
     when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
       null -> null
       is UnscaledGaps -> value
-      else -> throw UiDslException("Invalid VISUAL_PADDINGS")
+      else -> error("Invalid VISUAL_PADDINGS: $value")
     }
 
   if (customVisualPaddings == null && component is JScrollPane) {
@@ -188,7 +130,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {
-      warn("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
+      logWarningWithDebugStacktrace("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
     }
     return
   }
@@ -200,7 +142,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   val component = getLabelComponentFor(cell.component.interactiveComponent)
   if (component == null) {
     if (mnemonicExists) {
-      warn("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
+      logWarningWithDebugStacktrace("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
     }
     return
   }
@@ -218,15 +160,6 @@ private fun getLabelComponentFor(component: JComponent): JComponent? {
     return component
   }
   return null
-}
-
-internal fun warn(message: String) {
-  if (FAIL_ON_WARN) {
-    throw UiDslException(message)
-  }
-  else {
-    LOG.warn(message)
-  }
 }
 
 internal fun registerCreationStacktrace(component: JComponent) {
@@ -248,7 +181,7 @@ private val DENIED_TAGS = mapOf(
 fun checkDeniedHtmlTags(text: String) {
   for ((regex, reason) in DENIED_TAGS) {
     if (regex.find(text, 0) != null) {
-      UiDslException.error("Invalid html: $reason, text: $text")
+      failInDebugOrLog("Invalid html: $reason, text: $text")
     }
   }
 }

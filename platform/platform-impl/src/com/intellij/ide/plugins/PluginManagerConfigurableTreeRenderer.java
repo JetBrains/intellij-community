@@ -37,6 +37,9 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
   public @Nullable Pair<Component, Layout> getDecorator(@NotNull JComponent tree,
                                                         @Nullable UnnamedConfigurable configurable,
                                                         boolean selected) {
+    if (configurable instanceof PluginManagerConfigurable pluginManagerConfigurable) {
+      pluginManagerConfigurable.setOpenSourceFromSettings();
+    }
     if (myTree == null) {
       myUpdateSubscription = PluginUpdatesService.getInstance().subscribe(this);
       tree.addAncestorListener(this);

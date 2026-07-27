@@ -106,8 +106,6 @@ jvm_library(
         "@lib//:kotlinc-analysis-api-platform-interface",
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
-        "//plugins/kotlin/inspections",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
         "//plugins/kotlin/formatter/minimal",

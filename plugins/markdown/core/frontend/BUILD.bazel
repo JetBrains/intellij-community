@@ -41,6 +41,7 @@ jvm_library(
         "//libraries/miglayout-swing",
         "//fleet/rhizomedb",
         "//platform/lang-impl",
+        "//platform/ide-core-impl",
     ],
 )
 
@@ -81,6 +82,7 @@ jvm_library(
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.frontend` end

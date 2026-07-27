@@ -79,7 +79,8 @@ suspend fun createSdk(
   sdkAdditionalData: PythonSdkAdditionalData,
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
-): Result<Sdk, MessageError> = createSdkImpl(SdkCreationRequest.EelSdk(pythonBinaryPath.path, sdkAdditionalData), suggestedSdkName, advancedOpts)
+): Result<Sdk, MessageError> =
+  createSdkImpl(SdkCreationRequest.EelSdk(pythonBinaryPath.path, sdkAdditionalData), suggestedSdkName, advancedOpts)
 
 /**
  * Kinda low-level API to create SDK. Use [com.jetbrains.python.sdk.add.v2.FileSystem.setupSdk] if possible.
@@ -111,9 +112,14 @@ suspend fun SdkCreationRequest<*, *>.createSdk(
 suspend fun createLocalSdkGuessingTypeByPath(
   homePath: PythonBinary,
   moduleOrProject: ModuleOrProject,
-  suggestedSdkName: String? = null
+  suggestedSdkName: String? = null,
 ): PyResult<Sdk> =
-  createSdkGuessingTypeByPath(PathHolder.Eel(homePath), EelFileSystem(homePath.getEelDescriptor().toEelApi()), moduleOrProject, null, true, suggestedSdkName)
+  createSdkGuessingTypeByPath(PathHolder.Eel(homePath),
+                              EelFileSystem(homePath.getEelDescriptor().toEelApi()),
+                              moduleOrProject,
+                              null,
+                              true,
+                              suggestedSdkName)
 
 
 /**
@@ -125,7 +131,7 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   moduleOrProject: ModuleOrProject,
   targetPanelExtension: TargetPanelExtension?,
   isAssociateWithModule: Boolean,
-  suggestedSdkName: String? = null
+  suggestedSdkName: String? = null,
 ): PyResult<Sdk> {
   val flavorAndData = when (homePath) {
     is PathHolder.Eel -> withContext(Dispatchers.IO) {
@@ -144,11 +150,16 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
     is PathHolder.Target -> PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance())
   }
 
+  val workingDirectory = moduleOrProject.workingDirectory
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
 
   val newSdk = fileSystem.setupSdk(
     project = moduleOrProject.project,
     pythonBinaryPath = homePath,
-    sdkAdditionalData = PythonSdkAdditionalData(flavorAndData),
+    sdkAdditionalData = PythonSdkAdditionalData(
+      flavorAndData,
+      workingDirectory,
+    ),
     targetPanelExtension = targetPanelExtension,
     suggestedSdkName = suggestedSdkName
   ).getOr { return it }

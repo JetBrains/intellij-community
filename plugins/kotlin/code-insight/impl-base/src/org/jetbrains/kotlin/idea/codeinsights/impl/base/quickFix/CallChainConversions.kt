@@ -7,13 +7,14 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
@@ -542,7 +543,8 @@ object AssociateFunctionUtil {
     }
 
     @ApiStatus.Internal
-    fun KaSession.pair(expression: KtExpression): Pair<KtExpression, KtExpression>? {
+    context(_: KaSession)
+    fun pair(expression: KtExpression): Pair<KtExpression, KtExpression>? {
         return with(expression) {
             when (this) {
                 is KtBinaryExpression -> {

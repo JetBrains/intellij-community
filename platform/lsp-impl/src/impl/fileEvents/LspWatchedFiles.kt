@@ -37,7 +37,7 @@ internal class LspWatchedFiles(private val client: LspClientImpl) {
           val baseDir = client.descriptor.findFileByUri(baseUri)
           if (baseDir != null && baseDir.isDirectory) {
             val globPattern = relativePattern.pattern
-            if (client.globMatcher.pathMatches(fileChangeInfo.path, fileChangeInfo.isDirectory, globPattern, baseDir.path)) {
+            if (client.globMatcher.pathMatches(fileChangeInfo.path, fileChangeInfo.isDirectory, globPattern, client.descriptor.getFilePath(baseDir))) {
               return FileEvent(fileChangeInfo.uri, fileChangeInfo.changeType)
             }
           }

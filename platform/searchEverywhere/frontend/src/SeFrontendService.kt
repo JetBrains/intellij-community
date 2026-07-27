@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
@@ -109,6 +110,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val showPopupStartTime = System.currentTimeMillis()
 
+    // Mirror the old Search Everywhere (SearchEverywhereManagerImpl): an action that prefills the
+    // search field may request via IS_SELECT_SEARCH_TEXT that the prefilled text is not selected.
+    @Suppress("DEPRECATION")
+    val selectSearchText = initEvent.getData(SearchEverywhereManagerImpl.IS_SELECT_SEARCH_TEXT) != false
+
     val tabFactories = SeTabFactory.EP_NAME.extensionList
     val tabCustomizer = SeTabsCustomizer.getInstance()
     val initialTabs = visibleTabsState?.map { tab ->
@@ -124,7 +130,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val popupClosedCompletable = CompletableDeferred<Unit>()
     val searchStatePublisher = SeSearchStatePublisher()
     val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
-    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, searchStatePublisher) {
+    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, selectSearchText, searchStatePublisher) {
       popupInstance?.saveSearchText()
       visibleTabsState = it.visibleTabsInfo
       popupClosedCompletable.complete(Unit)
@@ -350,6 +356,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     initialTabs: List<SeDummyTabVm>,
     selectedTabId: String,
     searchText: String?,
+    selectSearchText: Boolean,
     searchStatePublisher: SeSearchStatePublisher,
     onCancel: (SePopupContentPane) -> Unit
   ): Pair<JBPopup, SePopupContentPane> {
@@ -367,6 +374,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                          initialTabs,
                                          selectedTabId,
                                          searchText,
+                                         selectSearchText,
                                          getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY),
                                          selectionState)
 

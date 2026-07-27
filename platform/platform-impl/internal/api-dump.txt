@@ -6,6 +6,9 @@ a:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 - f:getModelDirectory():java.lang.String
 - f:getResourceDirectory():java.lang.String
 f:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+com.intellij.internal.retype.RetypeFileAssistant
+- a:acceptLookupElement(com.intellij.codeInsight.lookup.LookupElement):Z
+- retypeDone(com.intellij.openapi.editor.Editor):V
 com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider
 - a:accept(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileTypes.FileType):Z
 - a:getPluginId():java.lang.String

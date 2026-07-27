@@ -213,15 +213,18 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
           require(currentWriteIntentLockMode == WriteIntentLockMode.UI_ONLY) {
             "Write action finished, but FlushQueue is unexpectedly allowed to run all runnables"
           }
+          synchronized(lockObject) {
+            uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
+          }
           if (threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) {
             threadingSupport.runWhenWriteActionIsCompleted {
+              uiQueue.enqueue(WriteActionFinished(timeCounter.getAndIncrement()))
               requestFlush()
             }
-            return null
+            // this requestFlush is needed because suspending edtWriteAction might be residing in this queue after the current WriteActionFinished
+            // so if current write action is pending, we need to continue processing UI runnables
+            continue
           } else {
-            synchronized(lockObject) {
-              uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
-            }
             currentWriteIntentLockMode = WriteIntentLockMode.ALL
           }
         }

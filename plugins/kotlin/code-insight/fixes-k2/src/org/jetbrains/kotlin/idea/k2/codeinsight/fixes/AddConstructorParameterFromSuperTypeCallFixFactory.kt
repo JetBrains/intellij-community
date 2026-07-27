@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCa
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.types.Variance
 
 internal object AddConstructorParameterFromSuperTypeCallFixFactory {
@@ -30,7 +30,7 @@ internal object AddConstructorParameterFromSuperTypeCallFixFactory {
         if (parameterIndex != valueArgumentList.arguments.size) return null
         val primaryConstructor = containingClass.primaryConstructor
         if (primaryConstructor?.valueParameters?.any { it.name == diagnostic.violatedParameter.toString() } == true) return null
-        val superTypeCallParameters = superTypeCall.partiallyAppliedSymbol.signature.valueParameters
+        val superTypeCallParameters = superTypeCall.signature.valueParameters
         val parameterType = superTypeCallParameters.getOrNull(parameterIndex)?.returnType ?: return null
 
         val renderedParameterType = parameterType.render(position = Variance.INVARIANT)

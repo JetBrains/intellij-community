@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -226,13 +226,14 @@ abstract class DeprecatedSymbolUsageFixBase(
 
                         (codeFragment.getContentElement() as? KtIsExpression)?.typeReference
                     } catch (e: Exception) {
-                        if (e is ControlFlowException) throw e
+                        rethrowControlFlowException(e)
                         val replacement = createReplacement(target as KtDeclaration, element, replaceWith, isUnitType) ?: return null
 
                         val mainExpression = replacement.mainExpression
                         if (target is KtClassLikeDeclaration &&
                             mainExpression !is KtReferenceExpression &&
-                            mainExpression !is KtQualifiedExpression) {
+                            mainExpression !is KtQualifiedExpression
+                        ) {
                             return null
                         }
 

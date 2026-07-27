@@ -2017,6 +2017,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
             }
 
+            @TestMetadata("backtickedReceiver.kt")
+            public void testBacktickedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/backtickedReceiver.kt");
+            }
+
             @TestMetadata("caretInsideBodyExplicitSignature.kt")
             public void testCaretInsideBodyExplicitSignature() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/caretInsideBodyExplicitSignature.kt");
@@ -4179,6 +4184,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
         }
 
+        @TestMetadata("destructuringDeclarationEntry.kt")
+        public void testDestructuringDeclarationEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntry.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryInLoop.kt")
+        public void testDestructuringDeclarationEntryInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryInLoop.kt");
+        }
+
         @TestMetadata("dotQualifiedInitializer.kt")
         public void testDotQualifiedInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/dotQualifiedInitializer.kt");
@@ -5881,6 +5896,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("annotationWithUseSite.kt")
         public void testAnnotationWithUseSite() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/annotationWithUseSite.kt");
+        }
+
+        @TestMetadata("backtickedIdentifier.kt")
+        public void testBacktickedIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/backtickedIdentifier.kt");
         }
 
         @TestMetadata("declaredInInterface.kt")
@@ -7629,6 +7649,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/destructuringDeclaration.kt");
         }
 
+        @TestMetadata("destructuringDeclarationBacktickedProperty.kt")
+        public void testDestructuringDeclarationBacktickedProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/destructuringDeclarationBacktickedProperty.kt");
+        }
+
         @TestMetadata("for.kt")
         public void testFor() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithParameterName/for.kt");
@@ -9371,6 +9396,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/abstractProperty.kt");
         }
 
+        @TestMetadata("backtickedClassName.kt")
+        public void testBacktickedClassName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/backtickedClassName.kt");
+        }
+
+        @TestMetadata("backtickedTypeParameter.kt")
+        public void testBacktickedTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/backtickedTypeParameter.kt");
+        }
+
         @TestMetadata("delegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/delegatedProperty.kt");
@@ -9645,6 +9680,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedSubclassName.kt")
+        public void testBacktickedSubclassName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/backtickedSubclassName.kt");
+        }
+
         @TestMetadata("dropDefaultConstructorCall.kt")
         public void testDropDefaultConstructorCall() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/dropDefaultConstructorCall.kt");
@@ -9843,6 +9883,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("annotationClass.kt")
         public void testAnnotationClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPrimaryConstructorToSecondary/annotationClass.kt");
+        }
+
+        @TestMetadata("backtickedParam.kt")
+        public void testBacktickedParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPrimaryConstructorToSecondary/backtickedParam.kt");
         }
 
         @TestMetadata("caretOnClassBody.kt")
@@ -10648,6 +10693,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/backtickedEnum.kt");
         }
 
+        @TestMetadata("backtickedEnumEntries.kt")
+        public void testBacktickedEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/backtickedEnumEntries.kt");
+        }
+
         @TestMetadata("entriesAndMembers.kt")
         public void testEntriesAndMembers() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesAndMembers.kt");
@@ -10701,6 +10751,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     public static class SamConversionToAnonymousObject extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backtickedInterfaceName.kt")
+        public void testBacktickedInterfaceName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/backtickedInterfaceName.kt");
         }
 
         @TestMetadata("funInterface.kt")
@@ -10831,6 +10886,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedMember.kt")
+        public void testBacktickedMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/backtickedMember.kt");
+        }
+
         @TestMetadata("Foo.kt")
         public void testFoo() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter/Foo.kt");
@@ -10892,6 +10952,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     public static class AddLabeledReturnInLambda extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backtickedLabel.kt")
+        public void testBacktickedLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addLabeledReturnInLambda/backtickedLabel.kt");
         }
 
         @TestMetadata("insideParenthesis.kt")
@@ -11539,6 +11604,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("withLoopDeepAndComments13.kt")
             public void testWithLoopDeepAndComments13() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments13.kt");
+            }
+
+            @TestMetadata("withLoopExistingBacktickedLabel.kt")
+            public void testWithLoopExistingBacktickedLabel() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopExistingBacktickedLabel.kt");
             }
 
             @TestMetadata("withLoopExistingLabel.kt")
@@ -12653,6 +12723,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backtickedProperty.kt")
+            public void testBacktickedProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/backtickedProperty.kt");
+            }
+
             @TestMetadata("binaryExpression.kt")
             public void testBinaryExpression() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertToScope/convertToApply/binaryExpression.kt");
@@ -12794,6 +12869,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public static class ConvertToRun extends AbstractK2IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("backtickedReceiver.kt")
+            public void testBacktickedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToRun/backtickedReceiver.kt");
             }
 
             @TestMetadata("binaryExpression.kt")
@@ -13423,6 +13503,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationWithUseSite.kt");
         }
 
+        @TestMetadata("backtickedIdentifier.kt")
+        public void testBacktickedIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/backtickedIdentifier.kt");
+        }
+
         @TestMetadata("dataClass.kt")
         public void testDataClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/dataClass.kt");
@@ -13514,6 +13599,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("addToVar.kt")
         public void testAddToVar() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addToVar.kt");
+        }
+
+        @TestMetadata("booleanResultUsed.kt")
+        public void testBooleanResultUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/booleanResultUsed.kt");
         }
 
         @TestMetadata("nonCollection.kt")
@@ -15262,6 +15352,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedParameter.kt")
+        public void testBacktickedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/backtickedParameter.kt");
+        }
+
         @TestMetadata("continueFromNestedLambda.kt")
         public void testContinueFromNestedLambda() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/continueFromNestedLambda.kt");
@@ -15358,6 +15453,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     public static class ReplaceForEachWithRepeat extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backtickedLabel.kt")
+        public void testBacktickedLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForEachWithRepeat/backtickedLabel.kt");
         }
 
         @TestMetadata("comments.kt")

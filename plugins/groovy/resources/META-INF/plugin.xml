@@ -962,7 +962,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.final.variable.access"
                      groupKey="inspection.control.flow"
-                     enabledByDefault="true"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.switch.statement.with.no.default"

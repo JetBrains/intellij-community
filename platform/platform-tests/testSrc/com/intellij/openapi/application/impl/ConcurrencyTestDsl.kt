@@ -31,15 +31,15 @@ class ConcurrencyDslShowcase {
     val counter = AtomicInteger(0)
     launch {
       checkpoint(1)
-      assertEquals(counter.getAndIncrement(), 0)
+      assertEquals(0, counter.getAndIncrement())
       checkpoint(3)
-      assertEquals(counter.getAndIncrement(), 2)
+      assertEquals(2, counter.getAndIncrement())
     }
     launch {
       checkpoint(2)
-      assertEquals(counter.getAndIncrement(), 1)
+      assertEquals(1, counter.getAndIncrement())
       checkpoint(4)
-      assertEquals(counter.getAndIncrement(), 3)
+      assertEquals(3, counter.getAndIncrement())
     }
   }
 

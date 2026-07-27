@@ -14,7 +14,6 @@ import com.intellij.projectImport.ProjectImportBuilder
 import com.intellij.projectImport.ProjectImportProvider.getDefaultPath
 import com.intellij.projectImport.ProjectOpenProcessor
 import icons.GradleIcons
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor
 import org.jetbrains.plugins.gradle.service.project.open.canLinkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
@@ -32,7 +31,6 @@ import javax.swing.Icon
  * Use [org.jetbrains.plugins.gradle.service.project.open.openGradleProject] to open (import) a new gradle project.
  * Use [org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject] to attach a gradle project to an opened idea project.
  */
-@ApiStatus.Internal
 @Deprecated("Use the open and link project utility functions")
 internal class JavaGradleProjectImportBuilder : ProjectImportBuilder<Any>(), DeprecatedProjectBuilderForImport {
   override fun getName(): String = GradleBundle.message("gradle.name")

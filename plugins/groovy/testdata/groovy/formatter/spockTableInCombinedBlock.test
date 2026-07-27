@@ -1,0 +1,79 @@
+class HelloSpock extends spock.lang.Specification {
+  def test1(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    a << [1, 2]
+    combined:
+    b | c
+    3 | 4
+    20 | 20
+  }
+
+  def test2(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    b | c
+    3 | 4
+    20 | 20
+    combined:
+    a << [1, 2]
+  }
+
+  def test3(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    a | b
+    1 | 2
+    10 | 20
+    combined:
+    c | d
+    3 | 4
+    30 | 40
+  }
+}
+-----
+class HelloSpock extends spock.lang.Specification {
+  def test1(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    a << [1, 2]
+    combined:
+    b  | c
+    3  | 4
+    20 | 20
+  }
+
+  def test2(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    b  | c
+    3  | 4
+    20 | 20
+    combined:
+    a << [1, 2]
+  }
+
+  def test3(int a, int b, int c) {
+    expect:
+    a < b * c
+
+    where:
+    a  | b
+    1  | 2
+    10 | 20
+    combined:
+    c  | d
+    3  | 4
+    30 | 40
+  }
+}

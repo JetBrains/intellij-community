@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
+import com.intellij.psi.impl.file.impl.signalBulkInvalidationNeeded
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
@@ -217,6 +218,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   }
 
   private fun queueTasks(actions: List<TaskFactory>, reason: @NonNls String) {
+    signalBulkInvalidationNeeded()
     actions.forEach { myTasks.offer(it) }
     val task: DumbModeTask = MyDumbModeTask(reason, this)
     myProject.messageBus.connect(task).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
@@ -276,6 +278,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   }
 
   private fun scheduleDumbModeReindexingIfNeeded() {
+    signalBulkInvalidationNeeded()
     FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject)
   }
 

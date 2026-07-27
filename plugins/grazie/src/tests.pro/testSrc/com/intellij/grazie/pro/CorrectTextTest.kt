@@ -2,7 +2,6 @@ package com.intellij.grazie.pro
 
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.openapi.util.registry.Registry
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -11,7 +10,6 @@ internal class CorrectTextTest : BaseTestCase() {
   @BeforeEach
   fun setUp() {
     myFixture.enableInspections(GrazieSpellCheckingInspection::class.java, GrazieInspection.Grammar::class.java, GrazieInspection.Style::class.java)
-    Registry.get("grazie.correct.text.enabled").setValue(true, testRootDisposable)
   }
 
   @Test

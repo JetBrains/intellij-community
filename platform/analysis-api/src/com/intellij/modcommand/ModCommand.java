@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -83,7 +83,27 @@ public sealed interface ModCommand
     if (isEmpty()) return next;
     if (next.isEmpty()) return this;
     List<ModCommand> commands = new ArrayList<>(unpack());
-    commands.addAll(next.unpack());
+    List<ModCommand> nextCommands = next.unpack();
+
+    // Sorting consecutive ModUpdateFileTextCommands by file URL
+    boolean canSort = true;
+    for (ModCommand nextCommand : nextCommands) {
+      canSort &= nextCommand instanceof ModUpdateFileText || nextCommand instanceof ModNothing;
+      commands.add(nextCommand);
+      if (!canSort || !(nextCommand instanceof ModUpdateFileText nextUpdate)) continue;
+
+      for (int i = commands.size() - 2; i >= 0; i--) {
+        if (!(commands.get(i) instanceof ModUpdateFileText curUpdate)) break;
+        if (curUpdate.file().getUrl().compareTo(nextUpdate.file().getUrl()) > 0) {
+          commands.set(i + 1, curUpdate);
+          commands.set(i, nextUpdate);
+        }
+        else {
+          break;
+        }
+      }
+    }
+
     return commands.size() == 1 ? commands.getFirst() : new ModCompositeCommand(commands);
   }
 

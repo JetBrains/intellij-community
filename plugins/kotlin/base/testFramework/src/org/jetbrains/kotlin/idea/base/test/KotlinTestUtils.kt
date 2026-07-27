@@ -4,13 +4,15 @@
 
 package org.jetbrains.kotlin.idea.base.test
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import java.io.File
 
 fun <R> executeOnPooledThreadInReadAction(action: () -> R): R {
-    val result = ApplicationManager.getApplication().executeOnPooledThread<R> { runReadAction(action) }
-    return result.get()
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+        readAction { action() }
+    }
 }
 
 fun k2FileName(

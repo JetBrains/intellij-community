@@ -55,7 +55,7 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 
   override val ui: PyToolUIInfo = UV_UI_INFO
 
-  override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
+  override val flavorDataType: Class<UvSdkFlavor> = UvSdkFlavor::class.java
 
   override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 

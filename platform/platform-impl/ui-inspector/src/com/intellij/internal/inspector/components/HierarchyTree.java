@@ -3,7 +3,7 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -556,8 +556,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
             }
           }
           myToolTipText =
-            InternalActionsBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
-                                                        count.getWarnings(), count.getRecommendations());
+            IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
+                                         count.getWarnings(), count.getRecommendations());
         }
       }
 

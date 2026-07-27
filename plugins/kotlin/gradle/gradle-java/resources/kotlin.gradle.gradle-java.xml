@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleJava">
+<idea-plugin visibility="internal">
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
@@ -11,14 +11,35 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
     <module name="intellij.kotlin.jvm.debugger.coroutines"/>
+    <module name="intellij.kotlin.native"/>
+    <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
 

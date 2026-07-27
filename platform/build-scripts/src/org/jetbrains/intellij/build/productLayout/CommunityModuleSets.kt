@@ -135,11 +135,13 @@ object CommunityModuleSets {
     module("intellij.platform.editor.frontend")
     module("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
+    module("intellij.platform.ide.internal")
     embeddedModule("intellij.platform.feedback")
 
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
     module("intellij.platform.pluginManager.frontend")
+    embeddedModule("intellij.platform.ide.updateChecker")
     module("intellij.platform.ide.updateChecker.backend")
 
     module("intellij.platform.execution.impl.frontend")
@@ -347,6 +349,7 @@ object CommunityModuleSets {
     // Packaging of those modules to the all IDEs is required to load a JetBrains Client from the big IDE distribution.
     module("intellij.rd.client")
     module("intellij.rd.client.base")
+    module("intellij.rd.client.internal")
   }
 
   /**

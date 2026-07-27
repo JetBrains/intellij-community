@@ -3,8 +3,3 @@
   - name: intellij.platform.icons
   - name: intellij.platform.ide
   - name: intellij.platform.ide.observable
-  - name: intellij.platform.ide.progress
-  - name: intellij.platform.ide.rpc
-  - name: intellij.platform.instanceContainer
-  - name: intellij.platform.project
-  - name: intellij.platform.serviceContainer

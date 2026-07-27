@@ -31,32 +31,32 @@ public class IntToIntBtreeLockFreeTest {
   private static final int ENOUGH_KEYS = 1 << 22;
 
   private static final int PAGE_SIZE = 1 << 15;
+  private static final long CACHE_CAPACITY_BYTES = 100L << 20;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private IntToIntBtreeLockFree bTree;
+  private FilePageCacheLockFree filePageCache;
   private Int2IntOpenHashMap generatedKeyValues;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    assumeTrue(
-      "PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED must be true to test IntToIntBtree over lock-free cache",
-      PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED
-    );
     IndexDebugProperties.DEBUG = true;
   }
 
   @Before
   public void setUp() throws Exception {
     final File file = temporaryFolder.newFile("btree");
+    filePageCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     LOCK_CONTEXT.writeLock().lock();
 
     bTree = new IntToIntBtreeLockFree(
       PAGE_SIZE,
       file.toPath(),
       LOCK_CONTEXT,
+      filePageCache,
       /*createAnew: */ true,
       new PageContentLockingStrategy.SharedLockLockingStrategy()
     );
@@ -76,6 +76,9 @@ public class IntToIntBtreeLockFreeTest {
     }
     finally {
       LOCK_CONTEXT.writeLock().unlock();
+      if (filePageCache != null) {
+        filePageCache.close();
+      }
     }
   }
 

@@ -32,9 +32,9 @@ internal class IoFloodingAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.text = if (value)
-      InternalActionsBundle.message("stop.IoFlooding.text")
+      PlatformInternalBundle.message("stop.IoFlooding.text")
     else
-      InternalActionsBundle.message("start.IoFlooding.text")
+      PlatformInternalBundle.message("start.IoFlooding.text")
   }
 }
 

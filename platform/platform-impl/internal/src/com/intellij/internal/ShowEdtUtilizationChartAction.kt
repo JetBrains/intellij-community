@@ -44,7 +44,7 @@ class ShowEdtUtilizationChartAction : DumbAwareAction() {
     application.service<EdtLockLoadMonitorService>().initialize()
     val toolWindowManager = ToolWindowManager.getInstance(e.project!!)
 
-    val toolWindowName = InternalActionsBundle.message("tab.title.edt.utilization.chart")
+    val toolWindowName = PlatformInternalBundle.message("tab.title.edt.utilization.chart")
     val maybeCreatedToolWindow = toolWindowManager.getToolWindow(toolWindowName)
     if (maybeCreatedToolWindow != null) {
       maybeCreatedToolWindow.show()
@@ -52,7 +52,7 @@ class ShowEdtUtilizationChartAction : DumbAwareAction() {
     }
 
     val toolWindow = toolWindowManager.registerToolWindow(toolWindowName) {
-      stripeTitle = InternalActionsBundle.messagePointer("tab.title.edt.utilization.chart")
+      stripeTitle = PlatformInternalBundle.messagePointer("tab.title.edt.utilization.chart")
       canCloseContent = false
       icon = AllIcons.Toolwindows.ToolWindowFind
       anchor = ToolWindowAnchor.BOTTOM

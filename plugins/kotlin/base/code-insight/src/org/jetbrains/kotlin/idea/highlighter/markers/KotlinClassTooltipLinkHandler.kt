@@ -10,7 +10,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 
-private class KotlinClassTooltipLinkHandler : TooltipLinkHandler() {
+internal class KotlinClassTooltipLinkHandler : TooltipLinkHandler() {
     override fun handleLink(refSuffix: String, editor: Editor): Boolean {
         val project = editor.project ?: return false
         val javaPsiFacade = JavaPsiFacade.getInstance(project)

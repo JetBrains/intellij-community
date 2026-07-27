@@ -26,6 +26,8 @@ public final class RedundantSlf4jDefinitionInspection extends LombokJavaInspecti
   }
 
   private static class LombokDefinitionVisitor extends JavaElementVisitor {
+    private static final CallMatcher LOGGER_FACTORY_GET_LOGGER = CallMatcher.staticCall("org.slf4j.LoggerFactory", "getLogger")
+      .parameterTypes("java.lang.Class");
 
     private final ProblemsHolder holder;
 
@@ -38,9 +40,6 @@ public final class RedundantSlf4jDefinitionInspection extends LombokJavaInspecti
       super.visitField(field);
       findRedundantDefinition(field);
     }
-
-    private static final CallMatcher LOGGER_FACTORY_GET_LOGGER = CallMatcher.staticCall("org.slf4j.LoggerFactory", "getLogger")
-      .parameterTypes("java.lang.Class");
 
     private static boolean isLoggerInitCall(PsiExpression initializer, PsiClass containingClass) {
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);

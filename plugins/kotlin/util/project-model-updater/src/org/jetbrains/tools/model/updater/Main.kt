@@ -14,7 +14,20 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
+    /**
+     * KGP version used in Kotlin Gradle import tests
+     * Needed as a fallback to pin the exact version of KGP in exceptional situations, otherwise intended to be absent
+     *
+     * @see GeneratorPreferences.kotlinGradlePluginArtifactVersion
+     */
     val kotlinGradlePluginVersion: String? by OptionalPreference
+
+    /**
+     * KGP version used in Kotlin plugin tests, which rely on Gradle import
+     * Intended to be fixed and updated manually because tests are included in quality gates
+     *
+     * @see GeneratorPreferences.kotlinNativeArtifactVersion
+     */
     val kotlinNativeVersion: String? by OptionalPreference
 
     /**
@@ -39,11 +52,23 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlinCompilerRepoPath: String? by OptionalPreference
 
     /**
+     * Whether to publish the Gradle Plugin artifacts.
+     *
+     * @see ApplicationMode.COMPILER_PUBLICATION
+     */
+    val publishGradlePlugin: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
      * Whether to convert the JPS project to Bazel format.
      *
      * @see ApplicationMode.PROJECT_MODEL_UPDATER
      */
     val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
+     * Whether to patch the `.patronus/config.yaml` file, excluding triggers for checks mentioned in `resources/patronus-deny-list.txt`.
+     */
+    val applyPatronusDenyList: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
 
     /**
      * Represents modes of the application. [PROJECT_MODEL_UPDATER] is the default one.

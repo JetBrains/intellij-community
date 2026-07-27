@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.validation
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.LayoutDslMarker
+import com.intellij.ui.dsl.builder.impl.LayoutDslMarker
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 

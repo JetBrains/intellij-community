@@ -28,12 +28,14 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
@@ -47,6 +49,7 @@ import com.intellij.task.ProjectTaskManager
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomManager
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +65,7 @@ import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.dom.processing.collectRegisteredClasses
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
@@ -99,6 +103,84 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       } ?: return@launch
       buildProjectAndRunExtraction(actualData)
     }
+  }
+
+  /**
+   * Converts a config file referenced in `<depends optional="true">` to a content module if classes registered in it are already extracted
+   * to a separate module.
+   */
+  fun convertOptionalDependsToContentModule(problemDescriptor: ProblemDescriptor, optionalDependencyModuleName: @NlsSafe String) {
+    class ConvertExistingModuleToContentModuleData(
+      val pluginXmlFile : VirtualFile,
+      val configFileDescriptor: VirtualFile,
+      val configFileAttributeValue: String,
+      val optionalDependencyModule: Module,
+      val existingResourceRoot: VirtualFile?,
+    )
+
+    coroutineScope.launch {
+      val conversionData = readAction {
+        val psiElement = problemDescriptor.psiElement
+        if (psiElement == null) {
+          reportError(DevKitBundle.message("extract.optional.dependency.error.cannot.apply"))
+          return@readAction null
+        }
+
+        val xmlElement = psiElement as XmlAttributeValue
+        val domManager = DomManager.getDomManager(project)
+        val dependencyElement = domManager.getDomElement(xmlElement.parentOfType<XmlTag>()) as Dependency
+        val configFileAttributeValue = dependencyElement.configFile.stringValue ?: error("Config file attribute value is null")
+        val configFileXml = dependencyElement.configFile.value?.resolve()?.containingFile as? XmlFile
+        if (configFileXml == null) {
+          reportError(DevKitBundle.message("extract.optional.dependency.cannot.find.config.file.0", configFileAttributeValue))
+          return@readAction null
+        }
+        val optionalDependencyModule = ModuleManager.getInstance(project).findModuleByName(optionalDependencyModuleName) ?: error("Cannot find module $optionalDependencyModuleName")
+        val existingResourceRoot = ModuleRootManager.getInstance(optionalDependencyModule).getSourceRoots(JavaResourceRootType.RESOURCE).firstOrNull()
+        ConvertExistingModuleToContentModuleData(
+          pluginXmlFile = psiElement.containingFile.virtualFile,
+          configFileDescriptor = configFileXml.virtualFile,
+          configFileAttributeValue = configFileAttributeValue,
+          optionalDependencyModule = optionalDependencyModule,
+          existingResourceRoot = existingResourceRoot,
+        )
+      } ?: return@launch
+
+      val resourceRoot = conversionData.existingResourceRoot ?: createResourceRoot(conversionData.optionalDependencyModule)
+      edtWriteAction {
+        executeCommand(project = project) {
+          conversionData.configFileDescriptor.move(this, resourceRoot)
+          conversionData.configFileDescriptor.rename(this, "${conversionData.optionalDependencyModule.name}.xml")
+          replaceDependsByContentModule(
+            conversionData.pluginXmlFile,
+            conversionData.configFileDescriptor,
+            conversionData.configFileAttributeValue,
+            contentModuleName = conversionData.optionalDependencyModule.name,
+          )
+        }
+      }
+    }
+  }
+
+  private suspend fun createResourceRoot(module: Module): VirtualFile {
+    val contentRoot = readAction { ModuleRootManager.getInstance(module).contentRoots.firstOrNull() ?: error("Cannot find content root for ${module.name}") }
+    val resourcesRootPath = contentRoot.toNioPath().resolve(RESOURCES_DIR_NAME)
+    withContext(Dispatchers.IO) {
+      resourcesRootPath.createDirectories()
+    }
+    val resourcesRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resourcesRootPath) ?: error("Cannot find $resourcesRootPath")
+    project.workspaceModel.update("Create resources root") { builder ->
+      val moduleEntity = module.findModuleEntity(builder) ?: error("Cannot find module entity for module $module")
+      val contentRoot = moduleEntity.contentRoots.firstOrNull() ?: error("Cannot find content root for module $module")
+      builder.modifyContentRootEntity(contentRoot) {
+        sourceRoots += SourceRootEntity(
+          url = resourcesRoot.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager()),
+          rootTypeId = JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID,
+          entitySource = moduleEntity.entitySource,
+        )
+      }
+    }
+    return resourcesRoot
   }
 
   private fun buildProjectAndRunExtraction(data: ExtractToJpsModuleData) {
@@ -307,9 +389,19 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       return null
     }
 
+    val originalModule = ModuleUtilCore.findModuleForFile(pluginXmlVirtualFile, project) ?: error("Cannot find module for $pluginXmlVirtualFile")
+
     val configFileElement = domManager.getFileElement(configFileXml, IdeaPlugin::class.java)?.rootElement
                             ?: error("Cannot find root element for $configFileXml")
     val classesRegisteredInConfigFile = collectRegisteredClasses(configFileElement)
+    for (psiClass in classesRegisteredInConfigFile) {
+      val moduleForClass = ModuleUtilCore.findModuleForPsiElement(psiClass)
+      if (moduleForClass != null && moduleForClass != originalModule) {
+        reportError(DevKitBundle.message("extract.optional.dependency.class.located.in.different.module", psiClass.qualifiedName, moduleForClass.name))
+        return null
+      }
+    }
+
     val commonPackageName = computeCommonPackage(classesRegisteredInConfigFile)
     if (commonPackageName != null) {
       val commonPackage = JavaPsiFacade.getInstance(project).findPackage(commonPackageName)
@@ -336,7 +428,6 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     }
 
     val descriptor = configFileXml.virtualFile ?: error("Cannot find virtual file for $configFileXml")
-    val originalModule = ModuleUtilCore.findModuleForFile(pluginXmlVirtualFile, project) ?: error("Cannot find module for $pluginXmlVirtualFile")
     val contentRoot = ModuleRootManager.getInstance(originalModule).contentRoots.firstOrNull() ?: error("Cannot find content root for $originalModule")
     val packageDirectory =
       if (commonPackageName != null) ModulePackageIndex.getInstance(originalModule)

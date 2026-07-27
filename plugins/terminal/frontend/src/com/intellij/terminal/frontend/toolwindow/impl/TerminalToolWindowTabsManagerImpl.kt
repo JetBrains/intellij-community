@@ -44,6 +44,8 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -58,9 +60,11 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import kotlin.time.Duration.Companion.seconds
 
-internal class TerminalToolWindowTabsManagerImpl(
+@ApiStatus.Internal
+class TerminalToolWindowTabsManagerImpl(
   private val project: Project,
-  private val coroutineScope: CoroutineScope,
+  @VisibleForTesting
+  val coroutineScope: CoroutineScope,
 ) : TerminalToolWindowTabsManager {
   override val tabs: List<TerminalToolWindowTab>
     get() = getToolWindow().contentManager.getTerminalTabs()

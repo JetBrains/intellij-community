@@ -98,7 +98,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
 
         if (hasDerivedProperty(element, symbol)) return null
 
-        val superCallValueParameters = superFunctionCallOrNull.partiallyAppliedSymbol.signature.valueParameters
+        val superCallValueParameters = superFunctionCallOrNull.signature.valueParameters
         val functionValueParameters = symbol.valueParameters
 
         if (functionValueParameters.size == superCallValueParameters.size &&

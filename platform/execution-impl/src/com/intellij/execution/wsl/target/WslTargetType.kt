@@ -15,6 +15,7 @@ import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
 import com.intellij.execution.wsl.ui.browseWslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.AbstractWizardStepEx
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -46,8 +47,16 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
 
   override fun createStepsForNewWizard(project: Project,
                                        configToConfigure: WslTargetEnvironmentConfiguration,
-                                       runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> {
-    val model = WslTargetWizardModel(project, configToConfigure, runtimeType, null)
+                                       runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> =
+    createStepsForNewWizard(WslTargetWizardModel(project, configToConfigure, runtimeType, null), runtimeType)
+
+  override fun createStepsForNewWizard(module: Module,
+                                       configToConfigure: WslTargetEnvironmentConfiguration,
+                                       runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> =
+    createStepsForNewWizard(WslTargetWizardModel(module, configToConfigure, runtimeType, null), runtimeType)
+
+  private fun createStepsForNewWizard(model: WslTargetWizardModel,
+                                      runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> {
     val isCustomToolConfiguration = runtimeType is CustomToolLanguageRuntimeType
     model.isCustomToolConfiguration = isCustomToolConfiguration
     return listOf(

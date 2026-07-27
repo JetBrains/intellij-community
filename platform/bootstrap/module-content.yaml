@@ -1,3 +1,11 @@
 - name: dist.all/lib/intellij.platform.bootstrap.jar
   modules:
   - name: intellij.platform.bootstrap
+  - name: intellij.platform.icons.api.rendering
+  - name: intellij.platform.icons.impl
+  - name: intellij.platform.ide.bootstrap
+  - name: intellij.platform.ide.bootstrap.eel
+  - name: intellij.platform.ide.bootstrap.kernel
+  library: googlecode.plist.dd
+  files:
+  - name: $MAVEN_REPOSITORY$/com/googlecode/plist/dd-plist/1/dd-plist-1.jar

@@ -13,6 +13,11 @@ function objectSchema(properties: Record<string, JsonSchemaProperty>, required?:
   }
 }
 
+/**
+ * Search schemas mirror the IDE's own `search_*` tools so the container-mode replacements
+ * are drop-in from the agent's point of view. Outside container mode the IDE's tools are
+ * passed through and these are unused.
+ */
 function createSearchSchema(qDescription: string): ToolInputSchema {
   return objectSchema(
     {
@@ -55,48 +60,6 @@ export function createSearchFileSchema(): ToolInputSchema {
       }
     },
     base.required
-  )
-}
-
-export function createSearchSymbolSchema(): ToolInputSchema {
-  return createSearchSchema('Symbol query text (class, method, field, etc.).')
-}
-
-export function createLintFilesSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      files: {
-        type: 'array',
-        description: 'List of project-relative file paths to analyze. Duplicate paths are ignored after normalization.',
-        items: {
-          type: 'string'
-        }
-      },
-      min_severity: {
-        type: 'string',
-        description: 'Minimum severity to include: warning or error. Defaults to warning.'
-      },
-      timeout: {
-        type: 'number',
-        description: 'Timeout in milliseconds for the full batch.'
-      }
-    },
-    ['files']
-  )
-}
-
-export function createReformatFileSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      files: {
-        type: 'array',
-        description: 'List of project-relative file paths to reformat. Duplicate paths are ignored after normalization.',
-        items: {
-          type: 'string'
-        }
-      }
-    },
-    ['files']
   )
 }
 

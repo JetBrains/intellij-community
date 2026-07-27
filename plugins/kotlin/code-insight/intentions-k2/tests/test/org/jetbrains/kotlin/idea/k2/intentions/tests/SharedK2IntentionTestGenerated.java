@@ -2331,6 +2331,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/removeBraces/doWhileWithLocalClass.kt");
         }
 
+        @TestMetadata("doWhileWithLocalFunction.kt")
+        public void testDoWhileWithLocalFunction() throws Exception {
+            runTest("testData/intentions/removeBraces/doWhileWithLocalFunction.kt");
+        }
+
         @TestMetadata("doWhileWithLocalVariable.kt")
         public void testDoWhileWithLocalVariable() throws Exception {
             runTest("testData/intentions/removeBraces/doWhileWithLocalVariable.kt");
@@ -2369,6 +2374,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("for.kt")
         public void testFor() throws Exception {
             runTest("testData/intentions/removeBraces/for.kt");
+        }
+
+        @TestMetadata("forWithDestructuringDeclarations.kt")
+        public void testForWithDestructuringDeclarations() throws Exception {
+            runTest("testData/intentions/removeBraces/forWithDestructuringDeclarations.kt");
         }
 
         @TestMetadata("forWithLocalClass.kt")
@@ -2549,6 +2559,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("whenWithComment3.kt")
         public void testWhenWithComment3() throws Exception {
             runTest("testData/intentions/removeBraces/whenWithComment3.kt");
+        }
+
+        @TestMetadata("whenWithDestructuringDeclaration.kt")
+        public void testWhenWithDestructuringDeclaration() throws Exception {
+            runTest("testData/intentions/removeBraces/whenWithDestructuringDeclaration.kt");
         }
 
         @TestMetadata("while.kt")
@@ -4121,6 +4136,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("annotations.kt")
         public void testAnnotations() throws Exception {
             runTest("testData/intentions/valToObject/annotations.kt");
+        }
+
+        @TestMetadata("backtickedName.kt")
+        public void testBacktickedName() throws Exception {
+            runTest("testData/intentions/valToObject/backtickedName.kt");
         }
 
         @TestMetadata("callableReference.kt")

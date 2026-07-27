@@ -2540,8 +2540,9 @@ object PyTypeChecker {
    */
   private val PyUnionType.isCallable: Boolean?
     get() = if (PyUnionType.isStrictSemanticsEnabled())
-      members.all { it.isCallable ?: return null }
-      else members.any { it.isCallable ?: return null }
+      members.allCallable()
+    else
+      members.anyCallable()
 
   /**
    * If at least one is callable -- it is callable.
@@ -2549,20 +2550,34 @@ object PyTypeChecker {
    * It is false otherwise.
    */
   private val PyUnsafeUnionType.isCallable: Boolean?
-    get() = members.any { it.isCallable ?: return null }
+    get() = members.anyCallable()
 
   private val PyIntersectionType.isCallable: Boolean?
-    get() {
-      var hasUnknown = false
-      for (member in members) {
-        when (member.isCallable) {
-          true -> return true
-          null -> hasUnknown = true
-          false -> {}
-        }
+    get() = members.anyCallable()
+
+  private fun Iterable<PyType?>.anyCallable(): Boolean? {
+    var seenNull = false
+    for (member in this) {
+      when (member.isCallable) {
+        true -> return true
+        null -> seenNull = true
+        false -> {}
       }
-      return if (hasUnknown) null else false
     }
+    return if (seenNull) null else false
+  }
+
+  private fun Iterable<PyType?>.allCallable(): Boolean? {
+    var seenNull = false
+    for (member in this) {
+      when (member.isCallable) {
+        false -> return false
+        null -> seenNull = true
+        true -> {}
+      }
+    }
+    return if (seenNull) null else true
+  }
 
   @JvmStatic
   fun definesGetAttr(file: PyFile, context: TypeEvalContext): Boolean {

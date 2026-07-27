@@ -14,7 +14,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.OnOffButton
-import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.impl.checkNull
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -130,9 +130,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   override fun separator(init: LcrSeparator.() -> Unit) {
-    if (separator != null) {
-      throw UiDslException("Separator is defined already")
-    }
+    checkNull(separator) { "Separator is defined already" }
 
     val separator = LcrSeparatorImpl()
     separator.init()
@@ -383,7 +381,7 @@ private class RendererPanel(key: RowKey) :
         is JLabel,
         is OnOffButton,
           -> null
-        else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
+        else -> error("Unsupported component type: ${component.javaClass.name}")
       }
 
       if (!result.isNullOrEmpty()) {
@@ -557,7 +555,7 @@ private class RendererPanel(key: RowKey) :
           // No text for icons, see [LcrCellBaseImpl.Type.ICON]
         }
         is OnOffButton -> result += if (component.isSelected) component.onText else component.offText
-        else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
+        else -> error("Unsupported component type: ${component.javaClass.name}")
       }
     }
 

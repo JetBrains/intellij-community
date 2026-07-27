@@ -122,6 +122,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/platform-impl/internal",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch/plugin",
         "//xml/impl",
@@ -144,10 +145,12 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":structuralSearch-tests",
+        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
         # do not sort,
+        "//platform/platform-impl/internal",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",

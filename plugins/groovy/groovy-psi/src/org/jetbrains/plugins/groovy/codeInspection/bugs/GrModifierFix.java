@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,13 +10,15 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+
+import java.util.function.Function;
 
 /**
  * @author Max Medvedev
@@ -40,7 +42,7 @@ public class GrModifierFix extends ModCommandQuickFix {
     return (PsiModifierList)element;
   };
 
-  private final String myModifier;
+  @PsiModifier.ModifierConstant private final String myModifier;
   private final @IntentionName String myText;
   private final boolean myDoSet;
   private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
@@ -79,12 +81,8 @@ public class GrModifierFix extends ModCommandQuickFix {
     myDoSet = doSet;
   }
 
-  public static @IntentionName String initText(boolean doSet, @NlsSafe @NotNull String name, @NlsSafe @NotNull String modifier) {
-    return GroovyBundle.message(
-      doSet ? "change.modifier" : "change.modifier.not",
-      name,
-      toPresentableText(modifier)
-    );
+  protected static @IntentionName String initText(boolean doSet, @NlsSafe @NotNull String name, @NlsSafe @NotNull String modifier) {
+    return GroovyBundle.message(doSet ? "change.modifier" : "change.modifier.not", name, modifier);
   }
 
   private static String getMemberName(PsiMember member, boolean showContainingClass) {
@@ -96,10 +94,6 @@ public class GrModifierFix extends ModCommandQuickFix {
     else {
       return member.getName();
     }
-  }
-
-  public static String toPresentableText(String modifier) {
-    return GroovyBundle.message(modifier + ".visibility.presentation");
   }
 
   @Override
@@ -114,11 +108,7 @@ public class GrModifierFix extends ModCommandQuickFix {
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiModifierList modifierList = getModifierList(descriptor);
+    final PsiModifierList modifierList = myModifierListProvider.apply(descriptor);
     return ModCommand.psiUpdate(modifierList, m -> m.setModifierProperty(myModifier, myDoSet));
-  }
-
-  private PsiModifierList getModifierList(ProblemDescriptor descriptor) {
-    return myModifierListProvider.fun(descriptor);
   }
 }

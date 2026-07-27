@@ -19,7 +19,7 @@ internal class ValidityEvaluatorImpl(
   private val newFileViewProviderFactory: NewFileViewProviderFactory,
 ) : ValidityEvaluator {
 
-  override fun isRecreatedViewProviderIsIdentical(
+  override fun isRecreatedViewProviderIdentical(
     virtualFile: VirtualFile,
     provider: AbstractFileViewProvider,
     context: CodeInsightContext,
@@ -75,21 +75,32 @@ internal class ValidityEvaluatorImpl(
     return original == file || original.isValid
   }
 
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    if (!isCached(viewProvider)) {
+      return false
+    }
+
+    val vFile = viewProvider.virtualFile
+    val context = defaultContext()
+    return vFile.isValid && isRecreatedViewProviderIdentical(vFile, viewProvider, context)
+  }
+
+  private fun isCached(viewProvider: AbstractFileViewProvider): Boolean {
+    return cache.getRaw(viewProvider.virtualFile, viewProvider.codeInsightContext) === viewProvider
+  }
+
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {
-    if (cache.getRaw(viewProvider.virtualFile, viewProvider.codeInsightContext) !== viewProvider) {
+    if (!isCached(viewProvider)) {
       return false
     }
 
     if (!viewProvider.isPossiblyInvalidated()) return true
 
-    val vFile = viewProvider.virtualFile
-    val context = defaultContext()
-    if (vFile.isValid && isRecreatedViewProviderIsIdentical(vFile, viewProvider, context)) {
-      resurrect(vFile, viewProvider, context)
+    if (canViewProviderBeResurrected(viewProvider)) {
+      resurrect(viewProvider.virtualFile, viewProvider, defaultContext())
       return true
-    }
-    else {
-      bury(vFile, viewProvider, context)
+    } else {
+      bury(viewProvider.virtualFile, viewProvider, defaultContext())
       return false
     }
   }

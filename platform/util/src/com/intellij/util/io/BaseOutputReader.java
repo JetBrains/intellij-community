@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +12,11 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 
 public abstract class BaseOutputReader extends BaseDataReader {
-  /** See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, {@link BaseDataReader.SleepingPolicy}
+  /**
+   * See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, {@link BaseDataReader.SleepingPolicy}
    * and {@link #processInput} for reference.
-   * */
+   *
+   */
   public static class Options {
     /**
      * @see BaseDataReader.SleepingPolicy#BLOCKING
@@ -24,23 +27,26 @@ public abstract class BaseOutputReader extends BaseDataReader {
      */
     public static final Options NON_BLOCKING = withPolicy(SleepingPolicy.NON_BLOCKING);
 
-    public SleepingPolicy policy() { return null; }
+    @NotNull
+    public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
+
     public boolean splitToLines() { return true; }
+
     public boolean sendIncompleteLines() { return true; }
+
     public boolean withSeparators() { return true; }
 
-    public static Options withPolicy(final SleepingPolicy policy) {
+    public static Options withPolicy(final @NotNull SleepingPolicy policy) {
       return new Options() {
         @Override
-        public SleepingPolicy policy() {
+        public @NotNull SleepingPolicy policy() {
           return policy;
         }
       };
     }
 
     public static Options forMostlySilentProcess() {
-      if (SystemProperties.getBooleanProperty("output.reader.blocking.mode.for.mostly.silent.processes", true) ||
-          Boolean.getBoolean("output.reader.blocking.mode")) {
+      if (SystemProperties.getBooleanProperty("output.reader.blocking.mode.for.mostly.silent.processes", true)) {
         return BLOCKING;
       }
       return NON_BLOCKING;
@@ -49,14 +55,38 @@ public abstract class BaseOutputReader extends BaseDataReader {
     public static @NotNull Options forTerminalPtyProcess() {
       return new BaseOutputReader.Options() {
         @Override
-        public BaseDataReader.SleepingPolicy policy() {
-          // com.pty4j.PtyProcess inheritors do not implement java.io.InputStream#available
-          return BaseDataReader.SleepingPolicy.BLOCKING;
+        public boolean splitToLines() {
+          return false; // prevent converting \r\n to \n to render in terminal emulator correctly
+        }
+      };
+    }
+
+    /**
+     * Creates same options but with a provided policy
+     */
+    @ApiStatus.Internal
+    @NotNull
+    public final Options copyWithPolicy(@NotNull SleepingPolicy newPolicy) {
+      Options original = this;
+      return new Options() {
+        @Override
+        public @NotNull SleepingPolicy policy() {
+          return newPolicy;
         }
 
         @Override
         public boolean splitToLines() {
-          return false; // prevent converting \r\n to \n to render in terminal emulator correctly
+          return original.splitToLines();
+        }
+
+        @Override
+        public boolean sendIncompleteLines() {
+          return original.sendIncompleteLines();
+        }
+
+        @Override
+        public boolean withSeparators() {
+          return original.withSeparators();
         }
       };
     }

@@ -8,9 +8,9 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -234,9 +234,9 @@ internal class ReceiverToParameterConverter(
 
     context(_: KaSession)
     private fun getArgumentExpressionToProcess(callElement: KtCallElement): KtExpression? {
-        val argumentMapping = callElement.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping ?: return null
+        val valueArgumentMapping = callElement.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping ?: return null
         val parameter = (data.changeInfo.method as KtFunction).valueParameters[data.functionParameterIndex ?: return null]
-        val entry = argumentMapping.entries.find { (_, value) -> value.name.asString() == parameter.name } ?: return null
+        val entry = valueArgumentMapping.entries.find { (_, value) -> value.name.asString() == parameter.name } ?: return null
         return KtPsiUtil.deparenthesize(entry.key)
     }
 
@@ -279,7 +279,7 @@ internal class ReceiverToParameterConverter(
                             usages.add(ConvertWithReplacement(parent, "$newParameterName.${parent.text}"))
                         }
                     } else if ((parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
-                        val referencedName = expression.getReferencedName()
+                        val referencedName = expression.getReferencedNameElement().text
                         usages.add(ConvertWithReplacement(expression, "$newParameterName.$referencedName"))
                     }
                 }

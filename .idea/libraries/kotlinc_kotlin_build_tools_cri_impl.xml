@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-tools-cri-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.5.0-dev-1493">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.5.0-dev-2030">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-1493/kotlin-build-tools-cri-impl-2.5.0-dev-1493.jar">
-          <sha256sum>5d161b2b53c102efe9b129fdcfd798ee7601232cfecb21a0b2ffb0581c4af520</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-2030/kotlin-build-tools-cri-impl-2.5.0-dev-2030.jar">
+          <sha256sum>804cad408bb051109e813a0ff562444b09f6a48794b977a433c8d0ebbe121923</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-1493/kotlin-build-tools-cri-impl-2.5.0-dev-1493.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-2030/kotlin-build-tools-cri-impl-2.5.0-dev-2030.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-1493/kotlin-build-tools-cri-impl-2.5.0-dev-1493-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-2030/kotlin-build-tools-cri-impl-2.5.0-dev-2030-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

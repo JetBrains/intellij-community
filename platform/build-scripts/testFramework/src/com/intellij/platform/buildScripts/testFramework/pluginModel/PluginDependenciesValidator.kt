@@ -278,8 +278,8 @@ class PluginDependenciesValidator private constructor(
         println("Unused ignored dependency pattern: '${entry.fromModule}' -> '${entry.toModule}' (${entry.issueId})")
     }
 
-    if (options.checkExtensionPointDependencies && errors.isEmpty()) {
-      checkExtensionsUseOnlyExtensionPointsFromDependencies(pluginSet, runtimeDescriptorToJpsModules)
+    if (options.checkExtensionPointDependencies) {
+      checkExtensionsUseOnlyExtensionPointsFromDependencies(pluginSet, runtimeDescriptorToJpsModules, errors.isNotEmpty())
     }
   }
 
@@ -301,6 +301,7 @@ class PluginDependenciesValidator private constructor(
   private fun checkExtensionsUseOnlyExtensionPointsFromDependencies(
     pluginSet: PluginSet,
     runtimeDescriptorToJpsModules: Map<IdeaPluginDescriptorImpl, String>,
+    isDependenciesMisconfigurationDetected: Boolean,
   ) {
     fun reportExtensionPointMisuse(descriptor: IdeaPluginDescriptorImpl, epName: String, message: String) {
       val violation = ExtensionPointDependencyViolation(descriptor, epName)
@@ -312,8 +313,10 @@ class PluginDependenciesValidator private constructor(
           pluginModelModuleName = runtimeDescriptorToJpsModules[descriptor] ?: violation.moduleName,
           errorMessage = buildString {
             appendLine(message)
+            if (isDependenciesMisconfigurationDetected) {
+              appendLine("! Note: this issue may be caused by misconfigured dependencies, see other reported issues first")
+            }
             appendLine()
-            appendLine("extensionPoint = $epName")
             append("violation = $violation")
           }
         )

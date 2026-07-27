@@ -40,7 +40,7 @@ class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode
           // Any other iterable contributes an unbounded `*tuple[T, ...]` portion of its item type.
           if (!operandType.isAnyOrUnknown && !PyTypeChecker.isUnknown(operandType, context) &&
               PyABCUtil.isSubtype(operandType, PyNames.ITERABLE, context)) {
-            val itemType = PyTargetExpressionImpl.getIterationType(operandType, starOperand, this@PyTupleExpressionImpl, false, context)
+            val itemType = PyTargetExpressionImpl.getIterationType(operandType, this@PyTupleExpressionImpl, false, context)
             add(PyUnpackedTupleTypeImpl(listOf(itemType), true))
             continue
           }

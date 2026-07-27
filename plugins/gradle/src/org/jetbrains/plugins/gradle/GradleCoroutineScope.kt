@@ -5,9 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal object GradleCoroutineScope {
 
   @Service(Service.Level.PROJECT)

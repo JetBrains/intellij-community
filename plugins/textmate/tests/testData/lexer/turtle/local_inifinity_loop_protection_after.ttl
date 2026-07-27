@@ -24,13 +24,13 @@ source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle: [67, 69], { )
 source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle;punctuation.terminator.triple.turtle: [69, 70], {.}
 source.turtle;meta.spec.turtleDoc.turtle: [70, 71], {
 }
-source.turtle;meta.spec.turtleDoc.turtle: [71, 72], {
+source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle: [71, 72], {
 }
-source.turtle;meta.spec.turtleDoc.turtle: [72, 73], {
+source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle: [72, 73], {
 }
-source.turtle;meta.spec.turtleDoc.turtle: [73, 74], {
+source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle: [73, 74], {
 }
-source.turtle;meta.spec.turtleDoc.turtle: [74, 75], {
+source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle: [74, 75], {
 }
 source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle;meta.spec.PNAME_LN.turtle: [75, 76], {:}
 source.turtle;meta.spec.turtleDoc.turtle;meta.spec.triples.turtle;keyword.other.typeOf.turtle: [76, 77], {a}

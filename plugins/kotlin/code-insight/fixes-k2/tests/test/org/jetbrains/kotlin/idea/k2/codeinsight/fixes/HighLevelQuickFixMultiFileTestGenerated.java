@@ -1508,6 +1508,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCall4.before.Main.kt");
         }
 
+        @TestMetadata("abstractSuperCallKeywordJavaInterface.before.Main.kt")
+        public void testAbstractSuperCallKeywordJavaInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCallKeywordJavaInterface.before.Main.kt");
+        }
+
         @TestMetadata("abstractSuperCallWithExplicitSuper3.before.Main.kt")
         public void testAbstractSuperCallWithExplicitSuper3() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper3.before.Main.kt");
@@ -2804,6 +2809,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/import.before.Main.kt");
             }
 
+            @TestMetadata("javaKeywordNames.test")
+            public void testJavaKeywordNames() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/javaKeywordNames.test");
+            }
+
             @TestMetadata("overrideJavaMethodWithAnnotation.test")
             public void testOverrideJavaMethodWithAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethodWithAnnotation.test");
@@ -2877,6 +2887,19 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("crossFile.before.Main.kt")
         public void testCrossFile() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/multiFile/crossFile.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/convertToAnonymousObject")
+    public static class ConvertToAnonymousObject extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("keywordJava.before.Main.kt")
+        public void testKeywordJava() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToAnonymousObject/keywordJava.before.Main.kt");
         }
     }
 }

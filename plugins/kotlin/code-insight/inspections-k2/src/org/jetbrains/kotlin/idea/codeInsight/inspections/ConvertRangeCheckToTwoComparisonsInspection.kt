@@ -6,8 +6,9 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -117,7 +118,7 @@ class ConvertRangeCheckToTwoComparisonsInspection :
 
         analyze(this) {
             val call = resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-            val symbol = call.partiallyAppliedSymbol.signature.symbol as? KaCallableSymbol ?: return null
+            val symbol = call.signature.symbol as? KaCallableSymbol ?: return null
             val fqName = symbol.callableId?.asSingleFqName()?.asString() ?: return null
 
             if (!fqName.startsWith("kotlin.")) return null

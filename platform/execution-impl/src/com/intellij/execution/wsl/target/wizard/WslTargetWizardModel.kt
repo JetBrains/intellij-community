@@ -8,13 +8,32 @@ import com.intellij.execution.target.getRuntimeType
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 
-class WslTargetWizardModel(override val project: Project,
-                           override val subject: WslTargetEnvironmentConfiguration,
-                           runtimeType: LanguageRuntimeType<*>?,
-                           var distribution: WSLDistribution?) : TargetWizardModel() {
+class WslTargetWizardModel private constructor(
+  override val project: Project,
+  override val subject: WslTargetEnvironmentConfiguration,
+  runtimeType: LanguageRuntimeType<*>?,
+  var distribution: WSLDistribution?,
+  override val module: Module?,
+) : TargetWizardModel() {
+
+  constructor(
+    project: Project,
+    subject: WslTargetEnvironmentConfiguration,
+    runtimeType: LanguageRuntimeType<*>?,
+    distribution: WSLDistribution?,
+  ) : this(project, subject, runtimeType, distribution, null)
+
+  constructor(
+    module: Module,
+    subject: WslTargetEnvironmentConfiguration,
+    runtimeType: LanguageRuntimeType<*>?,
+    distribution: WSLDistribution?,
+  ) : this(module.project, subject, runtimeType, distribution, module)
+
   internal var isCustomToolConfiguration: Boolean = false
 
   override var languageConfigForIntrospection: LanguageRuntimeConfiguration? = runtimeType?.createDefaultConfig()

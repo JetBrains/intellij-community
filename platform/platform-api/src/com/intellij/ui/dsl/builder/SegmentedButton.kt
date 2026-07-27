@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.ui.dsl.builder.impl.LayoutDslMarker
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
@@ -11,7 +12,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 /**
- * Represents segmented button or combobox depending on number of buttons and screen reader mode. Screen reader mode always uses combobox
+ * Represents a segmented button or a combobox depending on the number of buttons and screen reader mode. Screen reader mode always uses combobox
  *
  * @see Row.segmentedButton
  */
@@ -80,7 +81,7 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   fun whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
   /**
-   * Maximum number of buttons in segmented button. The component automatically turned into ComboBox if exceeded.
+   * Maximum number of buttons in a segmented button. The component automatically turns into a ComboBox when this limit is exceeded.
    * Default value is [DEFAULT_MAX_BUTTONS_COUNT]
    */
   fun maxButtonsCount(value: Int): SegmentedButton<T>

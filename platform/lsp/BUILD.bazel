@@ -34,6 +34,9 @@ jvm_library(
         "//platform/execution",
         "//platform/markdown-utils",
         "//platform/core-ui",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/eel-nioFs",
     ],
 )
 
@@ -63,6 +66,9 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/markdown-utils:markdown-utils_test_lib",
         "//platform/core-ui:core-ui_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp` end

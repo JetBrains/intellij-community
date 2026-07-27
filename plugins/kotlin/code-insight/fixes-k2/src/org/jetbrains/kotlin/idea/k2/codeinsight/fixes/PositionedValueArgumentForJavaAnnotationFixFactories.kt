@@ -42,7 +42,7 @@ internal object PositionedValueArgumentForJavaAnnotationFixFactories {
         val resolvedCall = annotationEntry.resolveToCall()?.singleFunctionCallOrNull() ?: return null
 
         val valueArguments = resolvedCall
-            .argumentMapping
+            .valueArgumentMapping
             .filter { (expression, signature) -> mustArgumentBeNamed(expression, signature) }
             .map { (expr, signature) ->
                 ValueArgument(expr.createSmartPointer(), signature.name)

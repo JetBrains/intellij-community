@@ -14,6 +14,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.nextLeaf
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
@@ -23,6 +26,7 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -92,21 +96,12 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     val text = elementText.trim()
     if (text.isBlank()) return null
 
-    val codeSpans = getAllCodeSpansOnLine(element)
-    if (codeSpans.firstOrNull() != element) return null
-
-    val configurations = codeSpans
-      .asSequence()
-      .map { getText(it).trim() to it }
-      .filter { it.first.isNotBlank() }
-      .distinctBy { it.first }
-      .flatMap { (text, host) ->
-        MarkdownCodeSpanConfigurationContextSearcher
-          .findAllConfigurations(text, host)
-          .mapNotNull { it.findExisting() ?: it.getConfiguration() }
-          .distinctBy { it.uniqueID }
-      }
-      .toList()
+    val configurations = CachedValuesManager.getCachedValue(element) {
+      CachedValueProvider.Result.create(
+        getConfigurations(element),
+        PsiModificationTracker.getInstance(element.project).forLanguages { !it.isKindOf(MarkdownLanguage.INSTANCE) }
+      )
+    }
     if (configurations.isEmpty()) return null
 
     val actions = configurations.map(::RunConfigurationAction).toTypedArray()
@@ -114,6 +109,24 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
       AllIcons.RunConfigurations.TestState.Run_run,
       actions
     ) { MarkdownBundle.message("markdown.runner.launch.command", text) }
+  }
+
+  private fun getConfigurations(element: PsiElement): List<RunnerAndConfigurationSettings> {
+    val codeSpans = getAllCodeSpansOnLine(element)
+    if (codeSpans.firstOrNull() != element) return emptyList()
+
+    return codeSpans
+      .asSequence()
+      .map { getText(it).trim() to it }
+      .filter { it.first.isNotBlank() }
+      .distinctBy { it.first }
+      .flatMap { (text, host) ->
+        MarkdownCodeSpanConfigurationContextSearcher
+          .findAllConfigurations(text, host)
+          .mapNotNull { it.getConfiguration() }
+          .distinctBy { it.uniqueID }
+      }
+      .toList()
   }
 
   private fun getText(element: PsiElement): @NlsSafe String {

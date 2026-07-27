@@ -127,7 +127,8 @@ def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], 
     )
 
 def fleet_wasmjs_binary(name, visibility, module_name, kotlinc_opts, module = None, optimize = "auto"):
-    """Links (and optionally wasm-opt-optimizes) a fleet_wasmjs_module into a WasmJS application directory.
+    """Links a fleet_wasmjs_module into a WasmJS application directory (with the default
+    `optimize = "auto"`, wasm-opt-optimized in `--compilation_mode=opt` builds only).
 
     By default links the `:wasmjs_module_lib` target the fleet_wasmjs_module macro of the same
     package creates (keep the `_lib` suffix in sync with fleet_wasmjs_module and

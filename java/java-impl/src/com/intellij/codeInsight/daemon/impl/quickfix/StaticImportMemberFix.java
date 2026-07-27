@@ -240,6 +240,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
       R ref = myReferencePointer.getElement();
+      if (ref == null) {
+        return ModCommand.nop();
+      }
       return ModCommand.chooseAction(
         getSelectorTitle(),
         ContainerUtil.map(candidates, c -> new StaticImportMemberSingleAction(ref, c)));
@@ -252,9 +255,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   private class StaticImportMemberSingleAction extends PsiUpdateModCommandAction<R> {
-    private final T myMember;
+    private final @NotNull T myMember;
 
-    private StaticImportMemberSingleAction(R ref, T member) {
+    private StaticImportMemberSingleAction(@NotNull R ref, @NotNull T member) {
       super(ref);
       myMember = member;
     }

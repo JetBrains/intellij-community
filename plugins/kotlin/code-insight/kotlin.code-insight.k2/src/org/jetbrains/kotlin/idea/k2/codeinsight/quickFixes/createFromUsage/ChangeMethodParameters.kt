@@ -18,12 +18,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -62,7 +65,7 @@ internal class ChangeMethodParameters(
 
                     analyze(target) {
                         val kaType = convertType.asKaType(target)?.let {
-                            KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                            KaRendererTypeApproximator.TO_DENOTABLE.approximateType(contextOf<KaSession>(), it, Variance.IN_VARIANCE)
                         } ?: error("Can't convert type $it")
                         val render = kaType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
                         render
@@ -227,7 +230,7 @@ internal class ChangeMethodParameters(
                     allowAnalysisFromWriteAction {
                         analyze(namedFunction) {
                             val kaType = convertType.asKaType(namedFunction)?.let {
-                                KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                                KaRendererTypeApproximator.TO_DENOTABLE.approximateType(contextOf<KaSession>(), it, Variance.IN_VARIANCE)
                             } ?: error("Can't convert type $jvmType")
                             val render = kaType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
                             append(render)

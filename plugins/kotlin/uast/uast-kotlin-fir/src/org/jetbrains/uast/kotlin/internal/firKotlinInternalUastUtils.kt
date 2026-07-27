@@ -442,7 +442,9 @@ internal fun toPsiType(
             else -> null
         }
         if (psiType != null) {
-            return psiType as? PsiPrimitiveType ?: session.annotateByKtType(psiType, ktType, context, true)
+            return psiType as? PsiPrimitiveType ?: with(session) {
+                annotateByKtType(psiType, ktType, context, true)
+            }
         }
     }
     val psiTypeParent: PsiElement =

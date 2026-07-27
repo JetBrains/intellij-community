@@ -25,7 +25,6 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
-import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.unwrapDelegate
@@ -79,7 +78,7 @@ private val LOG = logger<RunConfigurationBeforeCommitHandlerFactory>()
 
 @Service(Service.Level.PROJECT)
 @State(name = "TestsVcsConfig", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-private class VcsRunConfigurationBeforeCommitConfig : PersistentStateComponent<VcsRunConfigurationBeforeCommitConfig.MyState> {
+internal class VcsRunConfigurationBeforeCommitConfig : PersistentStateComponent<VcsRunConfigurationBeforeCommitConfig.MyState> {
   class MyState {
     var enabled = false
     var configuration: ConfigurationBean? = null

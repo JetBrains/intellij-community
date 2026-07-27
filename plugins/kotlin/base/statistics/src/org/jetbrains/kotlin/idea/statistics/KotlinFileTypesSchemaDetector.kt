@@ -5,12 +5,12 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-private class KotlinFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
+internal class KotlinFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
     override fun describes(project: Project, file: VirtualFile): Boolean =
         file.name.endsWith(".kt", true)
 }
 
-private enum class KotlinScriptTypes(val ext: String) {
+internal enum class KotlinScriptTypes(val ext: String) {
     GRADLE(".gradle.kts"),
     MAIN(".main.kts"),
     SPACE(".space.kts")
@@ -18,25 +18,25 @@ private enum class KotlinScriptTypes(val ext: String) {
 
 private fun containDotInName(fileName: String): Boolean = fileName.indexOf('.') != fileName.lastIndexOf('.')
 
-private class KotlinScriptFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
+internal class KotlinScriptFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
     override fun describes(project: Project, file: VirtualFile): Boolean =
         file.name.endsWith(".kts", true) && !containDotInName(file.name)
 }
 
-private abstract class BaseKotlinScriptFileTypeSchemaDetector(val scriptType: KotlinScriptTypes) : FileTypeUsageSchemaDescriptor {
+internal abstract class BaseKotlinScriptFileTypeSchemaDetector(val scriptType: KotlinScriptTypes) : FileTypeUsageSchemaDescriptor {
     override fun describes(project: Project, file: VirtualFile): Boolean =
         file.name.endsWith(scriptType.ext, true)
 }
 
-private class KotlinGradleScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.GRADLE)
-private class KotlinMainScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.MAIN)
-private class KotlinSpaceScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.SPACE)
+internal class KotlinGradleScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.GRADLE)
+internal class KotlinMainScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.MAIN)
+internal class KotlinSpaceScriptFileTypeSchemaDetector : BaseKotlinScriptFileTypeSchemaDetector(KotlinScriptTypes.SPACE)
 
 /**
  * Can have false positive detections when dot is just used in file name,
  * but seems unlikely because it is an uncommon way of naming files in Kotlin
  * */
-private class KotlinCustomScriptFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
+internal class KotlinCustomScriptFileTypeSchemaDetector : FileTypeUsageSchemaDescriptor {
     override fun describes(project: Project, file: VirtualFile): Boolean =
         file.name.endsWith(".kts", true)
                 && containDotInName(file.name)

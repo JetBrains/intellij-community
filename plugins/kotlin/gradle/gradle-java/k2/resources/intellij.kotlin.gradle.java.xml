@@ -1,10 +1,11 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.k2">
+<idea-plugin>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.highlighting"/>
   </dependencies>
   <!-- endregion -->

@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij
+package com.intellij.openapi.project
 
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.runInDumbMode
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.timeoutRunBlocking

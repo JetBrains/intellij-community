@@ -596,6 +596,42 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
     assertHighlightings()
   }
 
+  @Test
+  fun `scroll up keeps links aligned`() = withFixture {
+    // An alternate-buffer redraw arrives as a whole-screen update from line 0.
+    updateModel(0L, generateLines(200, 219, links = (200..219).toList()))
+    assertLinks(*(200..219).map { link(at(it - 200, "link$it")) }.toTypedArray())
+    // Scroll up by one line.
+    updateModel(0L, generateLines(201, 220, links = (201..220).toList()))
+    assertLinks(*(201..220).map { link(at(it - 201, "link$it")) }.toTypedArray())
+  }
+
+  @Test
+  fun `rapid scrolls with a slow filter keep links aligned`() = withFixture {
+    filter.delayPerLine = 1
+    updateModel(0L, generateLines(200, 219, links = (200..219).toList()))
+    for (top in 201..210) {
+      updateModel(0L, generateLines(top, top + 19, links = (top..top + 19).toList()))
+      delay(5.milliseconds)
+    }
+    assertLinks(*(210..229).map { link(at(it - 210, "link$it")) }.toTypedArray())
+  }
+
+  @Test
+  fun `screen cleared while the filter is mid-task leaves no stale links`() = withFixture {
+    filter.delayPerLine = 1
+    // A long, fully-linked screen begins processing across several batches (slow filter).
+    updateModel(0L, generateLines(0, 299, links = (0..299).toList()))
+    delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY) // the task is still running; only part of the screen is linkified
+    // The whole screen is cleared down to a single, different line (e.g. `clear`).
+    updateModel(0L, "0: cleared link500")
+    assertText("0: cleared link500")
+    assertLinks(
+      link(at(0, "link500")),
+    )
+    assertHighlightings()
+  }
+
   private fun generateLines(from: Int, toInclusive: Int, links: List<Int>): String {
     val linksAt = links.toSet()
     return (from..toInclusive).joinToString("\n") { line ->

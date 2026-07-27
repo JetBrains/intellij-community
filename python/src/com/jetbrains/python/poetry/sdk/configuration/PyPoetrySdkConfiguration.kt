@@ -152,7 +152,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
       val sdk = createSdk(
         PathHolder.Eel(file.toNioPath()),
-        PyPoetrySdkAdditionalData(module.baseDir?.path?.let { Path.of(it) }),
+        PyPoetrySdkAdditionalData(basePath),
         suggestedSdkName(basePath)
       ).getOr { return@withBackgroundProgress it }
 

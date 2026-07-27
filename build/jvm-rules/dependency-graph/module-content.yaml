@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.jps.build.dependencyGraph.jar
+  modules:
+  - name: intellij.platform.jps.build.dependencyGraph
+  library: kotlin-metadata
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar

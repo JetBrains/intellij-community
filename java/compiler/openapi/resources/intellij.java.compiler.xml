@@ -31,6 +31,10 @@
                     area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+      serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
+      serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration$JavaBuildWorkspaceConfiguration"
+      overrides="true"/>
     <projectSettings service="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
   </extensions>
 </idea-plugin>

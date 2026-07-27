@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DataIndexer
@@ -75,7 +75,7 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
                 else -> emptyMap()
             }
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            rethrowControlFlowException(e)
             LOG.warn("Error `(${e.javaClass.simpleName}: ${e.message})` while indexing file ${fileContent.fileName} using $name index. Probably the file is broken.")
             emptyMap()
         }

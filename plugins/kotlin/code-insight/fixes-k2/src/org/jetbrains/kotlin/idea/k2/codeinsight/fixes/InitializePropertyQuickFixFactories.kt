@@ -132,7 +132,7 @@ internal object InitializePropertyQuickFixFactories {
             constructor: KtConstructor<*>,
             containingClass: KtClass,
         ) {
-            val newParameterName = constructor.valueParameters.last().name
+            val newParameterName = constructor.valueParameters.last().nameIdentifier?.text
                 ?: errorWithAttachment(property, constructor, containingClass)
 
             val psiFactory = KtPsiFactory(project)
@@ -300,7 +300,7 @@ internal object InitializePropertyQuickFixFactories {
 
             add(InitializePropertyModCommandAction(property, propertyContext))
 
-            val propertyName = property.name ?: return@buildList
+            val propertyName = property.nameIdentifier?.text ?: return@buildList
 
             (property.containingClassOrObject as? KtClass)?.let { ktClass ->
                 if (ktClass.isAnnotation() || ktClass.isInterface()) return@let

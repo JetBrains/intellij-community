@@ -155,11 +155,6 @@ public class VFSChildrenAccessBenchmark {
 
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()
-      .jvmArgs(
-        //to enable 'new' API:
-        //"-Dvfs.lock-free-impl.enable=true",
-        //"-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5",
-      )
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)

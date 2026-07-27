@@ -68,6 +68,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
 
   fun testStatement() = doTest()
+  fun testReassignFinalFieldWriteOnly() = doTest()
   fun testConflictedNamesFiltered() = doTest()
   fun testVariableGetterSuggested() = doTest()
   fun testExactDuplicates() = doTest()

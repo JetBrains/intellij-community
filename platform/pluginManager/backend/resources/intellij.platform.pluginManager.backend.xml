@@ -9,8 +9,10 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.pluginManager.shared"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->

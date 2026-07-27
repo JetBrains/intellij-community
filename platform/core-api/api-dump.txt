@@ -3302,6 +3302,7 @@ com.intellij.psi.tree.ICompositeElementType
 com.intellij.psi.tree.ICustomParsingType
 - a:parse(java.lang.CharSequence,com.intellij.util.CharTable):com.intellij.lang.ASTNode
 c:com.intellij.psi.tree.IElementType
+- sf:NULL_ELEMENT_TYPE:com.intellij.psi.tree.IElementType
 - s:enumerate(com.intellij.psi.tree.IElementType$Predicate):com.intellij.psi.tree.IElementType[]
 - s:find(S):com.intellij.psi.tree.IElementType
 - f:getIndex():S

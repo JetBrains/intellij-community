@@ -8,21 +8,20 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -76,7 +75,6 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return null
             if (callableName == "filterIsInstance") {
                 if (receiverTypeArgument is KaTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return null
-                @OptIn(KaExperimentalApi::class)
                 val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return null
                 val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return null
                 if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubtypeOf(argumentType)) return null
@@ -138,7 +136,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
             if (receiverTypeArgumentType.isNullable) return null
             // Check if there is a function argument
-            resolvedCall.argumentMapping.toList().lastOrNull()?.first?.let { lastArgument ->
+            resolvedCall.valueArgumentMapping.toList().lastOrNull()?.first?.let { lastArgument ->
                 // We do not have a problem if the lambda argument might return null
                 if (!lastArgument.isMethodReferenceReturningNotNull() && !lastArgument.isLambdaReturningNotNull()) return null
                 // Otherwise, the
@@ -162,13 +160,14 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this
         if (expression !is KtLambdaExpression) return false
         var labelledReturnReturnsNullable = false
         expression.bodyExpression?.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-            val targetExpression = returnExpression.targetSymbol?.psi?.parent
+            val targetExpression = returnExpression.resolveSymbol()?.psi?.parent
             if (targetExpression == expression) {
                 labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
                         returnExpression.returnedExpression?.expressionType?.isNullable == true

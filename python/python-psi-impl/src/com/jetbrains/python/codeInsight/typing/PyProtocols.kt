@@ -61,7 +61,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         }
         else {
           val callableType = PyCallExpressionHelper.createCallableFromClass(subclass, resolveContext)
-          val fallbackTypes = PyTypeUtil.getCallableItems(callableType).map { PyTypeMember(null, it) }.toList() // TODO null
+          val fallbackTypes = PyTypeUtil.getCallableItems(callableType).map { PyTypeMember(null, it) } // TODO null
           result.add(Pair(protocolMember, fallbackTypes))
         }
       }

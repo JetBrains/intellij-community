@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.getPlugin
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -16,20 +17,21 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextComponentUI
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.textComponent
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
-import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.driver.sdk.waitFor
+import com.intellij.openapi.util.SystemInfo
 import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JButton
@@ -170,7 +172,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val updatePluginButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
-    val errorComponent = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
+    val errorComponent: JTextComponentUI = textComponent { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
 
     fun getPluginDescriptor(): PluginDescriptor =
       checkNotNull(driver.getPlugin(listPluginComponent.getPluginModel().pluginId.getIdString())) { "Plugin $name not found" }
@@ -229,6 +231,16 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
           actual = getAllTexts().asString()
           actual.contains(errorText)
         }
+      }
+      return this
+    }
+
+    fun clickEnableRequiredPluginLink(): ListPluginComponent {
+      step("Click the Enable required plugin link in the plugin error notice") {
+        waitFor(timeout = 30.seconds) {
+          errorComponent.text.contains("Enable required plugin")
+        }
+        errorComponent.clickText("Enable required plugin")
       }
       return this
     }
@@ -333,5 +345,3 @@ class RestartDialog(data: ComponentData) : DialogUiComponent(data) {
     }
   }
 }
-
-

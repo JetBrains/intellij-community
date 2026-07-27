@@ -28,7 +28,7 @@ sealed interface MutableTerminalOutputModel : TerminalOutputModel {
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
-  fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>)
+  fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList())
 
   fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>)
 

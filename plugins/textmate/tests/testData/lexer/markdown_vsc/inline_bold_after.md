@@ -6,7 +6,7 @@ text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;marku
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [18, 19], {*}
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [19, 20], {
 }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [20, 23], {   }
+text.html.markdown;markup.list.unnumbered.markdown: [20, 23], {   }
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [23, 42], {But this one spans }
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [42, 43], {*}
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown: [43, 46], {two}

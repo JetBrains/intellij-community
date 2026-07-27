@@ -57,6 +57,10 @@ final class PyFilesStateMachine {
         myInProgress = true;
         myStart = charNumber;
       }
+      else if (charToCheck == ' ' && !myQuoteMode) {
+        myInProgress = true;
+        myStart = charNumber + 1;
+      }
       return false;
     }
 

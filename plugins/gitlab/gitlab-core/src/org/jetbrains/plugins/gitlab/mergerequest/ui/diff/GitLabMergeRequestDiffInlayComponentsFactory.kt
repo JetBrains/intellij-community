@@ -136,13 +136,6 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 
-    return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-      Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
-        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-      }
-    }
-    else {
-      CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
-    }
+    return wrapInRoundedTrackablePanel(editor, vm)
   }
 }

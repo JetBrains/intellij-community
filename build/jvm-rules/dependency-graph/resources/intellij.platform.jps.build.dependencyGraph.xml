@@ -2,7 +2,12 @@
 
   <dependencies>
     <module name="intellij.platform.jps.build.javac.rt"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.hash4j"/>
+    <!-- endregion -->
   </dependencies>
 
 </idea-plugin>
-
