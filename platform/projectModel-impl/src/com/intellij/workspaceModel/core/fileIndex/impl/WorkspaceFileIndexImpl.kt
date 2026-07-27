@@ -260,12 +260,38 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
         }
       }
     }
+
+    val fileInfo = getFileInfo(fileOrDir,
+                               honorExclusion = true,
+                               includeContentSets = true,
+                               includeContentNonIndexableSets = includeContentNonIndexableSets,
+                               includeExternalSets = false,
+                               includeExternalSourceSets = false,
+                               includeExternalNonIndexableSets = false,
+                               includeCustomKindSets = false)
+
+    if (fileInfo == NonWorkspace.IGNORED || fileInfo == NonWorkspace.INVALID) {
+      return true
+    }
+
+    if (fileInfo == NonWorkspace.EXCLUDED || fileInfo == NonWorkspace.NOT_UNDER_ROOTS) {
+      val result = processContentFilesUnderExcludedDirectory(dir = fileOrDir,
+                                                       processor = processor,
+                                                       customFilter = customFilter,
+                                                       fileSetFilter = fileSetFilter,
+                                                       rootDir = fileOrDir,
+                                                       includeContentNonIndexableSets = includeContentNonIndexableSets,
+                                                       numberOfExcludedParentDirectories = 1)
+      return result.skipToParent != fileOrDir
+    }
+
+    val isIndexable = fileInfo.findFileSet { it.kind.isIndexable } != null || isIndexable(fileOrDir)
     // wrap non-indexable files as CacheAvoiding to prevent them from loading into VFS
-    val isIndexable = isIndexable(fileOrDir)
     val cacheAvoidingIfNecessary = when {
       isIndexable -> fileOrDir
       else -> NewVirtualFile.asCacheAvoiding(fileOrDir)
     }
+
     val result = VfsUtilCore.visitChildrenRecursively(cacheAvoidingIfNecessary, visitor)
     return result.skipToParent != cacheAvoidingIfNecessary
   }
