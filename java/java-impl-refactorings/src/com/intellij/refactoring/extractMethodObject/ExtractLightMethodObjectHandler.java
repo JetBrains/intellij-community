@@ -269,8 +269,17 @@ public final class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
+    boolean hasOutputVariables = false;
     int startOffsetInContainer;
     if (extractProcessor.prepare()) {
+      // For value-producing fragments, this includes at least the synthetic result variable. Ignore variables declared inside
+      // the fragment; only variables declared outside need to be written back to the original frame.
+      for (PsiVariable outputVariable : extractProcessor.getOutputVariables()) {
+        if (!isDeclaredInside(outputVariable, elementsCopy)) {
+          hasOutputVariables = true;
+          break;
+        }
+      }
       boolean shown = extractProcessor.showDialog();
       if (!shown) {
         throw new IllegalStateException("Must return success");
@@ -324,7 +333,7 @@ public final class ExtractLightMethodObjectHandler {
     final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset()).trim();
     return new LightMethodObjectExtractedData(generatedCall,
                                               (PsiClass)CodeStyleManager.getInstance(project).reformat(generatedClass),
-                                              originalAnchor, useMagicAccessor);
+                                              originalAnchor, useMagicAccessor, hasOutputVariables);
   }
 
   private static void generateResult(@NotNull Project project,
@@ -342,6 +351,15 @@ public final class ExtractLightMethodObjectHandler {
       elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
         .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));
     }
+  }
+
+  private static boolean isDeclaredInside(@NotNull PsiVariable variable, PsiElement[] elements) {
+    for (PsiElement element : elements) {
+      if (PsiTreeUtil.isAncestor(element, variable, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static @Nullable PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
