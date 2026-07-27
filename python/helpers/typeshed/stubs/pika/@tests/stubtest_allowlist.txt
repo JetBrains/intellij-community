@@ -1,3 +1,6 @@
+# bytes alias for Python 3 compatibility
+pika.spec.str
+
 # Behind a TYPE_CHECKING guard at runtime.
 pika.adapters.select_connection.SELECT_ERROR_T
 pika.adapters.select_connection.POLLER_PARAMS
@@ -12,3 +15,29 @@ pika.connection.ConnectionParameters.T
 
 # Arguments have a sentinel default, which is not reflected in the stubs.
 pika.connection.ConnectionParameters.__init__
+
+# These are defined as None, but on initialization are set as callable attributes.
+pika.adapters.base_connection._StreamingProtocolShim.connection_made
+pika.adapters.base_connection._StreamingProtocolShim.connection_lost
+pika.adapters.base_connection._StreamingProtocolShim.eof_received
+pika.adapters.base_connection._StreamingProtocolShim.data_received
+
+# The following methods are not defined directly on this class;
+# they are resolved via __getattr__.
+pika.adapters.base_connection._StreamingProtocolShim.add_on_close_callback
+pika.adapters.base_connection._StreamingProtocolShim.add_on_connection_blocked_callback
+pika.adapters.base_connection._StreamingProtocolShim.add_on_connection_unblocked_callback
+pika.adapters.base_connection._StreamingProtocolShim.add_on_open_callback
+pika.adapters.base_connection._StreamingProtocolShim.add_on_open_error_callback
+pika.adapters.base_connection._StreamingProtocolShim.channel
+pika.adapters.base_connection._StreamingProtocolShim.update_secret
+pika.adapters.base_connection._StreamingProtocolShim.close
+pika.adapters.base_connection._StreamingProtocolShim.is_closed
+pika.adapters.base_connection._StreamingProtocolShim.is_closing
+pika.adapters.base_connection._StreamingProtocolShim.is_open
+pika.adapters.base_connection._StreamingProtocolShim.basic_nack
+pika.adapters.base_connection._StreamingProtocolShim.consumer_cancel_notify
+pika.adapters.base_connection._StreamingProtocolShim.exchange_exchange_bindings
+pika.adapters.base_connection._StreamingProtocolShim.publisher_confirms
+pika.adapters.base_connection._StreamingProtocolShim.create_connection
+pika.adapters.base_connection._StreamingProtocolShim.ioloop

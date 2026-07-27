@@ -1,3 +1,6 @@
+from builtins import list as _list
+from typing import Any
+
 from .resource import Collection, Model
 
 class Node(Model):
@@ -10,4 +13,5 @@ class Node(Model):
 class NodeCollection(Collection[Node]):
     model: type[Node]
     def get(self, node_id): ...
-    def list(self, *args, **kwargs): ...
+    # Please keep in sync with docker.api.swarm.SwarmApiMixin.nodes
+    def list(self, filters: dict[str, Any] | None = None) -> _list[Node]: ...  # Any: filter values + Node response

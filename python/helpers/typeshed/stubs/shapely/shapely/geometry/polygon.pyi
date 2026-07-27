@@ -1,6 +1,6 @@
 from collections.abc import Collection
-from typing import Literal, NoReturn, TypeAlias, overload
-from typing_extensions import Self
+from typing import Literal, TypeAlias, overload
+from typing_extensions import Never, Self
 
 from .base import BaseGeometry
 from .linestring import LineString, _ConvertibleToLineString
@@ -39,7 +39,7 @@ class Polygon(BaseGeometry):
     @property
     def interiors(self) -> list[LinearRing] | InteriorRingSequence: ...
     @property
-    def coords(self) -> NoReturn: ...
+    def coords(self) -> Never: ...
     def svg(self, scale_factor: float = 1.0, fill_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     @classmethod
     def from_bounds(cls, xmin: float, ymin: float, xmax: float, ymax: float) -> Self: ...

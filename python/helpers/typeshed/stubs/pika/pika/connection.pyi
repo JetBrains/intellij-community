@@ -3,17 +3,17 @@ import ssl
 from _typeshed import Incomplete
 from collections.abc import Callable
 from logging import Logger
-from typing import Final
+from typing import Final, Literal
 from typing_extensions import Self
 
 from .callback import CallbackManager
 from .channel import Channel
 from .compat import AbstractBase
-from .credentials import _Credentials
+from .credentials import PlainCredentials, _Credentials
 from .frame import Method
 from .spec import Connection as SpecConnection
 
-PRODUCT: str
+PRODUCT: Final = "Pika Python Client Library"
 LOGGER: Logger
 
 class Parameters:
@@ -35,26 +35,26 @@ class Parameters:
         "_virtual_host",
         "_tcp_options",
     )
-    DEFAULT_USERNAME: str
-    DEFAULT_PASSWORD: str
-    DEFAULT_BLOCKED_CONNECTION_TIMEOUT: None
-    DEFAULT_CHANNEL_MAX: int
-    DEFAULT_CLIENT_PROPERTIES: None
-    DEFAULT_CREDENTIALS: Incomplete
-    DEFAULT_CONNECTION_ATTEMPTS: int
-    DEFAULT_FRAME_MAX: int
+    DEFAULT_USERNAME: Final = "guest"
+    DEFAULT_PASSWORD: Final = "guest"
+    DEFAULT_BLOCKED_CONNECTION_TIMEOUT: Final = None
+    DEFAULT_CHANNEL_MAX: Final = 65535
+    DEFAULT_CLIENT_PROPERTIES: Final = None
+    DEFAULT_CREDENTIALS: Final[PlainCredentials]
+    DEFAULT_CONNECTION_ATTEMPTS: Final = 1
+    DEFAULT_FRAME_MAX: Final = 131072
     DEFAULT_HEARTBEAT_TIMEOUT: None
-    DEFAULT_HOST: str
-    DEFAULT_LOCALE: str
-    DEFAULT_PORT: int
-    DEFAULT_RETRY_DELAY: float
-    DEFAULT_SOCKET_TIMEOUT: float
-    DEFAULT_STACK_TIMEOUT: float
-    DEFAULT_SSL: bool
-    DEFAULT_SSL_OPTIONS: None
-    DEFAULT_SSL_PORT: int
-    DEFAULT_VIRTUAL_HOST: str
-    DEFAULT_TCP_OPTIONS: None
+    DEFAULT_HOST: Final = "localhost"
+    DEFAULT_LOCALE: Final = "en_US"
+    DEFAULT_PORT: Final = 5672
+    DEFAULT_RETRY_DELAY: Final = 2.0
+    DEFAULT_SOCKET_TIMEOUT: Final = 10.0
+    DEFAULT_STACK_TIMEOUT: Final = 15.0
+    DEFAULT_SSL: Final = False
+    DEFAULT_SSL_OPTIONS: Final = None
+    DEFAULT_SSL_PORT: Final = 5671
+    DEFAULT_VIRTUAL_HOST: Final = "/"
+    DEFAULT_TCP_OPTIONS: Final = None
     def __init__(self) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __ne__(self, other: object) -> bool: ...
@@ -135,13 +135,12 @@ class Parameters:
     def virtual_host(self, value: str) -> None: ...
 
     @property
-    def tcp_options(self) -> dict[Incomplete, Incomplete] | None: ...
+    def tcp_options(self) -> dict[str, Incomplete] | None: ...
     @tcp_options.setter
-    def tcp_options(self, value: dict[Incomplete, Incomplete] | None) -> None: ...
+    def tcp_options(self, value: dict[str, Incomplete] | None) -> None: ...
 
 class ConnectionParameters(Parameters):
     __slots__ = ()
-
     def __init__(
         self,
         host: str = ...,
@@ -158,8 +157,8 @@ class ConnectionParameters(Parameters):
         stack_timeout: float | None = ...,
         locale: str = ...,
         blocked_connection_timeout: float | None = ...,
-        client_properties: dict[Incomplete, Incomplete] | None = ...,
-        tcp_options: dict[Incomplete, Incomplete] | None = ...,
+        client_properties: dict[str, Incomplete] | None = ...,
+        tcp_options: dict[str, Incomplete] | None = ...,
     ) -> None: ...
 
 class URLParameters(Parameters):
@@ -173,22 +172,22 @@ class SSLOptions:
     def __init__(self, context: ssl.SSLContext, server_hostname: str | None = None) -> None: ...
 
 class Connection(AbstractBase, metaclass=abc.ABCMeta):
-    ON_CONNECTION_CLOSED: Final[str]
-    ON_CONNECTION_ERROR: Final[str]
-    ON_CONNECTION_OPEN_OK: Final[str]
-    CONNECTION_CLOSED: Final[int]
-    CONNECTION_INIT: Final[int]
-    CONNECTION_PROTOCOL: Final[int]
-    CONNECTION_START: Final[int]
-    CONNECTION_TUNE: Final[int]
-    CONNECTION_OPEN: Final[int]
-    CONNECTION_CLOSING: Final[int]
-    connection_state: int  # one of the constants above
+    ON_CONNECTION_CLOSED: Final = "_on_connection_closed"
+    ON_CONNECTION_ERROR: Final = "_on_connection_error"
+    ON_CONNECTION_OPEN_OK: Final = "_on_connection_open_ok"
+    CONNECTION_CLOSED: Final = 0
+    CONNECTION_INIT: Final = 1
+    CONNECTION_PROTOCOL: Final = 2
+    CONNECTION_START: Final = 3
+    CONNECTION_TUNE: Final = 4
+    CONNECTION_OPEN: Final = 5
+    CONNECTION_CLOSING: Final = 6
+    connection_state: Literal[0, 1, 2, 3, 4, 5, 6]  # one of the constants above
     params: Parameters
     callbacks: CallbackManager
-    server_capabilities: Incomplete
-    server_properties: Incomplete
-    known_hosts: Incomplete
+    server_capabilities: dict[str, bool] | None
+    server_properties: dict[str, Incomplete] | None
+    known_hosts: str | None
     def __init__(
         self,
         parameters: Parameters | None = None,
@@ -209,7 +208,12 @@ class Connection(AbstractBase, metaclass=abc.ABCMeta):
     def channel(
         self, channel_number: int | None = None, on_open_callback: Callable[[Channel], object] | None = None
     ) -> Channel: ...
-    def update_secret(self, new_secret, reason, callback=None) -> None: ...
+    def update_secret(
+        self,
+        new_secret: str | bytes,
+        reason: str | bytes,
+        callback: Callable[[Method[SpecConnection.UpdateSecretOk]], object] | None = None,
+    ) -> None: ...
     def close(self, reply_code: int = 200, reply_text: str = "Normal shutdown") -> None: ...
     @property
     def is_closed(self) -> bool: ...

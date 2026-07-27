@@ -1,0 +1,7 @@
+version = "1.5.*"
+upstream-repository = "https://github.com/rasterio/rasterio"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2", "click>=8"]
+
+[tool.stubtest]
+stubtest-dependencies = ["rasterio==1.5.*"]

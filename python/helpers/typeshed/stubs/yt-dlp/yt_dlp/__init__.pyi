@@ -38,9 +38,7 @@ class _ExternalDownloader(TypedDict, total=False):
     ftp: str
     http: str
     m3u8: str
-    mms: str
     rtmp: str
-    rtsp: str
 
 @type_check_only
 class _DownloadRange(TypedDict):

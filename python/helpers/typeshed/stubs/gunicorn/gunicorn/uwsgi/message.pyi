@@ -5,6 +5,7 @@ from gunicorn.http.body import Body
 from gunicorn.http.unreader import Unreader
 
 from .._types import _AddressType
+from ..asgi.parser import _ProxyProtocolInfo, _ProxyProtocolInfoUnknown
 
 MAX_UWSGI_VARS: Final = 1000
 
@@ -28,7 +29,7 @@ class UWSGIRequest:
     uwsgi_vars: dict[str, str]
     modifier1: int
     modifier2: int
-    proxy_protocol_info: dict[str, str | int | None] | None  # TODO: Use TypedDict
+    proxy_protocol_info: _ProxyProtocolInfo | _ProxyProtocolInfoUnknown | None
 
     def __init__(self, cfg: Config, unreader: Unreader, peer_addr: _AddressType, req_number: int = 1) -> None: ...
     def force_close(self) -> None: ...

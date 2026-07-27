@@ -1,7 +1,10 @@
 import asyncio
 import socket
 from _typeshed import Incomplete
-from typing import ClassVar, Final
+from typing import ClassVar, Final, Literal, TypeAlias, TypedDict, type_check_only
+from typing_extensions import NotRequired
+
+from .errors import _DirtyErrorDict
 
 MAGIC: Final = b"GD"
 VERSION: Final = 0x01
@@ -38,6 +41,65 @@ MANAGE_OP_REMOVE: Final = 2
 HEADER_FORMAT: Final = ">2sBBIQ"
 HEADER_SIZE: Final[int]
 MAX_MESSAGE_SIZE: Final = 67108864
+
+@type_check_only
+class _DirtyRequest(TypedDict):
+    type: Literal["request"]
+    id: int | str
+    app_path: str
+    action: str
+    args: list[Incomplete]
+    kwargs: dict[str, Incomplete]
+
+@type_check_only
+class _DirtyResponse(TypedDict):
+    type: Literal["response"]
+    id: int | str
+    result: Incomplete
+
+@type_check_only
+class _DirtyErrorResponse(TypedDict):
+    type: Literal["error"]
+    id: int | str
+    error: _DirtyErrorDict | dict[str, Incomplete]
+
+@type_check_only
+class _DirtyChunkMessage(TypedDict):
+    type: Literal["chunk"]
+    id: int | str
+    data: Incomplete
+
+@type_check_only
+class _DirtyEndMessage(TypedDict):
+    type: Literal["end"]
+    id: int | str
+
+@type_check_only
+class _DirtyStashMessage(TypedDict):
+    type: Literal["stash"]
+    id: int | str
+    op: int
+    table: str
+    key: NotRequired[Incomplete]
+    value: NotRequired[Incomplete]
+    pattern: NotRequired[Incomplete]
+
+@type_check_only
+class _DirtyManageMessage(TypedDict):
+    type: Literal["manage"]
+    id: int | str
+    op: int
+    count: int
+
+_DirtyMessage: TypeAlias = (
+    _DirtyRequest
+    | _DirtyResponse
+    | _DirtyErrorResponse
+    | _DirtyChunkMessage
+    | _DirtyEndMessage
+    | _DirtyStashMessage
+    | _DirtyManageMessage
+)
 
 class BinaryProtocol:
     HEADER_SIZE: ClassVar[int]
@@ -80,33 +142,30 @@ class BinaryProtocol:
     @staticmethod
     def decode_message(data: bytes) -> tuple[str, int, Incomplete]: ...
     @staticmethod
-    async def read_message_async(reader: asyncio.StreamReader) -> dict[str, Incomplete]: ...
+    async def read_message_async(reader: asyncio.StreamReader) -> _DirtyMessage: ...
     @staticmethod
-    async def write_message_async(writer: asyncio.StreamWriter, message: dict[str, Incomplete]) -> None: ...
+    async def write_message_async(writer: asyncio.StreamWriter, message: _DirtyMessage) -> None: ...
     @staticmethod
     def _recv_exactly(sock: socket.socket, n: int) -> bytes: ...
     @staticmethod
-    def read_message(sock: socket.socket) -> dict[str, Incomplete]: ...
+    def read_message(sock: socket.socket) -> _DirtyMessage: ...
     @staticmethod
-    def write_message(sock: socket.socket, message: dict[str, Incomplete]) -> None: ...
+    def write_message(sock: socket.socket, message: _DirtyMessage) -> None: ...
     @staticmethod
-    def _encode_from_dict(message: dict[str, Incomplete]) -> bytes: ...
+    def _encode_from_dict(message: _DirtyMessage) -> bytes: ...
 
 DirtyProtocol = BinaryProtocol
 
-# TODO: Use TypedDict for results
 def make_request(
     request_id: int | str,
     app_path: str,
     action: str,
     args: tuple[Incomplete, ...] | None = None,
     kwargs: dict[str, Incomplete] | None = None,
-) -> dict[str, Incomplete]: ...
-def make_response(request_id: int | str, result) -> dict[str, Incomplete]: ...
-def make_error_response(request_id: int | str, error) -> dict[str, Incomplete]: ...
-def make_chunk_message(request_id: int | str, data) -> dict[str, Incomplete]: ...
-def make_end_message(request_id: int | str) -> dict[str, Incomplete]: ...
-def make_stash_message(
-    request_id: int | str, op: int, table: str, key=None, value=None, pattern=None
-) -> dict[str, Incomplete]: ...
-def make_manage_message(request_id: int | str, op: int, count: int = 1) -> dict[str, Incomplete]: ...
+) -> _DirtyRequest: ...
+def make_response(request_id: int | str, result) -> _DirtyResponse: ...
+def make_error_response(request_id: int | str, error) -> _DirtyErrorResponse: ...
+def make_chunk_message(request_id: int | str, data) -> _DirtyChunkMessage: ...
+def make_end_message(request_id: int | str) -> _DirtyEndMessage: ...
+def make_stash_message(request_id: int | str, op: int, table: str, key=None, value=None, pattern=None) -> _DirtyStashMessage: ...
+def make_manage_message(request_id: int | str, op: int, count: int = 1) -> _DirtyManageMessage: ...

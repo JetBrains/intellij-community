@@ -1,25 +1,29 @@
+import asyncio
 from _typeshed import Incomplete
-from asyncio import AbstractEventLoop, Future, Handle
 from collections.abc import Callable, Sequence
 from logging import Logger
-from typing_extensions import Self
 
-from ..connection import Connection, Parameters
-from .base_connection import BaseConnection
-from .utils import io_services_utils
-from .utils.connection_workflow import AbstractAMQPConnectionWorkflow, AMQPConnectorException
-from .utils.nbio_interface import AbstractFileDescriptorServices, AbstractIOReference, AbstractIOServices, AbstractTimerReference
+from pika.adapters.base_connection import BaseConnection
+from pika.adapters.utils import io_services_utils
+from pika.adapters.utils.connection_workflow import AbstractAMQPConnectionWorkflow, AMQPConnectorException
+from pika.adapters.utils.nbio_interface import (
+    AbstractFileDescriptorServices,
+    AbstractIOReference,
+    AbstractIOServices,
+    AbstractTimerReference,
+)
+from pika.connection import Connection, Parameters
 
 LOGGER: Logger
 
-class AsyncioConnection(BaseConnection):
+class AsyncioConnection(BaseConnection[asyncio.AbstractEventLoop]):
     def __init__(
         self,
         parameters: Parameters | None = None,
-        on_open_callback: Callable[[Self], object] | None = None,
-        on_open_error_callback: Callable[[Self, BaseException], object] | None = None,
-        on_close_callback: Callable[[Self, BaseException], object] | None = None,
-        custom_ioloop: AbstractEventLoop | None = None,
+        on_open_callback: Callable[[Connection], object] | None = None,
+        on_open_error_callback: Callable[[Connection, BaseException], object] | None = None,
+        on_close_callback: Callable[[Connection, BaseException], object] | None = None,
+        custom_ioloop: asyncio.AbstractEventLoop | AbstractIOServices | None = None,
         internal_connection_workflow: bool = True,
     ) -> None: ...
     @classmethod
@@ -27,7 +31,7 @@ class AsyncioConnection(BaseConnection):
         cls,
         connection_configs: Sequence[Parameters],
         on_done: Callable[[Connection | AMQPConnectorException], object],
-        custom_ioloop: AbstractEventLoop | None = None,
+        custom_ioloop: asyncio.AbstractEventLoop | None = None,
         workflow: AbstractAMQPConnectionWorkflow | None = None,
     ) -> AbstractAMQPConnectionWorkflow: ...
 
@@ -37,8 +41,8 @@ class _AsyncioIOServicesAdapter(
     AbstractIOServices,
     AbstractFileDescriptorServices,
 ):
-    def __init__(self, loop: AbstractEventLoop | None = None) -> None: ...
-    def get_native_ioloop(self) -> AbstractEventLoop: ...
+    def __init__(self, loop: asyncio.AbstractEventLoop | None = None) -> None: ...
+    def get_native_ioloop(self) -> asyncio.AbstractEventLoop: ...
     def close(self) -> None: ...
     def run(self) -> None: ...
     def stop(self) -> None: ...
@@ -46,9 +50,9 @@ class _AsyncioIOServicesAdapter(
     def call_later(self, delay: float, callback: Callable[[], object]) -> _TimerHandle: ...
     def getaddrinfo(
         self,
-        host: str,
-        port: int,
-        on_done: Callable[..., object],
+        host: str | bytes | None,
+        port: str | bytes | int | None,
+        on_done: Callable[[BaseConnection[asyncio.AbstractEventLoop] | BaseException], object],  # type: ignore[override]
         family: int = 0,
         socktype: int = 0,
         proto: int = 0,
@@ -60,9 +64,13 @@ class _AsyncioIOServicesAdapter(
     def remove_writer(self, fd: int) -> bool: ...
 
 class _TimerHandle(AbstractTimerReference):
-    def __init__(self, handle: Handle) -> None: ...
+    def __init__(self, handle: asyncio.Handle) -> None: ...
     def cancel(self) -> None: ...
 
 class _AsyncioIOReference(AbstractIOReference):
-    def __init__(self, future: Future[Incomplete], on_done: Callable[[BaseConnection | BaseException], object]) -> None: ...
+    def __init__(
+        self,
+        future: asyncio.Future[Incomplete],
+        on_done: Callable[[BaseConnection[asyncio.AbstractEventLoop] | BaseException], object],
+    ) -> None: ...
     def cancel(self) -> bool: ...

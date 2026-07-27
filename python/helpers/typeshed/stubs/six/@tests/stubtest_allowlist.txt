@@ -27,6 +27,3 @@ six.Module_six_moves_urllib_robotparser
 
 # Belongs to `django.utils.six`
 six.iterlists
-
-# Unclear problems
-six.callable

@@ -1,6 +1,7 @@
 from _typeshed import ReadableBuffer
 from io import BufferedIOBase, BufferedRandom, BytesIO
-from typing import Final, Literal, NoReturn
+from typing import Final, Literal
+from typing_extensions import Never
 
 COPY_BYTES: Final = 262144
 STRBUF_LIMIT: Final = 8192
@@ -38,7 +39,7 @@ class ReadOnlyFileBasedBuffer(FileBasedBuffer):
     def __iter__(self) -> ReadOnlyFileBasedBuffer: ...
     def next(self) -> bytes | None: ...
     __next__ = next
-    def append(self, s: ReadableBuffer) -> NoReturn: ...
+    def append(self, s: ReadableBuffer) -> Never: ...
 
 class OverflowableBuffer:
     overflowed: bool

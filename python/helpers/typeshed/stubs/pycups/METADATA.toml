@@ -1,0 +1,5 @@
+version = "2.0.*"
+upstream-repository = "https://github.com/OpenPrinting/pycups"
+
+[tool.stubtest]
+apt-dependencies = ["libcups2-dev"]

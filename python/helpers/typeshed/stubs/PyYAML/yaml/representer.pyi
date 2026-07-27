@@ -2,8 +2,8 @@ import datetime
 from _typeshed import Incomplete, ReadableBuffer, SupportsItems
 from collections.abc import Callable, Iterable, Mapping
 from types import BuiltinFunctionType, FunctionType, ModuleType
-from typing import Any, ClassVar, NoReturn, TypeVar
-from typing_extensions import Self
+from typing import Any, ClassVar, TypeVar
+from typing_extensions import Never, Self
 
 from yaml.error import YAMLError as YAMLError
 from yaml.nodes import MappingNode as MappingNode, Node as Node, ScalarNode as ScalarNode, SequenceNode as SequenceNode
@@ -50,7 +50,7 @@ class SafeRepresenter(BaseRepresenter):
     def represent_date(self, data: datetime.date) -> ScalarNode: ...
     def represent_datetime(self, data: datetime.datetime) -> ScalarNode: ...
     def represent_yaml_object(self, tag: str, data, cls, flow_style: bool | None = None) -> MappingNode: ...
-    def represent_undefined(self, data) -> NoReturn: ...
+    def represent_undefined(self, data) -> Never: ...
 
 class Representer(SafeRepresenter):
     def represent_complex(self, data: complex) -> ScalarNode: ...

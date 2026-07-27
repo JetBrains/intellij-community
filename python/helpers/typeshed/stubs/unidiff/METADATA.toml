@@ -1,2 +1,3 @@
 version = "0.7.*"
 upstream-repository = "https://github.com/matiasb/python-unidiff"
+obsolete-since = {version = "1.0.0", date = "2026-07-25"}

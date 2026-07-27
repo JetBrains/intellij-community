@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import datetime as _datetime, timedelta as _timedelta, tzinfo as _tzinfo
-from typing import Final, NoReturn, overload
-from typing_extensions import Self
+from typing import Final, overload
+from typing_extensions import Never, Self
 
 from . import _libastro
 
@@ -226,7 +226,7 @@ def localtime(date: Date | float) -> _datetime: ...
 
 class _UTC(_tzinfo):
     ZERO: _timedelta
-    def tzname(self, dt: _datetime | None, /) -> NoReturn: ...
+    def tzname(self, dt: _datetime | None, /) -> Never: ...
     def utcoffset(self, dt: _datetime | None) -> _timedelta: ...
     def dst(self, dt: _datetime | None) -> _timedelta: ...
 

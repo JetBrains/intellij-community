@@ -320,6 +320,25 @@ documentation.  Whenever you find them disagreeing, model the type
 information after the actual implementation and file an issue on the
 project's tracker to fix their documentation.
 
+### Deprecations (using the `@deprecated` decorator)
+
+Generally deprecactions using the `@deprecated` decorator are added more
+liberally in typeshed than runtime deprecation warnings. Here are some
+guidelines that can be deviated from in special cases.
+
+Use `@deprecated` if and only if
+
+- a feature is deprecated at runtime (either using `@deprecated` or with a
+  runtime warning); or
+- a feature is documented to be deprecated (e.g. in API documention,
+  docstrings, or comments).
+
+For standard library features that are not deprecated in all Python versions
+currently supported by typeshed use `@deprecated` for
+
+- all versions starting with the "Deprecated since" version, plus
+- all versions for which an alternative is available.
+
 ### Docstrings
 
 Typeshed stubs should not include duplicated docstrings from the source code.

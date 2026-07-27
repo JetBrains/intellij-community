@@ -1,12 +1,12 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import NoReturn
+from typing_extensions import Never
 
 from authlib.oauth2 import ResourceProtector as _ResourceProtector
 
 class ResourceProtector(_ResourceProtector):
-    def raise_error_response(self, error) -> NoReturn: ...
+    def raise_error_response(self, error) -> Never: ...
     def acquire_token(self, scopes=None, **kwargs): ...
     @contextmanager
     def acquire(self, scopes=None) -> Generator[Incomplete]: ...
