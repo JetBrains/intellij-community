@@ -2,6 +2,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Couple;
@@ -104,14 +106,20 @@ public final class ParsingTestUtil {
       TextRange changedRange =
         ChangedPsiRangeUtil.getChangedPsiRange(subTreeFile, Objects.requireNonNull(subTreeFile.getTreeElement()), newFileText);
       TestCase.assertNotNull("No changes found", changedRange);
-      Couple<ASTNode> reparseableRoots = BlockSupportImpl.findReparseableNodeAndReparseIt(subTreeFile, subTree.getNode(), changedRange, newFileText);
+      Couple<ASTNode> reparseableRoots = ReadAction.computeBlocking(
+        () -> BlockSupportImpl.findReparseableNodeAndReparseIt(subTreeFile, subTree.getNode(), changedRange, newFileText)
+      );
       result.append("Subtree: ").append(subTree.getLanguage()).append(NL_SEPARATOR_NL);
       serializeReparseableRoots(reparseableRoots, result, newFileText);
       result.append(NL_SEPARATOR_NL);
     }
 
-    WriteAction.run(() -> fileDocument.setText(newFileText));
-    psiDocumentManager.commitDocument(fileDocument);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      WriteAction.run(() -> {
+        fileDocument.setText(newFileText);
+        psiDocumentManager.commitDocument(fileDocument);
+      });
+    });
     var psiBeforeCommit = psiFileToString(psiFile);
     WriteCommandAction.runWriteCommandAction(project, () -> {
       fileDocument.setText("");
