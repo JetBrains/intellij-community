@@ -134,7 +134,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(isProjectCaseSensitive(project))
+    this.virtualFileManager = createIdeVirtualFileUrlManager(isProjectCaseSensitive(project))
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 

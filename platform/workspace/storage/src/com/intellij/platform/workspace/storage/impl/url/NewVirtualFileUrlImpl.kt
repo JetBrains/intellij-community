@@ -96,6 +96,8 @@ public open class NewVirtualFileUrlImpl(
     return manager.append(relativePath.removePrefix("/"), this)
   }
 
+  override fun toString(): String = getUrl()
+
   private fun computeUrlInternal(): String {
     if (parent == null) {
       return nodeName

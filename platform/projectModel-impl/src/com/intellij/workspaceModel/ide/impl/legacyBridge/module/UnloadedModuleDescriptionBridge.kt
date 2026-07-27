@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.groupPath
 import com.intellij.util.containers.Interner
-import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 
 internal class UnloadedModuleDescriptionBridge private constructor(
   private val name: String,
@@ -33,7 +32,7 @@ internal class UnloadedModuleDescriptionBridge private constructor(
 
     private fun create(entity: ModuleEntity, interner: Interner<String>): UnloadedModuleDescriptionBridge {
       val contentRoots = entity.contentRoots.sortedBy { contentEntry -> contentEntry.url.url }
-        .mapTo(ArrayList()) { contentEntry -> contentEntry.url as VirtualFileUrlBridge }
+        .mapTo(ArrayList()) { contentEntry -> contentEntry.url as VirtualFilePointer }
       val dependencyModuleNames = entity.dependencies.filterIsInstance<ModuleDependency>()
         .map { moduleDependency -> interner.intern(moduleDependency.module.name) }
       return UnloadedModuleDescriptionBridge(entity.name, dependencyModuleNames, contentRoots, entity.groupPath?.path ?: emptyList())

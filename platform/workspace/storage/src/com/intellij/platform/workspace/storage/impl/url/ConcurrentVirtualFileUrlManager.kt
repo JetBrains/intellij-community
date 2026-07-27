@@ -3,14 +3,13 @@ package com.intellij.platform.workspace.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
-public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManager {
+public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManagerEx {
 
   internal val root = NewVirtualFileUrlImpl("/", this)
 
@@ -44,11 +43,24 @@ public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManager {
    * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
    * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
    */
-  public fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+  override fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
     val node = findNode(url) ?: return true
     return node.processChildrenRecursively { childNode ->
       if (childNode.isRegistered()) processor(childNode) else TreeNodeProcessingResult.CONTINUE
     }
+  }
+
+  /**
+   * Every trie node is itself a [VirtualFileUrl], so this returns the nodes which were explicitly requested
+   * via [getOrCreateFromUrl] or [append], skipping the intermediate ones created along the way.
+   */
+  override fun getCachedVirtualFileUrls(): List<VirtualFileUrl> {
+    val result = ArrayList<VirtualFileUrl>()
+    root.processChildrenRecursively { childNode ->
+      if (childNode.isRegistered()) result.add(childNode)
+      TreeNodeProcessingResult.CONTINUE
+    }
+    return result
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
@@ -59,7 +71,7 @@ public open class ConcurrentVirtualFileUrlManager : VirtualFileUrlManager {
   /**
    * Returns class of instances produced by [createVirtualFileUrl], it's used during serialization.
    */
-  public open val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+  override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = NewVirtualFileUrlImpl::class.java
 
   /**
