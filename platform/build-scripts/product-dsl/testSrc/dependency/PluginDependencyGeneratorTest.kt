@@ -2218,14 +2218,14 @@ class PluginDependencyGeneratorTest {
     }
   }
 
-  // --- Globally embedded module filtering tests ---
+  // --- Explicit platform dependency tests ---
 
   @Test
-  fun `plugin dependency on globally embedded module is skipped`(@TempDir tempDir: Path) {
+  fun `plugin dependency on module embedded in every product is kept`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
-      // Setup: Plugin depends on a module that is globally embedded (in EMBEDDED module set, no plugin source)
+      // Setup: Plugin depends on a module embedded in every product (in EMBEDDED module set, no plugin source)
       val setup = pluginTestSetup(tempDir) {
-        // Globally embedded module - in EMBEDDED module set, no plugin source
+        // Module embedded in every product - in EMBEDDED module set, no plugin source
         contentModule("intellij.platform.core") {
           descriptor = """<idea-plugin package="com.intellij.core"/>"""
         }
@@ -2252,7 +2252,7 @@ class PluginDependencyGeneratorTest {
 
       val result = setup.generateDependencies(listOf("intellij.my.plugin"))
 
-      // Verify: Plugin XML should NOT have the embedded module dependency
+      // Verify: Plugin XML declares the embedded module dependency explicitly
       val pluginResult = result.files.find { it.pluginContentModuleName.value == "intellij.my.plugin" }
       assertThat(pluginResult).isNotNull()
 
@@ -2261,56 +2261,14 @@ class PluginDependencyGeneratorTest {
 
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Plugin XML should skip globally embedded module dependency")
-          .doesNotContain("""<module name="intellij.platform.core"/>""")
+          .describedAs("Plugin XML should declare embedded module dependency explicitly")
+          .contains("""<module name="intellij.platform.core"/>""")
       }
     }
   }
 
   @Test
-  fun `plugin dependency embedded only in subset of products is kept`(@TempDir tempDir: Path) {
-    runBlocking(Dispatchers.Default) {
-      val setup = pluginTestSetup(tempDir) {
-        contentModule("intellij.platform.frontend.split") {
-          descriptor = """<idea-plugin package="com.intellij.frontend.split"/>"""
-        }
-
-        contentModule("intellij.my.content") {
-          descriptor = """<idea-plugin package="com.intellij.content"/>"""
-          jpsDependency("intellij.platform.frontend.split")
-        }
-
-        plugin("intellij.my.plugin") {
-          content("intellij.my.content")
-        }
-
-        product("Idea") {
-          bundlesPlugin("intellij.my.plugin")
-        }
-
-        product("JetBrainsClient") {
-          bundlesPlugin("intellij.my.plugin")
-          moduleSet("client.set") {
-            module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
-          }
-        }
-      }
-
-      setup.generateDependencies(listOf("intellij.my.plugin"))
-
-      val diffs = setup.strategy.getDiffs()
-      val pluginXmlDiff = diffs.find { it.path.toString().contains("intellij.my.plugin") && it.path.toString().endsWith("plugin.xml") }
-
-      if (pluginXmlDiff != null) {
-        assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Dependency must be kept when target is not globally embedded")
-          .contains("""<module name="intellij.platform.frontend.split"/>""")
-      }
-    }
-  }
-
-  @Test
-  fun `plugin dependency embedded in all bundled products is skipped`(@TempDir tempDir: Path) {
+  fun `plugin dependency embedded in all bundled products is kept`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         contentModule("intellij.platform.frontend.split") {
@@ -2345,58 +2303,14 @@ class PluginDependencyGeneratorTest {
 
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Dependency should be skipped when embedded in all products where plugin is bundled")
-          .doesNotContain("""<module name="intellij.platform.frontend.split"/>""")
+          .describedAs("Product embedding topology must not affect generated deps")
+          .contains("""<module name="intellij.platform.frontend.split"/>""")
       }
     }
   }
 
   @Test
-  fun `plugin dependency is kept when only bundled owner plugin provides target`(@TempDir tempDir: Path) {
-    runBlocking(Dispatchers.Default) {
-      val setup = pluginTestSetup(tempDir) {
-        contentModule("intellij.platform.ide.impl") {
-          descriptor = """<idea-plugin package="com.intellij.ide.impl"/>"""
-        }
-
-        contentModule("intellij.my.content") {
-          descriptor = """<idea-plugin package="com.intellij.content"/>"""
-          jpsDependency("intellij.platform.ide.impl")
-        }
-
-        plugin("intellij.platform.owner") {
-          content("intellij.platform.ide.impl", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
-        }
-
-        plugin("intellij.my.plugin") {
-          content("intellij.my.content")
-        }
-
-        product("CodeServer") {
-          bundlesPlugin("intellij.my.plugin")
-        }
-
-        product("Idea") {
-          bundlesPlugin("intellij.my.plugin")
-          bundlesPlugin("intellij.platform.owner")
-        }
-      }
-
-      setup.generateDependencies(listOf("intellij.my.plugin", "intellij.platform.owner"))
-
-      val diffs = setup.strategy.getDiffs()
-      val pluginXmlDiff = diffs.find { it.path.toString().contains("intellij.my.plugin") && it.path.toString().endsWith("plugin.xml") }
-
-      if (pluginXmlDiff != null) {
-        assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Bundled plugin content alone does not make the target globally embedded")
-          .contains("""<module name="intellij.platform.ide.impl"/>""")
-      }
-    }
-  }
-
-  @Test
-  fun `plugin dependency on globally embedded module is skipped for non-bundled plugin`(@TempDir tempDir: Path) {
+  fun `plugin dependency on embedded module is kept for non-bundled plugin`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         contentModule("intellij.platform.core") {
@@ -2427,8 +2341,8 @@ class PluginDependencyGeneratorTest {
 
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Non-bundled plugin should skip globally embedded dependency")
-          .doesNotContain("""<module name="intellij.platform.core"/>""")
+          .describedAs("Non-bundled plugin should declare embedded dependency explicitly")
+          .contains("""<module name="intellij.platform.core"/>""")
       }
     }
   }
@@ -2436,9 +2350,9 @@ class PluginDependencyGeneratorTest {
   @Test
   fun `plugin dependency on module in another plugin is kept`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
-      // Setup: Plugin depends on a module that is in another plugin (NOT globally embedded)
+      // Setup: Plugin depends on a module that is owned by another plugin
       val setup = pluginTestSetup(tempDir) {
-        // Module in another plugin - NOT globally embedded because it has a plugin source
+        // Module owned by another plugin
         contentModule("intellij.vcs.core") {
           descriptor = """<idea-plugin package="com.intellij.vcs"/>"""
         }
@@ -2465,14 +2379,14 @@ class PluginDependencyGeneratorTest {
 
       setup.generateDependencies(listOf("intellij.my.plugin", "intellij.vcs.plugin"))
 
-      // Verify: Plugin XML should have the module dependency (it's in a plugin, not embedded)
+      // Verify: Plugin XML should have the module dependency
       val diffs = setup.strategy.getDiffs()
       val pluginXmlDiff = diffs.find { it.path.toString().contains("intellij.my.plugin") && it.path.toString().endsWith("plugin.xml") }
 
       // Either no diff (dep already in XML) or diff contains the dependency
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Module in another plugin is NOT globally embedded, should be kept")
+          .describedAs("Module owned by another plugin should be kept")
           .contains("""<module name="intellij.vcs.core"/>""")
       }
     }
@@ -2499,7 +2413,7 @@ class PluginDependencyGeneratorTest {
         product("TestProduct") {
           bundlesPlugin("intellij.my.plugin")
           moduleSet("optional.set") {
-            // REQUIRED loading, not EMBEDDED - dependency should be kept
+            // REQUIRED loading, not EMBEDDED
             module("intellij.platform.optional", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED)
           }
         }
@@ -2512,7 +2426,7 @@ class PluginDependencyGeneratorTest {
 
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("Module with REQUIRED loading is NOT globally embedded, should be kept")
+          .describedAs("Module with REQUIRED loading should be kept")
           .contains("""<module name="intellij.platform.optional"/>""")
       }
     }

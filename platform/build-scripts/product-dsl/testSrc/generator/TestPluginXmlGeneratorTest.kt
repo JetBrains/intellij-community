@@ -203,7 +203,7 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
-  fun `keeps module dependency when target is not globally embedded across products`(@TempDir tempDir: Path) {
+  fun `keeps module dependency on module embedded in another product`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("Idea") {

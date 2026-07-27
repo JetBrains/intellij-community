@@ -63,7 +63,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
     val pluginTargetNamesByPluginId = buildPluginTargetNamesByPluginId(model.pluginGraph)
     val pluginIdByTargetName = buildPluginIdByTargetName(model.pluginGraph)
     val resolutionContext = DependencyResolutionContext(model.pluginGraph)
-    val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
     val plans = testPluginsWithSource.map { (spec, productClass, productName) ->
       buildTestPluginDependencyPlan(
@@ -75,7 +74,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
         depsByModule = depsByModule,
         pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
         pluginIdByTargetName = pluginIdByTargetName,
-        allRealProductNames = allRealProductNames,
         existingPluginDependencies = readExistingTestPluginDependencies(model.projectRoot.resolve(spec.pluginXmlPath)).pluginDependencies,
         dependencyChains = model.dslTestPluginDependencyChains[spec.pluginId].orEmpty(),
       )
@@ -106,11 +104,9 @@ private fun buildTestPluginDependencyPlan(
   depsByModule: Map<ContentModuleName, ContentModuleDependencyPlan>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
   pluginIdByTargetName: Map<TargetName, PluginId>,
-  allRealProductNames: Set<String>,
   existingPluginDependencies: Set<PluginId>,
   dependencyChains: Map<ContentModuleName, List<ContentModuleName>>,
 ): TestPluginDependencyPlan {
-  val embeddedCheckProductNames = if (productName in allRealProductNames) setOf(productName) else allRealProductNames
   val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
   val contentModules = contentData.contentBlocks
     .asSequence()
@@ -206,7 +202,6 @@ private fun buildTestPluginDependencyPlan(
     productName = productName,
     bundledPluginNames = bundledPluginNames,
     pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
-    embeddedCheckProductNames = embeddedCheckProductNames,
   )
 
   val filteredRequiredByPlugin = requiredByPlugin
@@ -281,7 +276,6 @@ private fun collectTargetDependencies(
   productName: String,
   bundledPluginNames: Set<TargetName>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
-  embeddedCheckProductNames: Set<String>,
 ): TargetDependencyPlan {
   val inferredModuleDeps = LinkedHashSet<ContentModuleName>()
   val explicitModuleDeps = LinkedHashSet<ContentModuleName>()
@@ -374,10 +368,6 @@ private fun collectTargetDependencies(
               }
               if (declarationPolicy == ModuleDependencyDeclarationPolicy.EXPLICIT_MODULE) {
                 explicitModuleDeps.add(classification.moduleName)
-                return@dependsOn
-              }
-              val depModuleId = contentModule(classification.moduleName)
-              if (depModuleId != null && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
                 return@dependsOn
               }
               inferredModuleDeps.add(classification.moduleName)

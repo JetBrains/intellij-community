@@ -146,7 +146,7 @@ class PluginDependencyGraphTest {
       linkPluginMainTarget("plugin.b")
     }
 
-    val graphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = emptySet())
+    val graphDeps = collectPluginGraphDeps(graph = graph)
       .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
 
     assertThat(graphDeps.jpsPluginDependencies).containsExactly(PluginId("com.b"))
@@ -170,7 +170,7 @@ class PluginDependencyGraphTest {
       linkPluginMainTarget("plugin.b")
     }
 
-    val graphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = emptySet())
+    val graphDeps = collectPluginGraphDeps(graph = graph)
       .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
 
     val filtered = filterPluginDependencies(
