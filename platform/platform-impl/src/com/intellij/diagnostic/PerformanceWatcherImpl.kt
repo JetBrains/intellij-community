@@ -771,7 +771,7 @@ private suspend fun reportCrashesIfAny() {
       val event = LogMessage(JBRCrash(), message, attachments)
       event.appInfo = Files.readString(appInfoFile)
 
-      IdeaFreezeReporter.report(event)
+      reportToIndicator(event)
       LifecycleUsageTriggerCollector.onCrashDetected()
     }
   }

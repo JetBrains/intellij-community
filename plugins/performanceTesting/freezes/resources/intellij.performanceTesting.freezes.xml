@@ -20,11 +20,18 @@
     <applicationSettings service="com.intellij.performanceTesting.freezes.PluginsFreezesService"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportPromoterActivity"/>
-    <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.promo.FreezeCounterListener"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.performanceTesting.freezes.AutoReportExceptionsStateCollector"/>
   </extensions>
 
-  <actions resource-bundle="messages.PerformanceTestingBundle">
-    <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
-            internal="true"/>
+  <actions resource-bundle="messages.PluginFreezeBundle">
+    <group internal="true" id="Internal.Errors.Additional">
+      <separator/>
+      <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
+              internal="true"/>
+      <action id="PrintErrorAutoReporterState" class="com.intellij.performanceTesting.freezes.ErrorAutoReporterStateInternalAction"
+              internal="true">
+      </action>
+      <add-to-group group-id="Internal.Errors" anchor="after" relative-to-action="DebugListen"/>
+    </group>
   </actions>
 </idea-plugin>

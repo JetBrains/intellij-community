@@ -1905,6 +1905,10 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Report UI freezes to JetBrains"/>
     <registryKey key="freeze.reporter.maxDumpDuration.ms" defaultValue="40000"
                  description="Maximum duration of the 'report.txt' performance snapshot in ms"/>
+    <registryKey key="freeze.reporter.duration.threshold.seconds" defaultValue="10"
+                 description="Report UI freezes longer than the specified duration in seconds"/>
+    <registryKey key="ide.errors.deduplicate" defaultValue="true"
+                 description="Group error reports with identical stack traces in the error dialog"/>
     <registryKey key="freeze.reporter.profiling" defaultValue="true"
                  description="Start CPU profiling when the IDE is frozen"/>
     <registryKey key="freeze.reporter.profiling.all.threads" defaultValue="true"
