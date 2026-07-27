@@ -284,25 +284,6 @@ internal class RequirementDocumentationTarget(
     replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 }
 
-/**
- * HTML string builder with a compile-visible escape boundary — [text] escapes XML entities,
- * [raw] appends verbatim. Splitting the two APIs stops the double-escape / missed-escape mistake
- * Ilya's review flagged: at every call site you have to pick which one to invoke, so the
- * escaping story is explicit at every point instead of relying on convention.
- */
-private class HtmlBuffer {
-  private val buffer = StringBuilder()
-
-  fun text(value: String): HtmlBuffer {
-    buffer.append(value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
-    return this
-  }
-
-  fun raw(value: String): HtmlBuffer {
-    buffer.append(value)
-    return this
-  }
-}
 
 /**
  * Routes our two link schemes:

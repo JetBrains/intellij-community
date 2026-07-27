@@ -21,8 +21,8 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
   override val builtInRepositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + pipRepositoryManger.builtInRepositories
 
-  override val repositories: List<PyPackageRepository>
-    get() = listOf(CondaPackageRepository) + pipRepositoryManger.repositories
+  override val allRepositories: List<PyPackageRepository>
+    get() = listOf(CondaPackageRepository) + pipRepositoryManger.allRepositories
 
   private val condaPackageCache = service<CondaPackageCache>()
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.packages.tree.renderers
 
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -60,5 +61,17 @@ internal fun DisplayablePackage?.asInstalledPackageOrNull(): InstalledPackage? =
   is DependencyGroupNode,
   is UndeclaredPackagesGroup,
   null,
+    -> null
+}
+
+/** Tooltip for the trailing action icon in a tree row, or `null` if the row type has no action. */
+internal fun DisplayablePackage.trailingIconTooltip(): String? = when (this) {
+  is InstallablePackage -> PyBundle.message("action.PyInstallPackageAction.text")
+  is InstalledPackage -> PyBundle.message("python.toolwindow.packages.tooltip.uninstall")
+  is RequirementPackage,
+  is WorkspaceMember,
+  is LoadingNode,
+  is DependencyGroupNode,
+  is UndeclaredPackagesGroup,
     -> null
 }

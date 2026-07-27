@@ -46,7 +46,7 @@ private class FakeRepository(
 }
 
 private class FakeRepositoryManager(
-  override val repositories: List<PyPackageRepository>,
+  override val allRepositories: List<PyPackageRepository>,
   var awaitReadyCalled: Boolean = false,
 ) : PythonRepositoryManager {
   override val project: Project get() = error("Project unused in this test")
@@ -79,7 +79,7 @@ internal class PyInstallDialogSearchAggregatorTest {
 
   @Test
   fun `awaitReady is called before searching`() = runTest {
-    val manager = FakeRepositoryManager(repositories = emptyList())
+    val manager = FakeRepositoryManager(allRepositories =emptyList())
 
     aggregateInstallDialogSearch(manager, extraRepositories = emptyList(), query = "anything")
 
@@ -89,7 +89,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   @Test
   fun `built-in repositories are searched through the manager`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("requests", "requests-mock", "flask"))
-    val manager = FakeRepositoryManager(repositories = listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = emptyList(), query = "request")
 
@@ -101,7 +101,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   fun `enabled extra repository not already covered is searched directly`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("flask"))
     val internalRepo = FakeRepository("Internal", "https://repo.internal/simple", packages = listOf("internal-tool", "unrelated"))
-    val manager = FakeRepositoryManager(repositories = listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(internalRepo), query = "internal")
 
@@ -113,7 +113,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   fun `extra repository with same url as a built-in is not searched twice`() = runTest {
     val pypi = FakeRepository("PyPI", "https://pypi.org/simple", packages = listOf("requests"))
     val duplicate = FakeRepository("PyPI mirror", "https://pypi.org/simple", packages = listOf("requests"))
-    val manager = FakeRepositoryManager(repositories = listOf(pypi))
+    val manager = FakeRepositoryManager(allRepositories =listOf(pypi))
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(duplicate), query = "requests")
 
@@ -124,7 +124,7 @@ internal class PyInstallDialogSearchAggregatorTest {
   @Test
   fun `disabled extra repository is skipped`() = runTest {
     val internalRepo = FakeRepository("Internal", "https://repo.internal/simple", enabled = false, packages = listOf("internal-tool"))
-    val manager = FakeRepositoryManager(repositories = emptyList())
+    val manager = FakeRepositoryManager(allRepositories =emptyList())
 
     val result = aggregateInstallDialogSearch(manager, extraRepositories = listOf(internalRepo), query = "internal")
 

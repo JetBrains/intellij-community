@@ -164,8 +164,14 @@ internal class PyInstallDialogVersionPanel(
     selectedPackageName = name
     packageInfoLabel.text = "$name ($repoName)"
     packageInfoLabel.icon = PyPackageIcons.PackageGray
-    resetVersionState(repoName)
+    // Order matters: ask the presenter for the new view state (which snapshots documentation
+    // + version list for the *newly* selected package) BEFORE clearing local state. The old
+    // sequence — `resetVersionState` first, then `onPackageSelected` — meant the presenter
+    // was called after we had wiped `selectedPackageName` / `availableVersions`, so on a
+    // rapid re-select (typing filters the list, selection follows) the documentation pane
+    // briefly rendered the previous package while the version state was mid-reset.
     val state = presenter.onPackageSelected(descriptionToggle.isSelected)
+    resetVersionState(repoName)
     applyViewState(state)
   }
 

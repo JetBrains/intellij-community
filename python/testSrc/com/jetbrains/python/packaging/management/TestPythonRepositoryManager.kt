@@ -45,7 +45,7 @@ internal class TestPythonRepositoryManager(
     return this
   }
 
-  override val repositories: List<PyPackageRepository>
+  override val allRepositories: List<PyPackageRepository>
     get() = listOf(TestPackageRepository(packageNames))
 
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {

@@ -24,7 +24,7 @@ import java.time.Duration
 
 @Service(Service.Level.PROJECT)
 internal class PipRepositoryManager(override val project: Project) : PythonRepositoryManagerBase() {
-  override val repositories: List<PyPackageRepository>
+  override val allRepositories: List<PyPackageRepository>
     get() = listOf(PyPiPackageRepository) + service<PythonSimpleRepositoryCacheService>().repositories
 
   private val packageDetailsCache = Caffeine.newBuilder()
