@@ -31,6 +31,22 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
     expectedCount = 1,
   )
 
+  fun `test reports vector resource loaded with imageResource full qualifier`() = assertImageResourceProblems(
+    """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(org.jetbrains.compose.resources.imageResource(Res.drawable.vector), null)
+      }
+    """,
+    expectedCount = 1,
+    expectedHighlightedText = "org.jetbrains.compose.resources.imageResource"
+  )
+
   fun `test reports svg resource loaded with imageResource`() = assertImageResourceProblems(
     """
       import androidx.compose.runtime.Composable
@@ -120,6 +136,42 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
       """
         import androidx.compose.runtime.Composable
         import androidx.compose.foundation.Image
+        import demo.shared.generated.resources.Res
+        import demo.shared.generated.resources.vector
+        import org.jetbrains.compose.resources.painterResource
+
+        @Composable
+        fun usage() {
+          Image(painterResource(Res.drawable.vector), null)
+        }
+      """.trimIndent()
+    )
+  }
+
+  fun `test keeps imageResource import when still used after quick fix`() {
+    configureUsageFile(
+      """
+        import androidx.compose.runtime.Composable
+        import androidx.compose.foundation.Image
+        import org.jetbrains.compose.resources.imageResource
+        import demo.shared.generated.resources.Res
+        import demo.shared.generated.resources.vector
+
+        @Composable
+        fun usage() {
+          Image(<caret>imageResource(Res.drawable.vector), null)
+          val bitmap = imageResource(Res.drawable.raster)
+        }
+      """
+    )
+
+    myFixture.doHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+
+    myFixture.checkResult(
+      """
+        import androidx.compose.runtime.Composable
+        import androidx.compose.foundation.Image
         import org.jetbrains.compose.resources.imageResource
         import demo.shared.generated.resources.Res
         import demo.shared.generated.resources.vector
@@ -128,6 +180,40 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
         @Composable
         fun usage() {
           Image(painterResource(Res.drawable.vector), null)
+          val bitmap = imageResource(Res.drawable.raster)
+        }
+      """.trimIndent()
+    )
+  }
+
+  fun `test replaces imageResource full qualifier with painterResource for direct Image argument`() {
+    configureUsageFile(
+      """
+        import androidx.compose.runtime.Composable
+        import androidx.compose.foundation.Image
+        import demo.shared.generated.resources.Res
+        import demo.shared.generated.resources.vector
+
+        @Composable
+        fun usage() {
+          Image(<caret>org.jetbrains.compose.resources.imageResource(Res.drawable.vector), null)
+        }
+      """
+    )
+
+    myFixture.doHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+
+    myFixture.checkResult(
+      """
+        import androidx.compose.runtime.Composable
+        import androidx.compose.foundation.Image
+        import demo.shared.generated.resources.Res
+        import demo.shared.generated.resources.vector
+
+        @Composable
+        fun usage() {
+          Image(org.jetbrains.compose.resources.painterResource(Res.drawable.vector), null)
         }
       """.trimIndent()
     )
@@ -165,14 +251,22 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
   """
   )
 
-  private fun assertImageResourceProblems(@Language("kotlin") code: String, expectedCount: Int) {
+  private fun assertImageResourceProblems(
+    @Language("kotlin") code: String,
+    expectedCount: Int,
+    expectedHighlightedText: String = "imageResource"
+  ) {
     configureUsageFile(code)
 
     val problems = myFixture.doHighlighting(HighlightSeverity.ERROR)
       .filter { it.description == imageResourceProblemDescription }
 
     assertEquals(expectedCount, problems.size)
-    problems.forEach { assertEquals("imageResource", it.text) }
+    val document = myFixture.editor.document
+    problems.forEach {
+      val highlightedText = document.getText(com.intellij.openapi.util.TextRange(it.startOffset, it.endOffset))
+      assertEquals(expectedHighlightedText, highlightedText)
+    }
   }
 
   private fun assertImageResourceQuickFixUnavailable(@Language("kotlin") code: String) {

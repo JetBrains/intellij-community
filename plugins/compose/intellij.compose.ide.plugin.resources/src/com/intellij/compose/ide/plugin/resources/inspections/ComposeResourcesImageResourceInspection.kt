@@ -13,7 +13,9 @@ import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_RESOURCE_CALLABLE_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_RESOURCE_NAME
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.compose.ide.plugin.shared.isCallTo
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspection() {
   override fun buildVisitor(
@@ -37,11 +40,19 @@ internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspectio
         if (!expression.isCallTo(COMPOSE_IMAGE_RESOURCE_CALLABLE_ID)) return
         if (!expression.hasVectorResourceArgument()) return
 
-        val psiElement = expression.calleeExpression ?: expression
+        val calleeExpression = expression.calleeExpression ?: return
         val fixes: Array<LocalQuickFix> =
           if (expression.isDirectComposeImageArgument()) arrayOf(ComposeResourcesImageResourceQuickFix()) else LocalQuickFix.EMPTY_ARRAY
+        val message = ComposeIdeBundle.message("compose.inspection.image.resource.description")
 
-        holder.registerProblem(psiElement, ComposeIdeBundle.message("compose.inspection.image.resource.description"), *fixes)
+        val qualifiedExpression = expression.getQualifiedExpressionForSelector()
+        if (qualifiedExpression != null) {
+          val range = TextRange(0, calleeExpression.textRangeIn(qualifiedExpression).endOffset)
+          holder.registerProblem(qualifiedExpression, range, message, *fixes)
+        }
+        else {
+          holder.registerProblem(calleeExpression, message, *fixes)
+        }
       }
     }
   }
@@ -67,7 +78,13 @@ internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspectio
     endsWith(".xml", ignoreCase = true) || endsWith(".svg", ignoreCase = true)
 
   private fun KtCallExpression.isDirectComposeImageArgument(): Boolean {
-    val valueArgument = parent as? KtValueArgument ?: return false
+    val directParent = parent
+    val valueArgument =
+      when (directParent) {
+        is KtValueArgument -> directParent
+        is KtDotQualifiedExpression -> directParent.parent as? KtValueArgument
+        else -> null
+      } ?: return false
     val argumentList = valueArgument.parent as? KtValueArgumentList ?: return false
     val callExpression = argumentList.parent as? KtCallExpression ?: return false
     return callExpression.isCallTo(COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID)

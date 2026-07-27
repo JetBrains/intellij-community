@@ -63,6 +63,9 @@ jvm_library(
         "//plugins/kotlin/references",
         "//platform/observable",
         "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/base/code-insight",
+        "//platform/code-style-api:codeStyle",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     ],
 )
 
@@ -147,6 +150,9 @@ jvm_library(
         "//plugins/kotlin/references:references_test_lib",
         "//platform/observable:observable_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end
