@@ -73,6 +73,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private String myRequirementsFile;
   private Path myLegacyRequiredTxtPath;
   private @NotNull Path myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
+  private boolean myWorkingDirectoryIsCanonical = true;
   private boolean myMigrationRequired;
 
   private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
@@ -199,6 +200,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @ApiStatus.Internal
   public final void setWorkingDirectory(@NotNull Path workingDirectory) {
     myWorkingDirectory = workingDirectory;
+    myWorkingDirectoryIsCanonical = true;
     synchronizeFlavorWorkingDirectory();
   }
 
@@ -218,7 +220,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       rootElement.setAttribute(ASSOCIATED_REQUIRED_TXT_PATH, myLegacyRequiredTxtPath.toString());
     }
 
-    if (hasValidWorkingDirectory()) {
+    if (hasValidWorkingDirectory() && myWorkingDirectoryIsCanonical) {
       rootElement.setAttribute(WORKING_DIRECTORY, myWorkingDirectory.toString());
     }
 
@@ -290,6 +292,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       changed |= synchronizeFlavorWorkingDirectory();
     }
 
+    myWorkingDirectoryIsCanonical = true;
     myMigrationRequired = false;
     return changed;
   }
@@ -305,6 +308,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   public void load(@Nullable Element element) {
     Path legacyWorkingDirectory = myWorkingDirectory;
     myWorkingDirectory = EMPTY_WORKING_DIRECTORY;
+    myWorkingDirectoryIsCanonical = true;
     myMigrationRequired = false;
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
@@ -318,6 +322,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       }
       else if (!Objects.equals(legacyWorkingDirectory, EMPTY_WORKING_DIRECTORY)) {
         myWorkingDirectory = legacyWorkingDirectory;
+        myWorkingDirectoryIsCanonical = false;
         myMigrationRequired = true;
       }
       myRequirementsFile = element.getAttributeValue(REQUIREMENTS_FILE);
