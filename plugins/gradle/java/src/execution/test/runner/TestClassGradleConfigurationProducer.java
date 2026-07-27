@@ -75,6 +75,13 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
   }
 
   @Override
+  protected @Nullable PsiClass getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiClass element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiClass psiClass ? psiClass : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiClass element) {
     return Objects.requireNonNull(element.getName());
   }

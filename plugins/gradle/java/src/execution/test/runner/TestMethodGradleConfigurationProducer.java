@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,6 +59,13 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     VirtualFile source = psiFile.getVirtualFile();
     if (source == null) return null;
     return psiMethod;
+  }
+
+  @Override
+  protected @Nullable PsiMethod getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiMethod element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiMethod psiMethod ? psiMethod : null;
   }
 
   @Override

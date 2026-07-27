@@ -52,6 +52,13 @@ public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestR
   }
 
   @Override
+  protected @Nullable PsiPackage getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiPackage element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiPackage psiPackage ? psiPackage : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiPackage element) {
     return String.format("'%s'", element.getName());
   }

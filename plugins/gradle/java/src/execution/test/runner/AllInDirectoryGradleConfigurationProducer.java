@@ -52,6 +52,13 @@ public class AllInDirectoryGradleConfigurationProducer extends AbstractGradleTes
   }
 
   @Override
+  protected @Nullable PsiElement getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiElement element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiFileSystemItem item && item.isDirectory() ? item : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiElement element) {
     Module module = Objects.requireNonNull(context.getModule());
     return String.format("'%s'", module.getName());

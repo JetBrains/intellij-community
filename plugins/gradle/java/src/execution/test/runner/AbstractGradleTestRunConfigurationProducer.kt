@@ -25,6 +25,9 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   protected abstract fun getElement(context: ConfigurationContext): E?
 
+  /** Resolves the element again when possible and validates any fallback supplied by the original configuration. */
+  protected abstract fun getElementForFirstRun(context: ConfigurationContext, sourceElement: PsiElement): E?
+
   protected abstract fun getLocationName(context: ConfigurationContext, element: E): String
 
   protected abstract fun suggestConfigurationName(context: ConfigurationContext, element: E, chosenElements: List<Ex>): String
@@ -36,6 +39,9 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
   }
 
   protected abstract fun getAllTestsTaskToRun(context: ConfigurationContext, element: E, chosenElements: List<Ex>): List<TestTasksToRun>
+
+  /** Whether [onFirstRun] uses [testTasksChooser] to select among the available test tasks. */
+  protected open fun usesBaseTestTasksChooser(): Boolean = true
 
   override fun findOrCreateConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
     val configurationFromContext = super.findOrCreateConfigurationFromContext(context) ?: return null
@@ -54,6 +60,18 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   private fun allTestsTaskToRun(context: ConfigurationContext, element: E): List<TestTasksToRun> {
     return getAllTestsTaskToRun(context, element, emptyList())
+  }
+
+  override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
+    val element = getElement(context) ?: return super.findExistingConfiguration(context)
+    val hasMultipleTestTasks = allTestsTaskToRun(context, element)
+                                 .map { it.tasksToRun.testName }
+                                 .toSet()
+                                 .size > 1
+    if (usesBaseTestTasksChooser() && hasMultipleTestTasks) {
+      return null
+    }
+    return super.findExistingConfiguration(context)
   }
 
   override fun doSetupConfigurationFromContext(
@@ -88,13 +106,6 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     val externalProjectPath = resolveProjectPath(module) ?: return false
     val element = getElement(context) ?: return false
     val allTestsTaskToRun = allTestsTaskToRun(context, element)
-    if (allTestsTaskToRun.map { it.tasksToRun.testName }.toSet().size > 1) {
-      // Ignore, only if the configuration has been stored already, so the task chooser
-      // is shown again when `onFirstRun` executes. If the config new then it's accepted.
-      val runManager = RunManager.getInstance(configuration.project)
-      val stored = getConfigurationSettingsList(runManager).any { it.configuration === configuration }
-      if (stored) return false
-    }
     val allTasksAndArguments = allTestsTaskToRun.map { it.toTasksAndArguments() }
     val tasksAndArguments = configuration.commandLine.tasks.tokens
     return externalProjectPath == configuration.settings.externalProjectPath &&
@@ -104,13 +115,12 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
 
   override fun onFirstRun(configuration: ConfigurationFromContext, context: ConfigurationContext, startRunnable: Runnable) {
     val project = context.project
-    if (project == null) {
+    val element = getElementForFirstRun(context, configuration.sourceElement)
+    if (project == null || element == null) {
       LOG.warn("Cannot extract configuration data from context, uses raw run configuration")
       super.onFirstRun(configuration, context, startRunnable)
       return
     }
-    @Suppress("UNCHECKED_CAST")
-    val element = configuration.sourceElement as E
     val runConfiguration = configuration.configuration as GradleRunConfiguration
     val dataContext = contextWithLocationName(context.dataContext, getLocationName(context, element))
     chooseSourceElements(context, element) { elements ->
@@ -157,18 +167,16 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     tasksAndArguments: List<GradleCommandLineTasks>,
   ): RunnerAndConfigurationSettings? {
     val project = context.project ?: return null
-    val module = context.module ?: return null
-    val externalProjectPath = resolveProjectPath(module) ?: return null
+    if (tasksAndArguments.isEmpty()) return null
+    val selectedTaskTokens = tasksAndArguments.map { it.tokens }
     return getConfigurationSettingsList(RunManager.getInstance(project))
       .firstOrNull { runnerAndConfigurationSettings ->
         val existingConfiguration = runnerAndConfigurationSettings.configuration as? GradleRunConfiguration ?: return@firstOrNull false
-        (existingConfiguration.settings.externalProjectPath == externalProjectPath
-         && existingConfiguration.commandLine.tasks.tokens.isNotEmpty()
-         // Use task tokens rather than the rest of the configuration to discriminate the task to run
-         && isConsistedFrom(
-          existingConfiguration.commandLine.tasks.tokens,
-          tasksAndArguments.map { it.tokens })
-        )
+        val existingTaskTokens = existingConfiguration.commandLine.tasks.tokens
+
+        (isConfigurationCompatibleForSelectedTasks(existingConfiguration)
+         && existingTaskTokens.size == selectedTaskTokens.sumOf { it.size }
+         && isConsistedFrom(existingTaskTokens, selectedTaskTokens))
       }
   }
 

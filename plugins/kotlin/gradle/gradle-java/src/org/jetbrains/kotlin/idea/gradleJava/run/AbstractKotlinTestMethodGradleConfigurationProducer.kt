@@ -29,6 +29,8 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
     override val forceGradleRunner: Boolean get() = true
     override val hasTestFramework: Boolean get() = true
 
+    override fun usesBaseTestTasksChooser(): Boolean = false
+
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 
     abstract fun isApplicable(module: Module, platform: TargetPlatform): Boolean

@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducer;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
@@ -134,6 +135,15 @@ public abstract class GradleTestRunConfigurationProducer extends GradleRunConfig
 
   protected TestTasksChooser getTestTasksChooser() {
     return testTasksChooser;
+  }
+
+  /**
+   * Checks producer-specific metadata without comparing editable configuration options.
+   * Specialized producers should override this when task tokens alone do not identify their configurations.
+   */
+  @VisibleForTesting
+  protected boolean isConfigurationCompatibleForSelectedTasks(@NotNull GradleRunConfiguration configuration) {
+    return true;
   }
 
   @TestOnly
