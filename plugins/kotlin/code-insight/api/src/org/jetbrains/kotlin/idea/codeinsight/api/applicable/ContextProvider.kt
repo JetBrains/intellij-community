@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -36,12 +37,12 @@ interface ContextProvider<E : KtElement, C : Any> {
 fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
-    contextOf<KaSession>().prepareContext(element)
+    useSiteSession.prepareContext(element)
 } else analyzeCopy(
     element,
     KaDanglingFileResolutionModeProvider.getDanglingFileResolutionMode(element)
 ) {
-    contextOf<KaSession>().prepareContext(element)
+    useSiteSession.prepareContext(element)
 }
 
 inline val Boolean?.asUnit: Unit?

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
@@ -128,7 +129,7 @@ private class KtExpressionPostfixTemplateSelector(
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    predicate?.invoke(element, contextOf<KaSession>())
+                    predicate?.invoke(element, useSiteSession)
                 }
             }
         }

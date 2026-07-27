@@ -5,15 +5,16 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
@@ -61,7 +62,7 @@ object GenerateEqualsAndHashCodeUtils {
         val contextMap = mutableMapOf<String, Any?>()
 
 
-        val equalsFunction = if (tryToFindEqualsMethodForClass) contextOf<KaSession>().findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
+        val equalsFunction = if (tryToFindEqualsMethodForClass) useSiteSession.findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
 
         contextMap[BASE_PARAM_NAME] = "other"
         if (equalsFunction != null) {
@@ -107,7 +108,7 @@ object GenerateEqualsAndHashCodeUtils {
         val klass = info.klass
 
         val contextMap = mutableMapOf<String, Any?>()
-        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) contextOf<KaSession>().findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
+        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) useSiteSession.findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
         contextMap[SUPER_HAS_HASHCODE] = hashCodeFunction != null && (hashCodeFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
         // Sort variables in `hashCode()` to preserve the same order as in `equals()`
@@ -144,7 +145,7 @@ object GenerateEqualsAndHashCodeUtils {
 
         val contextMap = mutableMapOf<String, Any?>()
 
-        val toStringFunction = contextOf<KaSession>().findToStringMethodForClass(klass.symbol as KaClassSymbol)
+        val toStringFunction = useSiteSession.findToStringMethodForClass(klass.symbol as KaClassSymbol)
 
         contextMap["generateSuper"] = toStringFunction != null && (toStringFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
