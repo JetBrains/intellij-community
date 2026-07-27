@@ -64,6 +64,13 @@ import kotlin.time.Duration.Companion.seconds
 
 private val log = logger<FrontendXBreakpointManager>()
 
+private enum class BreakpointRemovalTrigger {
+  /** The underlying breakpoint was actually removed. */
+  BREAKPOINT_ACTUALLY_REMOVED,
+  /** Frontend breakpoint state was cleared for resynchronization. */
+  FRONTEND_RESET,
+}
+
 @ApiStatus.Internal
 @VisibleForTesting
 class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
@@ -119,7 +126,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       val (initialBreakpoints, breakpointEvents) = XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
       for (breakpointDto in initialBreakpoints) {
         try {
-          addBreakpoint(breakpointDto, updateUI = false)
+          addBreakpoint(breakpointDto, XBreakpointCreationTrigger.FRONTEND_INIT)
         }
         catch (e: Throwable) {
           if (e is CancellationException || e is RpcClientException) throw e
@@ -134,11 +141,11 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
           when (event) {
             is XBreakpointEvent.BreakpointAdded -> {
               log.debug { "Breakpoint add request from backend: ${event.breakpointDto.id}" }
-              addBreakpoint(event.breakpointDto, updateUI = true)
+              addBreakpoint(event.breakpointDto, XBreakpointCreationTrigger.BREAKPOINT_EVENT)
             }
             is XBreakpointEvent.BreakpointRemoved -> {
               log.debug { "Breakpoint removal request from backend: ${event.breakpointId}" }
-              removeBreakpointLocally(event.breakpointId)
+              removeBreakpointLocally(event.breakpointId, BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED)
               // breakpointRemoved event happened on the server, so we can remove id from the frontend
               breakpointIdsRemovedLocally.remove(event.breakpointId)
             }
@@ -160,7 +167,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       }
     }, stateReset = {
       for (breakpoint in breakpoints.values) {
-        removeBreakpointLocally(breakpoint.id)
+        removeBreakpointLocally(breakpoint.id, BreakpointRemovalTrigger.FRONTEND_RESET)
       }
       breakpointIdsRemovedLocally.clear()
       breakpoints.clear()
@@ -188,7 +195,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  private fun addBreakpoint(breakpointDto: XBreakpointDto, updateUI: Boolean): XBreakpointProxy? {
+  private fun addBreakpoint(breakpointDto: XBreakpointDto, creationTrigger: XBreakpointCreationTrigger): XBreakpointProxy? {
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       log.debug { "Breakpoint creation skipped for ${breakpointDto.id}, because it already exists" }
@@ -200,7 +207,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       return null
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
-    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this)
+    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, creationTrigger)
+    val updateUI = creationTrigger == XBreakpointCreationTrigger.BREAKPOINT_EVENT
     (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)
     newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
@@ -280,10 +288,15 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  private fun removeBreakpointLocally(breakpointId: XBreakpointId) {
+  private fun removeBreakpointLocally(breakpointId: XBreakpointId, trigger: BreakpointRemovalTrigger) {
     breakpointIdsRemovedLocally.add(breakpointId)
     val removedBreakpoint = breakpoints.remove(breakpointId)
 
+    if (trigger == BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED && removedBreakpoint is XLineBreakpointProxy) {
+      for (attachment in removedBreakpoint.attachments) {
+        attachment.breakpointRemoved()
+      }
+    }
     // Attachments are automatically disposed when the breakpoint's coroutine scope is cancelled via dispose()
     removedBreakpoint?.dispose()
     if (removedBreakpoint == null) {
@@ -372,7 +385,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       return CompletableFuture.completedFuture(null)
     }
     log.debug { "Breakpoint removal request from frontend: ${breakpoint.id}" }
-    removeBreakpointLocally(breakpoint.id)
+    removeBreakpointLocally(breakpoint.id, BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED)
     breakpointsChanged.tryEmit(Unit)
     return cs.future {
       XBreakpointTypeApi.getInstance().removeBreakpoint(breakpoint.id)

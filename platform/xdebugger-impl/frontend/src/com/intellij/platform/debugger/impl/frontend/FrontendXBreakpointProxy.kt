@@ -44,9 +44,10 @@ internal fun createXBreakpointProxy(
   dto: XBreakpointDto,
   type: XBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
+  creationTrigger: XBreakpointCreationTrigger,
 ): FrontendXBreakpointProxy {
   return if (type is XLineBreakpointTypeProxy) {
-    FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager)
+    FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager, creationTrigger)
   }
   else {
     FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter)
