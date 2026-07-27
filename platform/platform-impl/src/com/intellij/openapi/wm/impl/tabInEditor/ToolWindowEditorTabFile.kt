@@ -2,6 +2,8 @@
 package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
@@ -79,7 +81,7 @@ class ToolWindowEditorTabFile private constructor(
 
     presentationFlow
       .onEach { presentation ->
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (!isValid || project.isDisposed) {
             return@withContext
           }
