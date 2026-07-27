@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
+    id "org.jetbrains.kotlin.kapt" version '2.4.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    kapt('com.google.dagger:dagger-compiler:2.56.2')
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+}

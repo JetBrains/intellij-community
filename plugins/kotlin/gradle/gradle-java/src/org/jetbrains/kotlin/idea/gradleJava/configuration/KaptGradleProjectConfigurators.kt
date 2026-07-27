@@ -250,7 +250,7 @@ private data class GradleProcessorPath(val groupId: String, val artifactId: Stri
 }
 
 private val PROCESSOR_DEPENDENCY_REGEX = Regex(
-    """(?m)^(\s*)(annotationProcessor|testAnnotationProcessor|implementation|testImplementation)\s*(?:\(\s*)?["']([^"']+)["']\s*\)?"""
+    """(?m)^(\s*)(annotationProcessor|testAnnotationProcessor|implementation|testImplementation)\s*(?:\(\s*)?["']([^"']+)["'](?:\s*\))?"""
 )
 
 private val KAPT_DEPENDENCY_REGEX = Regex("""(?m)^\s*(kapt|kaptTest)\s*(?:\(\s*)?["']([^"']+)["']""")

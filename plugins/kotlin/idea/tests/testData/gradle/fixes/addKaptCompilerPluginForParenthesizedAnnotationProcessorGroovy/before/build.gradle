@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor(
+            'com.google.dagger:dagger-compiler:2.56.2'
+    )
+}
