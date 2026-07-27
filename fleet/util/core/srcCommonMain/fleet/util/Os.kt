@@ -54,6 +54,9 @@ class Os private constructor() {
   val isLinux: Boolean
     get() = this.type == Type.Linux
 
+  val linuxDistroId: String?
+    get() = if (isLinux) getLinuxDistroId() else null
+
   val isUnix: Boolean
     get() {
       val type = this.type
@@ -72,3 +75,5 @@ internal fun getName(): String = linkToActual()
 internal fun getVersion(): String = linkToActual()
 
 internal fun getArch(): String = linkToActual()
+
+internal fun getLinuxDistroId(): String? = linkToActual()
