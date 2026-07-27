@@ -31,6 +31,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -94,9 +94,18 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
       SearchScope scope = GlobalSearchScope.allScope(project);
       final Collection<PsiReference> references = ReferencesSearch.search(method, scope).findAll();
       return ModCommand.psiUpdate(method, (m, updater) -> {
-        List<PsiElement> writableRefs = ContainerUtil.map(references, ref -> updater.getWritable(ref.getElement()));
-        for (PsiElement e : writableRefs) {
-          PsiReference reference = e.getReference();
+        for (PsiReference ref : references) {
+          PsiElement refElement = ref.getElement();
+          // Code references (method calls and method references) keep resolving to the inherited super method
+          // once the redundant override is deleted, so they must be left untouched. Rebinding them would
+          // needlessly re-qualify the call (e.g. 'sub.charInput()' -> 'Test.Super.this.charInput()').
+          // Only documentation references (e.g. '@see Sub#foo') have to be redirected to the super method to
+          // avoid dangling references after the deletion.
+          if (refElement instanceof PsiReferenceExpression) {
+            continue;
+          }
+          PsiElement writable = updater.getWritable(refElement);
+          PsiReference reference = writable.getReference();
           if (reference != null) {
             reference.bindToElement(superMethods[0]);
           }
