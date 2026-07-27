@@ -258,6 +258,7 @@
   {"apiName": "com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper", "extensionPointNames": ["com.intellij.projectViewPaneSelectionHelper"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.ide.projectView.ProjectViewNodeDecorator", "extensionPointNames": ["com.intellij.projectViewNodeDecorator"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.ide.projectView.ProjectViewNestingRulesProvider", "extensionPointNames": ["com.intellij.projectViewNestingRulesProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.codeInsight.intention.IntentionAction", "extensionPointNames": ["com.intellij.intentionAction"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
 
 
 
