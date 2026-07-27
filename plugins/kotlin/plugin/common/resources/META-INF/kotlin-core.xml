@@ -107,11 +107,6 @@
   </extensions>
 
 
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- test frameworks integration -->
-    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
-  </extensions>
-
   <!-- Copy-paste -->
 
     <actions>

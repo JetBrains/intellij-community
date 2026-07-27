@@ -37,6 +37,11 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner"
                     serviceImplementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.ScratchFileAutoRunnerK2"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+  </extensions>
+
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
