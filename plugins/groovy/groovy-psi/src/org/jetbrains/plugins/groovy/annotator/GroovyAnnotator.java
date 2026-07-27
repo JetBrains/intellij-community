@@ -1080,8 +1080,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitModifierList(@NotNull GrModifierList modifierList) {
     final PsiElement parent = modifierList.getParent();
-    if (parent instanceof GrMethod) {
-      checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
+    if (parent instanceof GrMethod method) {
+      checkMethodDefinitionModifiers(myHolder, method);
     }
     else if (parent instanceof GrVariableDeclaration declaration) {
       if (isFieldDeclaration(declaration)) {
@@ -1095,6 +1095,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
     else if (parent instanceof GrClassInitializer) {
       checkClassInitializerModifiers(myHolder, modifierList);
+    }
+    else if (parent instanceof GrParameter) {
+      checkDuplicateModifiers(myHolder, modifierList, parent);
     }
   }
 
@@ -1891,7 +1894,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     checkDuplicateModifiers(holder, modifiersList, method);
     checkOverrideAnnotation(holder, modifiersList, method);
 
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, GroovyBundle.message("method.has.incorrect.modifier.volatile"), holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", PsiModifier.VOLATILE), holder);
+    checkModifierIsNotAllowed(modifiersList, GrModifier.VAR,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", GrModifier.VAR), holder);
+    checkModifierIsNotAllowed(modifiersList, GrModifier.VAL,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", GrModifier.VAL), holder);
 
     checkForAbstractAndFinalCombination(holder, method, modifiersList);
 
@@ -2030,8 +2038,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       checkForAbstractAndFinalCombination(holder, typeDefinition, modifiersList);
     }
 
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.TRANSIENT, GroovyBundle.message("modifier.transient.not.allowed.here"), holder);
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, GroovyBundle.message("modifier.volatile.not.allowed.here"), holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.TRANSIENT, holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, holder);
 
     if (typeDefinition.isInterface()) {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("interface.cannot.have.modifier.final"), holder);

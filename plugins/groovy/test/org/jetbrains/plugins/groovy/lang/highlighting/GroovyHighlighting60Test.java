@@ -34,4 +34,14 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        }
                        """);
   }
+
+  public void testIncorrectVal() {
+    highlightingTest(
+      """
+        class X {
+          <error descr="Modifier 'val' not allowed on methods">val</error> x(val <error descr="Duplicate modifier 'val'">val</error> p) {
+            val <error descr="Duplicate modifier 'val'">val</error> y = 1
+          }
+        }""");
+  }
 }
