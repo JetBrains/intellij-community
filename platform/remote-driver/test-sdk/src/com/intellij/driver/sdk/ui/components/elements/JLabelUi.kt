@@ -25,6 +25,7 @@ class JLabelUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy { driver.cast(component, JLabelRef::class) }
 
   fun getText(): String = fixture.getText().orEmpty()
+  fun getIcon(): Icon? = fixture.getIcon()
 }
 
 class ContentTabLabelUi(data: ComponentData) : UiComponent(data) {

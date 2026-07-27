@@ -11,10 +11,10 @@ import org.intellij.lang.annotations.Language
 import java.awt.Rectangle
 import javax.swing.text.JTextComponent as SwingJTextComponent
 
-fun Finder.textComponent(@Language("xpath") xpath: String? = null): JTextComponentUI =
-  x(xpath ?: xQuery { byType(SwingJTextComponent::class.java) }, JTextComponentUI::class.java)
+fun Finder.textComponent(@Language("xpath") xpath: String? = null, readableName: String? = null, ): JTextComponentUI =
+  x(xpath ?: xQuery { byType(SwingJTextComponent::class.java) }, JTextComponentUI::class.java, readableName)
 
-fun Finder.textComponent(init: QueryBuilder.() -> String): JTextComponentUI = x(JTextComponentUI::class.java, init)
+fun Finder.textComponent(readableName: String? = null, init: QueryBuilder.() -> String): JTextComponentUI = x(JTextComponentUI::class.java, readableName, init)
 
 open class JTextComponentUI(data: ComponentData) : UiComponent(data) {
   private val textComponent by lazy { driver.cast(component, JTextComponent::class) }
