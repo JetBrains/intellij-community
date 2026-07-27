@@ -42,16 +42,6 @@
     <xi:fallback/>
   </xi:include>
 
-
-  <extensions defaultExtensionNs="com.intellij">
-
-    <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
-                 description="Allow only bundled K2 compiler plugins to be used"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
-  </extensions>
-
   <content namespace="jetbrains">
     <module name="intellij.kotlin.base.projectModel" loading="required"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
