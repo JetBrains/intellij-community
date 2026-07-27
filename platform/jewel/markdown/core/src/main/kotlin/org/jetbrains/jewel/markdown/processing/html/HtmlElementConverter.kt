@@ -10,7 +10,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 
 /**
- * Defines a mechanism for converting HTML elements their child elements, and inline elements into supported Markdown
+ * Defines a mechanism for converting HTML elements, their child elements, and inline elements into supported Markdown
  * elements (blocks or inlines).
  */
 @ApiStatus.Experimental
@@ -76,7 +76,7 @@ internal class MarkdownHtmlConverter {
                     ) ?: return null
                 val transformedBlock = transform(convertedBlock, htmlElement.lineRange)
 
-                return if (htmlElement.attributes.isEmpty()) {
+                if (htmlElement.attributes.isEmpty()) {
                     transformedBlock
                 } else {
                     transform(
@@ -92,11 +92,11 @@ internal class MarkdownHtmlConverter {
         processor: MarkdownProcessor,
         transform: (MarkdownBlock, IntRange) -> MarkdownBlock,
     ): List<MarkdownBlock> {
-        // Some HTML elements may make up a block (e.g. nested list), but some can be pure inlines.
+        // Some HTML elements may make up a block (e.g., nested list), but some can be pure inlines.
         // For example, `<li><p>Hello</p></li>` is a block inside ListItem, but `<li><b>Hello<b></li>` is not.
         // What's worse, `<li>Pay attention to <b>this</b>:<ol>...</ol></li>` combines both inlines and blocks.
         // The idea here is to split the children into sublists of elements convertible to inline lists,
-        // separated by markdown blocks.
+        // separated by Markdown blocks.
         val blocks = mutableListOf<MarkdownBlock>()
         val currentInlineHtmlElements = mutableListOf<MarkdownHtmlNode>()
         var currentLine = lineRange.first
