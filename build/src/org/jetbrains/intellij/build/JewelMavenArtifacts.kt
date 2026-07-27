@@ -157,6 +157,14 @@ internal object JewelMavenArtifacts {
             add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
           }
         }
+        "com.jetbrains.intellij.platform" -> {
+          // Publish the Icons API modules (icons-api / icons-api-rendering / icons-impl) as compile
+          // dependencies, so consumers of the Jewel Standalone artifacts get IconManager on their
+          // classpath and can both boot IntUiTheme and compile against the public Icon/iconKey APIs.
+          if (coordinates.artifactId.startsWith("icons-")) {
+            add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+          }
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 
