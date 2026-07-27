@@ -158,7 +158,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       @Override
       protected @NotNull Promise<? super Object> selectImpl(Configurable configurable) {
         SettingsEditor.this.filter.update(null);
-        return treeView.select(configurable);
+        treeView.refilterAndSelect(configurable);
+        return Promises.resolvedPromise();
       }
 
       @Override
