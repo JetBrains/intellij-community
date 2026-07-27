@@ -75,6 +75,7 @@ import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
@@ -885,8 +886,6 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     override fun visitPyNamedParameter(node: PyNamedParameter) {
-      if (!hasExplicitType(node)) return
-
       val defaultValue = flattenParens(node.defaultValue)
       if (defaultValue == null) return
 
@@ -896,9 +895,13 @@ open class PyTypeCheckerInspection : PyInspection() {
 
       // we use `PyTypingTypeProvider.getType` of the annotation directly, instead of `node.getType`,
       //  because otherwise `PyTypingTypeProvider` will inject the type of `None`
-      val annotationValue = node.annotation?.value ?: return
-      val expectedRef = PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext)
-      if (expectedRef == null) return
+      val expectedRef = if (hasExplicitType(node)) {
+        val annotationValue = node.annotation?.value ?: return
+        PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext) ?: return
+      }
+      else {
+        findInheritedParameterAnnotationType(node) ?: return
+      }
       val expected = expectedRef.get()
       val actual = tryPromotingType(defaultValue, expected)
 
@@ -912,6 +915,27 @@ open class PyTypeCheckerInspection : PyInspection() {
           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         )
       }
+    }
+
+    private fun findInheritedParameterAnnotationType(node: PyNamedParameter): Ref<PyType?>? {
+      val paramName = node.name ?: return null
+      val parameterList = node.parent as? PyParameterList ?: return null
+      val function = parameterList.containingCallable as? PyFunction ?: return null
+      if (function.containingClass == null) return null
+
+      val superFunctions = PySuperMethodsSearch.search(function, true, myTypeEvalContext).findAll()
+        .filterIsInstance<PyFunction>()
+
+      for (superFunction in superFunctions) {
+        val superParameter = superFunction.parameterList.parameters
+          .filterIsInstance<PyNamedParameter>()
+          .find { it.name == paramName } ?: continue
+        if (!hasExplicitType(superParameter)) continue
+        val annotationValue = superParameter.annotation?.value ?: continue
+        val ref = PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext) ?: continue
+        return ref
+      }
+      return null
     }
 
     private fun isProtocolMethodParameter(node: PyNamedParameter): Boolean {

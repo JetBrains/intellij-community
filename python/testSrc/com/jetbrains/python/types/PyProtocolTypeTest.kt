@@ -873,6 +873,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-87730"])
     fun `ellipsis default argument in protocol method is allowed`() = test("""
       from typing import Protocol
 
