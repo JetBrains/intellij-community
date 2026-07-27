@@ -177,7 +177,8 @@ internal suspend fun generateIjLightLaunchData(
                              "-Dintellij.platform.product.mode=light" +
                              "-Didea.load.plugins.id=$explicitPluginIds" +
                              "-Dintellij.platform.use.proxies.for.open.services=true" +
-                             "-Didea.vfs.max-file-length-to-cache=0",
+                             "-Didea.vfs.max-file-length-to-cache=0" +
+                             "-Dcom.intellij.openapi.fileTypes.impl.FileTypeDetectionService.allowDetectionByContent=false",
     mainClass = clientContext.ideMainClassName,
     envVarBaseName = "JETBRAINS_CLIENT",
     dataDirectoryName = clientContext.systemSelector,
