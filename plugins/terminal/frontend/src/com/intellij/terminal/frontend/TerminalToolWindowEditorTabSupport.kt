@@ -3,20 +3,27 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPresentation
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabCloseListenerImpl
+import com.intellij.terminal.frontend.toolwindow.impl.confirmTermination
+import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
 import com.intellij.terminal.frontend.toolwindow.impl.getTitleText
 import com.intellij.terminal.frontend.toolwindow.impl.titleStateFlow
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -24,34 +31,47 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.TerminalTabCloseListener
-import org.jetbrains.plugins.terminal.TerminalTabCloseListener.CloseCheckResult
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import java.beans.PropertyChangeListener
 import javax.swing.Icon
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<TerminalToolWindowEditorTabSupport>()
 
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
-  override fun canCloseTab(project: Project, content: Content): Boolean {
-    return TerminalTabCloseListener.runCloseQuery(project, content, projectClosing = false) {
-      val terminalContent = findTerminalContent(content)
-                            ?: return@runCloseQuery CloseCheckResult.CAN_CLOSE_SILENTLY
+  override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
+    val terminalContents = contents.mapNotNull { content ->
+      findTerminalContent(content)?.let { content to it }
+    }
+    if (terminalContents.isEmpty()) {
+      return contents
+    }
 
-      TerminalTabCloseListener.runCloseCheckBlocking(project) {
-        when (terminalContent) {
-          is TerminalContent.Reworked ->
-            TerminalTabCloseListenerImpl.shouldConfirmClosing(terminalContent.view)
-          is TerminalContent.Classic ->
-            ClassicTerminalTabCloseListener.shouldConfirmClosing(terminalContent.widget)
-        }
+    val contentsToConfirm = try {
+      runWithModalProgressBlocking(project, TerminalBundle.message("checking.running.terminal.processes.progress")) {
+        collectContentsToConfirm(terminalContents)
       }
     }
+    catch (_: CancellationException) {
+      ProgressManager.checkCanceled()
+      return contents
+    }
+
+    if (contentsToConfirm.isEmpty()) {
+      return contents
+    }
+
+    if (confirmTermination(project, contentsToConfirm.map(ContentToConfirm::title))) {
+      return contents
+    }
+
+    val contentsToKeepOpen = contentsToConfirm.mapTo(HashSet(contentsToConfirm.size), ContentToConfirm::content)
+    return contents.filterNot(contentsToKeepOpen::contains)
   }
 
   override fun getTabPresentationFlow(
@@ -141,6 +161,32 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       }
     }
   }
+
+  private suspend fun collectContentsToConfirm(
+    contents: List<Pair<Content, TerminalContent>>,
+  ): List<ContentToConfirm> = coroutineScope {
+    contents.map { (content, terminalContent) ->
+      async {
+        when (terminalContent) {
+          is TerminalContent.Reworked ->
+            if (TerminalTabCloseListenerImpl.shouldConfirmClosing(terminalContent.view)) {
+              ContentToConfirm(content, terminalContent.view.getFullTitleText())
+            } else {
+              null
+            }
+
+          is TerminalContent.Classic ->
+            withContext(Dispatchers.IO) {
+              if (terminalContent.widget.isCommandRunning()) {
+                ContentToConfirm(content, terminalContent.widget.terminalTitle.buildFullTitle())
+              } else {
+                null
+              }
+            }
+        }
+      }
+    }.awaitAll().filterNotNull()
+  }
 }
 
 private sealed interface TerminalContent {
@@ -159,3 +205,8 @@ private fun findTerminalContent(content: Content): TerminalContent? {
 
   return null
 }
+
+private data class ContentToConfirm(
+  val content: Content,
+  val title: String,
+)

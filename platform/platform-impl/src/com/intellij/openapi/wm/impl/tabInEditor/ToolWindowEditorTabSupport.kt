@@ -13,7 +13,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
   @RequiresEdt
-  fun canCloseTab(project: Project, content: Content): Boolean = true
+  fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> = contents
 
   /**
    * Returns the current tab presentation and subsequent presentation updates.
