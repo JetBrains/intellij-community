@@ -15,7 +15,7 @@ class KotlinBuildToolsFusEvenListTest {
         assert(duplicates.isEmpty()) { "Found duplicate event names: $duplicates" }
     }
 
-    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(16, "ea4754521470d1332676a8ffa198ca28")
+    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(17, "ea4754521470d1332676a8ffa198ca28")
 
     @Test
     fun checkGroupVersionVersion() {

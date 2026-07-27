@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import org.jetbrains.kotlin.idea.gradle.statistics.anonymizedProjectRegexp
 
 /**
  * Base class for all Kotlin build tool Feature Usage Statistics (FUS) metrics.
@@ -201,8 +202,8 @@ internal class OverrideRegexStringFusMetric(metric: String, regex: String) :
  */
 internal class PathFusMetric(metric: String) : KotlinBuildToolFusMetric<String>(
     metric,
-    EventFields.AnonymizedPath as EventField<String>,
-    validationStep = KotlinBuildToolStringFLowValidationStep,
+    EventFields.StringListValidatedByInlineRegexp(metric.lowercase(), anonymizedProjectRegexp) as EventField<String>,
+    validationStep = KotlinBuildToolProjectPathValidationStep,
     aggregationStep = OverrideValueAggregationStep()
 )
 
