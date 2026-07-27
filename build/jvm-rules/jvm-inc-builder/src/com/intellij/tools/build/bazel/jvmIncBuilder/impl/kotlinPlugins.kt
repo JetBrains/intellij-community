@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.cli.plugins.extractPluginOrderConstraint
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.*
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.MessageCollectorAccess
 import org.jetbrains.kotlin.jvm.abi.JvmAbiCommandLineProcessor
 import org.jetbrains.kotlin.jvm.abi.JvmAbiComponentRegistrar
 import org.jetbrains.kotlin.util.ServiceLoaderLite
@@ -44,7 +45,6 @@ fun configurePlugins(
       "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin" -> {
         val processor = SerializationPluginOptions()
         consumer(RegisteredPluginInfo(
-          componentRegistrar = null,
           compilerPluginRegistrar = SerializationComponentRegistrar(),
           commandLineProcessor = processor,
           pluginOptions = internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
@@ -54,7 +54,6 @@ fun configurePlugins(
       "org.jetbrains.kotlin.kotlin-compose-compiler-plugin" -> {
         val processor = ComposeCommandLineProcessor()
         consumer(RegisteredPluginInfo(
-          componentRegistrar = null,
           compilerPluginRegistrar = ComposePluginRegistrar(),
           commandLineProcessor = processor,
           pluginOptions = internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
@@ -71,7 +70,6 @@ fun configurePlugins(
     val jvmAbiCommandLineProcessor = JvmAbiCommandLineProcessor()
     val pluginId = jvmAbiCommandLineProcessor.pluginId
     consumer(RegisteredPluginInfo(
-      componentRegistrar = null,
       compilerPluginRegistrar = JvmAbiComponentRegistrar(abiConsumer),
       commandLineProcessor = jvmAbiCommandLineProcessor,
       pluginOptions = listOf(
@@ -95,7 +93,7 @@ fun configurePlugins(
  * the `-Xcompiler-plugin-order` constraints: `"pluginId1>pluginId2"` means the plugin with
  * [CompilerPluginRegistrar.pluginId] `pluginId1` is executed before the one with `pluginId2`.
  */
-@OptIn(ExperimentalCompilerApi::class)
+@OptIn(ExperimentalCompilerApi::class, MessageCollectorAccess::class)
 fun sortCompilerPluginRegistrarsByOrderConstraints(configuration: CompilerConfiguration, rawConstraints: Array<String>) {
   if (rawConstraints.isEmpty()) {
     return
@@ -174,7 +172,6 @@ private fun loadRegisteredPluginsInfo(config: PluginClasspathConfig, internalPlu
 
   val processor = commandLineProcessor.firstOrNull()
   return RegisteredPluginInfo(
-    componentRegistrar = null,
     compilerPluginRegistrar = compilerPluginRegistrars.firstOrNull(),
     commandLineProcessor = processor,
     pluginOptions = if (processor == null) emptyList() else internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
@@ -209,7 +206,6 @@ private class CompilerPluginProvider {
 private fun createPluginInfo(data: Pair<MethodHandle, MethodHandle?>, internalPluginIdToPluginOptions: Map<String, List<CliOptionValue>>): RegisteredPluginInfo {
   val processor = data.second?.invoke() as CommandLineProcessor?
   return RegisteredPluginInfo(
-    componentRegistrar = null,
     compilerPluginRegistrar = data.first.invoke() as CompilerPluginRegistrar,
     commandLineProcessor = processor,
     pluginOptions = if (processor== null) emptyList() else internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),

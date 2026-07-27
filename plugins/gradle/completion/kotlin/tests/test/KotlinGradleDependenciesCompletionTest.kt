@@ -38,9 +38,11 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
+import kotlin.test.ExperimentalKotlinTestApi
 import kotlin.test.assertTrue
 
 
+@OptIn(ExperimentalKotlinTestApi::class)
 @IJIgnore(issue = "KT-88180")
 @GradleProjectTestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData")
