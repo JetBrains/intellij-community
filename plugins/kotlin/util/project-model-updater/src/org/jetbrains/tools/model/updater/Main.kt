@@ -66,7 +66,7 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
 
     /**
-     * Whether to patch the `.patronus/config.yaml` file, excluding triggers for checks mentioned in `resources/patronus-deny-list.txt`.
+     * Whether to patch the Patronus configuration file, excluding triggers for non-Kotlin checks.
      */
     val applyPatronusDenyList: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
 
