@@ -106,6 +106,7 @@ internal class FrontendXLineBreakpointProxy(
   dto: XBreakpointDto,
   override val type: XLineBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
+  creationTrigger: XBreakpointCreationTrigger,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter), XLineBreakpointProxy {
   private val debouncer = RequestsDebouncer(cs, this)
 
@@ -128,7 +129,7 @@ internal class FrontendXLineBreakpointProxy(
    * Attachments are notified when the breakpoint state changes.
    */
   override val attachments: List<XBreakpointAttachment> =
-    FrontendXLineBreakpointAttachmentProvider.createAttachments(this, attachmentScope)
+    FrontendXLineBreakpointAttachmentProvider.createAttachments(this, attachmentScope, creationTrigger)
 
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary
