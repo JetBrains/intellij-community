@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
@@ -27,6 +28,7 @@ data class FrontendOwnedBackendMirrorFileDescriptor(
   val namespace: String,
   val id: String,
   val presentableName: String,
+  val iconId: IconId?,
 )
 
 @ApiStatus.Internal
@@ -58,7 +60,6 @@ interface FrontendOwnedFileEditorSplitBinder {
     provider: FileEditorProvider,
     editor: FileEditor,
     mirrorFile: FrontendOwnedBackendMirrorFileDescriptor,
-    editorCoroutineScope: CoroutineScope,
   ): Boolean
 
   fun findFrontendFileForBackendMirror(mirrorFilePath: String): VirtualFile? = null
@@ -66,30 +67,49 @@ interface FrontendOwnedFileEditorSplitBinder {
   fun findBackendMirrorForFrontendFile(file: VirtualFile): String? = null
 
   companion object {
+    private val LOG = logger<FrontendOwnedFileEditorSplitBinder>()
+
     suspend fun tryBindExistingFrontendEditorToBackendMirror(
       project: Project,
       file: VirtualFile,
       provider: FileEditorProvider,
       editor: FileEditor,
       mirrorFile: FrontendOwnedBackendMirrorFileDescriptor,
-      editorCoroutineScope: CoroutineScope,
     ): Boolean {
-      return ApplicationManager.getApplication()
+      return project
                .getService(FrontendOwnedFileEditorSplitBinder::class.java)
-               ?.tryBindExistingFrontendEditorToBackendMirror(project, file, provider, editor, mirrorFile, editorCoroutineScope)
+               ?.tryBindExistingFrontendEditorToBackendMirror(project, file, provider, editor, mirrorFile)
              ?: false
     }
 
     fun findFrontendFileForBackendMirror(mirrorFilePath: String): VirtualFile? {
-      return ApplicationManager.getApplication()
-        .getService(FrontendOwnedFileEditorSplitBinder::class.java)
-        ?.findFrontendFileForBackendMirror(mirrorFilePath)
+      return findSingleProjectMapping("frontend file for backend mirror '$mirrorFilePath'") {
+        it.findFrontendFileForBackendMirror(mirrorFilePath)
+      }
     }
 
     fun findBackendMirrorForFrontendFile(file: VirtualFile): String? {
-      return ApplicationManager.getApplication()
-        .getService(FrontendOwnedFileEditorSplitBinder::class.java)
-        ?.findBackendMirrorForFrontendFile(file)
+      return findSingleProjectMapping("backend mirror for frontend file '$file'") {
+        it.findBackendMirrorForFrontendFile(file)
+      }
+    }
+
+    private fun <T : Any> findSingleProjectMapping(
+      description: String,
+      findInProjectBinder: (FrontendOwnedFileEditorSplitBinder) -> T?,
+    ): T? {
+      var result: T? = null
+      for (project in ProjectManager.getInstance().openProjects) {
+        val binder = project.getService(FrontendOwnedFileEditorSplitBinder::class.java) ?: continue
+        val value = findInProjectBinder(binder) ?: continue
+        val previous = result
+        if (previous != null && previous != value) {
+          LOG.warn("Ambiguous frontend-owned editor mapping for $description")
+          return null
+        }
+        result = value
+      }
+      return result
     }
   }
 }
