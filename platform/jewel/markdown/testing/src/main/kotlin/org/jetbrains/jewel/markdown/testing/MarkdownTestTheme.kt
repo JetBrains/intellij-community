@@ -16,6 +16,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.foundation.BorderColors
@@ -128,7 +129,11 @@ fun createMarkdownTestThemeDefinition(): ThemeDefinition =
         disabledAppearanceValues = DisabledAppearanceValues(brightness = 33, contrast = -35, alpha = 100),
     )
 
-fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default): MarkdownStyling {
+/** Creates a minimal [MarkdownStyling] with stub span styles for use in Markdown rendering tests. */
+fun createMarkdownTestStyling(
+    codeEditorTextStyle: TextStyle = TextStyle.Default,
+    blockVerticalSpacing: Dp = 8.dp,
+): MarkdownStyling {
     val mockSpanStyle = SpanStyle(Color.Black)
     val inlinesStyling =
         InlinesStyling(
@@ -145,7 +150,7 @@ fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default
             inlineHtml = mockSpanStyle,
         )
     return MarkdownStyling(
-        blockVerticalSpacing = 8.dp,
+        blockVerticalSpacing = blockVerticalSpacing,
         paragraph = MarkdownStyling.Paragraph(inlinesStyling),
         heading =
             MarkdownStyling.Heading(
