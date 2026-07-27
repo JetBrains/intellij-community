@@ -6,12 +6,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic1
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.diagnostics.AbstractKtDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.parcelize.fir.diagnostics.KtErrorsParcelize
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class ParcelizeK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
-    override val list = KtQuickFixesListBuilder.registerPsiQuickFix {
+    override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerQuickFixForDiagnosticFactory(
             KtErrorsParcelize.PARCELABLE_CANT_BE_INNER_CLASS,
             RemoveModifierFixBase.removeInnerModifier

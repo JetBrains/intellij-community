@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         val expression = diagnostic.psi as? KtExpression ?: return null
 
         val destructuredType = when (diagnostic) {
@@ -40,7 +41,8 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
         return setOfNotNull(missingName)
     }
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider

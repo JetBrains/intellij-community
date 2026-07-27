@@ -6,13 +6,18 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -39,29 +44,27 @@ object OverrideAccessorFunctionFixFactory {
 
         val containingClassOrObject = property.parent.parent as? KtClassOrObject ?: return@ModCommandBased emptyList()
         analyze(containingClassOrObject) {
-            with(contextOf<KaSession>()) {
-                val classSymbol = containingClassOrObject.symbol as? KaClassLikeSymbol ?: return@ModCommandBased emptyList()
-                for (superType in classSymbol.defaultType.allSupertypes) {
-                    val symbol = superType.expandedSymbol?.takeIf { it.origin.isJavaSourceOrLibrary() } ?: continue
-                    val callables = symbol.declaredMemberScope
-                        .callables.filterIsInstance<KaFunctionSymbol>()
-                    val overridden = buildList {
-                        addIfNotNull(callables.firstOrNull { it.name in getterIdentifiers && it.valueParameters.isEmpty() })
-                        addIfNotNull(callables.firstOrNull { it.name in setterIdentifiers && it.valueParameters.size == 1 })
-                    }
-                    if (overridden.isNotEmpty()) {
-                        val first = overridden.first()
-                        val type = if (first.name in getterIdentifiers) first.returnType else first.valueParameters.first().returnType
-                        return@ModCommandBased listOf(
-                            PropertyToAccessors(
-                                property,
-                                type.render(
-                                    KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-                                    position = Variance.OUT_VARIANCE
-                                )
+            val classSymbol = containingClassOrObject.symbol as? KaClassLikeSymbol ?: return@ModCommandBased emptyList()
+            for (superType in classSymbol.defaultType.allSupertypes) {
+                val symbol = superType.expandedSymbol?.takeIf { it.origin.isJavaSourceOrLibrary() } ?: continue
+                val callables = symbol.declaredMemberScope
+                    .callables.filterIsInstance<KaFunctionSymbol>()
+                val overridden = buildList {
+                    addIfNotNull(callables.firstOrNull { it.name in getterIdentifiers && it.valueParameters.isEmpty() })
+                    addIfNotNull(callables.firstOrNull { it.name in setterIdentifiers && it.valueParameters.size == 1 })
+                }
+                if (overridden.isNotEmpty()) {
+                    val first = overridden.first()
+                    val type = if (first.name in getterIdentifiers) first.returnType else first.valueParameters.first().returnType
+                    return@ModCommandBased listOf(
+                        PropertyToAccessors(
+                            property,
+                            type.render(
+                                KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
+                                position = Variance.OUT_VARIANCE
                             )
                         )
-                    }
+                    )
                 }
             }
         }

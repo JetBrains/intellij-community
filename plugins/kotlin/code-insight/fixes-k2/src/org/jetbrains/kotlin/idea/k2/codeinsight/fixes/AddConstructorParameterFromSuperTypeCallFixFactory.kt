@@ -3,21 +3,24 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.types.Variance
 
 internal object AddConstructorParameterFromSuperTypeCallFixFactory {
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createCallFix(diagnostic: KaFirDiagnostic.NoValueForParameter): AddConstructorParameterFromSuperTypeCallFix? {
+    context(session: KaSession)
+    private fun createCallFix(diagnostic: KaFirDiagnostic.NoValueForParameter): AddConstructorParameterFromSuperTypeCallFix? {
         val superTypeCallEntry = diagnostic.psi as? KtSuperTypeCallEntry ?: return null
         val valueArgumentList = superTypeCallEntry.valueArgumentList ?: return null
         val superTypeCall = superTypeCallEntry.resolveToCall()?.singleConstructorCallOrNull() ?: return null

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -13,6 +14,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix
 import org.jetbrains.kotlin.name.FqName
@@ -54,7 +58,8 @@ private fun KaType.unwrap(): KaType {
  * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
  */
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.substituteErrorAndTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
+context(session: KaSession)
+private fun substituteErrorAndTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
         is KaClassType -> typeCreator.classType(type.symbol) {
             type.typeArguments.mapNotNull { it.type }.forEach {

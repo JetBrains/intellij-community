@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -30,10 +31,8 @@ internal object ConstFixFactories {
             } ?: return@ModCommandBased emptyList()
 
             val property: KtProperty = analyze(expression) {
-                with(contextOf<KaSession>()) {
-                    val propertySymbol = expression.mainReference.resolveToSymbol() ?: return@with null
-                    (propertySymbol.psi as? KtProperty)?.takeIf { constModifierApplicable(it) }
-                }
+                val propertySymbol = expression.mainReference.resolveToSymbol() ?: return@analyze null
+                (propertySymbol.psi as? KtProperty)?.takeIf { constModifierApplicable(it) }
             } ?: return@ModCommandBased emptyList()
 
             val action = AddConstModifierFix(property).asIntention().asModCommandAction() ?: return@ModCommandBased emptyList()

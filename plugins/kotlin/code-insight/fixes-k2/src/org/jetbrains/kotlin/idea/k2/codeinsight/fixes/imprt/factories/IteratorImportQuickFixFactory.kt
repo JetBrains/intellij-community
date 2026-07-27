@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.DefaultImportContext
@@ -27,7 +29,8 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  * - `next()` - for getting the next element from iterator
  */
 internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         val iteratedExpression = diagnostic.psi as? KtExpression ?: return null
         
         return when (diagnostic) {
@@ -57,14 +60,15 @@ internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() 
      * Resolves the type of the iterator returned by calling `iterator()` on the given [iteratedExpression].
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.resolveIteratorType(iteratedExpression: KtExpression): KaType? {
+    context(session: KaSession)
+    private fun resolveIteratorType(iteratedExpression: KtExpression): KaType? {
         val psiFactory = KtPsiFactory.contextual(iteratedExpression)
 
         val iteratorCallExpression =
             psiFactory.createExpressionCodeFragment("${iteratedExpression.text}.iterator()", iteratedExpression).getContentElement()
                 ?: return null
 
-        return analyze(iteratorCallExpression) { with(contextOf<KaSession>()) { iteratorCallExpression.expressionType?.createPointer() } }?.restore()
+        return analyze(iteratorCallExpression) { iteratorCallExpression.expressionType?.createPointer() }?.restore()
     }
 
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportContext): Set<Name> = 
@@ -81,7 +85,8 @@ internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() 
             else -> emptySet()
         }
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importPositionContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,

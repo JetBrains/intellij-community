@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
@@ -99,13 +101,15 @@ internal object ActualWithoutExpectFactory {
         }
     }
 
-    private fun KaSession.findExpectWithConflictingVisibility(
+    context(session: KaSession)
+    private fun findExpectWithConflictingVisibility(
         actualDeclaration: KtCallableDeclaration,
         fileToCreateDeclaration: KtFile?,
         expectedContainingClass: KtClassOrObject?
     ): KtFunction? {
         if (fileToCreateDeclaration != null && actualDeclaration is KtFunction) {
-            fun KaSession.types(decl: KtFunction): List<KaType?> =
+            context(session: KaSession)
+            fun types(decl: KtFunction): List<KaType?> =
                 (decl.valueParameters.map { it.typeReference } + listOf(decl.receiverTypeReference) + decl.contextReceivers.map { it.typeReference() }).map { it?.type }
 
             val types = types(actualDeclaration)

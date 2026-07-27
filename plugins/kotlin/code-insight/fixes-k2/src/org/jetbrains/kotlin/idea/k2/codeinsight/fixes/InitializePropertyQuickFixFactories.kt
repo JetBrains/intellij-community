@@ -17,7 +17,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.defaultInitializer
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -287,7 +290,8 @@ internal object InitializePropertyQuickFixFactories {
         }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createFixes(
+    context(session: KaSession)
+    private fun createFixes(
         property: KtProperty,
     ): List<CommonIntentionAction> {
         // An extension property cannot be initialized because it has no backing field

@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 internal object SpecifyRemainingArgumentsByNameFixFactory {
 
-    private fun KaSession.createFixes(psiElement: PsiElement): List<SpecifyRemainingArgumentsByNameFix> {
+    context(session: KaSession)
+    private fun createFixes(psiElement: PsiElement): List<SpecifyRemainingArgumentsByNameFix> {
         val callExpression = psiElement as? KtCallExpression ?: return emptyList()
         val argumentList = callExpression.valueArgumentList ?: return emptyList()
         val remainingArguments = findRemainingNamedArguments(argumentList) ?: return emptyList()

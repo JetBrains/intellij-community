@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -22,7 +24,8 @@ internal object AddDefaultConstructorFixFactory {
     }
 }
 
-private fun KaSession.elementToBaseClass(element: PsiElement): KtClass? {
+context(session: KaSession)
+private fun elementToBaseClass(element: PsiElement): KtClass? {
     return when (element) {
         is KtSuperTypeCallEntry -> superTypeEntryToClass(element)
         is KtAnnotationEntry -> annotationEntryToClass(element)
@@ -30,7 +33,8 @@ private fun KaSession.elementToBaseClass(element: PsiElement): KtClass? {
     }
 }
 
-private fun KaSession.superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
+context(session: KaSession)
+private fun superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
     if ((typeEntry as? KtSuperTypeCallEntry)?.valueArguments?.isNotEmpty() == true) {
         return null // Don't suggest the quick fix because the default constructor should not have arguments
     }
@@ -41,7 +45,8 @@ private fun KaSession.superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): Kt
     return baseClassSymbol.psi as? KtClass
 }
 
-private fun KaSession.annotationEntryToClass(entry: KtAnnotationEntry): KtClass? {
+context(session: KaSession)
+private fun annotationEntryToClass(entry: KtAnnotationEntry): KtClass? {
     if (entry.valueArguments.isNotEmpty()) {
         return null // Don't suggest the quick fix because the default constructor should not have arguments
     }

@@ -3,6 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddSourceRetentionFix
@@ -29,7 +32,8 @@ internal object RestrictedRetentionForExpressionAnnotationFactories {
         )
     }
 
-    private fun KaSession.findAnnotation(ktClass: KtClass, fqName: FqName): KtAnnotationEntry? {
+    context(session: KaSession)
+    private fun findAnnotation(ktClass: KtClass, fqName: FqName): KtAnnotationEntry? {
         return ktClass.annotationEntries.firstOrNull {
             it.typeReference?.text?.endsWith(fqName.shortName().asString()) == true
                     && it.typeReference?.type?.expandedSymbol?.importableFqName == fqName

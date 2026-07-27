@@ -312,7 +312,8 @@ internal object ChangeVisibilityFixFactories {
         return targetVisibilities.mapNotNull { createFixToTargetVisibility(reference, declaration, it) }
     }
 
-    private fun KaSession.createChangeVisibilityFixOnExposure(
+    context(session: KaSession)
+    private fun createChangeVisibilityFixOnExposure(
         element: PsiElement,
         elementVisibility: EffectiveVisibility,
         restrictingSymbol: KaSymbol,
