@@ -1,5 +1,18 @@
 # Jewel Release Notes
 
+## v0.39.1 (2026-07-24)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2                     | 1.11.0                        |
+
+### Bug fixes
+
+* **[JEWEL-1374](https://youtrack.jetbrains.com/issue/JEWEL-1374)** The published Jewel Standalone POMs now declare the
+  Icons API modules (`icons-api`, `icons-api-rendering`, `icons-impl`) as transitive dependencies. A plain
+  `implementation("org.jetbrains.jewel:jewel-int-ui-standalone:…")` now boots `IntUiTheme` without extra wiring —
+  previously it failed at startup with `NoClassDefFoundError: com/intellij/platform/icons/IconManager`
+
 ## v0.39 (2026-07-14)
 
 | Min supported IJP versions | Compose Multiplatform version |
@@ -74,6 +87,19 @@
   * The API is retained for binary compatibility for the time being, but please migrate as soon as possible
 * **[JEWEL-1285](https://youtrack.jetbrains.com/issue/JEWEL-1285)** `Popup` components without the `windowShape`
   parameter are now deprecated ([#3449](https://github.com/JetBrains/intellij-community/pull/3449))
+
+## v0.38.1 (2026-07-24)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2 beta 1              | 1.11.0                        |
+
+### Bug fixes
+
+* **[JEWEL-1374](https://youtrack.jetbrains.com/issue/JEWEL-1374)** The published Jewel Standalone POMs now declare the
+  Icons API modules (`icons-api`, `icons-api-rendering`, `icons-impl`) as transitive dependencies. A plain
+  `implementation("org.jetbrains.jewel:jewel-int-ui-standalone:…")` now boots `IntUiTheme` without extra wiring —
+  previously it failed at startup with `NoClassDefFoundError: com/intellij/platform/icons/IconManager`
 
 ## v0.38 (2026-06-30)
 
