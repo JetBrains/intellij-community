@@ -91,7 +91,7 @@ private fun convertJpsToBazel(monorepoRoot: Path) {
 }
 
 private fun applyPatronusDenyList(monorepoRoot: Path) {
-    val denyListFile = monorepoRoot.resolve("community/plugins/kotlin/util/project-model-updater/resources/patronus-deny-list.txt")
+    val denyListFile = monorepoRoot.resolve(".patronus/kotlin-deny-list.txt")
 
     val deniedConfigurationIds = denyListFile.readLines()
         .map { it.substringBefore('#').trim() }
