@@ -21,11 +21,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
-import com.intellij.psi.util.PsiVersioningService
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
@@ -110,17 +108,11 @@ internal class VerticalBarPresentation(
     if (editor.isDisposed || boundsState == initialState) {
       return
     }
-    PsiVersioningService.freezePsiVersion {
-      SlowOperations.knownIssue("IJPL-162800").use {
-        if (!row.isValid) {
-          return@freezePsiVersion
-        }
-      }
-      graphics.useCopy { local ->
-        GraphicsUtil.setupAntialiasing(local)
-        GraphicsUtil.setupRoundedBorderAntialiasing(local)
-        paintRow(local, rowLocation)
-      }
+    if (tableRangePointer?.range == null) return
+    graphics.useCopy { local ->
+      GraphicsUtil.setupAntialiasing(local)
+      GraphicsUtil.setupRoundedBorderAntialiasing(local)
+      paintRow(local, rowLocation)
     }
   }
 
