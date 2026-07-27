@@ -1,6 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+exports_files(
+    [
+        "tools/mac/scripts/makedmg.sh",
+        "tools/mac/scripts/makedmg.py",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.platform.buildScripts` start
 create_kotlinc_options(
     name = "custom_build-scripts",
