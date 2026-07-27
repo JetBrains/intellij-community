@@ -27,6 +27,55 @@ jps_to_bazel_targets_json(
     visibility = ["//visibility:public"],
 )
 
+[
+    config_setting(
+        name = "host_%s" % name,
+        constraint_values = constraints,
+    )
+    for name, constraints in {
+        "darwin_aarch64": [
+            "@platforms//os:macos",
+            "@platforms//cpu:arm64",
+        ],
+        "darwin_x64": [
+            "@platforms//os:macos",
+            "@platforms//cpu:x86_64",
+        ],
+        "linux_aarch64": [
+            "@platforms//os:linux",
+            "@platforms//cpu:arm64",
+        ],
+        "linux_x64": [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        "windows_aarch64": [
+            "@platforms//os:windows",
+            "@platforms//cpu:arm64",
+        ],
+        "windows_x64": [
+            "@platforms//os:windows",
+            "@platforms//cpu:x86_64",
+        ],
+    }.items()
+]
+
+# The bun runtime for the current host, declared in //:MODULE.bazel. Depend on this from `data` and
+# resolve it with BazelTestUtil.getFileFromBazelRuntime instead of running `tools/bun.cmd`, which
+# needs its per-user cache or the network — neither of which a sandboxed test has.
+alias(
+    name = "bun",
+    actual = select({
+        ":host_darwin_aarch64": "@bun_darwin_aarch64//:binary",
+        ":host_darwin_x64": "@bun_darwin_x64//:binary",
+        ":host_linux_aarch64": "@bun_linux_aarch64//:binary",
+        ":host_linux_x64": "@bun_linux_x64//:binary",
+        ":host_windows_aarch64": "@bun_windows_aarch64//:binary",
+        ":host_windows_x64": "@bun_windows_x64//:binary",
+    }),
+    visibility = ["//visibility:public"],
+)
+
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
     name = "i_build_target",

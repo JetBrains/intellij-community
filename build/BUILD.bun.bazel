@@ -1,0 +1,17 @@
+# Build file for the `bun_*` archives declared in //:MODULE.bazel.
+# The archives are the same GitHub release zips `tools/bun.cmd` pins, with the top-level
+# `bun-<platform>` directory stripped, so the runtime is a single binary at the root.
+#
+# Not named `bun`: the extracted binary is itself `bun`, and a rule sharing a source file's name
+# makes `:bun` self-referential — Bazel reports it as a dependency cycle.
+filegroup(
+    name = "binary",
+    srcs = glob(
+        [
+            "bun",
+            "bun.exe",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
