@@ -8,10 +8,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.text.buildAnnotatedString
+import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.testing.MarkdownTestTheme
 import org.jetbrains.jewel.markdown.testing.createMarkdownTestStyling
@@ -123,6 +126,31 @@ public class DefaultMarkdownBlockRendererTest {
             onNodeWithText("Click me").performClick()
             waitForIdle()
             assertEquals("second:https://example.com", clickedUrl)
+        }
+    }
+
+    @Test
+    public fun `raw HTML blocks are not rendered by default`() {
+        runComposeUiTest {
+            // parseEmbeddedHtml defaults to false: keep producing HtmlBlock (renderer no-op),
+            // not HtmlBlockWithAttributes wrapping a Paragraph that could leak raw HTML text.
+            val processor = MarkdownProcessor(parseEmbeddedHtml = false)
+            val blocks = processor.processMarkdownDocument("<div>Raw HTML</div>\n\nVisible paragraph")
+
+            assertEquals(2, blocks.size)
+            assertTrue(blocks[0] is MarkdownBlock.HtmlBlock)
+            assertEquals("<div>Raw HTML</div>", (blocks[0] as MarkdownBlock.HtmlBlock).content)
+
+            setContent {
+                MarkdownTestTheme {
+                    val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                }
+            }
+
+            onAllNodesWithText("<div>Raw HTML</div>").assertCountEquals(0)
+            onAllNodesWithText("Raw HTML").assertCountEquals(0)
+            onNodeWithText("Visible paragraph").assertExists()
         }
     }
 

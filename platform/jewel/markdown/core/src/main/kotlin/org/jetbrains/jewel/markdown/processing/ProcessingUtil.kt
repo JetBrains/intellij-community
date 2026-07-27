@@ -17,7 +17,6 @@ import org.commonmark.node.Text as CMText
 import org.commonmark.parser.beta.ParsedInline
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
@@ -153,10 +152,6 @@ internal fun List<InlineMarkdown>.renderAsSimpleText(): String = buildString {
             is WithTextContent -> append(node.content)
             is InlineMarkdown.HardLineBreak -> append('\n')
             is InlineMarkdown.SoftLineBreak -> append(' ')
-            else -> {
-                JewelLogger.getInstance("MarkdownProcessingUtil")
-                    .debug("Ignoring node ${node.javaClass.simpleName} for text rendering")
-            }
         }
     }
 }
