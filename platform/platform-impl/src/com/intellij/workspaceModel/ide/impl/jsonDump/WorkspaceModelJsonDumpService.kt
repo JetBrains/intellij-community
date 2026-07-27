@@ -53,8 +53,8 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
 
   suspend fun getWorkspaceEntitiesAsJsonArray(snapshot: EntityStorage? = null): JsonArray {
     val snapshot = snapshot ?: project.workspaceModel.currentSnapshot
-    val wsmSerializers = WorkspaceModelSerializers()
-    val rootEntities = snapshot.allUniqueEntities().rootEntitiesClasses().toList().sortedBy { it.simpleName }
+    val wsmSerializer = WorkspaceModelJsonDumpSerializer()
+    val rootEntities = snapshot.rootEntitiesClassesList()
 
     return withBackgroundProgress(project, WorkspaceModelIdeBundle.message("progress.title.dumping.workspace.entities.json.to.clipboard")) {
       reportSequentialProgress(rootEntities.size) { reporter ->
@@ -68,7 +68,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
               putJsonArray("entities") {
                 for ((i, entity) in entities.withIndex()) {
                   if (i % 100 == 0) ensureActive()
-                  val jsonEntity = json.encodeToJsonElement(wsmSerializers[entity], entity)
+                  val jsonEntity = wsmSerializer.entityAsJson(entity)
                   add(jsonEntity)
                 }
               }

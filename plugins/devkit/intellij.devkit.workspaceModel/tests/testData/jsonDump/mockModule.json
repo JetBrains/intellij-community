@@ -1,0 +1,61 @@
+{
+  "fqn": "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+  "entitySource": {
+    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+    "virtualFileUrl": null
+  },
+  "name": "mock module entity",
+  "type": "null",
+  "dependencies_Count": 3,
+  "dependencies": [
+    {
+      "fqn": "com.intellij.platform.workspace.jps.entities.InheritedSdkDependency"
+    },
+    {
+      "fqn": "com.intellij.platform.workspace.jps.entities.ModuleSourceDependency"
+    },
+    {
+      "fqn": "com.intellij.platform.workspace.jps.entities.ModuleDependency",
+      "exported": "false",
+      "module": {
+        "Unknown \"FinalClassMetadata.KnownClass\"": "com.intellij.platform.workspace.jps.entities.ModuleId"
+      },
+      "productionOnTest": "true",
+      "scope": {
+        "Unknown \"FinalClassMetadata.KnownClass\"": "com.intellij.platform.workspace.jps.entities.DependencyScope"
+      }
+    }
+  ],
+  "Children_ContentRootEntity_Count": 1,
+  "Children_ContentRootEntity": [
+    {
+      "fqn": "com.intellij.platform.workspace.jps.entities.ContentRootEntity",
+      "entitySource": {
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+        "virtualFileUrl": null
+      },
+      "url": {
+        "url": "file:///tmp"
+      },
+      "excludedPatterns_Count": 1,
+      "excludedPatterns": [
+        "excludedPattern"
+      ],
+      "Children_SourceRootEntity_Count": 0,
+      "Children_SourceRootEntity": []
+    }
+  ],
+  "Child_JavaModuleSettingsEntity": {
+    "fqn": "com.intellij.java.workspace.entities.JavaModuleSettingsEntity",
+    "entitySource": {
+      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+      "virtualFileUrl": null
+    },
+    "inheritedCompilerOutput": "true",
+    "excludeOutput": "true",
+    "compilerOutput": "null",
+    "compilerOutputForTests": "null",
+    "languageLevelId": "null",
+    "manifestAttributes": "Serializing Map is not supported"
+  }
+}
