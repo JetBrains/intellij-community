@@ -146,7 +146,7 @@ object UniversalFileChooser {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
       mainPanel.preselect(explicit)
       if (this.showAndGet()) {
-        return toVirtualFiles(mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
+        return toVirtualFiles(descriptor, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
       }
       return emptyArray()
     }
@@ -156,7 +156,7 @@ object UniversalFileChooser {
       mainPanel.preselect(explicit)
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
-        mutableList.addAll(toVirtualFiles(mainPanel.getSelectedFiles()).filterNotNull())
+        mutableList.addAll(toVirtualFiles(descriptor, mainPanel.getSelectedFiles()))
         callback.consume(mutableList)
       }
     }
@@ -176,10 +176,13 @@ object UniversalFileChooser {
     }
   }
 
-  private fun toVirtualFiles(paths: List<Path>): List<VirtualFile?> {
-    return paths.map { path ->
-      VfsUtil.findFile(path, true)
-    }
+  private fun toVirtualFiles(descriptor: FileChooserDescriptor, paths: List<Path>): List<VirtualFile> {
+    // Mirror FileChooserDialogImpl.doOKAction: after resolving NIO paths to VirtualFiles, run each
+    // result through `descriptor.getFileToSelect(...)` (via FileChooserUtil.getChosenFiles) so that,
+    // e.g., an archive file is returned as its `jar://…!/` JarFileSystem VirtualFile when the
+    // descriptor has `isChooseJarContents = true` (see IJPL-250874).
+    val resolved = paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+    return FileChooserUtil.getChosenFiles(descriptor, resolved)
   }
 
   class Panel @JvmOverloads constructor(
@@ -651,7 +654,7 @@ object UniversalFileChooser {
       private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
 
       var fileToSelect: Path? = null
-      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles)
+      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
 
       @Volatile
       private var pathTextFieldInvalid: Boolean = false

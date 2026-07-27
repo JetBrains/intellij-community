@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -54,13 +55,18 @@ internal object NioFileChooserUtil {
     }
   }
 
-  fun safeGetChildren(directory: Path, showHidden: Boolean, showFiles: Boolean): List<Path> {
+  fun safeGetChildren(directory: Path, showHidden: Boolean, showFiles: Boolean, showArchives: Boolean = false): List<Path> {
     val children = runCatching {
       Files.list(directory).asSequence()
-        .filter { runCatching { (showFiles || Files.isDirectory(it)) && (showHidden || !isHidden(it)) }.getOrElse { false } }
+        .filter { runCatching { (showFiles || Files.isDirectory(it) || (showArchives && isArchiveFile(it))) && (showHidden || !isHidden(it)) }.getOrElse { false } }
         .sortedBy { it.name.lowercase() }.toList()
     }.getOrElse { emptyList() }
     return children
+  }
+
+  fun isArchiveFile(path: Path): Boolean {
+    val name = path.fileName?.toString() ?: return false
+    return FileTypeRegistry.getInstance().getFileTypeByFileName(name) === ArchiveFileType.INSTANCE
   }
 
   fun getIcon(path: Path) =

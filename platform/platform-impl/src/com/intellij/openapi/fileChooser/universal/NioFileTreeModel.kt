@@ -184,7 +184,10 @@ class NioFileTreeModel(
       if (!descriptor.isShowHiddenFiles) {
         if (isHiddenFromAttrs(entry)) return false
       }
-      if (!descriptor.isChooseFiles && !entry.isDirectory) return false
+      if (!descriptor.isChooseFiles && !entry.isDirectory &&
+          !(descriptor.isChooseJarContents && NioFileChooserUtil.isArchiveFile(entry.path))) {
+        return false
+      }
       if (!entry.isDirectory) {
         val extFilter = descriptor.extensionFilter
         if (extFilter != null) {
