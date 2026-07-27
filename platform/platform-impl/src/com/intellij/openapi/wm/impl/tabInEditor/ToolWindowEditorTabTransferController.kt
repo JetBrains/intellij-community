@@ -37,10 +37,13 @@ internal class ToolWindowEditorTabTransferController(
 
     val support = getSupport(toolWindow) ?: return
 
+    content.withTemporaryRemovedFlag {
+      content.manager?.removeContent(content, false)
+    }
+
     if (sourceDecorator != null &&
         (sourceDecorator.contentManager.isEmpty || // when the tab is dragging from the tool window to the editor, the manager is already empty
          (sourceDecorator.contentManager.contentCount == 1 && sourceDecorator.contentManager.getIndexOfContent(content) != -1))) {
-      content.manager?.removeContent(content, false)
       sourceDecorator.unsplit(null)
     }
 
@@ -60,11 +63,6 @@ internal class ToolWindowEditorTabTransferController(
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
       restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
       file.invalidateEditorTabFile()
-    }
-    else {
-      content.withTemporaryRemovedFlag {
-        content.manager?.removeContent(content, false)
-      }
     }
   }
 
