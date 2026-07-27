@@ -1,13 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.replaceService
 
 class RankingProvidersTest : MLSortingTestCase() {
   private lateinit var testLanguage: Language
@@ -15,7 +19,19 @@ class RankingProvidersTest : MLSortingTestCase() {
   override fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState =
     settings.withRankingEnabled(true).withDiffEnabled(false)
 
-  override fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) { }
+  override fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) {
+    ApplicationManager.getApplication().replaceService(
+      ExperimentStatus::class.java,
+      object : ExperimentStatus {
+        override fun forLanguage(language: Language): ExperimentInfo =
+          ExperimentInfo(true, 0, actualSettingsState.rankingEnabled, actualSettingsState.diffEnabled, true)
+
+        override fun disable() = Unit
+        override fun isDisabled(): Boolean = false
+      },
+      testRootDisposable
+    )
+  }
 
   fun `test no providers registered`() {
     checkActiveProvider(null, 0)
