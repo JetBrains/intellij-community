@@ -38,6 +38,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.idea.IJIgnore;
 import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -165,6 +166,7 @@ import java.util.stream.Collectors;
 /**
  * tests general daemon behaviour/interruptibility/restart during highlighting
  */
+@IJIgnore(issue = "IJPL-251500")
 @SkipSlowTestLocally
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase {
