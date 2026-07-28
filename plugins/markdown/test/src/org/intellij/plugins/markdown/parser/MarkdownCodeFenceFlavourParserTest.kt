@@ -2,7 +2,8 @@ package org.intellij.plugins.markdown.parser
 
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 
 class MarkdownCodeFenceFlavourParserTest: LightPlatformCodeInsightTestCase() {
@@ -13,10 +14,10 @@ class MarkdownCodeFenceFlavourParserTest: LightPlatformCodeInsightTestCase() {
     """.trimIndent()
     configureFromFileText("some.md", content)
     val fence = findFence()
-    TestCase.assertNotNull("Failed to find a fence", fence)
+    assertNotNull("Failed to find a fence", fence)
     checkNotNull(fence)
     val language = fence.fenceLanguage?.trim()
-    TestCase.assertEquals("mermaid", language)
+    assertEquals("mermaid", language)
   }
 
   fun `test delimiter syntax with non mermaid info string`() {
@@ -26,7 +27,15 @@ class MarkdownCodeFenceFlavourParserTest: LightPlatformCodeInsightTestCase() {
     """.trimIndent()
     configureFromFileText("some.md", content)
     val fence = findFence()
-    TestCase.assertNull("This fragment should not be parsed as a fence", fence)
+    assertNull("This fragment should not be parsed as a fence", fence)
+  }
+
+  @PerformanceUnitTest
+  fun `test long invalid fence does not cause regex backtracking`() {
+    val content = "~".repeat(20_000) + "`"
+    Benchmark.newBenchmark("highlighting") {
+      configureFromFileText("some.md", content)
+    }.start()
   }
 
   private fun findFence(): MarkdownCodeFence? {
