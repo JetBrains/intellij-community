@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -274,9 +275,10 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       }
     }
 
-    if (!hasValidWorkingDirectory()) {
+    if (!hasValidWorkingDirectory() || !myWorkingDirectoryIsCanonical) {
       Path workingDirectory = flavorMigration.workingDirectory();
       if (workingDirectory == null) workingDirectory = requirementsWorkingDirectory;
+      if (workingDirectory == null && hasValidWorkingDirectory()) workingDirectory = myWorkingDirectory;
       if (workingDirectory == null) workingDirectory = fallbackWorkingDirectory;
 
       if (workingDirectory != null && !workingDirectory.toString().isBlank()) {
@@ -320,6 +322,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
         myWorkingDirectory = legacyWorkingDirectory;
         myWorkingDirectoryIsCanonical = false;
         myMigrationRequired = true;
+      }
+      else if (myAssociatedModulePath != null) {
+        Path associatedModulePath = NioPathUtil.toNioPathOrNull(myAssociatedModulePath);
+        if (associatedModulePath != null && !Objects.equals(associatedModulePath, EMPTY_WORKING_DIRECTORY)) {
+          myWorkingDirectory = associatedModulePath;
+          myWorkingDirectoryIsCanonical = false;
+          myMigrationRequired = true;
+        }
       }
       myRequirementsFile = element.getAttributeValue(REQUIREMENTS_FILE);
       String legacyRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
