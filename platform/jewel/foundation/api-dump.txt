@@ -788,6 +788,7 @@ f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - f:green-vNxB06k(I):J
 - f:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - hashCode():I
+- f:isIslands():Z
 - f:lookup-ijrfgN4(java.lang.String):androidx.compose.ui.graphics.Color
 - f:orange-vNxB06k(I):J
 - f:orangeOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
