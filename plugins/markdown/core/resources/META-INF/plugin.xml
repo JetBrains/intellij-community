@@ -254,6 +254,8 @@
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
+    <joinLinesHandler implementation="org.intellij.plugins.markdown.editor.MarkdownJoinQuoteLinesHandler"/>
+
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
