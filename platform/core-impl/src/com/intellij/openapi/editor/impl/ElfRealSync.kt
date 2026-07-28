@@ -16,8 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue
  * on the typing view. Real changes are edits made to the real document while the
  * elf and real snapshots could not be merged immediately.
  *
- * A sync pass always runs on EDT, with write access, and outside an elf scope.
- * It handles three cases:
+ * A sync pass always runs on EDT, with write access, and outside an elf scope,
+ * though each elf-view mutation it performs (a revert or a real-change replay)
+ * fires its events inside an elf scope of its own, closed before the pass
+ * continues. It handles three cases:
  * - only elf changes: replay them to the real document;
  * - only real changes: apply them to the elf view and mark both views clean;
  * - both kinds of changes: revert pending elf changes, apply real changes to elf,

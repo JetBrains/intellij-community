@@ -21,14 +21,12 @@ internal class ElfImpl : Elf {
   // TODO: optimize me
   private val delayed: MutableCollection<Runnable> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  override fun withElfScope(action: Runnable) {
+  override fun <T> withElfScope(action: () -> T): T {
     ThreadingAssertions.assertEventDispatchThread()
     val old = inElfScope
     inElfScope = true
     try {
-      PsiVersioningService.freezePsiVersion {
-        action.run()
-      }
+      return PsiVersioningService.freezePsiVersion(action)
     } finally {
       inElfScope = old
       if (!isInElfScope()) {

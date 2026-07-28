@@ -135,6 +135,8 @@ class ElfTest {
   }
 
   private fun withElfScope(action: Runnable) {
-    return Elf.getElf().withElfScope(action)
+    Elf.getElf().withElfScope {
+      action.run()
+    }
   }
 }

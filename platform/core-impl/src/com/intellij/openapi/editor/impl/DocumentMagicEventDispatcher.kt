@@ -9,12 +9,11 @@ import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
-import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.DocumentSettings
+import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
-import kotlin.concurrent.Volatile
 
 internal abstract class DocumentMagicEventDispatcher(
   settingsElf: DocumentSettings,
@@ -27,8 +26,6 @@ internal abstract class DocumentMagicEventDispatcher(
   private val dispatcherElf: DocumentEventDispatcher = DocumentElfEventDispatcherImpl()
   private val dispatcherReal: DocumentEventDispatcher = DocumentRealEventDispatcherImpl()
 
-  @Volatile private var firingElfTextChangeOutsideElfScope = false
-
   protected abstract fun getSnapshotSnapshot(): SnapshotSnapshot
 
   fun elf(): DocumentEventDispatcher {
@@ -39,29 +36,24 @@ internal abstract class DocumentMagicEventDispatcher(
     return dispatcherReal
   }
 
+  /**
+   * The elf scope around firing matters for changes delivered after their originating scope (reverts and real-change
+   * replays during sync): [ElfCandidate] listeners receive them as ordinary document events, and the scope keeps the
+   * host document on the elf view so event.document reads match the elf snapshot. For typing-time changes the scope
+   * is already active and this nesting is a no-op.
+   */
   fun <T> withFiringElfTextUpdate(
     revertedEvent: DocumentEvent?,
     changeEvent: DocumentEvent,
     action: () -> T,
   ): T {
-    firingElfTextChangeOutsideElfScope = true
-    try {
-      return textElf.withFiringTextUpdate(changeEvent, revertedEvent, action)
-    } finally {
-      firingElfTextChangeOutsideElfScope = false
+    return Elf.getElf().withElfScope {
+      textElf.withFiringTextUpdate(changeEvent, revertedEvent, action)
     }
   }
 
   fun <T> withFiringBothTextUpdate(changeEvent: DocumentEvent, action: () -> T): T {
     return textBoth.withFiringTextUpdate(changeEvent, null, action)
-  }
-
-  /**
-   * Some ELF changes are delivered after leaving ELF scope, but @ElfCandidate listeners receive them as ordinary document events.
-   * Keep the host document on the ELF view while those listeners are notified so event.document reads match the ELF snapshot.
-   */
-  fun isFiringElfTextChangeOutsideElfScope(): Boolean {
-    return firingElfTextChangeOutsideElfScope
   }
 
   fun setBulkElfUpdateStatus(hostDocument: Document, status: Boolean) {

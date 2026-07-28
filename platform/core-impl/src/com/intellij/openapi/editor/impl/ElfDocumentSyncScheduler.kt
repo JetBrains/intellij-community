@@ -48,8 +48,9 @@ abstract class ElfDocumentSyncScheduler {
    * 3. A raw real-document insert can arrive before the scheduled job starts, so the selected ELF batch has to be rebased
    *    over real changes.
    *
-   * ELF scopes are not expected inside document listeners or other callbacks fired by [sync]. Any changes appended before
-   * the sync pass starts are already part of that pass.
+   * [sync] delivers reverted and replayed elf events inside elf scopes of its own, so a [schedule] call from a listener
+   * fired by [sync] defers to that firing scope's exit; it only launches an asynchronous pass and never nests a sync
+   * into the running one. Any changes appended before the sync pass starts are already part of that pass.
    */
   fun schedule() {
     ThreadingAssertions.assertEventDispatchThread()

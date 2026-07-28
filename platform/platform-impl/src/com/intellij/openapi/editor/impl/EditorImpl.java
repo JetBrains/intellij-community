@@ -1762,11 +1762,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean processKeyTyped(char c) {
-    AtomicBoolean result = new AtomicBoolean(false);
-    Elf.getElf().withElfScope(() -> {
-      result.set(processKeyTyped0(c));
-    });
-    return result.get();
+    return Elf.getElf().withElfScope(() -> processKeyTyped0(c));
   }
 
   private boolean processKeyTyped0(char c) {
