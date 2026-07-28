@@ -37,6 +37,7 @@ strictfp
 synchronized
 trait
 transient
+val
 var
 void
 volatile

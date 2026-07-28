@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -41,6 +41,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public static final @NlsSafe String GROOVY3_0 = "3.0";
   public static final @NlsSafe String GROOVY4_0 = "4.0";
   public static final @NlsSafe String GROOVY5_0 = "5.0";
+  public static final @NlsSafe String GROOVY6_0 = "6.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   private static final Map<String, Map<String, Integer>> versionsCompareMap = new LRUMap<>();
@@ -82,6 +83,10 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy50(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY5_0);
+  }
+
+  public static boolean isAtLeastGroovy60(@NotNull PsiElement element) {
+    return getInstance().isVersionAtLeast(element, GROOVY6_0);
   }
 
   public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
