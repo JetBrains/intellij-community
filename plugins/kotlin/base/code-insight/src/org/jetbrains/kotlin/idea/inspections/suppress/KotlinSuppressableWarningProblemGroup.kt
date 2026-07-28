@@ -39,10 +39,12 @@ class KotlinSuppressableWarningProblemGroup(private val factoryName: String) : S
     }
 }
 
-fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppressionKey: String): List<SuppressIntentionAction> {
+fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppressionId: String): List<SuppressIntentionAction> {
     if (severity != Severity.WARNING) {
         return emptyList()
     }
+
+    val suppressionKey = calculateSuppressionKey(element, suppressionId)
 
     val actions = arrayListOf<SuppressIntentionAction>()
     var current: PsiElement? = element
@@ -96,6 +98,14 @@ fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppre
     }
 
     return actions
+}
+
+private fun calculateSuppressionKey(element: PsiElement, suppressionId: String): String {
+    return if (element.parent is KtParameter && suppressionId == "unused") {
+        "UNUSED_PARAMETER"
+    } else {
+        suppressionId
+    }
 }
 
 private object DeclarationKindDetector : KtVisitor<AnnotationHostKind?, Unit?>() {
