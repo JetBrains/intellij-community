@@ -4277,6 +4277,15 @@ f:org.jetbrains.jewel.ui.theme.JewelThemeKt
 - sf:getTextFieldStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 - sf:getTooltipStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.TooltipStyle
 - sf:getTreeStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
+f:org.jetbrains.jewel.ui.theme.ThemeColorPaletteKt
+- sf:blueOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:grayOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:greenOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:orangeOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:purpleOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:redOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:tealOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
+- sf:yellowOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,androidx.compose.runtime.Composer,I):J
 f:org.jetbrains.jewel.ui.util.ColorExtensionsKt
 - sf:fromArgbHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
 - sf:fromRgbaHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color

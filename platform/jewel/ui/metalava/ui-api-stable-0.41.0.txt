@@ -5046,6 +5046,17 @@ package org.jetbrains.jewel.ui.theme {
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.LazyTreeStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.treeStyle;
   }
 
+  public final class ThemeColorPaletteKt {
+    method @androidx.compose.runtime.Composable public static long blueOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long grayOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long greenOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long orangeOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long purpleOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long redOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long tealOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+    method @androidx.compose.runtime.Composable public static long yellowOrDefault(org.jetbrains.jewel.foundation.theme.ThemeColorPalette, int index);
+  }
+
 }
 
 package org.jetbrains.jewel.ui.util {
