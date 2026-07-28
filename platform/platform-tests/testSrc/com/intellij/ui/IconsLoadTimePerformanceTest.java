@@ -6,6 +6,7 @@ import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.ui.icons.ImageCacheKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.TestScaleHelper;
@@ -15,13 +16,11 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -33,8 +32,6 @@ import static org.junit.Assume.assumeTrue;
 @PerformanceUnitTest
 public class IconsLoadTimePerformanceTest {
   private static final Logger LOG = Logger.getInstance(IconsLoadTimePerformanceTest.class);
-  private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE = 100; // ms
-  private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_CACHE = 50; // ms
   private static final int SVG_ICON_QUORUM_COUNT = 50;
 
   // a list of icons for which we have SVG versions
@@ -53,27 +50,30 @@ public class IconsLoadTimePerformanceTest {
   }
 
   @Test
-  public void test() throws IOException, ClassNotFoundException {
+  public void test() throws ClassNotFoundException {
     TestScaleHelper.setSystemProperty("idea.ui.icons.svg.disk.cache", "false");
-    loadIcons(SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE);
+    loadIcons("svg icons load, no disk cache");
 
     TestScaleHelper.setSystemProperty("idea.ui.icons.svg.disk.cache", "true");
-    loadIcons(SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_CACHE);
+    loadIcons("svg icons load, disk cache");
   }
 
-  public void loadIcons(int expectedTime) throws ClassNotFoundException, IOException {
+  public void loadIcons(String launchName) throws ClassNotFoundException {
     // force static init
     assertNotNull(Class.forName(IconsLoadTime.class.getName()));
 
-    try (BufferedReader br = Files.newBufferedReader(Paths.get(ICONS_LIST_PATH))) {
-      String iconPath;
-      while ((iconPath = br.readLine()) != null) {
-        URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
-        // do not use global cache
-        //noinspection KotlinInternalInJava
-        ImageCacheKt.loadImage(url.toString(), null, null, ScaleContext.create(), false, null, Collections.emptyList(), false, false);
+    Benchmark.newBenchmark(launchName, () -> {
+      try (BufferedReader br = Files.newBufferedReader(Paths.get(ICONS_LIST_PATH))) {
+        String iconPath;
+        while ((iconPath = br.readLine()) != null) {
+          URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
+          // do not use global cache
+          //noinspection KotlinInternalInJava
+          ImageCacheKt.loadImage(url.toString(), null, null, ScaleContext.create(), false, null, Collections.emptyList(), false, false);
+        }
       }
-    }
+    }).attempts(1).start();
+
     StatData svgData = IconsLoadTime.getStatData(false, true);
 
     assumeTrue("no SVG load statistics gathered", svgData != null);
@@ -81,8 +81,5 @@ public class IconsLoadTimePerformanceTest {
 
     assumeTrue("too few icons loaded: " + svgData.count + "; expecting > " + SVG_ICON_QUORUM_COUNT,
                svgData.count >= SVG_ICON_QUORUM_COUNT);
-
-    assertTiming("SVG icon load time raised to " + String.format("%.02fms", svgData.averageTime),
-                 expectedTime, (int)svgData.averageTime);
   }
 }

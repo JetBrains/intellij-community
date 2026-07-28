@@ -751,6 +751,10 @@ public final class PlatformTestUtil {
     ActionUtil.performAction(action, event);
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
     if (COVERAGE_ENABLED_BUILD) return;
 
@@ -789,7 +793,7 @@ public final class PlatformTestUtil {
    * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
    * @see BenchmarkTestInfo#start()
    */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true) // to warn about not calling .start() in the end
   public static @NotNull BenchmarkTestInfo newBenchmark(@NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
     return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
@@ -862,11 +866,19 @@ public final class PlatformTestUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expectedMillis, 4, actionToMeasure);
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
   @SuppressWarnings("CallToSystemGC")
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
