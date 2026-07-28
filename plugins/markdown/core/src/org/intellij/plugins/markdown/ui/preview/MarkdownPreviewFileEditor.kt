@@ -81,8 +81,6 @@ class MarkdownPreviewFileEditor(
   private val updateHtmlInProgress = AtomicReference<Job>()
 
   init {
-    document.addDocumentListener(ReparseContentDocumentListener(), this)
-
     coroutineScope.launch {
       mainEditor.filterNotNull().first()
       coroutineScope.launch(Dispatchers.EDT) {
@@ -288,6 +286,7 @@ class MarkdownPreviewFileEditor(
     val panelProvider = retrievePanelProvider(settings)
     val panel = panelProvider.createHtmlPanel(project, file)
     this.panel = panel
+    document.addDocumentListener(ReparseContentDocumentListener(), panel)
     htmlPanelWrapper.add(panel.component, BorderLayout.CENTER)
     if (htmlPanelWrapper.isShowing) htmlPanelWrapper.validate()
     htmlPanelWrapper.repaint()
