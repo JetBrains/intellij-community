@@ -108,6 +108,8 @@ internal class DoNotAskConfigurableUi {
         DoNotAskAppManager.getInstance().clearDoNotAsk(info.id)
       }
     }
+
+    myRemoveList.clear()
   }
 }
 
