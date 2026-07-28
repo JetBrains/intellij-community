@@ -10,6 +10,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -17,6 +19,10 @@ import java.nio.file.Path
 @ApiStatus.Internal
 class PythonSdkAdditionalDataMigrationActivity : ProjectActivity, DumbAware {
   override suspend fun execute(project: Project) {
+    if (project.isDisposed) return
+
+    @Suppress("UnsafeOpenServiceCast")
+    (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
     if (project.isDisposed) return
 
     val pythonSdks = ProjectJdkTable.getInstance().allJdks.filter { PythonSdkUtil.isPythonSdk(it) }
