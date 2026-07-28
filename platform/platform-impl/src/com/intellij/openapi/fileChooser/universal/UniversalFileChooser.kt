@@ -652,6 +652,8 @@ object UniversalFileChooser {
       val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
+      private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
+      private val chooseFolders: Boolean = descriptor.isChooseFolders
 
       var fileToSelect: Path? = null
       private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
@@ -888,7 +890,16 @@ object UniversalFileChooser {
       fun isOkEnabled(): Boolean {
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
-          file.parent != null && !(hasExtensionFilter && Files.isDirectory(file))
+          if (file.parent == null) return@all false
+          val isDir = Files.isDirectory(file)
+          if (isDir) {
+            if (!chooseFolders) return@all false
+            if (hasExtensionFilter) return@all false
+          }
+          else {
+            if (!chooseFiles) return@all false
+          }
+          true
         }
       }
 
