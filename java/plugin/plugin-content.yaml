@@ -64,8 +64,6 @@
 - name: lib/java-impl.jar
   modules:
   - name: intellij.java.plugin
-  contentModules:
-  - name: intellij.java.bookmarks
 - name: lib/jps-javac-extension.jar
   library: jps-javac-extension
   files:
@@ -112,6 +110,9 @@
 - name: lib/modules/intellij.java.backend.split.jar
   contentModules:
   - name: intellij.java.backend.split
+- name: lib/modules/intellij.java.bookmarks.jar
+  contentModules:
+  - name: intellij.java.bookmarks
 - name: lib/modules/intellij.java.codeserver.core.jar
   contentModules:
   - name: intellij.java.codeserver.core

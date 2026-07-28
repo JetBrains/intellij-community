@@ -20,10 +20,4 @@
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
   </extensions>
 
-
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
-                    serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
-  </extensions>
-
 </idea-plugin>

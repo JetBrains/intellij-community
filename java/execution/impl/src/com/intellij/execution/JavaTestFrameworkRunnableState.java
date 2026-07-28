@@ -57,7 +57,6 @@ import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -131,7 +130,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
 
-  private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
   private static final String JIGSAW_OPTIONS = "Jigsaw Options";
 
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
@@ -408,7 +406,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
       javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
-      for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
+      for (JUnitPatcher patcher : JUnitPatcher.JUNIT_PATCHER_EP.getExtensionList()) {
         patcher.patchJavaParameters(project, module, javaParameters);
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSourceAttachCollector;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -88,9 +87,6 @@ import java.util.function.Function;
  */
 @VisibleForTesting
 public final class AttachSourcesNotificationProvider implements EditorNotificationProvider {
-
-  private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<>("com.intellij.attachSourcesProvider");
 
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
@@ -175,7 +171,6 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
     });
   }
 
-  @SuppressWarnings("IncorrectParentDisposable")
   @RequiresEdt
   private static void findLibraryEntitiesForFile(@NotNull Project project,
                                                  @NotNull VirtualFile file,
@@ -212,7 +207,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
     List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
     boolean hasNonLightAction = false;
-    for (AttachSourcesProvider provider : EXTENSION_POINT_NAME.getExtensionList()) {
+    for (AttachSourcesProvider provider : AttachSourcesProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       if (!AttachSourcesProviderFilter.isProviderApplicable(provider, libraries, classFile)) {
         continue;
       }
@@ -396,7 +391,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> libraries) {
-      Library firstLibrary = libraries.get(0).getLibrary();
+      Library firstLibrary = libraries.getFirst().getLibrary();
       Map<Library, LibraryAndModule> librariesToAppendSourcesTo = new HashMap<>();
       for (LibraryOrderEntry library : libraries) {
         librariesToAppendSourcesTo.put(library.getLibrary(), new LibraryAndModule(library.getLibrary(), library.getOwnerModule()));
@@ -411,7 +406,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
       return performInternal(librariesToAppendSourcesTo, firstLibrary, files);
     }
 
-    private @Nullable VirtualFile[] chooseSourceFiles(Library firstLibrary) {
+    private VirtualFile @Nullable [] chooseSourceFiles(Library firstLibrary) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(JavaUiBundle.message("library.attach.sources.action"));
       descriptor.setDescription(JavaUiBundle.message("library.attach.sources.description"));

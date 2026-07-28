@@ -26,6 +26,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
+                    serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
     <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
     <registryKey key="uast.references.by.usage" defaultValue="true"
                  description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
