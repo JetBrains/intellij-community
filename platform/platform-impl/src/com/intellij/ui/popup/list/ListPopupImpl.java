@@ -800,9 +800,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     private boolean isMovingToSubmenu(MouseEvent e) {
-      if (myChild == null || myChild.isDisposed()) return false;
+      // A child that is not showing has no location on screen, and asking a child that failed to show for its
+      // bounds would throw IllegalComponentStateException from every mouse move over the parent.
+      if (myChild == null || myChild.isDisposed() || !myChild.isVisible()) return false;
 
       Rectangle childBounds = myChild.getBounds();
+      if (childBounds == null) return false;
       childBounds.setLocation(myChild.getLocationOnScreen());
 
       return myMouseMovementTracker.isMovingTowards(e, childBounds);
