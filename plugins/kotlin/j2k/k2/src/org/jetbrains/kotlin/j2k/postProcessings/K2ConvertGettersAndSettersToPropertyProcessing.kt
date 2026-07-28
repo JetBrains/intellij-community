@@ -203,9 +203,10 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : PostProcessing {
             precomputedUsages[element] = element.usages(searcher).mapNotNull { (it.element as? KtElement)?.createSmartPointer() }
         }
 
-        for ((_, getter, setter) in propertyWithAccessors) {
+        for ((property, getter, setter) in propertyWithAccessors) {
             (getter as? RealGetter)?.let { put(it.function) }
             (setter as? RealSetter)?.let { put(it.function) }
+            (property as? MergedProperty)?.let { put(it.mergeTo) }
         }
 
         return precomputedUsages
@@ -713,7 +714,7 @@ private class ClassConverter(
 
         val ktProperty = getKtProperty()
         val ktGetter = addGetter(getter, ktProperty, property.isFake)
-        val ktSetter = setter?.let { addSetter(it, ktProperty, property.isFake) }
+        val ktSetter = setter?.let { addSetter(it, ktProperty, property.name, property.isFake) }
         val isOpen = realGetter?.function?.hasModifier(OPEN_KEYWORD) == true || realSetter?.function?.hasModifier(OPEN_KEYWORD) == true
 
         val getterVisibility = realGetter?.function?.visibilityModifierTypeOrDefault()
@@ -856,7 +857,7 @@ private class ClassConverter(
         usages.mapNotNull { it.element }.forEach(action)
     }
 
-    private fun addSetter(setter: Setter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
+    private fun addSetter(setter: Setter, ktProperty: KtProperty, propertyName: String, isFakeProperty: Boolean): KtPropertyAccessor {
         if (setter is RealSetter) {
             setter.function.valueParameters.single().rename(setter.parameterName)
         }
@@ -881,8 +882,10 @@ private class ClassConverter(
 
         if (setter is RealSetter) {
             saveSurroundingComments(setter, ktSetter)
-            val propertyName = ktProperty.name
 
+            // Use the final property name (for a merged property this differs from ktProperty.name,
+            // which is still the old backing field name until renameTo runs) so that the references
+            // created here are already correct and don't require a post-mutation reference search.
             // update original function references to property references
             setter.function.forEachUsage { usage ->
                 val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forEachUsage
@@ -941,13 +944,12 @@ private class ClassConverter(
     }
 
     private fun KtProperty.renameTo(newName: String) {
-        for (usage in usages(searcher)) {
-            val element = usage.element
+        forEachUsage { element ->
             val isBackingField = element is KtNameReferenceExpression
                     && element.text == FIELD_KEYWORD.value
                     && element.mainReference.resolve() == this
                     && isAncestor(element)
-            if (isBackingField) continue
+            if (isBackingField) return@forEachUsage
             val replacer =
                 if (element.parent is KtQualifiedExpression) psiFactory.createExpression(newName)
                 else psiFactory.createExpression("this.$newName")
