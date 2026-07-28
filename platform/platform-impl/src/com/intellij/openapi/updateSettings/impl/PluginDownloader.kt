@@ -383,10 +383,15 @@ class PluginDownloader private constructor(
       newBuildNumber: BuildNumber?,
     ): Int {
       var state = VersionComparatorUtil.compare(newPluginVersion, existingPlugin.version)
-      if (state < 0 && (isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin, newBuildNumber))) {
+      if (state < 0 && isIncompatibleOrBrokenPlugin(existingPlugin, newBuildNumber)) {
         state = 1
       }
       return state
+    }
+
+    @ApiStatus.Internal
+    fun isIncompatibleOrBrokenPlugin(installedPlugin: IdeaPluginDescriptor, ideBuildNumber: BuildNumber?): Boolean {
+      return isBrokenPlugin(installedPlugin) || PluginManagerCore.isIncompatible(installedPlugin, ideBuildNumber)
     }
 
     @JvmStatic

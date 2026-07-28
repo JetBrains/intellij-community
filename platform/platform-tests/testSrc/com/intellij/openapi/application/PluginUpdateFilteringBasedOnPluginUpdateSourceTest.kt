@@ -8,13 +8,10 @@ import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.http.url
-import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
-import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -126,63 +123,6 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       handler.responseBody.writer().use {
         it.write(getUpdatesResponseJson(updates))
       }
-    }
-  }
-
-  private fun setCustomRepositoryPlugins(customServer: HttpServer, plugins: List<CustomRepositoryPlugin>) {
-    customServer.createContext("/custom-repository") { handler ->
-      handler.sendResponseHeaders(200, 0)
-      handler.responseBody.writer().use { out ->
-        out.write(
-          """
-          <plugins>
-            ${plugins.joinToString("\n") { it.toPluginXml(customServer) }}
-          </plugins>
-          """.trimIndent())
-      }
-    }
-
-    for (plugin in plugins) {
-      customServer.createContext(plugin.downloadPath) { handler ->
-        handler.sendResponseHeaders(200, 0)
-        handler.responseBody.use { output ->
-          JarOutputStream(output).use { jarOutput ->
-            jarOutput.putNextEntry(ZipEntry("META-INF/plugin.xml"))
-            jarOutput.write(plugin.toJarPluginXml().toByteArray())
-          }
-        }
-      }
-    }
-  }
-
-  private data class CustomRepositoryPlugin(val pluginId: String, val version: String) {
-    val downloadPath: String = "/downloads/$pluginId-$version.jar"
-
-    fun toPluginXml(customServer: HttpServer): String {
-      return """
-            <plugin id="$pluginId">
-              <name>$pluginId</name>
-              <description>$pluginId plugin</description>
-              <version>$version</version>
-              <vendor>JetBrains</vendor>
-              <idea-version since-build="1.0" until-build="999.*"/>
-              <change-notes>Update</change-notes>
-              <download-url>${customServer.url}$downloadPath</download-url>
-            </plugin>
-      """.trimIndent()
-    }
-
-    fun toJarPluginXml(): String {
-      return """
-        <idea-plugin>
-          <id>$pluginId</id>
-          <name>$pluginId</name>
-          <description>$pluginId plugin</description>
-          <vendor>JetBrains</vendor>
-          <version>$version</version>
-          <idea-version since-build="1.0" until-build="999.9999"/>
-        </idea-plugin>
-      """.trimIndent()
     }
   }
 

@@ -3,12 +3,16 @@
 
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
+import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.PluginUpdateCheckService
 import com.intellij.openapi.updateSettings.PluginUpdateInfo
+import com.intellij.openapi.updateSettings.impl.InternalPluginResults
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.junit5.RegistryKey
@@ -446,4 +450,110 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
     assertEquals("ImageView", result.update.id.idString)
   }
 
+  @Test
+  fun `return updates for a broken plugin if the first repository contains only downgrades (IJPL-251144)`() {
+    val pluginId = "test.custom.source.downgrade"
+    val customServer = createTestServer(testDisposable.get())
+    val customRepositoryUrl = customServer.url + "/custom-repository"
+
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock(id = pluginId,
+                          name = pluginId,
+                          company = "JetBrains",
+                          version = "2.0",
+                          sinceBuild = "1.0",
+                          untilBuild = "999.99999",
+                          enabled = true),
+    ))
+    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+    updateBrokenPlugins(mapOf(Pair(PluginId(pluginId), setOf("2.0"))))
+
+    val marketplaceUpdate = RepositoryPluginMock(pluginId = pluginId, externalPluginId = "501", externalUpdateId = "101", version = "3.0")
+    setServerPlugins(listOf(marketplaceUpdate), listOf(marketplaceUpdate))
+
+    setCustomRepositoryPlugins(customServer, listOf(CustomRepositoryPlugin(pluginId, "1.0")))
+
+    val internalResult = UpdateCheckerFacade.getInstance().getPluginUpdates(listOf(PluginId.getId(pluginId)))
+    assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
+
+    val result = internalResult.pluginUpdates
+    assertEquals(1, result.allEnabled.size)
+    val update = result.allEnabled.single()
+    assertEquals(pluginId, update.id.idString)
+    assertEquals(marketplaceUpdate.version, update.pluginVersion)
+    assertTrue(result.allDisabled.isEmpty())
+    assertTrue(result.incompatible.isEmpty())
+  }
+
+  @Test
+  fun `don't suggest downgrade for non-broken plugins from Marketplace even when downgrade is allowed (IJPL-251144)`() {
+    application.replaceService(PluginManagementPolicy::class.java, TestPluginManagementPolicy(), testDisposable.get())
+    val pluginId = "test.custom.source.downgrade"
+
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock(id = pluginId,
+                          name = pluginId,
+                          company = "JetBrains",
+                          version = "2.0",
+                          sinceBuild = "1.0",
+                          untilBuild = "999.99999",
+                          enabled = true),
+    ))
+
+    val marketplaceUpdate = RepositoryPluginMock(pluginId = pluginId, externalPluginId = "501", externalUpdateId = "101", version = "0.5")
+    setServerPlugins(listOf(marketplaceUpdate), listOf(marketplaceUpdate))
+
+    val internalResult = UpdateCheckerFacade.getInstance().getPluginUpdates(listOf(PluginId.getId(pluginId)))
+    assertIsEmpty(internalResult)
+  }
+
+  private fun assertIsEmpty(internalResult: InternalPluginResults) {
+    assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
+
+    val result = internalResult.pluginUpdates
+    assertTrue(result.allEnabled.isEmpty())
+    assertTrue(result.allDisabled.isEmpty())
+    assertTrue(result.incompatible.isEmpty())
+  }
+
+  @Test
+  fun `don't suggest downgrade for non-broken plugins from custom repository even when downgrade is allowed (IJPL-251144)`() {
+    application.replaceService(PluginManagementPolicy::class.java, TestPluginManagementPolicy(), testDisposable.get())
+    val pluginId = "test.custom.source.downgrade"
+    val customServer = createTestServer(testDisposable.get())
+    val customRepositoryUrl = customServer.url + "/custom-repository"
+
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock(id = pluginId,
+                          name = pluginId,
+                          company = "JetBrains",
+                          version = "2.0",
+                          sinceBuild = "1.0",
+                          untilBuild = "999.99999",
+                          enabled = true),
+    ))
+    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+
+    setCustomRepositoryPlugins(customServer, listOf(
+      CustomRepositoryPlugin(pluginId, "1.0"),
+      CustomRepositoryPlugin(pluginId, "1.5"),
+    ))
+
+    val internalResult = UpdateCheckerFacade.getInstance().getPluginUpdates(listOf(PluginId.getId(pluginId)))
+    assertIsEmpty(internalResult)
+  }
+
+  private class TestPluginManagementPolicy : PluginManagementPolicy {
+    override fun isUpgradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = true
+
+    override fun isDowngradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = true
+
+    override fun canEnablePlugin(descriptor: IdeaPluginDescriptor?): Boolean = false
+
+    override fun canInstallPlugin(descriptor: IdeaPluginDescriptor?): Boolean = false
+
+    override fun isInstallFromDiskAllowed(): Boolean = false
+
+    override fun isPluginAutoUpdateAllowed(): Boolean = false
+  }
 }

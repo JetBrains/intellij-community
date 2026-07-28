@@ -41,6 +41,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.AcceptUpdateToHigherVersion
+import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.KeepExistingPlugin
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
@@ -369,8 +371,7 @@ object UpdateChecker {
       updateable[id] = UpdateCheckerPluginsFacade.getInstance().getPlugin(id)
     }
 
-    val toUpdate = mutableMapOf<PluginId, PluginDownloader>()
-    val toUpdateDisabled = mutableMapOf<PluginId, PluginDownloader>()
+    val categorizedDownloaders = CategorizedDownloaders()
 
     val errors = LinkedHashMap<String?, Exception>()
     val state = InstalledPluginsState.getInstance()
@@ -391,12 +392,12 @@ object UpdateChecker {
         }
         pluginModels.putAll(relevantUpdates.models)
 
-        toUpdate.putAll(relevantUpdates.toUpdate)
-        toUpdateDisabled.putAll(relevantUpdates.toUpdateDisabled)
-        if (!PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
-          for (updatePluginId in (relevantUpdates.toUpdate.keys + relevantUpdates.toUpdateDisabled.keys)) {
+        categorizedDownloaders.putAll(relevantUpdates.categorizedDownloaders)
+        for (updatePluginId in relevantUpdates.categorizedDownloaders.allPluginsUpdatingToHigherVersion()) {
+          if (!PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
             updateable.remove(updatePluginId)
           }
+          categorizedDownloaders.removeAllUpdatesWithLowerVersion(updatePluginId)
         }
       }
       catch (e: Exception) {
@@ -407,8 +408,10 @@ object UpdateChecker {
 
     val incompatible = findPluginsWillBecomeIncompatible(buildNumber, updateable)
 
-    return InternalPluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible),
-                                 pluginModels.values, errors)
+    val updates = PluginUpdates(categorizedDownloaders.getDownloadersForAllEnabledPlugins(),
+                                categorizedDownloaders.getDownloadersForAllDisabledPlugins(),
+                                incompatible)
+    return InternalPluginResults(updates, pluginModels.values, errors)
   }
 
   private fun hasMatchingPluginUpdateSource(pluginId: PluginId, candidatePluginUpdateSource: PluginUpdateSourceId): Boolean {
@@ -460,11 +463,6 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  internal fun allowedDowngrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
-    return PluginManagementPolicy.getInstance().isDowngradeAllowed(localDescriptor, remoteDescriptor)
-  }
-
-  @JvmStatic
   internal fun allowedUpgrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
     return PluginManagementPolicy.getInstance().isUpgradeAllowed(localDescriptor, remoteDescriptor)
   }
@@ -503,26 +501,36 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @RequiresBackgroundThread
-  fun checkDownloader(
+  fun determineUpdateWithDownloaderDecision(
     downloader: PluginDownloader,
     state: InstalledPluginsState,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
     buildNumber: BuildNumber? = null,
-  ) {
+  ): PluginUpdateCandidateDecision {
     val pluginId = downloader.id
-    val pluginVersion = downloader.pluginVersion
+    val updateVersion = downloader.pluginVersion
     val installedPlugin = UpdateCheckerPluginsFacade.getInstance().getPlugin(pluginId)
-    if (installedPlugin == null
-        || pluginVersion == null
-        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
-            && allowedUpgrade(installedPlugin, downloader.descriptor))
-        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
-            && allowedDowngrade(installedPlugin, downloader.descriptor))) {
-      val descriptor = downloader.descriptor
-      if (UpdateCheckerPluginsFacade.getInstance().isCompatible(descriptor, downloader.buildNumber)
-          && !state.wasUpdated(descriptor.pluginId)) {
-        toUpdate[pluginId] = downloader
+    val result = if (installedPlugin == null || updateVersion == null) {
+      AcceptUpdateToHigherVersion
+    }
+    else {
+      val check = PluginUpdateVersionChecker.determinePluginUpdateDecision(updateVersion, installedPlugin, buildNumber)
+      if (check != KeepExistingPlugin && allowedUpgrade(installedPlugin, downloader.descriptor)) {
+        check
       }
+      else {
+        KeepExistingPlugin
+      }
+    }
+
+    if (result == KeepExistingPlugin) return result
+
+    val descriptor = downloader.descriptor
+    return if (UpdateCheckerPluginsFacade.getInstance().isCompatible(descriptor, downloader.buildNumber)
+               && !state.wasUpdated(descriptor.pluginId)) {
+      result
+    }
+    else {
+      KeepExistingPlugin
     }
   }
 

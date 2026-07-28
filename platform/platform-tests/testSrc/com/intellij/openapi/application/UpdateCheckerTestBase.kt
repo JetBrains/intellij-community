@@ -29,6 +29,8 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 
 internal abstract class UpdateCheckerTestBase {
   protected val testDisposable = disposableFixture()
@@ -107,6 +109,31 @@ internal abstract class UpdateCheckerTestBase {
     }
   }
 
+  protected fun setCustomRepositoryPlugins(customServer: HttpServer, plugins: List<CustomRepositoryPlugin>) {
+    customServer.createContext("/custom-repository") { handler ->
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use { out ->
+        out.write("""
+          <plugins>
+            ${plugins.joinToString("\n") { it.toPluginXml(customServer) }}
+          </plugins>
+          """.trimIndent())
+      }
+    }
+
+    for (plugin in plugins) {
+      customServer.createContext(plugin.downloadPath) { handler ->
+        handler.sendResponseHeaders(200, 0)
+        handler.responseBody.use { output ->
+          JarOutputStream(output).use { jarOutput ->
+            jarOutput.putNextEntry(ZipEntry("META-INF/plugin.xml"))
+            jarOutput.write(plugin.toJarPluginXml().toByteArray())
+          }
+        }
+      }
+    }
+  }
+
   protected fun getUpdatesResponseJson(updates: List<RepositoryPluginMock>): String {
     return objectMapper.writeValueAsString(
       updates.map {
@@ -181,6 +208,37 @@ internal data class InstalledPluginMock(
   val enabled: Boolean,
 )
 
+internal data class CustomRepositoryPlugin(val pluginId: String, val version: String) {
+  val downloadPath: String = "/downloads/$pluginId-$version.jar"
+
+  fun toPluginXml(customServer: HttpServer): String {
+    return """
+            <plugin id="$pluginId">
+              <name>$pluginId</name>
+              <description>$pluginId plugin</description>
+              <version>$version</version>
+              <vendor>JetBrains</vendor>
+              <idea-version since-build="1.0" until-build="999.*"/>
+              <change-notes>Update</change-notes>
+              <download-url>${customServer.url}$downloadPath</download-url>
+            </plugin>
+      """.trimIndent()
+  }
+
+  fun toJarPluginXml(): String {
+    return """
+        <idea-plugin>
+          <id>$pluginId</id>
+          <name>$pluginId</name>
+          <description>$pluginId plugin</description>
+          <vendor>JetBrains</vendor>
+          <version>$version</version>
+          <idea-version since-build="1.0" until-build="999.9999"/>
+        </idea-plugin>
+      """.trimIndent()
+  }
+}
+
 internal class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
   private val plugins = mutableListOf<InstalledPluginMock>()
   private val descriptors = mutableMapOf<PluginId, TestIdeaPluginDescriptor>()
@@ -228,8 +286,7 @@ internal class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
   override fun getOnceInstalledIfExists(): Path? = null
 
   override fun isDisabled(id: PluginId): Boolean {
-    return plugins.find { it.id == id.idString }
-      ?.enabled == false
+    return plugins.find { it.id == id.idString }?.enabled == false
   }
 
   override fun isCompatible(

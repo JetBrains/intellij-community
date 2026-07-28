@@ -26,7 +26,6 @@ import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getMainDescriptor
-import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
@@ -1047,8 +1046,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return
     }
 
-    if (PluginManagerCore.isIncompatible(descriptor) ||
-        isBrokenPlugin(descriptor) ||
+    if (PluginDownloader.isIncompatibleOrBrokenPlugin(descriptor, null) ||
         hasProblematicDependencies(session, pluginId)) {
       session.errorPluginsToDisable.add(pluginId)
     }
