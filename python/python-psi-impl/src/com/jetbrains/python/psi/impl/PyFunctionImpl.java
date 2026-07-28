@@ -44,7 +44,6 @@ import com.jetbrains.python.psi.PsiQuery;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
@@ -78,13 +77,9 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
-import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTypedDictTypeImpl;
@@ -96,9 +91,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -109,7 +102,6 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
-import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
 
@@ -245,32 +237,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  public @Nullable PyType getCallType(@Nullable PyExpression receiver,
-                                      @Nullable PyCallSiteOwner callSiteExpression,
-                                      @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                                      @NotNull TypeEvalContext context) {
-    @Nullable PyType type = context.getReturnType(this);
-    if (PyTypeChecker.hasGenerics(type, context)) {
-      PyType callableType = context.getType(this);
-      PyCallableType callableTypeCasted = callableType instanceof PyCallableType ? (PyCallableType)callableType : null;
-      final var substitutions =
-        PyTypeInferenceCspFactory.unifyGenericCall(callSiteExpression, callableTypeCasted, parameters, context);
-      if (substitutions != null) {
-        final var substitutionsWithUnresolvedReturnGenerics =
-          PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(callableTypeCasted, type, substitutions, context);
-        type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
-      }
-      else {
-        type = PyAnyType.getUnknown();
-      }
-    }
-    if (!isUnknown(type) && isDynamicallyEvaluated(parameters.values(), context)) {
-      type = PyUnionType.createWeakType(type);
-    }
-    return PyNarrowedType.Companion.bindIfNeeded(type, callSiteExpression);
-  }
-
-  @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this) {
       @Override
@@ -278,16 +244,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
       }
     };
-  }
-
-  private static boolean isDynamicallyEvaluated(@NotNull Collection<PyCallableParameter> parameters, @NotNull TypeEvalContext context) {
-    for (PyCallableParameter parameter : parameters) {
-      final PyType type = parameter.getType(context);
-      if (type instanceof PyDynamicallyEvaluatedType) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public static class YieldCollector extends PyRecursiveElementVisitor {
