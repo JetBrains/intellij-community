@@ -17,6 +17,8 @@ class LineNumberFileLinkDestinationReferenceTest : BasePlatformTestCase() {
 
   fun `test github single line`() = doTest("github_single_line.md", "Target.cs:L3")
 
+  fun `test github single line bare dotfile`() = doTest("github_bare_dotfile.md", ".env:L5")
+
   fun `test bitbucket single line`() = doTest("bitbucket_single_line.md", "Target.cs:L3")
 
   fun `test bitbucket cloud multi line`() = doTest("bitbucket_multi_reference.md", "Target.cs:L7")
