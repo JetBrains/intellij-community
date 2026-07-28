@@ -137,6 +137,7 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
+    <module name="intellij.platform.klogger" loading="embedded"/>
     <module name="intellij.platform.rpc" loading="embedded"/>
     <module name="intellij.platform.kernel" loading="embedded"/>
     <!-- endregion -->
