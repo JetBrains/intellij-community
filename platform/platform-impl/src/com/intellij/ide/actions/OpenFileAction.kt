@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.icons.AllIcons
@@ -53,11 +53,11 @@ import com.intellij.util.SlowOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
 open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.BackendOnly {
+  @Suppress("CompanionObjectInExtension")
   companion object {
     @JvmStatic
     fun openFile(filePath: String, project: Project) {
@@ -88,18 +88,26 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         openFile(file, project)
       }
     }
+
+    private suspend fun prepareFileTypeForOpening(project: Project?, virtualFile: VirtualFile): Boolean {
+      LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+      return (
+        readAction { virtualFile.fileType } != FileTypes.UNKNOWN ||
+        withContext(Dispatchers.EDT) { FileTypeChooser.associateFileType(virtualFile.name) } != null
+      )
+    }
   }
 
   init {
     templatePresentation.isApplicationScope = true
   }
-  
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     var toSelect: VirtualFile? = null
     val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultProjectDirectory.isNotEmpty()) {
-      toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
+      toSelect = VfsUtil.findFile(Path.of(defaultProjectDirectory), true)
     }
     val descriptor = createFileChooserDescriptor(project, toSelect)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: getPathToSelect(project)) { files ->
@@ -245,34 +253,22 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
   }
-}
 
-private suspend fun prepareFileTypeForOpening(project: Project?, virtualFile: VirtualFile): Boolean {
-  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
-
-  if (readAction { virtualFile.fileType } != FileTypes.UNKNOWN) {
-    return true
+  private fun isFileEqualToProjectFile(file: Path, project: Project): Boolean {
+    if (project !is ProjectStoreOwner) {
+      return false
+    }
+    val storeDescriptor = project.componentStore.storeDescriptor
+    return file == storeDescriptor.presentableUrl
   }
 
-  return withContext(Dispatchers.EDT) {
-    FileTypeChooser.associateFileType(virtualFile.name)
-  } != null
-}
+  @Messages.YesNoCancelResult
+  private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+    if (file.fileType is ProjectFileType) {
+      return Messages.YES
+    }
 
-private fun isFileEqualToProjectFile(file: Path, project: Project): Boolean {
-  if (project !is ProjectStoreOwner) {
-    return false
+    val provider = getImportProvider(file) ?: return Messages.CANCEL
+    return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
   }
-  val storeDescriptor = project.componentStore.storeDescriptor
-  return file == storeDescriptor.presentableUrl
-}
-
-@Messages.YesNoCancelResult
-private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
-  if (file.fileType is ProjectFileType) {
-    return Messages.YES
-  }
-
-  val provider = getImportProvider(file) ?: return Messages.CANCEL
-  return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
 }
