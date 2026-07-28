@@ -51,13 +51,13 @@ import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
-import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSED_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA_ITEMS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
+import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isUnknown
 
@@ -785,17 +785,17 @@ class PyTypedDictInspection : PyInspection() {
             varianceAndTypes.forEach { (typeVar, types) ->
               if (typeVar is PyTypeVarType) {
                 when (typeVar.variance) {
-                  PyTypeParameterType.Variance.INVARIANT -> {
+                  PyVariance.INVARIANT -> {
                     if (!types.first.isSameType(types.second, myTypeEvalContext)) {
                       return false
                     }
                   }
-                  PyTypeParameterType.Variance.COVARIANT -> {
+                  PyVariance.COVARIANT -> {
                     if (!PyTypeChecker.match(types.first, types.second, myTypeEvalContext)) {
                       return false
                     }
                   }
-                  PyTypeParameterType.Variance.CONTRAVARIANT -> {
+                  PyVariance.CONTRAVARIANT -> {
                     if (!PyTypeChecker.match(types.second, types.first, myTypeEvalContext)) {
                       return false
                     }

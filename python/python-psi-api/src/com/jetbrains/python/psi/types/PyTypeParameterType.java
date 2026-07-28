@@ -30,8 +30,23 @@ import org.jetbrains.annotations.Nullable;
  * However, they can also come from docstrings or be created dynamically by type providers and, hence, not have a physical declaration.
  */
 public interface PyTypeParameterType extends PyType {
+  /**
+   * @deprecated Use {@link PyVariance} instead
+   */
+  @Deprecated
   enum Variance {
     COVARIANT, CONTRAVARIANT, INVARIANT, BIVARIANT, INFER_VARIANCE
+    ;
+    @ApiStatus.Internal
+    public PyVariance toPyVariance() {
+      return switch (this) {
+        case COVARIANT -> PyVariance.COVARIANT;
+        case CONTRAVARIANT -> PyVariance.CONTRAVARIANT;
+        case INVARIANT -> PyVariance.INVARIANT;
+        case BIVARIANT -> PyVariance.BIVARIANT;
+        case INFER_VARIANCE -> PyVariance.INFER_VARIANCE;
+      };
+    }
   }
 
   /**
@@ -64,8 +79,8 @@ public interface PyTypeParameterType extends PyType {
   }
 
   /** Returns the declared variance for this type parameter. */
-  default @NotNull PyTypeVarType.Variance getVariance() {
-    return PyTypeVarType.Variance.INFER_VARIANCE;
+  default @NotNull PyVariance getVariance() {
+    return PyVariance.INFER_VARIANCE;
   }
 
   default @Nullable Ref<? extends PyType> getDefaultType() {

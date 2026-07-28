@@ -29,7 +29,6 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.ConstraintReducer.reduce
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.SubtypeJudgement.getReversibleSubstitutionData
 import com.jetbrains.python.psi.types.SubtypeJudgement.isRawSubtype
@@ -56,7 +55,7 @@ class CspBuilder(val context: TypeEvalContext) {
     return allSubstitutions.entries
   }
 
-  fun addConstraint(left: PyType?, right: PyType?, variance: Variance, priority: ConstraintPriority, isBinding: Boolean = true) {
+  fun addConstraint(left: PyType?, right: PyType?, variance: PyVariance, priority: ConstraintPriority, isBinding: Boolean = true) {
     if (left == right) {
       return
     }
@@ -196,20 +195,20 @@ data class PyCspSolution(
 private data class TypeConstraint(
   val left: PyType?,
   val right: PyType?,
-  val variance: Variance,
+  val variance: PyVariance,
   val priority: ConstraintPriority? = null,
   val isBinding: Boolean? = null,
 ) {
   companion object {
-    val TRUE = TypeConstraint(null, null, Variance.INVARIANT)
-    val FALSE = TypeConstraint(null, null, Variance.INFER_VARIANCE)
+    val TRUE = TypeConstraint(null, null, PyVariance.INVARIANT)
+    val FALSE = TypeConstraint(null, null, PyVariance.INFER_VARIANCE)
   }
 
   override fun toString(): String {
     val varianceStr = when (variance) {
-      Variance.INVARIANT -> "="
-      Variance.COVARIANT -> "<:"
-      Variance.CONTRAVARIANT -> ":>"
+      PyVariance.INVARIANT -> "="
+      PyVariance.COVARIANT -> "<:"
+      PyVariance.CONTRAVARIANT -> ":>"
       else -> "?"
     }
     return "$left $varianceStr $right"
@@ -309,13 +308,13 @@ private class InferenceVariableNameGenerator {
 private data class TypeBound(
   val left: PyInferenceVariable,
   val right: PyType?,
-  val variance: Variance,
+  val variance: PyVariance,
   val referencedInfVars: Set<PyInferenceVariable>,
 ) {
   constructor(
     left: PyInferenceVariable,
     right: PyType?,
-    variance: Variance,
+    variance: PyVariance,
     context: TypeEvalContext,
   ) : this(left, right, variance, collectInferenceVariables(right, context))
 }
@@ -410,7 +409,7 @@ private class ConstraintProblem(
     }
   }
 
-  fun addBound(left: PyInferenceVariable, right: PyType?, variance: Variance) {
+  fun addBound(left: PyInferenceVariable, right: PyType?, variance: PyVariance) {
     if (left == right) return
     val newBound = TypeBound(left, right, variance, context)
     val boundWasAdded = bounds.add(newBound)
@@ -422,7 +421,7 @@ private class ConstraintProblem(
     }
     pendingBounds.addLast(newBound)
 
-    if (variance == Variance.INVARIANT && isProper(right, context)) {
+    if (variance == PyVariance.INVARIANT && isProper(right, context)) {
       if (!instantiations.containsKey(left) || instantiations[left].isAnyOrUnknown) {
         instantiations[left] = right
       }
@@ -464,8 +463,8 @@ private object ConstraintReducer {
     reduce(constraint.left, constraint.right, constraint.variance, cp)
   }
 
-  private fun reduce(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
-    if (variance == Variance.INFER_VARIANCE) {
+  private fun reduce(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    if (variance == PyVariance.INFER_VARIANCE) {
       cp.fail()
       return
     }
@@ -476,7 +475,7 @@ private object ConstraintReducer {
     }
 
     if (left is PyUnsafeUnionType) {
-      reduceDisjunction(right, left.members.filterNotNull(), variance.inverse(), cp)
+      reduceDisjunction(right, left.members.filterNotNull(), !variance, cp)
       return
     }
     if (right is PyUnsafeUnionType) {
@@ -489,19 +488,19 @@ private object ConstraintReducer {
       return
     }
     if (right is PyInferenceVariable) {
-      cp.addBound(right, left, variance.inverse())
+      cp.addBound(right, left, !variance)
       return
     }
 
     // check top and bottom types. Doing this up-front here simplifies the handling of other special cases
-    val isBottomType = (if (variance === Variance.CONTRAVARIANT) right else left).isBottomType()
-    val isTopType = (if (variance === Variance.CONTRAVARIANT) left else right).isTopType(cp.context)
+    val isBottomType = (if (variance === PyVariance.CONTRAVARIANT) right else left).isBottomType()
+    val isTopType = (if (variance === PyVariance.CONTRAVARIANT) left else right).isTopType(cp.context)
     if (isBottomType || isTopType) {
       return
     }
 
     if (left is PyCompositeType) {
-      reduceCompositeType(right, left, variance.inverse(), cp)
+      reduceCompositeType(right, left, !variance, cp)
       return
     }
     if (right is PyCompositeType) {
@@ -511,8 +510,8 @@ private object ConstraintReducer {
 
     val isLeftStructural = isStructural(left, cp.context)
     val isRightStructural = isStructural(right, cp.context)
-    if ((isLeftStructural && (variance == Variance.CONTRAVARIANT || variance == Variance.INVARIANT))
-        || (isRightStructural && (variance == Variance.COVARIANT || variance == Variance.INVARIANT))) {
+    if ((isLeftStructural && (variance == PyVariance.CONTRAVARIANT || variance == PyVariance.INVARIANT))
+        || (isRightStructural && (variance == PyVariance.COVARIANT || variance == PyVariance.INVARIANT))) {
       reduceStructuralTypeGuarded(left, right, variance, cp)
       return
     }
@@ -531,7 +530,7 @@ private object ConstraintReducer {
     reduceProperType(left, right, variance, cp)
   }
 
-  private fun reduceStructuralTypeGuarded(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceStructuralTypeGuarded(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
     // iterating over all members (and their types) often leads to recursive checks and reduce calls
     try {
       cp.recursionGuard.doPreventingRecursion(Pair(left, right), false) {
@@ -543,10 +542,10 @@ private object ConstraintReducer {
     }
   }
 
-  private fun reduceStructuralType(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceStructuralType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
     if (left == right) return
     if (left == null || right == null) return
-    if (variance == Variance.CONTRAVARIANT) return reduceStructuralType(right, left, Variance.COVARIANT, cp)
+    if (variance == PyVariance.CONTRAVARIANT) return reduceStructuralType(right, left, PyVariance.COVARIANT, cp)
     if (right !is PyClassType || !right.isProtocol(cp.context)) UNREACHABLE()
     if (left !is PyClassType) {
       cp.fail() // TODO
@@ -581,7 +580,7 @@ private object ConstraintReducer {
       val rightMemberType = PyTypeChecker.substitutePlainly(rightMember.type, rightSubstitutions, cp.context)
       val leftMemberTypes = mutableSetOf<PyType?>()
       for (leftMember in leftMembers) {
-        if (variance == Variance.INVARIANT) {
+        if (variance == PyVariance.INVARIANT) {
           val leftMemberElement = leftMember.element
           val rightMemberElement = rightMember.element
           val leftIsReadOnly = leftMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(leftMemberElement, cp.context)
@@ -611,38 +610,37 @@ private object ConstraintReducer {
     }
   }
 
-  private fun reduceProperType(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceProperType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
     when (variance) {
-      Variance.COVARIANT -> {
+      PyVariance.COVARIANT -> {
         if (!isSubtype(left, right, cp.context)) {
           cp.fail()
           return
         }
       }
-      Variance.CONTRAVARIANT -> {
+      PyVariance.CONTRAVARIANT -> {
         if (!isSubtype(right, left, cp.context)) {
           cp.fail()
           return
         }
       }
-      Variance.INVARIANT -> {
+      PyVariance.INFER_VARIANCE,
+        // actually this should never happen. However, we fail gracefully and fall back to invariant
+      PyVariance.INVARIANT -> {
         if (!sameTypes(left, right, cp.context)) {
           cp.fail()
           return
         }
       }
-      Variance.BIVARIANT -> {
+      PyVariance.BIVARIANT -> {
         // success
-      }
-      Variance.INFER_VARIANCE -> {
-        UNREACHABLE()
       }
     }
     // success
   }
 
   /** Reduction for two given callable types will be applied on all their parameters and their return type in a pair-wise manner. */
-  private fun reduceCallableType(left: PyCallableType, right: PyCallableType, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceCallableType(left: PyCallableType, right: PyCallableType, variance: PyVariance, cp: ConstraintProblem) {
     // derive constraints for types of parameters
     val lParams = left.getParameters(cp.context)
     val rParams = right.getParameters(cp.context)
@@ -653,7 +651,7 @@ private object ConstraintReducer {
         val lParamType = lParam.getType(cp.context)
         val rParamType = rParam.getType(cp.context)
         if (lParamType != null && rParamType != null) {
-          val paramVariance = variance.multiply(Variance.CONTRAVARIANT)
+          val paramVariance = variance * PyVariance.CONTRAVARIANT
           reduce(lParamType, rParamType, paramVariance, cp)
         }
       }
@@ -661,7 +659,7 @@ private object ConstraintReducer {
 
     val lReturnType = left.getReturnType(cp.context)
     val rReturnType = right.getReturnType(cp.context)
-    val retTypeVariance = variance.multiply(Variance.COVARIANT)
+    val retTypeVariance = variance * PyVariance.COVARIANT
     reduce(lReturnType, rReturnType, retTypeVariance, cp)
   }
 
@@ -707,16 +705,16 @@ private object ConstraintReducer {
    *  substitutions defined by the original right-hand side ("C" in our example):
    *  IV <-> string
    */
-  private fun reduceNominalType(pLeft: PyType?, pRight: PyType?, pVariance: Variance, cp: ConstraintProblem) {
-    if ((pVariance == Variance.COVARIANT && !isRawSubtype(pLeft, pRight, cp.context))
-        || (pVariance == Variance.CONTRAVARIANT && !isRawSubtype(pRight, pLeft, cp.context))
-        || (pVariance == Variance.INVARIANT && !(isRawSubtype(pLeft, pRight, cp.context) || isRawSubtype(pRight, pLeft, cp.context)))) {
+  private fun reduceNominalType(pLeft: PyType?, pRight: PyType?, pVariance: PyVariance, cp: ConstraintProblem) {
+    if ((pVariance == PyVariance.COVARIANT && !isRawSubtype(pLeft, pRight, cp.context))
+        || (pVariance == PyVariance.CONTRAVARIANT && !isRawSubtype(pRight, pLeft, cp.context))
+        || (pVariance == PyVariance.INVARIANT && !(isRawSubtype(pLeft, pRight, cp.context) || isRawSubtype(pRight, pLeft, cp.context)))) {
       cp.fail()
     }
 
     val left: PyType?
     val right: PyType?
-    if (pVariance == Variance.COVARIANT) {
+    if (pVariance == PyVariance.COVARIANT) {
       // normalize ⟨ B <: A ⟩ to ⟨ A :> B ⟩ to make sure the (raw) subtype is on the right-hand side
       left = pRight
       right = pLeft
@@ -736,7 +734,7 @@ private object ConstraintReducer {
         val typeArgSubst = PyTypeChecker.substitutePlainly(leftTypeArg.get(), substitutionsRight, cp.context)
         val typeVarSubst = PyTypeChecker.substitutePlainly(leftTV, substitutionsRight, cp.context)
         val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(leftTV, cp.context)
-        val defSiteVariance = if (inferredVariance == Variance.BIVARIANT) Variance.COVARIANT else inferredVariance
+        val defSiteVariance = if (inferredVariance == PyVariance.BIVARIANT) PyVariance.COVARIANT else inferredVariance
         reduce(typeVarSubst, typeArgSubst, defSiteVariance, cp)
       }
     }
@@ -746,15 +744,15 @@ private object ConstraintReducer {
   private fun reduceCompositeType(
     left: PyType?,
     right: PyCompositeType, // COMPOSED TYPE
-    variance: Variance,
+    variance: PyVariance,
     cp: ConstraintProblem,
   ) {
     when (variance) {
-      Variance.INVARIANT -> {
-        reduceCompositeType(left, right, Variance.COVARIANT, cp)
-        reduceCompositeType(left, right, Variance.CONTRAVARIANT, cp)
+      PyVariance.INVARIANT -> {
+        reduceCompositeType(left, right, PyVariance.COVARIANT, cp)
+        reduceCompositeType(left, right, PyVariance.CONTRAVARIANT, cp)
       }
-      Variance.COVARIANT -> {
+      PyVariance.COVARIANT -> {
         if (right is PyUnionType) {
           // semantics: disjunction of right with each union member
           reduceDisjunction(left, right.members, variance, cp)
@@ -768,7 +766,7 @@ private object ConstraintReducer {
           }
         }
       }
-      Variance.CONTRAVARIANT -> {
+      PyVariance.CONTRAVARIANT -> {
         if (right is PyUnionType) {
           // semantics: conjunction of right with each intersection member
           for (member in right.members) {
@@ -797,7 +795,7 @@ private object ConstraintReducer {
    * the given set of member types here. To decide which type is the most promising, this
    * method makes some assumptions taking structural properties into account.
    */
-  private fun reduceDisjunction(left: PyType?, members: Collection<PyType?>, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceDisjunction(left: PyType?, members: Collection<PyType?>, variance: PyVariance, cp: ConstraintProblem) {
     if (members.isEmpty()) {
       return
     }
@@ -809,7 +807,7 @@ private object ConstraintReducer {
     // first to avoid incorrect results (for example, A|B <: [A, B, C] as a disjunction must be
     // handled as A <: [A, B, C] AND B <: [A, B, C], both as a disjunction), not as A|B <: X with
     // X being the choice of "most promising" option out of A, B, C).
-    if ((variance == Variance.COVARIANT && left is PyUnionType) || (variance == Variance.CONTRAVARIANT && left is PyIntersectionType)) {
+    if ((variance == PyVariance.COVARIANT && left is PyUnionType) || (variance == PyVariance.CONTRAVARIANT && left is PyIntersectionType)) {
       val leftMembers = left.members.filterNotNull()
       for (currLeft in leftMembers) {
         reduceDisjunction(currLeft, members, variance, cp)
@@ -826,8 +824,8 @@ private object ConstraintReducer {
       val bestMatchIdx = TreeMap<Int, Int>()
       for (i in memberList.indices) {
         val currRight: PyType? = memberList[i]
-        val subType: PyType? = if (variance == Variance.CONTRAVARIANT) currRight else left
-        val superType: PyType? = if (variance == Variance.CONTRAVARIANT) left else currRight
+        val subType: PyType? = if (variance == PyVariance.CONTRAVARIANT) currRight else left
+        val superType: PyType? = if (variance == PyVariance.CONTRAVARIANT) left else currRight
         val isRawSubtype = isRawSubtype(subType, superType, cp.context)
         if (isRawSubtype) {
           val currMatchCnt = computeMatchCount(left, memberList[i], variance, cp)
@@ -851,11 +849,11 @@ private object ConstraintReducer {
       // choose the first naked inference variable (if present)
       idx = memberList.indexOfFirst { it is PyInferenceVariable }
     }
-    if (idx == -1 && variance == Variance.COVARIANT) {
+    if (idx == -1 && variance == PyVariance.COVARIANT) {
       // choose the top type 'any' or one of the pseudo-top types: Object, N4Object
       idx = memberList.indexOfFirst { it.isTopType(cp.context) }
     }
-    if (idx == -1 && variance == Variance.CONTRAVARIANT) {
+    if (idx == -1 && variance == PyVariance.CONTRAVARIANT) {
       // choose the bottom type 'undefined' or one of the pseudo-bottom types: null
       idx = memberList.indexOfFirst { it.isBottomType() }
     }
@@ -866,7 +864,7 @@ private object ConstraintReducer {
     return reduce(left, memberList[idx], variance, cp)
   }
 
-  private fun computeMatchCount(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem): Int {
+  private fun computeMatchCount(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem): Int {
     var matchCount = 1000
 
     if (left is PyClassType && right is PyClassType && left.pyClass === right.pyClass) {
@@ -887,8 +885,8 @@ private object ConstraintReducer {
       return matchCount
     }
 
-    val superType = if (variance == Variance.COVARIANT) left else right
-    val subType = if (variance == Variance.COVARIANT) right else left
+    val superType = if (variance == PyVariance.COVARIANT) left else right
+    val subType = if (variance == PyVariance.COVARIANT) right else left
     if (superType is PyClassLikeType) {
       // choose the first supertype of left
       val lSTs = superType.getAncestorTypes(cp.context)
@@ -908,7 +906,7 @@ private object ConstraintReducer {
     return 0
   }
 
-  private fun mightSufficeExistingBounds(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem): Boolean {
+  private fun mightSufficeExistingBounds(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem): Boolean {
     var left = left
     var right = right
     var variance = variance
@@ -919,7 +917,7 @@ private object ConstraintReducer {
       val tmp = left
       left = right
       right = tmp
-      variance = variance.inverse()
+      variance = !variance
     }
     // left is InferenceVariable
 
@@ -927,12 +925,12 @@ private object ConstraintReducer {
       val newTypeBound = TypeBound(left, right, variance, cp.context)
       val newConstraints: List<TypeConstraint> = TypeBoundCombiner.combineAll(newTypeBound, cp)
       for (newConstraint in newConstraints) {
-        if (newConstraint.variance === Variance.CONTRAVARIANT) {
+        if (newConstraint.variance === PyVariance.CONTRAVARIANT) {
           if (!isRawSubtype(newConstraint.right, newConstraint.left, cp.context)) {
             return false
           }
         }
-        else if (newConstraint.variance === Variance.COVARIANT) {
+        else if (newConstraint.variance === PyVariance.COVARIANT) {
           if (!isRawSubtype(newConstraint.left, newConstraint.right, cp.context)) {
             return false
           }
@@ -974,25 +972,25 @@ private object TypeBoundCombiner {
    */
   fun combine(boundI: TypeBound, boundJ: TypeBound, cp: ConstraintProblem?, context: TypeEvalContext): TypeConstraint? {
     when (boundI.variance) {
-      Variance.INVARIANT -> when (boundJ.variance) {
-        Variance.INVARIANT -> return combineInvInv(boundI, boundJ, cp, context)
-        Variance.COVARIANT, Variance.CONTRAVARIANT -> return combineInvVar(boundI, boundJ, cp, context)
+      PyVariance.INVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvInv(boundI, boundJ, cp, context)
+        PyVariance.COVARIANT, PyVariance.CONTRAVARIANT -> return combineInvVar(boundI, boundJ, cp, context)
         else -> {
           UNREACHABLE()
         }
       }
-      Variance.COVARIANT -> when (boundJ.variance) {
-        Variance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
-        Variance.CONTRAVARIANT -> return combineContraCo(boundJ, boundI) // note: reversed arguments!
-        Variance.COVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
+      PyVariance.COVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
+        PyVariance.CONTRAVARIANT -> return combineContraCo(boundJ, boundI) // note: reversed arguments!
+        PyVariance.COVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
         else -> {
           UNREACHABLE()
         }
       }
-      Variance.CONTRAVARIANT -> when (boundJ.variance) {
-        Variance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
-        Variance.COVARIANT -> return combineContraCo(boundI, boundJ)
-        Variance.CONTRAVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
+      PyVariance.CONTRAVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
+        PyVariance.COVARIANT -> return combineContraCo(boundI, boundJ)
+        PyVariance.CONTRAVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
         else -> {
           UNREACHABLE()
         }
@@ -1009,7 +1007,7 @@ private object TypeBoundCombiner {
   private fun combineInvInv(boundS: TypeBound, boundT: TypeBound, cp: ConstraintProblem?, context: TypeEvalContext): TypeConstraint? {
     if (boundS.left === boundT.left) {
       // `α = S` and `α = T` implies `S = T`
-      return TypeConstraint(boundS.right, boundT.right, Variance.INVARIANT)
+      return TypeConstraint(boundS.right, boundT.right, PyVariance.INVARIANT)
     }
     // inference variables are different
     // -> try to substitute a proper RHS in the RHS of the other bound, to make it a proper type itself
@@ -1046,7 +1044,7 @@ private object TypeBoundCombiner {
       val beta = boundOther.left
       val substT = substituteInferenceVariable(typeT, alpha, typeU, context) // returns T[α:=U]
       cp?.removeBound(boundOther)
-      return TypeConstraint(beta, substT, Variance.INVARIANT)
+      return TypeConstraint(beta, substT, PyVariance.INVARIANT)
     }
     return null
   }
@@ -1102,7 +1100,7 @@ private object TypeBoundCombiner {
     if (alpha === beta) {
       // transitivity, using LHS as bridge:
       // α :> S and α <: T implies S <: T
-      return TypeConstraint(typeS, typeT, Variance.COVARIANT)
+      return TypeConstraint(typeS, typeT, PyVariance.COVARIANT)
     }
     // so, α and β are different
     if (typeS is PyInferenceVariable) {
@@ -1110,7 +1108,7 @@ private object TypeBoundCombiner {
       if (gamma === typeT) {
         // transitivity, using RHS as bridge:
         // α :> γ and β <: γ implies α :> β
-        return TypeConstraint(alpha, beta, Variance.CONTRAVARIANT)
+        return TypeConstraint(alpha, beta, PyVariance.CONTRAVARIANT)
       }
     }
     return null
@@ -1407,7 +1405,7 @@ private object TypeBoundResolver {
     assert(!(cp.isInstantiated(infVar))) { "attempt to re-instantiate var " + infVar.name }
     assert(isProper(proper, context))
     // add bound `infVar = proper`
-    reduce(TypeConstraint(infVar, proper, Variance.INVARIANT), cp)
+    reduce(TypeConstraint(infVar, proper, PyVariance.INVARIANT), cp)
     // check if 'proper' was accepted by BoundSet 'currentBounds' as an instantiation/solution of 'infVar'
     if (!cp.isInstantiated(infVar)) {
       // No! This should never happen except if 'proper' is not a proper type (and the above assertions are turned off).
@@ -1429,7 +1427,7 @@ private object TypeBoundResolver {
    * will have been created that reflects the impact of the instantiation of β on α (without mentioning β).
    */
   private fun chooseInstantiation(cp: ConstraintProblem, infVar: PyInferenceVariable, context: TypeEvalContext): PyType? {
-    val concreteBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == Variance.INVARIANT }
+    val concreteBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.INVARIANT }
     if (concreteBounds.size == 1) {
       return concreteBounds.single()
     }
@@ -1443,8 +1441,8 @@ private object TypeBoundResolver {
       return infVar.typeVariable
     }
 
-    val lowerBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == Variance.CONTRAVARIANT && !b.right.isUnknown }
-    val upperBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == Variance.COVARIANT && !b.right.isTopType(context) }
+    val lowerBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.CONTRAVARIANT && !b.right.isUnknown }
+    val upperBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.COVARIANT && !b.right.isTopType(context) }
 
     @Suppress("SENSELESS_COMPARISON") // All cases are declared explicitly for systematic reasons
     if (lowerBounds.isEmpty() && upperBounds.isEmpty()) {
@@ -1755,28 +1753,6 @@ private fun PyType?.isTopType(context: TypeEvalContext): Boolean {
 
 private fun PyType?.isBottomType(): Boolean {
   return this.isAnyOrUnknown || this is PyNeverType // Any or Never
-}
-
-private fun Variance.inverse(): Variance {
-  return when (this) {
-    Variance.COVARIANT -> Variance.CONTRAVARIANT
-    Variance.CONTRAVARIANT -> Variance.COVARIANT
-    else -> {
-      this
-    }
-  }
-}
-
-private fun Variance.multiply(other: Variance): Variance {
-  if (this == Variance.INVARIANT || other == Variance.INVARIANT)
-    return Variance.INVARIANT
-  if (this == Variance.CONTRAVARIANT && other == Variance.CONTRAVARIANT)
-    return Variance.COVARIANT
-  if (this == Variance.CONTRAVARIANT || other == Variance.CONTRAVARIANT)
-    return Variance.CONTRAVARIANT
-  if (this == Variance.COVARIANT && other == Variance.COVARIANT)
-    return Variance.COVARIANT
-  UNREACHABLE()
 }
 
 /** The author thought, we never get here. */

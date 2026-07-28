@@ -29,7 +29,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.enterCsp
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -170,7 +169,7 @@ object PyTypeInferenceCspFactory {
 
       val expectedType = getExpectedType(si.expression, tmpContext)
       if (expectedType != null && !expectedType.isAnyOrUnknown && !returnType.isAnyOrUnknown) {
-        builder.addConstraint(returnType, expectedType, Variance.COVARIANT, ConstraintPriority.LOW)
+        builder.addConstraint(returnType, expectedType, PyVariance.COVARIANT, ConstraintPriority.LOW)
       }
 
       builder.solve()
@@ -235,7 +234,7 @@ object PyTypeInferenceCspFactory {
     val sequenceTypeArg = PyUnionType.union(elementTypes)
 
     // Literal element types as union
-    builder.addConstraint(iv, sequenceTypeArg, Variance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
+    builder.addConstraint(iv, sequenceTypeArg, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
 
     return sequenceTypeIV
   }
@@ -281,7 +280,7 @@ object PyTypeInferenceCspFactory {
       if (value != null) {
         val keyIV = PyTypeChecker.substitutePlainly(key, ivSubstitutions, context)
         val valueIV = PyTypeChecker.substitutePlainly(value.get(), ivSubstitutions, context)
-        builder.addConstraint(keyIV, valueIV, Variance.INVARIANT, ConstraintPriority.HIGH)
+        builder.addConstraint(keyIV, valueIV, PyVariance.INVARIANT, ConstraintPriority.HIGH)
       }
     }
     ivSubstitutions.qualifierType = PyTypeChecker.substitutePlainly(ivSubstitutions.qualifierType, ivSubstitutions, context) // LOL
@@ -303,7 +302,7 @@ object PyTypeInferenceCspFactory {
         val expectedParamTypeSelfIV = PyTypeChecker.substitutePlainly(expectedParamTypeSelf, ivSubstitutions, context)
         val passedArgumentTypeIV = PyTypeChecker.substitutePlainly(passedArgumentType, ivSubstitutions, context)
         // semantics: Actual <: TV
-        builder.addConstraint(expectedParamTypeSelfIV, passedArgumentTypeIV, Variance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
+        builder.addConstraint(expectedParamTypeSelfIV, passedArgumentTypeIV, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
       }
     }
 
@@ -361,7 +360,7 @@ object PyTypeInferenceCspFactory {
     if (tv.bound != null && !tv.bound.isAnyOrUnknown) {
       val typeVarBoundIV = PyTypeChecker.substitutePlainly(tv.bound, ivGenericSubstitutions, context)
       // semantics: TV <: Bound
-      builder.addConstraint(iv, typeVarBoundIV, Variance.COVARIANT, ConstraintPriority.HIGH, false)
+      builder.addConstraint(iv, typeVarBoundIV, PyVariance.COVARIANT, ConstraintPriority.HIGH, false)
     }
     else if (tv.getConstraints().isNotEmpty()) {
       // Note: The Python type variable constraint(s) cannot be fully modeled without a specific CSP constraint that would model a strict logical OR.
@@ -377,8 +376,8 @@ object PyTypeInferenceCspFactory {
       val unionOfConstraints = PyUnionType.union(constraintsIV)
       // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
       // CV_1 & CV_2 & ... & CV_n <: TV <: CV_1 | CV_2 | ... | CV_n
-      builder.addConstraint(iv, intersectionOfConstraints, Variance.CONTRAVARIANT, ConstraintPriority.HIGH, false)
-      builder.addConstraint(iv, unionOfConstraints, Variance.COVARIANT, ConstraintPriority.HIGH, false)
+      builder.addConstraint(iv, intersectionOfConstraints, PyVariance.CONTRAVARIANT, ConstraintPriority.HIGH, false)
+      builder.addConstraint(iv, unionOfConstraints, PyVariance.COVARIANT, ConstraintPriority.HIGH, false)
     }
   }
 

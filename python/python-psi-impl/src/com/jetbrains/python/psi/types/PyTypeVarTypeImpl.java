@@ -22,28 +22,51 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   private final @NotNull List<@Nullable PyType> myConstraints;
   private final @Nullable PyType myBound;
   private final @Nullable Ref<PyType> myDefaultType;
-  private final @NotNull Variance myVariance;
+  private final @NotNull PyVariance myVariance;
   private final boolean myIsDefinition;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
 
   public PyTypeVarTypeImpl(@NotNull String name, @Nullable PyType bound) {
-    this(name, List.of(), bound, null, Variance.INVARIANT);
+    this(name, List.of(), bound, null, PyVariance.INVARIANT);
+  }
+
+  /** @deprecated use {@link #PyTypeVarTypeImpl(String, List, PyType, Ref, PyVariance)} */
+  @Deprecated
+  public PyTypeVarTypeImpl(@NotNull String name,
+                           @NotNull List<@Nullable PyType> constraints,
+                           @Nullable PyType bound,
+                           @Nullable Ref<PyType> defaultType,
+                           @NotNull Variance variance) {
+    this(name, constraints, bound, defaultType, variance.toPyVariance());
   }
 
   public PyTypeVarTypeImpl(@NotNull String name,
                            @NotNull List<@Nullable PyType> constraints,
                            @Nullable PyType bound,
                            @Nullable Ref<PyType> defaultType,
-                           @NotNull Variance variance) {
+                           @NotNull PyVariance variance) {
     this(name, constraints, bound, defaultType, variance, false, null, null);
+  }
+
+  /** @deprecated use {@link #PyTypeVarTypeImpl(String, List, PyType, Ref, PyVariance, boolean, PyQualifiedNameOwner, PyQualifiedNameOwner)} */
+  @Deprecated
+  PyTypeVarTypeImpl(@NotNull String name,
+                    @NotNull List<@Nullable PyType> constraints,
+                    @Nullable PyType bound,
+                    @Nullable Ref<PyType> defaultType,
+                    @NotNull Variance variance,
+                    boolean isDefinition,
+                    @Nullable PyQualifiedNameOwner declarationElement,
+                    @Nullable PyQualifiedNameOwner scopeOwner) {
+    this(name, constraints, bound, defaultType, variance.toPyVariance(), isDefinition, declarationElement, scopeOwner);
   }
 
   PyTypeVarTypeImpl(@NotNull String name,
                     @NotNull List<@Nullable PyType> constraints,
                     @Nullable PyType bound,
                     @Nullable Ref<PyType> defaultType,
-                    @NotNull Variance variance,
+                    @NotNull PyVariance variance,
                     boolean isDefinition,
                     @Nullable PyQualifiedNameOwner declarationElement,
                     @Nullable PyQualifiedNameOwner scopeOwner) {
@@ -169,7 +192,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   }
 
   @Override
-  public @NotNull Variance getVariance() {
+  public @NotNull PyVariance getVariance() {
     return myVariance;
   }
 

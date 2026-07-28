@@ -553,14 +553,20 @@ abstract class PyCodeInsightTestCase {
 
   private fun assertExpectedVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyReferenceExpression) getExpectedVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyReferenceExpression) {
+      return "Expected variance only available for PyReferenceExpressions"
+    }
+    val actualVariance = getExpectedVariance(element, context)
+    return actualVariance.name
   }
 
   private fun assertInferredVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyTypedElement) getDeclaredOrInferredVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyTypedElement) {
+      return "Inferred variance only available for PyTypedElements"
+    }
+    val actualVariance = getDeclaredOrInferredVariance(element, context)
+    return actualVariance?.name ?: "Unknown"
   }
 }
 

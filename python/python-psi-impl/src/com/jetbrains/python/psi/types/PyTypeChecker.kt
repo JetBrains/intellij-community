@@ -57,7 +57,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.match
 import com.jetbrains.python.psi.types.PyTypeChecker.recordFrame
 import com.jetbrains.python.psi.types.PyTypeChecker.recordLeaf
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.USE_DEFAULTS
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
@@ -1637,7 +1636,7 @@ object PyTypeChecker {
     for ((typeArgIndex, pair) in mapping.mappedTypes.withIndex()) {
       val (first, second) = pair
       val typeParameter = findTypeParameter(genericType, typeArgIndex, context)
-      val variance = if (typeParameter == null) Variance.COVARIANT else getDeclaredOrInferredVariance(typeParameter, context.context)
+      val variance = if (typeParameter == null) PyVariance.COVARIANT else getDeclaredOrInferredVariance(typeParameter, context.context)
 
       val matched = if (context.reversedSubstitutions)
         matchCapturedType(typeParameter, genericType, typeArgIndex, variance, second, first, context)
@@ -1674,7 +1673,7 @@ object PyTypeChecker {
     typeParameter: PyTypeVarType?,
     genericType: PyClassType?,
     typeArgIndex: Int,
-    variance: Variance,
+    variance: PyVariance,
     expectedType: PyType?,
     actualType: PyType?,
     context: MatchContext,
@@ -1684,7 +1683,7 @@ object PyTypeChecker {
     }
 
     return when (variance) {
-      Variance.INVARIANT -> {
+      PyVariance.INVARIANT -> {
         // First leg: the actual type argument must be assignable to the expected one. If it isn't, that's an
         // ordinary subtype failure whose own breakdown ("X is not assignable to Y") is the useful reason, so
         // run it under the generic type-argument frame.
@@ -1714,11 +1713,11 @@ object PyTypeChecker {
           sameType
         }
       }
-      Variance.COVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
-      Variance.CONTRAVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) {
+      PyVariance.COVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
+      PyVariance.CONTRAVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) {
         match(actualType, expectedType, context.reverseSubstitutions()).getOrElse { false }
       }
-      Variance.BIVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
+      PyVariance.BIVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
       else -> false
     }
   }

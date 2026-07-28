@@ -54,6 +54,7 @@ import com.jetbrains.python.psi.types.PyTypingNewType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.PyVariance;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import kotlin.jvm.functions.Function4;
 import one.util.streamex.StreamEx;
@@ -659,12 +660,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
                                            boolean showKind,
                                            Function4<PyType, PyTypedElement, PsiElement, TypeEvalContext, HtmlChunk> renderer,
                                            @NotNull TypeEvalContext context) {
-    PyTypeVarType.Variance variance = null;
+    PyVariance variance = null;
     if (showVariance) {
       PyTypedElement refExpr = findReferenceOrTypeParameter(originalElement);
       boolean effectivelyInvariant = isEffectivelyInvariant(refExpr, context);
       variance = effectivelyInvariant
-                 ? PyTypeVarType.Variance.INVARIANT
+                 ? PyVariance.INVARIANT
                  : PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
     }
     PyExpression boundExpression = typeParameter.getBoundExpression();
@@ -699,7 +700,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   private @NotNull HtmlChunk describeTypeParameter(
-    @Nullable PyTypeVarType.Variance variance,
+    @Nullable PyVariance variance,
     @Nls @NotNull String name,
     @Nullable HtmlChunk bound,
     @Nullable HtmlChunk defaultValue,

@@ -33,9 +33,8 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
 import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
+import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 
 class PyTypeInlayHintsProvider : InlayHintsProvider {
@@ -133,7 +132,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val qualifierType = resolveContext.typeEvalContext.getType(qualifier) as? PyClassLikeType ?: return
       if (PyTypingTypeProvider.GENERIC != qualifierType.classQName) return
       val typeVarType = PyTypingTypeProvider.getType(refExpr, resolveContext.typeEvalContext)?.get() as? PyTypeParameterType ?: return
-      if (typeVarType.variance == Variance.INVARIANT) return
+      if (typeVarType.variance == PyVariance.INVARIANT) return
 
       val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeVarType, resolveContext.typeEvalContext)
       sink.addPresentation(inferredVariance, element)
@@ -146,12 +145,12 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       sink.addPresentation(inferredVariance, element)
     }
 
-    fun InlayTreeSink.addPresentation(inferredVariance: Variance?, element: PsiElement) {
+    fun InlayTreeSink.addPresentation(inferredVariance: PyVariance?, element: PsiElement) {
       val position = InlineInlayPosition(element.textRange.startOffset, false)
-      if (inferredVariance == Variance.COVARIANT) {
+      if (inferredVariance == PyVariance.COVARIANT) {
         this.addPresentation(position, tooltip = "covariant: <code>${element.text}</code> only appears in output positions", hintFormat = varianceHintFormat) { text("out") }
       }
-      if (inferredVariance == Variance.CONTRAVARIANT) {
+      if (inferredVariance == PyVariance.CONTRAVARIANT) {
         this.addPresentation(position, tooltip = "contravariant: <code>${element.text}</code> only appears in input positions", hintFormat = varianceHintFormat) { text("in") }
       }
     }

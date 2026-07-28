@@ -829,7 +829,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     
     # We cannot infer variance for type variables whose origin was disguised
     def fn(t: X): pass
-    #         └ INFERRED_VARIANCE NULL
+    #         └ INFERRED_VARIANCE Unknown
     #         └ WARNING Invalid type annotation
     """.trimIndent())
 
@@ -911,6 +911,19 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     #        └ INFERRED_VARIANCE CONTRAVARIANT
         def f(self, t: tuple[*Ts]): ...
     """.trimIndent())
+
+  @TestFor(issues = ["PY-90344"])
+  @Test
+  /**
+   * In case you consider to have BIVARIANCE as a solution here, also keep in mind that
+   * (a) there can be more complex cases such as `class B[U, V]` where `U` and `V` are swapped at self-usage locations,
+   * (b) that even BIVANRIANCE needs to be treated as INVARIANCE during subtype checks.
+   */
+  fun `Infer invariance as stable solution for self usage in covariant position`() = test("""
+      class A[T]:
+      #       └ INFERRED_VARIANCE INVARIANT
+          def f(self, other: A[T]): ...
+      """.trimIndent())
 
   @Test
   fun `Type variable tuple invariant`() = test("""

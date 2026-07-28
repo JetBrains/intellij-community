@@ -24,16 +24,12 @@ import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.findTypeVariable
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionIgnoresVariance
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.BIVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.CONTRAVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.COVARIANT
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INFER_VARIANCE
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance.INVARIANT
+import com.jetbrains.python.psi.types.PyVariance.BIVARIANT
+import com.jetbrains.python.psi.types.PyVariance.CONTRAVARIANT
+import com.jetbrains.python.psi.types.PyVariance.COVARIANT
+import com.jetbrains.python.psi.types.PyVariance.INFER_VARIANCE
+import com.jetbrains.python.psi.types.PyVariance.INVARIANT
+import com.jetbrains.python.psi.types.PyVarianceIntermediateResult.RECURSIVE
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -61,9 +57,9 @@ object PyInferredVarianceJudgment {
    * It calls [findTypeVariable] first and passes the resulting type parameter type to [getDeclaredOrInferredVariance].
    */
   @JvmStatic
-  fun getDeclaredOrInferredVariance(element: PyTypedElement?, context: TypeEvalContext): Variance? {
+  fun getDeclaredOrInferredVariance(element: PyTypedElement?, context: TypeEvalContext): PyVariance? {
     val typeParameterType = findTypeVariable(element, context) ?: return null
-    return guardedGetDeclaredOrInferredVariance(typeParameterType, true, context)
+    return guardedGetDeclaredOrInferredVarianceOrInvariant(typeParameterType, true, context)
   }
 
   /**
@@ -71,9 +67,9 @@ object PyInferredVarianceJudgment {
    * It calls [findTypeVariable] first and passes the resulting type parameter type to [getInferredVariance].
    */
   @JvmStatic
-  fun getInferredVariance(element: PyTypedElement?, context: TypeEvalContext): Variance? {
+  fun getInferredVariance(element: PyTypedElement?, context: TypeEvalContext): PyVariance? {
     val typeVarType = findTypeVariable(element, context) ?: return null
-    return guardedGetDeclaredOrInferredVariance(typeVarType, false, context)
+    return guardedGetDeclaredOrInferredVarianceOrInvariant(typeVarType, false, context)
   }
 
   /** Returns the type parameter type if the given element is a type parameter or a reference to a type parameter */
@@ -94,21 +90,44 @@ object PyInferredVarianceJudgment {
    * Returns either the declared variance if it is declared explicitly, or infers the variance of the given type parameter from its usages.
    */
   @JvmStatic
-  fun getDeclaredOrInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): Variance {
-    return guardedGetDeclaredOrInferredVariance(typeParameterType, true, context)
+  fun getDeclaredOrInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): PyVariance {
+    return guardedGetDeclaredOrInferredVarianceOrInvariant(typeParameterType, true, context)
   }
 
   /** Returns the inferred the variance of the given type parameter from its usages */
   @JvmStatic
-  fun getInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): Variance {
-    return guardedGetDeclaredOrInferredVariance(typeParameterType, false, context)
+  fun getInferredVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): PyVariance {
+    return guardedGetDeclaredOrInferredVarianceOrInvariant(typeParameterType, false, context)
+  }
+
+  /**
+   * Returns either the declared variance if it is declared explicitly, or infers the variance of the given type parameter from its usages.
+   * Returns [RECURSIVE] iff the given parameter type's variance depends on itself.
+   *
+   * @see [RECURSIVE]
+   */
+  @JvmStatic
+  fun getIntermediateVariance(typeParameterType: PyTypeParameterType, context: TypeEvalContext): PyVarianceIntermediateResult {
+    return guardedGetDeclaredOrInferredVariance(typeParameterType, true, context)
+  }
+
+  private fun guardedGetDeclaredOrInferredVarianceOrInvariant(
+    typeParameterType: PyTypeParameterType,
+    checkDeclaredVariance: Boolean,
+    context: TypeEvalContext,
+  ): PyVariance {
+    val result = guardedGetDeclaredOrInferredVariance(typeParameterType, checkDeclaredVariance, context)
+    return when (result) {
+      is RECURSIVE -> INVARIANT
+      is PyVariance -> result
+    }
   }
 
   private fun guardedGetDeclaredOrInferredVariance(
     typeParameterType: PyTypeParameterType,
     checkDeclaredVariance: Boolean,
     context: TypeEvalContext,
-  ): Variance {
+  ): PyVarianceIntermediateResult {
     val scopeOwner = typeParameterType.scopeOwner
     if (scopeOwner is PyFunction) return INVARIANT
     if (checkDeclaredVariance && typeParameterType.variance != INFER_VARIANCE) return typeParameterType.variance
@@ -127,18 +146,18 @@ object PyInferredVarianceJudgment {
         val actualResult = doGetInferredVariance(tvId, context)
         context.getVarianceCache()[typeParameterType] = actualResult
         actualResult
-      } ?: BIVARIANT
+      } ?: RECURSIVE
 
       return result
     }
     catch (_: StackOverflowPreventedException) {
       // this is supposed to happen in recursive situations and a safe exit. No need to bother tests.
-      return BIVARIANT
+      return RECURSIVE
     }
 
   }
 
-  private fun doGetInferredVariance(tvId: TypeVariableId, context: TypeEvalContext): Variance {
+  private fun doGetInferredVariance(tvId: TypeVariableId, context: TypeEvalContext): PyVariance {
     val collector = UsageCollector(tvId, context)
     when (tvId.scopeOwner) {
       is PyClass -> collector.collectInClass(tvId.scopeOwner)
@@ -167,7 +186,7 @@ object PyInferredVarianceJudgment {
     val tvId: TypeVariableId,
     val context: TypeEvalContext,
   ) {
-    val usages = mutableSetOf<Variance>()
+    val usages = mutableSetOf<PyVariance>()
 
     fun collectInClass(clazz: PyClass) {
       val classType = context.getType(clazz)
@@ -250,7 +269,7 @@ object PyInferredVarianceJudgment {
           return
         }
         if (typeParamType.name == tvId.name && typeParamType.scopeOwner == tvId.scopeOwner) {
-          val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(element, context) ?: return
+          val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(element, context).toPyVariance() ?: return
           usages.add(exprVariance)
         }
       }
@@ -268,17 +287,6 @@ object PyInferredVarianceJudgment {
   }
 
   private data class TypeVariableId(val name: String, val scopeOwner: PyQualifiedNameOwner)
-
-  fun combineVariance(outer: Variance, inner: Variance): Variance {
-    return when {
-      outer == INVARIANT || inner == INVARIANT -> INVARIANT
-      outer == INFER_VARIANCE || inner == INFER_VARIANCE -> INVARIANT
-      outer == BIVARIANT -> inner
-      inner == BIVARIANT -> outer
-      outer == inner -> COVARIANT
-      else -> CONTRAVARIANT
-    }
-  }
 
   /**
    * Returns true iff
