@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
@@ -29,6 +30,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -46,6 +48,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InlineBanner;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.Wrapper;
@@ -71,6 +74,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JSeparator;
@@ -99,6 +103,7 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -206,6 +211,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(myShowAccessibilityIssuesAction);
     actions.addSeparator();
     actions.add(new ToggleAltHoverAction());
+    actions.addSeparator();
+    actions.add(new CopyTreeAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -940,6 +947,36 @@ public final class InspectorWindow extends JDialog implements Disposable {
         .toList();
 
       new DataContextDialog(myProject, components).show();
+    }
+  }
+
+  private final class CopyTreeAction extends MyTextAction {
+    private CopyTreeAction() {
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.CopyTree"));
+      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.CopyTree"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String yaml = myHierarchyTree.exportTreeAsYaml();
+      if (yaml.isEmpty()) return;
+      CopyPasteManager.copyTextToClipboard(yaml);
+      JLabel hint = new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.copied.hint"));
+      // the hint is shown in a bare popup, so it has to pad itself away from the popup border
+      hint.setBorder(JBUI.Borders.empty(4, 8));
+      HintManager.getInstance().showHint(
+        hint, getHintPoint(e),
+        HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_OTHER_HINT, 3000);
+    }
+
+    /** Right below the toolbar button that was pressed, or the middle of the inspector window if there is no button to anchor to. */
+    private @NotNull RelativePoint getHintPoint(@NotNull AnActionEvent e) {
+      InputEvent inputEvent = e.getInputEvent();
+      Component source = inputEvent == null ? null : inputEvent.getComponent();
+      if (source instanceof JComponent jSource && source.isShowing()) {
+        return RelativePoint.getSouthWestOf(jSource);
+      }
+      return RelativePoint.getCenterOf(getRootPane());
     }
   }
 
