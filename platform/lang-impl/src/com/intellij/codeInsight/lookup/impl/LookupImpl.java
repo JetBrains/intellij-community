@@ -1317,10 +1317,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         ActionContext finalActionContext = actionContext
           .withOffset(start)
           .withSelection(TextRange.create(start, actionContext.offset()));
+        long stamp = file.getFileDocument().getModificationStamp();
         // Cache current item result
         ReadAction.nonBlocking(
           () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
           .expireWith(this)
+          .expireWhen(() -> stamp != finalActionContext.file().getFileDocument().getModificationStamp())
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
