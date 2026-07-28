@@ -84,7 +84,12 @@ object PreviewLAFThemeStyles {
     blockquote, code, pre {
       background-color: ${scheme.fenceBackgroundColor.webRgba(scheme.fenceBackgroundColor.alpha / 255.0)};
     }
-    
+
+    blockquote table th,
+    blockquote table td {
+      background-color: $backgroundColor;
+    }
+
     """.trimIndent()
 
     val alertStyles = scheme.alertColors.entries.joinToString(separator = "\n\n") { (type, color) ->
