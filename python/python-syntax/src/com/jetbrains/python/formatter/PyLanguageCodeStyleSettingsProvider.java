@@ -114,6 +114,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
       consumer.renameStandardOption("METHOD_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.declaration.parameters"));
       consumer.renameStandardOption("CALL_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.call.arguments"));
 
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_CONSECUTIVE_ASSIGNMENTS",
+                                PySyntaxBundle.message("formatter.align.consecutive.assignments"),
+                                ApplicationBundle.message("wrapping.assignment.statement"));
+
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
                                 PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
@@ -296,6 +300,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
             print(platform.processor())""";
   private static final String WRAP_SETTINGS_PREVIEW = """
     from module import foo, bar, baz, quux
+
+    short = 1
+    long_name = 2
+    counter += 1
 
     long_expression = component_one + component_two + component_three + component_four + component_five + component_six
 

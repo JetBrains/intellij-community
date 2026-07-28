@@ -886,8 +886,8 @@ public class PyBlock implements ASTBlock {
       if (isWhitespace(child)) {
         continue;
       }
-      // A trailing comment on the same line as the previous statement doesn't break the run.
-      if (child.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT && !hasLineBreaksBeforeInSameParent(child, 1)) {
+      // Comments (trailing or standalone) don't break a run.
+      if (child.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
         continue;
       }
       final ASTNode operator = isAlignableAssignmentStatement(child) ? findAssignmentOperator(child) : null;
@@ -915,7 +915,7 @@ public class PyBlock implements ASTBlock {
 
   private static void flushAssignmentRun(@NotNull List<ASTNode> run, @NotNull Map<ASTNode, Alignment> result) {
     if (run.size() >= 2) {
-      final Alignment alignment = Alignment.createAlignment(true);
+      final Alignment alignment = Alignment.createAlignment(true, Alignment.Anchor.RIGHT);
       for (ASTNode statement : run) {
         result.put(statement, alignment);
       }
