@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PYTHON_FREE_PLUGIN_ID
 import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -171,6 +172,7 @@ private class SetupPythonInterpreterStep(
 
     // resolves `'runBlockingCancellable' is forbidden in the Write Action` from PythonSdkUpdater.scheduleUpdate
     keepTasksAsynchronousInHeadlessMode {
+      @OptIn(PyInternalExecApi::class) // TODO: Contact PyCharmExec subteam to get rid of this dependency ASAP
       val cacheOptions = if (preferences.cacheDir == null) emptyList()
       else when (PythonPackageManager.forSdk(project, sdk)) {
         is PipPythonPackageManager -> listOf("--cache-dir=${preferences.cacheDir}/pip")
