@@ -7,11 +7,9 @@ import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
@@ -38,10 +36,6 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
 
   private val targetEnvRequest: TargetEnvironmentRequest
     get() = pyRequest.targetEnvironmentRequest
-
-  init {
-    check(sdk !is Disposable || !Disposer.isDisposed(sdk))
-  }
 
   fun isLocalTarget(): Boolean = targetEnvRequest is LocalTargetEnvironmentRequest
 
