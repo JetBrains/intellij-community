@@ -90,7 +90,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -324,15 +323,6 @@ open class EditorComposite internal constructor(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
             errorMessage = { "exception during beforeFileOpened notification" },
           )
-        }
-
-        span("Artificially wait if the skeleton has been set recently to avoid flickering") {
-          compositePanel.skeleton?.let { editorSkeleton ->
-            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime.get()
-            if (hasBeenShownFor < editorSkeleton.skeletonDelayMs) {
-              delay(editorSkeleton.skeletonDelayMs - hasBeenShownFor)
-            }
-          }
         }
 
         applyFileEditorsInEdtWithSpans(
@@ -1070,8 +1060,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     private set
 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
-  var skeleton: EditorSkeleton? = null
-    private set
 
   init {
     addFocusListener(object : FocusAdapter() {
@@ -1103,7 +1091,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       val skeletonDelay = EditorSkeletonPolicy.getSkeletonDelayMs(composite)
       skeletonScope.launch(Dispatchers.UI) {
-        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope, skeletonDelay))
+        setNewSkeleton(EditorSkeleton(skeletonScope, composite.project, skeletonDelay))
       }
     }
     else {
@@ -1112,7 +1100,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   }
 
   private fun setNewSkeleton(skeleton: EditorSkeleton?) {
-    this.skeleton = skeleton
     if (skeleton == null) return
     if (components.isEmpty()) {
       add(skeleton, BorderLayout.CENTER)

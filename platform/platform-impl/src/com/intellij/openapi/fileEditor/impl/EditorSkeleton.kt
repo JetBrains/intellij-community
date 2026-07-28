@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.ANIMATION_DURATION_MS
-import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.TICK_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.EXTRA_LARGE
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.GUTTER_NORMAL
@@ -12,12 +13,14 @@ import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWid
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.LARGE
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.NORMAL
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.SMALL
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.project.Project
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.animation.Easing
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -26,43 +29,72 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.RenderingHints
-import java.util.concurrent.atomic.AtomicLong
+import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
-import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Component that paints a skeleton animation for a file editor.
+ * Component that paints a skeleton for a file editor.
  * This component is needed for Remote Dev when latency is quite high.
  *
- * Animation lasts while [cs] is active.
+ * The skeleton fades in over [skeletonDelayMs] while [cs] is active, then stays static.
+ * [nowMs] is the clock the fade-in is measured against; tests replace it to advance the fade-in deterministically.
  */
-internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, val skeletonDelayMs: Long) : JComponent() {
-  private val withAnimation = Registry.`is`("editor.skeleton.animation.enabled", true)
-  private val currentTime = AtomicLong(System.currentTimeMillis())
+@ApiStatus.Internal
+class EditorSkeleton(
+  cs: CoroutineScope,
+  val project: Project,
+  val skeletonDelayMs: Long,
+  nowMs: () -> Long = System::currentTimeMillis,
+) : JComponent() {
+  private val colorManager = EditorSkeletonColorManager(skeletonDelayMs, nowMs)
 
   init {
-    if (withAnimation) {
-      cs.launch(Dispatchers.UI) {
-        while (isActive) {
-          delay(TICK_MS)
-          currentTime.set(System.currentTimeMillis())
-          repaint()
-        }
+    cs.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      while (isActive && !colorManager.isFadeInComplete) {
+        delay(TICK_MS)
+        tickFadeIn()
       }
     }
+
+    // This listener is required for the rare case when the color scheme changes while the skeleton is showing.
+    // Reload the cached colors and repaint the already-created component to keep it consistent with the new scheme.
+    // If the skeleton has already been removed, repaint() is harmless: Swing discards repaint requests for detached components.
+    project.messageBus.connect(cs).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      cs.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+        colorManager.reloadColorScheme()
+        repaint()
+      }
+    })
 
     layout = BorderLayout()
     isOpaque = false
     add(createGutterComponent(), BorderLayout.WEST)
     add(createEditorComponent(), BorderLayout.CENTER)
+  }
+
+  fun tickFadeIn() {
+    colorManager.updateCurrentTime()
+    repaint()
+  }
+
+  override fun paint(g: Graphics) {
+    colorManager.markPainted()
+    val g2 = g.create() as Graphics2D
+    GraphicsUtil.setupAAPainting(g2)
+    try {
+      super.paint(g2)
+    }
+    finally {
+      g2.dispose()
+    }
   }
 
   /**
@@ -74,7 +106,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
       isOpaque = false
       add(createLineNumbersComponent())
       add(createGutterIconsComponent())
-      border = IdeBorderFactory.createBorder(BACKGROUND_COLOR, SideBorder.RIGHT)
+      border = EditorSkeletonSideBorder(colorManager, SideBorder.RIGHT)
     }
   }
 
@@ -87,10 +119,10 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
       border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, LINE_NUMBERS_LEFT_PADDING, SKELETON_OUTER_PADDING, 0)
       isOpaque = false
       repeat(9) {
-        add(EditorSkeletonBlock(GUTTER_SMALL, color = { currentColor() }))
+        add(EditorSkeletonBlock(GUTTER_SMALL, colorManager))
       }
       repeat(91) {
-        add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
+        add(EditorSkeletonBlock(GUTTER_NORMAL, colorManager))
       }
     }
   }
@@ -105,7 +137,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
       isOpaque = false
       repeat(100) {
         if (it in GUTTER_ICON_LINES) {
-          add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
+          add(EditorSkeletonBlock(GUTTER_NORMAL, colorManager))
         }
         else {
           Empty(GUTTER_NORMAL)
@@ -120,7 +152,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
     return JPanel().apply {
       layout = HorizontalLayout(GUTTER_LINE_NUMBERS_AND_ICONS_GAP)
       isOpaque = false
-      border = IdeBorderFactory.createBorder(BACKGROUND_COLOR, SideBorder.LEFT)
+      border = EditorSkeletonSideBorder(colorManager, SideBorder.LEFT)
       add(JPanel().apply {
         layout = VerticalLayout(LINES_GAP)
         border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, EDITOR_LEFT_GAP)
@@ -176,7 +208,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
     for (block in blocks) {
       val blockPanel = BorderLayoutPanel().apply {
         isOpaque = false
-        addToCenter(EditorSkeletonBlock(block) { currentColor() })
+        addToCenter(EditorSkeletonBlock(block, colorManager))
       }
       blocksLine.add(blockPanel)
     }
@@ -187,25 +219,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
    * Adds an empty component like an empty editor line.
    */
   private fun JComponent.Empty(width: SkeletonBlockWidth = NORMAL) {
-    add(EditorSkeletonBlock(width) { EDITOR_BACKGROUND_COLOR })
-  }
-
-  /**
-   * Provides given background color for blocks, so they hide/appear with a fade effect.
-   * This function is based on the [System.currentTimeMillis].
-   * So we need to change current time quite frequently to have smooth animation (see [TICK_MS]).
-   *
-   * @see ANIMATION_DURATION_MS
-   */
-  private fun currentColor(): Color {
-    if (!withAnimation) {
-      return BACKGROUND_COLOR
-    }
-
-    val elapsed = currentTime.get() - initialTime.get()
-    val t = (elapsed % ANIMATION_DURATION_MS).toDouble() / ANIMATION_DURATION_MS.toDouble()
-    val opacity = 0.3 + 0.35 * (sin(2 * Math.PI * (t - 0.75)) + 1)
-    return ColorUtil.withAlpha(BACKGROUND_COLOR, opacity)
+    add(Box.createRigidArea(JBDimension(width.width, EditorSkeletonBlock.HEIGHT)))
   }
 
   companion object {
@@ -238,30 +252,109 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, v
     private val INDENT_WIDTH
       get() = 30
     private val TICK_MS
-      get() = 40.milliseconds
+      get() = 8.milliseconds
     private val LINES_GAP
       get() = 6
     private val BLOCKS_GAP
       get() = 6
-    private val ANIMATION_DURATION_MS
-      get() = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong()
-    private val BACKGROUND_COLOR: Color get() {
-      val color = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      return if (ColorUtil.isDark(color)) ColorUtil.brighter(color, 10) else ColorUtil.darker(color, 1)
+
+    /**
+     * Oklab lightness distance between the editor background and a fully faded-in skeleton block.
+     *
+     * Oklab lightness is perceptually uniform, so one value keeps the skeleton contrast comparable in light and dark
+     * themes, and only its direction depends on the theme.
+     */
+    private val SKELETON_LIGHTNESS_DELTA
+      get() = 0.13
+
+    internal val SKELETON_COLOR: Color get() {
+      val background = EDITOR_BACKGROUND_COLOR
+      val delta = if (ColorUtil.isDark(background)) SKELETON_LIGHTNESS_DELTA else -SKELETON_LIGHTNESS_DELTA
+      return EditorSkeletonOklab.shiftLightness(background, delta)
     }
-    private val EDITOR_BACKGROUND_COLOR
+
+    @get:ApiStatus.Internal
+    val EDITOR_BACKGROUND_COLOR: Color
       get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
   }
+}
+
+private class EditorSkeletonColorManager(
+  private val skeletonDelayMs: Long,
+  private val nowMs: () -> Long,
+) {
+  private var ramp = createRamp()
+  private var fadeInStartTime: Long? = null
+  private var currentColor = ramp.colorAt(0.0)
+  private var hasBeenPainted = false
+  private var fadeInComplete = false
+
+  val color: Color
+    get() = currentColor
+
+  val isFadeInComplete: Boolean
+    get() = fadeInComplete
+
+  fun markPainted() {
+    hasBeenPainted = true
+  }
+
+  fun updateCurrentTime() {
+    val now = nowMs()
+    if (fadeInStartTime == null) {
+      if (!hasBeenPainted) return
+      fadeInStartTime = now
+      currentColor = ramp.colorAt(0.0)
+      return
+    }
+    currentColor = colorAt(now)
+  }
+
+  fun reloadColorScheme() {
+    ramp = createRamp()
+    if (fadeInStartTime == null) {
+      currentColor = ramp.colorAt(0.0)
+    }
+    else {
+      updateCurrentTime()
+    }
+  }
+
+  private fun createRamp(): EditorSkeletonOklab.Ramp {
+    return EditorSkeletonOklab.ramp(EditorSkeleton.EDITOR_BACKGROUND_COLOR, EditorSkeleton.SKELETON_COLOR)
+  }
+
+  private fun colorAt(now: Long): Color {
+    val progress = fadeInProgress(now - checkNotNull(fadeInStartTime))
+    if (progress >= 1.0) {
+      fadeInComplete = true
+    }
+    return ramp.colorAt(progress)
+  }
+
+  private val curve = Easing.bezier(0.4, 0.0, 1.0, 1.0)
+
+  private fun fadeInProgress(elapsedMs: Long): Double {
+    if (skeletonDelayMs <= 0) return 1.0
+    return curve.calc(elapsedMs.coerceIn(0, skeletonDelayMs).toDouble() / skeletonDelayMs.toDouble())
+  }
+}
+
+private class EditorSkeletonSideBorder(
+  private val colorManager: EditorSkeletonColorManager,
+  side: Int,
+) : SideBorder(JBColor.border(), side) {
+  override fun getLineColor(): Color = colorManager.color
 }
 
 /**
  * Represents a single skeleton block of different size (see [SkeletonBlockWidth]).
  *
- * [EditorSkeleton] should requests repaint for this [EditorSkeletonBlock] and provide up-to-date [color].
+ * [EditorSkeleton] requests repaint for this [EditorSkeletonBlock], which gets the current color from [EditorSkeletonColorManager].
  */
 private class EditorSkeletonBlock(
   blockWidth: SkeletonBlockWidth,
-  private val color: () -> Color,
+  private val colorManager: EditorSkeletonColorManager,
 ) : JComponent() {
   init {
     val size = JBDimension(blockWidth.width, HEIGHT)
@@ -274,17 +367,9 @@ private class EditorSkeletonBlock(
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
 
-    val g2 = g.create() as Graphics2D
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-
-      g2.color = color()
-      val radius = JBUI.scale(RADIUS)
-      g2.fillRoundRect(0, 0, width, height, 2 * radius, 2 * radius)
-    }
-    finally {
-      g2.dispose()
-    }
+    g.color = colorManager.color
+    val radius = JBUI.scale(RADIUS)
+    g.fillRoundRect(0, 0, width, height, 2 * radius, 2 * radius)
   }
 
   enum class SkeletonBlockWidth(val width: Int) {

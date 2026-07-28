@@ -478,13 +478,13 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     />
     <registryKey
       key="editor.skeleton.enabled"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable editor skeleton when the editor is not shown for a long period"
     />
     <registryKey
       key="editor.skeleton.delay.ms"
-      defaultValue="50"
-      description="Delay before the editor skeleton is shown if the editor is not shown (in milliseconds)"
+      defaultValue="500"
+      description="Skeleton fade in duration (in milliseconds)"
     />
   </extensions>
 </idea-plugin>

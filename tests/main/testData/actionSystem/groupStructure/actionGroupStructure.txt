@@ -795,6 +795,7 @@
           Internal.UI.Animation
             AnimationPanelTestAction
             AnimatorTestAction
+            EditorSkeletonFadeInSheet
           Internal.UI.Focus
             FocusDebugger
             FocusTracer

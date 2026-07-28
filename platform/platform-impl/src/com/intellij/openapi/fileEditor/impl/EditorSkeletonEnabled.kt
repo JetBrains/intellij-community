@@ -28,7 +28,7 @@ interface EditorSkeletonPolicy {
    */
   fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState
 
-  fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long? = null
+  fun getSkeletonFadeInMs(fileEditorComposite: FileEditorComposite): Long? = null
 
   companion object {
     private val EP_NAME: ExtensionPointName<EditorSkeletonPolicy> = ExtensionPointName("com.intellij.editorSkeletonPolicy")
@@ -44,10 +44,10 @@ interface EditorSkeletonPolicy {
 
     internal fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long {
       for (policy in EP_NAME.extensionList) {
-        val delay = policy.getSkeletonDelayMs(fileEditorComposite) ?: continue
+        val delay = policy.getSkeletonFadeInMs(fileEditorComposite) ?: continue
         return delay
       }
-      return 300
+      return 500
     }
   }
 }

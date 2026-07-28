@@ -7,11 +7,11 @@ import com.intellij.util.ThreeState
 
 internal class DefaultEditorSkeletonPolicy : EditorSkeletonPolicy {
   override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState {
-    val isEnabled = Registry.`is`("editor.skeleton.enabled", false)
+    val isEnabled = Registry.`is`("editor.skeleton.enabled", true)
     return ThreeState.fromBoolean(isEnabled)
   }
 
-  override fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long {
-    return Registry.intValue("editor.skeleton.delay.ms", 50).toLong()
+  override fun getSkeletonFadeInMs(fileEditorComposite: FileEditorComposite): Long {
+    return Registry.intValue("editor.skeleton.delay.ms", 500).toLong()
   }
 }

@@ -210,6 +210,7 @@
       <group id="Internal.UI.Animation" popup="true">
         <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
         <action id="AnimatorTestAction" class="com.intellij.internal.ui.AnimatorTestAction"/>
+        <action id="EditorSkeletonFadeInSheet" internal="true" class="com.intellij.internal.ui.EditorSkeletonFadeInSheetAction"/>
       </group>
       <group id="Internal.UI.Focus" popup="true">
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
