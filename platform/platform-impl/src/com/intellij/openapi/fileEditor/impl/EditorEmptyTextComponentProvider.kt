@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.Graphics
 import javax.swing.JComponent
 
@@ -16,7 +13,8 @@ internal class EditorEmptyTextComponentProvider : EditorEmptyStateComponentProvi
   }
 
   override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
-    return withContext(Dispatchers.EDT) {
+    // plain Swing construction, so the UI thread is enough without the write-intent lock
+    return buildEditorEmptyStateComponentOnUiThread {
       EditorEmptyTextComponent(splitters)
     }
   }

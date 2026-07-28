@@ -16,6 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,19 +30,44 @@ import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.LayoutManager2
+import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 private val LOG = logger<EditorEmptyStateComponentController>()
 internal const val EDITOR_ROOT_COMPONENT_CONSTRAINT: @NonNls String = "EditorRootComponent"
 internal const val EMPTY_STATE_COMPONENT_CONSTRAINT: @NonNls String = "EditorEmptyStateComponent"
 private val EMPTY_STATE_COMPONENT_CREATION_DELAY = 300.milliseconds
-private val SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD = 100.milliseconds
+
+/**
+ * Budget for the part of a single [EditorEmptyStateComponentProvider.createComponent] call that does not run on the UI thread.
+ *
+ * A [EditorEmptyStateComponentProvider.Kind.FALLBACK] provider only builds Swing components, so it has nothing to spend this on.
+ * A [EditorEmptyStateComponentProvider.Kind.RICH] one is allowed to resolve services and query a backend before it has anything to
+ * build, so its budget is the point at which that stops being plausible.
+ */
+private fun slowPreparationThreshold(kind: EditorEmptyStateComponentProvider.Kind): Duration = when (kind) {
+  EditorEmptyStateComponentProvider.Kind.FALLBACK -> 100.milliseconds
+  EditorEmptyStateComponentProvider.Kind.RICH -> 1.seconds
+}
+
+/**
+ * Budget for the UI-thread part of a single [EditorEmptyStateComponentProvider.createComponent] call, whatever the provider's kind.
+ *
+ * Preparation overlaps project open, so a UI-thread step this long is a startup freeze rather than a component that took its time —
+ * which is why it is budgeted apart from [slowPreparationThreshold] instead of disappearing into a generous end-to-end number.
+ * Only what a provider runs inside [buildEditorEmptyStateComponentOnUiThread] is measured against it.
+ */
+private val SLOW_UI_BUILD_THRESHOLD = 100.milliseconds
 
 internal class EditorEmptyStateComponentController(
   private val splitters: EditorsSplitters,
@@ -52,6 +79,13 @@ internal class EditorEmptyStateComponentController(
   private var creationJob: Job? = null
   private var creationGeneration: Int = 0
   private var richComponentsEnabled: Boolean = false
+
+  /**
+   * `false` while something else — startup opening editors of its own — still owns what this area is going to show.
+   *
+   * Components are prepared anyway, because preparation is invisible; only the mount waits for the gate, because a mount is not.
+   */
+  private val presentationAllowed = MutableStateFlow(true)
   private var creationDelay: Duration = EMPTY_STATE_COMPONENT_CREATION_DELAY
   private var creationGate: (suspend () -> Unit)? = null
 
@@ -85,6 +119,24 @@ internal class EditorEmptyStateComponentController(
     update()
   }
 
+  /**
+   * Opens or closes the presentation gate: while it is closed, components are still prepared, but nothing is mounted.
+   *
+   * Opening it is knowledge that nothing is going to take this area over any more, so a creation that was started under a closed
+   * gate mounts without waiting out [EMPTY_STATE_COMPONENT_CREATION_DELAY] — the delay is only a guess that an editor may still be
+   * arriving, and where there is knowledge there is no need to also guess.
+   */
+  fun setPresentationAllowed(allowed: Boolean) {
+    if (presentationAllowed.value == allowed) {
+      return
+    }
+    presentationAllowed.value = allowed
+    if (allowed) {
+      // a creation parked on the gate mounts on its own; this covers the case where there is nothing parked yet
+      update()
+    }
+  }
+
   fun update() {
     if (showEmptyState()) {
       showComponents()
@@ -101,6 +153,7 @@ internal class EditorEmptyStateComponentController(
 
   fun cancelCreation() {
     val job = creationJob ?: return
+    // bump the generation before clearing the job, so the cancelled job's `finally` cannot clear a job started after it
     creationGeneration++
     creationJob = null
     job.cancel()
@@ -128,8 +181,9 @@ internal class EditorEmptyStateComponentController(
     }
   }
 
-  fun setCreationDelayForTests(delay: Duration) {
-    creationDelay = delay
+  /** @param delay `null` restores the production delay. */
+  fun setCreationDelayForTests(delay: Duration?) {
+    creationDelay = delay ?: EMPTY_STATE_COMPONENT_CREATION_DELAY
   }
 
   fun setCreationGateForTests(gate: (suspend () -> Unit)?) {
@@ -149,14 +203,13 @@ internal class EditorEmptyStateComponentController(
       return
     }
 
+    // components are built first and presented afterwards, so a closed gate costs no latency: by the time it opens they are ready
+    val presentationHeld = !presentationAllowed.value
     val generation = ++creationGeneration
     creationJob = coroutineScope.launch(Dispatchers.Default + CoroutineName("create editor empty state components")) {
       var entries: List<EditorEmptyStateComponentEntry> = emptyList()
       var mounted = false
       try {
-        if (kind == EditorEmptyStateComponentProvider.Kind.RICH) {
-          delay(creationDelay)
-        }
         creationGate?.invoke()
         if (!isCreationValidOnEdt(generation, kind)) {
           return@launch
@@ -173,11 +226,21 @@ internal class EditorEmptyStateComponentController(
           }
           entries = createEntries(generation, fallbackProviders)
         }
+        if (entries.isEmpty()) {
+          // nothing to present, so there is nothing to wait for either — this creation must not go on holding the legacy empty text back
+          return@launch
+        }
+        if (!presentationHeld && kind == EditorEmptyStateComponentProvider.Kind.RICH) {
+          delay(creationDelay)
+        }
+        // Only a rich empty state is worth holding back. Plain empty text is what this area showed before any of this existed, and
+        // holding it back leaves the area blank rather than plain, because legacy painting is suppressed while a creation is pending.
+        if (entries.first().kind == EditorEmptyStateComponentProvider.Kind.RICH) {
+          // the gate may also have been closed after this creation started, so it is awaited whether it was held at that point or not
+          presentationAllowed.first { it }
+        }
         withContext(Dispatchers.EDT) {
-          if (!isCreationValid(generation, entries.firstOrNull()?.kind ?: kind)) {
-            return@withContext
-          }
-          if (entries.isEmpty()) {
+          if (!isCreationValid(generation, entries.first().kind)) {
             return@withContext
           }
           writeIntentReadAction {
@@ -284,12 +347,16 @@ internal class EditorEmptyStateComponentController(
           break
         }
         val component = try {
+          val uiBuildTime = EditorEmptyStateUiBuildTime()
           val startedAt = TimeSource.Monotonic.markNow()
-          val result = provider.createComponent(splitters)
-          val elapsed = startedAt.elapsedNow()
-          if (elapsed >= SLOW_EMPTY_STATE_COMPONENT_PROVIDER_THRESHOLD) {
-            LOG.warn("Slow editor empty state component provider $provider from ${pluginDescriptor.pluginId}: $elapsed")
-          }
+          val result = withContext(uiBuildTime) { provider.createComponent(splitters) }
+          reportSlowPreparation(
+            provider = provider,
+            pluginDescriptor = pluginDescriptor,
+            kind = kind,
+            elapsed = startedAt.elapsedNow(),
+            uiElapsed = uiBuildTime.elapsed,
+          )
           result
         }
         catch (e: CancellationException) {
@@ -328,6 +395,42 @@ internal class EditorEmptyStateComponentController(
       provider.disposeComponent(component)
     }
   }
+}
+
+private fun reportSlowPreparation(
+  provider: EditorEmptyStateComponentProvider,
+  pluginDescriptor: PluginDescriptor,
+  kind: EditorEmptyStateComponentProvider.Kind,
+  elapsed: Duration,
+  uiElapsed: Duration,
+) {
+  val offUiElapsed = maxOf(Duration.ZERO, elapsed - uiElapsed)
+  if (uiElapsed < SLOW_UI_BUILD_THRESHOLD && offUiElapsed < slowPreparationThreshold(kind)) {
+    return
+  }
+  LOG.warn(
+    "Slow editor empty state component preparation by $provider from ${pluginDescriptor.pluginId}: " +
+    "$elapsed, of which $uiElapsed on the UI thread"
+  )
+}
+
+/**
+ * How long a provider spent building on the UI thread, accumulated by [buildEditorEmptyStateComponentOnUiThread].
+ *
+ * A context element rather than a return value, so that a provider reports it by choosing where to hop rather than by threading a
+ * measurement back through its own signature.
+ */
+internal class EditorEmptyStateUiBuildTime : AbstractCoroutineContextElement(Key) {
+  companion object Key : CoroutineContext.Key<EditorEmptyStateUiBuildTime>
+
+  private val nanos = AtomicLong()
+
+  fun add(duration: Duration) {
+    nanos.addAndGet(duration.inWholeNanoseconds)
+  }
+
+  val elapsed: Duration
+    get() = nanos.get().nanoseconds
 }
 
 private data class EditorEmptyStateProviderEntry(
