@@ -12,6 +12,7 @@ import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
+import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
@@ -861,6 +862,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
         }
         group.addSeparator()
       }
+      group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {

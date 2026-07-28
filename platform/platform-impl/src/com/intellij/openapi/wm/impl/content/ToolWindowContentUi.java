@@ -619,6 +619,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
     var actionManager = ActionManager.getInstance();
 
+    group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"));
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
     group.add(actionManager.getAction("TW.CloseAllTabs"));
