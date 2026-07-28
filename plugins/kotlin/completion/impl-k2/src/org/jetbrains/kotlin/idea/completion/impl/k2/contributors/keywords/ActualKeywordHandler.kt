@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -11,11 +11,11 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -25,12 +25,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
+import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
+import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
@@ -76,8 +76,7 @@ internal class ActualKeywordHandler(
         if (!isTopLevelDeclaration) return emptyList()
 
         val module = position.module ?: return emptyList()
-        val kaModule = KaModuleProvider.getModule(project, position, useSiteModule = null)
-        val dependsOnModules = kaModule.transitiveDependsOnDependencies
+        val dependsOnModules = position.kaModule.transitiveDependsOnDependencies
         if (dependsOnModules.isEmpty()) return emptyList()
 
         val packageQualifiedName = position.packageDirective?.qualifiedName ?: return emptyList()

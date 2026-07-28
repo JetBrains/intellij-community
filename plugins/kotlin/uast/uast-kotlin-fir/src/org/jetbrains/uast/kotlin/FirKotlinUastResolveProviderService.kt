@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
@@ -576,8 +576,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
             }
 
-            val project = ktExpression.project
-
             val resolvedTargetElement =
                 when (resolvedTargetSymbol) {
                     is KaBackingFieldSymbol -> {
@@ -608,7 +606,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
 
             if (resolvedTargetElement != null) {
-                when (KaModuleProvider.getModule(project, resolvedTargetElement, useSiteModule = null)) {
+                when (resolvedTargetElement.kaModule) {
                     is KaSourceModule -> {
                         // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
                         resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
