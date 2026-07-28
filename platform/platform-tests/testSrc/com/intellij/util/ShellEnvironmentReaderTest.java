@@ -76,7 +76,7 @@ public class ShellEnvironmentReaderTest {
   @Test void pythonVirtualEnv(@TempDir Path tempDir) throws IOException, ExecutionException {
     assumeFalse(OS.CURRENT == OS.Windows);
 
-    var python = PathEnvironmentVariableUtil.findInPath("python3").toPath();
+    var python = PathEnvironmentVariableUtil.findFirst("python3");
     assumeTrue(python != null);
 
     var vEnv = tempDir.resolve(".venv");

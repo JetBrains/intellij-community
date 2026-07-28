@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -144,18 +143,7 @@ private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executabl
 
 fun PyTool.findExecutableInPath(
   executableName: String = packageName.name,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = resolveExecutableOnPath(executableName, osFamily)
-
-/**
- * Looks up [executableName] on the system PATH by its OS-specific binary name. This is how the
- * External Tools settings page resolves tool executables (via [findExecutableInPath]); shared so
- * other callers can resolve an installed executable the same way.
- */
-fun resolveExecutableOnPath(
-  executableName: String,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = PathEnvironmentVariableUtil.findInPath(osFamily.getOsSpecificBinaryName(executableName))?.toPath()
+): Path? = PathEnvironmentVariableUtil.findFirst(executableName)
 
 /**
  * Installs this tool's executable into the environment described by [eel], using the first available

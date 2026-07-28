@@ -1,28 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
 import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Alexander Lobas
- */
 public final class SceneBuilderInfo {
   public static final SceneBuilderInfo EMPTY = new SceneBuilderInfo(null, null);
 
@@ -43,10 +40,10 @@ public final class SceneBuilderInfo {
   }
 
   public static @NotNull SceneBuilderInfo get(Project project, boolean choosePathIfEmpty) {
-    JavaFxSettings settings = JavaFxSettings.getInstance();
-    String pathToSceneBuilder = settings.getPathToSceneBuilder();
+    var settings = JavaFxSettings.getInstance();
+    var pathToSceneBuilder = settings.getPathToSceneBuilder();
 
-    if (StringUtil.isEmptyOrSpaces(pathToSceneBuilder) || !new File(pathToSceneBuilder).exists()) {
+    if (pathToSceneBuilder == null || pathToSceneBuilder.isBlank() || !Files.exists(Path.of(pathToSceneBuilder))) {
       VirtualFile sceneBuilderFile = null;
       if (choosePathIfEmpty) {
         sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), project, getPredefinedPath());
@@ -55,33 +52,33 @@ public final class SceneBuilderInfo {
         return EMPTY;
       }
 
-      pathToSceneBuilder = FileUtil.toSystemIndependentName(sceneBuilderFile.getPath());
+      pathToSceneBuilder = sceneBuilderFile.getPath();
       settings.setPathToSceneBuilder(pathToSceneBuilder);
     }
 
-    File sceneBuilderLibsFile;
+    Path sceneBuilderLibsFile;
 
-    if (SystemInfo.isMac) {
-      sceneBuilderLibsFile = new File(new File(pathToSceneBuilder, "Contents"), "Java");
+    if (OS.CURRENT == OS.macOS) {
+      sceneBuilderLibsFile = Path.of(pathToSceneBuilder, "Contents", "Java");
     }
-    else if (SystemInfo.isWindows) {
-      File sceneBuilderRoot = new File(pathToSceneBuilder);
-      File sceneBuilderRootDir = sceneBuilderRoot.getParentFile();
+    else if (OS.CURRENT == OS.Windows) {
+      var sceneBuilderRoot = Path.of(pathToSceneBuilder);
+      var sceneBuilderRootDir = sceneBuilderRoot.getParent();
       if (sceneBuilderRootDir == null) {
-        final File foundInPath = PathEnvironmentVariableUtil.findInPath(pathToSceneBuilder);
-        if (foundInPath != null) {
-          sceneBuilderRootDir = foundInPath.getParentFile();
+        var foundInPath = PathEnvironmentVariableUtil.findFirst(pathToSceneBuilder);
+        if (foundInPath != null && foundInPath.getParent() != null) {
+          sceneBuilderRootDir = foundInPath.getParent();
         }
       }
-      sceneBuilderRoot = sceneBuilderRootDir != null ? sceneBuilderRootDir.getParentFile() : null;
+      sceneBuilderRoot = sceneBuilderRootDir != null ? sceneBuilderRootDir.getParent() : null;
       if (sceneBuilderRoot != null) {
-        final File appFile = new File(sceneBuilderRootDir, "app");
-        if (appFile.isDirectory()) {
+        var appFile = sceneBuilderRootDir.resolve("app");
+        if (Files.isDirectory(appFile)) {
           sceneBuilderLibsFile = appFile;
         }
         else {
-          final File libFile = new File(sceneBuilderRoot, "lib");
-          sceneBuilderLibsFile = libFile.isDirectory() ? libFile : null;
+          var libFile = sceneBuilderRoot.resolve("lib");
+          sceneBuilderLibsFile = Files.isDirectory(libFile) ? libFile : null;
         }
       }
       else {
@@ -89,51 +86,53 @@ public final class SceneBuilderInfo {
       }
     }
     else {
-      sceneBuilderLibsFile = new File(new File(pathToSceneBuilder).getParent(), "app");
+      sceneBuilderLibsFile = Path.of(pathToSceneBuilder).resolveSibling("app");
     }
 
-    if (sceneBuilderLibsFile != null && (!sceneBuilderLibsFile.exists() || !sceneBuilderLibsFile.isDirectory())) {
+    if (sceneBuilderLibsFile != null && !Files.isDirectory(sceneBuilderLibsFile)) {
       sceneBuilderLibsFile = null;
     }
 
-    return new SceneBuilderInfo(pathToSceneBuilder, sceneBuilderLibsFile == null ? null : sceneBuilderLibsFile.getAbsolutePath());
+    return new SceneBuilderInfo(pathToSceneBuilder, sceneBuilderLibsFile == null ? null : sceneBuilderLibsFile.toString());
   }
 
   private static @Nullable VirtualFile getPredefinedPath() {
-    String path = null;
-    if (SystemInfo.isWindows) {
-      List<String> suspiciousPaths = new ArrayList<>();
-      String programFiles = "C:\\Program Files";
+    var path = switch (OS.CURRENT) {
+      case Windows -> {
+        var suspiciousPaths = new ArrayList<String>();
+        var programFiles = "C:\\Program Files";
 
-      String sb20 = "\\JavaFX Scene Builder 2.0\\JavaFX Scene Builder 2.0.exe";
-      String sb11 = "\\JavaFX Scene Builder 1.1\\JavaFX Scene Builder 1.1.exe";
-      String sb10 = "\\JavaFX Scene Builder 1.0\\bin\\scenebuilder.exe";
+        var sb20 = "\\JavaFX Scene Builder 2.0\\JavaFX Scene Builder 2.0.exe";
+        var sb11 = "\\JavaFX Scene Builder 1.1\\JavaFX Scene Builder 1.1.exe";
+        var sb10 = "\\JavaFX Scene Builder 1.0\\bin\\scenebuilder.exe";
 
-      fillPaths(programFiles, suspiciousPaths, sb20, sb11, sb10);
-      fillPaths(programFiles + " (x86)", suspiciousPaths, sb20, sb11, sb10);
+        fillPaths(programFiles, suspiciousPaths, sb20, sb11, sb10);
+        fillPaths(programFiles + " (x86)", suspiciousPaths, sb20, sb11, sb10);
 
-      path = findFirstThatExist(ArrayUtilRt.toStringArray(suspiciousPaths));
-    }
-    else if (SystemInfo.isMac) {
-      path = findFirstThatExist("/Applications/JavaFX Scene Builder 2.0.app",
-                                "/Applications/JavaFX Scene Builder 1.1.app",
-                                "/Applications/JavaFX Scene Builder 1.0.app");
-    }
-    else if (SystemInfo.isUnix) {
-      path = findFirstThatExist("/opt/JavaFXSceneBuilder2.0/JavaFXSceneBuilder2.0", "/opt/JavaFXSceneBuilder1.1/JavaFXSceneBuilder1.1");
-    }
+        yield findFirstThatExist(ArrayUtilRt.toStringArray(suspiciousPaths));
+      }
+      case macOS -> findFirstThatExist(
+        "/Applications/JavaFX Scene Builder 2.0.app",
+        "/Applications/JavaFX Scene Builder 1.1.app",
+        "/Applications/JavaFX Scene Builder 1.0.app"
+      );
+      default -> findFirstThatExist(
+        "/opt/JavaFXSceneBuilder2.0/JavaFXSceneBuilder2.0",
+        "/opt/JavaFXSceneBuilder1.1/JavaFXSceneBuilder1.1"
+      );
+    };
 
     return path != null ? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)) : null;
   }
 
   private static String findFirstThatExist(String... paths) {
-    File sb = FileUtil.findFirstThatExist(paths);
+    var sb = FileUtil.findFirstThatExist(paths);
     return sb == null ? null : sb.getPath();
   }
 
   private static void fillPaths(String programFilesPath, List<String> suspiciousPaths, String... sb) {
-    for (String sbi : sb) {
-      suspiciousPaths.add(new File(programFilesPath, "Oracle").getPath() + sbi);
+    for (var sbi : sb) {
+      suspiciousPaths.add(Path.of(programFilesPath, "Oracle") + sbi);
     }
   }
 }

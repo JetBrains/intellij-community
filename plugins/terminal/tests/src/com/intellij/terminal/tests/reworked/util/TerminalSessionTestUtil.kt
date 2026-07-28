@@ -138,7 +138,7 @@ internal object TerminalSessionTestUtil {
       "pwsh",
       "pwsh.exe"
     ).mapNotNull {
-      PathEnvironmentVariableUtil.findInPath(it)?.toPath()
+      PathEnvironmentVariableUtil.findFirst(it)
     }
   }
 

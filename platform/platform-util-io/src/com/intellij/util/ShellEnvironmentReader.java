@@ -177,8 +177,9 @@ public final class ShellEnvironmentReader {
       innerScriptlet, javaExePath(), readEnvClasspath(), ReadEnv.class.getName(), OUTPUT_PLACEHOLDER
     );
 
-    var shellName = PathEnvironmentVariableUtil.findExecutableInWindowsPath("pwsh", "powershell.exe");  // PS7 with a falback to PS5
-    var processBuilder = new ProcessBuilder(shellName, "-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", scriptlet);
+    var ps7 = PathEnvironmentVariableUtil.findFirst("pwsh");
+    var ps7or5 = ps7 != null ? ps7.toString() : "powershell.exe";
+    var processBuilder = new ProcessBuilder(ps7or5, "-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", scriptlet);
     setWorkingDir(psFile, processBuilder);
     return processBuilder;
   }

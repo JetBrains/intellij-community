@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.settings;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.sh.ShBundle;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-import static com.intellij.execution.configurations.PathEnvironmentVariableUtil.findInPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 public final class ShSettings {
@@ -41,8 +40,8 @@ public final class ShSettings {
       }
     }
 
-    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHELLCHECK_WIN_EXECUTABLE : SHELLCHECK_UNIX_EXECUTABLE);
-    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+    final var defaultExecutable = PathEnvironmentVariableUtil.findFirst("shellcheck");
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.toString() : "";
 
     final var storedPath = ShToolsLocalSettings.getInstance(project).getShellcheckPath();
     return storedPath.isBlank() ? defaultExecutablePath : storedPath;
@@ -66,8 +65,8 @@ public final class ShSettings {
       }
     }
 
-    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHFMT_WIN_EXECUTABLE : SHFMT_UNIX_EXECUTABLE);
-    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+    final var defaultExecutable = PathEnvironmentVariableUtil.findFirst("shfmt");
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.toString() : "";
 
     final var storedPath = ShToolsLocalSettings.getInstance(project).getShfmtPath();
     return storedPath.isBlank() ? defaultExecutablePath : storedPath;

@@ -6,7 +6,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
@@ -28,6 +27,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.pythonSdk
@@ -63,6 +64,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Run `powershell.exe` with a venv activation script and make sure there are no errors and python is correct
  */
+@OptIn(LowLevelLocalMachineAccess::class)
 @PyEnvTestCaseWithConda
 class PyVirtualEnvTerminalCustomizerTest {
   private val projectFixture = projectFixture()
@@ -81,7 +83,7 @@ class PyVirtualEnvTerminalCustomizerTest {
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
     sdkToDelete?.let { sdk ->
-      if (SystemInfo.isWindows) {
+      if (OS.CURRENT == OS.Windows) {
         deleteCheckLocking(Path.of(sdk.homePath!!))
       }
       edtWriteAction {
@@ -93,9 +95,8 @@ class PyVirtualEnvTerminalCustomizerTest {
 
   private suspend fun getShellPath(shellType: ShellType): Path = when (shellType) {
     ShellType.POWERSHELL -> {
-      PathEnvironmentVariableUtil.findInPath("powershell.exe")?.toPath()
-      ?: Path((System.getenv("SystemRoot")
-               ?: "c:\\windows"), "system32", "WindowsPowerShell", "v1.0", "powershell.exe")
+      PathEnvironmentVariableUtil.findFirst("powershell.exe")
+      ?: Path((System.getenv("SystemRoot") ?: "c:\\windows"), "system32", "WindowsPowerShell", "v1.0", "powershell.exe")
     }
     ShellType.FISH, ShellType.BASH, ShellType.ZSH -> {
       localEel.exec.where(shellType.name.lowercase())?.asNioPath()
@@ -113,21 +114,20 @@ class PyVirtualEnvTerminalCustomizerTest {
     @TempDir venvPath: Path,
   ): Unit = timeoutRunBlocking(10.minutes) {
     when (shellType) {
-      ShellType.POWERSHELL -> Assumptions.assumeTrue(SystemInfo.isWindows, "PowerShell is Windows only")
+      ShellType.POWERSHELL -> Assumptions.assumeTrue(OS.CURRENT == OS.Windows, "PowerShell is Windows only")
       ShellType.FISH -> Assumptions.abort("Fish terminal activation isn't supported")
-      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(SystemInfo.isWindows, "Unix shells do not work on Windows")
+      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(OS.CURRENT == OS.Windows, "Unix shells do not work on Windows")
     }
 
     val shellPath = getShellPath(shellType)
     if (!withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }) {
       when (shellType) {
-        ShellType.ZSH -> Assumptions.assumeFalse(SystemInfo.isMac, "Zsh is mandatory on mac")
+        ShellType.ZSH -> Assumptions.assumeFalse(OS.CURRENT == OS.macOS, "Zsh is mandatory on mac")
         ShellType.BASH -> error("$shellPath not found")
         ShellType.FISH -> error("Fish must be ignored")
         ShellType.POWERSHELL -> error("Powershell is mandatory on Windows")
       }
     }
-
 
     val (pythonBinary, venvDirName) =
       if (useConda) {
@@ -162,21 +162,21 @@ class PyVirtualEnvTerminalCustomizerTest {
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
       // Unix shells do not activate without tty
-      .interactionOptions(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
+      .interactionOptions(if (OS.CURRENT == OS.Windows) null else EelExecApi.Pty(100, 100, true))
     val process = execOptions.eelIt()
     try {
       val stderr = async {
         process.stderr.readWholeText()
       }
       val stdout = async {
-        val separator = if (SystemInfo.isWindows) "\n" else "\r\n"
+        val separator = if (OS.CURRENT == OS.Windows) "\n" else "\r\n"
         process.stdout.readWholeText().split(separator).map { it.trim() }
       }
 
       // tool -- where.exe Windows, "type(1)" **nix
       // "$TOOL python" returns $PREFIX [path-to-python] $POSTFIX
-      val (locateTool, prefix) = if (SystemInfo.isWindows) {
-        Pair(PathEnvironmentVariableUtil.findInPath("where.exe")?.toString() ?: "where.exe", "")
+      val (locateTool, prefix) = if (OS.CURRENT == OS.Windows) {
+        Pair(PathEnvironmentVariableUtil.findFirst("where.exe")?.toString() ?: "where.exe", "")
       }
       else {
         Pair("type", "python is ")
@@ -190,14 +190,14 @@ class PyVirtualEnvTerminalCustomizerTest {
 
       assertThat("We ran `$locateTool`, so we there should be python path", output,
                  anyOf(hasItem(prefix + pythonBinary.pathString), hasItem(prefix + pythonBinaryReal.pathString)))
-      if (SystemInfo.isWindows) {
+      if (OS.CURRENT == OS.Windows) {
         assertThat("There must be a line with ($venvDirName)", output, hasItem(containsString("($venvDirName)")))
       }
 
       process.exitCode.await()
     }
     finally {
-      if (SystemInfo.isWindows) {
+      if (OS.CURRENT == OS.Windows) {
         deleteCheckLocking(tempDirFixture.get())
         deleteCheckLocking(venvPath)
       }
@@ -224,9 +224,9 @@ class PyVirtualEnvTerminalCustomizerTest {
     @CartesianTest.Enum shellType: ShellType,
   ): Unit = timeoutRunBlocking {
     when (shellType) {
-      ShellType.POWERSHELL -> Assumptions.assumeTrue(SystemInfo.isWindows, "PowerShell is Windows only")
+      ShellType.POWERSHELL -> Assumptions.assumeTrue(OS.CURRENT == OS.Windows, "PowerShell is Windows only")
       ShellType.FISH -> Assumptions.abort("Fish terminal activation isn't supported")
-      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(SystemInfo.isWindows, "Unix shells do not work on Windows")
+      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(OS.CURRENT == OS.Windows, "Unix shells do not work on Windows")
     }
     val shellPath = getShellPath(shellType)
     Assumptions.assumeTrue(withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }, "$shellPath not found")

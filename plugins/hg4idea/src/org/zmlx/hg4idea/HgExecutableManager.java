@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -6,14 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 public final class HgExecutableManager {
@@ -21,18 +18,18 @@ public final class HgExecutableManager {
     return ApplicationManager.getApplication().getService(HgExecutableManager.class);
   }
 
-  private static final @NonNls String[] DEFAULT_WINDOWS_PATHS = {
+  private static final String[] DEFAULT_WINDOWS_PATHS = {
     "C:\\Program Files\\Mercurial",
     "C:\\Program Files (x86)\\Mercurial",
-    "C:\\cygwin\\bin"};
-  private static final @NonNls String[] DEFAULT_UNIX_PATHS = {
+    "C:\\cygwin\\bin"
+  };
+  private static final String[] DEFAULT_UNIX_PATHS = {
     "/usr/local/bin",
     "/usr/bin",
     "/opt/local/bin",
     "/opt/bin",
-    "/usr/local/mercurial"};
-  private static final @NonNls String DEFAULT_WINDOWS_HG = "hg.exe";
-  private static final @NonNls String DEFAULT_UNIX_HG = "hg";
+    "/usr/local/mercurial"
+  };
 
   private final @NotNull NotNullLazyValue<String> myDetectedExecutable;
 
@@ -57,35 +54,24 @@ public final class HgExecutableManager {
     return myDetectedExecutable.getValue();
   }
 
-  /**
-   * @return the default executable name depending on the platform
-   */
+  /// @return the default executable name depending on the platform
   private static @NotNull String identifyDefaultHgExecutable() {
-    File hgExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? DEFAULT_WINDOWS_HG : DEFAULT_UNIX_HG,
-                                                                       PathEnvironmentVariableUtil.getPathVariableValue(),
-                                                                       null);
+    var executableName = OS.CURRENT.getBinaryName("hg");
+
+    var hgExecutableFromPath = PathEnvironmentVariableUtil.findFirst(executableName);
     if (hgExecutableFromPath != null) {
-      return hgExecutableFromPath.getPath();
+      return hgExecutableFromPath.toString();
     }
 
-    String[] paths;
-    String programName;
-    if (SystemInfo.isWindows) {
-      programName = DEFAULT_WINDOWS_HG;
-      paths = DEFAULT_WINDOWS_PATHS;
-    }
-    else {
-      programName = DEFAULT_UNIX_HG;
-      paths = DEFAULT_UNIX_PATHS;
-    }
-
-    for (String p : paths) {
-      Path programPath = Paths.get(p, programName);
-      if (Files.isExecutable(programPath)) {
-        return programPath.toAbsolutePath().toString();
+    var paths = OS.CURRENT == OS.Windows ? DEFAULT_WINDOWS_PATHS : DEFAULT_UNIX_PATHS;
+    for (var path : paths) {
+      var executablePath = Path.of(path, executableName);
+      if (Files.isExecutable(executablePath)) {
+        return executablePath.toString();
       }
     }
-    // otherwise, take the first variant and hope it's in $PATH
-    return programName;
+
+    // otherwise, let's hope it's in $PATH
+    return executableName;
   }
 }
