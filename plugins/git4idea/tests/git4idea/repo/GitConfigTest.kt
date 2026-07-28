@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.commands.Git
@@ -18,14 +17,11 @@ import git4idea.test.TestDataUtil
 import git4idea.test.createRepository
 import git4idea.test.git
 import git4idea.test.tac
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.assertNotNull
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.Locale
-import kotlin.test.assertContains
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
@@ -93,7 +89,8 @@ class GitConfigTest : GitPlatformTest() {
     val config = readConfig()
     val remote = config.parseRemotes().firstOrNull()
     assertNotNull(remote)
-    assertSameElements("pushurl parsed incorrectly", remote!!.pushUrls, listOf(pushUrl))
+    remote?.checkRemoteUrls(listOf("git@github.com:foo/bar.git"), listOf(pushUrl))
+
   }
 
   fun `test instead of case insensitive`() {
@@ -102,7 +99,7 @@ class GitConfigTest : GitPlatformTest() {
     git("config url.git@github.com:.InsteaDof https://github.com/")
     val config = readConfig()
     val remote = config.parseRemotes().first()
-    assertEquals(listOf("git@github.com::foo/bar.git"), remote.urls)
+    remote.checkRemoteUrls(listOf("git@github.com::foo/bar.git"), listOf("git@github.com::foo/bar.git"))
   }
 
   fun `test insteadOf resolving when pushInsteadOf is specified`() {
@@ -127,7 +124,7 @@ class GitConfigTest : GitPlatformTest() {
     remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("git@github.com:group/bar.git"))
   }
 
-  fun `test pushInsteadOf with a placeholder doesn't affect URL-resolving of other placeholders`() {
+  fun `test irrelevant pushInsteadOf with a placeholder doesn't affect URL-resolving of other placeholders`() {
     createRepository()
     addRemote("test:group/bar.git")
     git("""config url.git@github.com:.pushInsteadOf notTest:""")
@@ -135,7 +132,7 @@ class GitConfigTest : GitPlatformTest() {
 
     val config = readConfig()
     val remote = config.parseRemotes().first()
-    assertEquals(listOf("https://github.com/group/bar.git"), remote.urls)
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("https://github.com/group/bar.git"))
   }
 
   fun `test explicit pushUrl is substituted only with insteadOf`() {
@@ -243,7 +240,8 @@ class GitConfigTest : GitPlatformTest() {
 
     val config = readConfig()
     val remote = config.parseRemotes().first()
-    remote.checkRemoteUrls(listOf("https://github.com/no/prefix/group/bar.git"), listOf("no/prefix/group/bar.git"))
+    remote.checkRemoteUrls(listOf("https://github.com/no/prefix/group/bar.git"),
+                           listOf("https://github.com/no/prefix/group/bar.git"))
   }
 
   fun `test insteadOf empty value is not applied if somethings more suitable is set`() {
@@ -347,14 +345,19 @@ class GitConfigTest : GitPlatformTest() {
     expectedUrls: List<String>,
     expectedPushUrls: List<String>,
   ) {
-    val h = GitLineHandler(project, projectRoot, GitCommand.REMOTE);
-    h.isEnableInteractiveCallbacks = false;
-    h.setSilent(true);
-    h.addParameters("-v");
-    val output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    assertContains(output, ("${expectedUrls.first()} (fetch)"))
-    expectedPushUrls.forEach { pushUrl -> assertContains(output, ("${pushUrl} (push)")) }
-
+    val h = GitLineHandler(project, projectRoot, GitCommand.REMOTE)
+    h.isEnableInteractiveCallbacks = false
+    h.setSilent(true)
+    h.addParameters("-v")
+    val output = Git.getInstance().runCommand(h).output
+    assertEquals("Git remote response doesn't contain the expected value for fetch",
+                 expectedUrls.map { "origin\t${it} (fetch)" }.first(),
+                 output.first { it.endsWith("(fetch)") }
+    )
+    assertSameElements("Git remote response doesn't contain the expected value for push",
+                       output.filter { it.endsWith("(push)") },
+                       expectedPushUrls.map { "origin\t${it} (push)" }
+    )
     assertEquals(expectedUrls, urls)
     assertEquals(expectedPushUrls, pushUrls)
   }
@@ -367,7 +370,7 @@ class GitConfigTest : GitPlatformTest() {
     val config = readConfig()
     val remote = config.parseRemotes().firstOrNull()
     assertNotNull(remote)
-    assertSameElements(remote!!.urls, listOf(url))
+    remote?.checkRemoteUrls(listOf(url), listOf(url))
   }
 
   fun `test config sections are case insensitive`() {
