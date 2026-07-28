@@ -16,8 +16,4 @@
       implementation="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule"/>
   </extensions>
 
-  <actions>
-    <action class="com.intellij.platform.experiment.ab.demo.ABExperimentDemoAction" internal="true"
-            text="AB Experiment Demo Action"/>
-  </actions>
 </idea-plugin>

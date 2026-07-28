@@ -7,6 +7,7 @@
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.debugger" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.experiments" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.intelliLang" scope="RUNTIME" />
