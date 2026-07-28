@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -489,7 +488,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       return false;
     }
 
-    EditorThreading.assertWriteAllowed();
+    Elf.getElf().assertWriteAllowed();
 
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.

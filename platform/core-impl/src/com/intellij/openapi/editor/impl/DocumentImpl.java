@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
-import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentCore;
@@ -75,7 +74,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
     this(
-      (forUseInNonAWTThread || !ElfFeatureFlag.isEnabled())
+      forUseInNonAWTThread
       ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
       : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
     );

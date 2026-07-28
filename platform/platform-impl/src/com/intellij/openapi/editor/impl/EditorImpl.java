@@ -567,7 +567,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    myElfDocument = (DocumentEx)Elf.getElf().getElfDocument(document);
+    myElfDocument = ElfFeatureFlag.isEnabled() ? (DocumentEx)Elf.getElf().getElfDocument(document) : myDocument;
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -1762,7 +1762,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean processKeyTyped(char c) {
-    return Elf.getElf().withElfScope(() -> processKeyTyped0(c));
+    if (ElfFeatureFlag.isEnabled()) {
+      return Elf.getElf().withElfScope(() -> processKeyTyped0(c));
+    }
+    return processKeyTyped0(c);
   }
 
   private boolean processKeyTyped0(char c) {

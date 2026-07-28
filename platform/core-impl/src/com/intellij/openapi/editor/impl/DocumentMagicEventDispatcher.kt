@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
+import com.intellij.openapi.editor.elf.ElfFeatureFlag
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
@@ -90,13 +91,9 @@ internal abstract class DocumentMagicEventDispatcher(
   }
 
   final override fun removeDocumentListener(listener: DocumentListener) {
-    val listenerOrRouter = if (isElfCandidate(listener)) {
-      getListeners().find {
-        it is ElfRouter && it.origin === listener
-      } ?: listener
-    } else {
-      listener
-    }
+    val listenerOrRouter = getListeners().find {
+      it is ElfRouter && it.origin === listener
+    } ?: listener
     val success = listeners.remove(listenerOrRouter)
     if (!success) {
       LOG.error(
@@ -149,7 +146,8 @@ internal abstract class DocumentMagicEventDispatcher(
   }
 
   private fun isElfCandidate(listener: DocumentListener): Boolean {
-    return listener.javaClass.isAnnotationPresent(ElfCandidate::class.java)
+    return ElfFeatureFlag.isEnabled() && // routing is only for internal dogfooding
+           listener.javaClass.isAnnotationPresent(ElfCandidate::class.java)
   }
 
   private inner class DocumentElfEventDispatcherImpl : DocumentEventDispatcher by this {

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.elf
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
@@ -50,13 +51,6 @@ internal class ElfImpl : Elf {
 
   override fun isPsiInteractionAllowed(): Boolean {
     return !isInElfScope() || isLockFreePsiSupported()
-  }
-
-  override fun <T> runReadAction(action: () -> T): T {
-    if (isInElfScope()) {
-      return action()
-    }
-    return runReadActionBlocking(action)
   }
 
   override fun getElfDocument(document: Document): Document {
@@ -119,6 +113,27 @@ internal class ElfImpl : Elf {
       )
     } finally {
       inCommand = oldVal
+    }
+  }
+
+  override fun <T> runReadAction(action: () -> T): T {
+    if (isInElfScope()) {
+      return action()
+    }
+    return runReadActionBlocking(action)
+  }
+
+  override fun runWriteAction(action: Runnable) {
+    if (isInElfScope()) {
+      action.run()
+    } else {
+      ApplicationManager.getApplication().runWriteAction(action)
+    }
+  }
+
+  override fun assertWriteAllowed() {
+    if (!isInElfScope()) {
+      ThreadingAssertions.assertWriteAccess()
     }
   }
 

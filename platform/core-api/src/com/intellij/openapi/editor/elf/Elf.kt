@@ -7,6 +7,7 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /**
@@ -67,8 +68,6 @@ interface Elf {
    */
   fun isPsiInteractionAllowed(): Boolean
 
-  fun <T> runReadAction(action: () -> T): T
-
   /**
    * Returns the UI-side elf document corresponding to [document], or [document]
    * itself when elf is disabled or unsupported for this document.
@@ -110,12 +109,15 @@ interface Elf {
     command: Runnable,
   )
 
+  fun <T> runReadAction(action: () -> T): T
+
+  fun runWriteAction(action: Runnable)
+
+  fun assertWriteAllowed()
+
   companion object {
     @JvmStatic
     fun getElf(): Elf {
-      if (!ElfFeatureFlag.isEnabled()) {
-        return OffDuty
-      }
       val application = ApplicationManager.getApplication()
       return application?.serviceOrNull<Elf>() ?: OffDuty
     }
@@ -142,10 +144,6 @@ private object OffDuty : Elf {
     return true
   }
 
-  override fun <T> runReadAction(action: () -> T): T {
-    return runReadActionBlocking(action)
-  }
-
   override fun getElfDocument(document: Document): Document {
     return document
   }
@@ -168,5 +166,17 @@ private object OffDuty : Elf {
     command: Runnable,
   ) {
     command.run()
+  }
+
+  override fun <T> runReadAction(action: () -> T): T {
+    return runReadActionBlocking(action)
+  }
+
+  override fun runWriteAction(action: Runnable) {
+    ApplicationManager.getApplication().runWriteAction(action)
+  }
+
+  override fun assertWriteAllowed() {
+    ThreadingAssertions.assertWriteAccess()
   }
 }

@@ -12,13 +12,13 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
     try {
       boolean isWritable = EditorModificationUtil.requestWriting(editor, charTyped, dataContext);
       if (isWritable) {
-        EditorThreading.write(() -> {
+        Elf.getElf().runWriteAction(() -> {
           document.startGuardedBlockChecking();
           try {
             typedAction.getHandler().execute(editor, charTyped, dataContext);

@@ -30,18 +30,13 @@ public final class ElfFeatureFlag {
   }
 
   @TestOnly
-  public static void setEnabled(boolean enabled) {
-    IS_LOCK_FREE_TYPING_ENABLED = enabled;
-  }
-
-  @TestOnly
   public static void withEnabled(@NotNull Runnable action) {
     boolean oldValue = isEnabled();
-    setEnabled(true);
+    IS_LOCK_FREE_TYPING_ENABLED = true;
     try {
       action.run();
     } finally {
-      setEnabled(oldValue);
+      IS_LOCK_FREE_TYPING_ENABLED = oldValue;
     }
   }
 }
