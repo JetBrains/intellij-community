@@ -4,9 +4,11 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ide.impl.wsl.WSL_PREFIXES
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -93,7 +95,10 @@ internal class IjentWslNioFileSystemProvider(
     val notationLowerCase = notation.lowercase()
     assert(notationLowerCase in WSL_PREFIXES) { notation }
     return when (this) {
-      is IjentNioPath -> fold(originalFs.getPath("\\\\$notation\\$wslId\\")) { parent, file -> parent.resolve(file.toString()) }
+      // `ijentToLocal` is mandatory: chars like `:` are legal in Linux file names, but `WindowsPath` can't hold them as is.
+      is IjentNioPath -> fold(originalFs.getPath("\\\\$notation\\$wslId\\")) { parent, file ->
+        parent.resolve(ijentToLocal(file.toString()))
+      }
       is IjentWslNioPath -> presentablePath.toOriginalPath(notation)
       else -> this
     }
@@ -103,6 +108,8 @@ internal class IjentWslNioFileSystemProvider(
     return when (this) {
       is IjentNioPath -> error(this)
       is IjentWslNioPath -> presentablePath.toOriginalPathWithSameNotation()
+      // The original file system provider throws ProviderMismatchException for paths of the routing file system.
+      is MultiRoutingFsPath -> initialDelegate.toOriginalPathWithSameNotation()
       else -> this
     }
   }
@@ -132,12 +139,23 @@ internal class IjentWslNioFileSystemProvider(
     }
   }
 
-  private fun wslIdFromPath(path: Path): String? {
-    val root = path.toAbsolutePath().root.toString()
+  private fun wslIdFromPath(path: Path): String? = wslIdFromRoot(path.toAbsolutePath().root.toString())
+
+  private fun wslIdFromRoot(root: String): String? {
     val wslMarker = """\\wsl"""
     if (!root.startsWith(wslMarker, ignoreCase = true)) return null
     val wslId = root.substring(wslMarker.length).substringAfter('\\').trimEnd('\\')
     return wslId.ifEmpty { null }
+  }
+
+  /**
+   * `wsl$` or `wsl.localhost`, taken from [root] which looks like `\\wsl$\distro\`.
+   * A relative path has no root to take the notation from, so an empty [root] is accepted and yields the fallback.
+   */
+  internal fun notationFromRoot(root: String): String {
+    val notation = root.removePrefix("""\\""").substringBefore('\\')
+    // `wsl.localhost` is the notation supported by all WSL versions, hence it is the fallback.
+    return if (WSL_NOTATIONS.any { it.equals(notation, ignoreCase = true) }) notation else WSL_NOTATIONS[0]
   }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit = ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
@@ -171,12 +189,24 @@ internal class IjentWslNioFileSystemProvider(
 
   override fun deleteIfExists(path: Path): Boolean = ijentFsProvider.deleteIfExists(path.toIjentPath())
 
-  override fun readSymbolicLink(link: Path): IjentWslNioPath = IjentWslNioPath(
-    getFileSystem(wslIdFromPath(link)
-                  ?: throw IOException("Cannot find WSL distribution for $link. The URL is incorrect or the distribution does not exist.")),
-    ijentFsProvider.readSymbolicLink(link.toIjentPath()),
-    null,
-  )
+  override fun readSymbolicLink(link: Path): IjentWslNioPath {
+    val root = link.toAbsolutePath().root.toString()
+    val wslId = wslIdFromRoot(root)
+                ?: throw IOException("Cannot find WSL distribution for $link. The URL is incorrect or the distribution does not exist.")
+    val target = ijentFsProvider.readSymbolicLink(link.toIjentPath())
+    // The link target is what the user and the tools see, so it must be a Windows path even though IJent reports a Linux one:
+    // otherwise `link.parent.resolve(target)` and `target.toString()` produce garbage for targets with chars like `:` in them.
+    val presentableTarget =
+      if (target.isAbsolute) {
+        // The notation is taken from `link` because `\\wsl$\` and `\\wsl.localhost\` must never be mixed within one path.
+        target.toOriginalPath(notationFromRoot(root))
+      }
+      else {
+        // A relative target has no root, hence no notation; only the special chars have to be mapped.
+        originalFs.getPath(ijentToLocal(target.toString()))
+      }
+    return IjentWslNioPath(getFileSystem(wslId), presentableTarget, null)
+  }
 
   override fun getPath(uri: URI): Path = IjentWslNioPath(
     getFileSystem(wslIdFromPath(originalFsProvider.getPath(uri))
@@ -317,5 +347,11 @@ internal class IjentWslNioFileSystemProvider(
 
   companion object {
     private val LOG = logger<IjentWslNioFileSystemProvider>()
+
+    /**
+     * The two interchangeable notations of a WSL UNC root.
+     * They must never be mixed within one path, see [com.intellij.platform.eel.provider.asNioPath].
+     */
+    internal val WSL_NOTATIONS: List<String> = listOf("wsl.localhost", "wsl$")
   }
 }
