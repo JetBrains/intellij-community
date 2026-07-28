@@ -474,6 +474,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Terraform:javax.swing.Icon
 - sf:Text:javax.swing.Icon
 - sf:Toml:javax.swing.Icon
+- sf:TypeScript:javax.swing.Icon
 - sf:UiForm:javax.swing.Icon
 - sf:Unknown:javax.swing.Icon
 - sf:Vue:javax.swing.Icon
