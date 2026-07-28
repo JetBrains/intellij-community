@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.internal.backend
 
+import com.intellij.internal.PlatformInternalBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.serviceOrNull
@@ -35,7 +36,7 @@ internal class ShowRegisteredRemoteApisAction : DumbAwareAction() {
 
   private class ShowRegisteredApisDialog(private val apis: List<String>) : DialogWrapper(null) {
     init {
-      title = "Registered Remote APIs"
+      title = PlatformInternalBundle.message("dialog.title.registered.remote.apis")
       init()
     }
 
