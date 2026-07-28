@@ -151,8 +151,8 @@ private fun processDependenciesWithRootIndex(dependencies: Sequence<Directory>, 
 private fun collectAllDependencies(
   entry: PyProjectTomlProject, tomlDependencySpecifications: List<TomlDependencySpecification>,
 ): Sequence<Directory> = sequence {
-  yieldAll(getDependenciesFromProject(entry.pyProjectToml))
-  yieldAll(getDependenciesFromPep735Groups(entry.pyProjectToml))
+  yieldAll(getDependenciesFromProject(entry.root, entry.pyProjectToml))
+  yieldAll(getDependenciesFromPep735Groups(entry.root, entry.pyProjectToml))
   yieldAll(getToolSpecificDependencies(entry.root, entry.pyProjectToml.toml, tomlDependencySpecifications))
 }
 
@@ -168,10 +168,7 @@ private fun getToolSpecificDependencies(
       is TomlDependencySpecification.PathDependency -> tomlTable.safeGet<TomlTable>(specification.tomlKey, unquotedDottedKey = true).successOrNull?.let {
         getToolSpecificDependenciesFromTomlTable(root, it)
       } ?: emptySet()
-      is TomlDependencySpecification.Pep621Dependency -> {
-        val deps = tomlTable.safeGetArr<String>(specification.tomlKey, unquotedDottedKey = true).successOrNull ?: emptyList()
-        deps.asSequence().mapNotNull(::parsePep621Dependency).toSet()
-      }
+      is TomlDependencySpecification.Pep621Dependency -> getPep621Dependencies(root, tomlTable, specification.tomlKey).toSet()
       is TomlDependencySpecification.GroupPathDependency -> {
         val groups = tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
         groups.keySet().flatMap { group ->
@@ -180,8 +177,20 @@ private fun getToolSpecificDependencies(
           } ?: emptySet()
         }
       }
+      is TomlDependencySpecification.GroupPep621Dependency -> {
+        val groups = tomlTable.safeGet<TomlTable>(specification.tomlKeyToGroup, unquotedDottedKey = true).successOrNull ?: return@flatMap emptySet()
+        groups.keySet().flatMap { group ->
+          getPep621Dependencies(root, groups, "${group}.${specification.tomlKeyFromGroupToDependencies}")
+        }
+      }
     }
   }
+}
+
+@RequiresBackgroundThread
+private fun getPep621Dependencies(root: Path, tomlTable: TomlTable, tomlKeyToDependencies: String): Set<Path> {
+  val deps = tomlTable.safeGetArr<String>(tomlKeyToDependencies, unquotedDottedKey = true).successOrNull ?: return emptySet()
+  return deps.asSequence().mapNotNull { parsePep621Dependency(root, it) }.toSet()
 }
 
 @RequiresBackgroundThread
@@ -193,24 +202,45 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
 }
 
 @RequiresBackgroundThread
-private fun getDependenciesFromPep735Groups(tomlTable: PyProjectToml): Sequence<Directory> =
-  tomlTable.project.dependencies.allDepsFromGroups.asSequence().mapNotNull(::parsePep621Dependency)
+private fun getDependenciesFromPep735Groups(root: Path, tomlTable: PyProjectToml): Sequence<Directory> =
+  tomlTable.project.dependencies.allDepsFromGroups.asSequence().mapNotNull { parsePep621Dependency(root, it) }
 
 @RequiresBackgroundThread
-private fun getDependenciesFromProject(projectToml: PyProjectToml): Sequence<Directory> {
+private fun getDependenciesFromProject(root: Path, projectToml: PyProjectToml): Sequence<Directory> {
   val depsFromFile = projectToml.project.dependencies.project
-  return depsFromFile.asSequence().mapNotNull(::parsePep621Dependency)
+  return depsFromFile.asSequence().mapNotNull { parsePep621Dependency(root, it) }
 }
 
-private fun parsePep621Dependency(depSpec: String): Path? {
+private fun parsePep621Dependency(root: Path, depSpec: String): Path? {
   val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec) ?: return null
-  val (_, depUri) = match.destructured
-  return parseDepUri(depUri)
+  val (_, directReference) = match.destructured
+  return when {
+    directReference.startsWith("file:") -> parseDepUri(directReference)
+    else -> parseHatchContextFormattedPath(root, directReference)
+  }
 }
 
 
 // e.g. "lib @ file:///home/user/projects/main/lib"
-private val PEP_621_PATH_DEPENDENCY = """([\w-]+) @ (file:.*)""".toRegex()
+private val PEP_621_PATH_DEPENDENCY = """([\w-]+) @ (.*)""".toRegex()
+// e.g. "{root:parent:uri}/lib"
+private val HATCH_ROOT_URI = """\{root((?::parent)*):uri}(/.*)?""".toRegex()
+
+private fun parseHatchContextFormattedPath(root: Path, directReference: String): Path? {
+  val match = HATCH_ROOT_URI.matchEntire(directReference) ?: return null
+  val (parentModifiers, relativePath) = match.destructured
+  val parentCount = parentModifiers.split(':').count { it == "parent" }
+  val formattedRoot = root.nthParent(parentCount) ?: return null
+  return parseDepFromPathString(formattedRoot, relativePath.removePrefix("/"))
+}
+
+private fun Path.nthParent(count: Int): Path? {
+  var current: Path? = this
+  for (i in 0 until count) {
+    current = current?.parent ?: return null
+  }
+  return current
+}
 
 private fun parseDepUri(depUri: String): Path? =
   try {
