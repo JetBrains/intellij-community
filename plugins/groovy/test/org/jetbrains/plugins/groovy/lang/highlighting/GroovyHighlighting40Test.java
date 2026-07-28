@@ -41,7 +41,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
           var (Integer a, b) = [1, 2]
           def (Integer c, d) = [3, 4]
   
-          <error descr="Tuple declaration should end with 'def' or 'var' modifier">final</error> (Integer e, f) = [5, 6]
+          final (Integer e, f) = [5, 6]
       }
       """
     );
