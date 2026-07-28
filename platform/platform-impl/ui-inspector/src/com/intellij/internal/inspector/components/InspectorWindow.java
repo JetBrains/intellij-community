@@ -62,6 +62,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +213,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.addSeparator();
     actions.add(new ToggleAltHoverAction());
     actions.addSeparator();
-    actions.add(new CopyTreeAction());
+    actions.add(new ExportTreeAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -950,33 +951,27 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class CopyTreeAction extends MyTextAction {
-    private CopyTreeAction() {
-      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.CopyTree"));
-      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.CopyTree"));
+  private final class ExportTreeAction extends MyTextAction {
+    private ExportTreeAction() {
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ExportTree"));
+      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ExportTree"));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String yaml = myHierarchyTree.exportTreeAsYaml();
-      if (yaml.isEmpty()) return;
-      CopyPasteManager.copyTextToClipboard(yaml);
-      JLabel hint = new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.copied.hint"));
-      // the hint is shown in a bare popup, so it has to pad itself away from the popup border
-      hint.setBorder(JBUI.Borders.empty(4, 8));
+      String text = myHierarchyTree.exportTreeAsText();
+      if (text.isEmpty()) return;
+      CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       HintManager.getInstance().showHint(
-        hint, getHintPoint(e),
+        new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.exported.hint")),
+        RelativePoint.getSouthWestOf(myHierarchyTree),
         HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_OTHER_HINT, 3000);
     }
 
-    /** Right below the toolbar button that was pressed, or the middle of the inspector window if there is no button to anchor to. */
-    private @NotNull RelativePoint getHintPoint(@NotNull AnActionEvent e) {
-      InputEvent inputEvent = e.getInputEvent();
-      Component source = inputEvent == null ? null : inputEvent.getComponent();
-      if (source instanceof JComponent jSource && source.isShowing()) {
-        return RelativePoint.getSouthWestOf(jSource);
-      }
-      return RelativePoint.getCenterOf(getRootPane());
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     }
   }
 

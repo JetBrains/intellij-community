@@ -148,46 +148,41 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
   }
 
   /**
-   * Serializes the whole component hierarchy as YAML: every node becomes a {@code - node: "<label>"} entry
-   * with a nested {@code children:} sequence. Labels are the text the tree shows, emitted as double-quoted scalars.
+   * Serializes the whole component hierarchy into indented plain text, preserving the tree structure.
+   * Each node is rendered exactly as it appears in the tree (via the tree's cell renderer),
+   * and the nesting depth is expressed with leading indentation.
    */
-  public @NotNull String exportTreeAsYaml() {
+  public @NotNull String exportTreeAsText() {
     StringBuilder sb = new StringBuilder();
     Object root = getModel().getRoot();
     if (root instanceof TreeNode) {
-      appendNodeYaml(sb, (TreeNode)root, 0);
+      appendNodeText(sb, (TreeNode)root, 0);
     }
     return sb.toString();
   }
 
-  private void appendNodeYaml(@NotNull StringBuilder sb, @NotNull TreeNode node, int indent) {
-    String pad = " ".repeat(indent);
-    sb.append(pad).append("- node: ").append(toYamlScalar(getNodeText(node))).append('\n');
+  private void appendNodeText(@NotNull StringBuilder sb, @NotNull TreeNode node, int depth) {
+    sb.repeat("  ", depth);
+    sb.append(getNodeText(node));
+    sb.append('\n');
     int childCount = node.getChildCount();
-    if (childCount > 0) {
-      sb.append(pad).append("  children:\n");
-      for (int i = 0; i < childCount; i++) {
-        appendNodeYaml(sb, node.getChildAt(i), indent + 2);
-      }
+    for (int i = 0; i < childCount; i++) {
+      appendNodeText(sb, node.getChildAt(i), depth + 1);
     }
-  }
-
-  private static @NotNull String toYamlScalar(@NotNull String text) {
-    return '"' + StringUtil.escapeStringCharacters(text) + '"';
   }
 
   private @NotNull String getNodeText(@NotNull TreeNode node) {
-    // rendering a node is expensive (reflection over the component's owner fields), so reuse the text cached while painting
-    if (node instanceof ComponentNode componentNode && componentNode.myText != null) {
-      return componentNode.myText;
-    }
-    Component rendererComponent =
-      getCellRenderer().getTreeCellRendererComponent(this, node, false, true, node.isLeaf(), 0, false);
-    if (rendererComponent instanceof SimpleColoredComponent) {
-      String text = rendererComponent.toString();
-      if (!StringUtil.isEmpty(text)) {
-        return text;
+    try {
+      Component rendererComponent =
+        getCellRenderer().getTreeCellRendererComponent(this, node, false, true, node.isLeaf(), 0, false);
+      if (rendererComponent instanceof SimpleColoredComponent) {
+        String text = rendererComponent.toString();
+        if (!StringUtil.isEmpty(text)) {
+          return text;
+        }
       }
+    }
+    catch (Exception ignored) {
     }
     return String.valueOf(node);
   }
