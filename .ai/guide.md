@@ -97,6 +97,14 @@ Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual se
 - Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are disabled, and a `PreToolUse` hook denies `grep` and `find` as the primary shell command (piping them is allowed). Use ijproxy search, or `{{TOOLS_DIR}}/fd.cmd` and `{{TOOLS_DIR}}/rg.cmd` when no MCP is available.
 - Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted, except for text/file search — use `{{TOOLS_DIR}}/rg.cmd` and `{{TOOLS_DIR}}/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
+- `fd.cmd` and `rg.cmd` skip dot-directories by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, `.opencode/` — pass `-H` (`--hidden`) when looking for skills, guidelines, or hooks, or you will conclude they do not exist.
+
+### Skills
+
+The harness may list skill *names* only, without descriptions. When a task looks like something a skill covers, read the index for what each name does before improvising:
+
+<!-- IF_EDITION:ULTIMATE -->- Skill index: [`.agents/skills/INDEX.md`](../../.agents/skills/INDEX.md)<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:COMMUNITY -->- Skill index: [`.agents/skills/INDEX.md`](../.agents/skills/INDEX.md)<!-- /IF_EDITION:COMMUNITY -->
 
 {{PARTIAL:knowledge-mcps}}
 

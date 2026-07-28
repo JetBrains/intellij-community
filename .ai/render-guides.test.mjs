@@ -245,6 +245,52 @@ describe('render-guides skills', () => {
 
       const communityClaudeTestingStubPath = join(communityClaudeDir, 'testing', 'SKILL.md')
       ok(existsSync(communityClaudeTestingStubPath), 'community skill stub is missing in community/.claude/skills')
+
+      const agentsIndex = readFileSync(join(agentsDir, 'INDEX.md'), 'utf8')
+      ok(!agentsIndex.includes('platform-deep-dives'), 'community render should not list an ultimate-only skill in the index')
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it('writes a name → description index beside each canonical source tree', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
+
+    try {
+      writeSkill(join(communitySourceDir, 'piped'), 'piped', '# Piped\n', undefined, '"Handles a | pipe."')
+
+      await renderSkills({
+        communitySourceDir,
+        agentsDir,
+        claudeDir,
+        junieDir,
+        communityClaudeDir,
+        edition: 'ULTIMATE',
+      })
+
+      const agentsIndexPath = join(agentsDir, 'INDEX.md')
+      ok(existsSync(agentsIndexPath), 'index is missing beside the ultimate canonical sources')
+      const agentsIndex = readFileSync(agentsIndexPath, 'utf8')
+      ok(agentsIndex.startsWith(generatedSkillMarker), 'index should carry the generated-by header')
+      equal(
+        agentsIndex.split('\n').filter(line => line.startsWith('| [')).join('\n'),
+        [
+          '| [piped](piped/SKILL.md) | Handles a \\| pipe. |',
+          '| [platform-deep-dives](platform-deep-dives/SKILL.md) | platform-deep-dives |',
+          '| [testing](testing/SKILL.md) | testing |',
+        ].join('\n'),
+        'index should list community and ultimate-only skills, sorted by name, with table pipes escaped',
+      )
+
+      const communityIndex = readFileSync(join(communitySourceDir, 'INDEX.md'), 'utf8')
+      ok(
+        communityIndex.includes('| [testing](testing/SKILL.md) | testing |'),
+        'community index should list the community skills',
+      )
+      ok(!communityIndex.includes('platform-deep-dives'), 'community index should not list an ultimate-only skill')
+
+      ok(!existsSync(join(claudeDir, 'INDEX.md')), 'the index belongs beside canonical sources, not in generated trees')
+      ok(!existsSync(join(junieDir, 'INDEX.md')), 'the index belongs beside canonical sources, not in generated trees')
     } finally {
       rmSync(rootDir, {recursive: true, force: true})
     }
