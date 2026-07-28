@@ -128,10 +128,11 @@ class MavenSetupProjectTest(mavenVersion: String, modelVersion: String) {
       }
       maven.assertProjectState(it, projectInfo, linkedProjectInfo)
     }
-    openProjectAsync(projectInfo.projectFile)
-      .useProjectAsync {
-        maven.assertProjectState(it, projectInfo, linkedProjectInfo)
-      }
+    maven.waitForImport {
+      openProjectAsync(projectInfo.projectFile)
+    }.useProjectAsync {
+      maven.assertProjectState(it, projectInfo, linkedProjectInfo)
+    }
   }
 
   @Test
@@ -167,10 +168,11 @@ class MavenSetupProjectTest(mavenVersion: String, modelVersion: String) {
       }.useProjectAsync(save = true) {
         maven.assertProjectState(it, projectInfo)
       }
-      openProjectAsync(projectInfo.projectFile)
-        .useProjectAsync {
-          maven.assertProjectState(it, projectInfo)
-        }
+      maven.waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync {
+        maven.assertProjectState(it, projectInfo)
+      }
     }
   }
 
@@ -189,9 +191,10 @@ class MavenSetupProjectTest(mavenVersion: String, modelVersion: String) {
       }
       maven.assertProjectState(it, projectInfo, linkedProjectInfo)
     }
-    maven.importProjectActionAsync(projectInfo.projectFile)
-      .useProjectAsync {
-        maven.assertProjectState(it, projectInfo, linkedProjectInfo)
-      }
+    maven.waitForImport {
+      maven.importProjectActionAsync(projectInfo.projectFile)
+    }.useProjectAsync {
+      maven.assertProjectState(it, projectInfo, linkedProjectInfo)
+    }
   }
 }
