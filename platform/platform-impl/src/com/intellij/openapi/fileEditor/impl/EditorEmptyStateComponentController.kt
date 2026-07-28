@@ -2,10 +2,13 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.ui.JBUI
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -47,6 +51,15 @@ private val LOG = logger<EditorEmptyStateComponentController>()
 internal const val EDITOR_ROOT_COMPONENT_CONSTRAINT: @NonNls String = "EditorRootComponent"
 internal const val EMPTY_STATE_COMPONENT_CONSTRAINT: @NonNls String = "EditorEmptyStateComponent"
 private val EMPTY_STATE_COMPONENT_CREATION_DELAY = 300.milliseconds
+
+/**
+ * Ceiling on how long a prepared component waits for the presentation gate to open.
+ *
+ * Not a latency knob — the gate is opened by project open as soon as it knows, and this is above any plausible project open. It is a
+ * backstop against a hold nobody releases, which would otherwise leave this area showing nothing at all for as long as the project
+ * stays open, because the fallback empty text is not selected while a rich provider is available.
+ */
+private val PRESENTATION_GATE_TIMEOUT = 30.seconds
 
 /**
  * Budget for the part of a single [EditorEmptyStateComponentProvider.createComponent] call that does not run on the UI thread.
@@ -87,6 +100,7 @@ internal class EditorEmptyStateComponentController(
    */
   private val presentationAllowed = MutableStateFlow(true)
   private var creationDelay: Duration = EMPTY_STATE_COMPONENT_CREATION_DELAY
+  private var presentationGateTimeout: Duration = PRESENTATION_GATE_TIMEOUT
   private var creationGate: (suspend () -> Unit)? = null
 
   init {
@@ -98,10 +112,6 @@ internal class EditorEmptyStateComponentController(
   fun isCreationPending(): Boolean = creationJob != null
 
   fun isVisible(): Boolean = componentHost != null
-
-  fun isLegacyEmptyTextPaintingAllowed(): Boolean {
-    return componentHost == null && creationJob == null && !hasAvailableRichProvider()
-  }
 
   fun suppressRichComponents() {
     if (!richComponentsEnabled && componentHost == null && creationJob == null) {
@@ -162,9 +172,12 @@ internal class EditorEmptyStateComponentController(
   fun disposeComponents() {
     cancelCreation()
     val host = componentHost ?: return
-    splitters.uninstallEmptyStateOverlay(host)
-    host.removeAll()
-    disposeEntries(componentEntries)
+    // uninstalling fires `removeNotify` on a provider's component, which may release an editor — see [mount]
+    WriteIntentReadAction.run {
+      splitters.uninstallEmptyStateOverlay(host)
+      host.removeAll()
+      disposeEntries(componentEntries)
+    }
     componentHost = null
     componentEntries = emptyList()
     splitters.revalidate()
@@ -173,7 +186,9 @@ internal class EditorEmptyStateComponentController(
 
   private fun disposeComponentsOnEdt() {
     val application = ApplicationManager.getApplication()
-    if (application.isDispatchThread) {
+    // the scope may be cancelled from a strict-UI context, where taking the write-intent lock disposal needs is forbidden rather than
+    // merely absent — so the direct path is taken only where the lock is already held
+    if (application.isDispatchThread && application.isWriteIntentLockAcquired) {
       disposeComponents()
     }
     else {
@@ -184,6 +199,11 @@ internal class EditorEmptyStateComponentController(
   /** @param delay `null` restores the production delay. */
   fun setCreationDelayForTests(delay: Duration?) {
     creationDelay = delay ?: EMPTY_STATE_COMPONENT_CREATION_DELAY
+  }
+
+  /** @param timeout `null` restores the production timeout. */
+  fun setPresentationGateTimeoutForTests(timeout: Duration?) {
+    presentationGateTimeout = timeout ?: PRESENTATION_GATE_TIMEOUT
   }
 
   fun setCreationGateForTests(gate: (suspend () -> Unit)?) {
@@ -207,16 +227,17 @@ internal class EditorEmptyStateComponentController(
     val presentationHeld = !presentationAllowed.value
     val generation = ++creationGeneration
     creationJob = coroutineScope.launch(Dispatchers.Default + CoroutineName("create editor empty state components")) {
+      val startedAt = TimeSource.Monotonic.markNow()
       var entries: List<EditorEmptyStateComponentEntry> = emptyList()
       var mounted = false
       try {
         creationGate?.invoke()
-        if (!isCreationValidOnEdt(generation, kind)) {
+        if (!isCreationValidOnUiThread(generation, kind)) {
           return@launch
         }
         entries = createEntries(generation, providers)
         if (entries.isEmpty() && kind == EditorEmptyStateComponentProvider.Kind.RICH) {
-          val fallbackProviders = withContext(Dispatchers.EDT) {
+          val fallbackProviders = withContext(Dispatchers.UI) {
             if (isCreationValid(generation, EditorEmptyStateComponentProvider.Kind.FALLBACK)) {
               getAvailableProviders(EditorEmptyStateComponentProvider.Kind.FALLBACK)
             }
@@ -227,31 +248,36 @@ internal class EditorEmptyStateComponentController(
           entries = createEntries(generation, fallbackProviders)
         }
         if (entries.isEmpty()) {
-          // nothing to present, so there is nothing to wait for either — this creation must not go on holding the legacy empty text back
           return@launch
         }
-        if (!presentationHeld && kind == EditorEmptyStateComponentProvider.Kind.RICH) {
-          delay(creationDelay)
-        }
-        // Only a rich empty state is worth holding back. Plain empty text is what this area showed before any of this existed, and
-        // holding it back leaves the area blank rather than plain, because legacy painting is suppressed while a creation is pending.
-        if (entries.first().kind == EditorEmptyStateComponentProvider.Kind.RICH) {
+        // Only a rich empty state is worth delaying or holding back — the plain empty text is what this area showed before any of this
+        // existed. Keyed on what was actually built, so a fallback reached through a rich provider that built nothing is not delayed.
+        val presentedKind = entries.first().kind
+        if (presentedKind == EditorEmptyStateComponentProvider.Kind.RICH) {
+          if (!presentationHeld) {
+            delay(creationDelay)
+          }
           // the gate may also have been closed after this creation started, so it is awaited whether it was held at that point or not
-          presentationAllowed.first { it }
+          awaitPresentationAllowed()
         }
-        withContext(Dispatchers.EDT) {
-          if (!isCreationValid(generation, entries.first().kind)) {
+        // `Dispatchers.EDT`, not `Dispatchers.UI`: mounting takes the write-intent lock (see [mount]), and the strict UI dispatcher
+        // forbids taking it outright. `ModalityState.any()`, like the hold hops in `IdeProjectFrameAllocator`, so a modal dialog
+        // during startup cannot reorder the mount against the release that allowed it.
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (!isCreationValid(generation, presentedKind)) {
             return@withContext
           }
-          writeIntentReadAction {
-            mount(entries)
-          }
+          mount(entries)
           mounted = true
         }
       }
       finally {
-        withContext(NonCancellable + Dispatchers.EDT) {
+        withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (!mounted) {
+            if (entries.isNotEmpty()) {
+              // what the split costs when project open takes this area over anyway: components were built and are now thrown away
+              LOG.debug { "Discarded ${entries.size} prepared editor empty state component(s) after ${startedAt.elapsedNow()}" }
+            }
             disposeEntries(entries)
           }
           if (generation == creationGeneration) {
@@ -265,6 +291,12 @@ internal class EditorEmptyStateComponentController(
     }
   }
 
+  private suspend fun awaitPresentationAllowed() {
+    if (withTimeoutOrNull(presentationGateTimeout) { presentationAllowed.first { it } } == null) {
+      LOG.warn("Editor empty state presentation was held for $presentationGateTimeout and is presented anyway; a hold was never released")
+    }
+  }
+
   private fun getProvidersToCreate(): List<EditorEmptyStateProviderEntry> {
     val richProviders = getAvailableProviders(EditorEmptyStateComponentProvider.Kind.RICH)
     if (richProviders.isNotEmpty()) {
@@ -273,19 +305,9 @@ internal class EditorEmptyStateComponentController(
     return getAvailableProviders(EditorEmptyStateComponentProvider.Kind.FALLBACK)
   }
 
-  private fun hasAvailableRichProvider(): Boolean {
-    return getAvailableProviders(EditorEmptyStateComponentProvider.Kind.RICH, stopAfterFirst = true).isNotEmpty()
-  }
-
-  private fun getAvailableProviders(
-    kind: EditorEmptyStateComponentProvider.Kind,
-    stopAfterFirst: Boolean = false,
-  ): List<EditorEmptyStateProviderEntry> {
+  private fun getAvailableProviders(kind: EditorEmptyStateComponentProvider.Kind): List<EditorEmptyStateProviderEntry> {
     val providers = ArrayList<EditorEmptyStateProviderEntry>()
     EditorEmptyStateComponentProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
-      if (stopAfterFirst && providers.isNotEmpty()) {
-        return@processWithPluginDescriptor
-      }
       if (getProviderKind(provider, pluginDescriptor) != kind) {
         return@processWithPluginDescriptor
       }
@@ -322,10 +344,10 @@ internal class EditorEmptyStateComponentController(
     }
   }
 
-  private suspend fun isCreationValidOnEdt(
+  private suspend fun isCreationValidOnUiThread(
     generation: Int,
     kind: EditorEmptyStateComponentProvider.Kind,
-  ): Boolean = withContext(Dispatchers.EDT) {
+  ): Boolean = withContext(Dispatchers.UI) {
     isCreationValid(generation, kind)
   }
 
@@ -343,7 +365,7 @@ internal class EditorEmptyStateComponentController(
     val entries = ArrayList<EditorEmptyStateComponentEntry>()
     try {
       for ((provider, pluginDescriptor, kind) in providers) {
-        if (!isCreationValidOnEdt(generation, kind)) {
+        if (!isCreationValidOnUiThread(generation, kind)) {
           break
         }
         val component = try {
@@ -373,26 +395,45 @@ internal class EditorEmptyStateComponentController(
       return entries
     }
     catch (e: CancellationException) {
-      withContext(NonCancellable + Dispatchers.EDT) {
+      // `Dispatchers.EDT` for the same reason as the mount: disposing takes the write-intent lock
+      withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
         disposeEntries(entries)
       }
       throw e
     }
   }
 
+  /**
+   * Mounts the prepared components. Must be called where the write-intent lock may be taken — the legacy [Dispatchers.EDT], or
+   * `invokeLater` — because [Dispatchers.UI] forbids taking it rather than merely not carrying it.
+   */
   private fun mount(entries: List<EditorEmptyStateComponentEntry>) {
-    val host = EditorEmptyStateComponentHost(fillContent = entries.all { it.kind == EditorEmptyStateComponentProvider.Kind.FALLBACK })
-    componentHost = host
-    componentEntries = entries
-    host.setComponents(entries.map { it.component })
-    splitters.installEmptyStateOverlay(host)
-    splitters.revalidate()
-    splitters.repaint()
+    // Installing the overlay is a plain `Container.add`, but it fires `addNotify` on a provider's component, and a provider may create
+    // an editor there — AIR's composer hosts an `AirPromptEditorTextField`, whose `addNotify` runs `EditorTextField.initEditor`. The
+    // lock is taken here, where the need is, so that it is stated rather than inherited from whichever caller arrives.
+    WriteIntentReadAction.run {
+      val host = EditorEmptyStateComponentHost(fillContent = entries.all { it.kind == EditorEmptyStateComponentProvider.Kind.FALLBACK })
+      componentHost = host
+      componentEntries = entries
+      host.setComponents(entries.map { it.component })
+      splitters.installEmptyStateOverlay(host)
+      splitters.revalidate()
+      splitters.repaint()
+    }
   }
 
+  /**
+   * Takes the write-intent lock for the same reason [mount] does: a provider may release an editor while disposing its component. Same
+   * caller requirement, too — a context where that lock may be taken.
+   */
   private fun disposeEntries(entries: List<EditorEmptyStateComponentEntry>) {
-    for ((provider, component) in entries) {
-      provider.disposeComponent(component)
+    if (entries.isEmpty()) {
+      return
+    }
+    WriteIntentReadAction.run {
+      for ((provider, component) in entries) {
+        provider.disposeComponent(component)
+      }
     }
   }
 }

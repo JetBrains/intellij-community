@@ -57,6 +57,11 @@ interface EditorEmptyStateComponentProvider {
  *
  * Only time spent inside [block] is attributed to the UI thread: waiting for the thread to become free is contention, not this
  * provider's cost.
+ *
+ * Two limits of that split are worth knowing, because both understate the UI-thread half or the whole:
+ * - this measures wall time inside [block], so a suspension point that leaves the UI thread inside it is still charged to the UI budget;
+ * - only what a provider routes through here is counted, so a provider that hops on its own, or that loses the
+ *   [EditorEmptyStateUiBuildTime] context element on the way, reports no UI time at all.
  */
 @ApiStatus.Internal
 suspend fun <T> buildEditorEmptyStateComponentOnUiThread(block: suspend CoroutineScope.() -> T): T {
