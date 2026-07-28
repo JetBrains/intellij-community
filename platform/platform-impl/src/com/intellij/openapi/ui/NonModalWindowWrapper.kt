@@ -216,16 +216,39 @@ abstract class NonModalWindowWrapper(
     this.content = content
     this.minWindowSize = minSize
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
-    loadAndRegisterWindowState(activeWindow)
+    loadWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
     installWindowListeners()
     installToolkitListener()
   }
 
-  private fun loadAndRegisterWindowState(window: Window) {
+  private fun loadWindowState(window: Window) {
     val key = dimensionKey ?: return
-    val state = WindowStateService.getInstance(project).getState(key, window)
-    state?.applyTo(window)
+    val service = WindowStateService.getInstance(project)
+    val location = service.getLocation(key)
+    val size = service.getSize(key)
+    if (location != null && size != null) {
+      val rect = Rectangle(location.x, location.y, size.width, size.height)
+      ScreenUtil.fitToScreen(rect)
+      window.bounds = rect
+    }
+    else if (size != null) {
+      window.size = size
+      window.setLocationRelativeTo(getIdeJFrame())
+    }
+    else if (location != null) {
+      window.location = location
+    }
+    else {
+      window.setLocationRelativeTo(getIdeJFrame())
+    }
+  }
+
+  private fun saveWindowState(window: Window) {
+    val key = dimensionKey ?: return
+    val service = WindowStateService.getInstance(project)
+    service.putLocation(key, window.location)
+    service.putSize(key, window.size)
   }
 
   /**
@@ -400,7 +423,6 @@ abstract class NonModalWindowWrapper(
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = oldBounds
-    dimensionKey?.let { WindowStateService.getInstance(project).getState(it, activeWindow) }
     if (wasVisible) {
       showActiveWindow()
       activeWindow.toFront()
@@ -653,6 +675,7 @@ abstract class NonModalWindowWrapper(
     isDisposed = true
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
+    saveWindowState(activeWindow)
     Disposer.dispose(frameDisposable)
     disposeWindow(activeWindow)
   }
