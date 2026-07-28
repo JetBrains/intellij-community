@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.psi.PsiElement;
@@ -15,6 +15,9 @@ import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 public class Groovy25HighlightingTest extends LightGroovyTestCase implements HighlightingTest {
+
+  public void testVarDeclarations() { fileHighlightingTest(); }
+
   public void testDuplicatingNamedParams() { fileHighlightingTest(); }
 
   public void testDuplicatingNamedParamsWithSetter() { fileHighlightingTest(); }
@@ -27,10 +30,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
 
   public void testNamedParamsTypeCheckWithSetter() { fileHighlightingTest(); }
 
-  public void testNamedParamsUnusedCheck() {
-    getFixture().enableInspections(new GroovyUnusedDeclarationInspection());
-    fileHighlightingTest();
-  }
+  public void testNamedParamsUnusedCheck() { fileHighlightingTest(GroovyUnusedDeclarationInspection.class); }
 
   public void testNamedParamsRequired() { fileHighlightingTest(); }
 
