@@ -131,11 +131,11 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
             }
           }
         }
-        else if (resolved instanceof GrParameter &&
-                 ((GrParameter)resolved).getDeclarationScope() instanceof GrMethod &&
-                 ((GrParameter)resolved).hasModifierProperty(PsiModifier.FINAL) &&
+        else if (resolved instanceof GrParameter parameter &&
+                 parameter.getDeclarationScope() instanceof GrMethod &&
+                 parameter.hasModifierProperty(PsiModifier.FINAL) &&
                  PsiUtil.isUsedInIncOrDec(ref)) {
-          registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", ((GrParameter)resolved).getName()),
+          registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", parameter.getName()),
                         LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
@@ -191,20 +191,19 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
       private void processLocalVars(@NotNull GroovyPsiElement scope) {
         final MultiMap<PsiElement, GrVariable> scopes = collectVariables(scope);
 
-        for (final Map.Entry<PsiElement, Collection<GrVariable>> entry : scopes.entrySet()) {
+        for (Map.Entry<PsiElement, Collection<GrVariable>> entry : scopes.entrySet()) {
           final PsiElement scopeToProcess = entry.getKey();
 
           final Set<GrVariable> forInParameters = new HashSet<>();
           final Set<GrVariable> variables = new HashSet<>();
-          for (final GrVariable var : entry.getValue()) {
+          for (GrVariable var : entry.getValue()) {
             variables.add(var);
-            if (var instanceof GrParameter && ((GrParameter)var).getDeclarationScope() instanceof GrForStatement) {
+            if (var instanceof GrParameter parameter && parameter.getDeclarationScope() instanceof GrForStatement) {
               forInParameters.add(var);
             }
           }
 
-          final GroovyControlFlow flow = getFlow(scopeToProcess);
-          highlightInvalidWriteAccess(flow, variables, forInParameters);
+          highlightInvalidWriteAccess(getFlow(scopeToProcess), variables, forInParameters);
         }
       }
 
@@ -236,11 +235,11 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
     PsiElement container = ControlFlowUtils.findControlFlowOwner(place);
 
     PsiClass aClass = null;
-    if (!isStatic && container instanceof GrMethod && ((GrMethod)container).isConstructor()) {
-      aClass = ((GrMethod)container).getContainingClass();
+    if (!isStatic && container instanceof GrMethod method && method.isConstructor()) {
+      aClass = method.getContainingClass();
     }
-    else if (container instanceof GrClassInitializer && ((GrClassInitializer)container).isStatic() == isStatic) {
-      aClass = ((GrClassInitializer)container).getContainingClass();
+    else if (container instanceof GrClassInitializer initializer && initializer.isStatic() == isStatic) {
+      aClass = initializer.getContainingClass();
     }
     return aClass != null && containingClass.getManager().areElementsEquivalent(aClass, containingClass);
   }
@@ -289,7 +288,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
                                                                   @NotNull List<? extends GrField> fields,
                                                                   @NotNull Set<? super GrVariable> initializedFields) {
     final List<GrMethod> chained = getChainedConstructors(constructor);
-    chained.remove(0);
+    chained.removeFirst();
 
     for (GrMethod method : chained) {
       final GrOpenBlock block = method.getBlock();
@@ -400,9 +399,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
     if (fieldModifierList != null && fieldModifierList.hasExplicitVisibilityModifiers()) return false;
 
     PsiClass aClass = field.getContainingClass();
-    if (aClass == null) return false;
-
-    return GrImmutableUtils.hasImmutableAnnotation(aClass);
+    return aClass != null && GrImmutableUtils.hasImmutableAnnotation(aClass);
   }
 
   private static @NotNull List<GrMethod> getChainedConstructors(@NotNull GrMethod constructor) {
@@ -453,8 +450,8 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static @NotNull GroovyControlFlow getFlow(@NotNull PsiElement element) {
-    return element instanceof GrControlFlowOwner
-           ? ControlFlowUtils.getGroovyControlFlow((GrControlFlowOwner)element)
+    return element instanceof GrControlFlowOwner owner
+           ? ControlFlowUtils.getGroovyControlFlow(owner)
            : ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
   }
 
