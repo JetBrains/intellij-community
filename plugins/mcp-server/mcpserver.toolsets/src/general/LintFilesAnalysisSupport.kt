@@ -60,17 +60,20 @@ private const val LINT_FILES_TIMEOUT_HEADROOM_DIVISOR: Int = 20
 private const val LINT_FILES_MIN_TIMEOUT_HEADROOM_MILLISECONDS: Int = 50
 private const val LINT_FILES_MAX_TIMEOUT_HEADROOM_MILLISECONDS: Int = 5_000
 
-internal data class LintFilesTimeoutContext(
+@Internal
+data class LintFilesTimeoutContext(
   @JvmField val requestDeadlineMs: Long,
   @JvmField val perFileTimeoutMs: Int = LINT_FILES_PER_FILE_TIMEOUT_MILLISECONDS,
 )
 
-internal data class LintFilesBatchTimeouts(
+@Internal
+data class LintFilesBatchTimeouts(
   @JvmField val analysisTimeoutMs: Int,
   @JvmField val timeoutContext: LintFilesTimeoutContext,
 )
 
-internal fun createLintFilesBatchTimeouts(timeoutMs: Int, currentTimeMs: Long = System.currentTimeMillis()): LintFilesBatchTimeouts {
+@Internal
+fun createLintFilesBatchTimeouts(timeoutMs: Int, currentTimeMs: Long = System.currentTimeMillis()): LintFilesBatchTimeouts {
   val headroomMs = (timeoutMs / LINT_FILES_TIMEOUT_HEADROOM_DIVISOR)
     .coerceIn(LINT_FILES_MIN_TIMEOUT_HEADROOM_MILLISECONDS, LINT_FILES_MAX_TIMEOUT_HEADROOM_MILLISECONDS)
   val analysisTimeoutMs = (timeoutMs - headroomMs).coerceAtLeast(0)
@@ -150,7 +153,7 @@ internal suspend fun collectLintFiles(
 }
 
 @TestOnly
-internal suspend fun <T> withLintFilesCollectorOverride(
+suspend fun <T> withLintFilesCollectorOverride(
   project: Project,
   collector: suspend (LintFilesCollectorRequest, (AnalysisToolset.LintFileResult) -> Unit) -> Unit,
   action: suspend () -> T,
@@ -163,7 +166,7 @@ internal suspend fun <T> withLintFilesCollectorOverride(
 )
 
 @TestOnly
-internal suspend fun <T> withLintMainPassesRunnerOverride(
+suspend fun <T> withLintMainPassesRunnerOverride(
   project: Project,
   runner: suspend (LintMainPassesRunnerRequest) -> List<HighlightInfo>,
   action: suspend () -> T,
@@ -176,7 +179,7 @@ internal suspend fun <T> withLintMainPassesRunnerOverride(
 )
 
 @TestOnly
-internal suspend fun <T> withLintBeforeMainPassesOverride(
+suspend fun <T> withLintBeforeMainPassesOverride(
   project: Project,
   actionOverride: suspend (String) -> Unit,
   action: suspend () -> T,
@@ -212,7 +215,8 @@ private suspend fun <T, V> withLintFilesAnalysisSupportOverride(
   }
 }
 
-internal suspend fun collectLintFileResults(
+@Internal
+suspend fun collectLintFileResults(
   project: Project,
   resolvedFiles: List<ResolvedLintFile>,
   minSeverity: HighlightSeverity,
@@ -527,12 +531,14 @@ private fun createLintProblem(document: Document, info: HighlightInfo): Analysis
   )
 }
 
-internal data class ResolvedLintFile(
+@Internal
+data class ResolvedLintFile(
   @JvmField val relativePath: String,
   @JvmField val virtualFile: VirtualFile,
 )
 
-internal suspend fun prepareLintFiles(requestedFiles: List<RequestedLintFile>): List<ResolvedLintFile> {
+@Internal
+suspend fun prepareLintFiles(requestedFiles: List<RequestedLintFile>): List<ResolvedLintFile> {
   if (requestedFiles.isEmpty()) {
     return emptyList()
   }

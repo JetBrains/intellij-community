@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import java.lang.management.MemoryUsage
 import java.lang.management.ThreadInfo
@@ -252,7 +253,8 @@ private fun collectThreadSamples(threadMxBean: ThreadMXBean): Map<Long, ThreadSa
   }
 }
 
-internal fun inferNativeOperationHint(nativeFrame: StackTraceElement?): String? {
+@ApiStatus.Internal
+fun inferNativeOperationHint(nativeFrame: StackTraceElement?): String? {
   if (nativeFrame == null) return null
   val className = nativeFrame.className
   val methodName = nativeFrame.methodName

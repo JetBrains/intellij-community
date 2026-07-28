@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.util
+package com.intellij.mcpserver.toolsets.util
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.ExecutionManager
@@ -30,6 +30,9 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.TruncateMode
+import com.intellij.mcpserver.util.resolveInProject
+import com.intellij.mcpserver.util.truncateText
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
@@ -75,6 +78,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Action
@@ -604,7 +608,8 @@ private fun extractExecutionSessionName(descriptor: RunContentDescriptor): Strin
          ?: descriptor.displayName?.takeIf { it.isNotBlank() }
 }
 
-internal fun truncateRunConfigurationPreviewLine(line: String): String {
+@TestOnly
+fun truncateRunConfigurationPreviewLine(line: String): String {
   return truncateText(
     text = line,
     maxLinesCount = 3,

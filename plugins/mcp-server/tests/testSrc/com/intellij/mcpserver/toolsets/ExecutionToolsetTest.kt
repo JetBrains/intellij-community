@@ -26,14 +26,14 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.ExecutionToolset
-import com.intellij.mcpserver.util.prepareRunConfigurationForExecution
+import com.intellij.mcpserver.toolsets.util.prepareRunConfigurationForExecution
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.util.ui.EmptyIcon
@@ -50,8 +50,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.seconds
 
 class ExecutionToolsetTest : GeneralMcpToolsetTestBase() {
   private val mainKotlinFileFixture = sourceRootFixture.virtualFileFixture(

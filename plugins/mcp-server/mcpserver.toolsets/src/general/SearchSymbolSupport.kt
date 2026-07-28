@@ -43,9 +43,9 @@ import com.intellij.util.Processor
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.FindSymbolParameters
-import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 

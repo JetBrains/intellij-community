@@ -208,18 +208,6 @@ fun looksLikeVfsUrl(filePath: String): Boolean {
   return schemeSeparator > 0 && filePath.substring(0, schemeSeparator).all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }
 }
 
-// TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-internal fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
-  val filePath = virtualFile.toNioPathOrNull()
-                 ?: try {
-                   Path.of(virtualFile.path)
-                 }
-                 catch (_: Throwable) {
-                   return false
-                 }
-  return filePath.normalize().startsWith(project.projectDirectory)
-}
-
 enum class RenderStyle {
   NameOnly,
   AbsolutePath,

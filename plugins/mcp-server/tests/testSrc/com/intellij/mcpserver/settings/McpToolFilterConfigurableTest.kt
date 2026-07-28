@@ -137,7 +137,7 @@ class McpToolFilterConfigurableTest {
   fun `enabled checkbox toggled back clears modified state`() {
     val toolKey = McpServerService.getInstance()
       .getMcpToolsFiltered(useFiltersFromEP = false, excludeProviders = emptySet())
-      .first()
+      .first { it.descriptor.name != UniversalToolset::execute_tool.name }
       .descriptor
       .fullyQualifiedName
 

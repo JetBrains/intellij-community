@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.mcpserver"/>
+    <module name="intellij.mcpserver.toolsets"/>
     <module name="intellij.sh.core"/>
     <module name="intellij.terminal.backend"/>
   </dependencies>

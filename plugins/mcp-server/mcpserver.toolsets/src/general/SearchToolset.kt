@@ -16,9 +16,9 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.checkIndexingInProgress
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
-import com.intellij.mcpserver.util.checkIndexingInProgress
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
@@ -52,12 +52,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import org.jetbrains.annotations.ApiStatus
 import java.util.regex.PatternSyntaxException
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
@@ -81,7 +81,8 @@ private val DEFAULT_FILE_SYSTEM = FileSystems.getDefault()
  * implementation maps requests to the most efficient IDE backends and applies
  * precise post-filtering where needed.
  */
-internal class SearchToolset : McpToolset {
+@Internal
+class SearchToolset : McpToolset {
   override fun displayName(): String = McpServerBundle.message("toolset.display.name.search")
 
   override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")

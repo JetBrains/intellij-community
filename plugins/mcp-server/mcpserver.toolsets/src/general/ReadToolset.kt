@@ -13,23 +13,29 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
-import com.intellij.mcpserver.util.isUnderProjectDirectory
+import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.resolveReadFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 private const val DEFAULT_READ_LIMIT = 2000
 private const val MAX_READ_LIMIT = 5000
 private const val MAX_LINE_LENGTH = 2000
 
-internal class ReadToolset : McpToolset {
+@ApiStatus.Internal
+class ReadToolset : McpToolset {
   override fun displayName(): String = McpServerBundle.message("toolset.display.name.read")
 
   override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
@@ -168,3 +174,16 @@ private fun getLineText(document: Document, lineNumber: Int): String {
   val end = document.getLineEndOffset(lineIndex)
   return document.getText(TextRange(start, end))
 }
+
+// TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
+internal fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
+  val filePath = virtualFile.toNioPathOrNull()
+                 ?: try {
+                   Path.of(virtualFile.path)
+                 }
+                 catch (_: Throwable) {
+                   return false
+                 }
+  return filePath.normalize().startsWith(project.projectDirectory)
+}
+

@@ -53,6 +53,9 @@
 - name: lib/modules/intellij.mcpserver.terminal.jar
   contentModules:
   - name: intellij.mcpserver.terminal
+- name: lib/modules/intellij.mcpserver.toolsets.jar
+  contentModules:
+  - name: intellij.mcpserver.toolsets
 - name: lib/modules/intellij.mcpserver.vcs.jar
   contentModules:
   - name: intellij.mcpserver.vcs

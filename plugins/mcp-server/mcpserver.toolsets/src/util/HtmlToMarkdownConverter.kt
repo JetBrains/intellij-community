@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.util
+package com.intellij.mcpserver.toolsets.util
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack

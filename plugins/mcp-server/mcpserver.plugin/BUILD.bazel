@@ -16,6 +16,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.toolsets",
         "//plugins/mcp-server/mcpserver.frontend",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server/mcpserver.terminal",
@@ -37,6 +38,7 @@ jvm_library(
         # do not sort,
         ":mcpserver.plugin",
         "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_test_lib",
         "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_test_lib",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",

@@ -19,6 +19,7 @@
   <content namespace="jetbrains">
     <!--todo: embedded to simulate old behaviour-->
     <module name="intellij.mcpserver" loading="embedded"/>
+    <module name="intellij.mcpserver.toolsets"/>
     <module name="intellij.mcpserver.stdio" loading="embedded"/>
     <module name="intellij.mcpserver.vcs"/>
     <module name="intellij.mcpserver.terminal"/>

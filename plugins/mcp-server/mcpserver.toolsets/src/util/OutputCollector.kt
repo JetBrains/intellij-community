@@ -1,4 +1,4 @@
-package com.intellij.mcpserver.util
+package com.intellij.mcpserver.toolsets.util
 
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.openapi.diagnostic.logger
@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = logger<OutputCollector>()
 
-internal class OutputCollector(
+class OutputCollector(
   val parentScope: CoroutineScope,
   val outputPath: Path,
   val writeChunkDebouncePeriod: Duration = 50.milliseconds,

@@ -16,9 +16,9 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
-import com.intellij.mcpserver.util.RunPoint
-import com.intellij.mcpserver.util.collectRunPoints
-import com.intellij.mcpserver.util.executeRunConfiguration
+import com.intellij.mcpserver.toolsets.util.RunPoint
+import com.intellij.mcpserver.toolsets.util.collectRunPoints
+import com.intellij.mcpserver.toolsets.util.executeRunConfiguration
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager

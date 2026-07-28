@@ -5,6 +5,7 @@
 package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.mcpserver.mcpFail
+import org.jetbrains.annotations.ApiStatus
 
 private const val BEGIN_MARKER = "*** Begin Patch"
 private const val END_MARKER = "*** End Patch"
@@ -21,37 +22,44 @@ private val CONTROL_CHAR_REGEX = Regex("[\\u0000-\\u001F\\u007F]")
 private val ESCAPED_CONTROL_REGEX = Regex("\\\\[nrt]")
 private val UNIFIED_DIFF_HEADER_REGEX = Regex("^@@+\\s*-\\d+(?:,\\d+)?\\s+\\+\\d+(?:,\\d+)?\\s*@@+$")
 
-internal sealed interface PatchOperation {
+@ApiStatus.Internal
+sealed interface PatchOperation {
   val path: String
 }
 
-internal data class AddPatchOperation(
+@ApiStatus.Internal
+data class AddPatchOperation(
   override val path: String,
   val content: String,
 ) : PatchOperation
 
-internal data class DeletePatchOperation(
+@ApiStatus.Internal
+data class DeletePatchOperation(
   override val path: String,
 ) : PatchOperation
 
-internal data class PatchHunkLine(
+@ApiStatus.Internal
+data class PatchHunkLine(
   val prefix: Char,
   val text: String,
 )
 
-internal data class PatchHunk(
+@ApiStatus.Internal
+data class PatchHunk(
   val header: String?,
   val lines: List<PatchHunkLine>,
   val isEndOfFile: Boolean,
 )
 
-internal data class UpdatePatchOperation(
+@ApiStatus.Internal
+data class UpdatePatchOperation(
   override val path: String,
   val moveTo: String?,
   val hunks: List<PatchHunk>,
 ) : PatchOperation
 
-internal object PatchApplyEngine {
+@ApiStatus.Internal
+object PatchApplyEngine {
   fun extractPatchText(input: String?, patch: String?): String {
     if (input != null) return input
     if (patch != null) return patch
