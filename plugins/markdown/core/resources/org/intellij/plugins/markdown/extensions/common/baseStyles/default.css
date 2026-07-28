@@ -65,8 +65,29 @@ html input[disabled] {
 }
 
 input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
   box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  margin: 0;
   padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  position: relative;
+  vertical-align: middle;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border-style: solid;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 body * {
