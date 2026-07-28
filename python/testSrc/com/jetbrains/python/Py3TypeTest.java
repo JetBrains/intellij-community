@@ -190,6 +190,17 @@ public class Py3TypeTest extends PyTestCase {
     substituted = PyTypeChecker.substitute(callable, new GenericSubstitutions(Map.of(typeVarT, typeVarV, typeVarV, callable)), context);
     PyCallableType substitutedCallable = assertInstanceOf(substituted, PyCallableType.class);
     assertEquals(PyAnyType.getUnknown(), substitutedCallable.getReturnType(context));
+
+    // A cyclic substitution where each hop rebuilds the type variable in its `type[T]` (definition) form, so every
+    // step produces a fresh-but-equal PyTypeVarType instance. PyCloningTypeVisitor's identity-based cycle guard
+    // cannot see such a cycle, so substitution must stop via equality-based detection instead of overflowing the
+    // stack with clone(substitution) calls.
+    PyTypeVarType typeVarTClass = typeVarT.toClass();
+    PyTypeVarType typeVarVClass = typeVarV.toClass();
+    substituted = PyTypeChecker.substitute(typeVarTClass,
+                                           new GenericSubstitutions(Map.of(typeVarTClass, typeVarV, typeVarVClass, typeVarT)),
+                                           context);
+    assertEquals(typeVarTClass, substituted);
   }
 
 
