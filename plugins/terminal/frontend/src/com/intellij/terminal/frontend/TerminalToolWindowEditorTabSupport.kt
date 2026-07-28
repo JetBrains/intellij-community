@@ -47,7 +47,7 @@ private val LOG = logger<TerminalToolWindowEditorTabSupport>()
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
     val terminalContents = contents.mapNotNull { content ->
-      content.asTerminalContent
+      content.toTerminalContentOrNull()
     }
     if (terminalContents.isEmpty()) {
       return contents
@@ -67,7 +67,7 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
       return contents
     }
 
-    if (confirmTermination(project, contentsToConfirm.map(ConfirmationDetails::title))) {
+    if (confirmTermination(project, contentsToConfirm.map(ConfirmationDetails::fullTitle))) {
       return contents
     }
 
@@ -80,19 +80,19 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
     content: Content,
   ): Flow<ToolWindowEditorTabPresentation> {
     return flow {
-      suspend fun buildState(): ToolWindowEditorTabPresentation {
+      suspend fun buildPresentation(): ToolWindowEditorTabPresentation {
         return withContext(Dispatchers.EDT) {
           buildTabPresentation(project, content)
         }
       }
 
-      emit(buildState())
+      emit(buildPresentation())
 
       merge(
         titleUpdatesFlow(content),
         content.propertyUpdatesFlow(Content.PROP_ICON),
       ).collect {
-        emit(buildState())
+        emit(buildPresentation())
       }
     }.distinctUntilChanged()
   }
@@ -111,11 +111,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   private fun getTabTitle(content: Content): @NlsContexts.TabTitle String {
-    return content.asTerminalContent?.getTabTitle() ?: content.displayName
+    return content.toTerminalContentOrNull()?.getTabTitle() ?: content.displayName
   }
 
   private fun titleUpdatesFlow(content: Content): Flow<Unit> {
-    return content.asTerminalContent?.getTitleUpdatesFlow() ?: run {
+    return content.toTerminalContentOrNull()?.titleUpdatesFlow() ?: run {
       LOG.debug("Terminal title state is unavailable; falling back to Content.displayName")
       content.propertyUpdatesFlow(Content.PROP_DISPLAY_NAME)
     }
@@ -135,13 +135,13 @@ private sealed interface TerminalContent {
 
   @NlsSafe
   fun getTabTitle(): String
-  fun getTitleUpdatesFlow(): Flow<Unit>
+  fun titleUpdatesFlow(): Flow<Unit>
   suspend fun getConfirmationDetails(): ConfirmationDetails?
 
   class Reworked(override val content: Content, val view: TerminalView) : TerminalContent {
     override fun getTabTitle(): String = view.getTitleText()
 
-    override fun getTitleUpdatesFlow(): Flow<Unit> = view.titleStateFlow().map { }
+    override fun titleUpdatesFlow(): Flow<Unit> = view.titleStateFlow().map { }
 
     override suspend fun getConfirmationDetails(): ConfirmationDetails? {
       return if (TerminalTabCloseListenerImpl.shouldConfirmClosing(view)) {
@@ -156,7 +156,7 @@ private sealed interface TerminalContent {
   class Classic(override val content: Content, val widget: TerminalWidget) : TerminalContent {
     override fun getTabTitle(): String = widget.terminalTitle.buildSettingsAwareTitle()
 
-    override fun getTitleUpdatesFlow(): Flow<Unit> = widget.terminalTitle.stateFlow(
+    override fun titleUpdatesFlow(): Flow<Unit> = widget.terminalTitle.stateFlow(
       buildCroppedTitle = { it.buildSettingsAwareTitle() },
       buildFullTitle = { it.buildSettingsAwareFullTitle() },
     ).map { }
@@ -172,8 +172,7 @@ private sealed interface TerminalContent {
   }
 }
 
-private val Content.asTerminalContent: TerminalContent?
-  get() {
+private fun Content.toTerminalContentOrNull(): TerminalContent? {
     getTerminalTab()?.view?.let {
       return TerminalContent.Reworked(this, it)
     }
@@ -199,5 +198,5 @@ private fun Content.propertyUpdatesFlow(targetPropertyName: String): Flow<Unit> 
 
 private data class ConfirmationDetails(
   val content: Content,
-  val title: String,
+  val fullTitle: String,
 )
