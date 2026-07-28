@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.toolwindow.actions.PyTogglePackagingToolWindowAnchorAction
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
@@ -46,6 +47,8 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.KeyboardFocusManager
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -80,6 +83,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   private val listWithSearchPanel by lazy { buildListWithSearch() }
 
   private val contentPanel: JPanel
+  private var headerTitleRenderer: PyInterpreterHeaderTitleRenderer? = null
 
   internal var contentVisible: Boolean
     get() = contentPanel.isVisible
@@ -120,13 +124,24 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   fun getSelectedPackage(): DisplayablePackage? = packageListController.getSelectedPackages().firstOrNull()
 
   private fun setupToolWindowTitleActions() {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Python Packages") ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(PY_PACKAGES_TOOL_WINDOW_ID) ?: return
 
     // Show the default "Python Packages" id-label in the header instead of the SDK dropdown.
     // SDK can still be picked from elsewhere; the id-label is more discoverable as the title.
     toolWindow.component.putClientProperty(ToolWindowContentUi.DONT_HIDE_TOOLBAR_IN_HEADER, true)
     val gearActions = ActionManager.getInstance().getAction(ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID) as ActionGroup
     toolWindow.setAdditionalGearActions(gearActions)
+    toolWindow.setTitleActions(listOf(PyTogglePackagingToolWindowAnchorAction()))
+
+    headerTitleRenderer = PyInterpreterHeaderTitleRenderer(
+      toolWindow = toolWindow,
+      plainTitle = message("toolwindow.stripe.Python_Packages_Tool"),
+    )
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        SwingUtilities.invokeLater { headerTitleRenderer?.refit() }
+      }
+    })
   }
 
   private fun createContentPanel(): JComponent {
@@ -167,7 +182,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   }
 
   private fun isToolWindowHorizontal(): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Python Packages")
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(PY_PACKAGES_TOOL_WINDOW_ID)
                      ?: return false
     val anchor = toolWindow.anchor
     return anchor == ToolWindowAnchor.BOTTOM || anchor == ToolWindowAnchor.TOP
@@ -182,7 +197,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   }
 
   private fun createSearchBar(): JComponent {
-    val bundledAction = ActionManager.getInstance().getAction("PyInstallPackageAction")
+    val bundledAction = ActionManager.getInstance().getAction(PY_INSTALL_PACKAGE_ACTION_ID)
     val installAction = object : DumbAwareAction(
       message("action.PyInstallPackageAction.text"),
       null,
@@ -208,7 +223,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     val searchBarPanel = panel {
       row {
         cell(packageSearchController).align(AlignX.FILL).resizableColumn().customize(UnscaledGaps.EMPTY)
-        cell(toolbar.component).customize(UnscaledGaps.EMPTY)
+        cell(toolbar.component).customize(UnscaledGaps(left = hPad))
       }.customize(UnscaledGapsY.EMPTY)
     }.apply {
       border = JBUI.Borders.empty(vPad, hPad, vPad, hPad)
@@ -258,6 +273,11 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     packageListController.startSdkInit()
   }
 
+  @RequiresEdt
+  fun setInterpreterPath(path: String?) {
+    headerTitleRenderer?.update(path)
+  }
+
   internal fun setRefreshIndicatorVisible(visible: Boolean) {
     packageListController.setLoadingState(visible)
   }
@@ -298,8 +318,12 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   override fun dispose() {}
 
   companion object {
+    internal const val PY_PACKAGES_TOOL_WINDOW_ID: String = "Python Packages"
 
     @Language("devkit-action-id")
     private const val ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID = "PyPackageToolbarAdditional"
+
+    @Language("devkit-action-id")
+    private const val PY_INSTALL_PACKAGE_ACTION_ID = "PyInstallPackageAction"
   }
 }
