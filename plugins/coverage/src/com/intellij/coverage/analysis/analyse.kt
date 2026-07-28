@@ -4,45 +4,49 @@ package com.intellij.coverage.analysis
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageSuite
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): Map<ModuleRequest, List<RequestRoot>> {
+internal suspend fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): Map<ModuleRequest, List<RequestRoot>> {
   val coverageDataManager = CoverageDataManager.getInstance(project)
 
   val javaSuites = bundle.suites.filterIsInstance<JavaCoverageSuite>()
-  val packageNames = javaSuites.flatMap { it.getCurrentSuitePackages(project).mapNotNull { p -> runReadAction { p.qualifiedName } } }
+  val packageNames = readAction {
+    javaSuites.flatMap { it.getCurrentSuitePackages(project).mapNotNull { psiPackage -> psiPackage.qualifiedName } }
+  }
     .removeSubPackages()
     .filter { isPackageFiltered(bundle, it) }
-  val classes = javaSuites
-    .flatMap { it.getCurrentSuiteClasses(project) }.distinct()
-    .filter { aClass ->
-      val className = runReadAction { aClass.qualifiedName }
-      className != null && packageNames.none { className.startsWith(it) }
-    }
-  val modules = (if (packageNames.isNotEmpty()) {
-    coverageDataManager.doInReadActionIfProjectOpen { ModuleManager.getInstance(project).modules }?.toList() ?: emptyList()
+  val classesWithNames = readAction {
+    javaSuites.flatMap { it.getCurrentSuiteClasses(project) }
+      .distinct()
+      .mapNotNull { psiClass -> psiClass.qualifiedName?.let { psiClass to it } }
+      .filter { (_, className) -> packageNames.none { className.startsWith(it) } }
   }
-  else {
-    classes.mapNotNull { runReadAction { ModuleUtilCore.findModuleForPsiElement(it) } }.distinct()
-  })
+  val modules = readAction {
+    if (packageNames.isNotEmpty()) {
+      ModuleManager.getInstance(project).modules.toList()
+    }
+    else {
+      classesWithNames.mapNotNull { (psiClass, _) -> ModuleUtilCore.findModuleForPsiElement(psiClass) }.distinct()
+    }
+  }
     .filter { bundle.getSearchScope(project).isSearchInModuleContent(it) }
 
   val outputRoots = modules.flatMap { module ->
-    JavaCoverageClassesEnumerator.getRoots(coverageDataManager, module, bundle.isTrackTestFolders).toList().map { it to module }
+    CoverageOutputRoots.getRoots(coverageDataManager, module, bundle.isTrackTestFolders).toList().map { it to module }
   }.distinct()
 
   val requestedPackages = packageNames.map { it to null }
-    .plus(classes.mapNotNull { aClass ->
-      val fqn = runReadAction { aClass.qualifiedName }
-      fqn?.let { StringUtil.getPackageName(it) to StringUtil.getShortName(it) }
-    })
+    .plus(classesWithNames.map { (_, fqn) -> StringUtil.getPackageName(fqn) to StringUtil.getShortName(fqn) })
 
   val roots = hashMapOf<ModuleRequest, MutableList<RequestRoot>>()
   for ((root, module) in outputRoots) {
@@ -62,6 +66,22 @@ internal fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project):
 
 internal data class ModuleRequest(val packageName: String, val module: Module)
 internal data class RequestRoot(val root: Path, val simpleName: String?, val packagePathInRoot: String)
+
+@ApiStatus.Internal
+object CoverageOutputRoots {
+  @JvmStatic
+  fun getRoots(manager: CoverageDataManager, module: Module, includeTests: Boolean): Array<VirtualFile> {
+    val roots = manager.doInReadActionIfProjectOpen {
+      var enumerator = OrderEnumerator.orderEntries(module)
+        .withoutSdk()
+        .withoutLibraries()
+        .withoutDepModules()
+      if (!includeTests) enumerator = enumerator.productionOnly()
+      enumerator.classes().roots
+    }
+    return roots ?: VirtualFile.EMPTY_ARRAY
+  }
+}
 
 private fun List<String>.removeSubPackages(): List<String> {
   val allPackages = this.sortedBy { it.length }

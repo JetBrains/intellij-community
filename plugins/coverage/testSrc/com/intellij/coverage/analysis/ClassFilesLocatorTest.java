@@ -16,7 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @RunWith(JUnit4.class)
-public class JavaCoverageClassesEnumeratorTest {
+public class ClassFilesLocatorTest {
   @Test
   public void collectClassFilesIncludesNestedClassesFromDirectoryRoot() throws IOException {
     Path outputRoot = Files.createTempDirectory("coverage-output");
@@ -27,7 +27,7 @@ public class JavaCoverageClassesEnumeratorTest {
       createClassFile(outputRoot.resolve("org/demo/FooKt.class"));
       createClassFile(outputRoot.resolve("org/demo/sub/Foo.class"));
 
-      List<String> classFiles = collectClassFileNames(outputRoot, "org/demo", Set.of("Foo"));
+      List<String> classFiles = collectClassFileNames(outputRoot, Set.of("Foo"));
 
       Assert.assertEquals(List.of("Foo$Nested$Deep.class", "Foo$Nested.class", "Foo.class"), classFiles);
     }
@@ -48,7 +48,7 @@ public class JavaCoverageClassesEnumeratorTest {
         addEntry(outputStream, "org/demo/sub/Foo.class");
       }
 
-      List<String> classFiles = collectClassFileNames(archiveRoot, "org/demo", Set.of("Foo"));
+      List<String> classFiles = collectClassFileNames(archiveRoot, Set.of("Foo"));
 
       Assert.assertEquals(List.of("Foo$Nested$Deep.class", "Foo$Nested.class", "Foo.class"), classFiles);
     }
@@ -57,8 +57,8 @@ public class JavaCoverageClassesEnumeratorTest {
     }
   }
 
-  private static List<String> collectClassFileNames(Path outputRoot, String packageVMName, Set<String> topLevelClassNames) {
-    return JavaCoverageClassesEnumerator.collectClassFiles(outputRoot, packageVMName, topLevelClassNames).stream()
+  private static List<String> collectClassFileNames(Path outputRoot, Set<String> topLevelClassNames) {
+    return ClassFilesLocator.collectClassFiles(outputRoot, "org/demo", topLevelClassNames).stream()
       .map(path -> path.getFileName().toString())
       .sorted()
       .toList();

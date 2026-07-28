@@ -2,7 +2,7 @@
 package com.intellij.coverage;
 
 import com.intellij.coverage.analysis.CoverageInfoCollector;
-import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
+import com.intellij.coverage.analysis.CoverageSummaryTestUtil;
 import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -70,10 +70,15 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
       public boolean acceptedByFilters(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle suite) {
+        // PsiFile check is too slow while a report loading. Rely on exclude patterns instead for java
         return false;
       }
     };
-    CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(engine)) {
+    var excludePatterns = new String[]{"*"};
+    var coverageSuite = new JavaCoverageSuite(
+      "", new DefaultCoverageFileProvider(""), null, excludePatterns, 0,
+      false, false, false, new IDEACoverageRunner(), engine, myProject);
+    CoverageSuitesBundle suite = new CoverageSuitesBundle(coverageSuite) {
       @NotNull
       @Override
       public ProjectData getCoverageData() {
@@ -85,12 +90,12 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
+    CoverageSummaryTestUtil.build(suite, myProject, new CoverageInfoCollector() {
       @Override
       public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
-    }).visitSuite();
+    });
   }
 
   @Test
@@ -117,13 +122,13 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
     javaCoverageSuite.setIncludeFilters(new String[]{"p.*"});
     Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> dirs = new HashMap<>();
-    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
+    CoverageSummaryTestUtil.build(suite, myProject, new CoverageInfoCollector() {
       @Override
       public void addSourceDirectory(VirtualFile virtualFile,
                                      PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
-    }).visitSuite();
+    });
 
     assertEquals(2, dirs.size());
     for (PackageAnnotator.PackageCoverageInfo coverageInfo : dirs.values()) {

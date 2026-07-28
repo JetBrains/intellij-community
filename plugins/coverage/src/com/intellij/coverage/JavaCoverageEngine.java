@@ -5,8 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.coverage.analysis.AnalysisUtils;
+import com.intellij.coverage.analysis.ClassFilesLocator;
+import com.intellij.coverage.analysis.CoverageOutputRoots;
 import com.intellij.coverage.analysis.JavaCoverageAnnotator;
-import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
@@ -364,7 +365,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     final CoverageDataManager dataManager = CoverageDataManager.getInstance(module.getProject());
     final boolean includeTests = suite.isTrackTestFolders();
-    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final VirtualFile[] roots = CoverageOutputRoots.getRoots(dataManager, module, includeTests);
     final boolean rootsExist = roots.length >= (includeTests ? 2 : 1) && ContainerUtil.all(roots, (root) -> root != null && root.exists());
     if (!rootsExist) {
       final Project project = module.getProject();
@@ -478,7 +479,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final Project project = module.getProject();
     final CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
     boolean includeTests = suite.isTrackTestFolders();
-    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final VirtualFile[] roots = CoverageOutputRoots.getRoots(dataManager, module, includeTests);
 
 
     String packageVmName = AnalysisUtils.fqnToInternalName(getPackageName(srcFile));
@@ -494,7 +495,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     for (VirtualFile root : roots) {
       if (root == null) continue;
-      classFiles.addAll(JavaCoverageClassesEnumerator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
+      classFiles.addAll(ClassFilesLocator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
     }
     return classFiles;
   }

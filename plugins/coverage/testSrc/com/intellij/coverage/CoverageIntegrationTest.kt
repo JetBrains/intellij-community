@@ -4,8 +4,7 @@ package com.intellij.coverage
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
 import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
-import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
-import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
+import com.intellij.coverage.analysis.JavaCoverageSummaryBuilder
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
@@ -70,12 +69,12 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")))
   }
 
-  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle) {
+  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle) = runBlocking {
     val projectData = bundle.coverageData!!
     projectData.getClassData("foo.bar.BarClass")!!
 
     val consumer = PackageAnnotationConsumer()
-    JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
     assertEquals("""
       Classes: 
       foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
@@ -108,11 +107,11 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun `test jacoco reads classes from jar output roots`() = assertHitsWithJarOutputRoots { loadJaCoCoSuite() }
 
   @Test
-  fun testJaCoCoWithoutUnloaded() {
+  fun testJaCoCoWithoutUnloaded() = runBlocking {
     Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
-    JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer)
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
     assertEquals(IGNORE_CONSTRUCTOR_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
@@ -170,7 +169,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals("""
         Classes: 
         foo.FooClass: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
@@ -207,7 +206,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals(fooTestSummary, consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
     }
@@ -217,7 +216,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals(fooTestSummary, consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
     }
@@ -327,7 +326,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  private fun assertHits(suite: CoverageSuitesBundle, ignoreConstructor: Boolean, ignoreBranches: Boolean) {
+  private fun assertHits(suite: CoverageSuitesBundle, ignoreConstructor: Boolean, ignoreBranches: Boolean) = runBlocking {
     JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = ignoreConstructor
     val annotator = TestJavaCoverageAnnotator(myProject)
     annotator.collectSummaryInfo(suite)
@@ -337,7 +336,10 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 }
 
 private class TestJavaCoverageAnnotator(project: Project) : JavaCoverageAnnotator(project) {
-  fun collectSummaryInfo(suite: CoverageSuitesBundle) = collectSummaryInfo(suite, project)
+  suspend fun collectSummaryInfo(suite: CoverageSuitesBundle) {
+    val collector = JavaCoverageInfoCollector(this)
+    JavaCoverageSummaryBuilder.build(suite, project, collector)
+  }
 
   fun collectInfo(ignoreBranches: Boolean = false) = buildString {
     fun Map<String, SummaryCoverageInfo>.collectInfo() = toSortedMap().forEach { (fqn, summary) ->

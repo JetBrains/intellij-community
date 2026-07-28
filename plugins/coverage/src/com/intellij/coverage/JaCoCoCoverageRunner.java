@@ -3,7 +3,7 @@ package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.coverage.analysis.AnalysisUtils;
-import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
+import com.intellij.coverage.analysis.CoverageOutputRoots;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -245,7 +245,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     for (Module module : modules) {
-      final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(manager, module, true);
+      final VirtualFile[] roots = CoverageOutputRoots.getRoots(manager, module, true);
       if (roots.length == 0) {
         String message = "Could not find source roots for module " + module.getName() + ", the coverage data will not be loaded";
         LOG.warn(message);

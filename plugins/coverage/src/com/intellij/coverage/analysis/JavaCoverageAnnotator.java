@@ -4,10 +4,8 @@ package com.intellij.coverage.analysis;
 import com.intellij.coverage.BaseCoverageAnnotator;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.JavaCoverageEngineExtension;
-import com.intellij.coverage.JavaCoverageSuite;
 import com.intellij.coverage.view.CoverageClassStructure;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.Disposable;
@@ -21,9 +19,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -136,21 +131,11 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
   @Override
   protected Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
-    final Project project = getProject();
+    return JavaCoverageRenewRequestKt.createJavaCoverageRenewRequest(this, getProject(), suite, dataManager);
+  }
 
-    return () -> {
-      long timeMs = TimeoutUtil.measureExecutionTime(() -> {
-        collectSummaryInfo(suite, project);
-        myStructure = new CoverageClassStructure(project, this, suite);
-        Disposer.register(this, myStructure);
-        dataManager.triggerPresentationUpdate();
-      });
-
-      int annotatedClasses = myClassCoverageInfos.size();
-      ProjectData data = suite.getCoverageData();
-      int loadedClasses = data == null ? 0 : data.getClassesNumber();
-      CoverageLogger.logReportBuilding(project, timeMs, annotatedClasses, loadedClasses);
-    };
+  void updateStructure(@NotNull CoverageClassStructure structure) {
+    myStructure = structure;
   }
 
   public static @Nullable @Nls String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
@@ -277,17 +262,4 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return myClassCoverageInfos;
   }
 
-  protected void collectSummaryInfo(@NotNull CoverageSuitesBundle suite, Project project) {
-    var collector = new JavaCoverageInfoCollector(this);
-    if (shouldSkipUnloadedClassesAnalysis(suite)) {
-      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, collector);
-    }
-    else {
-      new JavaCoverageClassesAnnotator(suite, project, collector).visitSuite();
-    }
-  }
-
-  private static boolean shouldSkipUnloadedClassesAnalysis(CoverageSuitesBundle bundle) {
-    return ContainerUtil.and(bundle.getSuites(), suite -> suite instanceof JavaCoverageSuite javaSuite && javaSuite.isSkipUnloadedClassesAnalysis());
-  }
 }

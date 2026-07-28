@@ -6,7 +6,7 @@ import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
-import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
+import com.intellij.coverage.analysis.JavaCoverageSummaryBuilder
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.coverage.view.CoverageClassStructure
@@ -32,7 +32,7 @@ internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(pro
     val flattenPackageCoverage = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectoryCoverage = hashMapOf<VirtualFile, PackageCoverageInfo>()
     val sourceRoots = (dataManager.doInReadActionIfProjectOpen { ModuleManager.getInstance(suite.project).modules } ?: emptyArray())
-      .flatMap { JavaCoverageClassesAnnotator.getSourceRoots(it) }.toHashSet()
+      .flatMap { JavaCoverageSummaryBuilder.getSourceRoots(it) }.toHashSet()
 
     for (xmlSuite in suite.suites) {
       if (xmlSuite !is XMLReportSuite) continue
@@ -62,8 +62,8 @@ internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(pro
       collector.addClass(className, coverage)
     }
 
-    JavaCoverageClassesAnnotator.annotatePackages(flattenPackageCoverage, collector)
-    JavaCoverageClassesAnnotator.annotateDirectories(flattenDirectoryCoverage, collector, sourceRoots)
+    JavaCoverageSummaryBuilder.annotatePackages(flattenPackageCoverage, collector)
+    JavaCoverageSummaryBuilder.annotateDirectories(flattenDirectoryCoverage, collector, sourceRoots)
   }
 
   private fun findFile(packageName: String, fileName: String?, sourceRoots: Collection<VirtualFile>): VirtualFile? {
