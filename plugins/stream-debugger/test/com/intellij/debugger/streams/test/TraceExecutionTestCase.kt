@@ -51,7 +51,7 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
 
   override fun setUpModule() {
     super.setUpModule()
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_16)
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_24)
   }
 
   protected open fun replaceAdditionalInOutput(str: String): String {

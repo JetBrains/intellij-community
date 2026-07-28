@@ -55,7 +55,7 @@ internal class DistinctCallHandler(
     if (before == null || after == null) {
       return array(array("int", 0), array("int", 0))
     }
-    val utilsClass = clazz(StreamDebuggerUtils::class.java)
+    val utilsClass = helperClass(StreamDebuggerUtils::class.java)
     val method = utilsClass.method("computeDistinctMapping", "(Ljava/util/Map;Ljava/util/Map;)[Ljava/lang/Object;")
     return method.invoke(utilsClass, listOf(before, after)) as ArrayReference
   }
@@ -99,7 +99,7 @@ internal class DistinctByKeyCallHandler(
     if (before == null || after == null || keyExtractorRef == null) {
       return array(array("int", 0), array("int", 0))
     }
-    val utilsClass = clazz(StreamDebuggerUtils::class.java)
+    val utilsClass = helperClass(StreamDebuggerUtils::class.java)
     val capturedKeysField = DebuggerUtils.findField(keyExtractorRef.referenceType(), "capturedKeys")
       ?: return array(array("int", 0), array("int", 0))
     val capturedKeysList = keyExtractorRef.getValue(capturedKeysField) as ObjectReference
@@ -132,7 +132,7 @@ internal class DistinctByMapEntryCallHandler(
     if (value !is ObjectReference) return value
     return objectStorage.watch(evaluationContextImpl) {
       // 1. factory = EntryKeyCapturingWrapper.keys() or .values() — accumulates capturedKeys
-      val entryWrapperClass = clazz(EntryKeyCapturingWrapper::class.java)
+      val entryWrapperClass = helperClass(EntryKeyCapturingWrapper::class.java)
       val factoryMethod = entryWrapperClass.method(
         if (byKey) "keys" else "values",
         "()Lcom/intellij/debugger/streams/java/rt/EntryKeyCapturingWrapper;"
@@ -158,7 +158,7 @@ internal class DistinctByMapEntryCallHandler(
       val peekedStream = peekMethod.invoke(mappedStream, listOf(collector)) as ObjectReference
 
       // 4. EntryStream.of(peekedStream) — convert back so distinctKeys()/distinctValues() sees an EntryStream
-      val entryStreamClass = clazz("one.util.streamex.EntryStream")
+      val entryStreamClass = findClass("one.util.streamex.EntryStream")
       val ofMethod = entryStreamClass.method("of", "(Ljava/util/stream/Stream;)Lone/util/streamex/EntryStream;")
       ofMethod.invoke(entryStreamClass, listOf(peekedStream)) as ObjectReference
     }
@@ -169,7 +169,7 @@ internal class DistinctByMapEntryCallHandler(
     val after = afterValuesMap
     val factoryRef = factory
     if (before == null || after == null || factoryRef == null) return array(array("int", 0), array("int", 0))
-    val utilsClass = clazz(StreamDebuggerUtils::class.java)
+    val utilsClass = helperClass(StreamDebuggerUtils::class.java)
     val capturedKeysField = DebuggerUtils.findField(factoryRef.referenceType(), "capturedKeys")
       ?: return array(array("int", 0), array("int", 0))
     val capturedKeysList = factoryRef.getValue(capturedKeysField) as ObjectReference

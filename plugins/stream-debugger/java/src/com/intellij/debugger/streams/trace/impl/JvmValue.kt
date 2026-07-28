@@ -36,6 +36,7 @@ open class JvmValue(open val value: com.sun.jdi.Value) : Value {
 
 class JvmArrayReference(val reference: com.sun.jdi.ArrayReference) : JvmValue(reference), ArrayReference {
   override fun getValue(i: Int): Value? = convertJvmValueToStreamValue(reference.getValue(i))
+  override fun getValues(): List<Value?> = reference.values.map { convertJvmValueToStreamValue(it) }
   override fun length(): Int = reference.length()
 }
 

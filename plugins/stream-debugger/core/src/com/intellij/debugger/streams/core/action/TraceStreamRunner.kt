@@ -9,6 +9,8 @@ import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
 import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.debugger.streams.core.trace.StreamTracer
+import com.intellij.debugger.streams.core.trace.formatResolvedTrace
+import com.intellij.debugger.streams.core.trace.formatTrace
 import com.intellij.debugger.streams.core.ui.ChooserOption
 import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
@@ -20,6 +22,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -178,6 +181,16 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         when (result) {
           is StreamTracer.Result.Evaluated -> {
             val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
+            LOG.debug {
+              """
+                |Stream chain:
+                |${chain.text}
+                |Stream trace:
+                |${formatTrace(result.result.trace)}
+                |Resolved stream trace:
+                |${formatResolvedTrace(resolvedTrace)}
+              """.trimMargin()
+            }
             withContext(Dispatchers.EDT) {
               window.setTrace(resolvedTrace, debuggerLauncher, result.evaluationContext, provider.getCollectionTreeBuilder(project))
             }

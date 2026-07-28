@@ -45,6 +45,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//java/debugger/shared",
         "//plugins/stream-debugger/rt",
+        "//plugins/stream-debugger/rt/gatherers",
     ],
 )
 
@@ -101,6 +102,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//java/debugger/shared:shared_test_lib",
         "//plugins/stream-debugger/rt:rt_test_lib",
+        "//plugins/stream-debugger/rt/gatherers:gatherers_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.java` end

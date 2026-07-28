@@ -3,6 +3,8 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.withDebugContext
+import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
@@ -11,10 +13,13 @@ import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.java.rt.StreamDebuggerUtils
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointBasedStreamTracer
 import com.intellij.debugger.streams.trace.impl.JavaDebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.ui.impl.JavaCollectionTreeBuilder
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
@@ -43,12 +48,13 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
       return super.getTracerFor(chain, session)
     }
 
-    val isSupportedVm = withDebugContext(debugProcess.debuggerSession.contextManager.context) {
+    val debuggerContext = debugProcess.debuggerSession.contextManager.context
+    val canUseBreakpointEngine = withDebugContext(debuggerContext) {
       val vm = VirtualMachineProxyImpl.getCurrent()
-      isSupportedVm(vm)
+      isSupportedVm(vm) && canLoadRuntimeLibrary(debuggerContext)
     }
 
-    if (!isSupportedVm) {
+    if (!canUseBreakpointEngine) {
       return super.getTracerFor(chain, session)
     }
 
@@ -62,7 +68,32 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
 
   private fun isSupportedVm(vm: VirtualMachineProxyImpl): Boolean = vm.canForceEarlyReturn() && vm.canGetMethodReturnValues()
 
+  /**
+   * Fail-fast probe that must run on the debugger manager thread.
+   * We define one representative helper class up front (the load is cached per target VM, so the tracer reuses it) and,
+   * on failure, fall back to the expression-based engine before committing to the breakpoint-based one.
+   */
+  private fun canLoadRuntimeLibrary(debuggerContext: DebuggerContextImpl): Boolean {
+    val evaluationContext = debuggerContext.createEvaluationContext() ?: let {
+      LOG.warn("Cannot check stream debugger runtime support because the program is not suspended, falling back to the expression-based engine")
+      return false
+    }
+    return try {
+      val loaded = ClassLoadingUtils.getHelperClass(StreamDebuggerUtils::class.java, evaluationContext) != null
+      if (!loaded) {
+        LOG.warn("Stream debugger runtime support is unavailable in the debuggee, falling back to the expression-based engine")
+      }
+      loaded
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to load stream debugger runtime support into the debuggee, falling back to the expression-based engine", e)
+      false
+    }
+  }
+
   companion object {
+    private val LOG = logger<JvmLibrarySupportProvider>()
     private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
   }
 }

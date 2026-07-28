@@ -31,11 +31,19 @@ interface ValueContext {
   fun Method.invoke(classType: ClassType, args: List<Value?> = emptyList()): Value?
 
   /**
-   * Finds a class by name in the target VM using the context class loader.
+   * Defines helper class [cls] in the target VM and also defines [additionalClassesToLoad] (by FQN) into the debuggee so that classes
+   * referenced by the helper are available. This is useful for anonymous/named nested classes because they are
+   * separate class files that the debuggee class loader cannot find on its own.
    */
-  fun clazz(className: String): ClassType
+  fun helperClass(cls: Class<*>, vararg additionalClassesToLoad: String): ClassType
 
-  fun clazz(cls: Class<*>): ClassType
+  /**
+   * Finds an existing class by name in the target VM using the context class loader.
+   *
+   * Note: in most cases you don't need this. Use it **only** to resolve a class that is not in the
+   * standard library or in the `rt` module (ex. StreamEx).
+   */
+  fun findClass(className: String): ClassType
 
   /**
    * Finds a method by name and JNI signature on a reference type. Throws if not found.

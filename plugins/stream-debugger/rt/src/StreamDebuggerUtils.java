@@ -81,6 +81,14 @@ public final class StreamDebuggerUtils {
     return new Object[]{keys, values};
   }
 
+  public static int[] toIntArray(List<Integer> values) {
+    final int[] result = new int[values.size()];
+    for (int i = 0; i < values.size(); i++) {
+      result[i] = values.get(i);
+    }
+    return result;
+  }
+
   public static Object[] computeDistinctMapping(Map<Integer, Object> beforeMap, Map<Integer, Object> afterMap) {
     Map<Object, Map<Integer, Object>> eqClasses = new HashMap<>();
     for (int beforeTime : beforeMap.keySet()) {

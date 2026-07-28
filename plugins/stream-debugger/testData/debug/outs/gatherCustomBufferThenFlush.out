@@ -1,0 +1,34 @@
+LineBreakpoint created at GatherCustomBufferThenFlush.java:34
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! GatherCustomBufferThenFlush
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+GatherCustomBufferThenFlush.java:34
+Stream.of(1, 2, 3)
+.gather(gatherer)
+.toArray()
+gather
+    before: 1,2,3
+    after: 4,5,6
+toArray
+    before: 4,5,6
+    after: 7,8,9
+mappings for gather
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+  reverse:
+    nothing <- 4
+    nothing <- 5
+    nothing <- 6
+mappings for toArray
+  direct:
+    4 -> 7
+    5 -> 8
+    6 -> 9
+  reverse:
+    4 <- 7
+    5 <- 8
+    6 <- 9
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
