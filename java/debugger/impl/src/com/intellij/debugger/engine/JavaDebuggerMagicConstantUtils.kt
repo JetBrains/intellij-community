@@ -8,6 +8,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl
+import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
@@ -19,10 +20,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiExpressionCodeFragment
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.sun.jdi.ByteValue
 import com.sun.jdi.IntegerValue
 import com.sun.jdi.LongValue
@@ -105,6 +111,8 @@ private fun extractOwnerInfo(
       val position = suspendContext.debugProcess.positionManager.getSourcePosition(descriptor.method.location()) ?: return null
       OwnerInfo.Method(position)
     }
+    is EvaluationDescriptor ->
+      currentSourcePosition(suspendContext)?.let { OwnerInfo.Evaluation(descriptor, it) }
     else -> null
   }
 }
@@ -142,6 +150,17 @@ private fun resolveOwner(info: OwnerInfo, project: Project): PsiModifierListOwne
     val element = info.position.elementAt
     element?.let { PsiTreeUtil.getParentOfType(it, PsiMethod::class.java, false) }
   }
+  is OwnerInfo.Evaluation -> {
+    val context = info.position.elementAt
+    val fragment = context?.let { info.descriptor.createCodeFragment(it) } as? PsiExpressionCodeFragment
+    when (val expression = PsiUtil.skipParenthesizedExprDown(fragment?.expression)) {
+      // The result of a top-level call to an annotated method may be a magic constant.
+      is PsiMethodCallExpression -> expression.resolveMethod()
+      // A top-level reference to an annotated variable or field may carry a magic constant.
+      is PsiReferenceExpression -> expression.resolve() as? PsiVariable
+      else -> null
+    }
+  }
 }?.takeIf { it.containingFile != null }
 
 private sealed interface OwnerInfo {
@@ -149,4 +168,5 @@ private sealed interface OwnerInfo {
   data class Field(val fieldName: String, val typeName: String, val scope: GlobalSearchScope?) : OwnerInfo
   data class OuterLocalField(val varName: String, val position: SourcePosition) : OwnerInfo
   data class Method(val position: SourcePosition) : OwnerInfo
+  data class Evaluation(val descriptor: EvaluationDescriptor, val position: SourcePosition) : OwnerInfo
 }
