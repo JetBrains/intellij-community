@@ -5,8 +5,11 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,10 +19,17 @@ class MarkdownViewNode(
   value: MarkdownFileNode,
   viewSettings: ViewSettings?,
   private val children: MutableCollection<out AbstractTreeNode<*>>
-) : ProjectViewNode<MarkdownFileNode>(project, value, viewSettings) {
-  override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> = children
+) : AbstractPsiBasedNode<MarkdownFileNode>(project, value, viewSettings) {
+  override fun extractPsiFromValue(): PsiElement? = children.asSequence()
+    .filterIsInstance<BasePsiNode<*>>().firstNotNullOfOrNull { it.value }
 
-  override fun update(presentation: PresentationData) {
+  override fun getChildrenImpl(): MutableCollection<out AbstractTreeNode<*>> = children
+
+  override fun getRoots(): Collection<VirtualFile> = children
+    .filterIsInstance<ProjectViewNode<*>>()
+    .flatMapTo(mutableSetOf()) { it.getRoots() }
+
+  override fun updateImpl(presentation: PresentationData) {
     presentation.setIcon(MarkdownFileType.INSTANCE.icon)
     presentation.presentableText = value.name
   }
