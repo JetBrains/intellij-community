@@ -1006,7 +1006,7 @@ object PyCallExpressionHelper {
       allSubstitutions.typeVars.filterNot { (tv, ref) -> isDefault(tv, Ref.deref(ref)) },
       allSubstitutions.typeVarTuples.filterNot { (tvt, v) -> isDefault(tvt, v) },
       allSubstitutions.paramSpecs.filterNot { (ps, v) -> isDefault(ps, v) },
-      allSubstitutions.qualifierType,
+      allSubstitutions.selfType,
     )
     val result = PyTypeChecker.substitute(genericDef, nonDefaultSubstitutions, context)
     return if (result is PyClassType) result.toClass() else classType

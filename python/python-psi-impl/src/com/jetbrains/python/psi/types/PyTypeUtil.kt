@@ -631,7 +631,7 @@ object PyTypeUtil {
   ): PyType? {
     return if (memberType.hasGenerics(context)) {
       val substitutions = collectTypeSubstitutions(classType, context)
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       PyTypeChecker.substitute(memberType, substitutions, context)
     }
     else memberType
@@ -730,7 +730,7 @@ object PyTypeUtil {
     if (firstParam != null && !firstParam.isPositionOnlySeparator && !firstParam.isKeywordOnlySeparator) {
       val firstParamType = firstParam.getArgumentType(context)
       val substitutions = GenericSubstitutions()
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       if (firstParamType !is PySelfType) {
         if (!match(firstParamType, selfType, context, substitutions)) {
           return null

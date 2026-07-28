@@ -1185,7 +1185,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      return PyTypeChecker.GenericSubstitutions(typeVars, typeVarTuples, paramSpecs, substitutions.qualifierType)
+      return PyTypeChecker.GenericSubstitutions(typeVars, typeVarTuples, paramSpecs, substitutions.selfType)
     }
 
     private fun sameTypeArguments(left: List<PyType?>, right: List<PyType?>): Boolean {

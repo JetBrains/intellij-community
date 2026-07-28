@@ -608,12 +608,12 @@ object PyTypeChecker {
 
   private fun match(expected: PySelfType, actual: PyType?, context: MatchContext): Boolean {
     if (actual == null) return true
-    val qualifierType = context.mySubstitutions.qualifierType
-    if (qualifierType != null && qualifierType !is PySelfType) {
+    val selfType = context.mySubstitutions.selfType
+    if (selfType != null && selfType !is PySelfType) {
       val substitution = if (expected.isDefinition)
-        convertToClass(qualifierType)
+        convertToClass(selfType)
       else
-        convertToInstance(qualifierType)
+        convertToInstance(selfType)
       return match(substitution, actual, context).orElse(false)!!
     }
     if (actual !is PySelfType) return false
@@ -995,7 +995,7 @@ object PyTypeChecker {
     //
     // It should be equivalent to replacing Self in the protocol with the Foo class we're matching it with.
     val protocolSubstitutions = GenericSubstitutions()
-    protocolSubstitutions.qualifierType = actual.toInstance()
+    protocolSubstitutions.selfType = actual.toInstance()
     val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions, matchContext.literalInference)
     protocolContext.diagnostics = matchContext.diagnostics
     protocolContext.anchor = matchContext.anchor
@@ -1022,7 +1022,7 @@ object PyTypeChecker {
 
   @ApiStatus.Internal
   fun getMatchingProtocolMembers(expected: PyClassType, actual: PyClassType, substitutions: GenericSubstitutions,context: TypeEvalContext): List<ProtocolAndSubclassElements> {
-    substitutions.qualifierType = actual.toInstance()
+    substitutions.selfType = actual.toInstance()
     val protocolContext = MatchContext(context, substitutions, false)
     return getMatchingProtocolMembers(expected, actual, protocolContext)
   }
@@ -2100,7 +2100,7 @@ object PyTypeChecker {
       }
 
       override fun visitPySelfType(selfType: PySelfType): PyType {
-        val qType = substitutions.qualifierType ?: return selfType
+        val qType = substitutions.selfType ?: return selfType
         val selfScopeClassType = selfType.scopeClassType
         // An enum member has a value-refined literal type (`Literal[E.a]`), but `Self` denotes the enum class itself
         val normalizedQType = if (qType is PyLiteralType && qType.enumMemberName != null)
@@ -2353,7 +2353,7 @@ object PyTypeChecker {
   fun unifyReceiver(receiverType: PyType?, context: TypeEvalContext): GenericSubstitutions {
     if (receiverType is PyClassType) {
       val substitutions = collectTypeSubstitutions(receiverType, context)
-      substitutions.qualifierType = receiverType
+      substitutions.selfType = receiverType
       substitutions.setFrozenTypeVars(HashSet(substitutions.typeVars.keys), KeyImpl)
       return substitutions
     }
@@ -2731,7 +2731,8 @@ object PyTypeChecker {
     val paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType?>
       get() = Collections.unmodifiableMap(myParamSpecs)
 
-    var qualifierType: PyInstantiableType<*>? = null
+    // Substitution for `typing.Self`
+    var selfType: PyInstantiableType<*>? = null
 
     private var frozenTypeVars: Set<PyTypeVarType> = emptySet()
 
@@ -2749,14 +2750,14 @@ object PyTypeChecker {
       typeVars: Map<PyTypeVarType, Ref<PyType?>?>,
       typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType?>,
       paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType?>,
-      qualifierType: PyInstantiableType<*>?,
+      selfType: PyInstantiableType<*>?,
     ) : this() {
       for ((key, value) in typeVars) {
         putTypeVar(key, value, KeyImpl)
       }
       this.myTypeVarTuples.putAll(typeVarTuples)
       this.myParamSpecs.putAll(paramSpecs)
-      this.qualifierType = qualifierType
+      this.selfType = selfType
     }
 
     fun addToCopy(typeParameters: Map<PyTypeParameterType, Ref<PyType?>?>) : GenericSubstitutions {
@@ -2790,12 +2791,12 @@ object PyTypeChecker {
       if (paramSpecs != null) {
         newParamSpecs.putAll(paramSpecs)
       }
-      return GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, qualifierType)
+      return GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, selfType)
     }
 
     fun simplify(context: TypeEvalContext) : GenericSubstitutions {
       val simplifiedTypeVars : Map<PyTypeVarType, Ref<PyType?>?> = myTypeVars.mapValues { Ref(substitute(it.value?.get(), this, context)) }
-      return GenericSubstitutions(simplifiedTypeVars, typeVarTuples, paramSpecs, qualifierType)
+      return GenericSubstitutions(simplifiedTypeVars, typeVarTuples, paramSpecs, selfType)
     }
 
     @ApiStatus.Internal
