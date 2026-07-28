@@ -67,6 +67,12 @@ local_path_override(
     path = "platform/build-scripts/bazel",
 )
 
+bazel_dep(name = "rules_ij_plugin")
+local_path_override(
+  module_name = "rules_ij_plugin",
+  path = "platform/build-scripts/ij-plugin-rules",
+)
+
 local_path_override(
     module_name = "rules_jvm",
     path = "build/jvm-rules",
