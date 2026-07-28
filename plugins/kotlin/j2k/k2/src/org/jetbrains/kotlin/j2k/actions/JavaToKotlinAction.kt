@@ -48,12 +48,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
@@ -224,8 +223,6 @@ object JavaToKotlinActionHandler {
             }
         }
 
-        val externalCodeProcessing = result.externalCodeProcessing
-
         val userConfirmed = !askExternalCodeProcessing || withContext(Dispatchers.EDT) {
             Messages.showYesNoDialog(
                 project,
@@ -238,7 +235,6 @@ object JavaToKotlinActionHandler {
         commitConversionResult(
             project = project,
             result = result,
-            externalCodeProcessing = externalCodeProcessing,
             usages = usages,
             userConfirmed = userConfirmed,
         )
@@ -283,6 +279,7 @@ object JavaToKotlinActionHandler {
         if (!enableExternalCodeProcessing || externalCodeProcessing == null) return emptyList()
         reporter.text(KotlinJ2kBundle.message("progress.searching.usages"))
         reporter.fraction(0.0)
+
         return smartReadAction(project) {
             externalCodeProcessing.collectUsages { done, total, name ->
                 reporter.fraction(done.toDouble() / total.toDouble())
@@ -294,7 +291,6 @@ object JavaToKotlinActionHandler {
     private suspend fun commitConversionResult(
         project: Project,
         result: ConversionResult,
-        externalCodeProcessing: ExternalCodeProcessing?,
         usages: List<ExternalUsagesFixer.JKMemberInfoWithUsages>,
         userConfirmed: Boolean,
     ) {
@@ -304,9 +300,20 @@ object JavaToKotlinActionHandler {
                 applyResults(project, preparedResults)
             }
 
-            bindExternalCodeProcessing(project, externalCodeProcessing, newFiles)
+            val externalCodeProcessing = result.externalCodeProcessing
 
             if (externalCodeProcessing != null && userConfirmed && usages.isNotEmpty()) {
+                smartReadAction(project) {
+                    val contextElement = newFiles.firstOrNull()
+                    if (contextElement != null) {
+                        analyze(contextElement) {
+                            externalCodeProcessing.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
+                        }
+                    }
+
+                    ExternalUsagesFixer.populateEffectiveModality(usages)
+                }
+
                 edtWriteAction {
                     ExternalUsagesFixer(usages).fix()
                 }
@@ -317,20 +324,6 @@ object JavaToKotlinActionHandler {
                 newFiles.singleOrNull()?.let {
                     FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
                 }
-            }
-        }
-    }
-
-    private fun bindExternalCodeProcessing(
-        project: Project,
-        externalCodeProcessing: ExternalCodeProcessing?,
-        newFiles: List<KtFile>,
-    ) {
-        if (externalCodeProcessing == null) return
-        val contextElement = newFiles.firstOrNull() ?: return
-        project.runReadActionInSmartMode {
-            analyze(contextElement) {
-                externalCodeProcessing.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
             }
         }
     }
@@ -425,18 +418,15 @@ private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
     fun isWritablePackageDirectory(file: VirtualFile): Boolean {
         val directory = file.toPsiDirectory(project) ?: return false
         if (!PsiDirectoryFactory.getInstance(project).isPackage(directory) || !file.isWritable) return false
+
         return file.children.any { it.isDirectory || it.extension == JavaFileType.DEFAULT_EXTENSION }
     }
 
-    if (e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory)) {
-        // If a package is selected, we consider that it may contain Java files,
-        // but don't actually check, because this check is recursive and potentially expensive: KTIJ-12688.
-        //
-        // This logic is disabled for the project view popup to avoid cluttering it.
-        return true
-    }
-
-    return files.any(::isWritableJavaFile)
+    // If a package is selected, we consider that it may contain Java files,
+    // but don't actually check, because this check is recursive and potentially expensive: KTIJ-12688.
+    //
+    // This logic is disabled for the project view popup to avoid cluttering it.
+    return e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory) || files.any(::isWritableJavaFile)
 }
 
 suspend inline fun <T> withCommandOnEdt(project: Project, crossinline action: suspend () -> T): T {

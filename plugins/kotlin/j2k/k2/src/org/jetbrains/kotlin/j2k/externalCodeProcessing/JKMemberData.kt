@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 interface JKMemberData {
     var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>?
     var isStatic: Boolean
+    var isEffectivelyFinal: Boolean
     val fqName: FqName?
     var name: String
 
@@ -42,7 +43,8 @@ data class JKFakeFieldData(
     override var isStatic: Boolean,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
     override val fqName: FqName?,
-    override var name: String
+    override var name: String,
+    override var isEffectivelyFinal: Boolean = true
 ) : JKFieldData {
     override val searchInJavaFiles: Boolean
         get() = false
@@ -54,7 +56,8 @@ data class JKFieldDataFromJava(
     override val javaElement: PsiField,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
-    override var name: String = javaElement.name
+    override var name: String = javaElement.name,
+    override var isEffectivelyFinal: Boolean = true
 ) : JKMemberDataCameFromJava<PsiField>, JKFieldData {
     override val searchInKotlinFiles: Boolean
         get() = wasRenamed
@@ -71,7 +74,8 @@ data class JKPhysicalMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
-    override var usedAsAccessorOfProperty: JKFieldData? = null
+    override var usedAsAccessorOfProperty: JKFieldData? = null,
+    override var isEffectivelyFinal: Boolean = true
 ) : JKMethodData {
     override var name: String = javaElement.name
 }
@@ -80,7 +84,8 @@ data class JKLightMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
-    override var usedAsAccessorOfProperty: JKFieldData? = null
+    override var usedAsAccessorOfProperty: JKFieldData? = null,
+    override var isEffectivelyFinal: Boolean = true
 ) : JKMethodData {
     override var name: String = javaElement.name
 }
