@@ -599,7 +599,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
         yield()
       }
       if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
-        thisLogger().warn("Thread dump: ${ThreadDumper.dumpForDebug()}")
+        System.err.println("Thread dump: ${ThreadDumper.dumpForDebug()}")
       }
       assertFalse { ApplicationManagerEx.getApplicationEx().isWriteActionInProgress() }
       runReadActionBlocking {
