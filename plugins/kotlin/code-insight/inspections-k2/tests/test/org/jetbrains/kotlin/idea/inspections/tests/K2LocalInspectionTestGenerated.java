@@ -15380,6 +15380,36 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/abstractProperty.kt");
             }
 
+            @TestMetadata("annotationJvmField.kt")
+            public void testAnnotationJvmField() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationJvmField.kt");
+            }
+
+            @TestMetadata("annotationJvmStatic.kt")
+            public void testAnnotationJvmStatic() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationJvmStatic.kt");
+            }
+
+            @TestMetadata("annotationSynchronized.kt")
+            public void testAnnotationSynchronized() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationSynchronized.kt");
+            }
+
+            @TestMetadata("annotationSynchronized2.kt")
+            public void testAnnotationSynchronized2() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationSynchronized2.kt");
+            }
+
+            @TestMetadata("annotationSynchronized3.kt")
+            public void testAnnotationSynchronized3() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationSynchronized3.kt");
+            }
+
+            @TestMetadata("annotationVolatile.kt")
+            public void testAnnotationVolatile() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/annotationVolatile.kt");
+            }
+
             @TestMetadata("bodyProperty.kt")
             public void testBodyProperty() throws Exception {
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/bodyProperty.kt");

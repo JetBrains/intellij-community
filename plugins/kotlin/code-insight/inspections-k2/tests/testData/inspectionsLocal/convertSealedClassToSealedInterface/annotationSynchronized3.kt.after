@@ -1,0 +1,10 @@
+// FIX: Convert to sealed interface
+sealed interface Task {
+    companion object {
+        @Synchronized
+        fun run() {
+            println("JB")
+        }
+    }
+}
+class A : Task
