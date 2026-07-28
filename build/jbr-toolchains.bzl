@@ -1,5 +1,8 @@
 load("@rules_java//toolchains:remote_java_repository.bzl", "remote_java_repository")
 
+JBR_VERSION = "25.0.2"
+JBR_BUILD_VERSION = "b432.48"
+
 def _remote_jbr25_repos():
     remote_java_repository(
         name = "remotejbr25_linux",
@@ -9,9 +12,9 @@ def _remote_jbr25_repos():
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-linux-x64-b315.62.tar.gz"],
-        sha256 = "7e1614dce41044cd4777a51b2ed3224727b34bda8e569c1e2f687aebb0d8acb8",
-        strip_prefix = "jbrsdk-25.0.2-linux-x64-b315.62",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-linux-x64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "a76e8c1ef916f84d3b28e6794d1527d5189f9b0299a323e21ea737bdd93eaddd",
+        strip_prefix = "jbrsdk-%s-linux-x64-%s" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
     remote_java_repository(
         name = "remotejbr25_linux_aarch64",
@@ -21,9 +24,9 @@ def _remote_jbr25_repos():
             "@platforms//os:linux",
             "@platforms//cpu:arm64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-linux-aarch64-b315.62.tar.gz"],
-        sha256 = "ac94a6a0c80f0d4523a8c70363c5a93036406eb882ee6a393a7fb8b838213348",
-        strip_prefix = "jbrsdk-25.0.2-linux-aarch64-b315.62",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-linux-aarch64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "b2a7e10c80b9560bee42e2f6f69d4491dc74362a7ca378249ec545a83155eb57",
+        strip_prefix = "jbrsdk-%s-linux-aarch64-%s" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
     remote_java_repository(
         name = "remotejbr25_macos",
@@ -33,9 +36,9 @@ def _remote_jbr25_repos():
             "@platforms//os:macos",
             "@platforms//cpu:x86_64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-osx-x64-b315.62.tar.gz"],
-        sha256 = "8a8edb1b61b29d2ede8884c60ee52cd5246690b820f1bd171ab1707f6a00fb67",
-        strip_prefix = "jbrsdk-25.0.2-osx-x64-b315.62/Contents/Home",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-osx-x64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "aeb433aef8bedcd8ba32963857923096a03bd87ca6ebb7a65a79d8b41b97dec3",
+        strip_prefix = "jbrsdk-%s-osx-x64-%s/Contents/Home" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
     remote_java_repository(
         name = "remotejbr25_macos_aarch64",
@@ -45,9 +48,9 @@ def _remote_jbr25_repos():
             "@platforms//os:macos",
             "@platforms//cpu:arm64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-osx-aarch64-b315.62.tar.gz"],
-        sha256 = "e7b135873d05d92a2886270eccf2ff2a46ee6d3558715f7e068dc70e044d911a",
-        strip_prefix = "jbrsdk-25.0.2-osx-aarch64-b315.62/Contents/Home",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-osx-aarch64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "1501ed8f15c1176abc895d6e3cf2b52562152f9731ec024b552e4bef24f02bf9",
+        strip_prefix = "jbrsdk-%s-osx-aarch64-%s/Contents/Home" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
     remote_java_repository(
         name = "remotejbr25_win",
@@ -57,9 +60,9 @@ def _remote_jbr25_repos():
             "@platforms//os:windows",
             "@platforms//cpu:x86_64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-windows-x64-b315.62.tar.gz"],
-        sha256 = "8a7199d60d8d81e329a215b0790641eb4329be5f8c4c90e2f13654df15b0dd75",
-        strip_prefix = "jbrsdk-25.0.2-windows-x64-b315.62",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-windows-x64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "48bf62ff4d61969066d71012e98ed6ef1292c4709badb099e22ed07195b00527",
+        strip_prefix = "jbrsdk-%s-windows-x64-%s" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
     remote_java_repository(
         name = "remotejbr25_win_arm64",
@@ -69,9 +72,9 @@ def _remote_jbr25_repos():
             "@platforms//os:windows",
             "@platforms//cpu:arm64",
         ],
-        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-25.0.2-windows-aarch64-b315.62.tar.gz"],
-        sha256 = "8f00d4b4ab7c9ca38615620e876ad3343169caa7364ba30bf01e2f80797b738b",
-        strip_prefix = "jbrsdk-25.0.2-windows-aarch64-b315.62",
+        urls = ["https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%s-windows-aarch64-%s.tar.gz" % (JBR_VERSION, JBR_BUILD_VERSION)],
+        sha256 = "2f3495e5e2411bb08c30d877ecc49f24af8393f83ec54c0ed730987761ffe2ec",
+        strip_prefix = "jbrsdk-%s-windows-aarch64-%s" % (JBR_VERSION, JBR_BUILD_VERSION),
     )
 
 def _jbr_toolchains_impl(ctx):
