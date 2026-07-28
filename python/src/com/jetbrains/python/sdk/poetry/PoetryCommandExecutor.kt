@@ -13,6 +13,7 @@ import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -52,6 +53,9 @@ import kotlin.io.path.name
  */
 private val VERSION_2 = "2.0.0".toVersion()
 
+@Internal
+@PyInternalExecApi
+const val POETRY_TOML = "poetry.toml"
 
 internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   "poetry",
@@ -61,7 +65,6 @@ internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
 )
 
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
-private const val POETRY_TOML = "poetry.toml"
 private const val POETRY_LOCK = "poetry.lock"
 private val POETRY_PROJECT_FILES = listOf(PY_PROJECT_TOML, POETRY_LOCK, POETRY_TOML)
 private val POETRY_PROJECT_DOWNLOAD_CONFIG = DownloadConfig(relativePaths = POETRY_PROJECT_FILES)

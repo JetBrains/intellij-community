@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.util.ui.AsyncProcessIcon
@@ -24,15 +23,15 @@ import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal val RELEVANT_NON_PYTHON_FILES: Map<String, (Module) -> Boolean> = mapOf(
-  PY_PROJECT_TOML to { _ -> true },
-  "README.md" to ::moduleContainsPythonFiles,
-)
+internal val RELEVANT_NON_PYTHON_FILES: Map<String, (Module) -> Boolean> =
+  mutableMapOf("README.md" to ::moduleContainsPythonFiles) +
+  PyProjectSdkConfigurationExtension.potentialDependencyFiles.associateWith { { true } }
 
 @ApiStatus.Internal
 class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware {
