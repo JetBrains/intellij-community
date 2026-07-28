@@ -955,6 +955,7 @@ package org.jetbrains.jewel.foundation.theme {
     method public androidx.compose.ui.graphics.Color? grayOrNull(int index);
     method @Deprecated public long green(int index);
     method public androidx.compose.ui.graphics.Color? greenOrNull(int index);
+    method public boolean isIslands();
     method public androidx.compose.ui.graphics.Color? lookup(String colorKey);
     method @Deprecated public long orange(int index);
     method public androidx.compose.ui.graphics.Color? orangeOrNull(int index);
@@ -969,6 +970,7 @@ package org.jetbrains.jewel.foundation.theme {
     property public java.util.List<androidx.compose.ui.graphics.Color> blue;
     property public java.util.List<androidx.compose.ui.graphics.Color> gray;
     property public java.util.List<androidx.compose.ui.graphics.Color> green;
+    property public boolean isIslands;
     property public java.util.List<androidx.compose.ui.graphics.Color> orange;
     property public java.util.List<androidx.compose.ui.graphics.Color> purple;
     property public java.util.Map<java.lang.String,androidx.compose.ui.graphics.Color> rawMap;
