@@ -140,6 +140,10 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
 
       group(message("title.presentation")) {
+        for (configurable in ConfigurableWrapper.createConfigurables(PRIORITIZED_EP_NAME)) {
+          appendDslConfigurable(configurable)
+        }
+
         row {
           checkBox(myCbHighlightSelectionOccurrences)
         }
@@ -195,7 +199,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   }
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
-    return listOf(EP_NAME)
+    return listOf(EP_NAME, PRIORITIZED_EP_NAME)
   }
 
   override fun apply() {
@@ -220,6 +224,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
 
   private val INLINE_DOC_EP_NAME = ExtensionPointName.create<InlineDocAdditionalHandlerEP>("com.intellij.editorAppearanceInlineDocHandler")
   private val EP_NAME = ExtensionPointName.create<EditorAppearanceConfigurableEP>("com.intellij.editorAppearanceConfigurable")
+  private val PRIORITIZED_EP_NAME = ExtensionPointName.create<EditorAppearancePrioritizedConfigurableEP>("com.intellij.editorAppearancePrioritizedConfigurable")
 
   private val lazyInlineDocAdditionalConfigurable by lazy { ConfigurableWrapper.createConfigurables(INLINE_DOC_EP_NAME) }
 
