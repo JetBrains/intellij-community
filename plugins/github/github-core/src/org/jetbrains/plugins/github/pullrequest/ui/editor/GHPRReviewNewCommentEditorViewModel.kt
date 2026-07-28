@@ -35,6 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosi
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel.SubmitAction
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
+import java.util.Date
 import java.util.UUID
 
 interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel, CodeReviewTrackableItemViewModel, GHViewModelWithTextCompletion {
@@ -42,6 +43,7 @@ interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewMod
   val currentUser: GHActor
   val avatarIconsProvider: GHAvatarIconsProvider
   val submitActions: StateFlow<List<SubmitAction>>
+  val createdAt: Date
 
   fun cancel()
   fun updateLineRange(newStartLocation: DiffLineLocation?, newEndLocation: DiffLineLocation?)
@@ -138,6 +140,8 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
         emptyList()
       }
     }.stateInNow(cs, emptyList())
+
+  override val createdAt: Date = Date()
 
   override fun cancel() = onCancel(position.value)
 
