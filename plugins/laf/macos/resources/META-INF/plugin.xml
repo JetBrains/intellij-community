@@ -19,6 +19,7 @@
     <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <themeProvider id="macOSLight" path="/macintellijlaf.theme.json" targetUi="classic" parentTheme="IntelliJ" />

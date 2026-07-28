@@ -13,4 +13,5 @@
     <module name="intellij.platform.core.impl"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
 </idea-plugin>

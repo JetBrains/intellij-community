@@ -50,6 +50,7 @@
     <module name="intellij.platform.vcs.impl"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
   <content>
     <module name="intellij.libraries.sshd.osgi" loading="embedded"/>
   </content>

@@ -35,6 +35,7 @@
     <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="org.intellij.plugins.markdown.webview.preview.WebViewMarkdownPreviewPanelProvider"/>

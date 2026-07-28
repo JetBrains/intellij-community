@@ -47,6 +47,7 @@
     <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">

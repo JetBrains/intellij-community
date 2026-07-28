@@ -43,6 +43,7 @@
     <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
   <depends>com.intellij.modules.xml</depends>
   <resource-bundle>messages.XPathBundle</resource-bundle>
 

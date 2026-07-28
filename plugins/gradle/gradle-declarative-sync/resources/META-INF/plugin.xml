@@ -19,6 +19,7 @@
     <module name="intellij.platform.externalSystem.impl"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
   <depends>com.intellij.java</depends>
   <depends>com.intellij.gradle</depends>
   <depends>org.jetbrains.idea.gradle.dsl</depends>

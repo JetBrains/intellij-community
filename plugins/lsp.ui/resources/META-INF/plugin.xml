@@ -23,6 +23,7 @@
     <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <resource-bundle>messages.LspUiBundle</resource-bundle>
 

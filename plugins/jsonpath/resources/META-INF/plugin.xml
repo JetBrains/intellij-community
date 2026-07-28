@@ -29,6 +29,7 @@
     <module name="intellij.spellchecker"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <resource-bundle>messages.JsonPathBundle</resource-bundle>
 

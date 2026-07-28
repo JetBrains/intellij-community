@@ -29,6 +29,7 @@
     <module name="intellij.xml.psi"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
 
   <extensions defaultExtensionNs="com.intellij">

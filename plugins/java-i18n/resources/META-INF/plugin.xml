@@ -44,6 +44,7 @@
     <module name="intellij.xml.psi.impl"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <description>
     Provides code inspections and corresponding quick fixes for internationalization in Java source code.

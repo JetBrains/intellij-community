@@ -27,7 +27,7 @@
     <!-- endregion -->
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <!-- If the Python plugin is enabled in an IDE, the optional module below offers features that require a Python interpreter
     and Python language support. These include HTML previews of reStructuredText files formatted by the `docutils` module,
     Python syntax highlighting in code blocks, Sphinx documentation support, and more.-->

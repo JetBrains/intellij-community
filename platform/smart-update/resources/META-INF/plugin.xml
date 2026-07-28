@@ -25,6 +25,7 @@
     <module name="intellij.platform.vcs.impl"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.smartUpdateStep" interface="com.intellij.smartUpdate.SmartUpdateStep" dynamic="true"/>

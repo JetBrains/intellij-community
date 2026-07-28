@@ -30,6 +30,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
   <actions>
     <group id="AdditionalRefactoringsMenu">
       <add-to-group group-id="RefactoringMenu" anchor="last"/>

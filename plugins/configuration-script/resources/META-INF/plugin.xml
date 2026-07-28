@@ -28,6 +28,7 @@
     <module name="intellij.platform.util.ex"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>

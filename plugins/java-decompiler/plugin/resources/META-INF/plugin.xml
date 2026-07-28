@@ -29,6 +29,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
 
   <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
 

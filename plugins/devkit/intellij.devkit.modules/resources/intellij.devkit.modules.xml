@@ -1,6 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

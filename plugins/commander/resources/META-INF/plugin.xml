@@ -24,6 +24,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <content namespace="jetbrains"/>
   <resource-bundle>messages.CommanderBundle</resource-bundle>
 
   <depends>com.intellij.java</depends>

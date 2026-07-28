@@ -51,10 +51,12 @@
                         dynamic="true"/>
     </extensionPoints>
 
-    <content>
+    <content namespace="jetbrains">
       <module name="intellij.dotenv.kotlin"/>
-      <module name="intellij.dotenv.python"/>
+    </content>
+    <content>
       <module name="intellij.dotenv.java"/>
+      <module name="intellij.dotenv.python"/>
     </content>
 
     <xi:include href="/META-INF/dotenv-ultimate.xml">
