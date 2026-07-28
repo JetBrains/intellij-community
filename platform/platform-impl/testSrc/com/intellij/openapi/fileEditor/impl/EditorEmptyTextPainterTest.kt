@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -49,6 +50,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 @RunInEdt(writeIntent = true)
@@ -89,7 +92,12 @@ internal class EditorEmptyTextPainterTest {
   @AfterEach
   fun tearDown() {
     originalShortcuts.forEach { (actionId, shortcuts) -> resetShortcuts(actionId, shortcuts) }
-    manager.mainSplitters.setEmptyStateComponentCreationGateForTests(null)
+    val splitters = manager.mainSplitters
+    splitters.setEmptyStateComponentCreationGateForTests(null)
+    // a creation left waiting out an inflated delay must not survive into the next test
+    splitters.suppressRichEmptyStateComponents()
+    splitters.setEmptyStateComponentCreationDelayForTests(null)
+    splitters.resetStartupEmptyStatePresentationHoldForTests()
   }
 
   @Test
@@ -185,9 +193,10 @@ internal class EditorEmptyTextPainterTest {
       assertThat(findEmptyStateComponent(splitters)).isNotNull()
 
       scope.cancel()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+      // the scope's job completes only once its long-running children do, so the disposal it triggers is posted to the EDT
+      // some time after `cancel()` returns — wait for it instead of pumping once
+      waitForNoEmptyStateComponent(splitters)
 
-      assertThat(findEmptyStateComponent(splitters)).isNull()
       assertThat(disposedComponents).hasValue(1)
     }
     finally {
@@ -420,6 +429,12 @@ internal class EditorEmptyTextPainterTest {
     val openFilesJob = splitters.openFilesAsync(requestFocus = false)
     PlatformTestUtil.waitWhileBusy { !openFilesJob.isCompleted }
     waitForEmptyStateComponentCreation(splitters)
+
+    // the restore ends with the area non-empty, so settling the startup empty state must dispose rather than mount —
+    // no composer flash on a project that does reopen its editors
+    assertThat(splitters.openFileList).isNotEmpty()
+    assertThat(providerCalls).hasValue(0)
+    assertThat(findEmptyStateComponent(splitters)).isNull()
   }
 
   @Test
@@ -463,6 +478,176 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
     assertThat(disposedComponents).hasValue(1)
+  }
+
+  @Test
+  fun startupHoldPreparesTheEmptyStateWithoutMountingIt(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val providerCalls = AtomicInteger()
+    registerComponentProvider(disposable, providerCalls = providerCalls)
+    manager.closeAllFiles()
+    // building happens before presenting, so a delay this long must never be reached: it would mean the components are only
+    // built once project open is over, which is the latency this whole split exists to avoid
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+
+    waitForProviderCall(providerCalls, "The empty state was not prepared under the startup hold")
+    dispatchEventsFor(100.milliseconds)
+
+    // project open may still open an editor of its own, so nothing may be shown yet
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(splitters.isEmptyStateComponentCreationPending()).isTrue()
+  }
+
+  @Test
+  fun releasingTheStartupHoldMountsWithoutTheCreationDelay(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+    dispatchEventsFor(100.milliseconds)
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+
+    // the release is knowledge that nothing is coming, so there is no flash left for the delay to hide
+    splitters.endStartupEmptyStatePresentationHold()
+
+    waitForEmptyStateComponent(splitters, "Releasing the startup hold waited out the creation delay")
+  }
+
+  @Test
+  fun anEditorOpenedDuringTheStartupHoldPreventsTheEmptyStateEntirely(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val disposedComponents = AtomicInteger()
+    val providerCalls = AtomicInteger()
+    registerComponentProvider(disposable, disposedComponents, providerCalls = providerCalls)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+    waitForProviderCall(providerCalls, "The empty state was not prepared under the startup hold")
+    dispatchEventsFor(100.milliseconds)
+
+    // the welcome tab, a README, a file named on the command line: project open keeps opening editors after restoring finds none
+    val file = LightVirtualFile("empty-state-startup-hold.txt", "content")
+    manager.openFile(file, false)
+    splitters.endStartupEmptyStatePresentationHold()
+    waitForEmptyStateComponentCreation(splitters)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(disposedComponents).hasValue(1)
+  }
+
+  @Test
+  fun theStartupHoldDoesNotHoldBackTheFallbackEmptyText(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    registerFallbackComponentProvider(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+
+    // plain empty text is what this area showed before the hold existed, and holding it back would leave the area blank rather
+    // than plain, because legacy painting is suppressed while a creation is pending
+    waitForEmptyTextComponent(splitters)
+  }
+
+  @Test
+  fun aStartupHoldTakenAfterProjectOpenGaveUpIsNotHeldAgainstTheEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    val gateEntered = CompletableDeferred<Unit>()
+    val releaseGate = CompletableDeferred<Unit>()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.setEmptyStateComponentCreationGateForTests {
+      gateEntered.complete(Unit)
+      releaseGate.await()
+    }
+    manager.closeAllFiles()
+
+    // project open was cancelled before restoring took its hold, so its own release runs first
+    splitters.abandonStartupEmptyStatePresentationHold()
+    waitForDeferred(gateEntered)
+    // restoring takes its hold uninterruptibly, so it still arrives — with nobody left to release it
+    splitters.beginStartupEmptyStatePresentationHold()
+    releaseGate.complete(Unit)
+
+    waitForEmptyStateComponent(splitters, "A hold taken after project open gave up left the empty state unpresented")
+  }
+
+  @Test
+  fun userEmptiedEditorAreaKeepsTheCreationDelay(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.enableRichEmptyStateComponents()
+
+    manager.closeAllFiles()
+    dispatchEventsFor(100.milliseconds)
+
+    // closing the last tab is a user-visible transition, not startup: nothing says whether an editor is on its way in, so the
+    // components may be built but the delay still holds them back
+    assertThat(splitters.isEmptyStateComponentCreationPending()).isTrue()
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+  }
+
+  @Test
+  fun doNotReopenFilesKeepsRichEmptyStateDisabledUntilExplicitEnable(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    val project = projectFixture.get()
+    FileEditorManagerKeys.DO_NOT_REOPEN_FILES.set(project, true)
+    try {
+      splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+      splitters.finishStartupEditorRestore()
+      dispatchEventsFor(100.milliseconds)
+
+      // editors arrive from elsewhere here, so the absence of a local restore settles nothing
+      assertThat(splitters.isEmptyStateComponentCreationPending()).isFalse()
+      assertThat(findEmptyStateComponent(splitters)).isNull()
+
+      splitters.enableRichEmptyStateComponents()
+      waitForEmptyStateComponent(splitters, "The explicit enable did not mount the empty state")
+    }
+    finally {
+      FileEditorManagerKeys.DO_NOT_REOPEN_FILES.set(project, null)
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun restoringStateWithoutFileEntriesPreparesTheEmptyStateAtOnce(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val providerCalls = AtomicInteger()
+    registerComponentProvider(disposable, providerCalls = providerCalls)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    try {
+      // a saved state whose leaves hold no files restores nothing, so the empty state may be built while the rest of the project
+      // open runs — even though restoring does rebuild the editor component and its window
+      val restoreJob = scope.launch { splitters.createEditors(EditorSplitterState(emptySplitterStateElement())) }
+      PlatformTestUtil.waitWhileBusy { !restoreJob.isCompleted }
+
+      waitForProviderCall(providerCalls, "Restoring a file-less state did not prepare the empty state")
+      assertThat(findEmptyStateComponent(splitters)).isNull()
+
+      splitters.endStartupEmptyStatePresentationHold()
+      waitForEmptyStateComponent(splitters, "Restoring a file-less state waited out the creation delay")
+    }
+    finally {
+      scope.cancel()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    }
   }
 
   @Test
@@ -576,13 +761,17 @@ internal class EditorEmptyTextPainterTest {
     disposable: Disposable,
     disposedComponents: AtomicInteger = AtomicInteger(),
     includeFallbackProvider: Boolean = false,
+    providerCalls: AtomicInteger = AtomicInteger(),
   ) {
     ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, buildList {
       add(object : EditorEmptyStateComponentProvider {
-        override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
-          JPanel().apply {
-            name = EMPTY_STATE_COMPONENT_NAME
-            preferredSize = java.awt.Dimension(320, 40)
+        override suspend fun createComponent(splitters: EditorsSplitters): JComponent {
+          providerCalls.incrementAndGet()
+          return withContext(Dispatchers.EDT) {
+            JPanel().apply {
+              name = EMPTY_STATE_COMPONENT_NAME
+              preferredSize = java.awt.Dimension(320, 40)
+            }
           }
         }
 
@@ -638,6 +827,55 @@ internal class EditorEmptyTextPainterTest {
 
   private fun waitForEmptyStateComponentCreation(splitters: EditorsSplitters) {
     PlatformTestUtil.waitWhileBusy { splitters.isEmptyStateComponentCreationPending() }
+  }
+
+  private fun waitForEmptyStateComponent(splitters: EditorsSplitters, message: String) {
+    try {
+      // `waitWhileBusy` — not `waitWithEventsDispatching` — because the test body holds the write-intent lock, and the
+      // mount takes it too: only the former releases it while it dispatches
+      PlatformTestUtil.waitWhileBusy { findEmptyStateComponent(splitters) == null }
+    }
+    catch (e: AssertionError) {
+      throw AssertionError(message, e)
+    }
+  }
+
+  private fun waitForEmptyTextComponent(splitters: EditorsSplitters) {
+    try {
+      PlatformTestUtil.waitWhileBusy { findEmptyTextComponent(splitters) == null }
+    }
+    catch (e: AssertionError) {
+      throw AssertionError("The fallback empty text was held back by the startup presentation hold", e)
+    }
+  }
+
+  private fun waitForProviderCall(providerCalls: AtomicInteger, message: String) {
+    try {
+      PlatformTestUtil.waitWhileBusy { providerCalls.get() == 0 }
+    }
+    catch (e: AssertionError) {
+      throw AssertionError(message, e)
+    }
+  }
+
+  private fun waitForNoEmptyStateComponent(splitters: EditorsSplitters) {
+    try {
+      PlatformTestUtil.waitWhileBusy { findEmptyStateComponent(splitters) != null }
+    }
+    catch (e: AssertionError) {
+      throw AssertionError("The empty state was not disposed", e)
+    }
+  }
+
+  /** Gives a creation that is not waiting out the delay every chance to mount. */
+  private fun dispatchEventsFor(duration: Duration) {
+    val deadline = System.nanoTime() + duration.inWholeNanoseconds
+    while (System.nanoTime() < deadline) {
+      Thread.sleep(10)
+      // same reason as in `waitForEmptyStateComponent`: this dispatches with the write-intent lock released, so a creation
+      // that is only blocked on that lock cannot pass for one that is waiting out the delay
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
   }
 
   private fun waitForDeferred(deferred: CompletableDeferred<Unit>) {
@@ -718,5 +956,8 @@ internal class EditorEmptyTextPainterTest {
     const val PROVIDER_ACTION_ID: String = "EditorEmptyTextPainterTest.ProviderAction"
     const val PROVIDER_ACTION_TEXT: String = "Provider Action"
     const val EMPTY_STATE_COMPONENT_NAME: String = "EditorEmptyTextPainterTest.EmptyStateComponent"
+
+    /** Long enough that a test which reaches the delay fails on its own timeout rather than passing slowly. */
+    val NEVER_ELAPSING_CREATION_DELAY: Duration = 10.minutes
   }
 }
