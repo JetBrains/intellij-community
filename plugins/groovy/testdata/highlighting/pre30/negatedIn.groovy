@@ -1,1 +1,1 @@
-a <error descr="Negated 'in' is not supported in current version">!in</error> b
+a <error descr="Negated 'in' is available in Groovy 3.0 and later">!in</error> b

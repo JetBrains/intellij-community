@@ -1,3 +1,3 @@
-try <error descr="'try' with resources is not supported in current version">(</error>
+try <error descr="'try' with resources is available in Groovy 3.0 and later">(</error>
   def a = 1
 ) {}
