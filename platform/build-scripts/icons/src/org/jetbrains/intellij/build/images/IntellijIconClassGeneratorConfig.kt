@@ -52,6 +52,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "KubernetesIcons",
         packageName = "com.intellij.kubernetes"
       )
+      "intellij.clouds.telepresence.shared" -> IntellijIconClassGeneratorModuleConfig(
+        className = "TelepresenceIcons",
+        packageName = "com.intellij.kubernetes.telepresence"
+      )
       "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
         packageName = "com.intellij.css.common",
