@@ -127,6 +127,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test admonitions followed by paragraph`() = doTest()
 
+  fun `test reflow does not split emphasis markers`() = doTest()
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
