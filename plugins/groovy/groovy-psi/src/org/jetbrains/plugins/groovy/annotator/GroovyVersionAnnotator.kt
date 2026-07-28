@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -12,19 +12,18 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_5
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY3_0
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY4_0
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY5_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY6_0
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.NO_VERSION
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.compareSdkVersions
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 
 class GroovyVersionAnnotator : Annotator {
 
-  @Suppress("RemoveRedundantQualifierName")
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element !is GroovyPsiElement) {
       return
     }
-    val config = GroovyConfigUtils.getInstance()
-    val version = config.getSDKVersion(holder.currentAnnotationSession.file)
+    val version = GroovyConfigUtils.getInstance().getSDKVersion(holder.currentAnnotationSession.file)
     if (version == NO_VERSION) {
       return
     }
@@ -51,13 +50,18 @@ class GroovyVersionAnnotator : Annotator {
     }
     if (compareSdkVersions(version, GROOVY4_0) < 0) {
       element.accept(GroovyAnnotatorPre40(holder))
-    } else {
+    }
+    else {
       element.accept(GroovyAnnotator40(holder))
     }
     if (compareSdkVersions(version, GROOVY5_0) < 0) {
       element.accept(GroovyAnnotatorPre50(holder))
-    } else {
+    }
+    else {
       element.accept(GroovyAnnotator50(holder))
+    }
+    if (compareSdkVersions(version, GROOVY6_0) < 0) {
+      element.accept(GroovyAnnotatorPre60(holder))
     }
   }
 }

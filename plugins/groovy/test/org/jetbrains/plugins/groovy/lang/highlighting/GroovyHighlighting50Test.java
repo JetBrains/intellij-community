@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -146,6 +146,12 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                            def _ = 1
                             }
                        }
+                       """);
+  }
+  
+  public void testValDeclaration() {
+    highlightingTest("""
+                       <error descr="'val' declarations are available in Groovy 6.0 or later">val</error> x = 1
                        """);
   }
 
