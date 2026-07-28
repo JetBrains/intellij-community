@@ -71,7 +71,16 @@ object PreviewLAFThemeStyles {
     .footnotes {
       border-top-color: $separatorColor;
     }
-    
+
+    input[type="checkbox"]:checked {
+      border-color: ${scheme.linkActiveForegroundColor.webRgba()};
+      background-color: ${scheme.linkActiveForegroundColor.webRgba()};
+    }
+
+    input[type="checkbox"]:checked::after {
+      border-color: $backgroundColor;
+    }
+
     blockquote, code, pre {
       background-color: ${scheme.fenceBackgroundColor.webRgba(scheme.fenceBackgroundColor.alpha / 255.0)};
     }
