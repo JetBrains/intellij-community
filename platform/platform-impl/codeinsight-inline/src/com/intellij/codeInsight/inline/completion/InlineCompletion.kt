@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionSelectionListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
@@ -64,12 +65,14 @@ object InlineCompletion {
 
     editor.putUserData(KEY, handler to disposable)
 
-    editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
+    if (InlineCompletionEditorType.get(editor) != InlineCompletionEditorType.TERMINAL) {
+      editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
+      editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.TypingSessionCaretListener(), disposable)
+    }
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
     editor.selectionModel.addSelectionListener(InlineCompletionSelectionListener(), disposable)
-    editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.TypingSessionCaretListener(), disposable)
     editor.addEditorMouseListener(InlineCompletionTooltipProvokerMouseListener(), disposable)
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
@@ -78,7 +81,7 @@ object InlineCompletion {
       workingScope.cancel()
     }
 
-    LOG.trace { "[Inline Completion] Handler is installed for $editor." }
+    LOG.trace { "[Inline Completion] Handler is installed for $editor."}
   }
 
   fun remove(editor: Editor) {
