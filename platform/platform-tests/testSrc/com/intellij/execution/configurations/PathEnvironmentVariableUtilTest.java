@@ -25,4 +25,21 @@ class PathEnvironmentVariableUtilTest {
   @Test void isOnPathNegative() {
     assertThat(PathEnvironmentVariableUtil.isOnPath("no-one-in-his-right-mind-names-an-exec-like-this")).isFalse();
   }
+
+  @Test void findFirstAndFindAll() {
+    var shellName = OS.CURRENT == OS.Windows ? "cmd" : "sh";
+    var shellFile = PathEnvironmentVariableUtil.findFirst(shellName);
+    assertThat(shellFile).isAbsolute().isRegularFile().isExecutable();
+
+    if (OS.CURRENT == OS.Windows) {
+      assertThat(PathEnvironmentVariableUtil.findFirst("cmd.exe")).isEqualTo(shellFile);
+    }
+
+    var allShellFiles = PathEnvironmentVariableUtil.findAll(shellName);
+    assertThat(allShellFiles).isNotEmpty();
+    assertThat(allShellFiles.getFirst()).isEqualTo(shellFile);
+
+    assertThat(PathEnvironmentVariableUtil.findFirst("no-one-in-his-right-mind-names-an-exec-like-this")).isNull();
+    assertThat(PathEnvironmentVariableUtil.findAll("no-one-in-his-right-mind-names-an-exec-like-this")).isEmpty();
+  }
 }

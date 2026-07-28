@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileFilter;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +28,88 @@ public final class PathEnvironmentVariableUtil {
   private static final Map<String, Boolean> ourOnPathCache = Collections.synchronizedMap(new HashMap<>());
 
   private PathEnvironmentVariableUtil() { }
+
+  /// Finds the first executable file with the specified base name located in a directory listed in the `PATH` environment variable.
+  /// On Windows, executable extensions (`%PATHEXT%`) are appended if needed.
+  ///
+  /// @since 2026.3
+  @ApiStatus.Experimental
+  public static @Nullable Path findFirst(@NotNull String fileBaseName) {
+    return findFirst(fileBaseName, getPathVariableValue());
+  }
+
+  /// Finds the first executable file with the specified base name located in a directory listed in the given environment variable.
+  /// On Windows, executable extensions (`%PATHEXT%`) are appended if needed.
+  ///
+  /// @since 2026.3
+  @ApiStatus.Experimental
+  public static @Nullable Path findFirst(@NotNull String fileBaseName, @Nullable String pathEnvVarValue) {
+    var matches = findImpl(true, fileBaseName, pathEnvVarValue);
+    return !matches.isEmpty() ? matches.getFirst() : null;
+  }
+
+  /// Finds all executable files with the specified base name located in directories listed in the `PATH` environment variable.
+  /// On Windows, executable extensions (`%PATHEXT%`) are appended if needed.
+  ///
+  /// @since 2026.3
+  @ApiStatus.Experimental
+  public static @NotNull @Unmodifiable List<Path> findAll(@NotNull String fileBaseName) {
+    return findImpl(false, fileBaseName, getPathVariableValue());
+  }
+
+  private static List<Path> findImpl(boolean stopAfterFirstMatch, String baseName, @Nullable String pathEnvVarValue) {
+    if (baseName.isBlank() || baseName.indexOf('\\') >= 0 || baseName.indexOf('/') >= 0) throw new IllegalArgumentException(baseName);
+
+    if (pathEnvVarValue == null || pathEnvVarValue.isBlank()) return List.of();
+
+    var pathDirs = getPathDirs(pathEnvVarValue);
+    var candidateNames = getCandidateFileNames(baseName);
+    var result = new SmartList<Path>();
+    for (var dirPath : pathDirs) {
+      try {
+        var dir = Path.of(dirPath);
+        if (dir.isAbsolute() && Files.isDirectory(dir)) {
+          for (var candidateName : candidateNames) {
+            var file = dir.resolve(candidateName);
+            if (Files.isRegularFile(file) && Files.isExecutable(file)) {
+              result.add(file);
+              if (stopAfterFirstMatch) {
+                return result;
+              }
+            }
+          }
+        }
+      }
+      catch (InvalidPathException ignored) { }
+    }
+    return result;
+  }
+
+  private static String[] getCandidateFileNames(String fileBaseName) {
+    if (OS.CURRENT == OS.Windows) {
+      var extensions = getWindowsExecutableFileExtensions();
+      if (!extensions.isEmpty()) {
+        var lowerName = fileBaseName.toLowerCase(Locale.ROOT);
+        var hasExt = false;
+        for (var ext : extensions) {
+          if (lowerName.endsWith(ext)) {
+            hasExt = true;
+            break;
+          }
+        }
+        if (!hasExt) {
+          var candidates = new String[extensions.size() + 1];
+          int i = 0;
+          for (var ext : extensions) {
+            candidates[i++] = fileBaseName + ext;
+          }
+          candidates[i] = fileBaseName;
+          return candidates;
+        }
+      }
+    }
+    return new String[]{fileBaseName};
+  }
 
   /// Finds an executable file with the specified base name located in a directory listed in the `PATH` environment variable.
   ///
@@ -108,10 +191,7 @@ public final class PathEnvironmentVariableUtil {
     if (OS.CURRENT == OS.Windows) {
       @SuppressWarnings("SpellCheckingInspection") var allExtensions = System.getenv("PATHEXT");
       if (allExtensions != null) {
-        return StringUtil.split(allExtensions, ";", true, true).stream()
-          .filter(ext -> ext.startsWith("."))
-          .map(ext -> ext.toLowerCase(Locale.ROOT))
-          .toList();
+        return StringUtil.split(allExtensions.toLowerCase(Locale.ROOT), ";", true, true);
       }
     }
     return List.of();
@@ -140,15 +220,11 @@ public final class PathEnvironmentVariableUtil {
     return EnvironmentUtil.getValue("PATH");
   }
 
+  /// @deprecated use [#findFirst(String)] instead
+  @Deprecated(forRemoval = true)
   public static @Nullable java.io.File findExecutableInPathOnAnyOS(@NotNull String baseName) {
-    if (OS.CURRENT == OS.Windows) {
-      var fileNames = ContainerUtil.map2Array(getWindowsExecutableFileExtensions(), String.class, ext -> baseName + ext);
-      var exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), fileNames);
-      return !exeFiles.isEmpty() ? exeFiles.getFirst() : null;
-    }
-    else {
-      return findInPath(baseName);
-    }
+    var result = findFirst(baseName);
+    return result != null ? result.toFile() : null;
   }
 
   /// Checks whether the given file is in one of the directories listed in the PATH environment variable.

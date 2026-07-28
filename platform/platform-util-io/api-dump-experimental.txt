@@ -38,6 +38,10 @@ f:com.intellij.execution.configurations.ParametersList
 - *:add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - *:getTargetedList():java.util.List
 - *:prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
+- *s:findAll(java.lang.String):java.util.List
+- *s:findFirst(java.lang.String):java.nio.file.Path
+- *s:findFirst(java.lang.String,java.lang.String):java.nio.file.Path
 c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.KillableProcess
