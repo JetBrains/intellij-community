@@ -1,5 +1,99 @@
 # Jewel Release Notes
 
+## v0.40 (2026-08-11)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2.2                   | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1323](https://youtrack.jetbrains.com/issue/JEWEL-1323)** Removed a batch of APIs that had been deprecated for
+  more than six months ([#3517](https://github.com/JetBrains/intellij-community/pull/3517)). See the migration guide
+  below if you still use any of them.
+
+### New features
+
+* **[JEWEL-1275](https://youtrack.jetbrains.com/issue/JEWEL-1275)** Scrollable containers and scrollbars now accept an
+  optional `ScrollbarAdapter`, allowing custom scrollbar thumb sizing and positioning for scrollable content
+  ([#3561](https://github.com/JetBrains/intellij-community/pull/3561))
+* **[JEWEL-1317](https://youtrack.jetbrains.com/issue/JEWEL-1317)** Added portable typography APIs through
+  `JewelTheme.typography`, providing default, editor, and console text styles derived with a requested size, weight, or
+  style ([#3567](https://github.com/JetBrains/intellij-community/pull/3567))
+
+### Bug fixes
+
+* **[JEWEL-1319](https://youtrack.jetbrains.com/issue/JEWEL-1319)** Improved `CircularProgressIndicator` performance by
+  drawing the spinner directly on a `Canvas` instead of generating and decoding SVG frames
+  ([#3563](https://github.com/JetBrains/intellij-community/pull/3563))
+* **[JEWEL-1355](https://youtrack.jetbrains.com/issue/JEWEL-1355)** Fixed `SpeedSearchableLazyColumn` selection when
+  filtering removes the previously selected item. Selection now starts with the topmost visible match; if no match is
+  visible, it scans forward below the viewport and then wraps to the first match from the top
+  ([#3564](https://github.com/JetBrains/intellij-community/pull/3564))
+* **[JEWEL-1359](https://youtrack.jetbrains.com/issue/JEWEL-1359)** Fixed intermittent Compose paste-action update
+  errors in the IDE ([#3570](https://github.com/JetBrains/intellij-community/pull/3570))
+
+### Deprecated API
+
+* **[JEWEL-1275](https://youtrack.jetbrains.com/issue/JEWEL-1275)** Deprecated the `VerticallyScrollableContainer`,
+  `HorizontallyScrollableContainer`, `VerticalScrollbar`, and `HorizontalScrollbar` overloads without an `adapter`
+  parameter ([#3561](https://github.com/JetBrains/intellij-community/pull/3561))
+
+### Migration guide for removed APIs
+
+* `foundation`:
+  * The `TextColors` secondary constructor was removed; use the primary constructor, supplying `disabledSelected` and
+    `warning`.
+  * The `ThemeDefinition` secondary constructor was removed; use the primary constructor, supplying
+    `DisabledAppearanceValues`.
+* `ide-laf-bridge`:
+  * The `TextColors` and `ThemeDefinition` secondary constructors were removed as in `foundation`.
+  * Both `bridgePainterProvider` functions were removed; use an `IconKey` with the `Icon` composable instead.
+  * The `compose`, `JewelComposePanel`, `composeWithoutTheme`, `JewelComposeNoThemePanel`, and
+    `ToolWindow.addComposeTab` overloads without `focusOnClickInside` were removed; use the overloads that provide it.
+  * `LocalComponent` was removed; use `foundation`'s `LocalComponent` instead.
+  * `Typography.regular`, `Typography.medium`, and `Typography.small` were removed; use the corresponding properties
+    from `JewelTheme.typography`.
+* `ide-laf-bridge-styling`:
+  * The `ProvideMarkdownStyling` overload taking `themeName` was removed; use the overload without it.
+  * `InlinesStyling.create` no longer takes `renderInlineHtml`; use the overload without it.
+* `int-ui-standalone`:
+  * `WhenScrolling.default` was replaced with the no-argument function `WhenScrolling.default()`.
+  * `standalonePainterProvider` was removed; use an `IconKey` with the `Icon` composable instead.
+* `markdown`:
+  * The `Markdown` and `LazyMarkdown` overloads taking `onTextClick` were removed; use the overloads without it.
+  * The deprecated lower-case Markdown block-rendering APIs were removed. Migrate `MarkdownBlockRenderer.render(...)`
+    and `renderThematicBreak(...)` to the matching `Render*` composables; migrate
+    `MarkdownBlockRendererExtension.render(...)` to `RenderCustomBlock(...)`. The replacement APIs do not take
+    `onTextClick`, because that callback was ignored.
+  * The `InlinesStyling` secondary constructor was removed; use the constructor without `renderInlineHtml`.
+* `ui`:
+  * `ColorFilter.disabled()` was removed; apply `Modifier.disabledAppearance()` to the component modifier instead.
+  * `InformationDefaultBanner`, `SuccessDefaultBanner`, `WarningDefaultBanner`, and `ErrorDefaultBanner` were renamed to
+    `DefaultInformationBanner`, `DefaultSuccessBanner`, `DefaultWarningBanner`, and `DefaultErrorBanner`.
+  * `InformationInlineBanner`, `SuccessInlineBanner`, `WarningInlineBanner`, and `ErrorInlineBanner` overloads without
+    link and icon actions were removed; use `InlineInformationBanner`, `InlineSuccessBanner`, `InlineWarningBanner`, and
+    `InlineErrorBanner` with `linkActions` and `iconActions`.
+  * `painterResource(resourcePath)` was removed; use an `IconKey` with `Icon` or `Image` instead.
+  * The `Tooltip` overload taking `AutoHideBehavior`, and `AutoHideBehavior` itself, were removed; configure
+    `TooltipAutoHideBehavior` through `TooltipStyle.autoHideBehavior`.
+  * The legacy `SimpleListItem` overloads were removed. Use `ListItemState` or the current `selected`/`active`
+    overloads, with `colorFilter` and `painterHints` as needed.
+  * `MenuManager` and `LocalMenuManager` were removed; obtain the `MenuController` through `LocalMenuController.current`.
+  * `MenuSeparator`, `MenuItemState`, `MenuItemState.of()`, `MenuSubmenuItem`, and `MenuItemColors.*For` are now
+    internal.
+  * All `TextStyle.copyWithSize()` functions were removed. To derive resized default, editor, or console typography, use
+    `JewelTheme.typography.rememberDefaultTextStyle`, `rememberEditorTextStyle`, or `rememberConsoleTextStyle`; apply
+    unrelated custom `TextStyle` properties separately as needed.
+  * The `ChipMetrics` secondary constructor without `minSize` was removed; use the constructor that supplies it.
+  * The `TooltipMetrics` secondary constructor and `defaults` function were removed; use the versions that supply
+    `regularDisappearDelay` and `fullDisappearDelay`.
+  * The no-argument `AwtColor.toRgbaHexString()` and `Color.toRgbaHexString()` overloads were removed; use
+    `toRgbaHexString(omitAlphaWhenFullyOpaque = true)` to retain their former behaviour.
+  * `Color.fromRGBAHexStringOrNull(rgba)` was removed; use `Color.fromRgbaHexStringOrNull(rgba)`.
+  * The `org.jetbrains.jewel.ui.component.Typography` object was removed. Use the `Typography` API exposed through
+    `JewelTheme.typography`.
+
 ## v0.39.1 (2026-07-24)
 
 | Min supported IJP versions | Compose Multiplatform version |
