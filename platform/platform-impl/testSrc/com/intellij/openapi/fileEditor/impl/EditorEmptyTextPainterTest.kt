@@ -11,7 +11,10 @@ import com.intellij.openapi.actionSystem.KeyboardGestureAction
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
@@ -20,6 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -43,8 +47,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.awt.image.BufferedImage
 import java.nio.file.Files
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -97,6 +101,7 @@ internal class EditorEmptyTextPainterTest {
     // a creation left waiting out an inflated delay must not survive into the next test
     splitters.suppressRichEmptyStateComponents()
     splitters.setEmptyStateComponentCreationDelayForTests(null)
+    splitters.setEmptyStateComponentPresentationGateTimeoutForTests(null)
     splitters.resetStartupEmptyStatePresentationHoldForTests()
   }
 
@@ -261,7 +266,7 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun componentProviderSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
+  fun richComponentProviderIsPreferredOverTheFallbackEmptyText(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     resetShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE, listOf(doubleShiftShortcut))
     registerEmptyTextProvider(disposable)
@@ -274,11 +279,11 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNotNull()
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
+    assertThat(findEmptyTextComponent(splitters)).isNull()
   }
 
   @Test
-  fun componentProviderCreationPendingSuppressesEmptyTextHints(@TestDisposable disposable: Disposable) {
+  fun aPendingRichCreationLeavesTheFallbackEmptyTextUnmounted(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     registerEmptyTextProvider(disposable)
     registerComponentProvider(disposable, includeFallbackProvider = true)
@@ -297,8 +302,9 @@ internal class EditorEmptyTextPainterTest {
     waitForDeferred(gateEntered)
 
     try {
+      // the fallback is not a stand-in for a rich component that is still being prepared: this area shows nothing until it mounts,
+      // which is what bounds the wait on the presentation gate
       assertThat(findEmptyTextComponent(splitters)).isNull()
-      assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
     }
     finally {
       releaseGate.complete(Unit)
@@ -320,7 +326,6 @@ internal class EditorEmptyTextPainterTest {
     assertThat(findEmptyStateComponent(splitters)).isNull()
     assertThat(findEmptyTextComponent(splitters)).isNotNull()
     assertThat(emptyStateLayout(splitters).emptyStateOverlay).isSameAs(findEmptyTextComponent(splitters)?.parent)
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
   }
 
   @Test
@@ -337,13 +342,29 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
     assertThat(findEmptyTextComponent(splitters)).isNotNull()
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
   }
 
   @Test
-  fun unavailableComponentProviderDoesNotSuppressEmptyTextHints(@TestDisposable disposable: Disposable) {
+  fun fallbackEmptyTextReachedThroughARichProviderIsNotDelayed(@TestDisposable disposable: Disposable) {
     resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
     registerEmptyTextProvider(disposable)
+    registerNullAndFallbackComponentProviders(disposable)
+
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.enableRichEmptyStateComponents()
+
+    // the delay holds back a rich component; what is presented here is plain empty text, which this area showed before the delay
+    // existed — reaching it through a rich provider that built nothing does not make it worth hiding
+    waitForEmptyTextComponent(splitters, "A fallback reached through a rich provider waited out the creation delay")
+  }
+
+  @Test
+  fun unavailableComponentProviderMountsNothing(@TestDisposable disposable: Disposable) {
+    resetShortcuts(PROVIDER_ACTION_ID, listOf(doubleCtrlShortcut))
+    registerEmptyTextProvider(disposable)
+    // the provider fails the test if it is invoked at all, so this covers availability as well as what gets mounted
     registerUnavailableComponentProvider(disposable)
 
     val splitters = manager.mainSplitters
@@ -353,8 +374,7 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponentCreation(splitters)
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters))
-      .containsExactly(PROVIDER_ACTION_TEXT + " <shortcut>" + KeymapUtil.getShortcutText(doubleCtrlShortcut) + "</shortcut>")
+    assertThat(findEmptyTextComponent(splitters)).isNull()
   }
 
   @Test
@@ -424,7 +444,6 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(providerCalls).hasValue(0)
     assertThat(findEmptyStateComponent(splitters)).isNull()
-    assertThat(RecordingEditorEmptyTextPainter().paintEmptyTextLines(splitters)).isEmpty()
 
     val openFilesJob = splitters.openFilesAsync(requestFocus = false)
     PlatformTestUtil.waitWhileBusy { !openFilesJob.isCompleted }
@@ -519,11 +538,96 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
+  fun everyStartupHoldMustBeReleasedBeforeTheEmptyStateIsPresented(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val providerCalls = AtomicInteger()
+    registerComponentProvider(disposable, providerCalls = providerCalls)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+
+    // project open holds for its own editor phase, and a file named on the command line is opened after that phase has ended: two
+    // holds, taken by two owners that know nothing about each other
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+    waitForProviderCall(providerCalls, "The empty state was not prepared under the startup holds")
+
+    splitters.endStartupEmptyStatePresentationHold()
+    dispatchEventsFor(100.milliseconds)
+
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+
+    splitters.endStartupEmptyStatePresentationHold()
+
+    waitForEmptyStateComponent(splitters, "Releasing the last startup hold waited out the creation delay")
+  }
+
+  @Test
+  fun releasingTheStartupHoldFromProjectOpensOwnHopMountsTheEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    val providerCalls = AtomicInteger()
+    registerComponentProvider(disposable, providerCalls = providerCalls)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+    waitForProviderCall(providerCalls, "The empty state was not prepared under the startup hold")
+
+    // every other test releases straight from the test body; this one releases through the hop project open actually uses, so a release
+    // that reaches the mount only because the test body happens to be on the EDT with a lock cannot pass
+    releaseStartupHoldFromProjectOpensHop(splitters)
+
+    waitForEmptyStateComponent(splitters, "A release from project open's own hop did not mount the empty state")
+  }
+
+  @Test
+  fun aHoldNobodyReleasesStopsHoldingBackTheEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+    splitters.setEmptyStateComponentPresentationGateTimeoutForTests(200.milliseconds)
+
+    splitters.beginStartupEmptyStatePresentationHold()
+    splitters.finishStartupEditorRestore()
+
+    // nobody releases this hold, and the fallback empty text is not shown while a rich provider is available: without a ceiling on the
+    // wait, this area would show nothing at all for as long as the project stays open
+    waitForEmptyStateComponent(splitters, "A hold nobody released kept the empty state invisible")
+  }
+
+  @Test
+  fun aReleaseThatHadNoHoldToPairWithIsNotReportedAsUnbalanced(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    splitters.setEmptyStateComponentCreationDelayForTests(Duration.ZERO)
+
+    val holdWarnings = mutableListOf<String>()
+    // project open releases its hold unconditionally, but takes it only once restoring has returned a component: an open cancelled
+    // before that point releases a hold it never took, which is ordinary
+    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+        if (message.contains("presentation hold")) {
+          holdWarnings.add(message)
+        }
+        return true
+      }
+    }) {
+      splitters.endStartupEmptyStatePresentationHold()
+    }
+
+    assertThat(holdWarnings).isEmpty()
+    waitForEmptyStateComponent(splitters, "A release with no hold to pair with left presentation held")
+  }
+
+  @Test
   fun anEditorOpenedDuringTheStartupHoldPreventsTheEmptyStateEntirely(@TestDisposable disposable: Disposable) {
     val splitters = manager.mainSplitters
     val disposedComponents = AtomicInteger()
+    val disposedWithoutLock = AtomicBoolean()
     val providerCalls = AtomicInteger()
-    registerComponentProvider(disposable, disposedComponents, providerCalls = providerCalls)
+    registerComponentProvider(disposable, disposedComponents, providerCalls = providerCalls, disposedWithoutLock = disposedWithoutLock)
     manager.closeAllFiles()
     splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
     splitters.beginStartupEmptyStatePresentationHold()
@@ -539,6 +643,9 @@ internal class EditorEmptyTextPainterTest {
 
     assertThat(findEmptyStateComponent(splitters)).isNull()
     assertThat(disposedComponents).hasValue(1)
+    // discarding runs on a strict-UI hop inside the creation job, so the lock a provider needs to release an editor has to be taken
+    // there rather than inherited from a dispatcher
+    assertThat(disposedWithoutLock).isFalse()
   }
 
   @Test
@@ -553,9 +660,9 @@ internal class EditorEmptyTextPainterTest {
     splitters.beginStartupEmptyStatePresentationHold()
     splitters.finishStartupEditorRestore()
 
-    // plain empty text is what this area showed before the hold existed, and holding it back would leave the area blank rather
-    // than plain, because legacy painting is suppressed while a creation is pending
-    waitForEmptyTextComponent(splitters)
+    // plain empty text is what this area showed before the hold existed, and holding it back would leave the area blank rather than
+    // plain: nothing else paints those hints any more
+    waitForEmptyTextComponent(splitters, "The fallback empty text was held back by the startup presentation hold")
   }
 
   @Test
@@ -615,6 +722,33 @@ internal class EditorEmptyTextPainterTest {
 
       splitters.enableRichEmptyStateComponents()
       waitForEmptyStateComponent(splitters, "The explicit enable did not mount the empty state")
+    }
+    finally {
+      FileEditorManagerKeys.DO_NOT_REOPEN_FILES.set(project, null)
+    }
+  }
+
+  @Test
+  fun doNotReopenFilesMountsWithoutTheCreationDelayOnceTheStartupHoldIsReleased(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    val project = projectFixture.get()
+    FileEditorManagerKeys.DO_NOT_REOPEN_FILES.set(project, true)
+    try {
+      splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+      splitters.beginStartupEmptyStatePresentationHold()
+      splitters.finishStartupEditorRestore()
+      dispatchEventsFor(100.milliseconds)
+
+      // nothing is even prepared yet: rich components stay disabled until something says editors are not arriving from elsewhere
+      assertThat(splitters.isEmptyStateComponentCreationPending()).isFalse()
+
+      // the release is what says it, and it enables rich components before opening the gate, so the creation it makes possible starts
+      // under a closed gate and mounts at once instead of waiting out a delay that only exists to hide a flash
+      splitters.endStartupEmptyStatePresentationHold()
+
+      waitForEmptyStateComponent(splitters, "A project that does not reopen files waited out the creation delay")
     }
     finally {
       FileEditorManagerKeys.DO_NOT_REOPEN_FILES.set(project, null)
@@ -762,6 +896,7 @@ internal class EditorEmptyTextPainterTest {
     disposedComponents: AtomicInteger = AtomicInteger(),
     includeFallbackProvider: Boolean = false,
     providerCalls: AtomicInteger = AtomicInteger(),
+    disposedWithoutLock: AtomicBoolean = AtomicBoolean(),
   ) {
     ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, buildList {
       add(object : EditorEmptyStateComponentProvider {
@@ -776,6 +911,11 @@ internal class EditorEmptyTextPainterTest {
         }
 
         override fun disposeComponent(component: JComponent) {
+          // a real provider may release an editor here, through `removeNotify` — a headless test never realizes the hierarchy, so
+          // this is where the platform's lock is observable at all
+          if (!ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+            disposedWithoutLock.set(true)
+          }
           disposedComponents.incrementAndGet()
         }
       })
@@ -840,12 +980,40 @@ internal class EditorEmptyTextPainterTest {
     }
   }
 
-  private fun waitForEmptyTextComponent(splitters: EditorsSplitters) {
+  private fun waitForEmptyTextComponent(splitters: EditorsSplitters, message: String) {
     try {
       PlatformTestUtil.waitWhileBusy { findEmptyTextComponent(splitters) == null }
     }
     catch (e: AssertionError) {
-      throw AssertionError("The fallback empty text was held back by the startup presentation hold", e)
+      throw AssertionError(message, e)
+    }
+  }
+
+  /**
+   * Releases one startup hold from the hop `IdeProjectFrameAllocator` uses: [Dispatchers.EDT] with [ModalityState.any], off the test
+   * body's own stack.
+   *
+   * `Dispatchers.EDT` and not the strict UI dispatcher because releasing may mount or dispose components, which takes the write-intent
+   * lock — the strict dispatcher forbids taking it.
+   */
+  @Suppress("RAW_SCOPE_CREATION")
+  private fun releaseStartupHoldFromProjectOpensHop(splitters: EditorsSplitters) {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    try {
+      var failure: Throwable? = null
+      val releaseJob = scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        try {
+          splitters.endStartupEmptyStatePresentationHold()
+        }
+        catch (e: Throwable) {
+          failure = e
+        }
+      }
+      PlatformTestUtil.waitWhileBusy { !releaseJob.isCompleted }
+      failure?.let { throw AssertionError("Releasing the startup hold from project open's own hop failed", it) }
+    }
+    finally {
+      scope.cancel()
     }
   }
 
@@ -933,18 +1101,6 @@ internal class EditorEmptyTextPainterTest {
     fun appendProviderActionLines(): List<String> {
       advertiseActions(JPanel(), createTextPainter())
       return lines.filter { it.startsWith(PROVIDER_ACTION_TEXT) }
-    }
-
-    fun paintEmptyTextLines(splitters: JComponent): List<String> {
-      val image = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)
-      val graphics = image.createGraphics()
-      try {
-        doPaintEmptyText(splitters, graphics)
-      }
-      finally {
-        graphics.dispose()
-      }
-      return lines
     }
 
     override fun appendLine(painter: UIUtil.TextPainter, line: String) {

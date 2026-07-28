@@ -202,7 +202,11 @@ internal class IdeProjectFrameAllocator(
           val project = projectInitObservable.awaitProjectInit()
           span("restoreEditors") {
             val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
-            restoreEditors(project = project, fileEditorManager = fileEditorManager)
+            restoreEditors(
+              project = project,
+              fileEditorManager = fileEditorManager,
+              opensFileAfterProjectOpen = options.opensFileAfterProjectOpen,
+            )
           }
 
           val start = projectInitObservable.projectInitTimestamp
@@ -520,7 +524,11 @@ private fun applyProjectFrameUiPolicy(
   disconnectIfDone()
 }
 
-private suspend fun restoreEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
+private suspend fun restoreEditors(
+  project: Project,
+  fileEditorManager: FileEditorManagerImpl,
+  opensFileAfterProjectOpen: Boolean,
+) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     // DaemonCodeAnalyzer wants DaemonCodeAnalyzerSettings
@@ -540,9 +548,15 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
     val (editorComponent, editorState) = fileEditorManager.init()
     // the empty state may be built as soon as restoring is over, in parallel with the rest of the project open, but it must not be
     // shown until project open is done opening editors of its own — the welcome tab and the README below are two of those.
-    // `ModalityState.any()`, like the release in `postOpenEditors`, so a modal dialog during startup cannot reorder the two.
-    withContext(NonCancellable + Dispatchers.UI + ModalityState.any().asContextElement()) {
+    // `ModalityState.any()`, like the release in `postOpenEditors`, so a modal dialog during startup cannot reorder the two, and
+    // `Dispatchers.EDT` because settling the empty state may mount or dispose components, which needs the write-intent lock.
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
       editorComponent.beginStartupEmptyStatePresentationHold()
+      if (opensFileAfterProjectOpen) {
+        // a file named on the command line is opened after project open has returned, so project open's own release does not cover it;
+        // `openFileFromCommandLine` releases this second hold
+        editorComponent.beginStartupEmptyStatePresentationHold()
+      }
       if (editorState == null) {
         // there is nothing to restore, so preparation may start at once
         editorComponent.finishStartupEditorRestore()
@@ -604,7 +618,9 @@ private suspend fun postOpenEditors(
     }
   }
   finally {
-    withContext(NonCancellable + Dispatchers.UI + ModalityState.any().asContextElement()) {
+    // `Dispatchers.EDT` rather than the strict UI dispatcher: releasing may mount or dispose the empty state right here, and both take
+    // the write-intent lock, which `Dispatchers.UI` forbids taking at all
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (!project.isDisposed) {
         // project open is done opening editors: whatever the editor area shows now is what it keeps
         fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
