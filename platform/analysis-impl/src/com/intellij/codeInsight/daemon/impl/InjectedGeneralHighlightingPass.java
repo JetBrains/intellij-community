@@ -181,7 +181,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
           }
         });
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         rethrowControlFlowException(e);
         LOG.error(e);
       }

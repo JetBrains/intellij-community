@@ -243,7 +243,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       catch (ProcessCanceledException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
         continue;
       }
