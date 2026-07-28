@@ -19,8 +19,11 @@ internal class DoNotAskAppManagerImpl(private val cs: CoroutineScope) :
     saveSettingsForRemoteDevelopment(cs, application)
   }
 
-  override fun getPropertiesComponent() : PropertiesComponent {
-    return PropertiesComponent.getInstance()
+  @Synchronized
+  override fun noStateLoaded() {
+    state.idToDisplayName.clear()
+
+    migrateFromPropertiesComponent(PropertiesComponent.getInstance())
   }
 
 }
@@ -33,8 +36,11 @@ internal class DoNotAskProjectManagerImpl(private val project: Project, private 
     saveSettingsForRemoteDevelopment(cs, project)
   }
 
-  override fun getPropertiesComponent() : PropertiesComponent {
-    return PropertiesComponent.getInstance(project)
+  @Synchronized
+  override fun noStateLoaded() {
+    state.idToDisplayName.clear()
+
+    migrateFromPropertiesComponent(PropertiesComponent.getInstance(project))
   }
 
 }

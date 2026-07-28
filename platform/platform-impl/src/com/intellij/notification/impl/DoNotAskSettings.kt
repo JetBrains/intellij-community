@@ -36,16 +36,7 @@ internal abstract class DoNotAskSettings : SimplePersistentStateComponent<DoNotA
     saveSettingsForRemDev()
   }
 
-  @Synchronized
-  override fun noStateLoaded() {
-    state.idToDisplayName.clear()
-
-    migrateFromPropertiesComponent(getPropertiesComponent())
-  }
-
   abstract fun saveSettingsForRemDev()
-
-  abstract fun getPropertiesComponent() : PropertiesComponent
 
   fun migrateFromPropertiesComponent(manager: PropertiesComponent) {
     if (manager !is BasePropertyService) return
