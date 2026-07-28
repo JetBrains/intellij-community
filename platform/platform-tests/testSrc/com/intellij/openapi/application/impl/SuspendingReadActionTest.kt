@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.stallReadActionsIfThereIsPendingWrite
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.assertCurrentJobIsChildOf
@@ -595,6 +597,9 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       checkpoint(4)
       while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
         yield()
+      }
+      if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+        thisLogger().warn("Thread dump: ${ThreadDumper.dumpForDebug()}")
       }
       assertFalse { ApplicationManagerEx.getApplicationEx().isWriteActionInProgress() }
       runReadActionBlocking {
