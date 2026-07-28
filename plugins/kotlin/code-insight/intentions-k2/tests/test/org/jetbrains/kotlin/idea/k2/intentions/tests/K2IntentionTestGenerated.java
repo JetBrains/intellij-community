@@ -11348,6 +11348,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/javaSyntheticProperties/platformTypeSyntheticProperty.kt");
             }
 
+            @TestMetadata("sideEffectfulSyntheticProperty.kt")
+            public void testSideEffectfulSyntheticProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/javaSyntheticProperties/sideEffectfulSyntheticProperty.kt");
+            }
+
             @TestMetadata("syntheticJavaProperty.kt")
             public void testSyntheticJavaProperty() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/javaSyntheticProperties/syntheticJavaProperty.kt");
@@ -11474,6 +11479,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("ifsWithoutElse.kt")
             public void testIfsWithoutElse() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifsWithoutElse.kt");
+            }
+
+            @TestMetadata("kotlinCustomGetterProperty.kt")
+            public void testKotlinCustomGetterProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/kotlinCustomGetterProperty.kt");
+            }
+
+            @TestMetadata("kotlinDefaultGetterProperty.kt")
+            public void testKotlinDefaultGetterProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/kotlinDefaultGetterProperty.kt");
             }
 
             @TestMetadata("lambdaExpression.kt")
