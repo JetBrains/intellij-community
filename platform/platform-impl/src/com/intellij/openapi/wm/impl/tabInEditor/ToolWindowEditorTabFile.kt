@@ -104,11 +104,11 @@ class ToolWindowEditorTabFile internal constructor(
 
   internal fun onEditorClosed() {
     if (getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) != true) {
-      invalidateEditorTabFile()
+      invalidate()
     }
   }
 
-  internal fun invalidateEditorTabFile() {
+  internal fun invalidate() {
     // remove file from recent files
     EditorHistoryManager.getInstance(project).removeFile(this)
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(this)

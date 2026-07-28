@@ -120,7 +120,7 @@ class ToolWindowEditorTabFileTest {
   fun `invalidateEditorTabFile marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
 
-    file.invalidateEditorTabFile()
+    file.invalidate()
 
     assertThat(file.isValid).isFalse()
   }
