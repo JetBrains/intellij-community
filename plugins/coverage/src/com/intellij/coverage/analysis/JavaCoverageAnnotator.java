@@ -37,6 +37,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
+  private final Map<String, VirtualFile> myClassSourceFiles = new ConcurrentHashMap<>();
   protected CoverageClassStructure myStructure;
 
   public JavaCoverageAnnotator(final Project project) {
@@ -94,6 +95,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myFlattenPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
+    myClassSourceFiles.clear();
     if (myStructure != null) {
       Disposer.dispose(myStructure);
     }
@@ -124,8 +126,13 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     }
 
     @Override
-    public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+    public void addClass(String classQualifiedName,
+                         PackageAnnotator.ClassCoverageInfo classCoverageInfo,
+                         @Nullable VirtualFile sourceFile) {
       myAnnotator.myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+      if (sourceFile != null) {
+        myAnnotator.myClassSourceFiles.put(classQualifiedName, sourceFile);
+      }
     }
   }
 
@@ -260,6 +267,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
   public final Map<String, PackageAnnotator.ClassCoverageInfo> getClassesCoverage() {
     return myClassCoverageInfos;
+  }
+
+  public final @Nullable VirtualFile getClassSourceFile(@NotNull String classFQName) {
+    return myClassSourceFiles.get(classFQName);
   }
 
 }

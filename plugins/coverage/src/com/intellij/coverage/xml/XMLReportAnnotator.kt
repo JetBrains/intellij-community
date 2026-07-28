@@ -29,6 +29,7 @@ internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(pro
 
   internal fun annotate(suite: CoverageSuitesBundle, dataManager: CoverageDataManager, collector: CoverageInfoCollector) {
     val classCoverage = hashMapOf<String, ClassCoverageInfo>()
+    val classSourceFiles = hashMapOf<String, VirtualFile>()
     val flattenPackageCoverage = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectoryCoverage = hashMapOf<VirtualFile, PackageCoverageInfo>()
     val sourceRoots = (dataManager.doInReadActionIfProjectOpen { ModuleManager.getInstance(suite.project).modules } ?: emptyArray())
@@ -46,11 +47,14 @@ internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(pro
         currentCoverage.append(coverage)
 
         val packageName = StringUtil.getPackageName(classInfo.name)
-        val virtualFile = findFile(packageName, classInfo.fileName, sourceRoots)
+        val sourceFile = findSourceFile(packageName, classInfo.fileName, sourceRoots)
 
         flattenPackageCoverage.getOrPut(packageName) { PackageCoverageInfo() }.append(coverage)
-        if (virtualFile != null) {
-          flattenDirectoryCoverage.getOrPut(virtualFile) { PackageCoverageInfo() }.append(coverage)
+        if (sourceFile != null) {
+          classSourceFiles[classInfo.name] = sourceFile
+          sourceFile.parent?.let { directory ->
+            flattenDirectoryCoverage.getOrPut(directory) { PackageCoverageInfo() }.append(coverage)
+          }
         }
       }
     }
@@ -59,19 +63,20 @@ internal class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(pro
     classCoverage.entries.groupBy { AnalysisUtils.getSourceToplevelFQName(it.key) }.forEach { (className, classes) ->
       val coverage = ClassCoverageInfo()
       classes.forEach { coverage.append(it.value) }
-      collector.addClass(className, coverage)
+      val sourceFile = classes.firstNotNullOfOrNull { classSourceFiles[it.key] }
+      collector.addClass(className, coverage, sourceFile)
     }
 
     JavaCoverageSummaryBuilder.annotatePackages(flattenPackageCoverage, collector)
     JavaCoverageSummaryBuilder.annotateDirectories(flattenDirectoryCoverage, collector, sourceRoots)
   }
 
-  private fun findFile(packageName: String, fileName: String?, sourceRoots: Collection<VirtualFile>): VirtualFile? {
+  private fun findSourceFile(packageName: String, fileName: String?, sourceRoots: Collection<VirtualFile>): VirtualFile? {
     if (fileName == null) return null
     val path = XMLReportSuite.getPath(packageName, fileName)
     for (root in sourceRoots) {
       val file = root.findFileByRelativePath(path) ?: continue
-      return file.parent
+      return file
     }
     return null
   }

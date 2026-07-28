@@ -8,16 +8,17 @@ import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.coverage.filters.ModifiedFilesFilter
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.DefaultMutableTreeNode
@@ -28,8 +29,9 @@ private val LOG = logger<CoverageClassStructure>()
 internal data class CoverageNodeInfo(
   val id: String,
   val name: String,
-  val value: PsiNamedElement,
   val counter: PackageAnnotator.ClassCoverageInfo = PackageAnnotator.ClassCoverageInfo(),
+  val sourceFile: VirtualFile? = null,
+  val isClass: Boolean = false,
 ) {
   override fun toString(): String = name
 }
@@ -62,6 +64,12 @@ internal class CoverageClassStructure(val project: Project, val annotator: JavaC
 
   fun getNodeInfo(id: String): CoverageNodeInfo? = nodeMap[id]?.userObject
 
+  fun getPsiElement(id: String): PsiNamedElement? {
+    val info = nodeMap[id]?.userObject ?: return null
+    if (id == ROOT_ID) return getPsiPackage("")
+    return if (info.isClass) getPsiClass(info.id, info.sourceFile, suite.getSearchScope(project)) else getPsiPackage(info.id)
+  }
+
   @RequiresBackgroundThread
   private fun buildClassesTree() {
     val onlyModified = state.isShowOnlyModified
@@ -71,33 +79,27 @@ internal class CoverageClassStructure(val project: Project, val annotator: JavaC
     filter?.resetFilteredFiles()
 
     hasFullyCoveredChildren = false
-    val scope = suite.getSearchScope(project)
     val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
+      val sourceFile = annotator.getClassSourceFile(fqn) ?: return@mapNotNull null
       if (hideFullyCovered && counter.isFullyCovered) {
         hasFullyCoveredChildren = true
         null
       }
-      else if (onlyModified && filter != null && !isModified(fqn, scope, filter)) {
+      else if (onlyModified && filter != null && !isModified(sourceFile, filter)) {
         null
       }
       else {
-        val psiClass = getPsiClass(fqn, scope) ?: return@mapNotNull null
         val simpleName = StringUtil.getShortName(fqn)
-        CoverageNodeInfo(fqn, simpleName, psiClass, counter)
+        CoverageNodeInfo(fqn, simpleName, counter, sourceFile, isClass = true)
       }
     }
 
-    val root = CoverageTreeNode(CoverageNodeInfo(ROOT_ID, "", getPsiPackage("")!!))
-    loop@ for (clazz in classes) {
+    val root = CoverageTreeNode(CoverageNodeInfo(ROOT_ID, ""))
+    for (clazz in classes) {
       val packageName = StringUtil.getPackageName(clazz.id)
       if (flattenPackages) {
         root.userObject.counter.append(clazz.counter)
-        val psiPackage = getPsiPackage(packageName)
-        if (psiPackage == null) {
-          logSkippedPackage(packageName)
-          continue
-        }
-        val node = root.getOrCreateChild(CoverageNodeInfo(packageName, packageName, psiPackage))
+        val node = root.getOrCreateChild(CoverageNodeInfo(packageName, packageName))
         node.userObject.counter.append(clazz.counter)
         node.getOrCreateChild(clazz)
       }
@@ -107,12 +109,7 @@ internal class CoverageClassStructure(val project: Project, val annotator: JavaC
           for (part in packageName.split('.')) {
             node.userObject.counter.append(clazz.counter)
             val newId = if (node.userObject.id == ROOT_ID) part else "${node.userObject.id}.$part"
-            val psiPackage = getPsiPackage(newId)
-            if (psiPackage == null) {
-              logSkippedPackage(newId)
-              continue@loop
-            }
-            node = node.getOrCreateChild(CoverageNodeInfo(newId, part, psiPackage))
+            node = node.getOrCreateChild(CoverageNodeInfo(newId, part))
           }
         }
         node.userObject.counter.append(clazz.counter)
@@ -164,16 +161,17 @@ internal class CoverageClassStructure(val project: Project, val annotator: JavaC
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String, scope: GlobalSearchScope, filter: ModifiedFilesFilter): Boolean = runReadAction {
-    val psiClass = getPsiClass(className, scope)?.takeIf { it.isValid } ?: return@runReadAction false
-    val virtualFile = PsiUtilCore.getVirtualFile(psiClass) ?: return@runReadAction false
-    filter.isFileModified(virtualFile)
-  }
+  private fun isModified(sourceFile: VirtualFile?, filter: ModifiedFilesFilter): Boolean =
+    sourceFile?.takeIf { it.isValid }?.let(filter::isFileModified) ?: false
 
   private fun getModifiedFilesFilter() = annotator.modifiedFilesFilter
 
-  private fun getPsiClass(className: String, scope: GlobalSearchScope): PsiNamedElement? = cache.getOrPut(className) {
-    DumbService.getInstance(project).runReadActionInSmartMode(Computable { JavaPsiFacade.getInstance(project).findClass(className, scope) })
+  private fun getPsiClass(className: String, sourceFile: VirtualFile?, scope: GlobalSearchScope): PsiNamedElement? = cache.getOrPut(className) {
+    DumbService.getInstance(project).runReadActionInSmartMode(Computable {
+      val psiFile = sourceFile?.takeIf { it.isValid }?.let { PsiManager.getInstance(project).findFile(it) }
+      val sourceClass = (psiFile as? PsiClassOwner)?.classes?.firstOrNull { it.qualifiedName == className }
+      sourceClass ?: JavaPsiFacade.getInstance(project).findClass(className, scope)
+    })
   }
 
   private fun getPsiPackage(packageName: String): PsiNamedElement? = cache.getOrPut(packageName) {
@@ -195,7 +193,3 @@ private class TypedTreeNode<E>(userObject: E) : DefaultMutableTreeNode(userObjec
 }
 
 private typealias CoverageTreeNode = TypedTreeNode<CoverageNodeInfo>
-
-private fun logSkippedPackage(packageName: String) {
-  LOG.warn("Failed to locate package $packageName, skip it in coverage results")
-}

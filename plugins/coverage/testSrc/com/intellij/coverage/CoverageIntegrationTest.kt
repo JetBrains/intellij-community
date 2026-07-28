@@ -55,6 +55,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     XMLReportAnnotator.getInstance(myProject).annotate(bundle, manager, consumer)
     assertEquals(FULL_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
+    assertEquals(3, consumer.myClassSourceFiles.size)
   }
 
   @Test
@@ -87,6 +88,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       
     """.trimIndent(), consumer.collectInfo())
     assertEquals(1, consumer.myDirectoryCoverage.size)
+    assertEquals("BarClass.java", consumer.myClassSourceFiles["foo.bar.BarClass"]?.name)
   }
 
   @Test
@@ -280,6 +282,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
         val psiDir = psiClass!!.containingFile!!.containingDirectory
         val info = annotator.getDirCoverageInformationString(psiDir, bundle, manager)
         assertEquals(loaded, info != null)
+        assertEquals(loaded, (annotator as JavaCoverageAnnotator).getClassSourceFile(clazz) != null)
       }
     }
   }
@@ -367,6 +370,7 @@ private class PackageAnnotationConsumer : CoverageInfoCollector {
   val myPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myFlatPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myClassCoverageInfo: MutableMap<String, ClassCoverageInfo> = ConcurrentHashMap()
+  val myClassSourceFiles: MutableMap<String, VirtualFile> = ConcurrentHashMap()
 
   override fun addSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
     myDirectoryCoverage[virtualFile] = packageCoverageInfo
@@ -376,8 +380,11 @@ private class PackageAnnotationConsumer : CoverageInfoCollector {
     (if (flatten) myFlatPackageCoverage else myPackageCoverage)[packageQualifiedName] = packageCoverageInfo
   }
 
-  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
+  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo, sourceFile: VirtualFile?) {
     myClassCoverageInfo[classQualifiedName] = classCoverageInfo
+    if (sourceFile != null) {
+      myClassSourceFiles[classQualifiedName] = sourceFile
+    }
   }
 
   fun collectInfo(ignoreBranches: Boolean = false) = buildString {

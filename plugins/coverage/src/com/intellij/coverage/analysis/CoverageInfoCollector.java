@@ -2,11 +2,14 @@
 package com.intellij.coverage.analysis;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public interface CoverageInfoCollector {
   default void addSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) { }
 
   default void addPackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, boolean flatten) { }
 
-  default void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) { }
+  default void addClass(String classQualifiedName,
+                        PackageAnnotator.ClassCoverageInfo classCoverageInfo,
+                        @Nullable VirtualFile sourceFile) { }
 }

@@ -92,7 +92,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     };
     CoverageSummaryTestUtil.build(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+      public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo, VirtualFile sourceFile) {
         Assert.fail("No classes are accepted by filter");
       }
     });

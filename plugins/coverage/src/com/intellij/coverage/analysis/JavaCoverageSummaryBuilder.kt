@@ -53,7 +53,7 @@ object JavaCoverageSummaryBuilder {
         val source = CoverageSourceResolver.findClass(project, bundle, topLevelName) ?: continue
         val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
         val result = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName, source.psiClass, source.file)
-        collector.addClass(topLevelName, result.info)
+        collector.addClass(topLevelName, result.info, source.file)
         flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(result.info)
         flattenDirectories.getOrPut(result.directory) { PackageCoverageInfo() }.append(result.info)
       }
@@ -101,8 +101,8 @@ object JavaCoverageSummaryBuilder {
   private fun collectCoverage(results: List<ModuleCoverageResult>, collector: CoverageInfoCollector) {
     val flattenPackages = HashMap<String, PackageCoverageInfo>()
     for ((classes, modulePackages, directories, sourceRoots) in results) {
-      for ((className, info) in classes) {
-        collector.addClass(className, info)
+      for ((className, collectedClass) in classes) {
+        collector.addClass(className, collectedClass.info, collectedClass.sourceFile)
       }
       for ((packageVMName, info) in modulePackages) {
         val packageFQName = AnalysisUtils.internalNameToFqn(packageVMName)
@@ -194,7 +194,7 @@ private class ModuleCoverageBuilder(
   private val project: Project,
   private val projectData: ProjectData,
 ) {
-  private val classes = HashMap<String, ClassCoverageInfo>()
+  private val classes = HashMap<String, CollectedClass>()
   private val flattenPackages = HashMap<String, PackageCoverageInfo>()
   private val flattenDirectories = HashMap<VirtualFile, PackageCoverageInfo>()
 
@@ -248,7 +248,7 @@ private class ModuleCoverageBuilder(
 
     val source = CoverageSourceResolver.findClass(project, suite, topLevelClassName) ?: return
     val result = classSummaryBuilder.visitFiles(children, packageVMName, source.psiClass, source.file)
-    classes[topLevelClassName] = result.info
+    classes[topLevelClassName] = CollectedClass(result.info, source.file)
     flattenPackages.getOrPut(packageVMName, ::PackageCoverageInfo).append(result.info)
     result.directory?.let { directory ->
       flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(result.info)
@@ -266,8 +266,10 @@ private class ModuleCoverageBuilder(
 
 private data class RootRequestKey(val root: Path, val packagePathInRoot: String)
 
+private data class CollectedClass(val info: ClassCoverageInfo, val sourceFile: VirtualFile?)
+
 private data class ModuleCoverageResult(
-  val classes: Map<String, ClassCoverageInfo>,
+  val classes: Map<String, CollectedClass>,
   val flattenPackages: Map<String, PackageCoverageInfo>,
   val flattenDirectories: Map<VirtualFile, PackageCoverageInfo>,
   val sourceRoots: Set<VirtualFile>,
