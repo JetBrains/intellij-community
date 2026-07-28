@@ -215,13 +215,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return false;
     }
     if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // todo: rework after lazy validation happens in a dumb task: IJPL-250756
+      return true;
       // in versioned environment, we would like to not touch VFS, so we don't evalute the validity of virtual file.
       // We do not allow resurrection of PsiFiles (this is a questionable logic, and we try to not rely on it),
       // so resurrection is not invoked.
       // Instead, we track invalidation in a versioned reference.
       // So once a file is invalidated, it cannot become valid anymore.
-      Object trace = versionedInvalidationTrace.get();
-      return trace == null;
+      //Object trace = versionedInvalidationTrace.get();
+      //return trace == null;
     }
 
     if (!myViewProvider.getVirtualFile().isValid()) {
