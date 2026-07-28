@@ -54,11 +54,9 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       ClassData classData = annotator.collectNonCoveredClassInfo(classFile, projectData);
       if (classData == null || classData.getLines() == null) return List.of();
 
-      JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(suite.getProject());
       List<Integer> uncoveredLines = new ArrayList<>();
       for (Object line : classData.getLines()) {
-        if (line instanceof LineData lineData &&
-            !optionsProvider.isGeneratedConstructor(classData.getName(), lineData.getMethodSignature())) {
+        if (line instanceof LineData lineData) {
           uncoveredLines.add(lineData.getLineNumber() - 1);
         }
       }

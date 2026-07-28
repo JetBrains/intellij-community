@@ -4,13 +4,8 @@ package com.intellij.coverage.analysis;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.JavaCoverageEngineExtension;
-import com.intellij.coverage.JavaCoverageOptionsProvider;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.rt.coverage.data.BranchData;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -20,7 +15,6 @@ import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import com.intellij.rt.coverage.util.ClassNameUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -35,12 +29,9 @@ import java.util.zip.ZipFile;
 
 @ApiStatus.Internal
 public final class PackageAnnotator implements Closeable {
-  private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
-
   private final CoverageSuitesBundle mySuite;
   private final Project myProject;
   private final ProjectData myProjectData;
-  private final boolean myIgnoreImplicitConstructor;
   private final Map<String, ZipFile> myArchiveZipCache = new ConcurrentHashMap<>();
   private ProjectData myUnloadedClassesProjectData;
 
@@ -51,9 +42,6 @@ public final class PackageAnnotator implements Closeable {
     myProject = project;
     myProjectData = projectData;
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
-
-    JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
-    myIgnoreImplicitConstructor = optionsProvider.getIgnoreImplicitConstructors();
   }
 
   private synchronized ProjectData getUnloadedClassesProjectData() {
@@ -82,12 +70,10 @@ public final class PackageAnnotator implements Closeable {
    * @param children      name - file pairs, where file is optional (could be null),
    *                      when file is null, unloaded class analysis is skipped
    * @param packageVMName common package name in internal VM format
-   * @param psiClass      top-level source class
    * @param sourceFile    source file, or null when coverage is retained without source
    */
   public @NotNull Result visitFiles(final Map<String, @Nullable Path> children,
                                     final String packageVMName,
-                                    final @NotNull PsiClass psiClass,
                                     final @Nullable VirtualFile sourceFile) {
     var topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
     VirtualFile parent = sourceFile == null ? null : sourceFile.getParent();
@@ -99,16 +85,14 @@ public final class PackageAnnotator implements Closeable {
       }
       String simpleName = e.getKey();
       String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
-      var info = collectClassCoverageInformation(file, psiClass, classFqName);
+      var info = collectClassCoverageInformation(file, classFqName);
       if (info == null) continue;
       topLevelClassCoverageInfo.append(info);
     }
     return new Result(topLevelClassCoverageInfo, parent);
   }
 
-  private @Nullable PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable Path classFile,
-                                                                                       @NotNull PsiClass psiClass,
-                                                                                       String className) {
+  private @Nullable PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable Path classFile, String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
@@ -126,22 +110,14 @@ public final class PackageAnnotator implements Closeable {
       }
     }
 
-    return getSummaryInfo(psiClass, classData, myIgnoreImplicitConstructor);
+    return getSummaryInfo(classData);
   }
 
-  private static @Nullable ClassCoverageInfo getSummaryInfo(@NotNull PsiClass psiClass,
-                                                            @Nullable ClassData classData,
-                                                            boolean ignoreImplicitConstructor) {
+  private static @Nullable ClassCoverageInfo getSummaryInfo(@Nullable ClassData classData) {
     if (classData == null || classData.getLines() == null) return null;
     ClassCoverageInfo info = new ClassCoverageInfo();
-    boolean isDefaultConstructorGenerated = false;
     final Collection<String> methodSigs = classData.getMethodSigs();
     for (final String nameAndSig : methodSigs) {
-      if (ignoreImplicitConstructor && isGeneratedDefaultConstructor(psiClass, nameAndSig)) {
-        isDefaultConstructorGenerated = true;
-        continue;
-      }
-
       if (classData.getStatus(nameAndSig) != LineCoverage.NONE) {
         info.coveredMethodCount++;
       }
@@ -151,11 +127,7 @@ public final class PackageAnnotator implements Closeable {
     final Object[] lines = classData.getLines();
     for (Object l : lines) {
       if (l instanceof LineData lineData) {
-        if (isDefaultConstructorGenerated &&
-            isDefaultConstructor(lineData.getMethodSignature())) {
-          continue;
-        }
-        else if (lineData.getStatus() == LineCoverage.FULL) {
+        if (lineData.getStatus() == LineCoverage.FULL) {
           info.fullyCoveredLineCount++;
         }
         else if (lineData.getStatus() == LineCoverage.PARTIAL) {
@@ -176,30 +148,6 @@ public final class PackageAnnotator implements Closeable {
       }
     }
     return info;
-  }
-
-  /**
-   * Checks if the method is a default constructor generated by the compiler. Such constructors are not marked as synthetic
-   * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
-   */
-  public static boolean isGeneratedDefaultConstructor(final @Nullable PsiClass aClass, String nameAndSig) {
-    if (aClass == null) return false;
-    if (isDefaultConstructor(nameAndSig)) {
-      return hasGeneratedConstructor(aClass);
-    }
-    return false;
-  }
-
-  private static boolean isDefaultConstructor(String nameAndSig) {
-    return DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig);
-  }
-
-  private static boolean hasGeneratedConstructor(final @NotNull PsiClass aClass) {
-    return aClass.getLanguage().isKindOf(JavaLanguage.INSTANCE) && ReadAction.computeBlocking(() -> {
-      if (!aClass.isValid()) return false;
-      PsiMethod[] constructors = aClass.getConstructors();
-      return constructors.length == 0;
-    });
   }
 
   public @Nullable ClassData collectNonCoveredClassInfo(final @NotNull Path classFile, @NotNull ProjectData projectData) {

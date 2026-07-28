@@ -728,14 +728,6 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
-    if (JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, ((LineData)lineData).getMethodSignature())) {
-      return true;
-    }
-    return super.isGeneratedCode(project, qualifiedName, lineData);
-  }
-
-  @Override
   public CoverageViewExtension createCoverageViewExtension(Project project,
                                                            CoverageSuitesBundle suiteBundle) {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle);

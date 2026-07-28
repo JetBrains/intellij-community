@@ -50,10 +50,10 @@ object JavaCoverageSummaryBuilder {
     }.mapValues { (_, names) -> names.map(StringUtil::getShortName) }
     PackageAnnotator(bundle, project, projectData).use { packageAnnotator ->
       for ((topLevelName, simpleNames) in classes) {
-        val source = CoverageSourceResolver.findClass(project, bundle, topLevelName) ?: continue
+        val file = CoverageSourceResolver.findFile(project, bundle, topLevelName) ?: continue
         val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
-        val result = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName, source.psiClass, source.file)
-        collector.addClass(topLevelName, result.info, source.file)
+        val result = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName, file)
+        collector.addClass(topLevelName, result.info, file)
         flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(result.info)
         flattenDirectories.getOrPut(result.directory) { PackageCoverageInfo() }.append(result.info)
       }
@@ -246,9 +246,9 @@ private class ModuleCoverageBuilder(
       .associateBy(AnalysisUtils::getClassName)
     if (children.isEmpty()) return
 
-    val source = CoverageSourceResolver.findClass(project, suite, topLevelClassName) ?: return
-    val result = classSummaryBuilder.visitFiles(children, packageVMName, source.psiClass, source.file)
-    classes[topLevelClassName] = CollectedClass(result.info, source.file)
+    val file = CoverageSourceResolver.findFile(project, suite, topLevelClassName) ?: return
+    val result = classSummaryBuilder.visitFiles(children, packageVMName, file)
+    classes[topLevelClassName] = CollectedClass(result.info, file)
     flattenPackages.getOrPut(packageVMName, ::PackageCoverageInfo).append(result.info)
     result.directory?.let { directory ->
       flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(result.info)

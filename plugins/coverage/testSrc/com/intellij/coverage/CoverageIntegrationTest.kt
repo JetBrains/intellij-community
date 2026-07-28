@@ -22,7 +22,6 @@ import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -60,17 +59,15 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
   @Test
   fun testSingleClassFilter() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
-    assertSingleClassFilter(loadIJSuite(arrayOf("foo.bar.BarClass")))
+    assertSingleClassFilter(loadIJSuite(arrayOf("foo.bar.BarClass")), 1)
   }
 
   @Test
   fun testJaCoCoSingleClassFilter() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
-    assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")))
+    assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")), 3)
   }
 
-  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle) = runBlocking {
+  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle, expectedDirectoryCount: Int) = runBlocking {
     val projectData = bundle.coverageData!!
     projectData.getClassData("foo.bar.BarClass")!!
 
@@ -78,16 +75,16 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
     assertEquals("""
       Classes: 
-      foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       Packages: 
-      : TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-      foo: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-      foo.bar: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      : TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+      foo: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+      foo.bar: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       Flatten packages: 
-      foo.bar: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      foo.bar: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       
     """.trimIndent(), consumer.collectInfo())
-    assertEquals(1, consumer.myDirectoryCoverage.size)
+    assertEquals(expectedDirectoryCount, consumer.myDirectoryCoverage.size)
     assertEquals("BarClass.java", consumer.myClassSourceFiles["foo.bar.BarClass"]?.name)
   }
 
@@ -110,17 +107,15 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
   @Test
   fun testJaCoCoWithoutUnloaded() = runBlocking {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
     JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
-    assertEquals(IGNORE_CONSTRUCTOR_REPORT, consumer.collectInfo())
+    assertEquals(FULL_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
   @Test
   fun testMergeIjWithJaCoCo() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
 
@@ -128,7 +123,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     // When reading Jacoco report, we cannot distinguish jump and switches, so all branches are stored as switches.
     // While in IJ coverage we store jumps and switches separately.
     // Because of this, we cannot implement stable merge of IJ and jacoco reports
-    assertHits(bundle, true, ignoreBranches = true)
+    assertHits(bundle, ignoreBranches = true)
   }
 
   @Test
@@ -161,7 +156,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   @Test
   fun `test sub coverage`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
 
     val suite = loadIJSuite()
     openSuiteAndWait(suite)
@@ -174,16 +168,16 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals("""
         Classes: 
-        foo.FooClass: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
-        foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-        foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.FooClass: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=2 CB=0 
+        foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+        foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 TB=0 CB=0 
         Packages: 
-        : TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo: TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+        : TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo: TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 TB=0 CB=0 
         Flatten packages: 
-        foo: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
-        foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+        foo: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=2 CB=0 
+        foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 TB=0 CB=0 
 
       """.trimIndent(), consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
@@ -191,16 +185,16 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
     val fooTestSummary = """
         Classes: 
-        foo.FooClass: TC=1 CC=1 TM=2 CM=1 TL=2 CL=1 TB=2 CB=0 
-        foo.bar.BarClass: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=0 CB=0 
-        foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.FooClass: TC=1 CC=1 TM=3 CM=2 TL=3 CL=2 TB=2 CB=0 
+        foo.bar.BarClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 TB=0 CB=0 
         Packages: 
-        : TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo: TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=0 TM=7 CM=0 TL=7 CL=0 TB=0 CB=0 
+        : TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo: TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=0 TM=9 CM=0 TL=9 CL=0 TB=0 CB=0 
         Flatten packages: 
-        foo: TC=1 CC=1 TM=2 CM=1 TL=2 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=0 TM=7 CM=0 TL=7 CL=0 TB=0 CB=0 
+        foo: TC=1 CC=1 TM=3 CM=2 TL=3 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=0 TM=9 CM=0 TL=9 CL=0 TB=0 CB=0 
 
       """.trimIndent()
     waitSuiteProcessing {
@@ -287,15 +281,11 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {
-    val original = JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors
-    try {
-      assertHits(suite, true, ignoreBranches)
-      assertHits(suite, false, ignoreBranches)
-    }
-    finally {
-      JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = original
-    }
+  private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) = runBlocking {
+    val annotator = TestJavaCoverageAnnotator(myProject)
+    annotator.collectSummaryInfo(suite)
+    val expected = if (ignoreBranches) FULL_REPORT_WITHOUT_BRANCHES else FULL_REPORT
+    assertEquals(expected, annotator.collectInfo(ignoreBranches))
   }
 
   private fun assertHitsWithJarOutputRoots(loadSuite: () -> CoverageSuitesBundle) {
@@ -329,13 +319,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  private fun assertHits(suite: CoverageSuitesBundle, ignoreConstructor: Boolean, ignoreBranches: Boolean) = runBlocking {
-    JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = ignoreConstructor
-    val annotator = TestJavaCoverageAnnotator(myProject)
-    annotator.collectSummaryInfo(suite)
-    val expected = if (ignoreConstructor) if (ignoreBranches) IGNORE_BRANCHES_REPORT else IGNORE_CONSTRUCTOR_REPORT else FULL_REPORT
-    assertEquals(expected, annotator.collectInfo(ignoreBranches))
-  }
 }
 
 private class TestJavaCoverageAnnotator(project: Project) : JavaCoverageAnnotator(project) {
@@ -414,33 +397,18 @@ private fun SummaryCoverageInfo.collectToString(ignoreBranches: Boolean) = build
   }
 }
 
-private val IGNORE_CONSTRUCTOR_REPORT = """
+private val FULL_REPORT_WITHOUT_BRANCHES = """
   Classes: 
-  foo.FooClass: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 TB=2 CB=1 
-  foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-  foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+  foo.FooClass: TC=1 CC=1 TM=3 CM=3 TL=3 CL=3 
+  foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 
+  foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 
   Packages: 
-  : TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 TB=2 CB=1 
-  foo: TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 TB=2 CB=1 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+  : TC=3 CC=2 TM=12 CM=5 TL=12 CL=5 
+  foo: TC=3 CC=2 TM=12 CM=5 TL=12 CL=5 
+  foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 
   Flatten packages: 
-  foo: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 TB=2 CB=1 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
-
-""".trimIndent()
-
-private val IGNORE_BRANCHES_REPORT = """
-  Classes: 
-  foo.FooClass: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 
-  foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 
-  foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 
-  Packages: 
-  : TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 
-  foo: TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 
-  Flatten packages: 
-  foo: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 
+  foo: TC=1 CC=1 TM=3 CM=3 TL=3 CL=3 
+  foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 
 
 """.trimIndent()
 
