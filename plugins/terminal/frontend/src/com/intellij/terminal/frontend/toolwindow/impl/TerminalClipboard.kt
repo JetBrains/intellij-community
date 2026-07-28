@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
@@ -61,11 +62,20 @@ internal object TerminalClipboard {
     if (content == null) return null
     val terminalContext = getTerminalContext(view) ?: return null
 
-    val allConverters: List<TransferableToTextConverter> = listOf(
-      FileListToTextConverter(),
-      ImageToTextConverter(),
-      StringToTextConverter(),
-    )
+    val allConverters = if (Registry.`is`("terminal.prefer.image.path.paste.over.text")) {
+      listOf(
+        FileListToTextConverter(),
+        ImageToTextConverter(),
+        StringToTextConverter(),
+      )
+    }
+    else {
+      listOf(
+        FileListToTextConverter(),
+        StringToTextConverter(),
+        ImageToTextConverter(),
+      )
+    }
 
     try {
       for (converter in allConverters) {

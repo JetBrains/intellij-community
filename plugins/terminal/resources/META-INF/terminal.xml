@@ -75,6 +75,9 @@
                   When disabled, the changed range is always replaced in a single edit."/>
     <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
                  description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
+    <registryKey key="terminal.prefer.image.path.paste.over.text" defaultValue="true"
+                 description="When pasting in the terminal, prefer inserting an image path if it is available in the clipboard
+                  even if text representation is available."/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilterProvider"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
