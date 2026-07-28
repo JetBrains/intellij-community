@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
@@ -107,7 +109,11 @@ class ToolWindowEditorTabFile internal constructor(
   }
 
   internal fun invalidateEditorTabFile() {
-    isValid = false // mark invalid, so file does not appear in the recent files
+    // remove file from recent files
+    EditorHistoryManager.getInstance(project).removeFile(this)
+    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(this)
+
+    isValid = false
     coroutineScope.cancel()
   }
 }

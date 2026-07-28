@@ -6,10 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPreferredFocusedComponent
 import com.intellij.openapi.wm.ToolWindow
@@ -97,10 +95,6 @@ internal class ToolWindowEditorTabTransferController(
     finally {
       file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
     }
-
-    // explicitly remove the file from recent files
-    EditorHistoryManager.getInstance(project).removeFile(file)
-    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(file)
 
     restoreContentToToolWindow(file.content, toolWindow, targetDecorator?.contentManager)
     file.invalidateEditorTabFile()
