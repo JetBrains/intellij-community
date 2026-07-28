@@ -158,6 +158,7 @@ internal enum class IntelliJPlatformProduct {
         PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() -> IDEA
         PlatformUtils.isPyCharm() -> PYCHARM
         PlatformUtils.isRider() -> RIDER
+        PlatformUtils.isCLion() -> CLION
         else -> OTHER
       }
   }
