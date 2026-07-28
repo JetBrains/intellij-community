@@ -1416,6 +1416,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Toml = new IntelliJIconKey("expui/fileTypes/toml.svg", "expui/fileTypes/toml.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey TypeScript = new IntelliJIconKey("expui/fileTypes/typeScript.svg", "expui/fileTypes/typeScript.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey UiForm = new IntelliJIconKey("fileTypes/uiForm.svg", "expui/fileTypes/uiForm.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

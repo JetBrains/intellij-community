@@ -2881,6 +2881,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Terraform:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Text:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Toml:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TypeScript:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:UiForm:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Unknown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Vue:org.jetbrains.jewel.ui.icon.IntelliJIconKey
