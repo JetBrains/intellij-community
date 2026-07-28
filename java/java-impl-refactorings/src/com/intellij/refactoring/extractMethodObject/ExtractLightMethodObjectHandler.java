@@ -269,17 +269,13 @@ public final class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
-    boolean hasOutputVariables = false;
+    boolean hasOutputVariables;
     int startOffsetInContainer;
     if (extractProcessor.prepare()) {
       // For value-producing fragments, this includes at least the synthetic result variable. Ignore variables declared inside
       // the fragment; only variables declared outside need to be written back to the original frame.
-      for (PsiVariable outputVariable : extractProcessor.getOutputVariables()) {
-        if (!isDeclaredInside(outputVariable, elementsCopy)) {
-          hasOutputVariables = true;
-          break;
-        }
-      }
+      hasOutputVariables = ContainerUtil.exists(extractProcessor.getOutputVariables(),
+                                                outputVariable -> !isDeclaredInside(outputVariable, elementsCopy));
       boolean shown = extractProcessor.showDialog();
       if (!shown) {
         throw new IllegalStateException("Must return success");
@@ -354,12 +350,7 @@ public final class ExtractLightMethodObjectHandler {
   }
 
   private static boolean isDeclaredInside(@NotNull PsiVariable variable, PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (PsiTreeUtil.isAncestor(element, variable, false)) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.exists(elements, element -> PsiTreeUtil.isAncestor(element, variable, false));
   }
 
   private static @Nullable PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
