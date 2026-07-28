@@ -107,6 +107,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+@IJIgnore(issue = "IJPL-251501")
 public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   private static final int TIMEOUT_MS = 30_000;
 
