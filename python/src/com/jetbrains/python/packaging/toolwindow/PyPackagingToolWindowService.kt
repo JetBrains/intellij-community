@@ -38,6 +38,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
@@ -376,6 +377,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         toolWindowPanel?.let {
           it.packageListController.setLoadingState(false)
           it.contentVisible = false
+          it.setInterpreterPath(null)
         }
       }
       showNoInterpreterMessage()
@@ -385,6 +387,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     withContext(Dispatchers.EDT) {
       toolWindowPanel?.let {
         it.startLoadingSdk(sdk.name)
+        it.setInterpreterPath(sdk.pyInterpreterPresentation().fullName)
         it.syncSdkControllerSelection(sdk)
       }
     }
