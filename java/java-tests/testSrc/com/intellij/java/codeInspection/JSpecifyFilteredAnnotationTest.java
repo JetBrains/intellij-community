@@ -36,6 +36,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -99,16 +100,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                    33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
         new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
 
-        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24) ,// see: IDEA-377699
-
-        new Pair<>("SelfType.java", 34),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("SelfType.java", 43),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("OutOfBoundsTypeVariable.java", 21),  // see: IDEA-377707 (also see the commented case in warning matchers)
-        new Pair<>("TypeParameterBounds.java", 40), // see: IDEA-377707
-
-        new Pair<>("NullnessUnspecifiedTypeParameter.java", 33), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 28), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30) // see: IDEA-377683
+        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24)// see: IDEA-377699
       )
     ),
     new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
@@ -217,6 +209,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
       nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
+      // JSpecify records no diagnostic when a wildcard bound escapes the bound of the type parameter,
+      // e.g. ImplicitlyObjectBounded<? extends @Nullable Lib> for interface ImplicitlyObjectBounded<T>
+      nullableStuffInspection.REPORT_WILDCARD_TYPE_ARGUMENT_CONFLICTS = false;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
@@ -461,8 +456,14 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "returning.a.class.with.notnull.arguments",
              "overriding.a.class.with.nullable.elements",
              "overriding.a.class.with.notnull.elements"
-          //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
           -> warnings.put(anchor, "jspecify_nullness_mismatch");
+        case "non.null.type.argument.is.expected" -> {
+          if (anchor instanceof PsiTypeElement typeElement) {
+            warnings.put(anchor, typeElement.getType().getNullability().nullability() == Nullability.NULLABLE
+                                 ? "jspecify_nullness_mismatch"
+                                 : "jspecify_nullness_not_enough_information");
+          }
+        }
         case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
         case "inspection.nullable.problems.Nullable.NotNull.conflict" -> warnings.put(anchor, "jspecify_conflicting_annotations");

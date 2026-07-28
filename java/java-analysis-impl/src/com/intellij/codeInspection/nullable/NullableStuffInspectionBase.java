@@ -157,6 +157,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = false;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_WILDCARD_TYPE_ARGUMENT_CONFLICTS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
   /**
@@ -189,6 +190,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
+          "REPORT_WILDCARD_TYPE_ARGUMENT_CONFLICTS".equals(name) && "true".equals(value) ||
           "REPORT_UNSPECIFIED_BOUND_CONFLICTS".equals(name) && "false".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
@@ -545,6 +547,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               Project project = element.getProject();
               PsiType type = typeArgument.getType();
               if (TypeNullability.ofTypeParameter(typeParameters[i]).nullability() != Nullability.NOT_NULL) continue;
+              if (!REPORT_WILDCARD_TYPE_ARGUMENT_CONFLICTS && type instanceof PsiWildcardType) continue;
               TypeNullability nullability = type.getNullability();
               Nullability typeNullability = nullability.nullability();
               if (typeNullability != Nullability.NOT_NULL &&
@@ -561,11 +564,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   nullability == TypeNullability.UNKNOWN && !REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE ?
                   ProblemHighlightType.INFORMATION :
                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-                if (!isOnTheFly && level == ProblemHighlightType.INFORMATION) continue;
-                holder.registerProblem(typeArgument,
-                                       JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
-                                       level,
-                                       fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+                LocalQuickFix[] fixArray = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
+                if (level == ProblemHighlightType.INFORMATION) {
+                  if (!isOnTheFly) continue;
+                  holder.registerProblem(typeArgument,
+                                         JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
+                                         level,
+                                         fixArray);
+                }
+                else {
+                  reportProblem(holder, typeArgument, fixArray, "non.null.type.argument.is.expected");
+                }
               }
             }
           }
