@@ -113,6 +113,11 @@ public class K2TextJavaToKotlinCopyPasteConversionTestGenerated extends Abstract
         runTest("../../shared/tests/testData/copyPastePlainText/MembersToTopLevel.txt");
     }
 
+    @TestMetadata("NamedArguments.txt")
+    public void testNamedArguments() throws Exception {
+        runTest("../../shared/tests/testData/copyPastePlainText/NamedArguments.txt");
+    }
+
     @TestMetadata("Override.txt")
     public void testOverride() throws Exception {
         runTest("../../shared/tests/testData/copyPastePlainText/Override.txt");

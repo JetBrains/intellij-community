@@ -254,8 +254,21 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             JavaContext.TOP_LEVEL -> isParsedAsJavaFile(text)
             JavaContext.CLASS_BODY -> isParsedAsJavaFile("class Dummy { $text\n}")
             JavaContext.IN_BLOCK -> isParsedAsJavaFile("class Dummy { void foo() {$text\n}\n}")
-            JavaContext.EXPRESSION -> isParsedAsJavaFile("class Dummy { Object field = $text; }")
+            JavaContext.EXPRESSION -> isParsedAsSingleJavaExpression(text, project)
         }
+    }
+
+    /**
+     * A plain [isParsedAsFile] check is not enough: a top-level comma makes the wrapper parse as a valid
+     * multi-variable field declaration. For example, `a = 1, b = 2` (a Kotlin named-argument list) yields
+     * `Object field = a = 1, b = 2;`, declaring two fields `field` and `b` with no parse error, and J2K would
+     * be triggered on non-Java text (KTIJ-36990).
+     */
+    private fun isParsedAsSingleJavaExpression(text: String, project: Project): Boolean {
+        val psiFile = parseAsFile("class Dummy { Object field = $text; }", JavaFileType.INSTANCE, project)
+        if (psiFile.anyDescendantOfType<PsiErrorElement>()) return false
+        val singleClass = (psiFile as? PsiJavaFile)?.classes?.singleOrNull() ?: return false
+        return singleClass.fields.size == 1
     }
 
     private fun isParsedAsKotlinCode(text: String, kotlinContext: KotlinContext, project: Project): Boolean {
