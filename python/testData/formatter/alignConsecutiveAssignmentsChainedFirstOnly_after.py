@@ -1,2 +1,2 @@
-a    = b = 1
-cccc = 2
+a = b = 1
+cccc  = 2

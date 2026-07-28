@@ -863,13 +863,14 @@ public class PyBlock implements ASTBlock {
   }
 
   private static @Nullable ASTNode findAssignmentOperator(@NotNull ASTNode statement) {
+    ASTNode last = null;
     for (ASTNode child = statement.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       final IElementType type = child.getElementType();
       if (type == PyTokenTypes.EQ || PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(type)) {
-        return child;
+        last = child;
       }
     }
-    return null;
+    return last;
   }
 
   private @Nullable Alignment getAssignmentColumnAlignment(@NotNull ASTNode statement) {
