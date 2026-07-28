@@ -19,6 +19,8 @@
     <eelEnvironmentInitializer implementation="com.intellij.platform.eel.tcp.TcpEelEnvironmentInitializer"/>
     <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.raw.RawTcpPathParser"/>
     <eelMachineResolver implementation="com.intellij.platform.eel.tcp.raw.RawTcpMachineResolver"/>
+    <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelPathParser"/>
+    <eelMachineResolver implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelMachineResolver"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.eelTcpPathParser" interface="com.intellij.platform.eel.tcp.TcpEelPathParser"
