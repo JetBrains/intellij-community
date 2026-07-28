@@ -333,9 +333,14 @@ fun PythonExecution.extendEnvs(additionalEnvs: Map<String, TargetEnvironmentFunc
 
 @ApiStatus.Internal
 fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndicator): ProcessOutput {
+  // Don't even start the process if we're already cancelled (e.g. the SDK was disposed and cancelled the indicator).
+  indicator.checkCanceled()
   val process = env.createProcess(this, indicator)
   val capturingHandler = CapturingProcessHandler(process, charset, getCommandPresentation(env))
-  val output = capturingHandler.runProcess()
+  // Poll the indicator so the process is destroyed if it gets cancelled mid-run (createProcess/runProcess don't do this on their own).
+  val output = capturingHandler.runProcessWithProgressIndicator(indicator)
+  // Surface a cancellation as ProcessCanceledException rather than a spurious non-zero-exit ExecutionException below.
+  indicator.checkCanceled()
   if (output.isTimeout || output.exitCode != 0) {
     val fullCommand = collectCommandsSynchronously()
     throw PyExecutionException("", fullCommand[0], fullCommand.drop(1), output)
