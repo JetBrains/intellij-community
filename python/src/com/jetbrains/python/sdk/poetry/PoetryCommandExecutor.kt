@@ -52,6 +52,8 @@ import kotlin.io.path.name
  */
 private val VERSION_2 = "2.0.0".toVersion()
 
+@Internal
+const val POETRY_TOML = "poetry.toml"
 
 internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   "poetry",
@@ -61,7 +63,6 @@ internal val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
 )
 
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
-private const val POETRY_TOML = "poetry.toml"
 private const val POETRY_LOCK = "poetry.lock"
 private val POETRY_PROJECT_FILES = listOf(PY_PROJECT_TOML, POETRY_LOCK, POETRY_TOML)
 private val POETRY_PROJECT_DOWNLOAD_CONFIG = DownloadConfig(relativePaths = POETRY_PROJECT_FILES)

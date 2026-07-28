@@ -4,7 +4,6 @@ package com.jetbrains.python.conda.sdk.configuration
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -68,6 +67,8 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   override val toolId: ToolId = CONDA_TOOL_ID
 
+  override val potentialDependencyFiles: Set<String> = CondaEnvironmentYmlSdkUtils.envFileNames
+
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module) }
@@ -93,10 +94,9 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       else EnvCheckerResult.CannotConfigure
     }
 
-  private suspend fun getEnvironmentYml(module: Module) = listOf(
-    CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,
-    CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME,
-  ).firstNotNullOfOrNull { findAmongRoots(module, it) }
+  private suspend fun getEnvironmentYml(module: Module) = CondaEnvironmentYmlSdkUtils.envFileNames.firstNotNullOfOrNull {
+    findAmongRoots(module, it)
+  }
 
   private suspend fun createAndAddSdk(module: Module, envExists: Boolean): PyResult<Sdk> {
     val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
