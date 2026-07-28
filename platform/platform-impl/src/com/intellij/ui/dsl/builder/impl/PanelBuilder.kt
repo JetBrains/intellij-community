@@ -168,7 +168,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
   private fun checkRow(row: RowImpl): Boolean {
     if (row.cells.isEmpty()) {
-      logWarningWithDebugStacktrace("Row should not be empty")
+      errorInInternalOrLogWarn("Row should not be empty", row.creationStackTrace)
       return false
     }
 
@@ -179,7 +179,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     val gaps = grid.rowsGaps
     for (i in gaps.indices) {
       if (i > 0 && gaps[i - 1].bottom > 0 && gaps[i].top > 0) {
-        logWarningWithDebugStacktrace("There is double gap between two near rows")
+        errorInInternalOrLogWarn("There is double gap between two near rows")
       }
     }
   }

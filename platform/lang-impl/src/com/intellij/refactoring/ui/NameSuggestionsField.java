@@ -16,6 +16,7 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ public class NameSuggestionsField extends JPanel {
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myComponent);
   }
 
   /**
@@ -83,6 +85,7 @@ public class NameSuggestionsField extends JPanel {
       myComponent = combobox;
     }
     add(myComponent, BorderLayout.CENTER);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myComponent);
   }
 
   /**
@@ -197,7 +200,7 @@ public class NameSuggestionsField extends JPanel {
     return myComponent instanceof JComboBox;
   }
 
-  private @NotNull JComponent createTextFieldForName(String @Nullable [] nameSuggestions, FileType fileType) {
+  private @NotNull EditorTextField createTextFieldForName(String @Nullable [] nameSuggestions, FileType fileType) {
     final String text;
     if (nameSuggestions != null && nameSuggestions.length > 0 && nameSuggestions[0] != null) {
       text = nameSuggestions[0];

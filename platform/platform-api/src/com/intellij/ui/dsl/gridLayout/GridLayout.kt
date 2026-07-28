@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.builder.impl.checkConstraints
 import com.intellij.ui.dsl.builder.impl.checkJComponent
 import com.intellij.ui.dsl.builder.impl.checkNull
-import com.intellij.ui.dsl.builder.impl.failInDebugOrLog
+import com.intellij.ui.dsl.builder.impl.failInInternalOrLogError
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import com.intellij.ui.dsl.gridLayout.impl.SizeConstrainsData
 import org.jetbrains.annotations.ApiStatus
@@ -133,19 +133,19 @@ class GridLayout : LayoutManager2 {
 fun JComponent.setVisualPadding(visualPaddings: UnscaledGaps) {
   val parent = parent
   if (parent == null) {
-    failInDebugOrLog("Parent is null: $this")
+    failInInternalOrLogError("Parent is null: $this")
     return
   }
 
   val layout = parent.layout as? GridLayout
   if (layout == null) {
-    failInDebugOrLog("GridLayout was expected, found: ${parent.layout}")
+    failInInternalOrLogError("GridLayout was expected, found: ${parent.layout}")
     return
   }
 
   val constraints = layout.getConstraints(this)
   if (constraints == null) {
-    failInDebugOrLog("Component is not found in the layout: $this")
+    failInInternalOrLogError("Component is not found in the layout: $this")
     return
   }
 

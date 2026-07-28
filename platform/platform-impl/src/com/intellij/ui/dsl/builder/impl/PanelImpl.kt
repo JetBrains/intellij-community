@@ -72,6 +72,8 @@ internal class PanelImpl(
       labelCell(label, result.cells[1])
     }
 
+    result.initCreationStackTrace()
+
     return result
   }
 
