@@ -3,6 +3,7 @@ package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -16,6 +17,7 @@ import java.nio.file.Path
 
 internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   override val toolId: ToolId = UV_TOOL_ID
+  override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML)
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
