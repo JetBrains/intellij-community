@@ -23,7 +23,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipFile;
 
@@ -116,21 +118,19 @@ public final class PackageAnnotator implements Closeable {
   private static @Nullable ClassCoverageInfo getSummaryInfo(@Nullable ClassData classData) {
     if (classData == null || classData.getLines() == null) return null;
     ClassCoverageInfo info = new ClassCoverageInfo();
-    final Collection<String> methodSigs = classData.getMethodSigs();
-    for (final String nameAndSig : methodSigs) {
-      if (classData.getStatus(nameAndSig) != LineCoverage.NONE) {
-        info.coveredMethodCount++;
-      }
-      info.totalMethodCount++;
-    }
-
+    Set<String> coveredMethods = new HashSet<>();
     final Object[] lines = classData.getLines();
     for (Object l : lines) {
       if (l instanceof LineData lineData) {
-        if (lineData.getStatus() == LineCoverage.FULL) {
+        int lineStatus = lineData.getStatus();
+        if (lineStatus != LineCoverage.NONE) {
+          coveredMethods.add(lineData.getMethodSignature());
+        }
+
+        if (lineStatus == LineCoverage.FULL) {
           info.fullyCoveredLineCount++;
         }
-        else if (lineData.getStatus() == LineCoverage.PARTIAL) {
+        else if (lineStatus == LineCoverage.PARTIAL) {
           info.partiallyCoveredLineCount++;
         }
         info.totalLineCount++;
@@ -141,6 +141,15 @@ public final class PackageAnnotator implements Closeable {
         }
       }
     }
+
+    final Collection<String> methodSigs = classData.getMethodSigs();
+    for (final String nameAndSig : methodSigs) {
+      if (coveredMethods.contains(nameAndSig)) {
+        info.coveredMethodCount++;
+      }
+      info.totalMethodCount++;
+    }
+
     if (!methodSigs.isEmpty()) {
       info.totalClassCount = 1;
       if (info.getCoveredLineCount() > 0) {
