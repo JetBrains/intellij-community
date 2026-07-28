@@ -638,7 +638,7 @@ private class EditorTabs(
 
   override fun close() {
     val selected = targetInfo ?: return
-    window.manager.closeFile((selected.`object` as VirtualFile), window)
+    window.manager.closeFileWithChecks(file = selected.`object` as VirtualFile, window = window)
   }
 
   override fun getEditorWindow(): EditorWindow = window
