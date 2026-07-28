@@ -24,7 +24,7 @@ import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicBoolean
 
 object InlineCompletion {
   private val KEY = Key.create<Pair<InlineCompletionHandler, Disposable>>("inline.completion.handler")
@@ -47,7 +47,8 @@ object InlineCompletion {
       it.disposeWithEditorIfNeeded(editor)
     }
 
-    val workingScope = scope.childScope(supervisor = !application.isUnitTestMode) // Completely fail only in tests
+    // Completely fail only in tests
+    val workingScope = scope.childScope(name = "[Inline Completion] editor handler", supervisor = !application.isUnitTestMode)
     val handler = InlineCompletionHandlerInitializer.initialize(editor, workingScope, disposable)
     if (handler == null) {
       workingScope.cancel()
@@ -92,7 +93,7 @@ object InlineCompletion {
   }
 
   private fun Disposable.disposeWithEditorIfNeeded(editor: Editor) {
-    val isDisposed = AtomicReference(false)
+    val isDisposed = AtomicBoolean(false)
     whenDisposed { isDisposed.set(true) }
 
     EditorUtil.disposeWithEditor(editor) {
