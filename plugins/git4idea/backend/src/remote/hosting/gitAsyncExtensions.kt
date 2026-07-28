@@ -75,7 +75,7 @@ fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
     awaitClose()
   }
 
-private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> {
+fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> {
   if (repositories.isEmpty()) {
     return emptySet()
   }

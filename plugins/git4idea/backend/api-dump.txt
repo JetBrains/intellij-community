@@ -239,6 +239,7 @@ git4idea.remote.GitHttpAuthDataProvider
 - getPresentableErrorMessage(java.util.List):java.lang.String
 f:git4idea.remote.hosting.GitAsyncExtensionsKt
 - sf:changesSignalFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
+- sf:collectRemotes(git4idea.repo.GitRepositoryManager):java.util.Set
 - sf:findFirstRemoteBranchTrackedByCurrent(git4idea.repo.GitRepoInfo):git4idea.GitRemoteBranch
 - sf:gitRemotesFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
 - sf:infoFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow

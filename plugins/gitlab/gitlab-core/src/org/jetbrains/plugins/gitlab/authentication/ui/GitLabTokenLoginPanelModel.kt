@@ -9,14 +9,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabGitAuthorizationSignal
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 
-class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
-                                 var uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
-  : LoginPanelModelBase(), LoginTokenGenerator {
-
+class GitLabTokenLoginPanelModel(
+  var requiredUsername: String? = null,
+  var uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+) : LoginPanelModelBase(), LoginTokenGenerator, GitLabGitAuthorizationSignal {
   private val _tryGitAuthorizationSignal: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1)
-  val tryGitAuthorizationSignal: Flow<Unit> = _tryGitAuthorizationSignal.asSharedFlow()
+  override val tryGitAuthorizationSignal: Flow<Unit> = _tryGitAuthorizationSignal.asSharedFlow()
 
   override suspend fun checkToken(): String {
     val server = createServerPath(serverUri)
@@ -39,7 +40,7 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
     BrowserUtil.browse(newTokenUrl)
   }
 
-  suspend fun tryGitAuthorization() {
-    _tryGitAuthorizationSignal.emit(Unit)
+  override fun tryGitAuthorization() {
+    _tryGitAuthorizationSignal.tryEmit(Unit)
   }
 }

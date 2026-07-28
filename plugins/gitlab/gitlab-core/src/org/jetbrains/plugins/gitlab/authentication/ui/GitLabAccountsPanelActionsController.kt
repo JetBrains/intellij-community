@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil.logInViaOAuth
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil.logInViaOAuthToCustomServer
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil.logInViaToken
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -25,12 +26,14 @@ internal class GitLabAccountsPanelActionsController(
   private val project: Project,
   private val model: GitLabAccountsListModel,
 ) : AccountsPanelActionsController<GitLabAccount> {
-  override val isAddActionWithPopup: Boolean = false
+  override val isAddActionWithPopup: Boolean = true
 
   @RequiresEdt
+  @Suppress("SplitModeApiUsage")
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val group = DefaultActionGroup().apply {
       add(createOAuthLoginAction(project))
+      add(createOAuthEnterpriseLoginAction(project, parentComponent))
       add(createTokenLoginAction(project, parentComponent))
     }
     val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
@@ -70,6 +73,18 @@ internal class GitLabAccountsPanelActionsController(
     DumbAwareAction.create(GitLabBundle.message("account.add.popup.text")) {
       logInViaOAuth(
         project,
+        loginSource = GitLabLoginSource.SETTINGS,
+        uniqueAccountPredicate = ::isAccountUnique
+      ).asSafely<LoginResult.Success>()?.also {
+        model.add(it.account, it.credentials)
+      }
+    }
+
+  private fun createOAuthEnterpriseLoginAction(project: Project, parentComponent: JComponent?) =
+    DumbAwareAction.create(GitLabBundle.message("account.add.custom.server.popup.text")) {
+      logInViaOAuthToCustomServer(
+        project,
+        parentComponent,
         loginSource = GitLabLoginSource.SETTINGS,
         uniqueAccountPredicate = ::isAccountUnique
       ).asSafely<LoginResult.Success>()?.also {

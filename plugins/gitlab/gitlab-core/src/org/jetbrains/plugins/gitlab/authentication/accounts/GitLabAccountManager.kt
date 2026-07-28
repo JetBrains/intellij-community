@@ -54,7 +54,7 @@ internal class PersistentGitLabAccountManager : GitLabAccountManager,
       is GitLabCredentials.OAuth -> {
         if (credentials.isAccessTokenValid()) return credentials
         try {
-          GitLabOAuthService.instance.refreshToken(account.server, credentials.refreshToken).also {
+          GitLabOAuthService.instance.refreshToken(account.server, credentials.refreshToken, credentials.clientId).also {
             doUpdateAccount(account, it)
           }
         }

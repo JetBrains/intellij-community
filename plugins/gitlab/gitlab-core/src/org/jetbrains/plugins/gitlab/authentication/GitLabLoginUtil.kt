@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.authentication
 
 import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState
+import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState.Connected
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -27,6 +28,8 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginDialogComponentFactory
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginOutcome
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -45,6 +48,24 @@ object GitLabLoginUtil {
   ): LoginResult {
     val dialogTitle = GitLabBundle.message("account.add.dialog.title")
     return performOAuthLogin(project, requiredUsername, serverPath, uniqueAccountPredicate, dialogTitle, loginSource)
+  }
+
+  @RequiresEdt
+  internal fun logInViaOAuthToCustomServer(
+    project: Project,
+    parentComponent: JComponent?,
+    requiredUsername: String? = null,
+    loginSource: GitLabLoginSource,
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+  ): LoginResult {
+    val dialogTitle = GitLabBundle.message("account.add.dialog.title")
+    return performOAuthLoginToCustomServer(project = project,
+                                           parentComponent = parentComponent,
+                                           requiredUsername = requiredUsername,
+                                           dialogTitle = dialogTitle,
+                                           uniqueAccountPredicate = uniqueAccountPredicate,
+                                           serverFieldDisabled = false,
+                                           loginSource = loginSource)
   }
 
   @ApiStatus.Internal
@@ -234,13 +255,43 @@ object GitLabLoginUtil {
           cs,
           serverFieldDisabled,
           tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
-          errorPresenter = GitLabLoginErrorStatusPresenter(cs, model, canLogInWithGit)
+          errorPresenter = GitLabLoginErrorStatusPresenter(model, canLogInWithGit)
         )
       }
     }
     dialog.showAndGet()
-
     return dialog.exitCode
+  }
+
+  private fun performOAuthLoginToCustomServer(
+    project: Project,
+    parentComponent: JComponent?,
+    requiredUsername: String?,
+    dialogTitle: @NlsContexts.DialogTitle String,
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+    serverFieldDisabled: Boolean,
+    loginSource: GitLabLoginSource,
+    requiredServerPath: GitLabServerPath? = null,
+    accountId: String? = null,
+  ): LoginResult {
+    val outcome = GitLabOAuthLoginDialogComponentFactory.showIn(
+      project = project,
+      parentComponent = parentComponent,
+      title = dialogTitle,
+      requiredServerPath = requiredServerPath,
+      serverFieldDisabled = serverFieldDisabled,
+      canLogInWithGit = loginSource == GitLabLoginSource.GIT,
+      requiredUsername = requiredUsername,
+      uniqueAccountPredicate = uniqueAccountPredicate
+    )
+
+    return when (outcome) {
+      is GitLabOAuthLoginOutcome.Success -> with(outcome) {
+        createSuccessResult(Connected(username), serverPath, loginSource, credentials, accountId)
+      }
+      GitLabOAuthLoginOutcome.Cancelled -> LoginResult.Failure
+      GitLabOAuthLoginOutcome.OtherMethod -> LoginResult.OtherMethod
+    }
   }
 
   @RequiresEdt
@@ -255,7 +306,7 @@ object GitLabLoginUtil {
   ): LoginResult {
     return try {
       runWithModalProgressBlocking(project, title) {
-        val credentials = GitLabOAuthService.instance.authorize(serverPath)
+        val credentials = GitLabOAuthService.instance.authorize(serverPath, null)
         val username =
           GitLabSecurityUtil.validateAndResolveUsername(requiredUsername, serverPath, credentials.accessToken, uniqueAccountPredicate)
         createSuccessResult(LoginState.Connected(username), serverPath, loginSource, credentials, accountId)

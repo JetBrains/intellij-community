@@ -1638,6 +1638,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindBusyIn(com.intellij.ui.components.JBList,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindChildIn(javax.swing.JPanel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,java.lang.Object,java.lang.Integer,kotlin.jvm.functions.Function2):V
 - bs:bindChildIn$default(javax.swing.JPanel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,java.lang.Object,java.lang.Integer,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+- sf:bindComboBoxTextIn(com.intellij.ui.dsl.builder.Cell,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):com.intellij.ui.dsl.builder.Cell
 - sf:bindContentIn(com.intellij.ui.components.panels.Wrapper,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindContentIn(com.intellij.ui.components.panels.Wrapper,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
 - sf:bindDisabledIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V

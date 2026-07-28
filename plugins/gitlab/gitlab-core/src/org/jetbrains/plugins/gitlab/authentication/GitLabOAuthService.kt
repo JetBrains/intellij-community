@@ -31,7 +31,7 @@ import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
-private const val OAUTH_CLIENT_ID = "0ec01bcbbfce083d0ad842f9e5896e8a38ab837b5630dfe2f41a1af50d1556a9"
+private const val GITLAB_DOT_COM_OAUTH_CLIENT_ID = "0ec01bcbbfce083d0ad842f9e5896e8a38ab837b5630dfe2f41a1af50d1556a9"
 private const val CODE_CHALLENGE_METHOD = "S256"
 private const val TOKEN_SCOPE = "api read_user write_repository openid"
 private const val SUCCESS_HTML = "<p><strong>Authentication Successful!</strong></p>"
@@ -46,17 +46,22 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     get() = "http://127.0.0.1:${BuiltInServerManager.getInstance().port}/${RestService.PREFIX}/$SERVICE_NAME"
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun authorize(server: GitLabServerPath): GitLabCredentials.OAuth {
-    check(server.isDefault)
+  suspend fun authorize(server: GitLabServerPath, oAuthClientId: String?): GitLabCredentials.OAuth {
+    val clientId = if (server.isDefault) {
+      GITLAB_DOT_COM_OAUTH_CLIENT_ID
+    }
+    else {
+      oAuthClientId ?: throw GitLabOAuthFlowException("OAuth client ID is required for non-default GitLab servers")
+    }
     val requestId = DigestUtil.randomToken()
     val codeVerifier = ByteArray(32).also { DigestUtil.random.nextBytes(it) }
     val codeVerifierEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifier)
     val request = CompletableDeferred<GitLabCredentials.OAuth>()
 
-    val pending = PendingLoginWithRequest(server, codeVerifierEncoded, request)
+    val pending = PendingLoginWithRequest(server, clientId, codeVerifierEncoded, request)
     pendingLogins[requestId] = pending
     try {
-      val uri = server.buildAuthorizationURI(requestId, redirectUri, codeVerifierEncoded)
+      val uri = server.buildAuthorizationURI(requestId, clientId, redirectUri, codeVerifierEncoded)
       BrowserUtil.browse(uri)
       return request.await()
     }
@@ -69,13 +74,13 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     }
   }
 
-  private fun GitLabServerPath.buildAuthorizationURI(requestId: String, redirectUri: String, codeVerifier: String): URI {
+  private fun GitLabServerPath.buildAuthorizationURI(requestId: String, clientId: String, redirectUri: String, codeVerifier: String): URI {
     val codeChallenge = DigestUtil.sha256().digest(codeVerifier.toByteArray())
     val codeChallengeEncoded = Base64.getUrlEncoder()
       .withoutPadding()
       .encodeToString(codeChallenge)
     return oauthUri.resolveRelative("authorize").withQuery {
-      "client_id" eq OAUTH_CLIENT_ID
+      "client_id" eq clientId
       "state" eq requestId
       "response_type" eq "code"
       "code_challenge" eq codeChallengeEncoded
@@ -86,13 +91,12 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
   }
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun refreshToken(server: GitLabServerPath, refreshToken: String): GitLabCredentials.OAuth {
-    check(server.isDefault)
+  suspend fun refreshToken(server: GitLabServerPath, refreshToken: String, oAuthClientId: String): GitLabCredentials.OAuth {
     val api = service<GitLabApiManager>().getUnauthenticatedClient(server)
     val uri = api.server.oauthUri.resolveRelative("token")
     val request = api.request(uri)
       .postForm {
-        "client_id" eq OAUTH_CLIENT_ID
+        "client_id" eq oAuthClientId
         "grant_type" eq "refresh_token"
         "refresh_token" eq refreshToken
         "redirect_uri" eq redirectUri
@@ -102,7 +106,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     return withContext(Dispatchers.IO) {
       api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
     }.let {
-      GitLabCredentials.OAuth.fromDTO(it)
+      GitLabCredentials.OAuth.fromDTO(it, oAuthClientId)
     }
   }
 
@@ -114,7 +118,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     context: ChannelHandlerContext,
     httpRequest: FullHttpRequest,
   ) {
-    val (server, codeVerifier, request) = requestId?.let { pendingLogins[it] }
+    val (server, clientId, codeVerifier, request) = requestId?.let { pendingLogins[it] }
                                           ?: return sendHTMLResponse(context, httpRequest, FAILURE_HTML)
     if (error != null) {
       val reason = errorDescription ?: error
@@ -127,7 +131,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     }
     cs.launch {
       val html = try {
-        val tokenResponse = exchangeCodeForToken(server, code, redirectUri, codeVerifier)
+        val tokenResponse = exchangeCodeForToken(server, clientId, code, redirectUri, codeVerifier)
         request.complete(tokenResponse)
         SUCCESS_HTML
       }
@@ -145,6 +149,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
 
   private suspend fun exchangeCodeForToken(
     serverPath: GitLabServerPath,
+    oAuthClientId: String,
     code: String,
     redirectUri: String,
     codeVerifier: String,
@@ -153,7 +158,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     val uri = api.server.oauthUri.resolveRelative("token")
     val request = api.request(uri)
       .postForm {
-        "client_id" eq OAUTH_CLIENT_ID
+        "client_id" eq oAuthClientId
         "grant_type" eq "authorization_code"
         "code" eq code
         "code_verifier" eq codeVerifier
@@ -165,7 +170,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     return withContext(Dispatchers.IO) {
       api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
     }.let {
-      GitLabCredentials.OAuth.fromDTO(it)
+      GitLabCredentials.OAuth.fromDTO(it, oAuthClientId)
     }
   }
 
@@ -206,6 +211,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
 
 private data class PendingLoginWithRequest(
   val serverPath: GitLabServerPath,
+  val oAuthClientId: String,
   val codeVerifier: String,
   val request: CompletableDeferred<GitLabCredentials.OAuth>,
 )

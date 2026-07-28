@@ -66,6 +66,7 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.JToggleButton
 import javax.swing.ListModel
 import javax.swing.border.Border
@@ -595,6 +596,18 @@ fun Cell<JBTextField>.bindTextIn(cs: CoroutineScope, flow: MutableStateFlow<Stri
     }
   })
 }
+
+fun Cell<ComboBox<String>>.bindComboBoxTextIn(cs: CoroutineScope, flow: MutableStateFlow<String>): Cell<ComboBox<String>> =
+  applyToComponent {
+    val editorField = editor.editorComponent as? JTextField ?: return@applyToComponent
+    editorField.bindTextIn(cs, flow)
+
+    editorField.document?.addDocumentListener(cs.asDisposable(), object : DocumentAdapter() {
+      override fun textChanged(e: javax.swing.event.DocumentEvent) {
+        flow.value = editorField.text.orEmpty()
+      }
+    })
+  }
 
 fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>): Cell<ComboBox<T>> = applyToComponent {
   model.bindSelectedItemIn(scope, flow)

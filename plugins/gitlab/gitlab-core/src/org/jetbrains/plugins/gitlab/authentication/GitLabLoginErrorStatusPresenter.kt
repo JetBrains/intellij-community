@@ -9,16 +9,12 @@ import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.net.ConnectException
 import javax.swing.Action
 
 internal class GitLabLoginErrorStatusPresenter(
-  private val cs: CoroutineScope,
-  private val model: GitLabTokenLoginPanelModel,
+  private val model: GitLabGitAuthorizationSignal,
   private val canLogInWithGit: Boolean,
 ) : ErrorStatusPresenter.HTML<Throwable> {
   override fun getErrorTitle(error: Throwable): String = ""
@@ -42,7 +38,7 @@ internal class GitLabLoginErrorStatusPresenter(
     if (error !is LoginException.UnsupportedServerVersion &&
         error !is LoginException.InvalidTokenOrUnsupportedServerVersion) return null
     return swingAction(CollaborationToolsBundle.message("login.via.git")) {
-      cs.launch { model.tryGitAuthorization() }
+      model.tryGitAuthorization()
     }
   }
 

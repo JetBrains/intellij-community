@@ -16,14 +16,20 @@ sealed class GitLabCredentials {
   abstract val accessToken: String
 
   @Serializable
-  class OAuth(override val accessToken: String, val refreshToken: String, val expiresIn: Int, private val createdAt: Long) :
+  class OAuth(
+    override val accessToken: String,
+    val refreshToken: String,
+    val clientId: String,
+    val expiresIn: Int,
+    private val createdAt: Long,
+  ) :
     GitLabCredentials() {
     fun isAccessTokenValid(): Boolean =
       Clock.System.now() < Instant.fromEpochSeconds(createdAt + expiresIn - ACCESS_TOKEN_EXPIRY_MARGIN_SECONDS)
 
     companion object {
-      fun fromDTO(dto: GitLabOAuthResponseDTO): OAuth = with(dto) {
-        OAuth(accessToken, refreshToken, expiresIn, createdAt)
+      fun fromDTO(dto: GitLabOAuthResponseDTO, clientId: String): OAuth = with(dto) {
+        OAuth(accessToken, refreshToken, clientId, expiresIn, createdAt)
       }
     }
   }
