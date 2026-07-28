@@ -32,5 +32,7 @@ internal class HatchPyProjectManager : PyProjectManager {
     rootIndex: Map<Directory, ProjectName>,
   ): ProjectStructureInfo? = null
 
-  override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = emptyList()
+  override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = listOf(
+    TomlDependencySpecification.GroupPep621Dependency("tool.hatch.envs", "dependencies"),
+  )
 }
