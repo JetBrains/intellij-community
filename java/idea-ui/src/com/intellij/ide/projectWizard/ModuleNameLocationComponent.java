@@ -221,7 +221,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
 
     myModuleContentRoot.addBrowseFolderListener(myWizardContext.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.title"))
-      .withDescription(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.description")));
+      .withDescription(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.description"))
+      .withEnvironmentRestricted(true));
 
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -277,7 +278,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
 
     myModuleFileLocation.addBrowseFolderListener(myWizardContext.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(JavaUiBundle.message("project.new.wizard.module.file.chooser.title"))
-      .withDescription(JavaUiBundle.message("project.new.wizard.module.file.description")));
+      .withDescription(JavaUiBundle.message("project.new.wizard.module.file.description"))
+      .withEnvironmentRestricted(true));
     myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(final @NotNull DocumentEvent e) {
