@@ -3,6 +3,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.junit5.RunInEdt;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.TestDisposable;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunInEdt
 @TestApplication
+@SkipInHeadlessEnvironment
 public class WindowTabsComponentTest {
   @Test
   void insertingExistingFrameDoesNotCreateDuplicate(@TestDisposable Disposable disposable) {
