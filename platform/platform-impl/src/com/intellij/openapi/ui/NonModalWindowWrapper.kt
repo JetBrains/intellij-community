@@ -263,6 +263,13 @@ abstract class NonModalWindowWrapper(
    */
   private fun fitWindowToScreen(window: Window) {
     clampMinimumSizeToScreen(window)
+    window.bounds = fitBoundsToScreen(window.bounds)
+  }
+
+  private fun fitBoundsToScreen(bounds: Rectangle): Rectangle {
+    val rect = Rectangle(bounds)
+    ScreenUtil.fitToScreen(rect)
+    return rect
   }
 
   /**
@@ -346,25 +353,22 @@ abstract class NonModalWindowWrapper(
     }
 
     override fun setSize(width: Int, height: Int) {
-      val rect = Rectangle(location.x, location.y, width, height)
-      ScreenUtil.fitToScreen(rect)
-      super.setSize(rect.width, rect.height)
+      val rect = fitBoundsToScreen(Rectangle(location.x, location.y, width, height))
       if (location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y)
       }
+      super.setSize(rect.width, rect.height)
     }
 
     override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
       clampMinimumSizeToScreen(this)
-      val rect = Rectangle(x, y, width, height)
-      ScreenUtil.fitToScreen(rect)
+      val rect = fitBoundsToScreen(Rectangle(x, y, width, height))
       super.setBounds(rect.x, rect.y, rect.width, rect.height)
     }
 
     override fun setBounds(r: Rectangle) {
       clampMinimumSizeToScreen(this)
-      ScreenUtil.fitToScreen(r)
-      super.setBounds(r)
+      super.setBounds(fitBoundsToScreen(r))
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -378,25 +382,22 @@ abstract class NonModalWindowWrapper(
     }
 
     override fun setSize(width: Int, height: Int) {
-      val rect = Rectangle(location.x, location.y, width, height)
-      ScreenUtil.fitToScreen(rect)
-      super.setSize(rect.width, rect.height)
+      val rect = fitBoundsToScreen(Rectangle(location.x, location.y, width, height))
       if (location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y)
       }
+      super.setSize(rect.width, rect.height)
     }
 
     override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
       clampMinimumSizeToScreen(this)
-      val rect = Rectangle(x, y, width, height)
-      ScreenUtil.fitToScreen(rect)
+      val rect = fitBoundsToScreen(Rectangle(x, y, width, height))
       super.setBounds(rect.x, rect.y, rect.width, rect.height)
     }
 
     override fun setBounds(r: Rectangle) {
       clampMinimumSizeToScreen(this)
-      ScreenUtil.fitToScreen(r)
-      super.setBounds(r)
+      super.setBounds(fitBoundsToScreen(r))
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
