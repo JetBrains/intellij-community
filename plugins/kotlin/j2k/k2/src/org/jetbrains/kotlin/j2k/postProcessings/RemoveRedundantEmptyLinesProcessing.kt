@@ -25,33 +25,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * because such lines may be introduced rather randomly from various other processings.
  */
 class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
-    override fun runProcessing(elements: List<PsiElement>) {
-        val containers = runReadAction {
-            elements.descendantsOfType<KtBlockExpression>() +
-                    elements.descendantsOfType<KtClassBody>() +
-                    elements.descendantsOfType<KtFunctionLiteral>()
-        }
-
-        if (containers.isEmpty()) return
-        val factory = runReadAction { KtPsiFactory(containers.first().project) }
-
-        for (container in containers) {
-            val (firstWhitespace, lastWhitespace) = runReadAction {
-                container.firstChild?.nextSibling as? PsiWhiteSpace to container.lastChild?.prevSibling as? PsiWhiteSpace
-            }
-            firstWhitespace?.removeRedundantEmptyLines(factory)
-            lastWhitespace?.removeRedundantEmptyLines(factory)
-        }
-    }
-
-    private fun PsiWhiteSpace.removeRedundantEmptyLines(factory: KtPsiFactory) {
-        if (StringUtil.getLineBreakCount(text) > 1) {
-            runUndoTransparentActionInEdt(inWriteAction = true) {
-                this.replace(factory.createNewLine())
-            }
-        }
-    }
-
     override fun computeApplier(elements: List<PsiElement>): PostProcessingApplier {
         val containers = elements.descendantsOfType<KtBlockExpression>() +
                 elements.descendantsOfType<KtClassBody>() +

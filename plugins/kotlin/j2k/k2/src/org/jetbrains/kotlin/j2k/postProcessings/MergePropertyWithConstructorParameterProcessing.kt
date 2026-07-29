@@ -70,22 +70,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * TODO convert everything to element pointers
  */
 class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>) {
-        val ktElement = elements.firstIsInstanceOrNull<KtElement>() ?: return
-        val context = runReadAction {
-            allowAnalysisOnEdt {
-                analyze(ktElement) {
-                    prepareContext(elements)
-                }
-            }
-        }
-
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            Applier(context).apply()
-        }
-    }
-
     override fun computeApplier(elements: List<PsiElement>): PostProcessingApplier {
         val context = prepareContext(elements)
         return Applier(context)

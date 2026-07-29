@@ -26,10 +26,6 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     private val diagnosticToProcessing: Map<KClass<out KaDiagnosticWithPsi<*>>, K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>> =
         diagnosticBasedProcessings.associateBy({ it.diagnosticClass }, { it })
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
-        error("Not supported in K2 J2K")
-    }
-
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,

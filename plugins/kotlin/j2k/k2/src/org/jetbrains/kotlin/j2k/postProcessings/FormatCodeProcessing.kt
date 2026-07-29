@@ -13,19 +13,6 @@ import org.jetbrains.kotlin.j2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
 class FormatCodeProcessing : FileBasedPostProcessing() {
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
-        val codeStyleManager = CodeStyleManager.getInstance(file.project)
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            // TODO investigate why one formatting pass is not enough in some cases (KTIJ-29962)
-            repeat(2) {
-                when {
-                    rangeMarker == null -> codeStyleManager.reformat(file)
-                    rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
-                }
-            }
-        }
-    }
-
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,

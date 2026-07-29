@@ -19,16 +19,6 @@ import org.jetbrains.kotlin.psi.KtFile
 
 // TODO is it necessary to use `JKImportStorage.isImportNeededForCall`, like in K1?
 internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
-        val range = runReadAction {
-            if (rangeMarker != null && rangeMarker.isValid) rangeMarker.textRange else file.textRange
-        }
-
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            ShortenReferencesFacility.getInstance().shorten(file, range)
-        }
-    }
-
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
