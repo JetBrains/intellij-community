@@ -1627,7 +1627,9 @@ class ListPluginComponent(
     }
 
     fun setProgressComponent(progressComponent: JComponent) {
-      if (myProgressComponent != null) return
+      if (myProgressComponent != null) {
+        remove(myProgressComponent)
+      }
       myProgressComponent = progressComponent
       add(progressComponent)
 
