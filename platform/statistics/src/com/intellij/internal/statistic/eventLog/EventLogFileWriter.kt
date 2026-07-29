@@ -44,7 +44,6 @@ open class EventLogFileWriter(
   private val lock = Any() // protects all mutable fields
   private val currentFileData: FileData by lazy { FileData(dir, logFilePathProvider) }
   private var closed = false
-  @Volatile
   protected var oldestExistingFile = -1L
   private var logFilesSupplier: Supplier<List<File>> = Supplier {
     val files = dir.toFile().listFiles()
@@ -132,36 +131,38 @@ open class EventLogFileWriter(
   }
 
   protected open fun cleanUpOldFiles(oldestAcceptable: Long) {
-    val logs = logFilesSupplier.get()
-    if (logs.isEmpty()) {
-      return
-    }
-    val now = System.currentTimeMillis()
-    val activeLog = getActiveLogName()
-    var oldestFile: Long = -1
-    var failedDeletingFiles = 0
-    for (file in logs) {
-      if (StringUtil.equals(file.name, activeLog)) continue
-      val lastModified = file.lastModified()
-      if (lastModified < oldestAcceptable) {
-        val sizeBytes = file.length()
-        val buildType = EventLogFile(file).getType()
-        val firstEventMs = getFirstEventMs(file)
-        if (!file.delete()) {
-          System.err.println("Failed deleting old FUS file $file")
-          failedDeletingFiles ++
+    synchronized(lock) {
+      val logs = logFilesSupplier.get()
+      if (logs.isEmpty()) {
+        return
+      }
+      val now = System.currentTimeMillis()
+      val activeLog = getActiveLogName()
+      var oldestFile: Long = -1
+      var failedDeletingFiles = 0
+      for (file in logs) {
+        if (StringUtil.equals(file.name, activeLog)) continue
+        val lastModified = file.lastModified()
+        if (lastModified < oldestAcceptable) {
+          val sizeBytes = file.length()
+          val buildType = EventLogFile(file).getType()
+          val firstEventMs = getFirstEventMs(file)
+          if (!file.delete()) {
+            System.err.println("Failed deleting old FUS file $file")
+            failedDeletingFiles ++
+          }
+          else {
+            val ageMs = if (firstEventMs > 0) now - firstEventMs else -1L
+            logDeletedFile(ageMs, now - lastModified, sizeBytes, buildType)
+          }
         }
-        else {
-          val ageMs = if (firstEventMs > 0) now - firstEventMs else -1L
-          logDeletedFile(ageMs, now - lastModified, sizeBytes, firstEventMs, lastModified, buildType)
+        else if (lastModified < oldestFile || oldestFile == -1L) {
+          oldestFile = lastModified
         }
       }
-      else if (lastModified < oldestFile || oldestFile == -1L) {
-        oldestFile = lastModified
-      }
+      oldestExistingFile = oldestFile
+      eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
     }
-    oldestExistingFile = oldestFile
-    eventLogSystemCollector?.logDeletedFilesCalculated(logs.size, logs.size - failedDeletingFiles, failedDeletingFiles)
   }
 
   /** Logs a single file removed by [cleanUpOldFiles]. Overridable so tests can capture the reported metrics. */
@@ -169,11 +170,9 @@ open class EventLogFileWriter(
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
-    firstEventMs: Long,
-    lastEventMs: Long,
     buildType: EventLogBuildType,
   ) {
-    eventLogSystemCollector?.logFileDeleted(ageMs, queuedMs, sizeBytes, firstEventMs, lastEventMs, buildType)
+    eventLogSystemCollector?.logFileDeleted(ageMs, queuedMs, sizeBytes, buildType)
   }
 
   /**

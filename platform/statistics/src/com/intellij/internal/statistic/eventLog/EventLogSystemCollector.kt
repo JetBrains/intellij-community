@@ -104,8 +104,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   private val fileDeletedEvent = GROUP.registerVarargEvent(
     "logs.file.deleted",
-    deletedFileAgeMsField, deletedFileQueuedMsField, deletedFileSizeBytesField, deletedFileFirstEventMsField,
-    deletedFileLastEventMsField, deletedFileBuildTypeField
+    deletedFileAgeMsField, deletedFileQueuedMsField, deletedFileSizeBytesField, deletedFileBuildTypeField
   )
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
@@ -175,16 +174,12 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
-    firstEventMs: Long,
-    lastEventMs: Long,
     buildType: EventLogBuildType,
   ) {
     fileDeletedEvent.log(
       deletedFileAgeMsField.with(ageMs),
       deletedFileQueuedMsField.with(queuedMs),
       deletedFileSizeBytesField.with(sizeBytes),
-      deletedFileFirstEventMsField.with(firstEventMs),
-      deletedFileLastEventMsField.with(lastEventMs),
       deletedFileBuildTypeField.with(buildType),
     )
   }
@@ -273,8 +268,6 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val deletedFileAgeMsField = EventFields.Long("deleted_file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
     private val deletedFileQueuedMsField = EventFields.Long("deleted_file_queued_ms", "How long the deleted file waited since its last write before being deleted: now minus last modified time, in milliseconds")
     private val deletedFileSizeBytesField = EventFields.Long("deleted_file_size_bytes", "Size of the deleted file in bytes")
-    private val deletedFileFirstEventMsField = EventFields.Long("deleted_file_first_event_ms", "Timestamp of the oldest event in the deleted file, in milliseconds")
-    private val deletedFileLastEventMsField = EventFields.Long("deleted_file_last_event_ms", "Timestamp of the newest event in the deleted file (its last modified time), in milliseconds")
     private val deletedFileBuildTypeField = EventFields.Enum<EventLogBuildType>("deleted_file_build_type", "Build type (EAP, RELEASE, etc.)")
   }
 }

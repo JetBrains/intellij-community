@@ -242,8 +242,6 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(1000L, report.firstEventMs)
-      assertEquals(file.lastModified(), report.lastEventMs)
       assertEquals(file.length(), report.sizeBytes)
       assertEquals(EventLogBuildType.EAP, report.buildType)
       assertTrue { report.ageMs > 0 }
@@ -260,8 +258,8 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(2000L, report.firstEventMs)
       assertEquals(EventLogBuildType.RELEASE, report.buildType)
+      assertTrue("blank lines are skipped, so the oldest event is found and age is positive") { report.ageMs > 0 }
     }
   }
 
@@ -274,7 +272,6 @@ class EventLogFileWriterTest {
       fileWriter.cleanUpOldFiles()
 
       val report = fileWriter.deletedReports.single()
-      assertEquals(-1L, report.firstEventMs)
       assertEquals(-1L, report.ageMs)
     }
   }
@@ -324,11 +321,9 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
     ageMs: Long,
     queuedMs: Long,
     sizeBytes: Long,
-    firstEventMs: Long,
-    lastEventMs: Long,
     buildType: EventLogBuildType,
   ) {
-    deletedReports.add(DeletedFileReport(ageMs, queuedMs, sizeBytes, firstEventMs, lastEventMs, buildType))
+    deletedReports.add(DeletedFileReport(ageMs, queuedMs, sizeBytes, buildType))
   }
 
   override fun getActiveLogName(): String {
@@ -340,8 +335,6 @@ data class DeletedFileReport(
   val ageMs: Long,
   val queuedMs: Long,
   val sizeBytes: Long,
-  val firstEventMs: Long,
-  val lastEventMs: Long,
   val buildType: EventLogBuildType,
 )
 
