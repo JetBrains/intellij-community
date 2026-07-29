@@ -3,6 +3,7 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.types.PyTypeFormType
 import org.junit.jupiter.api.Nested
@@ -32,6 +33,52 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def f(x: TypeForm[int | str]):
           y = x
       #   └ TYPE TypeForm[int | str]
+      """)
+
+
+    // PEP 747: bare `TypeForm` is equivalent to `TypeForm[Any]`. The `PyTypeHintsInspection` diagnostic on the
+    // bare form is out of scope here; this checks only the inferred type.
+    @Test
+    fun `bare TypeForm resolves to TypeForm of Any`() = test(
+      defaultTestOptions.copy(disableInspections = setOf(PyTypeHintsInspection::class.java)), """
+      from typing_extensions import TypeForm
+
+      def f(x: TypeForm):
+          y = x
+      #   └ TYPE TypeForm[Any]
+      """)
+
+    @Test
+    fun `explicit TypeForm of Any resolves to TypeForm of Any`() = test("""
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      def f(x: TypeForm[Any]):
+          y = x
+      #   └ TYPE TypeForm[Any]
+      """)
+
+    // Same, but with the `python.type.any` engine off (the production default), where the represented type is
+    // `null` rather than the explicit `PyAnyType.Any`. Both must still render as `TypeForm[Any]`.
+    @Test
+    fun `bare TypeForm resolves to TypeForm of Any with the legacy engine`() = test(
+      defaultTestOptions.copy(enablePyAnyType = false, disableInspections = setOf(PyTypeHintsInspection::class.java)), """
+      from typing_extensions import TypeForm
+
+      def f(x: TypeForm):
+          y = x
+      #   └ TYPE TypeForm[Any]
+      """)
+
+    @Test
+    fun `explicit TypeForm of Any resolves to TypeForm of Any with the legacy engine`() = test(
+      defaultTestOptions.copy(enablePyAnyType = false), """
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      def f(x: TypeForm[Any]):
+          y = x
+      #   └ TYPE TypeForm[Any]
       """)
   }
 
@@ -160,6 +207,33 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeForm
 
       x: TypeForm[Any] = "int"
+      """)
+
+    @Test
+    fun `class object is assignable to TypeForm of Any`() = test("""
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      x: TypeForm[Any] = int
+      """)
+
+    // PEP 747: `TypeForm[Any]` is assignable both to and from any other `TypeForm` type.
+    @Test
+    fun `TypeForm of Any is assignable to a specific TypeForm`() = test("""
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      def use(a: TypeForm[Any]):
+          x: TypeForm[int] = a
+      """)
+
+    @Test
+    fun `specific TypeForm is assignable to TypeForm of Any`() = test("""
+      from typing import Any
+      from typing_extensions import TypeForm
+
+      def use(a: TypeForm[int]):
+          x: TypeForm[Any] = a
       """)
 
     @Test

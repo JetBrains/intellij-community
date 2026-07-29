@@ -669,7 +669,7 @@ private object ConstraintReducer {
   }
 
   /** Reduces a PEP 747 `TypeForm` constraint to a constraint between the represented types. */
-  private fun reduceTypeFormType(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
+  private fun reduceTypeFormType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
     val leftRepr = PyTypeFormType.representedTypeOf(left)
     val rightRepr = PyTypeFormType.representedTypeOf(right)
     if (leftRepr == null || rightRepr == null) {
