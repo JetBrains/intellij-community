@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.EnvironmentScanner
+import com.intellij.openapi.util.EnvironmentScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
