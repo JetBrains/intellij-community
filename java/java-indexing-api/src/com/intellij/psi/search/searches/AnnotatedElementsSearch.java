@@ -2,6 +2,7 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
@@ -13,13 +14,16 @@ import com.intellij.util.InstanceofQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   public static final ExtensionPointName<QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters>> EP_NAME = ExtensionPointName.create("com.intellij.annotatedElementsSearch");
   public static final AnnotatedElementsSearch INSTANCE = new AnnotatedElementsSearch();
 
   public static class Parameters {
-    private final PsiClass myAnnotationClass;
+    private final @Nullable PsiClass myAnnotationClass;
+    private final @Nullable String myAnnotationName;
+    private final @NotNull Project myProject;
     private final SearchScope myScope;
     private final Class<? extends PsiModifierListOwner>[] myTypes;
     private final boolean myApproximate;
@@ -32,13 +36,48 @@ public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiMod
     @SafeVarargs
     public Parameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, boolean approximate, @NotNull Class<? extends PsiModifierListOwner> @NotNull ... types) {
       myAnnotationClass = annotationClass;
+      myAnnotationName = null;
+      myProject = myAnnotationClass.getProject();
       myScope = scope;
       myTypes = types;
       myApproximate = approximate;
     }
 
-    public @NotNull PsiClass getAnnotationClass() {
+    /**
+     * Searches for elements annotated with an annotation of the given fully qualified name, regardless of which particular
+     * {@link PsiClass} that name resolves to. This is important when the same annotation is present on the classpath in
+     * several jars (e.g. different library versions): matching by name rather than by resolved class makes the result
+     * deterministic and independent of the resolve outcome.
+     */
+    @SafeVarargs
+    public Parameters(@NotNull Project project, @NotNull String annotationFQN, @NotNull SearchScope scope, boolean approximate,
+                      @NotNull Class<? extends PsiModifierListOwner> @NotNull ... types) {
+      myAnnotationClass = null;
+      myAnnotationName = annotationFQN;
+      myProject = project;
+      myScope = scope;
+      myTypes = types;
+      myApproximate = approximate;
+    }
+
+    /**
+     * @return the annotation class the search was set up with, or {@code null} if it was set up with a bare fully qualified name
+     * (see {@link #getAnnotationName()}).
+     */
+    public @Nullable PsiClass getAnnotationClass() {
       return myAnnotationClass;
+    }
+
+    /**
+     * @return the fully qualified name the search was set up with, or {@code null} if it was set up with a {@link PsiClass}
+     * (in which case the name should be derived from {@link #getAnnotationClass()}).
+     */
+    public @Nullable String getAnnotationName() {
+      return myAnnotationName;
+    }
+
+    public @NotNull Project getProject() {
+      return myProject;
     }
 
     public @NotNull SearchScope getScope() {
@@ -76,6 +115,17 @@ public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiMod
 
   public static @NotNull Query<PsiClass> searchPsiClasses(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
      return searchElements(annotationClass, scope, PsiClass.class);
+  }
+
+  /**
+   * Searches for classes annotated with an annotation of the given fully qualified name, regardless of which particular
+   * {@link PsiClass} that name resolves to (and even if it does not resolve to any class present in the project).
+   *
+   * @see Parameters#Parameters(Project, String, SearchScope, boolean, Class[])
+   */
+  public static @NotNull Query<PsiClass> searchPsiClasses(@NotNull Project project, @NotNull String annotationFQN, @NotNull SearchScope scope) {
+    //noinspection unchecked
+    return (Query<PsiClass>)searchElements(new Parameters(project, annotationFQN, scope, false, PsiClass.class));
   }
 
   public static @NotNull Query<PsiMethod> searchPsiMethods(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
