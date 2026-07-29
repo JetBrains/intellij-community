@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -131,7 +130,7 @@ data class PyProjectToml(
       return readAction {
         val psiFile = PsiManager.getInstance(project).findFile(pyProjectFile) ?: return@readAction null
         CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, {
-          CachedValueProvider.Result.create(parse(pyProjectFile.readText()), pyProjectFile)
+          CachedValueProvider.Result.create(parse(psiFile.text), psiFile)
         }, false)
       }
     }

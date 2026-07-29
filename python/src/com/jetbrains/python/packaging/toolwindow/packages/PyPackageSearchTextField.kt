@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.jetbrains.python.PyBundle
@@ -36,6 +37,7 @@ internal class PyPackageSearchTextField(private val project: Project) : Extendab
 
   init {
     emptyText.text = PyBundle.message("python.toolwindow.packages.search.text.placeholder")
+    TextComponentEmptyText.setupPlaceholderVisibility(this)
 
     addExtension(object : ExtendableTextComponent.Extension {
       override fun getIcon(hovered: Boolean) = AllIcons.Actions.Search

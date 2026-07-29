@@ -121,6 +121,8 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   private var balloonFullSize: Dimension? = null
   private var collapsedSize: Dimension? = null
 
+  private var isOpeningFileBrowser = false
+
   override fun createList(): JBList<Any> = resultsList.list
 
   override fun createCellRenderer(): ListCellRenderer<Any> = resultsList.renderer
@@ -206,7 +208,8 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       .createComponentPopupBuilder(this, mySearchField)
       .setProject(project)
       .setModalContext(false)
-      .setCancelOnWindowDeactivation(false)
+      .setCancelOnWindowDeactivation(true)
+      .setCancelCallback { !isOpeningFileBrowser }
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setResizable(true)
@@ -421,8 +424,14 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   }
 
   private fun openFileBrowser() {
-    val file = FileChooser.chooseFile(packageFileDescriptor, project, null)
-    if (file != null) mySearchField.text = file.path
+    isOpeningFileBrowser = true
+    try {
+      val file = FileChooser.chooseFile(packageFileDescriptor, project, null)
+      if (file != null) mySearchField.text = file.path
+    }
+    finally {
+      isOpeningFileBrowser = false
+    }
   }
 
   private fun setupSearchListener() {

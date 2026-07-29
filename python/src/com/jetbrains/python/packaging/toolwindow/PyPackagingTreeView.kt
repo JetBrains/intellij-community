@@ -260,11 +260,10 @@ internal class PyPackagingTreeView(
 
   private fun createNewRepository(repository: PyPackageRepository, items: List<DisplayablePackage>, moreItems: Int, sortedAll: List<DisplayablePackage>) {
     val newTree = PyPackagesTree(project, controller)
-    newTree.items = items
-    if (sortedAll.size > items.size) newTree.primeSortedMatches(sortedAll)
-    newTree.pendingMore = moreItems
     val newTreeGroup = PyPackagingTreeGroup(repository, newTree, container, showHeader = true, useTreeNodeHeader = true)
     newTreeGroup.items = items
+    if (sortedAll.size > items.size) newTree.primeSortedMatches(sortedAll)
+    newTree.pendingMore = moreItems
     repositories.add(newTreeGroup)
     newTreeGroup.addTo(uninstalledContainerPanel)
     newTree.addTreeSelectionListener {

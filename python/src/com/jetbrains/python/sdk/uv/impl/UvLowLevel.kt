@@ -163,7 +163,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe", "--all-groups")
       .getOr { return it }
 
     return PyExecResult.success(out)
