@@ -1174,10 +1174,9 @@ com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImp
 com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolver
 - sf:Companion:com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolver$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:findModule(com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,java.lang.String):com.intellij.openapi.module.Module
 - a:resolveModule(com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,java.lang.String):com.intellij.openapi.module.Module
 f:com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolver$Companion
-f:com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolverService
-- <init>():V
 - f:findModule(com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,java.lang.String):com.intellij.openapi.module.Module
 a:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 - p:state:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State
