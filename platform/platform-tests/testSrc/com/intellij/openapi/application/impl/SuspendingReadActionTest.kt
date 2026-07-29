@@ -598,10 +598,9 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
         yield()
       }
-      if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
-        System.err.println("Thread dump: ${ThreadDumper.dumpForDebug()}")
-      }
-      assertFalse { ApplicationManagerEx.getApplicationEx().isWriteActionInProgress() }
+      assertFalse(ApplicationManagerEx.getApplicationEx().isWriteActionInProgress(), {
+        "Expected write action not running. Dump:\n${ThreadDumper.dumpForDebug()}"
+      })
       runReadActionBlocking {
         assertTrue(writeActionExecuted.get(), "Write action should be executed at this point")
         checkpoint(8)
