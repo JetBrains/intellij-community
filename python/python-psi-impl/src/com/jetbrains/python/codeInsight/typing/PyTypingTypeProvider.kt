@@ -97,7 +97,6 @@ import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
-import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -277,7 +276,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val callee = call.callee
       if (callee != null && isTypeForm(resolveToQualifiedNames(callee, context.typeContext), callee)) {
         val typeForm = createTypeFormType(call, call.arguments.firstOrNull(), context) ?: return null
-        return Ref.create<PyCallableType?>(PyCallableTypeImpl(null as List<PyCallableParameter>?, typeForm))
+        // A single parameter, so that the regular argument-list checks report a wrong number of arguments.
+        val parameter = PyCallableParameterImpl.nonPsi(PyAnyType.any)
+        return Ref.create<PyCallableType?>(PyCallableTypeImpl(listOf(parameter), typeForm))
       }
     }
     return null

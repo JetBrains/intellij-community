@@ -139,6 +139,30 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       x: TypeForm[int | str] = TypeForm(int)
       """)
+
+    // The synthesized callable takes exactly one parameter, so the regular argument-list checks cover the arity.
+    @Test
+    fun `explicit TypeForm constructor requires an argument`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm()
+      #            └ WARNING No signature matches the arguments. Argument types: (). Expected one of: (Any)
+      """)
+
+    @Test
+    fun `explicit TypeForm constructor rejects extra arguments`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm(int, str)
+      #                 ^^^ WARNING Unexpected argument
+      """)
+
+    @Test
+    fun `explicit TypeForm constructor accepts exactly one argument`() = test("""
+      from typing_extensions import TypeForm
+
+      x = TypeForm(int)
+      """)
   }
 
   @Nested
