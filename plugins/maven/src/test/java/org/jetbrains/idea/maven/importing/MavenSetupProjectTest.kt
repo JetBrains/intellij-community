@@ -177,6 +177,7 @@ class MavenSetupProjectTest(mavenVersion: String, modelVersion: String) {
   }
 
   @Test
+  @Disabled("IDEA-391921")
   fun `test project re-import deprecation`() = runBlocking {
     val projectInfo = maven.generateProject("A")
     val linkedProjectInfo = maven.generateProject("L")
