@@ -5,12 +5,14 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.Assert
 
 class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtureTestCase() {
@@ -70,7 +72,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
   fun `test class in transitive dependency module - no error`() {
     val transitiveModule = addModuleWithSourceRoot("transitiveModule")
     val directDepModule = addModuleWithSourceRoot("directDepModule")
-    ModuleRootModificationUtil.addDependency(directDepModule, transitiveModule, com.intellij.openapi.roots.DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(directDepModule, transitiveModule, DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(myFixture.module, directDepModule)
     myFixture.addFileToProject(
       "transitiveModule/com/example/TransitiveAction.java",
@@ -364,6 +366,79 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     testHighlighting(testedFile)
   }
 
+  fun `test class in test-dependency module - no error when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val testDepModule = addModuleWithSourceRoot("testDepModule")
+    ModuleRootModificationUtil.addDependency(myFixture.module, testDepModule, DependencyScope.TEST, false)
+    myFixture.addFileToProject(
+      "testDepModule/com/example/TestDepTopic.java",
+      //language=JAVA
+      "package com.example; public interface TestDepTopic {}"
+    )
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="com.example.TestDepTopic"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in unrelated module - error when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    addModuleWithSourceRoot("unrelatedModule")
+    myFixture.addFileToProject(
+      "unrelatedModule/com/example/UnrelatedTopic.java",
+      //language=JAVA
+      "package com.example; public interface UnrelatedTopic {}"
+    )
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.UnrelatedTopic' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.UnrelatedTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in test-dependency module - error when plugin xml is in production source root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val testDepModule = addModuleWithSourceRoot("testDepModule")
+    ModuleRootModificationUtil.addDependency(myFixture.module, testDepModule, DependencyScope.TEST, false)
+    myFixture.addFileToProject(
+      "testDepModule/com/example/TestDepTopic.java",
+      //language=JAVA
+      "package com.example; public interface TestDepTopic {}"
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.TestDepTopic' (module 'testDepModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.TestDepTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
   fun `test quick fix adds module dependency for unreachable class`() {
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class ActionGroup extends AnAction {}")
     val unrelatedModule = addModuleWithSourceRoot("unrelatedModule")
@@ -507,7 +582,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
   fun `test quick fix adds plugin descriptor dependency - v2 descriptor content module`() {
     val unrelatedModule = addModuleWithSourceRoot("unrelatedModule")
     val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("unrelatedModule/resources")
-    PsiTestUtil.addSourceRoot(unrelatedModule, resourceRoot, org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE)
+    PsiTestUtil.addSourceRoot(unrelatedModule, resourceRoot, JavaResourceRootType.RESOURCE)
     myFixture.addFileToProject(
       "unrelatedModule/com/example/UnreachableInterface.java",
       //language=JAVA

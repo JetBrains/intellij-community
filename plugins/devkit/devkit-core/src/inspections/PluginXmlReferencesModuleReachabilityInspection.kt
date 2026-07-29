@@ -46,7 +46,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
     val value = element.value
     if (value is PsiClass) {
       if (isClassRegistration(element)) return // handled by ComponentModuleRegistrationChecker
-      if (!isReachableFromModule(value, module)) {
+      if (!isReachableFromModule(element, value, module)) {
         val referencedClassName = value.qualifiedName ?: value.name ?: ""
         holder.reportUnreachableClassProblem(
           element, value, referencedClassName, module.name, "inspection.plugin.xml.references.module.reachability.class"
@@ -59,7 +59,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
       val target = ref.resolve() ?: continue
       when (ref) {
         is ActionOrGroupIdReference -> {
-          if (!isReachableFromModule(target, module)) {
+          if (!isReachableFromModule(element, target, module)) {
             holder.reportUnreachableClassProblem(
               element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.action.or.group"
             )
@@ -67,7 +67,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         }
 
         is ResourceBundleReference -> {
-          if (!isReachableFromModule(target, module)) {
+          if (!isReachableFromModule(element, target, module)) {
             holder.reportUnreachableClassProblem(
               element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.bundle"
             )
@@ -77,9 +77,11 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
     }
   }
 
-  private fun isReachableFromModule(target: PsiElement, module: Module): Boolean {
+  private fun isReachableFromModule(element: GenericDomValue<*>, target: PsiElement, module: Module): Boolean {
     val targetFile = PsiUtilCore.getVirtualFile(target) ?: return true
-    return GlobalSearchScope.moduleRuntimeScope(module, false).contains(targetFile)
+    val elementFile = DomUtil.getFile(element).virtualFile
+    val includeTests = elementFile != null && ProjectFileIndex.getInstance(module.project).isInTestSourceContent(elementFile)
+    return GlobalSearchScope.moduleRuntimeScope(module, includeTests).contains(targetFile)
   }
 
   private fun DomElementAnnotationHolder.reportUnreachableClassProblem(
