@@ -34,6 +34,7 @@ f:org.jetbrains.jewel.ui.component.DropdownKt
 *f:org.jetbrains.jewel.ui.component.FixedCursorPoint
 - androidx.compose.foundation.TooltipPlacement
 - sf:$stable:I
+- <init>():V
 - b:<init>(J,androidx.compose.ui.Alignment,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - positionProvider-9KIMszo(J,androidx.compose.runtime.Composer,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.LazyTreeKt
