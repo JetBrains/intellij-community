@@ -1463,6 +1463,24 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(1, myFixture.filterAvailableIntentions("Import class").size());
   }
 
+  public void testDoNotImportClassForAmbiguousStaticReference() {
+    myFixture.addClass("package amb; public enum Bar { CONST }");
+    myFixture.addClass("package amb; public enum Foo { CONST }");
+    myFixture.addClass("package amb; public class CONST {}");
+    myFixture.configureByText("Usage.java", """
+      import static amb.Bar.*;
+      import static amb.Foo.*;
+
+      class Usage {
+        void m() {
+          CO<caret>NST;
+        }
+      }
+      """);
+    myFixture.doHighlighting();
+    assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
+  }
+
   public void testPreviewForFileTheReferenceDoesNotBelongTo() {
     myFixture.configureByText("a.java", """
       public class Foo {

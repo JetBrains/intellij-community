@@ -35,6 +35,7 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.pom.java.JavaFeature;
@@ -148,12 +149,15 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     if (PsiUtil.isModuleFile(containingFile)) return null;
     if (ref.getParent() instanceof PsiMethodCallExpression) return null;
     SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer = SmartPointerManager.createPointer(ref);
+    JavaErrorKind<?, ?> kind = error.kind();
     return sink -> {
       PsiJavaCodeReferenceElement newRef = pointer.getElement();
       if (newRef == null) return;
       sink.accept(new StaticImportConstantFix(containingFile, newRef));
       sink.accept(new QualifyStaticConstantFix(containingFile, newRef));
-      sink.accept(new ImportClassFix(newRef));
+      if (kind != JavaErrorKinds.EXPRESSION_EXPECTED && kind != JavaErrorKinds.REFERENCE_AMBIGUOUS) {
+        sink.accept(new ImportClassFix(newRef));
+      }
     };
   }
 
