@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
 internal class KotlinGeneratedSourcesFilter : GeneratedSourcesFilter() {
@@ -16,9 +16,7 @@ internal class KotlinGeneratedSourcesFilter : GeneratedSourcesFilter() {
     ): Boolean {
         if (!file.isKotlinFileType()) return false
 
-        val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
-        val contentFileSetRoot =
-            workspaceFileIndex.getContentFileSetRoot(file, true) ?: return false
+        val contentFileSetRoot = file.getSourceRoot(project) ?: return false
 
         val moduleSourceRoot = ProjectRootsUtil.getModuleSourceRoot(contentFileSetRoot, project)
         val properties =
