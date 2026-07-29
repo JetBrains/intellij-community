@@ -222,25 +222,39 @@ private fun getUvDependencies(
   val workspaceDeps = mutableListOf<ProjectName>()
   val pathDeps = hashSetOf<Path>()
   for ((sourcesTable, ownerRoot) in sourcesTablesWithRoots) {
-    for ((sourceKey, depTable) in sourcesTable.toMap().entries) {
+    for ((sourceKey, sourceValue) in sourcesTable.toMap().entries) {
       val normalizedKey = PyPackageName.normalizeProjectName(sourceKey)
       val depName = depByNormalizedName[normalizedKey] ?: continue
-      val table = depTable as? TomlTable ?: continue
 
-      // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
-      if (table.safeGet<Boolean>("workspace").successOrNull == true) {
-        workspaceDeps.add(ProjectName(depName))
-        depByNormalizedName.remove(normalizedKey)
+      // A source entry is either a single table or an array of tables (multiple sources selected by
+      // platform marker — a valid uv feature); resolve every table it contains (PY-91195).
+      val depTables = when (sourceValue) {
+        is TomlTable -> listOf(sourceValue)
+        is TomlArray -> sourceValue.toList().filterIsInstance<TomlTable>()
+        else -> continue
       }
-      else {
-        val path = table.safeGet<String>("path").successOrNull ?: continue
-        try {
-          pathDeps.add(ownerRoot.resolve(path).normalize())
-          depByNormalizedName.remove(normalizedKey)
+
+      var resolved = false
+      for (table in depTables) {
+        // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
+        if (table.safeGet<Boolean>("workspace").successOrNull == true) {
+          workspaceDeps.add(ProjectName(depName))
+          resolved = true
         }
-        catch (e: InvalidPathException) {
-          logger.info("Can't resolve $path against $ownerRoot", e)
+        else {
+          val path = table.safeGet<String>("path").successOrNull ?: continue
+          try {
+            pathDeps.add(ownerRoot.resolve(path).normalize())
+            resolved = true
+          }
+          catch (e: InvalidPathException) {
+            logger.info("Can't resolve $path against $ownerRoot", e)
+          }
         }
+      }
+      // Once resolved by a higher-priority table, don't let parent workspace tables override it.
+      if (resolved) {
+        depByNormalizedName.remove(normalizedKey)
       }
     }
   }
