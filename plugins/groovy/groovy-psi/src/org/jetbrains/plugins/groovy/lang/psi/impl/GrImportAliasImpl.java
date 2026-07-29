@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias;
+
+import java.util.List;
 
 public class GrImportAliasImpl extends GroovyPsiElementImpl implements GrImportAlias {
 
@@ -16,7 +18,12 @@ public class GrImportAliasImpl extends GroovyPsiElementImpl implements GrImportA
 
   @Override
   public PsiElement getNameElement() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
+    if (result == null) {
+      List<PsiElement> children = findChildrenByType(TokenSets.GROOVY_KEYWORDS);
+      return children.size() > 1 ? children.get(1) : null;
+    }
+    return result;
   }
 
   @Override

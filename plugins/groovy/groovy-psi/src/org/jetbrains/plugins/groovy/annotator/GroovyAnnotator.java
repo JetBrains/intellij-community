@@ -486,6 +486,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         .withFix(new GrMoveClassToCorrectPlaceFix(typeDefinition)).create();
     }
     checkTypeDefinition(myHolder, typeDefinition);
+    PsiElement identifier = typeDefinition.getNameIdentifierGroovy();
+    String name = identifier.getText();
+    if (GrModifier.VAR.equals(name) || GrModifier.VAL.equals(name)) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("0.is.a.restricted.type.name", name))
+        .range(identifier.getTextRange()).create();
+    }
 
     // enum constants are not handled here because their getTextOffset() is crazy - outside their own getTextRange()
     if (!(typeDefinition instanceof PsiEnumConstantInitializer)) {

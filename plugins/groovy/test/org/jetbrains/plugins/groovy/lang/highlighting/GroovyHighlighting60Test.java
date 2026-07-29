@@ -50,4 +50,51 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
     myFixture.launchAction(myFixture.findSingleIntention("Remove 'final'"));
     myFixture.checkResult("enum E {}");
   }
+
+  public void testWeakKeywordTypeDefinitions() {
+    highlightingTest("""
+                       class as {
+                           as() {
+                               new trait(1)
+                           }
+                       }
+                       class record {
+                           record() {}
+                       }
+                       class sealed {
+                           sealed() {}
+                       }
+                       enum En {
+                           as, permits, trait, sealed, record, var, val, yield
+                       }
+                       
+                       class trait {
+                           trait(var i) {}
+                       }
+                       class <error descr="'val' is a restricted type name and cannot be used as the identifier of a type declaration">val</error> {
+                           val() {}
+                       }
+                       class <error descr="'var' is a restricted type name and cannot be used as the identifier of a type declaration">var</error> {
+                           var() {}
+                       }
+                       class yield {
+                           yield() {}
+                       }
+                       """);
+  }
+
+  public void testWeakKeywordImportAlias() {
+    highlightingTest("""
+                       import java.lang.String as trait
+                       println (trait)"yes"
+                       """);
+  }
+
+  public void testWeakKeywordLabeledStatement() {
+    highlightingTest("""
+                       trait: for (val x in [1, 2, 4]) {
+                         if (x == 2) break trait;
+                       }
+                       """);
+  }
 }

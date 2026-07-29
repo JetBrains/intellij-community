@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
@@ -110,7 +110,8 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Override
   public @NotNull PsiElement getNameIdentifierGroovy() {
-    return findNotNullChildByType(TokenSets.PROPERTY_NAMES);
+    PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
+    return (result == null) ? findNotNullChildByType(TokenSets.GROOVY_KEYWORDS) : result;
   }
 
   @Override

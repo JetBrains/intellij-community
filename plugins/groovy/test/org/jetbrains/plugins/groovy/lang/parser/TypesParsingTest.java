@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 public class TypesParsingTest extends GroovyParsingTestCase {
@@ -91,7 +91,9 @@ public class TypesParsingTest extends GroovyParsingTestCase {
 
   public void testIncompleteConstructor() { doTest(); }
 
-  public void _testWeak_keyword_type1() { doTest(); }
+  public void testWeakKeywordType1() { doTest(); }
+
+  public void testWeakKeywordType2() { doTest(); }
 
   public void testmembers$identifierOnly() { doTest(); }
 
