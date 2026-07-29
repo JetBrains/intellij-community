@@ -39,6 +39,8 @@ class KotlinSuppressIntentionAction(
     @FileModifier.SafeFieldForPreview
     private val project = suppressAt.project
 
+    val priority: Int get() = kind.priority
+
     override fun getFamilyName(): String = KotlinBaseCodeInsightBundle.message("intention.suppress.family")
 
     override fun getText(): String = KotlinBaseCodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")

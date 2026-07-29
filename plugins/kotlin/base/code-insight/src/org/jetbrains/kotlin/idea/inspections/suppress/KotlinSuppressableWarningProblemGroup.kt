@@ -27,6 +27,13 @@ import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
+internal const val PRIORITY_STATEMENT = 10
+internal const val PRIORITY_PARAMETER = 30
+internal const val PRIORITY_MEMBER = 40
+internal const val PRIORITY_ENUM_ENTRY = 45
+internal const val PRIORITY_CLASS = 50
+internal const val PRIORITY_FILE = 60
+
 class KotlinSuppressableWarningProblemGroup(private val factoryName: String) : SuppressableProblemGroup {
     override fun getProblemName(): String = factoryName
 
@@ -39,19 +46,19 @@ class KotlinSuppressableWarningProblemGroup(private val factoryName: String) : S
     }
 }
 
-fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppressionId: String): List<SuppressIntentionAction> {
+fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppressionId: String): List<KotlinSuppressIntentionAction> {
     if (severity != Severity.WARNING) {
         return emptyList()
     }
 
     val suppressionKey = calculateSuppressionKey(element, suppressionId)
 
-    val actions = arrayListOf<SuppressIntentionAction>()
+    val actions = arrayListOf<KotlinSuppressIntentionAction>()
     var current: PsiElement? = element
     var suppressAtStatementAllowed = true
     while (current != null) {
-        when {
-            current is KtDeclaration && current !is KtDestructuringDeclaration -> {
+        when (current) {
+            is KtDeclaration if current !is KtDestructuringDeclaration -> {
                 val declaration = current
                 val kind = DeclarationKindDetector.detect(declaration)
                 if (kind != null) {
@@ -60,18 +67,27 @@ fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppre
                 suppressAtStatementAllowed = false
             }
 
-            current is KtExpression && suppressAtStatementAllowed -> {
+            is KtExpression if suppressAtStatementAllowed -> {
                 val hostKind = when {
                     current.parent is KtBlockExpression -> AnnotationHostKind(
-                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"), null, true
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"),
+                        null,
+                        true,
+                        PRIORITY_STATEMENT
                     )
 
                     current.parent is KtDestructuringDeclaration -> AnnotationHostKind(
-                        KotlinBaseCodeInsightBundle.message("declaration.kind.initializer"), null, true
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.initializer"),
+                        null,
+                        true,
+                        PRIORITY_STATEMENT
                     )
 
                     current.parent is KtNamedFunction && (current.parent as KtNamedFunction).bodyExpression == current -> AnnotationHostKind(
-                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"), null, true
+                        KotlinBaseCodeInsightBundle.message("declaration.kind.statement"),
+                        null,
+                        true,
+                        PRIORITY_STATEMENT
                     )
 
                     else -> null
@@ -82,13 +98,14 @@ fun createSuppressWarningActions(element: PsiElement, severity: Severity, suppre
                 }
             }
 
-            current is PsiWhiteSpace && current.prevSibling is KtClassLikeDeclaration -> {
+            is PsiWhiteSpace if current.prevSibling is KtClassLikeDeclaration -> {
                 current = current.prevSibling
                 continue
             }
 
-            current is KtFile -> {
-                val hostKind = AnnotationHostKind(KotlinBaseCodeInsightBundle.message("declaration.kind.file"), current.name, true)
+            is KtFile -> {
+                val hostKind =
+                    AnnotationHostKind(KotlinBaseCodeInsightBundle.message("declaration.kind.file"), current.name, true, PRIORITY_FILE)
                 actions.add(KotlinSuppressIntentionAction(current, suppressionKey, hostKind))
                 break
             }
@@ -122,12 +139,12 @@ private object DeclarationKindDetector : KtVisitor<AnnotationHostKind?, Unit?>()
             declaration.isInterface() -> KotlinBaseCodeInsightBundle.message("declaration.kind.interface")
             else -> KotlinBaseCodeInsightBundle.message("declaration.kind.class")
         }
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true, priority = PRIORITY_CLASS)
     }
 
     override fun visitNamedFunction(declaration: KtNamedFunction, data: Unit?): AnnotationHostKind {
         val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.fun")
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true, priority = PRIORITY_MEMBER)
     }
 
     override fun visitProperty(declaration: KtProperty, data: Unit?): AnnotationHostKind {
@@ -135,27 +152,27 @@ private object DeclarationKindDetector : KtVisitor<AnnotationHostKind?, Unit?>()
             declaration.isVar -> KotlinBaseCodeInsightBundle.message("declaration.kind.var")
             else -> KotlinBaseCodeInsightBundle.message("declaration.kind.val")
         }
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true, priority = PRIORITY_MEMBER)
     }
 
     override fun visitTypeParameter(declaration: KtTypeParameter, data: Unit?): AnnotationHostKind {
         val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.type.parameter")
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = false)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = false, priority = PRIORITY_PARAMETER)
     }
 
     override fun visitEnumEntry(declaration: KtEnumEntry, data: Unit?): AnnotationHostKind {
         val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.enum.entry")
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true, priority = PRIORITY_ENUM_ENTRY)
     }
 
     override fun visitParameter(declaration: KtParameter, data: Unit?): AnnotationHostKind {
         val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.parameter")
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = false)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = false, priority = PRIORITY_PARAMETER)
     }
 
     override fun visitSecondaryConstructor(declaration: KtSecondaryConstructor, data: Unit?): AnnotationHostKind {
         val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.secondary.constructor.of")
-        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true)
+        return AnnotationHostKind(kind, getDeclarationName(declaration), newLineNeeded = true, priority = PRIORITY_MEMBER)
     }
 
     override fun visitObjectDeclaration(d: KtObjectDeclaration, data: Unit?): AnnotationHostKind? {
@@ -167,13 +184,13 @@ private object DeclarationKindDetector : KtVisitor<AnnotationHostKind?, Unit?>()
                     d.name.toString(),
                     d.getStrictParentOfType<KtClass>()?.name.toString()
                 )
-                AnnotationHostKind(kind, name, newLineNeeded = true)
+                AnnotationHostKind(kind, name, newLineNeeded = true, priority = PRIORITY_CLASS)
             }
 
             d.parent is KtObjectLiteralExpression -> null
             else -> {
                 val kind = KotlinBaseCodeInsightBundle.message("declaration.kind.object")
-                AnnotationHostKind(kind, getDeclarationName(d), newLineNeeded = true)
+                AnnotationHostKind(kind, getDeclarationName(d), newLineNeeded = true, priority = PRIORITY_CLASS)
             }
         }
     }

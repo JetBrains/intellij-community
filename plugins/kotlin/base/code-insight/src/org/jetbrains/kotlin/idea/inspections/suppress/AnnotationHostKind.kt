@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.suppress
 
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview
+import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 
@@ -14,5 +15,8 @@ class AnnotationHostKind(
     @NlsSafe val name: String?,
 
     /** True if the annotation needs to be added to a separate line. */
-    val newLineNeeded: Boolean
+    val newLineNeeded: Boolean,
+
+    /** Sort key for the suppression fix. See [SuppressQuickFix.getPriority]. */
+    val priority: Int,
 )
