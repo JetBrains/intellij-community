@@ -96,13 +96,13 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   fun `test fence in quotes`() {
     val content =
       """
-      > class C {
-      >
-      >   public static void main(String[] args) {
-      >
-      >   }
-      >
-      > }
+      class C {
+
+        public static void main(String[] args) {
+
+        }
+
+      }
       """.trimIndent()
     val text =
       """
@@ -115,7 +115,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >
       > }
       > ```
-      """.trimIndent()
+    """.trimIndent()
     doTest(text, true)
     assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
   }
@@ -123,13 +123,13 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   fun `test fence in list`() {
     val content =
       """
-      |  class C {
+      |class C {
+      |
+      |  public static void main(String[] args) {
       |  
-      |    public static void main(String[] args) {
-      |    
-      |    }
-      |    
       |  }
+      |  
+      |}
       """.trimMargin()
     val text =
       """
