@@ -3,7 +3,6 @@ package com.intellij.coverage.analysis;
 
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.IDEACoverageRunner;
-import com.intellij.coverage.JavaCoverageEngineExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.BranchData;
@@ -13,11 +12,12 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import com.intellij.rt.coverage.util.ClassNameUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -72,26 +72,53 @@ public final class PackageAnnotator implements Closeable {
    * @param children      name - file pairs, where file is optional (could be null),
    *                      when file is null, unloaded class analysis is skipped
    * @param packageVMName common package name in internal VM format
-   * @param sourceFile    source file, or null when coverage is retained without source
    */
-  public @NotNull Result visitFiles(final Map<String, @Nullable Path> children,
-                                    final String packageVMName,
-                                    final @Nullable VirtualFile sourceFile) {
+  public @NotNull ClassCoverageInfo visitFiles(Map<String, @Nullable Path> children, String packageVMName) {
     var topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
-    VirtualFile parent = sourceFile == null ? null : sourceFile.getParent();
     for (Map.Entry<String, Path> e : children.entrySet()) {
       Path file = e.getValue();
-      if (sourceFile == null && !ContainerUtil.exists(JavaCoverageEngineExtension.EP_NAME.getExtensionList(),
-                                                      extension -> extension.keepCoverageInfoForClassWithoutSource(mySuite, file))) {
-        continue;
-      }
       String simpleName = e.getKey();
       String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
       var info = collectClassCoverageInformation(file, classFqName);
       if (info == null) continue;
       topLevelClassCoverageInfo.append(info);
     }
-    return new Result(topLevelClassCoverageInfo, parent);
+    return topLevelClassCoverageInfo;
+  }
+
+  public @Nullable String getSourceFileName(@NotNull Map<String, @Nullable Path> children, @NotNull String packageVMName) {
+    var projects = new ProjectData[]{myProjectData, getUnloadedClassesProjectData()};
+    for (String simpleName : children.keySet()) {
+      String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
+      for (ProjectData projectData : projects) {
+        if (projectData == null) continue;
+        ClassData classData = projectData.getClassData(classFqName);
+        if (classData == null) continue;
+        String sourceFileName = classData.getSource();
+        if (sourceFileName != null) return sourceFileName;
+      }
+    }
+
+    for (Path classFile : children.values()) {
+      if (classFile == null) continue;
+      String sourceFileName = readSourceFileName(classFile);
+      if (sourceFileName != null) return sourceFileName;
+    }
+    return null;
+  }
+
+  private @Nullable String readSourceFileName(@NotNull Path classFile) {
+    byte[] bytes = loadClassBytes(classFile);
+    if (bytes == null) return null;
+
+    String[] sourceFileName = {null};
+    new ClassReader(bytes).accept(new ClassVisitor(Opcodes.ASM9) {
+      @Override
+      public void visitSource(String source, String debug) {
+        sourceFileName[0] = source;
+      }
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+    return sourceFileName[0];
   }
 
   private @Nullable PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable Path classFile, String className) {
@@ -273,16 +300,6 @@ public final class PackageAnnotator implements Closeable {
 
     public DirCoverageInfo(VirtualFile sourceRoot) {
       this.sourceRoot = sourceRoot;
-    }
-  }
-
-  public static class Result {
-    public final ClassCoverageInfo info;
-    public final VirtualFile directory;
-
-    public Result(ClassCoverageInfo info, VirtualFile directory) {
-      this.info = info;
-      this.directory = directory;
     }
   }
 }

@@ -183,6 +183,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
       String className = AnalysisUtils.internalNameToFqn(classCoverage.getName());
       final ClassData classData = data.getOrCreateClassData(className);
+      classData.setSource(classCoverage.getSourceFileName());
       final Collection<IMethodCoverage> methods = classCoverage.getMethods();
       LineData[] lines = new LineData[classCoverage.getLastLine() + 1];
       for (IMethodCoverage method : methods) {

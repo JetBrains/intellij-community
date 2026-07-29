@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.ProjectData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -43,6 +44,7 @@ object JavaCoverageSummaryBuilder {
 
     val flattenPackages = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectories = hashMapOf<VirtualFile, PackageCoverageInfo>()
+    val searchScope = bundle.getSearchScope(project)
 
     val classes = projectData.classesCollection.map { it.name }.groupBy { fqn ->
       val vmName = AnalysisUtils.fqnToInternalName(fqn)
@@ -50,12 +52,14 @@ object JavaCoverageSummaryBuilder {
     }.mapValues { (_, names) -> names.map(StringUtil::getShortName) }
     PackageAnnotator(bundle, project, projectData).use { packageAnnotator ->
       for ((topLevelName, simpleNames) in classes) {
-        val file = CoverageSourceResolver.findFile(project, bundle, topLevelName) ?: continue
+        val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName) ?: continue
         val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
-        val result = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName, file)
-        collector.addClass(topLevelName, result.info, file)
-        flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(result.info)
-        flattenDirectories.getOrPut(result.directory) { PackageCoverageInfo() }.append(result.info)
+        val info = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName)
+        collector.addClass(topLevelName, info, file)
+        flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
+        file.parent?.let { directory ->
+          flattenDirectories.getOrPut(directory) { PackageCoverageInfo() }.append(info)
+        }
       }
     }
 
@@ -208,8 +212,9 @@ private class ModuleCoverageBuilder(
         return ModuleCoverageResult(emptyMap(), emptyMap(), emptyMap(), emptySet())
       }
 
+      val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(suite.getSearchScope(project))
       for (locatedClass in locateClassFiles(packageVMName, roots, progress)) {
-        collectClassCoverage(locatedClass, classSummaryBuilder)
+        collectClassCoverage(locatedClass, classSummaryBuilder, searchScope)
       }
       return ModuleCoverageResult(
         classes,
@@ -238,7 +243,11 @@ private class ModuleCoverageBuilder(
     }
   }
 
-  private suspend fun collectClassCoverage(locatedClass: LocatedClassFiles, classSummaryBuilder: PackageAnnotator) {
+  private suspend fun collectClassCoverage(
+    locatedClass: LocatedClassFiles,
+    classSummaryBuilder: PackageAnnotator,
+    searchScope: GlobalSearchScope,
+  ) {
     val (topLevelClassName, packageVMName, files) = locatedClass
     if (isClassExcluded(topLevelClassName)) return
     val children = files.asSequence()
@@ -246,13 +255,20 @@ private class ModuleCoverageBuilder(
       .associateBy(AnalysisUtils::getClassName)
     if (children.isEmpty()) return
 
-    val file = CoverageSourceResolver.findFile(project, suite, topLevelClassName) ?: return
-    val result = classSummaryBuilder.visitFiles(children, packageVMName, file)
-    classes[topLevelClassName] = CollectedClass(result.info, file)
-    flattenPackages.getOrPut(packageVMName, ::PackageCoverageInfo).append(result.info)
-    result.directory?.let { directory ->
-      flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(result.info)
+    val info = classSummaryBuilder.visitFiles(children, packageVMName)
+    val sourceFileName = classSummaryBuilder.getSourceFileName(children, packageVMName)
+    val file = CoverageSourceResolver.findFile(project, searchScope, topLevelClassName, sourceFileName)
+    if (file == null && children.values.none(::keepCoverageInfoForClassWithoutSource)) return
+
+    classes[topLevelClassName] = CollectedClass(info, file)
+    flattenPackages.getOrPut(packageVMName, ::PackageCoverageInfo).append(info)
+    file?.parent?.let { directory ->
+      flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(info)
     }
+  }
+
+  private fun keepCoverageInfoForClassWithoutSource(classFile: Path): Boolean {
+    return JavaCoverageEngineExtension.EP_NAME.extensionList.any { it.keepCoverageInfoForClassWithoutSource(suite, classFile) }
   }
 
   private fun ignoreClass(classFile: Path): Boolean {

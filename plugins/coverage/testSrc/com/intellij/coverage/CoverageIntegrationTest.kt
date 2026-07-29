@@ -3,8 +3,10 @@ package com.intellij.coverage
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
 import com.intellij.coverage.analysis.CoverageInfoCollector
+import com.intellij.coverage.analysis.CoverageSourceResolver
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.JavaCoverageSummaryBuilder
+import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
@@ -19,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
+import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
@@ -92,6 +95,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun testJaCoCoProjectData() {
     val bundle = loadJaCoCoSuite()
     val classData = bundle.coverageData!!.getClassData("foo.FooClass")
+    assertEquals("FooClass.java", classData.source)
     // getStatus() never returns full coverage; it can only distinguish between none and partial
     assertEquals(LineCoverage.PARTIAL.toInt(), classData.getStatus("method1()I"))
   }
@@ -112,6 +116,25 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
     assertEquals(FULL_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
+  }
+
+  @Test
+  fun `test source lookup uses file name before class lookup`() = runBlocking {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val bundle = loadIJSuite()
+    val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(bundle.getSearchScope(myProject))
+    val sourceFile = CoverageSourceResolver.findFile(myProject, searchScope, "foo.MissingClass", "FooClass.java")
+    assertEquals("FooClass.java", sourceFile?.name)
+  }
+
+  @Test
+  fun `test source file name is read from class file`() {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val outputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
+    val classFile = Path.of(VfsUtilCore.urlToPath(outputUrl)).resolve("foo/FooClass.class")
+    PackageAnnotator(loadIJSuite(), myProject, ProjectData()).use { annotator ->
+      assertEquals("FooClass.java", annotator.getSourceFileName(mapOf("FooClass" to classFile), "foo"))
+    }
   }
 
   @Test
