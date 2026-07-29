@@ -209,9 +209,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
       nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
-      // JSpecify records no diagnostic when a wildcard bound escapes the bound of the type parameter,
-      // e.g. ImplicitlyObjectBounded<? extends @Nullable Lib> for interface ImplicitlyObjectBounded<T>
-      nullableStuffInspection.REPORT_WILDCARD_TYPE_ARGUMENT_CONFLICTS = false;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
