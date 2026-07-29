@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.settings
 
 import com.intellij.mcpserver.settings.McpServerSettings.Companion.DEFAULT_MCP_PORT
@@ -29,13 +30,24 @@ interface McpServerSettings {
 @Service
 @State(name = "McpServerSettings", storages = [Storage("mcpServer.xml")])
 internal class McpServerSettingsImpl : McpServerSettings, SimplePersistentStateComponent<McpServerSettingsImpl.MyState>(MyState()) {
-  override fun loadState(state: MyState) {
-    super.loadState(state)
-  }
 
-  override var mcpServerPort: Int by state::mcpServerPort
-  override var enableMcpServer: Boolean by state::enableMcpServer
-  override var enableBraveMode: Boolean by state::enableBraveMode
+  override var mcpServerPort: Int
+    get() = state.mcpServerPort
+    set(value) {
+      state.mcpServerPort = value
+    }
+
+  override var enableMcpServer: Boolean
+    get() = state.enableMcpServer
+    set(value) {
+      state.enableMcpServer = value
+    }
+
+  override var enableBraveMode: Boolean
+    get() = state.enableBraveMode
+    set(value) {
+      state.enableBraveMode = value
+    }
 
   internal class MyState : BaseState() {
     var enableBraveMode: Boolean by property(false)
