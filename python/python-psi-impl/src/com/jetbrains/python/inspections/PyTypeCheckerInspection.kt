@@ -565,12 +565,17 @@ open class PyTypeCheckerInspection : PyInspection() {
         return
       }
 
-      var expected = myTypeEvalContext.getType(node)
-
-      if (scopeOwner is PyClass) {
-        if (!targetOrResolvedHasExplicitType(node)) return
+      // We don't report type errors on non-annotated assignments inside class bodies because there
+      // the expected attribute type is either:
+      // - just the type of the assigned value, so there is nothing to type check against
+      // - special-cased for some metaprogramming API, e.g., Django models,
+      //    so the type provided by a dedicated PyTypeProvider intentionally differs from the type of the assigned value
+      //    (e.g. str instead of TextField), then type checking it normally will cause a false positive.
+      if (scopeOwner is PyClass && !targetOrResolvedHasExplicitType(node)) {
+        return
       }
 
+      var expected = myTypeEvalContext.getType(node)
       val qualifier = node.qualifier
       if (qualifier != null) {
         expected = myTypeEvalContext.getType(qualifier).compositeMap {
