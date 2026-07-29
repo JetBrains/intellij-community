@@ -545,7 +545,7 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
     return CancellationFutureTask(childJob, wrappedCallable, executionTracker, childContext)
   }
   else {
-    return FutureTask(wrappedCallable)
+    return ShallowCancellationFutureTask(childContext, executionTracker, wrappedCallable)
   }
 }
 
