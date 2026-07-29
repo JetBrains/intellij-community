@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
 import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
@@ -68,16 +68,14 @@ import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.startCoroutine
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
-internal val RPC_TIMEOUT = 60_000.milliseconds
+internal val RPC_TIMEOUT = 1.minutes
 
 private data class OutgoingRequest(
   val route: UID,
@@ -719,7 +717,7 @@ private class RpcClient(
         logger.trace { "Result published for request $requestId" }
 
       }
-    } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}ms", cause = null)
+    } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}", cause = null)
   }
 
   private fun registerStreams(
