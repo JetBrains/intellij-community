@@ -368,7 +368,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     if (stackTrace.size < 6) {
       return@addMeasuredTime
     }
-    val stackStraceIterator = RuntimeException().stackTrace.iterator()
+    val stackStraceIterator = stackTrace.iterator()
     // Skip six methods of the current update
     repeat(6) { stackStraceIterator.next() }
     while (stackStraceIterator.hasNext()) {
