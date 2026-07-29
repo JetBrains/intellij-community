@@ -1932,6 +1932,13 @@ object PyTypeChecker {
     context: TypeEvalContext,
   ): PyType? {
     return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
+      // Type variables currently being expanded along the active substitution path. A substitution map can be
+      // mutually recursive (e.g. {T: S, S: T}) or self-referential (e.g. {T: list[T]}), and the transformations
+      // below (toClass/invert/deref) create fresh-but-equal PyTypeVarType instances, so PyCloningTypeVisitor's
+      // identity-based cycle guard never trips on them. This equality-based, path-scoped set breaks such cycles
+      // to avoid a StackOverflowError.
+      val typeVarsBeingSubstituted = HashSet<PyTypeVarType>()
+
       fun flattenUnpackedTuple(type: PyType?): List<PyType?> {
         return if (type is PyUnpackedTupleType && !type.isUnbound) {
           type.elementTypes
@@ -1962,57 +1969,71 @@ object PyTypeChecker {
       }
 
       override fun visitPyTypeVarType(typeVarType: PyTypeVarType): PyType? {
-        // Both mappings of kind {T: T2} (and no mapping for T2) and {T: T} mean the substitution process should stop for T.
-        // The first one occurs in the situations like
-        //
-        // def f(x: T1) -> T1: ...
-        // def g(y: T2): f(y)
-        //
-        // when we're inferring the return type of "g".
-        // The second is a plug for type hints like
-        //
-        // def g() -> Callable[[T], T]
-        //
-        // where we want to prevent replacing T with Any, even though it cannot be inferred at a call site.
-        if (typeVarType !in substitutions.typeVars && typeVarType.invert() !in substitutions.typeVars) {
-          val substitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
-            typeVarType2.declarationElement != null && (typeVarType.scopeOwner == null || (typeVarType2.scopeOwner === typeVarType.scopeOwner))
-            && typeVarType2.declarationElement == typeVarType.declarationElement
-          } ?: PyAnyType.unknown
-
-          if (!substitution.isUnknown) {
-            return clone(substitution)
-          }
+        // Normalize to the instance form so that the `type[T]` (definition) and `T` (instance) variants produced by
+        // the substitution transformations below map to the same cycle key.
+        val cycleKey = if (typeVarType.isDefinition) typeVarType.toInstance() else typeVarType
+        if (!typeVarsBeingSubstituted.add(cycleKey)) {
+          // Reached this type variable again while still expanding it: the substitution map is cyclic.
+          // Stop here and leave it unsubstituted instead of recursing forever (PyCloningTypeVisitor's
+          // identity-based guard can't catch this because each step is a fresh-but-equal instance).
           return typeVarType
         }
-        val substitutionRef = substitutions.typeVars[typeVarType]
-        var substitution = substitutionRef.derefOrUnknown()
-        if (substitutionRef == null) {
-          val invertedTypeVar: PyInstantiableType<*> = typeVarType.invert()
-          val invertedSubstitution = substitutions.typeVars[invertedTypeVar]?.get() as? PyInstantiableType<*>
-          if (invertedSubstitution != null && !invertedSubstitution.isUnknown) {
-            substitution = invertedSubstitution.invert()
-          }
-        }
-        if (substitution is PyTypeVarType) {
-          val sameScopeSubstitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
-            (typeVarType2 != substitution) && typeVarType2.declarationElement != null && typeVarType2.declarationElement == substitution.declarationElement
-          }
+        try {
+          // Both mappings of kind {T: T2} (and no mapping for T2) and {T: T} mean the substitution process should stop for T.
+          // The first one occurs in the situations like
+          //
+          // def f(x: T1) -> T1: ...
+          // def g(y: T2): f(y)
+          //
+          // when we're inferring the return type of "g".
+          // The second is a plug for type hints like
+          //
+          // def g() -> Callable[[T], T]
+          //
+          // where we want to prevent replacing T with Any, even though it cannot be inferred at a call site.
+          if (typeVarType !in substitutions.typeVars && typeVarType.invert() !in substitutions.typeVars) {
+            val substitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
+              typeVarType2.declarationElement != null && (typeVarType.scopeOwner == null || (typeVarType2.scopeOwner === typeVarType.scopeOwner))
+              && typeVarType2.declarationElement == typeVarType.declarationElement
+            } ?: PyAnyType.unknown
 
-          if (sameScopeSubstitution != null && substitution.defaultType != null) {
-            return clone(sameScopeSubstitution)
+            if (!substitution.isUnknown) {
+              return clone(substitution)
+            }
+            return typeVarType
           }
+          val substitutionRef = substitutions.typeVars[typeVarType]
+          var substitution = substitutionRef.derefOrUnknown()
+          if (substitutionRef == null) {
+            val invertedTypeVar: PyInstantiableType<*> = typeVarType.invert()
+            val invertedSubstitution = substitutions.typeVars[invertedTypeVar]?.get() as? PyInstantiableType<*>
+            if (invertedSubstitution != null && !invertedSubstitution.isUnknown) {
+              substitution = invertedSubstitution.invert()
+            }
+          }
+          if (substitution is PyTypeVarType) {
+            val sameScopeSubstitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
+              (typeVarType2 != substitution) && typeVarType2.declarationElement != null && typeVarType2.declarationElement == substitution.declarationElement
+            }
+
+            if (sameScopeSubstitution != null && substitution.defaultType != null) {
+              return clone(sameScopeSubstitution)
+            }
+          }
+          // Keep the class-object form when the type variable stands for `type[T]`, so that e.g.
+          // `Alias = type[T]` parameterized with `int` yields `type[int]`, not `int` (PY-60614).
+          if (typeVarType.isDefinition && substitution is PyInstantiableType<*> && !substitution.isDefinition) {
+            substitution = substitution.toClass()
+          }
+          // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
+          if ((typeVarType != substitution) && (substitution !is PySelfType) && substitution.hasGenerics(context)) {
+            return clone(substitution)
+          }
+          return substitution
         }
-        // Keep the class-object form when the type variable stands for `type[T]`, so that e.g.
-        // `Alias = type[T]` parameterized with `int` yields `type[int]`, not `int` (PY-60614).
-        if (typeVarType.isDefinition && substitution is PyInstantiableType<*> && !substitution.isDefinition) {
-          substitution = substitution.toClass()
+        finally {
+          typeVarsBeingSubstituted.remove(cycleKey)
         }
-        // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
-        if ((typeVarType != substitution) && (substitution !is PySelfType) && substitution.hasGenerics(context)) {
-          return clone(substitution)
-        }
-        return substitution
       }
 
       override fun visitPyParamSpecType(paramSpecType: PyParamSpecType): PyType? {
