@@ -13,14 +13,13 @@ object ClassFilesLocator {
   internal fun findClassFiles(
     outputRoot: Path,
     rootPackageVMName: String,
-    packagePathInRoot: String,
     requestedSimpleNames: Set<String>?,
   ): List<LocatedClassFiles> {
     val source = createClassFilesSource(outputRoot) ?: return emptyList()
     val requestedTopLevelNames = requestedSimpleNames?.mapTo(HashSet()) { simpleName ->
       AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(rootPackageVMName, simpleName))
     }
-    val context = ClassFilesSourceContext(rootPackageVMName, packagePathInRoot, requestedSimpleNames == null)
+    val context = ClassFilesSourceContext(rootPackageVMName, requestedSimpleNames == null)
     val topLevelClasses = LinkedHashMap<LocatedClassKey, MutableList<Path>>()
     source.findClassFiles(context).forEach { (packageVMName, simpleName, classFile) ->
       val classVMName = AnalysisUtils.buildVMName(packageVMName, simpleName)
@@ -38,7 +37,7 @@ object ClassFilesLocator {
   @JvmStatic
   fun collectClassFiles(outputRoot: Path, packageVMName: String, topLevelClassNames: Set<String>): List<Path> {
     if (topLevelClassNames.isEmpty()) return emptyList()
-    return findClassFiles(outputRoot, packageVMName, packageVMName, topLevelClassNames)
+    return findClassFiles(outputRoot, packageVMName, topLevelClassNames)
       .flatMap(LocatedClassFiles::files)
   }
 
@@ -61,7 +60,6 @@ private data class DiscoveredClassFile(val packageVMName: String, val simpleName
 
 private data class ClassFilesSourceContext(
   val rootPackageVMName: String,
-  val packagePathInRoot: String,
   val includeSubpackages: Boolean,
 )
 
@@ -71,7 +69,7 @@ private interface ClassFilesSource {
 
 private class DirectoryClassFilesSource(private val outputRoot: Path) : ClassFilesSource {
   override fun findClassFiles(context: ClassFilesSourceContext): List<DiscoveredClassFile> {
-    val packageRoot = context.packagePathInRoot.takeIf(String::isNotEmpty)?.let(outputRoot::resolve) ?: outputRoot
+    val packageRoot = context.rootPackageVMName.takeIf(String::isNotEmpty)?.let(outputRoot::resolve) ?: outputRoot
     if (!Files.exists(packageRoot)) return emptyList()
 
     val result = ArrayList<DiscoveredClassFile>()
@@ -107,7 +105,7 @@ private class DirectoryClassFilesSource(private val outputRoot: Path) : ClassFil
 
 private class ArchiveClassFilesSource(private val outputRoot: Path) : ClassFilesSource {
   override fun findClassFiles(context: ClassFilesSourceContext): List<DiscoveredClassFile> {
-    val prefix = context.packagePathInRoot.takeIf(String::isNotEmpty)?.plus('/') ?: ""
+    val prefix = context.rootPackageVMName.takeIf(String::isNotEmpty)?.plus('/') ?: ""
     return try {
       val result = ArrayList<DiscoveredClassFile>()
       ZipInputStream(Files.newInputStream(outputRoot)).use { input ->

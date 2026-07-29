@@ -6,10 +6,12 @@ import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.CoverageSourceResolver
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.JavaCoverageSummaryBuilder
+import com.intellij.coverage.analysis.PackageEntry
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
+import com.intellij.coverage.analysis.collectOutputRoots
 import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.application.readAction
@@ -68,6 +70,48 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   @Test
   fun testJaCoCoSingleClassFilter() {
     assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")), 3)
+  }
+
+  @Test
+  fun `test output roots group class filters by package`() = runBlocking {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val bundle = loadIJSuite(arrayOf("foo.FooClass", "foo.bar.BarClass", "foo.bar.UncoveredClass"))
+
+    val requests = collectOutputRoots(bundle, myProject)
+
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.module == module })
+    val expectedPackages = listOf(
+      PackageEntry("foo", listOf("FooClass")),
+      PackageEntry("foo.bar", listOf("BarClass", "UncoveredClass")),
+    )
+    assertTrue(requests.all { it.packages == expectedPackages })
+  }
+
+  @Test
+  fun `test output roots remove packages covered by parent package`() = runBlocking {
+    val parentSuite = loadIJSuite(arrayOf("foo.*")).suites[0]
+    val childSuite = loadIJSuite(arrayOf("foo.bar.*")).suites[0]
+
+    val requests = collectOutputRoots(CoverageSuitesBundle(arrayOf(parentSuite, childSuite)), myProject)
+
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.packages == listOf(PackageEntry("foo", null)) })
+  }
+
+  @Test
+  fun `test output roots include class filters outside package filters`() = runBlocking {
+    val packageSuite = loadIJSuite(arrayOf("foo.bar.*")).suites[0]
+    val classSuite = loadIJSuite(arrayOf("foo.FooClass")).suites[0]
+
+    val requests = collectOutputRoots(CoverageSuitesBundle(arrayOf(packageSuite, classSuite)), myProject)
+
+    val expectedPackages = listOf(
+      PackageEntry("foo.bar", null),
+      PackageEntry("foo", listOf("FooClass")),
+    )
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.packages == expectedPackages })
   }
 
   private fun assertSingleClassFilter(bundle: CoverageSuitesBundle, expectedDirectoryCount: Int) = runBlocking {

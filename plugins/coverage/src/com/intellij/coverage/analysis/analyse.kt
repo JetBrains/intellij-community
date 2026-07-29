@@ -16,66 +16,52 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal suspend fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): Map<ModuleRequest, List<RequestRoot>> {
+internal suspend fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): List<ModuleRequest> {
   val coverageDataManager = CoverageDataManager.getInstance(project)
 
   val javaSuites = bundle.suites.filterIsInstance<JavaCoverageSuite>()
   val packageNames = readAction {
     javaSuites.flatMap { it.getCurrentSuitePackages(project).mapNotNull { psiPackage -> psiPackage.qualifiedName } }
-  }
-    .removeSubPackages()
-    .filter { isPackageFiltered(bundle, it) }
-  val classesWithNames = readAction {
-    javaSuites.flatMap { it.getCurrentSuiteClasses(project) }
-      .distinct()
-      .mapNotNull { psiClass -> psiClass.qualifiedName?.let { psiClass to it } }
-      .filter { (_, className) -> packageNames.none { className.startsWith(it) } }
-  }
+  }.filter { isPackageFiltered(bundle, it) }.removeSubPackages()
+
+  val searchScope = bundle.getSearchScope(project)
+  val psiClasses = readAction { javaSuites.flatMap { it.getCurrentSuiteClasses(project) }.distinct() }
+  val classPackageEntries = readAction { psiClasses.mapNotNull { it.qualifiedName } }
+    .filter { className -> packageNames.none { className.isInPackage(it) } }
+    .groupBy { StringUtil.getPackageName(it) }
+    .map { (packageName, names) -> PackageEntry(packageName, names.map { StringUtil.getShortName(it) }) }
+
+  val packageEntries = packageNames.map { PackageEntry(it, null) } + classPackageEntries
+
   val modules = readAction {
     if (packageNames.isNotEmpty()) {
       ModuleManager.getInstance(project).modules.toList()
     }
     else {
-      classesWithNames.mapNotNull { (psiClass, _) -> ModuleUtilCore.findModuleForPsiElement(psiClass) }.distinct()
+      psiClasses.mapNotNull { ModuleUtilCore.findModuleForPsiElement(it) }.distinct()
     }
+  }.filter(searchScope::isSearchInModuleContent)
+
+  return modules.flatMap { module ->
+    CoverageOutputRoots.getRoots(coverageDataManager, module, bundle.isTrackTestFolders)
+      .asSequence()
+      .map(VirtualFile::toNioPath)
+      .filter(::isValidOutputRoot)
+      .distinct()
+      .map { root -> ModuleRequest(module, root, packageEntries) }
+      .toList()
   }
-    .filter { bundle.getSearchScope(project).isSearchInModuleContent(it) }
-
-  val outputRoots = modules.flatMap { module ->
-    CoverageOutputRoots.getRoots(coverageDataManager, module, bundle.isTrackTestFolders).toList().map { it to module }
-  }.distinct()
-
-  val requestedPackages = packageNames.map { it to null }
-    .plus(classesWithNames.map { (_, fqn) -> StringUtil.getPackageName(fqn) to StringUtil.getShortName(fqn) })
-
-  val roots = hashMapOf<ModuleRequest, MutableList<RequestRoot>>()
-  for ((root, module) in outputRoots) {
-    val outputRoot = root.toNioPath()
-    for ((packageName, simpleName) in requestedPackages) {
-      val packagePath = AnalysisUtils.fqnToInternalName(packageName)
-      val isValidRoot = Files.isDirectory(outputRoot) || Files.isRegularFile(outputRoot) && outputRoot.fileName.toString()
-        .endsWith(".jar", ignoreCase = true)
-      if (isValidRoot) {
-        val requestRoot = RequestRoot(outputRoot, simpleName, packagePath)
-        roots.getOrPut(ModuleRequest(packageName, module)) { mutableListOf() }.add(requestRoot)
-      }
-    }
-  }
-  return roots
 }
 
-internal data class ModuleRequest(val packageName: String, val module: Module)
-internal data class RequestRoot(val root: Path, val simpleName: String?, val packagePathInRoot: String)
+internal data class ModuleRequest(val module: Module, val root: Path, val packages: List<PackageEntry>)
+internal data class PackageEntry(val packageName: String, val simpleClassNames: List<String>?)
 
 @ApiStatus.Internal
 object CoverageOutputRoots {
   @JvmStatic
   fun getRoots(manager: CoverageDataManager, module: Module, includeTests: Boolean): Array<VirtualFile> {
     val roots = manager.doInReadActionIfProjectOpen {
-      var enumerator = OrderEnumerator.orderEntries(module)
-        .withoutSdk()
-        .withoutLibraries()
-        .withoutDepModules()
+      var enumerator = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules()
       if (!includeTests) enumerator = enumerator.productionOnly()
       enumerator.classes().roots
     }
@@ -87,11 +73,19 @@ private fun List<String>.removeSubPackages(): List<String> {
   val allPackages = this.sortedBy { it.length }
   val packages = mutableListOf<String>()
   for (fqn in allPackages) {
-    if (packages.none { it.startsWith(fqn) }) {
+    if (packages.none { parent -> fqn.isInPackage(parent) }) {
       packages.add(fqn)
     }
   }
   return packages
+}
+
+private fun String.isInPackage(packageName: String): Boolean {
+  return packageName.isEmpty() || this == packageName || this.startsWith("$packageName.")
+}
+
+private fun isValidOutputRoot(root: Path): Boolean {
+  return Files.isDirectory(root) || Files.isRegularFile(root) && root.fileName.toString().endsWith(".jar", ignoreCase = true)
 }
 
 private fun isPackageFiltered(bundle: CoverageSuitesBundle, qualifiedName: String): Boolean {

@@ -74,13 +74,13 @@ object JavaCoverageSummaryBuilder {
   ) {
     val projectData = suite.coverageData ?: return
     val requests = collectOutputRoots(suite, project)
-    val progress = CoverageProgress(requests.values.sumOf(List<RequestRoot>::size))
+    val progress = CoverageProgress(requests.sumOf { it.packages.size })
     val dispatcher = Dispatchers.IO.limitedParallelism(getWorkingThreads())
 
     val results = coroutineScope {
-      requests.map { (moduleRequest, roots) ->
+      requests.map { moduleRequest ->
         async(dispatcher) {
-          ModuleCoverageBuilder(suite, project, projectData).build(moduleRequest, roots, progress)
+          ModuleCoverageBuilder(suite, project, projectData, moduleRequest, progress).build()
         }
       }.awaitAll()
     }
@@ -197,49 +197,44 @@ private class ModuleCoverageBuilder(
   private val suite: CoverageSuitesBundle,
   private val project: Project,
   private val projectData: ProjectData,
+  private val moduleRequest: ModuleRequest,
+  private val progress: CoverageProgress,
 ) {
   private val classes = HashMap<String, CollectedClass>()
   private val flattenPackages = HashMap<String, PackageCoverageInfo>()
   private val flattenDirectories = HashMap<VirtualFile, PackageCoverageInfo>()
 
-  suspend fun build(moduleRequest: ModuleRequest, roots: List<RequestRoot>, progress: CoverageProgress): ModuleCoverageResult {
+  suspend fun build(): ModuleCoverageResult {
     val module = moduleRequest.module
-    val packageVMName = AnalysisUtils.fqnToInternalName(moduleRequest.packageName)
     PackageAnnotator(suite, project, projectData).use { classSummaryBuilder ->
       if (module.isDisposed) {
         LOG.warn("Module is already disposed: $module")
-        progress.rootsVisited(roots.size)
+        progress.rootsVisited(moduleRequest.packages.size)
         return ModuleCoverageResult(emptyMap(), emptyMap(), emptyMap(), emptySet())
       }
 
       val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(suite.getSearchScope(project))
-      for (locatedClass in locateClassFiles(packageVMName, roots, progress)) {
-        collectClassCoverage(locatedClass, classSummaryBuilder, searchScope)
+      val sourceRoots = HashSet<VirtualFile>()
+      for ((packageName, simpleClassNames) in moduleRequest.packages) {
+        val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
+        sourceRoots.addAll(getPackageRoots(module, packageVMName))
+        try {
+          val requestedSimpleNames = simpleClassNames?.toSet()
+          val locatedClasses = ClassFilesLocator.findClassFiles(moduleRequest.root, packageVMName, requestedSimpleNames)
+          for (locatedClass in locatedClasses) {
+            collectClassCoverage(locatedClass, classSummaryBuilder, searchScope)
+          }
+        }
+        finally {
+          progress.rootsVisited(1)
+        }
       }
       return ModuleCoverageResult(
         classes,
         flattenPackages,
         flattenDirectories,
-        getPackageRoots(module, packageVMName),
+        sourceRoots,
       )
-    }
-  }
-
-  private fun locateClassFiles(
-    rootPackageVMName: String,
-    roots: List<RequestRoot>,
-    progress: CoverageProgress,
-  ): List<LocatedClassFiles> {
-    val requestsByRoot = roots.groupByTo(LinkedHashMap()) { RootRequestKey(it.root, it.packagePathInRoot) }
-    return requestsByRoot.flatMap { (key, rootRequests) ->
-      try {
-        val requestedSimpleNames = if (rootRequests.any { it.simpleName == null }) null
-        else rootRequests.mapNotNullTo(HashSet(), RequestRoot::simpleName)
-        ClassFilesLocator.findClassFiles(key.root, rootPackageVMName, key.packagePathInRoot, requestedSimpleNames)
-      }
-      finally {
-        progress.rootsVisited(rootRequests.size)
-      }
     }
   }
 
@@ -279,8 +274,6 @@ private class ModuleCoverageBuilder(
     return suite.suites.all { it is JavaCoverageSuite && !it.isClassFiltered(fqn) }
   }
 }
-
-private data class RootRequestKey(val root: Path, val packagePathInRoot: String)
 
 private data class CollectedClass(val info: ClassCoverageInfo, val sourceFile: VirtualFile?)
 
