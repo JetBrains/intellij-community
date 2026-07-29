@@ -30,6 +30,8 @@ JetBrains MCP tools are removed upstream.
   `lint_files(files)` and `reformat_file(files)` are the only tool shapes, so
   they are passed through untouched.
 - `get_file_problems` is hidden in favor of the batched `lint_files`.
+- `build_project` is hidden: this repo builds through Bazel wrappers (`bazel build`,
+  `tests.cmd`), and an IDE JPS build duplicates and conflicts with them.
 - Multi-IDE search results are merged; path-scoped analysis, formatting, and
   refactoring calls are routed between IDEA and Rider.
 - Container mode routes search through container tools and retains the

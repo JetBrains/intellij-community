@@ -55,7 +55,7 @@ Environment variables (optional):
 - `JETBRAINS_MCP_SCAN_TIMEOUT_S`: timeout for additional port probes after the default port fails (seconds). Default: `1`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
 - `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
-- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for long-running upstream calls such as `build_project` and `lint_files` (seconds). Default: `1200` (20 minutes). Use `0` to disable.
+- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for long-running upstream calls such as `lint_files` and `reformat_file` (seconds). Default: `1200` (20 minutes). Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
@@ -78,6 +78,7 @@ Notes:
 - JetBrains MCP file-operation tools, including the container variants, are blocked until they are removed upstream.
 - `search_*`, `lint_files` and `reformat_file` are upstream tools passed through unchanged; the proxy only normalizes their arguments and, in a dual-IDE setup, splits and merges them across IDEA and Rider.
 - `get_file_problems` is hidden: it is the per-file variant of `lint_files`, and exposing both invites the agent to lint one file at a time.
+- `build_project` is hidden: this repo builds through Bazel wrappers (`bazel build`, `tests.cmd`), and an IDE JPS build duplicates and conflicts with them.
 - `lint_files` responses may include file entries with `timedOut: true` and empty `problems`; top-level `more: true` still means the overall batch is incomplete.
 - Search tools are documented in `search.md`.
 

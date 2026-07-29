@@ -261,7 +261,7 @@ export class UpstreamConnection {
     })
   }
 
-  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project', 'lint_files', 'reformat_file', 'open_file_in_editor', 'container_exec'])
+  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['lint_files', 'reformat_file', 'open_file_in_editor', 'container_exec'])
 
   private _resolveTimeoutMs(toolName: string): number {
     const ctx = requestContext.getStore()
