@@ -46,6 +46,9 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/refactoring",
         "//platform/util:util-ui",
+        "//platform/execution-impl",
+        "//platform/execution",
+        "//platform/statistics",
     ],
 )
 
@@ -91,6 +94,9 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.backend` end

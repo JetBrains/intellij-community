@@ -92,8 +92,12 @@
         language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
       <codeInsight.lineMarkerProvider
         language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MermaidLineMarkerAdvertisementProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
 
       <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
+
+      <runLineMarkerContributor language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownRunLineMarkersProvider"/>
 
       <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
     </extensions>

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.extensions.jcef.commandRunner
+package com.intellij.markdown.backend.highlighting.markers
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -21,9 +21,15 @@ import com.intellij.psi.util.nextLeaf
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectory
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
@@ -62,7 +68,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     }
 
     val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
-      AllIcons.RunConfigurations.TestState.Run) {
+                                      AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
         execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
       }

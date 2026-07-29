@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.extensions.common.plantuml
+package com.intellij.markdown.backend.highlighting.markers
 
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.CodeFenceDownloadLineMarkerProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider
+import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : CodeFenceDownloadLineMarkerProvider() {
