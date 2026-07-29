@@ -380,7 +380,7 @@ internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHa
       return false
     }
     val completionService = project.getService(CommandCompletionService::class.java)
-    return completionService.getFactory(psiFile.language) != null
+    return completionService.getSuffixProvider(psiFile.language) != null
   }
 }
 

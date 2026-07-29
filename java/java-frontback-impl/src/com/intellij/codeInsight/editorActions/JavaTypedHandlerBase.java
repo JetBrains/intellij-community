@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.NewRdCompletionSupport;
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
-import com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory;
+import com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -617,7 +617,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       if (".".equals(prevSibling.getText())) {
         if (!(".".equals(lastElement.getText()) &&
               CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
-              JavaCommandCompletionFactory.isAfterTypeElementDotsInParameterList(file, offset - 2, 2))) {
+              JavaCommandCompletionSupport.isAfterTypeElementDotsInParameterList(file, offset - 2, 2))) {
           return false;
         }
       }

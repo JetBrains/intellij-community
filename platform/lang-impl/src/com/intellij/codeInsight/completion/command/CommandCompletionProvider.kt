@@ -668,7 +668,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
 }
 
 internal fun findCommandCompletionType(
-  factory: CommandCompletionFactory,
+  factory: CommandCompletionSuffixProvider,
   isNonWritten: Boolean,
   offset: Int,
   editor: Editor,

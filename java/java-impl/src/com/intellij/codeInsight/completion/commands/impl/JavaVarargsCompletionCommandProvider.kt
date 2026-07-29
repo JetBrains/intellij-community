@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.CommandProvider
 import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory
+import com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nls
 internal class JavaVarargsCompletionCommandProvider : CommandProvider, DumbAware {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     if (context.isReadOnly) return emptyList()
-    if (!JavaCommandCompletionFactory.isAfterTypeElementDotsInParameterList(context.psiFile,
+    if (!JavaCommandCompletionSupport.isAfterTypeElementDotsInParameterList(context.psiFile,
                                                                             context.offset, 2)) return emptyList()
     return listOf(JavaVarargsCompletionCommand())
   }
