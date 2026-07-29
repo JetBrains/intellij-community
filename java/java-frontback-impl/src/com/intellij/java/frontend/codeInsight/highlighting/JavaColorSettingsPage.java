@@ -1,16 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.colors.pages;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.frontend.codeInsight.highlighting;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.java.frontend.codeInsight.highlighting.JavaColorSettingsPageBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
+import com.intellij.openapi.options.colors.pages.AbstractBasicJavaColorSettingsPage;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-public final class JavaColorSettingsPage extends JavaColorSettingsPageBase implements RainbowColorSettingsPage{
+import javax.swing.Icon;
+
+public class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsPage implements RainbowColorSettingsPage {
+
   @Override
   public @NotNull String getDemoText() {
     return
@@ -78,14 +85,25 @@ public final class JavaColorSettingsPage extends JavaColorSettingsPageBase imple
   @Override
   public boolean isRainbowType(TextAttributesKey type) {
     return JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES.equals(type)
-        || JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES.equals(type)
-        || JavaHighlightingColors.PARAMETER_ATTRIBUTES.equals(type)
-        || JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES.equals(type)
-        || JavaHighlightingColors.DOC_COMMENT_TAG_VALUE.equals(type);
+           || JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES.equals(type)
+           || JavaHighlightingColors.PARAMETER_ATTRIBUTES.equals(type)
+           || JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES.equals(type)
+           || JavaHighlightingColors.DOC_COMMENT_TAG_VALUE.equals(type);
   }
 
   @Override
   public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
+  }
+
+
+  @Override
+  public final Icon getIcon() {
+    return JavaFileType.INSTANCE.getIcon();
+  }
+
+  @Override
+  public final @NotNull SyntaxHighlighter getHighlighter() {
+    return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 }

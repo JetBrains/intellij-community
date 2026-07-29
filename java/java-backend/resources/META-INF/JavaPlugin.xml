@@ -650,7 +650,6 @@
     <macro implementation="com.intellij.ide.macro.ClasspathMacro"/>
     <macro implementation="com.intellij.ide.macro.ClasspathEntryMacro"/>
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.PatternPackageSetParserExtension"/>
-    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.JavaColorSettingsPage"/>
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaRefactoringElementDescriptionProvider"/>
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>

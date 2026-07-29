@@ -136,5 +136,7 @@
     <registryKey key="java.folding.split.frontend.backend" defaultValue="false"
                  description="Split Java code folding between frontend (syntax-based) and backend (resolve-based) builders"/>
     <applicationSettings service="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
+
+    <colorSettingsPage implementation="com.intellij.java.frontend.codeInsight.highlighting.JavaColorSettingsPage"/>
   </extensions>
 </idea-plugin>

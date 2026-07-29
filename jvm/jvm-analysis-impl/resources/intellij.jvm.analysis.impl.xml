@@ -35,10 +35,6 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
-                    interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
-                    interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInspection.sourceToSinkProvider"
                     dynamic="true"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">

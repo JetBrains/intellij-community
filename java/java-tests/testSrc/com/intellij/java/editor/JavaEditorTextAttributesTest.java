@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.frontend.codeInsight.highlighting.JavaColorSettingsPage;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -10,7 +11,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.pages.JavaColorSettingsPage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.ui.ColorUtil;

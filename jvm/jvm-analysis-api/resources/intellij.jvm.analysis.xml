@@ -11,4 +11,11 @@
     <module name="intellij.platform.uast.ide"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
+                    interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
+                    interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
