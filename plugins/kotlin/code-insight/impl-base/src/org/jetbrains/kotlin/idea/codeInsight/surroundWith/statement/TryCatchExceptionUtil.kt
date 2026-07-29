@@ -122,10 +122,10 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
                     }
                 }
             }
-            is KaCompoundVariableAccessCall -> processCallable(call.compoundOperation.operationPartiallyAppliedSymbol.symbol)
+            is KaCompoundVariableAccessCall -> processCallable(call.compoundOperation.operationCall.symbol)
             is KaCompoundArrayAccessCall -> {
-                processCallable(call.getPartiallyAppliedSymbol.symbol)
-                processCallable(call.setPartiallyAppliedSymbol.symbol)
+                processCallable(call.getterCall.symbol)
+                processCallable(call.setterCall.symbol)
             }
             else -> {}
         }

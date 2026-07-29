@@ -355,7 +355,7 @@ class SmartStepTargetVisitor(
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
                 val variableAccessCall = expression.resolveToCall()?.successfulCallOrNull<KaVariableAccessCall>() ?: return
-                val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KaPropertySymbol ?: return
+                val symbol = variableAccessCall.symbol as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }
         }

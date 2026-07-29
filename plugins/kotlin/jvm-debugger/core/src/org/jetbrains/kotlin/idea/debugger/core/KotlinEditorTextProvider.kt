@@ -207,7 +207,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
                         languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses)
                     }
                     is KaFunctionCall<*> -> {
-                        val functionSymbol = call.partiallyAppliedSymbol.symbol
+                        val functionSymbol = call.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     is KaCompoundVariableAccessCall -> {

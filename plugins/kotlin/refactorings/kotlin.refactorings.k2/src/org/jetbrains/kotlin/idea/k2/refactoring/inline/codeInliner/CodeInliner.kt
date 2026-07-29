@@ -142,14 +142,12 @@ class CodeInliner(
         treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping?.mapValues { e -> e.value.name }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private val contextArguments: List<String?>? = analyze(call) {
         treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.contextArguments?.map {
             createReplacementForContextArgument(it)
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private val explicitContextArguments: Map<Name, String>? = analyze(call) {
         val partiallyAppliedSymbol = treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return@analyze null
         partiallyAppliedSymbol.symbol.contextParameters.zip(partiallyAppliedSymbol.contextArguments)

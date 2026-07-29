@@ -325,7 +325,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ktExpression.resolveToCallCandidates().forEach { candidateInfo ->
                     when (val candidate = candidateInfo.candidate) {
                         is KaFunctionCall<*> -> {
-                            add(candidate.partiallyAppliedSymbol.symbol)
+                            add(candidate.symbol)
                         }
 
                         is KaCompoundVariableAccessCall -> {

@@ -227,7 +227,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     if (defaultPsiFile != null) {
                         return readAction { SourcePosition.createFromLine(defaultPsiFile, 0) }
                     }
-                } catch (e: AbsentInformationException) {
+                } catch (_: AbsentInformationException) {
                     // ignored
                 }
             }
@@ -509,7 +509,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
         val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
+        val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return@f null
         getByteCodeMethodName(symbol)
     }
 
@@ -617,7 +617,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             } else {
                 defaultInternalName(location)
             }
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             defaultInternalName(location)
         }
 
@@ -734,7 +734,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
 
             return locations.filter { it.sourceName(KOTLIN_STRATA_NAME) == position.file.name }
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             throw NoDataException.INSTANCE
         }
     }
@@ -866,7 +866,7 @@ private fun hasInlinedLinesToAsync(
 private fun fallbackHasInlinedLinesTo(referenceType: ReferenceType, line: Int, sourceCandidatesInternalName: List<String>): Boolean {
     val locations = try {
         DebuggerUtilsAsync.locationsOfLineSync(referenceType, KOTLIN_STRATA_NAME, null, line)
-    } catch (e: AbsentInformationException) {
+    } catch (_: AbsentInformationException) {
         emptyList()
     }
     return locations.any { location ->

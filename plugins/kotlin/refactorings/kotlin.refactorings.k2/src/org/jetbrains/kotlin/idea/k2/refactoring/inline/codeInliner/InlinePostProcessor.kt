@@ -146,7 +146,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                 val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
 
                 val arguments = functionCall.valueArgumentMapping.entries.toList()
-                val callableSymbol = functionCall.partiallyAppliedSymbol.symbol
+                val callableSymbol = functionCall.symbol
                 val valueParameters = callableSymbol.valueParameters
                 var idx = arguments.size
                 for ((argument, param) in arguments.asReversed()) {

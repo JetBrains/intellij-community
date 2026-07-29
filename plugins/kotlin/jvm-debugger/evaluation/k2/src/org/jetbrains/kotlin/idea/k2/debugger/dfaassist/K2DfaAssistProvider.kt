@@ -291,7 +291,7 @@ internal class K2DfaAssistProvider : DfaAssistProvider {
                 if (call != null) {
                     val inline = analyze(call) {
                         val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
-                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
+                        (functionCall?.symbol as? KaNamedFunctionSymbol)?.isInline == true
                     }
                     if (inline) {
                         current = call

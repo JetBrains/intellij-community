@@ -354,8 +354,8 @@ object OperatorToFunctionConverter {
         val owner = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(callee) {
-                    val partiallyAppliedSymbol = element.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol
-                    val symbol = (partiallyAppliedSymbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
+                    val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull()
+                    val symbol = (functionCall?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
                     (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.psi
                 }
             }

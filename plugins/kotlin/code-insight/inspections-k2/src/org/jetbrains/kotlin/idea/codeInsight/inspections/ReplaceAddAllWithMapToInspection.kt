@@ -81,8 +81,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-        val symbol = partiallyAppliedSymbol.symbol
+        val symbol = resolvedCall.symbol
 
         return when (element) {
             is KtBinaryExpression -> {
@@ -100,7 +99,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
             }
 
             is KtCallExpression -> {
-                val dispatchReceiver = partiallyAppliedSymbol.dispatchReceiver
+                val dispatchReceiver = resolvedCall.dispatchReceiver
 
                 val addAllOperation = if (dispatchReceiver != null) {
                     if (!dispatchReceiver.type.isSubtypeOf(StandardClassIds.MutableCollection)) return null

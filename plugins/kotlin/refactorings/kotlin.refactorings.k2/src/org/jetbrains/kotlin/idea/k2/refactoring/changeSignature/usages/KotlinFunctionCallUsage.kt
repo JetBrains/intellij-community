@@ -16,7 +16,6 @@ import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
@@ -111,8 +111,7 @@ internal class KotlinFunctionCallUsage(
                 val ktCall = element.resolveToCall()
                 val functionCall = ktCall?.singleFunctionCallOrNull()
                     ?: return@allowAnalysisOnEdt null
-                val partiallyAppliedSymbol = functionCall.partiallyAppliedSymbol
-                if (ktCall is KaErrorCallInfo && (partiallyAppliedSymbol.signature.valueParameters.size != element.valueArguments.size ||
+                if (ktCall is KaErrorCallInfo && (functionCall.signature.valueParameters.size != element.valueArguments.size ||
                         ktCall.diagnostic is KaFirDiagnostic.NamedParameterNotFound)) {
                     //don't update broken call sites e.g. if new parameter is added as follows
                     //first add new argument to all function usages and only then call refactoring to update function hierarchy
@@ -121,7 +120,8 @@ internal class KotlinFunctionCallUsage(
                 val receiverOffset = if (callee is KtCallableDeclaration && callee.receiverTypeReference != null) 1 else 0
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
 
-                val oldIdxMap: Map<KaValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
+                val oldIdxMap: Map<KaValueParameterSymbol, Int> =
+                    functionCall.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
                 functionCall.valueArgumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
@@ -133,15 +133,15 @@ internal class KotlinFunctionCallUsage(
                         }
                     }
                 }
-                val receiver = ((partiallyAppliedSymbol.extensionReceiver
-                    ?: partiallyAppliedSymbol.dispatchReceiver) as? KaExplicitReceiverValue)?.expression
+                val receiver = ((functionCall.extensionReceiver
+                    ?: functionCall.dispatchReceiver) as? KaExplicitReceiverValue)?.expression
                 if (receiver != null) {
                     val receiverPointer = receiver.createSmartPointer()
                     if (receiverOffset > 0) map[0] = receiverPointer
                     map[Int.MAX_VALUE] = receiverPointer
                 } else {
-                    val symbol = ((partiallyAppliedSymbol.extensionReceiver
-                        ?: partiallyAppliedSymbol.dispatchReceiver) as? KaImplicitReceiverValue)?.symbol
+                    val symbol = ((functionCall.extensionReceiver
+                        ?: functionCall.dispatchReceiver) as? KaImplicitReceiverValue)?.symbol
                     val thisText = if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                         "this@" + symbol.name!!.asString()
                     } else {
@@ -168,8 +168,7 @@ internal class KotlinFunctionCallUsage(
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(element) {
-                    val partiallyAppliedSymbol = element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
-                    val receiverValue = partiallyAppliedSymbol?.extensionReceiver
+                    val receiverValue = element.resolveToCall()?.singleFunctionCallOrNull()?.extensionReceiver
                     when (val receiver = (receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) {
                         is KaExplicitReceiverValue -> receiver.expression.text to null
                         is KaImplicitReceiverValue -> {

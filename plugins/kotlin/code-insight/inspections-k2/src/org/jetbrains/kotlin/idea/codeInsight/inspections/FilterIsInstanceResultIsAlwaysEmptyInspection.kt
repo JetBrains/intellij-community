@@ -98,7 +98,7 @@ class FilterIsInstanceResultIsAlwaysEmptyInspection: AbstractKotlinInspection() 
                 if (calleeExpression.text !in filterIsInstanceShortNames) return@callExpressionVisitor
 
                 val callSymbol =
-                    calleeExpression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()?.partiallyAppliedSymbol
+                    calleeExpression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()
                         ?: return@callExpressionVisitor
 
                 val callableId = callSymbol.symbol.callableId ?: return@callExpressionVisitor

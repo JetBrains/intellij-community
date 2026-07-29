@@ -242,8 +242,7 @@ internal class K2PullUpHelper(
         val visitor = object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val resolvedCall = expression.resolveToCall()?.singleVariableAccessCall() ?: return
-                val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-                val receiverValue = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver
+                val receiverValue = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
                 val receiver = (receiverValue as? KaExplicitReceiverValue)?.expression
                 if (receiver != null && receiver !is KtThisExpression) return
                 when (val target = resolvedCall.symbol.sourcePsi<KtCallableDeclaration>()) {
