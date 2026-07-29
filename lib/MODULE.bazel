@@ -1793,17 +1793,17 @@ http_file(
 )
 
 http_file(
-    name = "com_github_luben-zstd-jni-1_5_5-11_http",
-    downloaded_file_path = "zstd-jni-1.5.5-11.jar",
-    sha256 = "d75b2ced6059f81ad23e021c554259b906b6c4f2991cb772409827569ead4c1a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.5-11/zstd-jni-1.5.5-11.jar",
+    name = "com_github_luben-zstd-jni-1_5_7-12_http",
+    downloaded_file_path = "zstd-jni-1.5.7-12.jar",
+    sha256 = "33661c9439a0898c4cc844d675bef56f6ea72e11079173c3cfc8f352c6e73f0c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-12/zstd-jni-1.5.7-12.jar",
 )
 
 http_file(
-    name = "com_github_luben-zstd-jni-1_5_5-11-sources_http",
-    downloaded_file_path = "zstd-jni-1.5.5-11-sources.jar",
-    sha256 = "658dc0dc9832114d6e8665eb297ae432ad90ec1419fadbc97f974179137bb8c2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.5-11/zstd-jni-1.5.5-11-sources.jar",
+    name = "com_github_luben-zstd-jni-1_5_7-12-sources_http",
+    downloaded_file_path = "zstd-jni-1.5.7-12-sources.jar",
+    sha256 = "3cbb19809552b151146935ff6dc71e877ed4f02f0b994952dd935fa7fa542bd4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-12/zstd-jni-1.5.7-12-sources.jar",
 )
 
 http_file(
@@ -16105,20 +16105,6 @@ http_file(
     downloaded_file_path = "marketplace-zip-signer-0.1.43-sources.jar",
     sha256 = "50233062bc38ac3d6405d7de0505440260588da59ebf8589ac7edabe7a499ead",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/marketplace-zip-signer/0.1.43/marketplace-zip-signer-0.1.43-sources.jar",
-)
-
-http_file(
-    name = "com_github_luben-zstd-jni-1_5_7-7_http",
-    downloaded_file_path = "zstd-jni-1.5.7-7.jar",
-    sha256 = "d4725bce2c3e4f3df54cbea8bf5966e240872bb7ba7658572ededaef28a01d83",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-7/zstd-jni-1.5.7-7.jar",
-)
-
-http_file(
-    name = "com_github_luben-zstd-jni-1_5_7-7-sources_http",
-    downloaded_file_path = "zstd-jni-1.5.7-7-sources.jar",
-    sha256 = "2a68334a3e102a71647d07bc859fb8fa7651d3e46197d19412cf2a4e14f6aa1e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-7/zstd-jni-1.5.7-7-sources.jar",
 )
 
 http_file(

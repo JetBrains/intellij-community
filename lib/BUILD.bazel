@@ -2419,17 +2419,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.github.luben/zstd-jni-1.5.5-11.jar_copy",
-    src = "@com_github_luben-zstd-jni-1_5_5-11_http//file",
-    out = "com.github.luben/zstd-jni-1.5.5-11.jar",
+    name = "com.github.luben/zstd-jni-1.5.7-12.jar_copy",
+    src = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
+    out = "com.github.luben/zstd-jni-1.5.7-12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-github-luben-zstd-jni",
-    jar = "@com_github_luben-zstd-jni-1_5_5-11_http//file",
-    source_jar = "@com_github_luben-zstd-jni-1_5_5-11-sources_http//file",
+    jar = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
+    source_jar = "@com_github_luben-zstd-jni-1_5_7-12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20879,18 +20879,10 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "com.github.luben/zstd-jni-1.5.7-7.jar_copy",
-    src = "@com_github_luben-zstd-jni-1_5_7-7_http//file",
-    out = "com.github.luben/zstd-jni-1.5.7-7.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
 jvm_import(
     name = "zstd-jni",
-    jar = "@com_github_luben-zstd-jni-1_5_7-7_http//file",
-    source_jar = "@com_github_luben-zstd-jni-1_5_7-7-sources_http//file",
+    jar = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
+    source_jar = "@com_github_luben-zstd-jni-1_5_7-12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
