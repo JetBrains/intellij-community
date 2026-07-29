@@ -9912,6 +9912,89 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant")
+    public static class KotlinTimeToJavaInstant extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentTypeMismatch.kt")
+        public void testAssignmentTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/assignmentTypeMismatch.kt");
+        }
+
+        @TestMetadata("chainExpression.kt")
+        public void testChainExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/chainExpression.kt");
+        }
+
+        @TestMetadata("existingImport.kt")
+        public void testExistingImport() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/existingImport.kt");
+        }
+
+        @TestMetadata("functionExpectedType.kt")
+        public void testFunctionExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/functionExpectedType.kt");
+        }
+
+        @TestMetadata("initializerTypeMismatch.kt")
+        public void testInitializerTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/initializerTypeMismatch.kt");
+        }
+
+        @TestMetadata("initializerTypeMismatchForParameter.kt")
+        public void testInitializerTypeMismatchForParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/initializerTypeMismatchForParameter.kt");
+        }
+
+        @TestMetadata("namesakeExpectedType.kt")
+        public void testNamesakeExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/namesakeExpectedType.kt");
+        }
+
+        @TestMetadata("noExpectedType.kt")
+        public void testNoExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/noExpectedType.kt");
+        }
+
+        @TestMetadata("nullableArgumentForNonNullableParameter.kt")
+        public void testNullableArgumentForNonNullableParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/nullableArgumentForNonNullableParameter.kt");
+        }
+
+        @TestMetadata("replaceKotlinInstant.kt")
+        public void testReplaceKotlinInstant() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceKotlinInstant.kt");
+        }
+
+        @TestMetadata("replaceNullable.kt")
+        public void testReplaceNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceNullable.kt");
+        }
+
+        @TestMetadata("replaceWithParentheses.kt")
+        public void testReplaceWithParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/replaceWithParentheses.kt");
+        }
+
+        @TestMetadata("trailingLambda.kt")
+        public void testTrailingLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/trailingLambda.kt");
+        }
+
+        @TestMetadata("unrelatedExpectedType.kt")
+        public void testUnrelatedExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/unrelatedExpectedType.kt");
+        }
+
+        @TestMetadata("unrelatedPassedType.kt")
+        public void testUnrelatedPassedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kotlinTimeToJavaInstant/unrelatedPassedType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/lateinit")
     public static class Lateinit extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
