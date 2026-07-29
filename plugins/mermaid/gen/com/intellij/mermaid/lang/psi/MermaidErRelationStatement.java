@@ -14,6 +14,9 @@ public interface MermaidErRelationStatement extends MermaidPsiElement {
   List<MermaidErIdentifier> getErIdentifierList();
 
   @NotNull
+  List<MermaidErStyleClass> getErStyleClassList();
+
+  @NotNull
   MermaidRelationship getRelationship();
 
   @Nullable

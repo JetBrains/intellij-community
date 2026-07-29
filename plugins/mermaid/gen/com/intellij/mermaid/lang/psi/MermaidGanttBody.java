@@ -50,6 +50,9 @@ public interface MermaidGanttBody extends MermaidDiagramBlock {
   List<MermaidGanttWeekdayStatement> getGanttWeekdayStatementList();
 
   @NotNull
+  List<MermaidGanttWeekendStatement> getGanttWeekendStatementList();
+
+  @NotNull
   List<MermaidTitleStatement> getTitleStatementList();
 
 }

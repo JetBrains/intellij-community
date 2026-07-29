@@ -45,4 +45,10 @@ public class MermaidEntityDeclarationImpl extends ASTWrapperPsiElement implement
     return findChildByClass(MermaidErIdentifierAlias.class);
   }
 
+  @Override
+  @Nullable
+  public MermaidErStyleClass getErStyleClass() {
+    return findChildByClass(MermaidErStyleClass.class);
+  }
+
 }

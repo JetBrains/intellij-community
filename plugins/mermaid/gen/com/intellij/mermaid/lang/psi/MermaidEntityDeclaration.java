@@ -16,4 +16,7 @@ public interface MermaidEntityDeclaration extends MermaidPsiElement {
   @Nullable
   MermaidErIdentifierAlias getErIdentifierAlias();
 
+  @Nullable
+  MermaidErStyleClass getErStyleClass();
+
 }

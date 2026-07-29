@@ -35,6 +35,18 @@ public class MermaidErBodyImpl extends ASTWrapperPsiElement implements MermaidEr
 
   @Override
   @NotNull
+  public List<MermaidClassDefStatement> getClassDefStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidClassDefStatement.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidDirectionStatement> getDirectionStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidDirectionStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidDirective> getDirectiveList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidDirective.class);
   }
@@ -61,6 +73,24 @@ public class MermaidErBodyImpl extends ASTWrapperPsiElement implements MermaidEr
   @NotNull
   public List<MermaidErRelationStatement> getErRelationStatementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidErRelationStatement.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidErStyleClass> getErStyleClassList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidErStyleClass.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidFlowchartClassStatement> getFlowchartClassStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidFlowchartClassStatement.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidStyleStatement> getStyleStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidStyleStatement.class);
   }
 
 }

@@ -11,44 +11,20 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidErRelationStatementImpl extends ASTWrapperPsiElement implements MermaidErRelationStatement {
+public class MermaidPlotPointImpl extends ASTWrapperPsiElement implements MermaidPlotPoint {
 
-  public MermaidErRelationStatementImpl(@NotNull ASTNode node) {
+  public MermaidPlotPointImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitErRelationStatement(this);
+    visitor.visitPlotPoint(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof MermaidVisitor) accept((MermaidVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @Nullable
-  public MermaidComplexLabel getComplexLabel() {
-    return findChildByClass(MermaidComplexLabel.class);
-  }
-
-  @Override
-  @NotNull
-  public List<MermaidErIdentifier> getErIdentifierList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidErIdentifier.class);
-  }
-
-  @Override
-  @NotNull
-  public List<MermaidErStyleClass> getErStyleClassList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidErStyleClass.class);
-  }
-
-  @Override
-  @NotNull
-  public MermaidRelationship getRelationship() {
-    return findNotNullChildByClass(MermaidRelationship.class);
   }
 
   @Override

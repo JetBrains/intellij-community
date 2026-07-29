@@ -35,6 +35,18 @@ public class MermaidRequirementDiagramBodyImpl extends ASTWrapperPsiElement impl
 
   @Override
   @NotNull
+  public List<MermaidClassDefStatement> getClassDefStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidClassDefStatement.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidDirectionStatement> getDirectionStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidDirectionStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidDirective> getDirectiveList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidDirective.class);
   }
@@ -47,6 +59,12 @@ public class MermaidRequirementDiagramBodyImpl extends ASTWrapperPsiElement impl
 
   @Override
   @NotNull
+  public List<MermaidFlowchartClassStatement> getFlowchartClassStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidFlowchartClassStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidRelationshipDef> getRelationshipDefList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidRelationshipDef.class);
   }
@@ -55,6 +73,12 @@ public class MermaidRequirementDiagramBodyImpl extends ASTWrapperPsiElement impl
   @NotNull
   public List<MermaidRequirementDef> getRequirementDefList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidRequirementDef.class);
+  }
+
+  @Override
+  @NotNull
+  public List<MermaidStyleStatement> getStyleStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidStyleStatement.class);
   }
 
 }

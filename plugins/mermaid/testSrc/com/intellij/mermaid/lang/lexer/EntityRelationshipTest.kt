@@ -1,6 +1,16 @@
 package com.intellij.mermaid.lang.lexer
 
 class EntityRelationshipTest : MermaidLexerTestCase() {
+  // Regression guard: `direction` is only a keyword when a direction value follows, so an entity may be
+  // called `direction`. Matches upstream, which requires the value too.
+  fun `test entity named direction`() {
+    val content = """
+    erDiagram
+      direction ||--|| CAR : owns
+    """.trimIndent()
+    doTest(content)
+  }
+
   override val diagramName: String
     get() = "entityRelationship"
 

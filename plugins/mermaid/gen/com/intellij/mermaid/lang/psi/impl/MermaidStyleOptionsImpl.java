@@ -27,4 +27,10 @@ public class MermaidStyleOptionsImpl extends ASTWrapperPsiElement implements Mer
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public List<MermaidStyleDeclaration> getStyleDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidStyleDeclaration.class);
+  }
+
 }

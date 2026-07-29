@@ -11,26 +11,20 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidPlotDataImpl extends ASTWrapperPsiElement implements MermaidPlotData {
+public class MermaidGanttWeekendStatementImpl extends ASTWrapperPsiElement implements MermaidGanttWeekendStatement {
 
-  public MermaidPlotDataImpl(@NotNull ASTNode node) {
+  public MermaidGanttWeekendStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitPlotData(this);
+    visitor.visitGanttWeekendStatement(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof MermaidVisitor) accept((MermaidVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<MermaidPlotPoint> getPlotPointList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidPlotPoint.class);
   }
 
 }

@@ -113,6 +113,12 @@ public class MermaidGanttBodyImpl extends ASTWrapperPsiElement implements Mermai
 
   @Override
   @NotNull
+  public List<MermaidGanttWeekendStatement> getGanttWeekendStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidGanttWeekendStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidTitleStatement> getTitleStatementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidTitleStatement.class);
   }

@@ -10,6 +10,9 @@ public interface MermaidPointStatement extends MermaidPsiElement {
   @NotNull
   MermaidPoint getPoint();
 
+  @Nullable
+  MermaidPointRadius getPointRadius();
+
   @NotNull
   MermaidQuadrantComplexText getQuadrantComplexText();
 

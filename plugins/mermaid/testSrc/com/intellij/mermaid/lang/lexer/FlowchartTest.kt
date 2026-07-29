@@ -41,7 +41,7 @@ class FlowchartTest : MermaidLexerTestCase() {
     val content = """
     flowchart TD
       A@{
-        shape: rect,
+        shape: rect
         label: "Multi line"
       }
     """.trimIndent()

@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface MermaidStyleOptions extends MermaidPsiElement {
 
+  @NotNull
+  List<MermaidStyleDeclaration> getStyleDeclarationList();
+
 }

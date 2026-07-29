@@ -34,6 +34,12 @@ public class MermaidPointStatementImpl extends ASTWrapperPsiElement implements M
   }
 
   @Override
+  @Nullable
+  public MermaidPointRadius getPointRadius() {
+    return findChildByClass(MermaidPointRadius.class);
+  }
+
+  @Override
   @NotNull
   public MermaidQuadrantComplexText getQuadrantComplexText() {
     return findNotNullChildByClass(MermaidQuadrantComplexText.class);

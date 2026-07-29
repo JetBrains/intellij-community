@@ -597,6 +597,10 @@ object MermaidTokens {
     @JvmField
     val EXCLUDES = MermaidToken("Gantt.EXCLUDES")
 
+    // `weekend friday` names which day counts as the weekend (mermaid 11.16).
+    @JvmField
+    val WEEKEND = MermaidToken("Gantt.WEEKEND")
+
     @JvmField
     val INCLUDES = MermaidToken("Gantt.INCLUDES")
 
@@ -929,6 +933,10 @@ object MermaidTokens {
   object Quadrant {
     @JvmField
     val QUADRANT_CHART = MermaidToken("Quadrant.QUADRANT_CHART")
+
+    // `Campaign A: [0.9, 0.0] radius: 12` sizes an individual point (mermaid 11.16).
+    @JvmField
+    val RADIUS = MermaidToken("Quadrant.RADIUS")
 
     @JvmField
     val QUADRANT = MermaidToken("Quadrant.QUADRANT")

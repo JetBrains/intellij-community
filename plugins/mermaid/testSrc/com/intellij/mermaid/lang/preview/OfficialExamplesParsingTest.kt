@@ -29,33 +29,11 @@ class OfficialExamplesParsingTest {
    * Refresh the examples themselves with ./updateMermaidExamples.sh after bumping mermaidVersion.
    */
   private val ignoredTests = listOf(
-    // block (1)
-    "block-28",
-    // entityRelationshipDiagram (5)
-    "entityRelationshipDiagram-7",
-    "entityRelationshipDiagram-12",
-    "entityRelationshipDiagram-13",
-    "entityRelationshipDiagram-14",
-    "entityRelationshipDiagram-15",
-    // flowchart (1) -- classDef style values may contain commas (`stroke-dasharray: 9,5`), which the
-    // style lexer reads as a declaration separator. Pre-existing, not a v11 gap.
-    "flowchart-86",
-    // gantt (1)
-    "gantt-3",
-    // gitgraph (1)
-    "gitgraph-19",
-    // quadrantChart (1)
+    // quadrantChart (1) -- `radius: N` alone now parses, but this example also uses the multi-property
+    // form (`color: #ff3300, radius: 10`) together with a `:::class` style class. The quadrant body has a
+    // single catch-all text token whose character class includes the comma, so separating properties needs
+    // that token split up first.
     "quadrantChart-2",
-    // requirementDiagram (5)
-    "requirementDiagram-1",
-    "requirementDiagram-3",
-    "requirementDiagram-4",
-    "requirementDiagram-5",
-    "requirementDiagram-6",
-    // xyChart (3)
-    "xyChart-1",
-    "xyChart-4",
-    "xyChart-5",
   )
 
   @TestTemplate

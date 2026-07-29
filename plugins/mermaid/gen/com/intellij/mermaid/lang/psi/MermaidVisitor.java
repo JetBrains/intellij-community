@@ -442,6 +442,10 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitErStyleClass(@NotNull MermaidErStyleClass o) {
+    visitPsiElement(o);
+  }
+
   public void visitFlowchartBody(@NotNull MermaidFlowchartBody o) {
     visitDiagramBlock(o);
   }
@@ -527,6 +531,10 @@ public class MermaidVisitor extends PsiElementVisitor {
   }
 
   public void visitGanttWeekdayStatement(@NotNull MermaidGanttWeekdayStatement o) {
+    visitPsiElement(o);
+  }
+
+  public void visitGanttWeekendStatement(@NotNull MermaidGanttWeekendStatement o) {
     visitPsiElement(o);
   }
 
@@ -790,7 +798,15 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitPlotPoint(@NotNull MermaidPlotPoint o) {
+    visitPsiElement(o);
+  }
+
   public void visitPoint(@NotNull MermaidPoint o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPointRadius(@NotNull MermaidPointRadius o) {
     visitPsiElement(o);
   }
 
@@ -1007,6 +1023,10 @@ public class MermaidVisitor extends PsiElementVisitor {
   }
 
   public void visitString(@NotNull MermaidString o) {
+    visitPsiElement(o);
+  }
+
+  public void visitStyleDeclaration(@NotNull MermaidStyleDeclaration o) {
     visitPsiElement(o);
   }
 

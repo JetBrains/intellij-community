@@ -156,11 +156,17 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | INV_TRAP_START nodeText INV_TRAP_END
   | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
 
-// `A@{ shape: rect, label: "Hello" }` (mermaid 11.3+). An inline mapping, which upstream also accepts
-// spread over several lines, hence the EOL tolerance. Shared with sequence participants and actors
+// `A@{ shape: rect, label: "Hello" }` (mermaid 11.3+). Shared with sequence participants and actors
 // (`participant Alice@{ "type": "boundary" }`, 11.13+), which is why keys may be quoted as well as bare.
+//
+// Entries are separated by a comma or by a newline, matching how mermaid reads the mapping: on one line the
+// separator is the comma, and when it is spread over several lines the newline separates them and a trailing
+// comma would be taken as part of the value ("No such shape: rounded,").
 metadata ::= METADATA_START EOL* [metadataEntries] METADATA_END
-private metadataEntries ::= metadataEntry (EOL* COMMA EOL* metadataEntry)* EOL*
+// One separator rule covering both spellings rather than two alternatives: written as
+// `EOL* COMMA EOL* | EOL+` the two share a leading `EOL*`, and the first alternative consuming the newline
+// before failing on the missing comma stops the second from being tried at all.
+private metadataEntries ::= metadataEntry ((EOL | COMMA)+ metadataEntry)* EOL*
 // Named metadataEntryValue, not metadataValue: the generated element type would otherwise collide with
 // the METADATA_VALUE token, and both are static-imported into the generated parser.
 metadataEntry ::= (METADATA_KEY | string) COLON metadataEntryValue
@@ -213,7 +219,12 @@ classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
 
 flowchartClassStatement ::= CLASS identifier (COMMA identifier)* STYLE_TARGET
 
-styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
+// STYLE_VAL+ rather than a single token: a CSS value may contain commas (`stroke-dasharray: 9,5`), and the
+// lexer emits those commas as value fragments rather than declaration separators, so a value arrives as
+// several adjacent tokens.
+styleOptions ::= styleDeclaration (COMMA styleDeclaration)*
+// The value is optional because mermaid accepts a declaration with no colon at all.
+styleDeclaration ::= STYLE_OPT [COLON STYLE_VAL+]
 
 
 sequenceHeader ::= SEQUENCE
@@ -480,19 +491,26 @@ private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
 private erStatement ::= erRelationStatement
   | entityDeclaration
-  | erIdentifier [erIdentifierAlias]
+  | erIdentifier [erStyleClass] [erIdentifierAlias]
   | directive
   | accStatement
+  | styleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | directionStatement
 
-erRelationStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | maybeEmptyString)
+erRelationStatement ::= erIdentifier [erStyleClass] relationship erIdentifier [erStyleClass] COLON (complexLabel | maybeEmptyString)
 
 erIdentifier ::= ID | string {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
 erIdentifierAlias ::= OPEN_SQUARE (ID | string) CLOSE_SQUARE
+// `PERSON:::someclass` attaches a classDef class. Kept out of erIdentifier so the identifier's own text
+// stays just the name, which is what the named-element mixin exposes to rename and find-usages.
+erStyleClass ::= STYLE_SEPARATOR ID
 
-entityDeclaration ::= erIdentifier [erIdentifierAlias] erEntityBlock
+entityDeclaration ::= erIdentifier [erStyleClass] [erIdentifierAlias] erEntityBlock
 
 relationship ::= erCardinality (IDENTIFYING | NON_IDENTIFYING) erCardinality
 private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE | MD_PARENT
@@ -516,6 +534,7 @@ private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
 private ganttStatement ::= ganttDateFormatStatement
   | titleStatement
   | ganttExcludesStatement
+  | ganttWeekendStatement
   | ganttIncludesStatement
   | ganttAxisFormatStatement
   | ganttTodayMarkerStatement
@@ -540,6 +559,8 @@ private ganttSectionInnerStatement ::= ganttDataStatement
 
 ganttDateFormatStatement ::= DATE_FORMAT GANTT_VALUE+
 ganttExcludesStatement ::= EXCLUDES GANTT_VALUE+
+// `weekend friday` names which day counts as the weekend (mermaid 11.16).
+ganttWeekendStatement ::= WEEKEND GANTT_VALUE+
 ganttIncludesStatement ::= INCLUDES GANTT_VALUE+
 ganttAxisFormatStatement ::= AXIS_FORMAT GANTT_VALUE+
 ganttTodayMarkerStatement ::= TODAY_MARKER GANTT_VALUE+
@@ -558,6 +579,10 @@ private requirementStatement ::= requirementDef
   | relationshipDef
   | directive
   | accStatement
+  | styleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | directionStatement
 
 requirementDef ::= requirementHeader requirementBlock
 requirementType ::= REQUIREMENT
@@ -566,7 +591,8 @@ requirementType ::= REQUIREMENT
   | PERFORMANCE_REQUIREMENT
   | PHYSICAL_REQUIREMENT
   | DESIGN_CONSTRAINT
-requirementHeader ::= requirementType identifier
+// The name may be quoted, which is how markdown formatting gets into it: `requirement "__test_req__"`.
+requirementHeader ::= requirementType (identifier | string) [erStyleClass]
 private requirementValue ::= complexLabel | string
 
 requirementBlock ::= OPEN_CURLY EOL+ requirementBlockLines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
@@ -868,7 +894,11 @@ private quadrantStatement ::= titleStatement
   | axisDetailsStatement
   | quadrantDetailsStatement
 
-pointStatement ::= quadrantComplexText COLON point
+pointStatement ::= quadrantComplexText COLON point [pointRadius]
+// `radius: 12` after the coordinates sizes the point (mermaid 11.16).
+// The value is a QUADRANT_TEXT, not NUM: numbers are only lexed as NUM inside the coordinate brackets,
+// and outside them the quadrant body has a single catch-all text token.
+pointRadius ::= RADIUS COLON QUADRANT_TEXT
 point ::= OPEN_SQUARE NUM COMMA NUM CLOSE_SQUARE
 
 axisDetailsStatement ::= (X_AXIS | Y_AXIS) (quadrantComplexText) [ARROW quadrantComplexText?]
@@ -932,7 +962,9 @@ private yAxisData ::= xyChartText* arrowData
 lineStatement ::= LINE_KEYWORD [xyChartText] plotData
 barStatement ::= BAR_KEYWORD [xyChartText] plotData
 
-plotData ::= OPEN_SQUARE (NUM (COMMA NUM)*) CLOSE_SQUARE
+// mermaid 11.16 allows a label on individual points: `line [25 "Launch", 45, 72, 90 "Target Hit"]`.
+plotData ::= OPEN_SQUARE (plotPoint (COMMA plotPoint)*) CLOSE_SQUARE
+plotPoint ::= NUM [string]
 bandData ::= OPEN_SQUARE (xyChartText (COMMA xyChartText)*) CLOSE_SQUARE
 arrowData ::= NUM ARROW NUM
 private xyChartText ::= XY_CHART_TEXT | maybeEmptyString | maybeEmptyMdText

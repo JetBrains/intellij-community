@@ -11,15 +11,27 @@ public interface MermaidRequirementDiagramBody extends MermaidDiagramBlock {
   List<MermaidAccStatement> getAccStatementList();
 
   @NotNull
+  List<MermaidClassDefStatement> getClassDefStatementList();
+
+  @NotNull
+  List<MermaidDirectionStatement> getDirectionStatementList();
+
+  @NotNull
   List<MermaidDirective> getDirectiveList();
 
   @NotNull
   List<MermaidElementDef> getElementDefList();
 
   @NotNull
+  List<MermaidFlowchartClassStatement> getFlowchartClassStatementList();
+
+  @NotNull
   List<MermaidRelationshipDef> getRelationshipDefList();
 
   @NotNull
   List<MermaidRequirementDef> getRequirementDefList();
+
+  @NotNull
+  List<MermaidStyleStatement> getStyleStatementList();
 
 }

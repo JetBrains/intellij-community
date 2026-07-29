@@ -7,10 +7,16 @@ import com.intellij.psi.PsiElement;
 
 public interface MermaidRequirementHeader extends MermaidPsiElement {
 
-  @NotNull
+  @Nullable
+  MermaidErStyleClass getErStyleClass();
+
+  @Nullable
   MermaidIdentifier getIdentifier();
 
   @NotNull
   MermaidRequirementType getRequirementType();
+
+  @Nullable
+  MermaidString getString();
 
 }

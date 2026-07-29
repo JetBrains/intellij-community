@@ -11,6 +11,12 @@ public interface MermaidErBody extends MermaidDiagramBlock {
   List<MermaidAccStatement> getAccStatementList();
 
   @NotNull
+  List<MermaidClassDefStatement> getClassDefStatementList();
+
+  @NotNull
+  List<MermaidDirectionStatement> getDirectionStatementList();
+
+  @NotNull
   List<MermaidDirective> getDirectiveList();
 
   @NotNull
@@ -24,5 +30,14 @@ public interface MermaidErBody extends MermaidDiagramBlock {
 
   @NotNull
   List<MermaidErRelationStatement> getErRelationStatementList();
+
+  @NotNull
+  List<MermaidErStyleClass> getErStyleClassList();
+
+  @NotNull
+  List<MermaidFlowchartClassStatement> getFlowchartClassStatementList();
+
+  @NotNull
+  List<MermaidStyleStatement> getStyleStatementList();
 
 }

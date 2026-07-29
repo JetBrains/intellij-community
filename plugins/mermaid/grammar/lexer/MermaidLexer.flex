@@ -167,7 +167,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { return EOL; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, block_diagram, generic_diagram> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, xy_chart, block_diagram, generic_diagram> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant, xy_chart, block_diagram> {
@@ -176,6 +176,28 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <flowchart_body, gantt, class_diagram> {
   "click" { yypushstate(click); return CLICK; }
+}
+// Entity-relationship and requirement diagrams accept `direction`, `style` and `classDef` like the other
+// families do. Declared here, ahead of those states' own identifier rules: an identifier rule matches
+// "style" at the same length, and among equal-length matches JFlex prefers the rule declared first.
+<entity_relationship, requirement_diagram> {
+  // The direction value is required, so an entity or requirement named `direction` still parses. This mirrors
+  // upstream, whose erDiagram.jison matches `.*direction\s+TB[^\n]*` and friends rather than the bare word.
+  // `style` and `classDef` deliberately stay unconditional: upstream's rules for those are unconditional too
+  // (erDiagram.jison lines 49 and 55), so an entity named `style` does not work in mermaid either, and
+  // accepting one here would only mean the editor disagreeing with the renderer.
+  "direction"/[^\S\n\r]+("TB"|"BT"|"RL"|"LR") { yypushstate(simple_direction_value); return DIRECTION; }
+  "style" { yypushstate(style); return STYLE; }
+  "classDef" { yypushstate(class_def); return CLASS_DEF; }
+  // `class test_entity important` assigns a previously declared classDef class.
+  "class" { yypushstate(flowchart_class); return CLASS; }
+}
+// `PERSON:::someclass` / `requirement test_req:::important` attach a classDef class, as in flowcharts and
+// class diagrams. class_style_id reads the class name and pops straight back. The `requirement` state is
+// included because the keyword switches into it before the name is read, and there `:` is otherwise
+// meaningful (`id:`, `text:`); three characters beat one on longest match, so the two do not conflict.
+<entity_relationship, requirement_diagram, requirement> {
+  ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
 }
 
 <pie> {
@@ -378,13 +400,21 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <style_opt> {
   [^\s,:;][^,:\n\r;]*/: { return STYLE_OPT; }
+  // Upstream's own block documentation contains `style A fill#969;` -- a declaration with no colon, which
+  // mermaid tolerates. Accept it rather than reporting valid-per-mermaid input as an error.
+  [^\s,:;][^,:\n\r;]* { return STYLE_OPT; }
   ":" { yybegin(style_value); return COLON; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <style_value> {
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^\s,:;][^,:\n\r;]* { return STYLE_VAL; }
-  "," { yybegin(style_opt); return COMMA; }
+  // A comma only separates declarations when another `key:` follows it. CSS values may contain commas of
+  // their own (`stroke-dasharray: 9,5`), and treating those as separators made the lexer demand a key and
+  // report "STYLE_OPT expected, got '5'". The lookahead cannot cross a comma, so it distinguishes the two:
+  // a following declaration has its colon before the next comma, a value fragment does not.
+  ","/[^,:;\n\r]*":" { yybegin(style_opt); return COMMA; }
+  "," { return STYLE_VAL; }
   ";" { yypopstate(); return SEMICOLON; }
   [\n\r] { yypopstate(); return EOL; }
 }
@@ -403,10 +433,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ";" { yypopstate(); return SEMICOLON; }
   [\n\r] { yypopstate(); return EOL; }
 }
-// `@{ ... }` metadata, an inline mapping of comma-separated `key: value` pairs. Values are bare words,
-// numbers, or quoted strings (`A@{ img: "https://...", h: 60 }`). Keys are told apart from bare values
-// only by the following colon, hence the lookahead. Newlines are allowed: upstream accepts the mapping
-// spread over several lines.
+// `@{ ... }` metadata, a mapping of `key: value` pairs. Values are bare words, numbers, or quoted strings
+// (`A@{ img: "https://...", h: 60 }`). Keys are told apart from bare values only by the following colon,
+// hence the lookahead. Newlines are allowed because the mapping may be spread over several lines, in which
+// case the newline is the separator rather than the comma.
 //
 // Shared by flowchart nodes and edges (mermaid 11.3+) and by sequence participants and actors
 // (`participant Alice@{ "type": "boundary" }`, 11.13+). Entered with yypushstate and left with yypopstate
@@ -819,7 +849,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <entity_attributes> {
   "FK" | "PK" | "UK" { return EntityRelationship.ATTR_KEY; }
-  [\*a-zA-Z_][\w\-\[\]\(\)]* { return ATTRIBUTE_WORD; }
+  // A trailing `?` marks the attribute type optional, added in mermaid 11.16.
+  [\*a-zA-Z_][\w\-\[\]\(\)]*[?]? { return ATTRIBUTE_WORD; }
   [~]/[^\n\r]+[~] { yypushstate(complex_generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "{" { return OPEN_CURLY; }
@@ -843,6 +874,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "axisFormat" { yybegin(gantt_value); return Gantt.AXIS_FORMAT; }
   "includes" { yybegin(gantt_value); return Gantt.INCLUDES; }
   "excludes" { yybegin(gantt_value); return Gantt.EXCLUDES; }
+  "weekend" { yybegin(gantt_value); return Gantt.WEEKEND; }
   "todayMarker" { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER; }
   "tickInterval" { yybegin(gantt_value); return Gantt.TICK_INTERVAL; }
   "section" { yypushstate(gantt_section); return SECTION; }
@@ -893,13 +925,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---requirement------------------------------------------------------------------
 <requirement_diagram> {
-  "requirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.REQUIREMENT; }
-  "functionalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.FUNCTIONAL_REQUIREMENT; }
-  "interfaceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.INTERFACE_REQUIREMENT; }
-  "performanceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PERFORMANCE_REQUIREMENT; }
-  "physicalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PHYSICAL_REQUIREMENT; }
-  "designConstraint"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.DESIGN_CONSTRAINT; }
-  "element"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(req_element); return Requirement.ELEMENT; }
+  "requirement"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.REQUIREMENT; }
+  "functionalRequirement"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.FUNCTIONAL_REQUIREMENT; }
+  "interfaceRequirement"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.INTERFACE_REQUIREMENT; }
+  "performanceRequirement"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.PERFORMANCE_REQUIREMENT; }
+  "physicalRequirement"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.PHYSICAL_REQUIREMENT; }
+  "designConstraint"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(requirement); return Requirement.DESIGN_CONSTRAINT; }
+  "element"/\s+[\w\"][^\r\n\{\<\>\-\=;]*\s*\{ { yybegin(req_element); return Requirement.ELEMENT; }
   "contains"/\s*\- { return Requirement.CONTAINS; }
   "copies"/\s*\- { return Requirement.COPIES; }
   "derives"/\s*\- { return Requirement.DERIVES; }
@@ -969,7 +1001,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "HIGHLIGHT" { return GitGraph.HIGHLIGHT; }
 
   "LR" |
-  "TB" { return DIR; }
+  "TB" |
+  "BT" { return DIR; }
 
   ":" { return COLON; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
@@ -1105,6 +1138,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---quadrant---------------------------------------------------------------------
 <quadrant> {
   "title" { yypushstate(title); return TITLE; }
+
+  // `radius:` sizes an individual point (mermaid 11.16). Declared ahead of the quadrant text rule, which
+  // matches "radius" at the same length; equal-length matches go to the rule declared first.
+  "radius"/[^\S\n\r]*":" { return Quadrant.RADIUS; }
 
   "x-axis" { return X_AXIS; }
   "y-axis" { return Y_AXIS; }

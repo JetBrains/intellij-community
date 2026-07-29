@@ -28,15 +28,27 @@ public class MermaidRequirementHeaderImpl extends ASTWrapperPsiElement implement
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public MermaidErStyleClass getErStyleClass() {
+    return findChildByClass(MermaidErStyleClass.class);
+  }
+
+  @Override
+  @Nullable
   public MermaidIdentifier getIdentifier() {
-    return findNotNullChildByClass(MermaidIdentifier.class);
+    return findChildByClass(MermaidIdentifier.class);
   }
 
   @Override
   @NotNull
   public MermaidRequirementType getRequirementType() {
     return findNotNullChildByClass(MermaidRequirementType.class);
+  }
+
+  @Override
+  @Nullable
+  public MermaidString getString() {
+    return findChildByClass(MermaidString.class);
   }
 
 }

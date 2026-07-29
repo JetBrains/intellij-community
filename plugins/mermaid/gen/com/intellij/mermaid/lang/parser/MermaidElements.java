@@ -119,6 +119,7 @@ public interface MermaidElements {
   IElementType ER_IDENTIFIER = new MermaidElementType("ER_IDENTIFIER");
   IElementType ER_IDENTIFIER_ALIAS = new MermaidElementType("ER_IDENTIFIER_ALIAS");
   IElementType ER_RELATION_STATEMENT = new MermaidElementType("ER_RELATION_STATEMENT");
+  IElementType ER_STYLE_CLASS = new MermaidElementType("ER_STYLE_CLASS");
   IElementType FLOWCHART_BODY = new MermaidElementType("FLOWCHART_BODY");
   IElementType FLOWCHART_CLASS_STATEMENT = new MermaidElementType("FLOWCHART_CLASS_STATEMENT");
   IElementType FLOWCHART_CLICK_STATEMENT = new MermaidElementType("FLOWCHART_CLICK_STATEMENT");
@@ -141,6 +142,7 @@ public interface MermaidElements {
   IElementType GANTT_TODAY_MARKER_STATEMENT = new MermaidElementType("GANTT_TODAY_MARKER_STATEMENT");
   IElementType GANTT_TOP_AXIS_STATEMENT = new MermaidElementType("GANTT_TOP_AXIS_STATEMENT");
   IElementType GANTT_WEEKDAY_STATEMENT = new MermaidElementType("GANTT_WEEKDAY_STATEMENT");
+  IElementType GANTT_WEEKEND_STATEMENT = new MermaidElementType("GANTT_WEEKEND_STATEMENT");
   IElementType GENERIC = new MermaidElementType("GENERIC");
   IElementType GENERIC_BODY = new MermaidElementType("GENERIC_BODY");
   IElementType GENERIC_CONTENT = new MermaidElementType("GENERIC_CONTENT");
@@ -206,7 +208,9 @@ public interface MermaidElements {
   IElementType PIE_DATA_STATEMENT = new MermaidElementType("PIE_DATA_STATEMENT");
   IElementType PIE_HEADER = new MermaidElementType("PIE_HEADER");
   IElementType PLOT_DATA = new MermaidElementType("PLOT_DATA");
+  IElementType PLOT_POINT = new MermaidElementType("PLOT_POINT");
   IElementType POINT = new MermaidElementType("POINT");
+  IElementType POINT_RADIUS = new MermaidElementType("POINT_RADIUS");
   IElementType POINT_STATEMENT = new MermaidElementType("POINT_STATEMENT");
   IElementType QUADRANT_BODY = new MermaidElementType("QUADRANT_BODY");
   IElementType QUADRANT_COMPLEX_TEXT = new MermaidElementType("QUADRANT_COMPLEX_TEXT");
@@ -262,6 +266,7 @@ public interface MermaidElements {
   IElementType STATE_RELATION_STATEMENT = new MermaidElementType("STATE_RELATION_STATEMENT");
   IElementType STRING = new MermaidElementType("STRING");
   IElementType STYLED_VERTEX = new MermaidElementType("STYLED_VERTEX");
+  IElementType STYLE_DECLARATION = new MermaidElementType("STYLE_DECLARATION");
   IElementType STYLE_OPTIONS = new MermaidElementType("STYLE_OPTIONS");
   IElementType STYLE_STATEMENT = new MermaidElementType("STYLE_STATEMENT");
   IElementType STYLE_STATEMENT_TARGET = new MermaidElementType("STYLE_STATEMENT_TARGET");
@@ -615,6 +620,9 @@ public interface MermaidElements {
       else if (type == ER_RELATION_STATEMENT) {
         return new MermaidErRelationStatementImpl(node);
       }
+      else if (type == ER_STYLE_CLASS) {
+        return new MermaidErStyleClassImpl(node);
+      }
       else if (type == FLOWCHART_BODY) {
         return new MermaidFlowchartBodyImpl(node);
       }
@@ -680,6 +688,9 @@ public interface MermaidElements {
       }
       else if (type == GANTT_WEEKDAY_STATEMENT) {
         return new MermaidGanttWeekdayStatementImpl(node);
+      }
+      else if (type == GANTT_WEEKEND_STATEMENT) {
+        return new MermaidGanttWeekendStatementImpl(node);
       }
       else if (type == GENERIC) {
         return new MermaidGenericImpl(node);
@@ -876,8 +887,14 @@ public interface MermaidElements {
       else if (type == PLOT_DATA) {
         return new MermaidPlotDataImpl(node);
       }
+      else if (type == PLOT_POINT) {
+        return new MermaidPlotPointImpl(node);
+      }
       else if (type == POINT) {
         return new MermaidPointImpl(node);
+      }
+      else if (type == POINT_RADIUS) {
+        return new MermaidPointRadiusImpl(node);
       }
       else if (type == POINT_STATEMENT) {
         return new MermaidPointStatementImpl(node);
@@ -1043,6 +1060,9 @@ public interface MermaidElements {
       }
       else if (type == STYLED_VERTEX) {
         return new MermaidStyledVertexImpl(node);
+      }
+      else if (type == STYLE_DECLARATION) {
+        return new MermaidStyleDeclarationImpl(node);
       }
       else if (type == STYLE_OPTIONS) {
         return new MermaidStyleOptionsImpl(node);

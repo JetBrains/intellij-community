@@ -21,7 +21,6 @@ FILE
               PsiWhiteSpace(' ')
               MermaidMetadataEntryValueImpl(METADATA_ENTRY_VALUE)
                 PsiElement(Flowchart.METADATA_VALUE)('rect')
-            PsiElement(COMMA)(',')
             PsiElement(EOL)('\n')
             PsiWhiteSpace('    ')
             MermaidMetadataEntryImpl(METADATA_ENTRY)
