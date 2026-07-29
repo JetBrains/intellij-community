@@ -148,7 +148,7 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
 
   private static @NotNull Collection<TextRange> findThisFieldUsages(@NotNull PsiField field, @NotNull PsiElement searchScope) {
     Collection<TextRange> ranges = new ArrayList<>();
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(searchScope)).asIterable()) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(searchScope)).findAll()) {
       PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiReferenceExpression.class, false);
       if (expression == null) {
         continue;
