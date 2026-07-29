@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -152,15 +153,17 @@ private class AddModuleDependencyFix(
     return message("inspection.plugin.xml.references.module.reachability.fix.name", targetModuleName)
   }
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-      val ideaPlugin = resolveIdeaPlugin(descriptor)
-      if (ideaPlugin != null) {
-        addDescriptorDependency(ideaPlugin)
-      }
-      return
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    val text = if (descriptorDependencyId != null) {
+      message("inspection.plugin.xml.references.module.reachability.fix.preview.with.descriptor", targetModuleName, descriptorDependencyId)
     }
+    else {
+      message("inspection.plugin.xml.references.module.reachability.fix.preview", targetModuleName)
+    }
+    return IntentionPreviewInfo.Html(HtmlChunk.text(text))
+  }
 
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement) ?: return
     val targetModule = ModuleManager.getInstance(project).findModuleByName(targetModuleName) ?: return
     JavaProjectModelModificationService.getInstance(project)
