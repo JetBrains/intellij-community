@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.ex.DocumentAspect
+import com.intellij.openapi.editor.ex.DocumentAspectList
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.editor.impl.modTree.ModificationTree
 import com.intellij.openapi.editor.impl.modTree.ModificationTreeImpl
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.ImmutableCharSequence
@@ -19,6 +22,7 @@ internal class DocumentSnapshotImpl private constructor(
   private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
   private var modTree: ModificationTree?,         // non-volatile intentionally, see tree()
   private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
+  private val aspects: DocumentAspectList,
 ) : DocumentSnapshot {
 
   constructor(chars: CharSequence) : this(
@@ -28,6 +32,7 @@ internal class DocumentSnapshotImpl private constructor(
     lineSet = null,
     modTree = null,
     textString = null,
+    aspects = DocumentAspectList.empty(),
   )
 
   override fun text(): ImmutableCharSequence {
@@ -153,12 +158,37 @@ internal class DocumentSnapshotImpl private constructor(
     return dump.toString()
   }
 
+  override fun <A : DocumentAspect> aspect(key: Key<A>): A? {
+    @Suppress("UNCHECKED_CAST") // sound because withAspect associates an aspect only with a key of its own type
+    return aspects.get(key) as A?
+  }
+
+  override fun <A : DocumentAspect> withAspect(key: Key<A>, aspect: A?): DocumentSnapshot {
+    val newAspects = if (aspect == null) {
+      aspects.remove(key)
+    } else {
+      aspects.add(key, aspect)
+    }
+    if (newAspects === aspects) {
+      return this
+    }
+    return DocumentSnapshotImpl(
+      text,
+      modStamp,
+      modSequence,
+      lineSet,
+      modTree,
+      textString,
+      newAspects,
+    )
+  }
+
   override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
     val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
     if (modStamp == newModStamp && modSequence == newModSequence) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, modTree, textString)
+    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, modTree, textString, aspects)
   }
 
   override fun withClearedLineFlags(
@@ -206,6 +236,7 @@ internal class DocumentSnapshotImpl private constructor(
       this.lineSet,
       this.modTree,
       this.textString,
+      this.aspects,
     )
   }
 
@@ -252,14 +283,17 @@ internal class DocumentSnapshotImpl private constructor(
     } else {
       updateModTree(oldFragmentLength, newFragmentLength, startOffset, endOffset)
     }
-    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null)
+    val newAspects = aspects.transform {
+      it.withText(this, newWholeText, startOffset, endOffset, newFragment, newModStamp, wholeTextReplaced)
+    }
+    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null, newAspects)
   }
 
   private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
     if (this.lineSet === newLineSet) {
       return this
     }
-    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, modTree, textString)
+    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, modTree, textString, aspects)
   }
 
   /**
@@ -323,12 +357,14 @@ internal class DocumentSnapshotImpl private constructor(
     val tx = presentation(text)
     val ls = presentation(lineSet)
     val st = presentation(textString)
+    val ap = presentation(aspects)
     return "DocumentSnapshot" + id + '{' +
            "modStamp=" + ms +
            ", modSequence=" + mq +
            ", text=" + tx +
            ", lineSet=" + ls +
            ", string=" + st +
+           ", aspects=" + ap +
            '}'
   }
 
