@@ -29,6 +29,33 @@ class FlowchartTest : MermaidLexerTestCase() {
     doTest(content)
   }
 
+  fun `test flowchart node metadata without spaces`() {
+    val content = """
+    flowchart RL
+      A@{shape: manual-file, label: "File Handling"}
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test flowchart node metadata spanning lines`() {
+    val content = """
+    flowchart TD
+      A@{
+        shape: rect,
+        label: "Multi line"
+      }
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test flowchart node metadata with numeric and url values`() {
+    val content = """
+    flowchart TD
+      A@{ img: "https://mermaid.js.org/favicon.svg", pos: "t", h: 60, constraint: "on" }
+    """.trimIndent()
+    doTest(content)
+  }
+
   fun `test flowchart with named nodes`() {
     val content = """
     flowchart TD

@@ -283,6 +283,24 @@ object MermaidTokens {
     @JvmField
     val FLOWCHART = MermaidToken("Flowchart.FLOWCHART")
 
+    // mermaid 11.3+ `A@{ shape: rect, label: "..." }` node metadata, and the 11.5+ edge form
+    // `e1@{ animate: true }`. Both use the same inline-mapping syntax.
+    @JvmField
+    val METADATA_START = MermaidToken("Flowchart.METADATA_START")
+
+    @JvmField
+    val METADATA_END = MermaidToken("Flowchart.METADATA_END")
+
+    @JvmField
+    val METADATA_KEY = MermaidToken("Flowchart.METADATA_KEY")
+
+    @JvmField
+    val METADATA_VALUE = MermaidToken("Flowchart.METADATA_VALUE")
+
+    // The `@` binding an edge id to its arrow: `A e1@--> B` (mermaid 11.5+).
+    @JvmField
+    val EDGE_ID_MARKER = MermaidToken("Flowchart.EDGE_ID_MARKER")
+
     @JvmField
     val STADIUM_START = MermaidToken("Flowchart.STADIUM_START")
 

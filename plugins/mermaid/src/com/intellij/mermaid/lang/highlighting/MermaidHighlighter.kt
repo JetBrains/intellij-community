@@ -64,6 +64,18 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.CLASS_DEF
       )
       holder[MermaidTokens.Flowchart.LINK_TEXT] = MermaidTextAttributes.note
+
+      // `A@{ shape: rect }` metadata. Keys read as constants and the delimiters as operators, matching
+      // how the frontmatter and directive mappings are coloured.
+      holder[MermaidTokens.Flowchart.METADATA_KEY] = MermaidTextAttributes.constant
+      holder[MermaidTokens.Flowchart.METADATA_VALUE] = MermaidTextAttributes.identifier
+      fillMap(
+        holder,
+        MermaidTextAttributes.operator,
+        MermaidTokens.Flowchart.METADATA_START,
+        MermaidTokens.Flowchart.METADATA_END,
+        MermaidTokens.Flowchart.EDGE_ID_MARKER
+      )
     }
 
     private fun addSequenceHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {

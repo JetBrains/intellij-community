@@ -54,7 +54,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states journey,section_task, journey_section, journey_section_title
 
-%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id
+%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id, node_metadata
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
@@ -250,8 +250,15 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   [\"]/` { yypushstate(md_string); return DOUBLE_QUOTE; }
-  [^\s\n\r;:%\[({><\^\|\-\=\.~\"]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-  [^\s\n\r;:%\[({><\^\|\-\=\.~\"]+ { return ID; }
+
+  // `@` is not part of an identifier in a flowchart body: it only ever introduces node metadata
+  // (`A@{ ... }`, mermaid 11.3+) or binds an edge id to its arrow (`A e1@--> B`, 11.5+). Excluding it
+  // from ID keeps the identifier itself clean, which matters because ids feed rename and find-usages.
+  "@{" { yybegin(node_metadata); return Flowchart.METADATA_START; }
+  "@" { return Flowchart.EDGE_ID_MARKER; }
+
+  [^\s\n\r;:%\[({><\^\|\-\=\.~\"@]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+  [^\s\n\r;:%\[({><\^\|\-\=\.~\"@]+ { return ID; }
   [\-\=\.] { return ID; }
   :|:: { return ID; }
 
@@ -370,6 +377,23 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   \s { yypopstate(); return WHITE_SPACE; }
   ";" { yypopstate(); return SEMICOLON; }
   [\n\r] { yypopstate(); return EOL; }
+}
+// `@{ ... }` metadata, an inline mapping of comma-separated `key: value` pairs. Values are bare words,
+// numbers, or quoted strings (`A@{ img: "https://...", h: 60 }`). Keys are told apart from bare values
+// only by the following colon, hence the lookahead. Newlines are allowed: upstream accepts the mapping
+// spread over several lines.
+<node_metadata> {
+  "}" { yybegin(flowchart_body); return Flowchart.METADATA_END; }
+  "," { return COMMA; }
+  ":" { return COLON; }
+
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+
+  [a-zA-Z_][a-zA-Z0-9_\-]*/[^\S\n\r]*":" { return Flowchart.METADATA_KEY; }
+  [^\s,:}\"]+ { return Flowchart.METADATA_VALUE; }
+
+  [\n\r] { return EOL; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
 }
 
 //---sequence---------------------------------------------------------------------

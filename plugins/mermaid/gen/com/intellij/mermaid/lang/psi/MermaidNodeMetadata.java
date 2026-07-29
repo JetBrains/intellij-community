@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface MermaidFlowchartLinkStatement extends MermaidPsiElement {
+public interface MermaidNodeMetadata extends MermaidPsiElement {
 
-  @Nullable
-  MermaidComplexLinkText getComplexLinkText();
-
-  @Nullable
-  MermaidEdgeId getEdgeId();
+  @NotNull
+  List<MermaidMetadataEntry> getMetadataEntryList();
 
 }

@@ -11,14 +11,14 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidVertexImpl extends ASTWrapperPsiElement implements MermaidVertex {
+public class MermaidMetadataEntryValueImpl extends ASTWrapperPsiElement implements MermaidMetadataEntryValue {
 
-  public MermaidVertexImpl(@NotNull ASTNode node) {
+  public MermaidMetadataEntryValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitVertex(this);
+    visitor.visitMetadataEntryValue(this);
   }
 
   @Override
@@ -28,21 +28,9 @@ public class MermaidVertexImpl extends ASTWrapperPsiElement implements MermaidVe
   }
 
   @Override
-  @NotNull
-  public MermaidComplexIdentifier getComplexIdentifier() {
-    return findNotNullChildByClass(MermaidComplexIdentifier.class);
-  }
-
-  @Override
   @Nullable
-  public MermaidNodeMetadata getNodeMetadata() {
-    return findChildByClass(MermaidNodeMetadata.class);
-  }
-
-  @Override
-  @Nullable
-  public MermaidVertexText getVertexText() {
-    return findChildByClass(MermaidVertexText.class);
+  public MermaidString getString() {
+    return findChildByClass(MermaidString.class);
   }
 
 }

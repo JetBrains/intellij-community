@@ -33,4 +33,10 @@ public class MermaidFlowchartLinkStatementImpl extends ASTWrapperPsiElement impl
     return findChildByClass(MermaidComplexLinkText.class);
   }
 
+  @Override
+  @Nullable
+  public MermaidEdgeId getEdgeId() {
+    return findChildByClass(MermaidEdgeId.class);
+  }
+
 }

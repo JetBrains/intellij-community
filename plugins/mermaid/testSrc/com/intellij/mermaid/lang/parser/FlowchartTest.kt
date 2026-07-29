@@ -7,6 +7,10 @@ class FlowchartTest : MermaidParserTestCase("flowchart") {
 
   fun `test edge with id`() = doTest(true)
 
+  fun `test node metadata spanning lines`() = doTest(true)
+
+  fun `test edge metadata statement`() = doTest(true)
+
   fun `test flowchart with subgraphs`() = doTest(true)
 
   fun `test flowchart with styles`() = doTest(true)

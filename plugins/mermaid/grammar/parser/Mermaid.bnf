@@ -130,10 +130,15 @@ private flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
 
 private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
-flowchartLinkStatement ::= START_ARROW complexLinkText ARROW | ARROW [SEP complexLinkText SEP]
+flowchartLinkStatement ::= [edgeId] (START_ARROW complexLinkText ARROW | ARROW [SEP complexLinkText SEP])
+// mermaid 11.5+: `A e1@--> B` names the edge so it can be styled or animated later.
+edgeId ::= ID EDGE_ID_MARKER
 nodeStatement ::= (styledVertex | vertex)  [AMPERSAND nodeStatement]
 styledVertex ::= vertex STYLE_SEPARATOR STYLE_TARGET
-vertex ::= complexIdentifier [vertexText]
+// A node carries either the classic bracket shape or `@{ ... }` metadata, not both. Standalone
+// `e1@{ animate: true }` lines land here too: an id plus metadata is the same shape, and only the id's
+// meaning differs.
+vertex ::= complexIdentifier [nodeMetadata | vertexText]
 vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | OPEN_ROUND nodeText CLOSE_ROUND
   | STADIUM_START nodeText STADIUM_END
@@ -148,6 +153,15 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | TRAP_START nodeText TRAP_END
   | INV_TRAP_START nodeText INV_TRAP_END
   | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
+
+// `A@{ shape: rect, label: "Hello" }` (mermaid 11.3+). An inline mapping, which upstream also accepts
+// spread over several lines, hence the EOL tolerance.
+nodeMetadata ::= METADATA_START EOL* [metadataEntries] METADATA_END
+private metadataEntries ::= metadataEntry (EOL* COMMA EOL* metadataEntry)* EOL*
+// Named metadataEntryValue, not metadataValue: the generated element type would otherwise collide with
+// the METADATA_VALUE token, and both are static-imported into the generated parser.
+metadataEntry ::= METADATA_KEY COLON metadataEntryValue
+metadataEntryValue ::= METADATA_VALUE | string
 
 nodeText ::=
     (maybeEmptyQuotedNodeText | maybeEmptyMdText) ALIAS+
@@ -986,7 +1000,11 @@ complexAccDescrMultilineValue ::= ACC_DESCR_MULTILINE_VALUE+ [EOL] | EOL
 string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
 private maybeEmptyString ::= DOUBLE_QUOTE DOUBLE_QUOTE | string
 
-complexIdentifier ::= ID+ {
+// The not-predicate stops an identifier from absorbing a following edge id: in `A e1@--> B` the two IDs
+// are adjacent, and without it `ID+` takes both, so the identifier becomes "A e1" and resolve, rename
+// and find-usages all see a name that does not exist. EDGE_ID_MARKER only occurs in flowcharts, so this
+// is inert for every other diagram that shares this rule.
+complexIdentifier ::= (ID !EDGE_ID_MARKER)+ {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 identifier ::= ID {

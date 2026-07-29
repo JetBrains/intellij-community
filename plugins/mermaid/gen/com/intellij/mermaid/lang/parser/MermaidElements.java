@@ -104,6 +104,7 @@ public interface MermaidElements {
   IElementType DIRECTION_STATEMENT = new MermaidElementType("DIRECTION_STATEMENT");
   IElementType DIRECTIVE = new MermaidElementType("DIRECTIVE");
   IElementType DIVIDER_STATEMENT = new MermaidElementType("DIVIDER_STATEMENT");
+  IElementType EDGE_ID = new MermaidElementType("EDGE_ID");
   IElementType ELEMENT_BLOCK = new MermaidElementType("ELEMENT_BLOCK");
   IElementType ELEMENT_DEF = new MermaidElementType("ELEMENT_DEF");
   IElementType ELEMENT_DOC_REF_ATTRIBUTE = new MermaidElementType("ELEMENT_DOC_REF_ATTRIBUTE");
@@ -171,6 +172,8 @@ public interface MermaidElements {
   IElementType MEMBER_ATTRIBUTE = new MermaidElementType("MEMBER_ATTRIBUTE");
   IElementType MEMBER_STATEMENT = new MermaidElementType("MEMBER_STATEMENT");
   IElementType MERGE_STATEMENT = new MermaidElementType("MERGE_STATEMENT");
+  IElementType METADATA_ENTRY = new MermaidElementType("METADATA_ENTRY");
+  IElementType METADATA_ENTRY_VALUE = new MermaidElementType("METADATA_ENTRY_VALUE");
   IElementType MINDMAP_BODY = new MermaidElementType("MINDMAP_BODY");
   IElementType MINDMAP_CLASS_STATEMENT = new MermaidElementType("MINDMAP_CLASS_STATEMENT");
   IElementType MINDMAP_HEADER = new MermaidElementType("MINDMAP_HEADER");
@@ -182,6 +185,7 @@ public interface MermaidElements {
   IElementType NAMESPACE_IDENTIFIER = new MermaidElementType("NAMESPACE_IDENTIFIER");
   IElementType NAMESPACE_STATEMENT = new MermaidElementType("NAMESPACE_STATEMENT");
   IElementType NODE_DESCRIPTION = new MermaidElementType("NODE_DESCRIPTION");
+  IElementType NODE_METADATA = new MermaidElementType("NODE_METADATA");
   IElementType NODE_STATEMENT = new MermaidElementType("NODE_STATEMENT");
   IElementType NODE_TEXT = new MermaidElementType("NODE_TEXT");
   IElementType NOTE_HEADER = new MermaidElementType("NOTE_HEADER");
@@ -562,6 +566,9 @@ public interface MermaidElements {
       else if (type == DIVIDER_STATEMENT) {
         return new MermaidDividerStatementImpl(node);
       }
+      else if (type == EDGE_ID) {
+        return new MermaidEdgeIdImpl(node);
+      }
       else if (type == ELEMENT_BLOCK) {
         return new MermaidElementBlockImpl(node);
       }
@@ -763,6 +770,12 @@ public interface MermaidElements {
       else if (type == MERGE_STATEMENT) {
         return new MermaidMergeStatementImpl(node);
       }
+      else if (type == METADATA_ENTRY) {
+        return new MermaidMetadataEntryImpl(node);
+      }
+      else if (type == METADATA_ENTRY_VALUE) {
+        return new MermaidMetadataEntryValueImpl(node);
+      }
       else if (type == MINDMAP_BODY) {
         return new MermaidMindmapBodyImpl(node);
       }
@@ -795,6 +808,9 @@ public interface MermaidElements {
       }
       else if (type == NODE_DESCRIPTION) {
         return new MermaidNodeDescriptionImpl(node);
+      }
+      else if (type == NODE_METADATA) {
+        return new MermaidNodeMetadataImpl(node);
       }
       else if (type == NODE_STATEMENT) {
         return new MermaidNodeStatementImpl(node);
