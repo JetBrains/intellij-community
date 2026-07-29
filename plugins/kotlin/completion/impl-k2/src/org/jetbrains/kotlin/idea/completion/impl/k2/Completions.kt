@@ -164,7 +164,7 @@ internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
             call.partiallyAppliedSymbol.signature,
-            call.argumentMapping,
+            call.valueArgumentMapping,
             valueArgument
         )
     ) return true
@@ -172,7 +172,7 @@ internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
     val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
         callElement,
         call.partiallyAppliedSymbol.signature,
-        call.argumentMapping,
+        call.valueArgumentMapping,
         callElement.languageVersionSettings
     ) ?: return false
 

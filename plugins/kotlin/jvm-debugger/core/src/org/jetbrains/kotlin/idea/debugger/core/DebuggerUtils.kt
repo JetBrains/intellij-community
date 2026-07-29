@@ -277,7 +277,7 @@ object DebuggerUtils {
 
         return runDumbAnalyze(callExpression, fallback = false) f@ {
             val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
-            val parameter = call.argumentMapping[argumentExpression]?.symbol ?: return@f false
+            val parameter = call.valueArgumentMapping[argumentExpression]?.symbol ?: return@f false
             return@f parameter.isCrossinline
         }
     }

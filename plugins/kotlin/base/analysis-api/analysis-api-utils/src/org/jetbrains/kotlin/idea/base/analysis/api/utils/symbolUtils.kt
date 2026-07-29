@@ -176,7 +176,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
 
         val argumentExpression = arg.getArgumentExpression()
 
-        val signature = resolvedFunctionCall.argumentMapping[argumentExpression]
+        val signature = resolvedFunctionCall.valueArgumentMapping[argumentExpression]
             ?: return false
 
         val signatureReturnType = signature.symbol.returnType.withNullability(isMarkedNullable = false)

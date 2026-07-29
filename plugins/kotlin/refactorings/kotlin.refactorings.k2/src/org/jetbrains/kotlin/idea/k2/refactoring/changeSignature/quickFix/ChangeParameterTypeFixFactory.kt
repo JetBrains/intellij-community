@@ -80,7 +80,7 @@ object ChangeParameterTypeFixFactory {
         val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
-        val paramSymbol = memberCall.argumentMapping[argumentKey]
+        val paramSymbol = memberCall.valueArgumentMapping[argumentKey]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
         return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol))

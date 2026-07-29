@@ -85,7 +85,7 @@ private fun KtFunctionLiteral.findLambdaReturnType(): KaType? {
     val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
     analyze(this) {
         val functionCallOrNull = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-        val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
+        val variableLikeSignature = functionCallOrNull.valueArgumentMapping[valueArgument.getArgumentExpression()] ?: return null
         return (variableLikeSignature.returnType as? KaFunctionType)?.returnType
     }
 }

@@ -93,7 +93,7 @@ private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String
         val resolvedCall = callExpression.resolveToCall() ?: return null
         val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
         if (!doesCustomizeTask(functionCall)) return null
-        val nameArgument = functionCall.argumentMapping
+        val nameArgument = functionCall.valueArgumentMapping
             .filterValues { isStringParameterSignature(it) }
             // IDEA-380456: uncomment, when parameter names in .class files are fixed. Now, the parameter is named as "var1", not "name".
             //.filterValues { it.name.identifier == "name" }

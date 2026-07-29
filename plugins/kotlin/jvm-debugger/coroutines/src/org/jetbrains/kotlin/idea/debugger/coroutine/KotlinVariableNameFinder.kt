@@ -139,7 +139,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
         val call = parentCall.resolveToCall()?.singleFunctionCallOrNull() ?: return false
         val valueArgument = parentCall.getContainingValueArgument(expression) ?: return false
-        val argumentSymbol = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+        val argumentSymbol = call.valueArgumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argumentSymbol.returnType.isSuspendFunctionType
     }
 

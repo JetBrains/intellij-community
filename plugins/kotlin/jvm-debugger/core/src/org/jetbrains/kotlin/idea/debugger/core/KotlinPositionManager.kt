@@ -1010,7 +1010,7 @@ private suspend fun KtFunction.isSamLambda(): Boolean {
         val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return@f false
         val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
         val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return@f false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
+        val argument = call.valueArgumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
         argument.returnType is KaUsualClassType
     }
 }

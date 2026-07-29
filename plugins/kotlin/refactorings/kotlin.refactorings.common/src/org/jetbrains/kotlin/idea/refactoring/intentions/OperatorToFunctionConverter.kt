@@ -222,7 +222,7 @@ object OperatorToFunctionConverter {
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    val argumentMapping = element.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping.orEmpty()
+                    val argumentMapping = element.resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping.orEmpty()
                     if (argumentMapping[element.indexExpressions.firstOrNull()]?.symbol?.isVararg == true) {
                         argumentMapping[(element.parent as KtBinaryExpression).right]?.symbol?.name?.asString()
                             .let { pattern.appendFixedText("$it = ") }

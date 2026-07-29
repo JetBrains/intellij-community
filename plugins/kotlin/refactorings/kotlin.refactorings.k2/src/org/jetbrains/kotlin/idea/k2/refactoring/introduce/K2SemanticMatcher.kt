@@ -956,7 +956,7 @@ object K2SemanticMatcher {
         if (call == null) return allArguments
 
         val signature = call.partiallyAppliedSymbol.signature
-        val mappedArguments = mapArgumentsToParameterIndices(sourceElement = this, signature, call.argumentMapping)
+        val mappedArguments = mapArgumentsToParameterIndices(sourceElement = this, signature, call.valueArgumentMapping)
         val sortedMappedArguments = mappedArguments.toList()
             .sortedWith(compareBy({ (_, parameterIndex) -> parameterIndex }, { (argument, _) -> argument.startOffset }))
             .map { (argument, _) -> argument }

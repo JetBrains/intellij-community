@@ -636,7 +636,7 @@ internal class K2PullUpHelper(
 
 
                                 val prevArgument = prevParameterSymbol?.asSignature()?.let { prevParameterSignature ->
-                                    superResolvedCall.argumentMapping.reverse()[prevParameterSignature]
+                                    superResolvedCall.valueArgumentMapping.reverse()[prevParameterSignature]
                                 }?.parent as? KtValueArgument
                                 val newArgumentName =
                                     if (prevArgument != null && prevArgument.isNamed()) identifier(member.name!!) else null

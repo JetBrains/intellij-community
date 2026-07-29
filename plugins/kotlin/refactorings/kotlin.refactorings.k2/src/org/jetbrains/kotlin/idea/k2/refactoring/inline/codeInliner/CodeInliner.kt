@@ -133,7 +133,7 @@ class CodeInliner(
     private val replacement: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
-        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping?.mapValues { e -> e.value.name }
     }
 
     @OptIn(KaExperimentalApi::class)

@@ -142,7 +142,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
             analyze(callExpression) {
                 val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@forEachDescendantOfType
 
-                val arguments = functionCall.argumentMapping.entries.toList()
+                val arguments = functionCall.valueArgumentMapping.entries.toList()
                 val callableSymbol = functionCall.partiallyAppliedSymbol.symbol
                 val valueParameters = callableSymbol.valueParameters
                 var idx = arguments.size
@@ -164,7 +164,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                                 if (symbol is KaValueParameterSymbol && symbol in valueParameters) {
                                     ref.putCopyableUserData(
                                         key,
-                                        functionCall.argumentMapping.entries.firstOrNull { it.value.symbol == symbol }?.key
+                                        functionCall.valueArgumentMapping.entries.firstOrNull { it.value.symbol == symbol }?.key
                                     )
                                     needToSubstitute = true
                                 }
@@ -241,7 +241,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                     if (argument.isNamed()) continue
                     if (argument is KtLambdaArgument) continue
                     val argumentExpression = argument.getArgumentExpression() ?: continue
-                    val name = resolvedCall.argumentMapping[argumentExpression]?.symbol?.let { symbol ->
+                    val name = resolvedCall.valueArgumentMapping[argumentExpression]?.symbol?.let { symbol ->
                         symbol.name.takeIf { symbol.psi is KtElement }
                     }
                     //TODO: not always correct for vararg's

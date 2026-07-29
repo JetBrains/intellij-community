@@ -68,7 +68,7 @@ private fun namedArgumentTail(
     argumentName: Name,
     call: KaFunctionCall<*>,
 ): Tail? {
-    val usedParameterNames = (call.argumentMapping.values.map { it.name } + listOf(argumentName)).toSet()
+    val usedParameterNames = (call.valueArgumentMapping.values.map { it.name } + listOf(argumentName)).toSet()
     val notUsedParameters = call.signature.valueParameters.filter { it.name !in usedParameterNames }
     return when {
         notUsedParameters.isEmpty() -> Tail.RPARENTH // named arguments no supported for []
@@ -84,19 +84,19 @@ private fun namedArgumentTail(
 context(_: KaSession)
 private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall): Tail? {
     if (call !is KaFunctionCall<*>) return null
-    if (call.argumentMapping.isEmpty()) return null
+    if (call.valueArgumentMapping.isEmpty()) return null
 
     val argument = argumentExpression.parent ?: return null
     val argumentName = (argument as? KtValueArgument)?.getArgumentName()?.asName
     val isFunctionLiteralArgument = argument is LambdaArgument
 
-    var parameter = call.argumentMapping[argumentExpression]
+    var parameter = call.valueArgumentMapping[argumentExpression]
 
     val isArrayAccess = argument.parent is KtArrayAccessExpression
     val rparenthTail = if (isArrayAccess) Tail.RBRACKET else Tail.RPARENTH
 
     var parameters = call.signature.valueParameters.toList()
-    if (isArrayAccess && call.argumentMapping.size == 2) {
+    if (isArrayAccess && call.valueArgumentMapping.size == 2) {
         // last parameter in set is used for value assigned
         if (parameter == parameters.last()) {
             parameter = null

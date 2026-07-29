@@ -76,7 +76,7 @@ object AnonymousFunctionToLambdaUtil {
         val argument = element.getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()
         val callElement = argument?.getStrictParentOfType<KtCallElement>()
         val typeParameterIndexes = if (callElement != null && callElement.typeArgumentList == null) {
-            val functionalType = callElement.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.get(argument)?.symbol?.returnType
+            val functionalType = callElement.resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping?.get(argument)?.symbol?.returnType
 
             val typeArguments = (functionalType as? KaClassType)?.typeArguments?.let {
                 if (it.isNotEmpty()) it.dropLast(1) else it

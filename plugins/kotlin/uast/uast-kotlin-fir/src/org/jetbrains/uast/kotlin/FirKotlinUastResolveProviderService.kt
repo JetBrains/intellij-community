@@ -179,7 +179,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyzeForUast(ktCallElement) {
-            val argumentMapping = ktCallElement.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping ?: return null
+            val argumentMapping = ktCallElement.resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping ?: return null
             val handledParameters = mutableSetOf<KaValueParameterSymbol>()
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
@@ -209,7 +209,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val annotationEntry = uAnnotation.sourcePsi
         analyzeForUast(annotationEntry) {
             val resolvedAnnotationCall = annotationEntry.resolveToCall()?.singleCallOrNull<KaAnnotationCall>() ?: return null
-            val parameter = resolvedAnnotationCall.argumentMapping[arg.getArgumentExpression()]?.symbol ?: return null
+            val parameter = resolvedAnnotationCall.valueArgumentMapping[arg.getArgumentExpression()]?.symbol ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }
@@ -235,7 +235,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedFunctionLikeSymbol =
                 resolvedFunctionCall?.symbol ?: return null
             val parameter = resolvedFunctionLikeSymbol.valueParameters.getOrNull(index) ?: return null
-            val arguments = resolvedFunctionCall.argumentMapping.entries
+            val arguments = resolvedFunctionCall.valueArgumentMapping.entries
                 .filter { (_, param) -> param.symbol == parameter }
                 .mapNotNull { (arg, _) -> arg.parentValueArgument }
             return when {

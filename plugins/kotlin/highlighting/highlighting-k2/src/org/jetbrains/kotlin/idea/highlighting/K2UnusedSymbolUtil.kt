@@ -259,7 +259,7 @@ object K2UnusedSymbolUtil {
             withResolve = false,
         ) ?: return false
         val call = anno.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val levelArgument = call.argumentMapping.entries.find { it.value.symbol.name == DEPRECATION_LEVEL_PARAMETER_NAME } ?: return false
+        val levelArgument = call.valueArgumentMapping.entries.find { it.value.symbol.name == DEPRECATION_LEVEL_PARAMETER_NAME } ?: return false
         val levelArgumentCall = levelArgument.key.resolveToCall()?.successfulVariableAccessCall() ?: return false
         return levelArgumentCall.symbol.importableFqName == DEPRECATION_LEVEL_HIDDEN
     }

@@ -128,7 +128,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
         for (call in arrayAccessExpression.tryResolveCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
-                for ((argumentExpression, sig) in call.argumentMapping) {
+                for ((argumentExpression, sig) in call.valueArgumentMapping) {
                     if (argumentExpression == target) {
                         return ExpectedExpressionMatcher(types = listOf(sig.returnType))
                     }
@@ -152,7 +152,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
     private fun getForArgument(callElement: KtCallElement, argument: ValueArgument): ExpectedExpressionMatcher? {
         for (call in callElement.tryResolveCall()?.calls.orEmpty()) {
             if (call is KaFunctionCall<*>) {
-                for ((argumentExpression, sig) in call.argumentMapping) {
+                for ((argumentExpression, sig) in call.valueArgumentMapping) {
                     if (argumentExpression == argument) {
                         return ExpectedExpressionMatcher(types = listOf(sig.returnType))
                     }

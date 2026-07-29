@@ -317,8 +317,8 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
         }
     }
 
-    val lastParameter = call.argumentMapping[lastLambdaExpression]
-        ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
+    val lastParameter = call.valueArgumentMapping[lastLambdaExpression]
+        ?: lastLambdaExpression.parentLabeledExpression()?.let(call.valueArgumentMapping::get)
         ?: return false
 
     if (lastParameter.symbol.isVararg) {
