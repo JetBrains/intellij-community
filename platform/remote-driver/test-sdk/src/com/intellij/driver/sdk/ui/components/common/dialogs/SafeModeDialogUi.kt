@@ -14,5 +14,4 @@ class SafeModeDialogUi(data: ComponentData) : UiComponent(data) {
   val dontOpenButton: JButtonUiComponent = button { byAccessibleName("Don't Open") }
   val previewInSafeModeButton: JButtonUiComponent = button { byAccessibleName("Preview in Safe Mode") }
   val trustProjectButton: JButtonUiComponent = button { byAccessibleName("Trust Project") }
-  val isSafeModeDialogPresent: Boolean by lazy { this.present() }
 }
