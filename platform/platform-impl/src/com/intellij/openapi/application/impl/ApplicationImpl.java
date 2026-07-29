@@ -87,6 +87,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
+import com.intellij.util.Suppressions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -326,10 +327,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     var coroutineContext = ThreadContext.currentThreadContext();
     try (var ignored = Cancellation.withNonCancelableSection()) {
       cancelAndJoinBlocking(this, coroutineContext);
-      runWriteAction(() -> {
-        startDispose();
-        Disposer.dispose(this);
-      });
+      runWriteAction(() -> Suppressions.runSuppressing(
+        this::startDispose,
+        () -> Disposer.dispose(this)
+      ));
       Disposer.assertIsEmpty();
     }
     catch (Throwable t) {
@@ -487,36 +488,36 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void dispose() {
-    lock.removeErrorHandler();
-    lock.removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
-    lock.removeWriteActionListener(appListenerDispatcherWrapper);
-    lock.removeReadActionListener(customReadActionListener);
-
-    //noinspection deprecation
-    myDispatcher.getMulticaster().applicationExiting();
-
     var componentStore = componentStoreValue.getValueIfInitialized();
-    super.dispose();
-    if (componentStore != null) {
-      try {
-        componentStore.release();
-      }
-      catch (Exception e) {
-        getLogger().error(e);
-      }
-    }
-
-    // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
-    AppExecutorUtil.shutdownApplicationScheduledExecutorService();
-
-    if (myLastDisposable == null) {
-      ApplicationManager.setApplication(null);
-    }
-    else {
-      Disposer.dispose(myLastDisposable);
-    }
-
-    otelMonitor.get().close();
+    Suppressions.runSuppressing(
+      () -> {
+        lock.removeErrorHandler();
+        lock.removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
+        lock.removeWriteActionListener(appListenerDispatcherWrapper);
+        lock.removeReadActionListener(customReadActionListener);
+      },
+      () -> {
+        //noinspection deprecation
+        myDispatcher.getMulticaster().applicationExiting();
+      },
+      () -> super.dispose(),
+      () -> {
+        if (componentStore != null) {
+          componentStore.release();
+        }
+      },
+      // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
+      AppExecutorUtil::shutdownApplicationScheduledExecutorService,
+      () -> {
+        if (myLastDisposable == null) {
+          ApplicationManager.setApplication(null);
+        }
+        else {
+          Disposer.dispose(myLastDisposable);
+        }
+      },
+      () -> otelMonitor.get().close()
+    );
   }
 
   @Override
