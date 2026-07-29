@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
@@ -101,7 +102,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
       reset()
 
-      val maxDumpDuration = Registry.get("freeze.reporter.maxDumpDuration.ms").asInteger()
+      val maxDumpDuration = FreezeReporterRegistry.maxDumpDurationMs()
       if (maxDumpDuration <= 0) {
         return
       }
@@ -166,8 +167,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     try {
-      if (Registry.`is`("freeze.reporter.enabled", false)) {
-        if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
+      if (FreezeReporterRegistry.isReporterEnabled()) {
+        if (((durationMs / 1000).toInt() > FreezeReporterRegistry.durationThresholdSeconds() || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
           val dumps = ArrayList(currentDumps) // defensive copy
           if (dumpTask.isValid() && dumps.size >= 2) {
             val attachments = ArrayList<Attachment>()
@@ -379,9 +380,6 @@ private fun buildTree(threadInfos: List<ThreadInfo>, time: Int): CallTreeNode {
 
 private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnostic.freezeProfiler")
 
-// intentionally hardcoded and not implemented via a registry key or system property
-// to be updated when we are ready to collect freezes from the specified duration and up
-private const val FREEZE_THRESHOLD = 10
 private const val REPORT_PREFIX = "report"
 private const val DUMP_PREFIX = "dump"
 private const val MESSAGE_FILE_NAME = ".message"
@@ -415,7 +413,7 @@ private suspend fun reportUnfinishedFreezes() {
     }
 
     // report deadly freeze
-    if (duration > FREEZE_THRESHOLD) {
+    if (duration > FreezeReporterRegistry.durationThresholdSeconds()) {
       try {
         LifecycleUsageTriggerCollector.onDeadlockDetected()
         if (isUnfinishedFreezeReportEnabled()) {
@@ -576,3 +574,44 @@ private fun countClassLoading(causeThreads: List<ThreadInfo>): Int =
 
 private fun isClassLoading(stackTraceElement: StackTraceElement): Boolean =
   "loadClass" == stackTraceElement.methodName && "java.lang.ClassLoader" == stackTraceElement.className
+
+@ApiStatus.Internal
+object FreezeReporterRegistry {
+  const val ENABLED: String = "freeze.reporter.enabled"
+  const val MAX_DUMP_DURATION_MS: String = "freeze.reporter.maxDumpDuration.ms"
+  const val DURATION_THRESHOLD_SECONDS: String = "freeze.reporter.duration.threshold.seconds"
+
+  private const val DEFAULT_MAX_DUMP_DURATION_MS = 40_000
+  private const val DEFAULT_DURATION_THRESHOLD_SECONDS = 10
+
+  @Volatile
+  private var overrides = FreezeReporterOverrides()
+
+  fun setOverrides(
+    enabled: Boolean?,
+    maxDumpDurationMs: Int?,
+    durationThresholdSeconds: Int?,
+  ) {
+    overrides = FreezeReporterOverrides(enabled, maxDumpDurationMs, durationThresholdSeconds)
+  }
+
+  fun isReporterEnabled(): Boolean = overrides.enabled ?: Registry.`is`(ENABLED, false)
+
+  fun maxDumpDurationMs(): Int {
+    return overrides.maxDumpDurationMs ?: Registry.intValue(MAX_DUMP_DURATION_MS, DEFAULT_MAX_DUMP_DURATION_MS)
+  }
+
+  fun durationThresholdSeconds(): Int {
+    val threshold = overrides.durationThresholdSeconds ?: Registry.intValue(
+      DURATION_THRESHOLD_SECONDS,
+      DEFAULT_DURATION_THRESHOLD_SECONDS,
+    )
+    return threshold.coerceAtLeast(0)
+  }
+}
+
+private data class FreezeReporterOverrides(
+  val enabled: Boolean? = null,
+  val maxDumpDurationMs: Int? = null,
+  val durationThresholdSeconds: Int? = null,
+)
