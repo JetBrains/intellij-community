@@ -105,7 +105,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test blockquote with numbered list`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
-  fun `test non-breaking space before text`() = doTest(rightMargin = 20)
+  fun `test unusual whitespace before text`() = doTest(rightMargin = 20)
 
   fun `test do not wrap codespan when wrap settings disabled`() = doTest(
     rightMargin = 120,
