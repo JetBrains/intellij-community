@@ -31,6 +31,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*;
 import static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*;
 import static com.intellij.mermaid.lang.lexer.MermaidTokens.XYChart.*;
 import static com.intellij.mermaid.lang.lexer.MermaidTokens.Block.*;
+import static com.intellij.mermaid.lang.lexer.MermaidTokens.Generic.*;
 import static com.intellij.mermaid.lang.parser.ParserUtils.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
@@ -6150,6 +6151,117 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // genericLines
+  public static boolean genericBody(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericBody")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _NONE_, GENERIC_BODY, "<generic body>");
+    result_ = genericLines(builder_, level_ + 1);
+    exit_section_(builder_, level_, marker_, result_, false, null);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // (GENERIC_TEXT | string)+
+  public static boolean genericContent(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericContent")) return false;
+    if (!nextTokenIs(builder_, "<generic content>", DOUBLE_QUOTE, GENERIC_TEXT)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_, level_, _NONE_, GENERIC_CONTENT, "<generic content>");
+    result_ = genericContent_0(builder_, level_ + 1);
+    while (result_) {
+      int pos_ = current_position_(builder_);
+      if (!genericContent_0(builder_, level_ + 1)) break;
+      if (!empty_element_parsed_guard_(builder_, "genericContent", pos_)) break;
+    }
+    exit_section_(builder_, level_, marker_, result_, false, null);
+    return result_;
+  }
+
+  // GENERIC_TEXT | string
+  private static boolean genericContent_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericContent_0")) return false;
+    boolean result_;
+    result_ = consumeToken(builder_, GENERIC_TEXT);
+    if (!result_) result_ = string(builder_, level_ + 1);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // GENERIC_DIAGRAM
+  public static boolean genericHeader(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericHeader")) return false;
+    if (!nextTokenIs(builder_, GENERIC_DIAGRAM)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = consumeToken(builder_, GENERIC_DIAGRAM);
+    exit_section_(builder_, marker_, GENERIC_HEADER, result_);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // genericStatement [separator] | separator
+  static boolean genericLine(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericLine")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = genericLine_0(builder_, level_ + 1);
+    if (!result_) result_ = separator(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // genericStatement [separator]
+  private static boolean genericLine_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericLine_0")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = genericStatement(builder_, level_ + 1);
+    result_ = result_ && genericLine_0_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // [separator]
+  private static boolean genericLine_0_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericLine_0_1")) return false;
+    separator(builder_, level_ + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // genericLine [genericLines]
+  static boolean genericLines(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericLines")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = genericLine(builder_, level_ + 1);
+    result_ = result_ && genericLines_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // [genericLines]
+  private static boolean genericLines_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericLines_1")) return false;
+    genericLines(builder_, level_ + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // directive
+  //   | accStatement
+  //   | genericContent
+  static boolean genericStatement(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "genericStatement")) return false;
+    boolean result_;
+    result_ = directive(builder_, level_ + 1);
+    if (!result_) result_ = accStatement(builder_, level_ + 1);
+    if (!result_) result_ = genericContent(builder_, level_ + 1);
+    return result_;
+  }
+
+  /* ********************************************************** */
   // GENERIC_TYPE+
   public static boolean genericTypeId(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "genericTypeId")) return false;
@@ -8241,6 +8353,7 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   //   | quadrantHeader EOL* [quadrantBody]
   //   | xyChartHeader EOL* [xyChartBody]
   //   | blockDiagramHeader EOL* [blockDiagramBody]
+  //   | genericHeader EOL* [genericBody]
   static boolean oldDiagram(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "oldDiagram")) return false;
     boolean result_;
@@ -8261,6 +8374,7 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
     if (!result_) result_ = oldDiagram_13(builder_, level_ + 1);
     if (!result_) result_ = oldDiagram_14(builder_, level_ + 1);
     if (!result_) result_ = oldDiagram_15(builder_, level_ + 1);
+    if (!result_) result_ = oldDiagram_16(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;
   }
@@ -8721,6 +8835,36 @@ public class _MermaidParser implements PsiParser, LightPsiParser {
   private static boolean oldDiagram_15_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "oldDiagram_15_2")) return false;
     blockDiagramBody(builder_, level_ + 1);
+    return true;
+  }
+
+  // genericHeader EOL* [genericBody]
+  private static boolean oldDiagram_16(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "oldDiagram_16")) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = genericHeader(builder_, level_ + 1);
+    result_ = result_ && oldDiagram_16_1(builder_, level_ + 1);
+    result_ = result_ && oldDiagram_16_2(builder_, level_ + 1);
+    exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // EOL*
+  private static boolean oldDiagram_16_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "oldDiagram_16_1")) return false;
+    while (true) {
+      int pos_ = current_position_(builder_);
+      if (!consumeToken(builder_, EOL)) break;
+      if (!empty_element_parsed_guard_(builder_, "oldDiagram_16_1", pos_)) break;
+    }
+    return true;
+  }
+
+  // [genericBody]
+  private static boolean oldDiagram_16_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "oldDiagram_16_2")) return false;
+    genericBody(builder_, level_ + 1);
     return true;
   }
 

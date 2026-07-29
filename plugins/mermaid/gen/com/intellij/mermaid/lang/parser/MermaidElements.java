@@ -142,6 +142,9 @@ public interface MermaidElements {
   IElementType GANTT_TOP_AXIS_STATEMENT = new MermaidElementType("GANTT_TOP_AXIS_STATEMENT");
   IElementType GANTT_WEEKDAY_STATEMENT = new MermaidElementType("GANTT_WEEKDAY_STATEMENT");
   IElementType GENERIC = new MermaidElementType("GENERIC");
+  IElementType GENERIC_BODY = new MermaidElementType("GENERIC_BODY");
+  IElementType GENERIC_CONTENT = new MermaidElementType("GENERIC_CONTENT");
+  IElementType GENERIC_HEADER = new MermaidElementType("GENERIC_HEADER");
   IElementType GENERIC_TYPE_ID = new MermaidElementType("GENERIC_TYPE_ID");
   IElementType GIT_GRAPH_BODY = new MermaidElementType("GIT_GRAPH_BODY");
   IElementType GIT_GRAPH_BRANCH_IDENTIFIER = new MermaidElementType("GIT_GRAPH_BRANCH_IDENTIFIER");
@@ -679,6 +682,15 @@ public interface MermaidElements {
       }
       else if (type == GENERIC) {
         return new MermaidGenericImpl(node);
+      }
+      else if (type == GENERIC_BODY) {
+        return new MermaidGenericBodyImpl(node);
+      }
+      else if (type == GENERIC_CONTENT) {
+        return new MermaidGenericContentImpl(node);
+      }
+      else if (type == GENERIC_HEADER) {
+        return new MermaidGenericHeaderImpl(node);
       }
       else if (type == GENERIC_TYPE_ID) {
         return new MermaidGenericTypeIdImpl(node);

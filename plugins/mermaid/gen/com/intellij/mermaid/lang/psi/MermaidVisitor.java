@@ -534,6 +534,18 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitGenericBody(@NotNull MermaidGenericBody o) {
+    visitDiagramBlock(o);
+  }
+
+  public void visitGenericContent(@NotNull MermaidGenericContent o) {
+    visitPsiElement(o);
+  }
+
+  public void visitGenericHeader(@NotNull MermaidGenericHeader o) {
+    visitPsiElement(o);
+  }
+
   public void visitGenericTypeId(@NotNull MermaidGenericTypeId o) {
     visitPsiElement(o);
   }

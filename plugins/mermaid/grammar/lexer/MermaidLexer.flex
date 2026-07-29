@@ -84,6 +84,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states block_diagram, block_diagram_node, block_diagram_arrow, block_diagram_size, block_diagram_columns, block_id
 
+%states generic_diagram
+
 %%
 
 "%%"/"{"[^]* { yypushstate(directive); return Directives.OPEN_DIRECTIVE; }
@@ -121,6 +123,29 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "xychart"("-beta")? { yybegin(xy_chart); return XYChart.XY_CHART; }
   "block"("-beta")? { yybegin(block_diagram); return Block.BLOCK_DIAGRAM; }
 
+  // swimlane-beta has no parser of its own upstream: it reuses the flowchart parser wholesale
+  // (createFlowDiagram({ defaultLayout: 'swimlane' })), including the direction after the keyword, so it
+  // can reuse the flowchart states here too.
+  "swimlane-beta" { yybegin(flowchart); return Flowchart.FLOWCHART; }
+
+  // Families mermaid renders but this grammar does not model in detail. Recognising the header and
+  // treating the body as opaque text keeps the file out of the error state; without this every token
+  // falls through to BAD_CHARACTER below and the whole document is red. Both the bare and "-beta"
+  // spellings are accepted where upstream accepts both.
+  "info" |
+  "packet"("-beta")? |
+  "architecture"("-beta")? |
+  "kanban" |
+  "radar-beta" |
+  "treemap"("-beta")? |
+  "treeView-beta" |
+  "venn-beta" |
+  "wardley-beta" |
+  "ishikawa"("-beta")? |
+  "eventmodeling" |
+  "cynefin-beta" |
+  "railroad"("-ebnf"|"-abnf"|"-peg")?"-beta" { yybegin(generic_diagram); return Generic.GENERIC_DIAGRAM; }
+
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
   ";" { return SEMICOLON; }
@@ -142,7 +167,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { return EOL; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, block_diagram> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey, block_diagram, generic_diagram> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant, xy_chart, block_diagram> {
@@ -394,6 +419,25 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   [\n\r] { return EOL; }
   [^\S\n\r]+ { return WHITE_SPACE; }
+}
+
+//---generic (families not modelled in detail)-------------------------------------
+// Deliberately structureless: anything that is not whitespace, a newline or a quoted string becomes one
+// opaque token. The point is only to keep such files out of the error state until a real grammar exists,
+// so no attempt is made to guess statements. Quoted strings are still recognised so labels containing
+// spaces stay in one piece.
+<generic_diagram> {
+  // These need their own rules with lookahead rather than joining the shared accTitle/accDescr group:
+  // the catch-all below matches "accTitle:" including the colon, which is longer than a bare "accTitle",
+  // so the shared rule could never win here. Including the colon in the lookahead makes the lengths
+  // equal, and among equal-length matches JFlex prefers the rule declared first.
+  "accTitle"/[^\S\n\r]*":" { yypushstate(acc_title); return ACC_TITLE; }
+  "accDescr"/[^\S\n\r]*(":"|"{") { yypushstate(acc_descr); return ACC_DESCR; }
+
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\n\r] { return EOL; }
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^\s\"]+ { return Generic.GENERIC_TEXT; }
 }
 
 //---sequence---------------------------------------------------------------------

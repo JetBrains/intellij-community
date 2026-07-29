@@ -40,6 +40,24 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "xychart-beta",
       "block",
       "block-beta",
+      // Families rendered by the bundled mermaid but not yet modelled in detail by the grammar. Offering
+      // them is still correct: they parse without errors via the generic fallback and render fine.
+      "architecture-beta",
+      "cynefin-beta",
+      "eventmodeling",
+      "ishikawa-beta",
+      "kanban",
+      "packet",
+      "radar-beta",
+      "railroad-beta",
+      "railroad-abnf-beta",
+      "railroad-ebnf-beta",
+      "railroad-peg-beta",
+      "swimlane-beta",
+      "treemap-beta",
+      "treeView-beta",
+      "venn-beta",
+      "wardley-beta",
     )
 
   override fun addCompletions(

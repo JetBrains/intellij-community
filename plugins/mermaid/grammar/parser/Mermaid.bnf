@@ -30,6 +30,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.XYChart.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Block.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Generic.*'
     'static com.intellij.mermaid.lang.parser.ParserUtils.*'
   ]
   generateTokens=false
@@ -60,6 +61,7 @@ private oldDiagram ::= pieHeader EOL* [pieBody]
   | quadrantHeader EOL* [quadrantBody]
   | xyChartHeader EOL* [xyChartBody]
   | blockDiagramHeader EOL* [blockDiagramBody]
+  | genericHeader EOL* [genericBody]
 
 private newDiagram ::= ZEN_UML
   | sankeyHeader EOL* [sankeyBody]
@@ -943,6 +945,25 @@ private blockDiagramStatement ::= directive
   | classDefStatement
   | flowchartClassStatement
   | styleStatement
+
+// Families mermaid renders but this grammar does not model in detail (packet, architecture, kanban,
+// radar, treemap, treeView, venn, wardley, ishikawa, eventmodeling, cynefin, railroad*, info). The body
+// is intentionally shapeless: the goal is only that the file stops being reported as one long error,
+// while comments, frontmatter, directives, accessibility statements and the preview keep working.
+// Replace a family's entry here with a real grammar when one is written.
+//
+// Attached to oldDiagram, so interleaved `%%{...}%%` directives are accepted: mermaid strips directives
+// in preprocessDiagram() before the diagram is ever detected or parsed, so they are valid for every
+// diagram type regardless of how new it is.
+genericHeader ::= GENERIC_DIAGRAM
+
+genericBody ::= genericLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private genericLines ::= genericLine [genericLines]
+private genericLine ::= genericStatement [separator] | separator
+private genericStatement ::= directive
+  | accStatement
+  | genericContent
+genericContent ::= (GENERIC_TEXT | string)+
 
 blockDiagramComplexStatement ::= (blockDiagramNodeStatementInner | spaceStatementInner) (blockDiagramNodeStatementInner | spaceStatementInner)+
 

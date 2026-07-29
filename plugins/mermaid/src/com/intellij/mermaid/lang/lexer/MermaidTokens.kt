@@ -944,6 +944,21 @@ object MermaidTokens {
   }
 
 
+  /**
+   * Diagram families mermaid renders but this grammar does not model in detail yet. They are lexed
+   * permissively so such a file is not reported as one long error: the header is recognised and the body
+   * becomes opaque text, which still leaves comments, frontmatter, accessibility statements and the
+   * preview working.
+   */
+  object Generic {
+    @JvmField
+    val GENERIC_DIAGRAM = MermaidToken("Generic.GENERIC_DIAGRAM")
+
+    @JvmField
+    val GENERIC_TEXT = MermaidToken("Generic.GENERIC_TEXT")
+  }
+
+
   object Sankey {
     @JvmField
     val SANKEY = MermaidToken("Sankey.SANKEY")

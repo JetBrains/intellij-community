@@ -29,10 +29,6 @@ class OfficialExamplesParsingTest {
    * Refresh the examples themselves with ./updateMermaidExamples.sh after bumping mermaidVersion.
    */
   private val ignoredTests = listOf(
-    // architecture (3)
-    "architecture-0",
-    "architecture-1",
-    "architecture-2",
     // block (1)
     "block-28",
     // classDiagram (8)
@@ -44,49 +40,21 @@ class OfficialExamplesParsingTest {
     "classDiagram-31",
     "classDiagram-32",
     "classDiagram-33",
-    // entityRelationshipDiagram (4)
-    "entityRelationshipDiagram-11",
+    // entityRelationshipDiagram (5)
+    "entityRelationshipDiagram-7",
     "entityRelationshipDiagram-12",
     "entityRelationshipDiagram-13",
     "entityRelationshipDiagram-14",
-    // eventmodeling (12)
-    "eventmodeling-0",
-    "eventmodeling-1",
-    "eventmodeling-2",
-    "eventmodeling-3",
-    "eventmodeling-4",
-    "eventmodeling-5",
-    "eventmodeling-6",
-    "eventmodeling-7",
-    "eventmodeling-8",
-    "eventmodeling-9",
-    "eventmodeling-10",
-    "eventmodeling-11",
-    // flowchart (1) -- not a v11 gap. classDef style values may themselves contain commas
-    // (`stroke-dasharray: 9,5`), but the lexer treats every comma as a declaration separator and then
-    // expects a key, so it reports "STYLE_OPT expected, got '5'". Pre-existing, affects style/classDef
-    // generally rather than flowchart specifically.
+    "entityRelationshipDiagram-15",
+    // flowchart (1) -- classDef style values may contain commas (`stroke-dasharray: 9,5`), which the
+    // style lexer reads as a declaration separator. Pre-existing, not a v11 gap.
     "flowchart-86",
     // gantt (1)
     "gantt-3",
     // gitgraph (1)
     "gitgraph-19",
-    // ishikawa (1)
-    "ishikawa-0",
-    // kanban (3)
-    "kanban-0",
-    "kanban-1",
-    "kanban-2",
-    // packet (3)
-    "packet-0",
-    "packet-1",
-    "packet-2",
     // quadrantChart (1)
     "quadrantChart-2",
-    // radar (3)
-    "radar-0",
-    "radar-1",
-    "radar-2",
     // requirementDiagram (5)
     "requirementDiagram-1",
     "requirementDiagram-3",
@@ -103,50 +71,10 @@ class OfficialExamplesParsingTest {
     "sequenceDiagram-10",
     "sequenceDiagram-11",
     "sequenceDiagram-12",
-    // treeView (2)
-    "treeView-0",
-    "treeView-1",
-    // treemap (8)
-    "treemap-0",
-    "treemap-1",
-    "treemap-2",
-    "treemap-3",
-    "treemap-4",
-    "treemap-5",
-    "treemap-6",
-    "treemap-7",
-    // venn (5)
-    "venn-0",
-    "venn-1",
-    "venn-2",
-    "venn-3",
-    "venn-4",
-    // wardley (23)
-    "wardley-0",
-    "wardley-1",
-    "wardley-2",
-    "wardley-3",
-    "wardley-4",
-    "wardley-5",
-    "wardley-6",
-    "wardley-7",
-    "wardley-8",
-    "wardley-9",
-    "wardley-10",
-    "wardley-11",
-    "wardley-12",
-    "wardley-13",
-    "wardley-14",
-    "wardley-15",
-    "wardley-16",
-    "wardley-17",
-    "wardley-18",
-    "wardley-19",
-    "wardley-20",
-    "wardley-21",
-    "wardley-22",
-    // xyChart (1)
+    // xyChart (3)
     "xyChart-1",
+    "xyChart-4",
+    "xyChart-5",
   )
 
   @TestTemplate
