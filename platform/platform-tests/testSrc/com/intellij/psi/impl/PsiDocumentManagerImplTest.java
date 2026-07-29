@@ -107,7 +107,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-@IJIgnore(issue = "IJPL-251501")
 public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   private static final int TIMEOUT_MS = 30_000;
 
@@ -921,7 +920,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testAllowCommittingNonPhysicalDocumentsInBackgroundThread() throws Exception {
     PsiDocumentManagerImpl pdm = getPsiDocumentManager();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+    Future<?> f = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       String text = "text";
       PsiFile file =
         PsiFileFactory.getInstance(getProject()).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, text, false, false);
@@ -940,7 +939,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       pdm.commitDocument(document);
       assertEquals(" " + text, file.getText());
       assertTrue(documentCommitCallback.get());
-    })).get();
+    }));
+    PlatformTestUtil.waitForFuture(f, 10_000);
   }
 
   public void testPerformWhenAllCommittedDoesNotRaceWithBackgroundLightCommitsResultingInExceptions(){
