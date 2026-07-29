@@ -148,7 +148,6 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     T = TypeVar("T", infer_variance=True)
     class A(Protocol[T]):
     #                └ INFERRED_VARIANCE BIVARIANT
-    #                └ WARNING This type variable is effectively covariant in this protocol, so it cannot be bivariant here FIXME
         def method(self): pass
     """.trimIndent())
 
@@ -690,8 +689,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     #       └ INFERRED_VARIANCE COVARIANT
         def __init__(self):
             ...
-    """.trimIndent(),
-                      "lib.py" to """
+    """.trimIndent(), "lib.py" to """
             from typing import Final
             class A[T]:
                 def __init__(self, t: T):
@@ -759,7 +757,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues=["PY-90269"])
+  @TestFor(issues = ["PY-90269"])
   fun `Frozen attribute via dataclass_transform frozen_default`() = test("""
     from typing import dataclass_transform
     
@@ -773,7 +771,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues=["PY-90269"])
+  @TestFor(issues = ["PY-90269"])
   fun `Mutable attribute via dataclass_transform frozen_default overridden`() = test("""
     from typing import dataclass_transform, Callable
     
@@ -936,12 +934,76 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-88800"])
   @Test
-  fun `Contravariant arguments in nested functions`() = test("""
+  fun `Captured type variable in parameter of function in nested function`() = test("""
     class B[T]:
     #       └ INFERRED_VARIANCE BIVARIANT
         def f1(self):
-            def f2(a: T): # nested uses of T are ignored by variance inference
+            def f2(a: T): # nested uses of T are ignored by variance inference and checks
                 ...
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-88800"])
+  @Test
+  fun `Captured type variable in parameter of function in nested function of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class B(Protocol[T]):
+    #                └ INFERRED_VARIANCE BIVARIANT
+        def f1(self):
+            def f2(a: T): # nested uses of T are ignored by variance inference and checks
+                ...
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in parameter of function in nested class`() = test("""
+    class Outer[T]:
+    #           └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            def function(self, arg: T): # nested uses of T are ignored by variance inference and checks
+                ...
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in parameter of function in nested class of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class Outer(Protocol[T]):
+    #                    └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            def function(self, arg: T): # nested uses of T are ignored by variance inference and checks
+                ...
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in attribute in nested class`() = test("""
+    class Outer[T]:
+    #           └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            a: T # nested uses of T are ignored by variance inference and checks
+
+        pass
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91260"])
+  @Test
+  fun `Captured type variable in attribute in nested class of protocol`() = test("""
+    from typing import TypeVar, Protocol
+    
+    T = TypeVar("T", infer_variance=True)
+    class Outer(Protocol[T]):
+    #                    └ INFERRED_VARIANCE BIVARIANT
+        class Inner:
+            a: T # nested uses of T are ignored by variance inference and checks
+    #          └ WARNING Unbound type variable
+
+        pass
     """.trimIndent())
 
 }

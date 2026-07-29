@@ -76,7 +76,7 @@ object PyExpectedVarianceJudgment {
       is PyNamedParameter,
         -> !getExpectedVariance(parent, context)
 
-      // keep the following list as precise and short as possible to enforce returning null whenever possible
+      // keep the following list as precise and short as possible to enforce returning NONE whenever possible
       is PyListLiteralExpression,
       is PyArgumentList,
       is PyBinaryExpression,
@@ -105,7 +105,9 @@ object PyExpectedVarianceJudgment {
   }
 
   private fun fromFunction(function: PyFunction, parent: PsiElement): PyExpectedVariance {
-    if (parent !is PyStatementList || PyUtil.getFragmentContextAwareParent(parent) !is PyClass) return NONE
+    if (parent !is PyStatementList) return NONE // Safety check in case of broken AST
+    val parentClass = PyUtil.getFragmentContextAwareParent(parent)
+    if (parentClass !is PyClass) return NONE // If parent is not a class, all type variables of this function must be invariant
     if (functionDoesNotAffectVarianceInference(function)) return NONE
     return COVARIANT
   }
