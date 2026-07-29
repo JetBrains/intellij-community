@@ -221,11 +221,13 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
               uiQueue.enqueue(WriteActionFinished(timeCounter.getAndIncrement()))
               requestFlush()
             }
+            requestFlush()
             // this requestFlush is needed because suspending edtWriteAction might be residing in this queue after the current WriteActionFinished
             // so if current write action is pending, we need to continue processing UI runnables
             continue
           } else {
             currentWriteIntentLockMode = WriteIntentLockMode.ALL
+            requestFlush()
           }
         }
         is RunnableInfo -> {
