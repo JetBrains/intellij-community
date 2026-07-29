@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -385,6 +386,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     )
     val intention = myFixture.findSingleIntention("Add dependency on module 'unrelatedModule'")
     myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
     val dependencies = ModuleRootManager.getInstance(myFixture.module).dependencies
     Assert.assertTrue(
@@ -423,6 +425,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     )
     val intention = myFixture.findSingleIntention("Add dependency on module 'unrelatedModule'")
     myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
     Assert.assertEquals(
       //language=XML
@@ -477,6 +480,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     )
     val intention = myFixture.findSingleIntention("Add dependency on module 'unrelatedModule'")
     myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
     Assert.assertEquals(
       //language=XML
@@ -535,6 +539,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     )
     val intention = myFixture.findSingleIntention("Add dependency on module 'unrelatedModule'")
     myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
     Assert.assertEquals(
       //language=XML

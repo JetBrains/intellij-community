@@ -6,16 +6,21 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.properties.ResourceBundleReference
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
@@ -148,19 +153,35 @@ private class AddModuleDependencyFix(
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val domElement = DomUtil.getDomElement(descriptor.psiElement)
-      if (descriptorDependencyId != null && domElement != null) {
-        val ideaPlugin = domElement.getParentOfType(IdeaPlugin::class.java, true)
-        if (ideaPlugin != null) {
-          addDescriptorDependency(ideaPlugin)
-        }
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      val ideaPlugin = resolveIdeaPlugin(descriptor)
+      if (ideaPlugin != null) {
+        addDescriptorDependency(ideaPlugin)
       }
-
-    if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
-      val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement) ?: return
-      val targetModule = ModuleManager.getInstance(project).findModuleByName(targetModuleName) ?: return
-      ModuleRootModificationUtil.addDependency(module, targetModule)
+      return
     }
+
+    val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement) ?: return
+    val targetModule = ModuleManager.getInstance(project).findModuleByName(targetModuleName) ?: return
+    JavaProjectModelModificationService.getInstance(project)
+      .addDependency(module, targetModule, DependencyScope.COMPILE, false)
+      .onSuccess {
+        ReadAction.nonBlocking<IdeaPlugin?> {
+          resolveIdeaPlugin(descriptor)
+        }.finishOnUiThread(ModalityState.nonModal()) { ideaPlugin ->
+          if (ideaPlugin != null) {
+            WriteCommandAction.runWriteCommandAction(project, familyName, null, {
+              addDescriptorDependency(ideaPlugin)
+            })
+          }
+        }.submit(AppExecutorUtil.getAppExecutorService())
+      }
+  }
+
+  private fun resolveIdeaPlugin(descriptor: ProblemDescriptor): IdeaPlugin? {
+    if (descriptorDependencyId == null) return null
+    val domElement = DomUtil.getDomElement(descriptor.psiElement) ?: return null
+    return domElement.getParentOfType(IdeaPlugin::class.java, true)
   }
 
   private fun addDescriptorDependency(ideaPlugin: IdeaPlugin) {
