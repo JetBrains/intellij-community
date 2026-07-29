@@ -579,7 +579,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       var overloads = PyiUtil.getOverloads(function, context);
       if (!overloads.isEmpty()) {
         return Ref.create(new PyOverloadType(
-          ContainerUtil.map(overloads, overload -> (PyCallableType)context.getType(overload)),
+          ContainerUtil.mapNotNull(overloads, overload -> (PyCallableType)context.getType(overload)),
           PyiUtil.isOverload(function, context) ? null : Ref.create(context.getType(function))
         ));
       }
