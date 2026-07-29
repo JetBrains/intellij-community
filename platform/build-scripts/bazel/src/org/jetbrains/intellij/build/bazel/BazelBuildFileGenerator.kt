@@ -1358,7 +1358,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   checkNoUnhandledKotlincOptions(
     module.module,
     mergedCompilerArguments,
-    handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths"),
+    // manuallyConfiguredFeatures is the raw form of -XXLanguage:; the parser also folds it into internalArguments,
+    // which is what the x_x_language handling above reads.
+    handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths", "manuallyConfiguredFeatures"),
     allowedInternalArguments = allowedInternalXXLanguage,
     allowedUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-generate-closed-world-multimodule", "-Xwasm-kclass-fqn"),
   )
@@ -1389,7 +1391,7 @@ private fun checkNoUnhandledKotlincOptions(module: JpsModule, mergedCompilerArgu
     .filterNot { it.name in handledArguments }
     .forEach {
       val defaultValue = it.getter.call(K2JVMCompilerArguments())
-      if (it.getter.call(mergedCompilerArguments) != defaultValue) {
+      if (!isSameArgumentValue(it.getter.call(mergedCompilerArguments), defaultValue)) {
         error("module '${module.name}' has compiler argument which is not supported: ${it.name}")
       }
     }
@@ -1406,11 +1408,18 @@ private fun checkNoUnhandledKotlincOptions(module: JpsModule, mergedCompilerArgu
   mergedCompilerArguments.errors?.unknownExtraFlags.orEmpty().filterNot { it in allowedUnknownExtraFlags }.forEach {
     error("module '${module.name}' has unknown compiler extra flag: $it")
   }
-  mergedCompilerArguments.errors?.argumentWithoutValue?.let {
+  mergedCompilerArguments.errors?.argumentsWithoutValue.orEmpty().forEach {
     error("module '${module.name}' has compiler argument without value: $it")
   }
-  mergedCompilerArguments.errors?.booleanArgumentWithValue?.let {
+  mergedCompilerArguments.errors?.booleanArgumentsWithIncorrectValue.orEmpty().forEach {
     error("module '${module.name}' has compiler boolean argument with value: $it")
+  }
+  // Arguments that toggle a language feature are reported separately from the two buckets above.
+  mergedCompilerArguments.errors?.booleanLangFeatureArgumentsWithValue.orEmpty().forEach {
+    error("module '${module.name}' has compiler boolean language feature argument with value: $it")
+  }
+  mergedCompilerArguments.errors?.stringLangFeatureArgumentsWithIncorrectValue.orEmpty().forEach { (argument, allowedValues) ->
+    error("module '${module.name}' has compiler language feature argument with an unsupported value: $argument (allowed: ${allowedValues.joinToString()})")
   }
   mergedCompilerArguments.errors?.argfileErrors.orEmpty().forEach {
     error("module '${module.name}' has compiler argfile error: $it")
@@ -1418,6 +1427,12 @@ private fun checkNoUnhandledKotlincOptions(module: JpsModule, mergedCompilerArgu
   mergedCompilerArguments.errors?.internalArgumentsParsingProblems.orEmpty().forEach {
     error("module '${module.name}' has compiler internal arguments parsing problem: $it")
   }
+}
+
+// Array-valued kotlinc arguments default to a fresh `emptyArray()`, so `==` (reference equality for arrays)
+// would report every unset array argument as customized.
+private fun isSameArgumentValue(value: Any?, defaultValue: Any?): Boolean {
+  return if (value is Array<*> && defaultValue is Array<*>) value.contentEquals(defaultValue) else value == defaultValue
 }
 
 private val addExportsRegex = Regex("""--add-exports\s+([^=]+)=\S+""")

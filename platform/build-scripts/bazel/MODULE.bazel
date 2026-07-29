@@ -61,7 +61,7 @@ maven.install(
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
         "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
-        "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0",
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.4.10-RC2",
         "org.jetbrains.teamcity:serviceMessages:2024.07",
         "junit:junit:4.13.2",
         "org.assertj:assertj-core:4.0.0-M1",

@@ -47,19 +47,19 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module-library">
       <library name="jetbrains.kotlin.jps.plugin.classpath" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.2.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.4.10-RC2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.0/kotlin-jps-plugin-classpath-2.2.0.jar">
-              <sha256sum>61002bb21cc3c512bd7c9d532f3932e33e019e58d554bc4d3c208ebec5c11284</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.4.10-RC2/kotlin-jps-plugin-classpath-2.4.10-RC2.jar">
+              <sha256sum>9b372965d41e2240d008fdaf192a69655b038027869583420f4dd707ae178304</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.0/kotlin-jps-plugin-classpath-2.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.4.10-RC2/kotlin-jps-plugin-classpath-2.4.10-RC2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.0/kotlin-jps-plugin-classpath-2.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.4.10-RC2/kotlin-jps-plugin-classpath-2.4.10-RC2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
