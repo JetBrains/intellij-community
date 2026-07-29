@@ -131,10 +131,7 @@ public final class ComponentPropertiesCollector {
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
 
-    int width = component.getWidth();
-    int height = component.getHeight();
-    Integer baseline = width >= 0 && height >= 0 ? component.getBaseline(width, height) : null;
-    myProperties.add(new PropertyBean("baseline", baseline));
+    myProperties.add(new PropertyBean("baseline", getBaseline(component)));
 
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
@@ -180,6 +177,22 @@ public final class ComponentPropertiesCollector {
       if (placeholder != null && !placeholder.isEmpty()) {
         myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
+    }
+  }
+
+  private static @Nullable Integer getBaseline(@NotNull Component component) {
+    int width = component.getWidth();
+    int height = component.getHeight();
+    if (width < 0 || height < 0) {
+      return null;
+    }
+
+    try {
+      return component.getBaseline(width, height);
+    }
+    catch (IllegalArgumentException ignored) {
+      // UI delegates can reject the effective size after subtracting insets from a component's dimensions.
+      return null;
     }
   }
 
