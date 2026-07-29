@@ -2,6 +2,7 @@
 package com.intellij.internal.inspector.components;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
@@ -33,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -951,15 +953,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ExportTreeAction extends MyTextAction {
+  private final class ExportTreeAction extends DumbAwareAction {
     private ExportTreeAction() {
-      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ExportTree"));
-      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ExportTree"));
+      super(
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ExportTree"),
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ExportTree"),
+        AllIcons.Actions.Copy
+      );
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String text = myHierarchyTree.exportTreeAsText();
+      String text = myHierarchyTree.exportTreeAsJson();
       if (text.isEmpty()) return;
       CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       HintManager.getInstance().showHint(

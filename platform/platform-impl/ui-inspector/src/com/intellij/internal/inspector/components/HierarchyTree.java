@@ -3,6 +3,7 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.internal.inspector.ComponentPropertiesCollector;
 import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
@@ -24,7 +25,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RowIcon;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -148,43 +148,115 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
   }
 
   /**
-   * Serializes the whole component hierarchy into indented plain text, preserving the tree structure.
-   * Each node is rendered exactly as it appears in the tree (via the tree's cell renderer),
-   * and the nesting depth is expressed with leading indentation.
+   * Serializes the whole component hierarchy and the properties shown in the inspector table as JSON.
    */
-  public @NotNull String exportTreeAsText() {
+  public @NotNull String exportTreeAsJson() {
     StringBuilder sb = new StringBuilder();
     Object root = getModel().getRoot();
-    if (root instanceof TreeNode) {
-      appendNodeText(sb, (TreeNode)root, 0);
+    if (root instanceof ComponentNode) {
+      appendNodeJson(sb, (ComponentNode)root, 0);
     }
     return sb.toString();
   }
 
-  private void appendNodeText(@NotNull StringBuilder sb, @NotNull TreeNode node, int depth) {
-    sb.repeat("  ", depth);
-    sb.append(getNodeText(node));
-    sb.append('\n');
-    int childCount = node.getChildCount();
-    for (int i = 0; i < childCount; i++) {
-      appendNodeText(sb, node.getChildAt(i), depth + 1);
+  private static void appendNodeJson(@NotNull StringBuilder sb, @NotNull ComponentNode node, int depth) {
+    sb.append("  ".repeat(depth)).append("{\n");
+    appendJsonProperty(sb, "class", getNodeName(node), depth + 1, true);
+
+    Component component = node.getComponent();
+    if (component != null) {
+      appendJsonProperty(sb, "size", component.getWidth() + "x" + component.getHeight(), depth + 1, true);
     }
+
+    sb.append("  ".repeat(depth + 1)).append("\"property\": [");
+    appendPropertiesJson(sb, getNodeProperties(node), depth + 2);
+    sb.append("],\n");
+
+    sb.append("  ".repeat(depth + 1)).append("\"children\": [");
+    int childCount = node.getChildCount();
+    if (childCount > 0) sb.append('\n');
+    for (int i = 0; i < childCount; i++) {
+      appendNodeJson(sb, (ComponentNode)node.getChildAt(i), depth + 2);
+      if (i + 1 < childCount) sb.append(',');
+      sb.append('\n');
+    }
+    if (childCount > 0) sb.append("  ".repeat(depth + 1));
+    sb.append("]\n");
+    sb.append("  ".repeat(depth)).append('}');
   }
 
-  private @NotNull String getNodeText(@NotNull TreeNode node) {
-    try {
-      Component rendererComponent =
-        getCellRenderer().getTreeCellRendererComponent(this, node, false, true, node.isLeaf(), 0, false);
-      if (rendererComponent instanceof SimpleColoredComponent) {
-        String text = rendererComponent.toString();
-        if (!StringUtil.isEmpty(text)) {
-          return text;
+  private static void appendPropertiesJson(@NotNull StringBuilder sb, @NotNull List<PropertyBean> properties, int depth) {
+    if (properties.isEmpty()) return;
+
+    sb.append('\n').append("  ".repeat(depth)).append('{').append('\n');
+    for (int i = 0; i < properties.size(); i++) {
+      PropertyBean property = properties.get(i);
+      appendJsonProperty(sb, property.getPropertyName(), getPropertyValue(property), depth + 1, i + 1 < properties.size());
+    }
+    sb.append("  ".repeat(depth)).append('}').append('\n').append("  ".repeat(depth - 1));
+  }
+
+  private static void appendJsonProperty(@NotNull StringBuilder sb,
+                                         @NotNull String name,
+                                         @NotNull String value,
+                                         int depth,
+                                         boolean appendComma) {
+    sb.append("  ".repeat(depth));
+    appendJsonString(sb, name);
+    sb.append(": ");
+    appendJsonString(sb, value);
+    if (appendComma) sb.append(',');
+    sb.append('\n');
+  }
+
+  private static void appendJsonString(@NotNull StringBuilder sb, @NotNull String value) {
+    sb.append('"');
+    StringUtil.escapeStringCharacters(value.length(), value, sb);
+    sb.append('"');
+  }
+
+  private static @NotNull String getNodeName(@NotNull ComponentNode node) {
+    Component component = node.getComponent();
+    return component == null ? node.toString() : UiInspectorUtil.getComponentName(component);
+  }
+
+  private static @NotNull List<PropertyBean> getNodeProperties(@NotNull ComponentNode node) {
+    Component component = node.getComponent();
+    if (component != null) {
+      return ComponentPropertiesCollector.collect(component);
+    }
+
+    Accessible accessible = node.getAccessible();
+    if (accessible != null) {
+      return ComponentPropertiesCollector.collect(accessible);
+    }
+
+    Object userObject = node.getUserObject();
+    if (userObject instanceof UiInspectorCustomComponentChildProvider provider) {
+      List<PropertyBean> properties = new ArrayList<>();
+      Object propertiesHolder = provider.getObjectForProperties();
+      if (propertiesHolder != null) {
+        properties.addAll(ComponentPropertiesCollector.collect(propertiesHolder, provider.getPropertiesMethodList()));
+      }
+      properties.addAll(provider.getUiInspectorContext());
+      return properties;
+    }
+
+    if (userObject instanceof List<?> values) {
+      List<PropertyBean> properties = new ArrayList<>();
+      for (Object value : values) {
+        if (value instanceof PropertyBean property) {
+          properties.add(property);
         }
       }
+      return properties;
     }
-    catch (Exception ignored) {
-    }
-    return String.valueOf(node);
+    return Collections.emptyList();
+  }
+
+  private static @NotNull String getPropertyValue(@NotNull PropertyBean property) {
+    Object value = property.getPropertyValue();
+    return value == null ? "-" : ValueCellRenderer.getToStringValue(value);
   }
 
   public void selectPath(@NotNull Component component) {

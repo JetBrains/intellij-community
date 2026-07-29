@@ -131,7 +131,10 @@ public final class ComponentPropertiesCollector {
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
 
-    myProperties.add(new PropertyBean("baseline", component.getBaseline(component.getWidth(), component.getHeight())));
+    int width = component.getWidth();
+    int height = component.getHeight();
+    Integer baseline = width >= 0 && height >= 0 ? component.getBaseline(width, height) : null;
+    myProperties.add(new PropertyBean("baseline", baseline));
 
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
