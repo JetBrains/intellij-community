@@ -541,7 +541,7 @@ public class RefManagerImpl extends RefManager {
       .inSmartMode(myProject)
       .wrapProgress(progressIndicator)
       .submit(myExecutor)
-      .onSuccess(_ -> {
+      .onProcessed(_ -> {
         if (myTasksInFlight.decrementAndGet() == 0) myLatch.countDown();
       });
   }
