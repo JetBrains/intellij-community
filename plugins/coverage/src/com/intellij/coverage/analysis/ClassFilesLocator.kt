@@ -3,31 +3,24 @@ package com.intellij.coverage.analysis
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import org.jetbrains.annotations.ApiStatus
+import java.io.Closeable
 import java.io.IOException
+import java.io.UncheckedIOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.zip.ZipInputStream
+import java.util.stream.Stream
+import java.util.zip.ZipFile
 
 @ApiStatus.Internal
 object ClassFilesLocator {
-  internal fun findClassFiles(
-    outputRoot: Path,
-    rootPackageVMName: String,
-    requestedSimpleNames: Set<String>?,
-  ): List<LocatedClassFiles> {
-    val source = createClassFilesSource(outputRoot) ?: return emptyList()
-    val requestedTopLevelNames = requestedSimpleNames?.mapTo(HashSet()) { simpleName ->
-      AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(rootPackageVMName, simpleName))
+  internal fun findClassFiles(outputRoot: Path, packages: List<PackageEntry>): ClassFilesResource {
+    val filter = ClassFilesFilter(packages)
+    return when {
+      packages.isEmpty() -> EmptyClassFilesResource
+      Files.isDirectory(outputRoot) -> DirectoryClassFilesResource(outputRoot, packages, filter)
+      Files.isRegularFile(outputRoot) -> createArchiveClassFilesResource(outputRoot, filter)
+      else -> EmptyClassFilesResource
     }
-    val context = ClassFilesSourceContext(rootPackageVMName, requestedSimpleNames == null)
-    val topLevelClasses = LinkedHashMap<LocatedClassKey, MutableList<Path>>()
-    source.findClassFiles(context).forEach { (packageVMName, simpleName, classFile) ->
-      val classVMName = AnalysisUtils.buildVMName(packageVMName, simpleName)
-      val topLevelClassName = AnalysisUtils.getSourceToplevelFQName(classVMName)
-      if (requestedTopLevelNames != null && topLevelClassName !in requestedTopLevelNames) return@forEach
-      topLevelClasses.getOrPut(LocatedClassKey(topLevelClassName, packageVMName), ::ArrayList).add(classFile)
-    }
-    return topLevelClasses.map { (key, files) -> LocatedClassFiles(key.topLevelClassName, key.packageVMName, files) }
   }
 
   /**
@@ -37,97 +30,229 @@ object ClassFilesLocator {
   @JvmStatic
   fun collectClassFiles(outputRoot: Path, packageVMName: String, topLevelClassNames: Set<String>): List<Path> {
     if (topLevelClassNames.isEmpty()) return emptyList()
-    return findClassFiles(outputRoot, packageVMName, topLevelClassNames)
-      .flatMap(LocatedClassFiles::files)
+
+    val packageName = AnalysisUtils.internalNameToFqn(packageVMName)
+    return findClassFiles(outputRoot, listOf(PackageEntry(packageName, topLevelClassNames.toList()))).use { resource ->
+      resource.asSequence().map(LocatedClassFile::path).toList()
+    }
   }
 
-  private fun createClassFilesSource(outputRoot: Path): ClassFilesSource? = when {
-    Files.isDirectory(outputRoot) -> DirectoryClassFilesSource(outputRoot)
-    Files.isRegularFile(outputRoot) -> ArchiveClassFilesSource(outputRoot)
-    else -> null
+  private fun createArchiveClassFilesResource(
+    outputRoot: Path,
+    filter: ClassFilesFilter,
+  ): ClassFilesResource {
+    return try {
+      ArchiveClassFilesResource(outputRoot, filter, ZipFile(outputRoot.toString()))
+    }
+    catch (_: IOException) {
+      EmptyClassFilesResource
+    }
   }
 }
 
-internal data class LocatedClassFiles(
-  val topLevelClassName: String,
+/** A single-pass class-file iterator. Entries may load bytes until this resource is closed. */
+internal interface ClassFilesResource : Iterator<LocatedClassFile>, Closeable {
+  operator fun iterator(): Iterator<LocatedClassFile> = this
+}
+
+internal class LocatedClassFile(
+  /** A regular file path or a logical `archive.jar!/entry.class` path. */
+  val path: Path,
+  val relativePath: String,
   val packageVMName: String,
-  val files: List<Path>,
-)
+  val simpleName: String,
+  bytesLoader: () -> ByteArray?,
+) {
+  private val bytes by lazy(LazyThreadSafetyMode.NONE, bytesLoader)
 
-private data class LocatedClassKey(val topLevelClassName: String, val packageVMName: String)
-
-private data class DiscoveredClassFile(val packageVMName: String, val simpleName: String, val path: Path)
-
-private data class ClassFilesSourceContext(
-  val rootPackageVMName: String,
-  val includeSubpackages: Boolean,
-)
-
-private interface ClassFilesSource {
-  fun findClassFiles(context: ClassFilesSourceContext): List<DiscoveredClassFile>
+  fun loadBytes(): ByteArray? = bytes
 }
 
-private class DirectoryClassFilesSource(private val outputRoot: Path) : ClassFilesSource {
-  override fun findClassFiles(context: ClassFilesSourceContext): List<DiscoveredClassFile> {
-    val packageRoot = context.rootPackageVMName.takeIf(String::isNotEmpty)?.let(outputRoot::resolve) ?: outputRoot
-    if (!Files.exists(packageRoot)) return emptyList()
+private class ClassFilesFilter(packages: List<PackageEntry>) {
+  private val recursivePackages = ArrayList<String>()
+  private val requestedTopLevelClassNames = HashSet<String>()
 
-    val result = ArrayList<DiscoveredClassFile>()
-    val stack = ArrayDeque<PackageData>()
-    stack.addLast(PackageData(context.rootPackageVMName, listChildren(packageRoot)))
-    while (stack.isNotEmpty()) {
-      ProgressIndicatorProvider.checkCanceled()
-      val (packageVMName, children) = stack.removeLast()
-      for (child in children) {
-        when {
-          AnalysisUtils.isClassFile(child) -> result.add(DiscoveredClassFile(packageVMName, AnalysisUtils.getClassName(child), child))
-          context.includeSubpackages && Files.isDirectory(child) -> {
-            val childPackageVMName = AnalysisUtils.buildVMName(packageVMName, child.fileName.toString())
-            stack.addLast(PackageData(childPackageVMName, listChildren(child)))
-          }
+  init {
+    for ((packageName, simpleClassNames) in packages) {
+      val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
+      if (simpleClassNames == null) {
+        recursivePackages.add(packageVMName)
+      }
+      else {
+        for (simpleClassName in simpleClassNames) {
+          requestedTopLevelClassNames.add(
+            AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleClassName))
+          )
         }
       }
     }
+  }
+
+  fun accepts(packageVMName: String, simpleName: String): Boolean {
+    if (recursivePackages.any { packageVMName.isInPackage(it) }) return true
+    val classVMName = AnalysisUtils.buildVMName(packageVMName, simpleName)
+    return AnalysisUtils.getSourceToplevelFQName(classVMName) in requestedTopLevelClassNames
+  }
+
+  private fun String.isInPackage(packageVMName: String): Boolean {
+    return packageVMName.isEmpty() || this == packageVMName || startsWith("$packageVMName/")
+  }
+}
+
+private abstract class AbstractClassFilesResource : ClassFilesResource {
+  private var closed = false
+  private var nextComputed = false
+  private var nextFile: LocatedClassFile? = null
+
+  final override fun hasNext(): Boolean {
+    if (closed) return false
+    if (!nextComputed) {
+      nextFile = findNext()
+      nextComputed = true
+    }
+    return nextFile != null
+  }
+
+  final override fun next(): LocatedClassFile {
+    if (!hasNext()) throw NoSuchElementException()
+    val result = nextFile ?: throw NoSuchElementException()
+    nextFile = null
+    nextComputed = false
     return result
   }
 
-  private fun listChildren(packageRoot: Path): List<Path> {
-    return try {
-      Files.list(packageRoot).use { it.toList() }
-    }
-    catch (_: IOException) {
-      emptyList()
+  final override fun close() {
+    if (closed) return
+    closed = true
+    nextFile = null
+    nextComputed = true
+    closeResource()
+  }
+
+  protected abstract fun findNext(): LocatedClassFile?
+
+  protected open fun closeResource() {}
+}
+
+private object EmptyClassFilesResource : AbstractClassFilesResource() {
+  override fun findNext(): LocatedClassFile? = null
+}
+
+private class DirectoryClassFilesResource(
+  private val root: Path,
+  packages: List<PackageEntry>,
+  private val filter: ClassFilesFilter,
+) : AbstractClassFilesResource() {
+  private val traversals = packages.iterator()
+  private val visitedPaths = HashSet<String>()
+  private var currentStream: Stream<Path>? = null
+  private var currentIterator: Iterator<Path>? = null
+
+  override fun findNext(): LocatedClassFile? {
+    while (true) {
+      ProgressIndicatorProvider.checkCanceled()
+      val iterator = currentIterator
+      if (iterator == null) {
+        if (!openNextTraversal()) return null
+        continue
+      }
+      val hasNext = try {
+        iterator.hasNext()
+      }
+      catch (_: UncheckedIOException) {
+        false
+      }
+      if (!hasNext) {
+        closeCurrentStream()
+        if (!openNextTraversal()) return null
+        continue
+      }
+
+      val classFile = try {
+        iterator.next()
+      }
+      catch (_: UncheckedIOException) {
+        closeCurrentStream()
+        continue
+      }
+      if (!AnalysisUtils.isClassFile(classFile)) continue
+
+      val relativePath = root.relativize(classFile)
+      val relativePathString = relativePath.joinToString("/")
+      if (!visitedPaths.add(relativePathString)) continue
+
+      val packageVMName = relativePath.parent?.joinToString("/").orEmpty()
+      val simpleName = AnalysisUtils.getClassName(relativePath)
+      if (!filter.accepts(packageVMName, simpleName)) continue
+
+      return LocatedClassFile(classFile, relativePathString, packageVMName, simpleName) {
+        AnalysisUtils.loadClassBytes(classFile)
+      }
     }
   }
 
-  private data class PackageData(val packageVMName: String, val children: List<Path>)
+  private fun openNextTraversal(): Boolean {
+    while (traversals.hasNext()) {
+      val (packageName, simpleClassNames) = traversals.next()
+      val packageRoot = AnalysisUtils.fqnToInternalName(packageName).takeIf(String::isNotEmpty)?.let(root::resolve) ?: root
+      try {
+        currentStream = if (simpleClassNames == null) Files.walk(packageRoot) else Files.list(packageRoot)
+        currentIterator = currentStream?.iterator()
+        return true
+      }
+      catch (_: IOException) {
+      }
+    }
+    return false
+  }
+
+  override fun closeResource() {
+    closeCurrentStream()
+  }
+
+  private fun closeCurrentStream() {
+    currentIterator = null
+    currentStream?.close()
+    currentStream = null
+  }
 }
 
-private class ArchiveClassFilesSource(private val outputRoot: Path) : ClassFilesSource {
-  override fun findClassFiles(context: ClassFilesSourceContext): List<DiscoveredClassFile> {
-    val prefix = context.rootPackageVMName.takeIf(String::isNotEmpty)?.plus('/') ?: ""
-    return try {
-      val result = ArrayList<DiscoveredClassFile>()
-      ZipInputStream(Files.newInputStream(outputRoot)).use { input ->
-        while (true) {
-          ProgressIndicatorProvider.checkCanceled()
-          val entry = input.nextEntry ?: break
-          if (entry.isDirectory || !entry.name.endsWith(".class") || prefix.isNotEmpty() && !entry.name.startsWith(prefix)) continue
+private class ArchiveClassFilesResource(
+  private val root: Path,
+  private val filter: ClassFilesFilter,
+  private val zipFile: ZipFile,
+) : AbstractClassFilesResource() {
+  private val entries = zipFile.entries()
 
-          val relativePath = entry.name.removePrefix(prefix)
-          val slashIndex = relativePath.lastIndexOf('/')
-          if (!context.includeSubpackages && slashIndex >= 0) continue
+  override fun findNext(): LocatedClassFile? {
+    while (entries.hasMoreElements()) {
+      ProgressIndicatorProvider.checkCanceled()
+      val entry = entries.nextElement()
+      if (entry.isDirectory || !entry.name.endsWith(".class")) continue
 
-          val packageVMName = if (slashIndex < 0) context.rootPackageVMName
-          else AnalysisUtils.buildVMName(context.rootPackageVMName, relativePath.substring(0, slashIndex))
-          val simpleName = relativePath.substring(slashIndex + 1, relativePath.length - ".class".length)
-          result.add(DiscoveredClassFile(packageVMName, simpleName, AnalysisUtils.toArchiveEntryPath(outputRoot, entry.name)))
+      val slashIndex = entry.name.lastIndexOf('/')
+      val packageVMName = if (slashIndex < 0) "" else entry.name.substring(0, slashIndex)
+      val simpleName = entry.name.substring(slashIndex + 1, entry.name.length - ".class".length)
+      if (!filter.accepts(packageVMName, simpleName)) continue
+
+      val classFile = AnalysisUtils.toArchiveEntryPath(root, entry.name)
+      return LocatedClassFile(classFile, entry.name, packageVMName, simpleName) {
+        try {
+          AnalysisUtils.loadClassBytes(zipFile, entry.name)
+        }
+        catch (_: IllegalStateException) {
+          null
         }
       }
-      result
+    }
+    return null
+  }
+
+  override fun closeResource() {
+    try {
+      zipFile.close()
     }
     catch (_: IOException) {
-      emptyList()
     }
   }
 }

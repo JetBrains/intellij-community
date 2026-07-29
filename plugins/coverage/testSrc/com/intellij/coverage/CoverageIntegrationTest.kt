@@ -2,6 +2,7 @@
 package com.intellij.coverage
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.CoverageSourceResolver
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
@@ -176,9 +177,9 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
     val outputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
     val classFile = Path.of(VfsUtilCore.urlToPath(outputUrl)).resolve("foo/FooClass.class")
-    PackageAnnotator(loadIJSuite(), myProject, ProjectData()).use { annotator ->
-      assertEquals("FooClass.java", annotator.getSourceFileName(mapOf("FooClass" to classFile), "foo"))
-    }
+    val annotator = PackageAnnotator(loadIJSuite(), myProject, ProjectData())
+    val sourceFileName = annotator.getSourceFileName("foo.FooClass") { AnalysisUtils.loadClassBytes(classFile) }
+    assertEquals("FooClass.java", sourceFileName)
   }
 
   @Test

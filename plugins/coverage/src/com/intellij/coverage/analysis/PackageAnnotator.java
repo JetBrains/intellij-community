@@ -19,22 +19,17 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.ZipFile;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public final class PackageAnnotator implements Closeable {
+public final class PackageAnnotator {
   private final CoverageSuitesBundle mySuite;
   private final Project myProject;
   private final ProjectData myProjectData;
-  private final Map<String, ZipFile> myArchiveZipCache = new ConcurrentHashMap<>();
   private ProjectData myUnloadedClassesProjectData;
 
   public PackageAnnotator(CoverageSuitesBundle suite,
@@ -54,63 +49,21 @@ public final class PackageAnnotator implements Closeable {
     return myUnloadedClassesProjectData;
   }
 
-  @Override
-  public void close() {
-    for (ZipFile zipFile : myArchiveZipCache.values()) {
-      try {
-        zipFile.close();
-      }
-      catch (IOException ignored) {
-      }
-    }
-    myArchiveZipCache.clear();
+  public @Nullable String getSourceFileName(@NotNull String className, @Nullable Supplier<byte[]> classBytes) {
+    ClassData classData = myProjectData.getClassData(className);
+    String sourceFileName = classData == null ? null : classData.getSource();
+    if (sourceFileName != null) return sourceFileName;
+
+    classData = getUnloadedClassesProjectData().getClassData(className);
+    sourceFileName = classData == null ? null : classData.getSource();
+    if (sourceFileName != null) return sourceFileName;
+
+    if (classBytes == null) return null;
+    byte[] bytes = classBytes.get();
+    return bytes == null ? null : readSourceFileName(bytes);
   }
 
-  /**
-   * Collect coverage for classes with the same top level name.
-   *
-   * @param children      name - file pairs, where file is optional (could be null),
-   *                      when file is null, unloaded class analysis is skipped
-   * @param packageVMName common package name in internal VM format
-   */
-  public @NotNull ClassCoverageInfo visitFiles(Map<String, @Nullable Path> children, String packageVMName) {
-    var topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
-    for (Map.Entry<String, Path> e : children.entrySet()) {
-      Path file = e.getValue();
-      String simpleName = e.getKey();
-      String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
-      var info = collectClassCoverageInformation(file, classFqName);
-      if (info == null) continue;
-      topLevelClassCoverageInfo.append(info);
-    }
-    return topLevelClassCoverageInfo;
-  }
-
-  public @Nullable String getSourceFileName(@NotNull Map<String, @Nullable Path> children, @NotNull String packageVMName) {
-    var projects = new ProjectData[]{myProjectData, getUnloadedClassesProjectData()};
-    for (String simpleName : children.keySet()) {
-      String classFqName = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName));
-      for (ProjectData projectData : projects) {
-        if (projectData == null) continue;
-        ClassData classData = projectData.getClassData(classFqName);
-        if (classData == null) continue;
-        String sourceFileName = classData.getSource();
-        if (sourceFileName != null) return sourceFileName;
-      }
-    }
-
-    for (Path classFile : children.values()) {
-      if (classFile == null) continue;
-      String sourceFileName = readSourceFileName(classFile);
-      if (sourceFileName != null) return sourceFileName;
-    }
-    return null;
-  }
-
-  private @Nullable String readSourceFileName(@NotNull Path classFile) {
-    byte[] bytes = loadClassBytes(classFile);
-    if (bytes == null) return null;
-
+  private static @Nullable String readSourceFileName(byte @NotNull [] bytes) {
     String[] sourceFileName = {null};
     new ClassReader(bytes).accept(new ClassVisitor(Opcodes.ASM9) {
       @Override
@@ -121,11 +74,12 @@ public final class PackageAnnotator implements Closeable {
     return sourceFileName[0];
   }
 
-  private @Nullable PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable Path classFile, String className) {
+  public @Nullable ClassCoverageInfo collectClassCoverage(@NotNull String className,
+                                                          @Nullable Supplier<byte[]> classBytes) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
-    if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
-      var bytes = loadClassBytes(classFile);
+    if (classBytes != null && (!classExists || !classData.isFullyAnalysed())) {
+      var bytes = classBytes.get();
       if (bytes != null) {
         ClassData fullClassData = collectNonCoveredClassInfo(className, bytes, getUnloadedClassesProjectData());
         if (fullClassData != null) {
@@ -187,7 +141,7 @@ public final class PackageAnnotator implements Closeable {
   }
 
   public @Nullable ClassData collectNonCoveredClassInfo(final @NotNull Path classFile, @NotNull ProjectData projectData) {
-    var bytes = loadClassBytes(classFile);
+    var bytes = AnalysisUtils.loadClassBytes(classFile);
     if (bytes == null) return null;
     String className = ClassNameUtil.convertToFQName(new ClassReader(bytes).getClassName());
     return collectNonCoveredClassInfo(className, bytes, projectData);
@@ -198,37 +152,6 @@ public final class PackageAnnotator implements Closeable {
                                                          @NotNull ProjectData projectData) {
     UnloadedUtil.appendUnloadedClass(projectData, className, bytes, mySuite.isBranchCoverage());
     return projectData.getClassData(className);
-  }
-
-  private byte @Nullable [] loadClassBytes(@NotNull Path classFile) {
-    AnalysisUtils.ArchiveEntryPath archiveEntryPath = AnalysisUtils.splitArchiveEntryPath(classFile);
-    if (archiveEntryPath != null) {
-      ZipFile zip = getOrCreateArchive(archiveEntryPath.archivePath());
-      return zip == null ? null : AnalysisUtils.loadClassBytes(zip, archiveEntryPath.entryPath());
-    }
-    return AnalysisUtils.loadClassBytes(classFile);
-  }
-
-  private @Nullable ZipFile getOrCreateArchive(@NotNull String archivePath) {
-    ZipFile cached = myArchiveZipCache.get(archivePath);
-    if (cached != null) return cached;
-
-    try {
-      ZipFile opened = new ZipFile(archivePath);
-      ZipFile existing = myArchiveZipCache.putIfAbsent(archivePath, opened);
-      if (existing != null) {
-        try {
-          opened.close();
-        }
-        catch (IOException ignored) {
-        }
-        return existing;
-      }
-      return opened;
-    }
-    catch (IOException ignored) {
-      return null;
-    }
   }
 
   public abstract static class SummaryCoverageInfo {

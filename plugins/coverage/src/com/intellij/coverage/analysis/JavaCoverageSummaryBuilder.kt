@@ -50,16 +50,19 @@ object JavaCoverageSummaryBuilder {
       val vmName = AnalysisUtils.fqnToInternalName(fqn)
       AnalysisUtils.getSourceToplevelFQName(vmName)
     }.mapValues { (_, names) -> names.map(StringUtil::getShortName) }
-    PackageAnnotator(bundle, project, projectData).use { packageAnnotator ->
-      for ((topLevelName, simpleNames) in classes) {
-        val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName) ?: continue
-        val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
-        val info = packageAnnotator.visitFiles(simpleNames.associateWith { null }, packageVMName)
-        collector.addClass(topLevelName, info, file)
-        flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
-        file.parent?.let { directory ->
-          flattenDirectories.getOrPut(directory) { PackageCoverageInfo() }.append(info)
-        }
+    val packageAnnotator = PackageAnnotator(bundle, project, projectData)
+    for ((topLevelName, simpleNames) in classes) {
+      val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName) ?: continue
+      val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
+      val info = ClassCoverageInfo()
+      for (simpleName in simpleNames) {
+        val className = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName))
+        packageAnnotator.collectClassCoverage(className, null)?.let(info::append)
+      }
+      collector.addClass(topLevelName, info, file)
+      flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
+      file.parent?.let { directory ->
+        flattenDirectories.getOrPut(directory) { PackageCoverageInfo() }.append(info)
       }
     }
 
@@ -196,69 +199,77 @@ private fun getSourceFolders(module: Module) = ModuleRootManager.getInstance(mod
 private class ModuleCoverageBuilder(
   private val suite: CoverageSuitesBundle,
   private val project: Project,
-  private val projectData: ProjectData,
+  projectData: ProjectData,
   private val moduleRequest: ModuleRequest,
   private val progress: CoverageProgress,
 ) {
   private val classes = HashMap<String, CollectedClass>()
+  private val pendingClasses = HashMap<String, PendingClassCoverage>()
   private val flattenPackages = HashMap<String, PackageCoverageInfo>()
   private val flattenDirectories = HashMap<VirtualFile, PackageCoverageInfo>()
+  private val packageAnnotator = PackageAnnotator(suite, project, projectData)
 
   suspend fun build(): ModuleCoverageResult {
     val module = moduleRequest.module
-    PackageAnnotator(suite, project, projectData).use { classSummaryBuilder ->
-      if (module.isDisposed) {
-        LOG.warn("Module is already disposed: $module")
-        progress.rootsVisited(moduleRequest.packages.size)
-        return ModuleCoverageResult(emptyMap(), emptyMap(), emptyMap(), emptySet())
-      }
+    if (module.isDisposed) {
+      LOG.warn("Module is already disposed: $module")
+      progress.rootsVisited(moduleRequest.packages.size)
+      return ModuleCoverageResult(emptyMap(), emptyMap(), emptyMap(), emptySet())
+    }
 
-      val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(suite.getSearchScope(project))
-      val sourceRoots = HashSet<VirtualFile>()
-      for ((packageName, simpleClassNames) in moduleRequest.packages) {
-        val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
-        sourceRoots.addAll(getPackageRoots(module, packageVMName))
-        try {
-          val requestedSimpleNames = simpleClassNames?.toSet()
-          val locatedClasses = ClassFilesLocator.findClassFiles(moduleRequest.root, packageVMName, requestedSimpleNames)
-          for (locatedClass in locatedClasses) {
-            collectClassCoverage(locatedClass, classSummaryBuilder, searchScope)
-          }
-        }
-        finally {
-          progress.rootsVisited(1)
+    val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(suite.getSearchScope(project))
+    val sourceRoots = HashSet<VirtualFile>()
+    for ((packageName, _) in moduleRequest.packages) {
+      val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
+      sourceRoots.addAll(getPackageRoots(module, packageVMName))
+    }
+
+    try {
+      ClassFilesLocator.findClassFiles(moduleRequest.root, moduleRequest.packages).use { classFiles ->
+        for (classFile in classFiles) {
+          collectClassCoverage(classFile)
         }
       }
-      return ModuleCoverageResult(
-        classes,
-        flattenPackages,
-        flattenDirectories,
-        sourceRoots,
-      )
+      finalizeCollectedClasses(searchScope)
+    }
+    finally {
+      progress.rootsVisited(moduleRequest.packages.size)
+    }
+
+    return ModuleCoverageResult(
+      classes,
+      flattenPackages,
+      flattenDirectories,
+      sourceRoots,
+    )
+  }
+
+  private fun collectClassCoverage(classFile: LocatedClassFile) {
+    val classVMName = AnalysisUtils.buildVMName(classFile.packageVMName, classFile.simpleName)
+    val topLevelClassName = AnalysisUtils.getSourceToplevelFQName(classVMName)
+    if (isClassExcluded(topLevelClassName) || ignoreClass(classFile.path)) return
+
+    val className = AnalysisUtils.internalNameToFqn(classVMName)
+    val pending = pendingClasses.getOrPut(topLevelClassName) { PendingClassCoverage(classFile.packageVMName) }
+    packageAnnotator.collectClassCoverage(className) { classFile.loadBytes() }?.let(pending.info::append)
+    if (pending.sourceFileName == null) {
+      pending.sourceFileName = packageAnnotator.getSourceFileName(className) { classFile.loadBytes() }
+    }
+    if (!pending.keepWithoutSource) {
+      pending.keepWithoutSource = keepCoverageInfoForClassWithoutSource(classFile.path)
     }
   }
 
-  private suspend fun collectClassCoverage(
-    locatedClass: LocatedClassFiles,
-    classSummaryBuilder: PackageAnnotator,
-    searchScope: GlobalSearchScope,
-  ) {
-    val (topLevelClassName, packageVMName, files) = locatedClass
-    if (isClassExcluded(topLevelClassName)) return
-    val children = files.asSequence()
-      .filterNot(::ignoreClass)
-      .associateBy(AnalysisUtils::getClassName)
-    if (children.isEmpty()) return
+  private suspend fun finalizeCollectedClasses(searchScope: GlobalSearchScope) {
+    for ((topLevelClassName, pending) in pendingClasses) {
+      val file = CoverageSourceResolver.findFile(project, searchScope, topLevelClassName, pending.sourceFileName)
+      if (file == null && !pending.keepWithoutSource) continue
 
-    val info = classSummaryBuilder.visitFiles(children, packageVMName)
-    val sourceFileName = classSummaryBuilder.getSourceFileName(children, packageVMName)
-    val file = CoverageSourceResolver.findFile(project, searchScope, topLevelClassName, sourceFileName)
-    if (file == null && children.values.none(::keepCoverageInfoForClassWithoutSource)) return
-
-    classes[topLevelClassName] = CollectedClass(info, file)
-    flattenPackages.getOrPut(packageVMName, ::PackageCoverageInfo).append(info)
-    file?.parent?.let { directory ->
-      flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(info)
+      classes[topLevelClassName] = CollectedClass(pending.info, file)
+      flattenPackages.getOrPut(pending.packageVMName, ::PackageCoverageInfo).append(pending.info)
+      file?.parent?.let { directory ->
+        flattenDirectories.getOrPut(directory, ::PackageCoverageInfo).append(pending.info)
+      }
     }
   }
 
@@ -276,6 +287,12 @@ private class ModuleCoverageBuilder(
 }
 
 private data class CollectedClass(val info: ClassCoverageInfo, val sourceFile: VirtualFile?)
+
+private class PendingClassCoverage(val packageVMName: String) {
+  val info = ClassCoverageInfo()
+  var sourceFileName: String? = null
+  var keepWithoutSource = false
+}
 
 private data class ModuleCoverageResult(
   val classes: Map<String, CollectedClass>,

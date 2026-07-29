@@ -50,7 +50,8 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   @Override
   public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
     final ProjectData projectData = new ProjectData();
-    try (PackageAnnotator annotator = new PackageAnnotator(suite, suite.getProject(), projectData)) {
+    try {
+      PackageAnnotator annotator = new PackageAnnotator(suite, suite.getProject(), projectData);
       ClassData classData = annotator.collectNonCoveredClassInfo(classFile, projectData);
       if (classData == null || classData.getLines() == null) return List.of();
 
