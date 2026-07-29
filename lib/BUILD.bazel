@@ -7571,44 +7571,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "net.java.dev.jna/jna-platform-5.17.0.jar_copy",
-    src = "@net_java_dev_jna-jna-platform-5_17_0_http//file",
-    out = "net.java.dev.jna/jna-platform-5.17.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.java.dev.jna/jna-5.17.0.jar_copy",
-    src = "@net_java_dev_jna-jna-5_17_0_http//file",
-    out = "net.java.dev.jna/jna-5.17.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "jna",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":net_java_dev_jna-jna-platform-5_17_0_http_import",
-        ":net_java_dev_jna-jna-5_17_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "net_java_dev_jna-jna-platform-5_17_0_http_import",
-    jar = "@net_java_dev_jna-jna-platform-5_17_0_http//file",
-    source_jar = "@net_java_dev_jna-jna-platform-5_17_0-sources_http//file",
-)
-
-jvm_import(
-    name = "net_java_dev_jna-jna-5_17_0_http_import",
-    jar = "@net_java_dev_jna-jna-5_17_0_http//file",
-    source_jar = "@net_java_dev_jna-jna-5_17_0-sources_http//file",
-)
-
-copy_file(
     name = "org.jetbrains.jps/jps-javac-extension-10.jar_copy",
     src = "@org_jetbrains_jps-jps-javac-extension-10_http//file",
     out = "org.jetbrains.jps/jps-javac-extension-10.jar",
@@ -12013,6 +11975,44 @@ jvm_import(
     jar = "@org_jline-jline-3_24_1_http//file",
     source_jar = "@org_jline-jline-3_24_1-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "net.java.dev.jna/jna-platform-5.17.0.jar_copy",
+    src = "@net_java_dev_jna-jna-platform-5_17_0_http//file",
+    out = "net.java.dev.jna/jna-platform-5.17.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "net.java.dev.jna/jna-5.17.0.jar_copy",
+    src = "@net_java_dev_jna-jna-5_17_0_http//file",
+    out = "net.java.dev.jna/jna-5.17.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-jna-jna",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":net_java_dev_jna-jna-platform-5_17_0_http_import",
+        ":net_java_dev_jna-jna-5_17_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "net_java_dev_jna-jna-platform-5_17_0_http_import",
+    jar = "@net_java_dev_jna-jna-platform-5_17_0_http//file",
+    source_jar = "@net_java_dev_jna-jna-platform-5_17_0-sources_http//file",
+)
+
+jvm_import(
+    name = "net_java_dev_jna-jna-5_17_0_http_import",
+    jar = "@net_java_dev_jna-jna-5_17_0_http//file",
+    source_jar = "@net_java_dev_jna-jna-5_17_0-sources_http//file",
 )
 
 copy_file(

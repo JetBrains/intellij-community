@@ -76,8 +76,6 @@ private val libsUsedInJps = setOf(
   "Log4J",
   "slf4j-api",
   "slf4j-jdk14",
-  // see getBuildProcessApplicationClasspath - used in JPS
-  "jna",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "kotlin-stdlib",
 )

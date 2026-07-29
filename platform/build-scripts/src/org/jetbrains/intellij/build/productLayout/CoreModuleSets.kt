@@ -100,6 +100,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
+    embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     embeddedModule("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")

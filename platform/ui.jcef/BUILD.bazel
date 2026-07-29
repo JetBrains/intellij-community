@@ -51,7 +51,7 @@ jvm_library(
         "//platform/core-impl",
         "//libraries/jbr",
         "//platform/jbr",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -86,6 +86,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//libraries/jbr:jbr_test_lib",
         "//platform/jbr:jbr_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ui.jcef` end

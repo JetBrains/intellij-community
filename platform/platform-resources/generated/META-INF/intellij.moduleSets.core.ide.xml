@@ -74,6 +74,7 @@
     <module name="intellij.libraries.jaxen" loading="embedded"/>
     <module name="intellij.libraries.jbr" loading="embedded"/>
     <module name="intellij.libraries.jcip" loading="embedded"/>
+    <module name="intellij.libraries.jna" loading="embedded"/>
     <module name="intellij.libraries.jsoup" loading="embedded"/>
     <module name="intellij.libraries.jsonpath" loading="embedded"/>
     <module name="intellij.libraries.jsvg" loading="embedded"/>
