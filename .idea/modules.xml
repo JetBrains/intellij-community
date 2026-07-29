@@ -1008,6 +1008,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/jsonrpc/intellij.libraries.eclipse.lsp4j.jsonrpc.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/jsonrpc/intellij.libraries.eclipse.lsp4j.jsonrpc.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/lsp4j/jsonrpc-debug/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml" filepath="$PROJECT_DIR$/libraries/lsp4j/jsonrpc-debug/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" filepath="$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ffmpeg/intellij.libraries.ffmpeg.iml" filepath="$PROJECT_DIR$/libraries/ffmpeg/intellij.libraries.ffmpeg.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" filepath="$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" filepath="$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/json/intellij.libraries.groovy.json.iml" filepath="$PROJECT_DIR$/libraries/groovy/json/intellij.libraries.groovy.json.iml" />

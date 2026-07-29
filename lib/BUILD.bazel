@@ -337,7 +337,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg",
+    name = "android-streaming-test_util-ffmpeg",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -351,7 +351,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg-javacpp",
+    name = "android-streaming-test_util-ffmpeg-javacpp",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -365,7 +365,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg-linux-x64",
+    name = "android-streaming-test_util-ffmpeg-linux-x64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -379,7 +379,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg-macos-aarch64",
+    name = "android-streaming-test_util-ffmpeg-macos-aarch64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -393,7 +393,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg-macos-x64",
+    name = "android-streaming-test_util-ffmpeg-macos-x64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -407,7 +407,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-ffmpeg-windows-x64",
+    name = "android-streaming-test_util-ffmpeg-windows-x64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -421,7 +421,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-javacpp-linux-x64",
+    name = "android-streaming-test_util-javacpp-linux-x64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -435,7 +435,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-javacpp-macos-aarch64",
+    name = "android-streaming-test_util-javacpp-macos-aarch64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -449,7 +449,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-streaming-javacpp-macos-x64",
+    name = "android-streaming-test_util-javacpp-macos-x64",
     jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
@@ -459,66 +459,6 @@ copy_file(
     src = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
     out = "org.jetbrains.intellij.deps.android.tools.streaming.ffmpeg-bundle/javacpp-windows-x86_64-1.5.9-189.jar",
     allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-javacpp-windows-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg-javacpp",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg-linux-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg-macos-aarch64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg-macos-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-ffmpeg-windows-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-javacpp-linux-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-javacpp-macos-aarch64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "android-streaming-test_util-javacpp-macos-x64",
-    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -11221,6 +11161,66 @@ jvm_import(
     name = "libraries-fastutil-fastutil-min",
     jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http//file",
     source_jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-6_0-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg-javacpp",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg-linux-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-linux-x86_64-6_0-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg-macos-aarch64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-arm64-6_0-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg-macos-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-macosx-x86_64-6_0-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-ffmpeg-windows-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-ffmpeg-windows-x86_64-6_0-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-javacpp-linux-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-linux-x86_64-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-javacpp-macos-aarch64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-arm64-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-javacpp-macos-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-macosx-x86_64-1_5_9-189_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ffmpeg-javacpp-windows-x64",
+    jar = "@org_jetbrains_intellij_deps_android_tools_streaming_ffmpeg-bundle-javacpp-windows-x86_64-1_5_9-189_http//file",
     visibility = ["//visibility:public"],
 )
 
