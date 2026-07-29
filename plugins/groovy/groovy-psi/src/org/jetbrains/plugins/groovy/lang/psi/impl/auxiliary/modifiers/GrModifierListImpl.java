@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -197,6 +198,22 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
         setModifierPropertyInternal(GrModifier.PUBLIC, false);
         setModifierPropertyInternal(GrModifier.PROTECTED, false);
         setModifierPropertyInternal(GrModifier.PRIVATE, false);
+      }
+      else if (GrModifier.VAL.equals(name) || GrModifier.VAR.equals(name) || GrModifier.DEF.equals(name)) {
+        setModifierPropertyInternal(GrModifier.VAL, false);
+        setModifierPropertyInternal(GrModifier.VAR, false);
+        setModifierPropertyInternal(GrModifier.DEF, false);
+      }
+      else if (GrModifier.FINAL.equals(name) && hasModifierProperty(GrModifier.VAR) && GroovyConfigUtils.isAtLeastGroovy60(this)) {
+        setModifierProperty(GrModifier.VAL, true);
+        setModifierProperty(GrModifier.VAR, false);
+        return;
+      }
+    }
+    else {
+      if (GrModifier.FINAL.equals(name) && hasModifierProperty(GrModifier.VAL)) {
+        setModifierProperty(GrModifier.VAR, true);
+        setModifierProperty(GrModifier.VAL, false);
       }
     }
     if (GrModifier.PACKAGE_LOCAL.equals(name) /*|| GrModifier.PUBLIC.equals(name)*/) {

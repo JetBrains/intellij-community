@@ -1,13 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection;
 
 public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
   @Override
   public InspectionProfileEntry[] getCustomInspections() {
     return new InspectionProfileEntry[]{new GroovyVariableCanBeFinalInspection()};
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_6_0;
   }
 
   public void testSimpleLocalVariable() {
@@ -18,6 +26,22 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                              println b
                          }
                          """);
+  }
+
+  public void testSimpleVar() {
+    doTestHighlighting("""
+                         def method() {
+                           var <warning descr="Variable 'x' can be final"><caret>x</warning> = 1
+                           println x
+                         }
+                         """);
+    myFixture.launchAction(myFixture.findSingleIntention("Make 'x' final"));
+    myFixture.checkResult("""
+                            def method() {
+                              val x = 1
+                              println x
+                            }
+                            """);
   }
 
   public void testClosureParam() {

@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -42,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
@@ -58,6 +61,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author Max Medvedev
@@ -120,14 +124,12 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
           if (PsiUtil.isLValue(ref)) {
             if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, ref, true)) {
-              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()));
             }
           }
           else if (PsiUtil.isUsedInIncOrDec(ref)) {
             if (containingClass == null || !isInsideConstructorOrInitializer(containingClass, ref, field.hasModifierProperty(PsiModifier.STATIC))) {
-              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()));
             }
           }
         }
@@ -135,8 +137,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
                  parameter.getDeclarationScope() instanceof GrMethod &&
                  parameter.hasModifierProperty(PsiModifier.FINAL) &&
                  PsiUtil.isUsedInIncOrDec(ref)) {
-          registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", parameter.getName()),
-                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", parameter.getName()));
         }
       }
 
@@ -216,17 +217,25 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
         if (result == null) return;
 
         for (ReadWriteVariableInstruction instruction : result) {
-          VariableDescriptor descriptor = flow.getVarIndices()[instruction.getDescriptor()];
-          if (!(descriptor instanceof ResolvedVariableDescriptor d)) continue;
-          GrVariable variable = d.getVariable();
+          if (!(flow.getVarIndices()[instruction.getDescriptor()] instanceof ResolvedVariableDescriptor descriptor)) continue;
+          GrVariable variable = descriptor.getVariable();
           PsiElement element = instruction.getElement();
-          if (variables.contains(variable) && element != null) {
+          if (variables.contains(variable) && element instanceof GrReferenceExpression ref) {
             String message = GroovyBundle.message(variable instanceof GrField
                                                   ? "cannot.assign.a.value.to.final.field.0"
                                                   : "cannot.assign.a.value.to.final.variable.0", variable.getName());
-            registerError(element, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            registerError(ref, message);
           }
         }
+      }
+
+      private void registerError(@NotNull GrReferenceExpression anchor, @InspectionMessage @NotNull String message) {
+        Function<ProblemDescriptor, PsiModifierList> function =
+          d -> d.getPsiElement() instanceof GrReferenceExpression ref
+               && ref.resolve() instanceof GrVariable var ? var.getModifierList() : null;
+        GrModifierFix fix = new GrModifierFix(GroovyBundle.message("change.modifier.not", anchor.getReferenceName(), PsiModifier.FINAL),
+                                              PsiModifier.FINAL, false, function);
+        registerError(anchor, message, new LocalQuickFix[] {fix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     };
   }

@@ -44,4 +44,10 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
           }
         }""");
   }
+
+  public void testFinalEnum() {
+    highlightingTest("<error descr=\"Modifier 'final' not allowed here\"><caret>final</error> enum E {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Remove 'final'"));
+    myFixture.checkResult("enum E {}");
+  }
 }

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 
 public class GroovyHighlighting50Test extends LightGroovyTestCase implements HighlightingTest {
@@ -153,6 +154,23 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
     highlightingTest("""
                        <error descr="'val' declarations are available in Groovy 6.0 or later">val</error> x = 1
                        """);
+  }
+
+  public void testSimpleVar() {
+    myFixture.enableInspections(new GroovyVariableCanBeFinalInspection());
+    highlightingTest("""
+                       def method() {
+                         var <warning descr="Variable 'x' can be final"><caret>x</warning> = 1
+                         println x
+                       }
+                       """);
+    myFixture.launchAction(myFixture.findSingleIntention("Make 'x' final"));
+    myFixture.checkResult("""
+                            def method() {
+                              final var x = 1
+                              println x
+                            }
+                            """);
   }
 
   public void testAbstractMethodWithBody() {

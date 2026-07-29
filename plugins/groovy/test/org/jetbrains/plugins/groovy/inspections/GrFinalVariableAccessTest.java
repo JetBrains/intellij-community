@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.groovy.inspections;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection;
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 
@@ -14,6 +17,11 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     return new GrFinalVariableAccessInspection[]{new GrFinalVariableAccessInspection()};
   }
 
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_6_0;
+  }
+
   public void testSimpleVar() {
     doTestHighlighting("""
                          final foo = 5
@@ -24,8 +32,13 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   public void testSimpleVal() {
     doTestHighlighting("""
                          val foo = 5
-                         <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 7
+                         <error descr="Cannot assign a value to final variable 'foo'"><caret>foo</error> = 7
                          print foo""");
+    myFixture.launchAction(myFixture.findSingleIntention("Make 'foo' not final"));
+    myFixture.checkResult("""
+                            var foo = 5
+                            foo = 7
+                            print foo""");
   }
 
   public void testSplitInit() {
@@ -428,7 +441,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          class Money {
                              String currency
                              int amount
-                             private final <error descr="Field 'privateField' might not have been initialized">privateField</error>
+                             private final int <error descr="Field 'privateField' might not have been initialized">privateField</error>
                          
                              void doubleYourMoney() {
                                  <error descr="Cannot assign a value to final field 'amount'">amount</error> *= 2
