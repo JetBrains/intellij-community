@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.j2k;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -276,6 +278,7 @@ public class J2KNullityInferrer {
                         case NOT_NULL -> registerNotNullType(componentType);
                     }
                 }
+                registerExplicitTypeArgumentNullability(type);
             }
 
             @Override
@@ -367,6 +370,25 @@ public class J2KNullityInferrer {
         }
     }
 
+    private void registerExplicitTypeArgumentNullability(@Nullable PsiType type) {
+        if (type instanceof PsiArrayType arrayType) {
+            registerExplicitTypeArgumentNullability(arrayType.getComponentType());
+            return;
+        }
+        if (!(type instanceof PsiClassType classType)) return;
+        for (PsiType typeArgument : classType.getParameters()) {
+            PsiType unwrappedTypeArgument = unwrap(typeArgument);
+            TypeNullability typeNullability = unwrappedTypeArgument.getNullability();
+            if (typeNullability.source() instanceof NullabilitySource.ExplicitAnnotation) {
+                switch (typeNullability.nullability()) {
+                    case NULLABLE -> registerNullableType(unwrappedTypeArgument);
+                    case NOT_NULL -> registerNotNullType(unwrappedTypeArgument);
+                }
+            }
+            registerExplicitTypeArgumentNullability(unwrappedTypeArgument);
+        }
+    }
+
     private void registerTypeNullability(@NotNull PsiType type, boolean isNullable) {
         if (isNullable(type)) {
             // If this type is already nullable:
@@ -380,13 +402,19 @@ public class J2KNullityInferrer {
             return;
         }
 
-        // We conservatively skip type parameter references for now (their nullability is always considered unknown)
-        // TODO support it
-        if (type instanceof PsiClassType classType) {
-            PsiClass psiClass = classType.resolve();
-            if (psiClass instanceof PsiTypeParameter) {
-                return;
-            }
+        TypeNullability typeNullability = type.getNullability();
+        boolean hasExplicitAnnotation = typeNullability.source() instanceof NullabilitySource.ExplicitAnnotation;
+        if (hasExplicitAnnotation &&
+            typeNullability.nullability() != Nullability.UNKNOWN &&
+            (typeNullability.nullability() == Nullability.NULLABLE) != isNullable) {
+            return;
+        }
+
+        // TODO support inferred type parameter nullability too
+        if (type instanceof PsiClassType classType
+            && classType.resolve() instanceof PsiTypeParameter
+            && !hasExplicitAnnotation) {
+            return;
         }
 
         PsiJavaCodeReferenceElement element = null;
@@ -558,6 +586,7 @@ public class J2KNullityInferrer {
                     case NOT_NULL -> registerNotNullType(componentType);
                 }
             }
+            registerExplicitTypeArgumentNullability(methodReturnType);
 
             boolean allRawReturnValueTypesAreNotNull = true;
             boolean rawMethodReturnTypeIsNotNull = methodNullability == Nullability.NOT_NULL || isNotNull(methodReturnType);

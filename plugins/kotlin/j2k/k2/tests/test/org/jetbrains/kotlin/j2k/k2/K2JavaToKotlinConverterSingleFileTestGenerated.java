@@ -5211,6 +5211,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/methodCallArgument.java");
         }
 
+        @TestMetadata("notNullGenericArray.java")
+        public void testNotNullGenericArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullGenericArray.java");
+        }
+
         @TestMetadata("notNullIterationParameterArray.java")
         public void testNotNullIterationParameterArray() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullIterationParameterArray.java");
@@ -5229,6 +5234,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("notNullParameterAsArgument.java")
         public void testNotNullParameterAsArgument() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullParameterAsArgument.java");
+        }
+
+        @TestMetadata("notNullTypeArgument.java")
+        public void testNotNullTypeArgument() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullTypeArgument.java");
         }
 
         @TestMetadata("notNullTypeArgumentFromKotlinTypeParameterInCall.java")
