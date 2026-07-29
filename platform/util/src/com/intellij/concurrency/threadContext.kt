@@ -24,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
@@ -266,16 +267,22 @@ If this behavior is unexpected, please consult the documentation for com.intelli
   }
 }
 
+private val counter = AtomicInteger()
+
 /**
  * Do not use this function -- it is invisible in stacktraces, and it complicates the debugging of erroneously dropped thread context.
  * Consider using the overload with an explicit action.
  */
 @Deprecated("Use resetThreadContext", ReplaceWith("resetThreadContext(action)"))
 fun resetThreadContext(): AccessToken {
-  return withThreadLocal(tlCoroutineContext) { _ ->
-    @OptIn(InternalCoroutinesApi::class)
+  return withThreadLocal(tlCoroutineContext) {
     val currentSnapshot = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
-    InstalledThreadContext(currentSnapshot, null)
+    if (currentSnapshot == null) {
+      // optimization for excessive allocations
+      INITIAL_THREAD_CONTEXT
+    } else {
+      InstalledThreadContext(currentSnapshot, null)
+    }
   }
 }
 
