@@ -15660,17 +15660,17 @@ http_file(
 )
 
 http_file(
-    name = "org_xerial-sqlite-jdbc-3_50_3_0_http",
-    downloaded_file_path = "sqlite-jdbc-3.50.3.0.jar",
-    sha256 = "a3f53a2aa15ae9425a9e793bbe9c8e5288febeb4b65ef5c1a4e80d4c2045cf08",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.50.3.0/sqlite-jdbc-3.50.3.0.jar",
+    name = "org_xerial-sqlite-jdbc-3_53_2_1_http",
+    downloaded_file_path = "sqlite-jdbc-3.53.2.1.jar",
+    sha256 = "f55e405ed96d5ffe629e05b7b51b059e1c7d64527c0cc90a972fbac06730ccc1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1.jar",
 )
 
 http_file(
-    name = "org_xerial-sqlite-jdbc-3_50_3_0-sources_http",
-    downloaded_file_path = "sqlite-jdbc-3.50.3.0-sources.jar",
-    sha256 = "fc5dffd5a31b763cbd84d5b1eeafa3a058ce1fad99e35a599401c3f95271f8c9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.50.3.0/sqlite-jdbc-3.50.3.0-sources.jar",
+    name = "org_xerial-sqlite-jdbc-3_53_2_1-sources_http",
+    downloaded_file_path = "sqlite-jdbc-3.53.2.1-sources.jar",
+    sha256 = "b391339a7928f148bc489506cef28a35a2c6400c661f8f936583732008c4d017",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1-sources.jar",
 )
 
 http_file(

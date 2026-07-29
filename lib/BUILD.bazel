@@ -20199,17 +20199,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.xerial/sqlite-jdbc-3.50.3.0.jar_copy",
-    src = "@org_xerial-sqlite-jdbc-3_50_3_0_http//file",
-    out = "org.xerial/sqlite-jdbc-3.50.3.0.jar",
+    name = "org.xerial/sqlite-jdbc-3.53.2.1.jar_copy",
+    src = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
+    out = "org.xerial/sqlite-jdbc-3.53.2.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "sqlite",
-    jar = "@org_xerial-sqlite-jdbc-3_50_3_0_http//file",
-    source_jar = "@org_xerial-sqlite-jdbc-3_50_3_0-sources_http//file",
+    jar = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
+    source_jar = "@org_xerial-sqlite-jdbc-3_53_2_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
