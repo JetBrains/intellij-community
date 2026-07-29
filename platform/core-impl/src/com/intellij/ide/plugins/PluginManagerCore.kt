@@ -815,6 +815,7 @@ object PluginManagerCore {
         is IncompatibleWithAnotherModule -> {
           registerLoadingError(PluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
         }
+        is OnDemandContentModuleHasNoDependentsLeft -> {} // expected exclusion, not a loading error
         is PackagePrefixConflictWithAnotherModule -> {
           registerLoadingError(PluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
         }

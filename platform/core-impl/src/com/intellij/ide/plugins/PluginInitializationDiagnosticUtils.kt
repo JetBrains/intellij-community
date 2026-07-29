@@ -147,6 +147,7 @@ object PluginInitializationDiagnosticUtils {
       is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
       is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
+      is OnDemandContentModuleHasNoDependentsLeft -> "$logDescr is on-demand and has no dependents left"
       is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in " +
                                                    "${preferredConflictingModule.shortLogDescription}: " +
                                                    "${formatPackagePrefixConflictDetails(descriptor)} conflicts with " +

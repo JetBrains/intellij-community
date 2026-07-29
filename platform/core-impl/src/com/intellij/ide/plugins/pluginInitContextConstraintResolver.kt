@@ -38,11 +38,17 @@ private class PluginSetConstraintsResolver(
 
   private fun IdeaPluginDescriptorImpl.getState(): CandidateState = candidates[this] ?: error("Unknown descriptor: $this")
 
+  // The fraction of on-demand modules is expected to be small.
+  private val onDemandModuleActiveDependentCounts = HashMap<ContentModuleDescriptor, Int>()
+
   init {
     val allDescriptors = pluginSet.sequenceAllDescriptors().toList()
     candidates = LinkedHashMap(allDescriptors.size)
     for (descriptor in allDescriptors) {
       candidates[descriptor] = Candidate()
+      if (descriptor is ContentModuleDescriptor && descriptor.moduleLoadingRule == ModuleLoadingRule.ON_DEMAND) {
+        registerOnDemandModule(descriptor)
+      }
     }
   }
 
@@ -64,6 +70,7 @@ private class PluginSetConstraintsResolver(
       }
     }
 
+    releaseVirtualDemandEdges()
     resolveRemainingIncompatibleWithViolations()
     resolveRemainingPackagePrefixConflicts()
 
@@ -101,6 +108,8 @@ private class PluginSetConstraintsResolver(
         exclude(RequiredContentModuleIsExcluded(data.plugin, excludedDescriptor as ContentModuleDescriptor))
       is ExcludeDependentDescriptorOnModuleExclusion ->
         exclude(DependencyIsExcluded(data.dependentDescriptor, excludedDescriptor as PluginModuleDescriptor))
+      is DecrementOnDemandModuleDependentsCountOnModuleExclusion ->
+        decrementOnDemandModuleDependentsCount(data.onDemandModule)
     }
   }
 
@@ -231,7 +240,9 @@ private class PluginSetConstraintsResolver(
             exclude(DependencyIsExcluded(candidate, target))
             return
           }
-          is Candidate -> targetState.addListener(ExcludeDependentDescriptorOnModuleExclusion(candidate))
+          is Candidate -> {
+            setupDependencyExclusionListeners(candidate, targetState, target)
+          }
         }
       }
     }
@@ -250,6 +261,42 @@ private class PluginSetConstraintsResolver(
       }
     }
     resolvedDependenciesLists[candidate] = resolvedDependencies
+  }
+
+  private fun setupDependencyExclusionListeners(
+    candidate: IdeaPluginDescriptorImpl,
+    targetState: Candidate,
+    target: PluginModuleDescriptor,
+  ) {
+    targetState.addListener(ExcludeDependentDescriptorOnModuleExclusion(candidate))
+    if (target is ContentModuleDescriptor && target.moduleLoadingRule == ModuleLoadingRule.ON_DEMAND) {
+      onDemandModuleActiveDependentCounts[target] = onDemandModuleActiveDependentCounts.getValue(target) + 1
+      (candidate.getState() as Candidate).addListener(DecrementOnDemandModuleDependentsCountOnModuleExclusion(target))
+    }
+  }
+
+  private fun registerOnDemandModule(descriptor: ContentModuleDescriptor) {
+    assert(descriptor.moduleLoadingRule == ModuleLoadingRule.ON_DEMAND) { descriptor.toString() }
+    // set up a virtual 'demand' edge that will prevent this module from being excluded until the dependency relations are fully built
+    onDemandModuleActiveDependentCounts[descriptor] = 1
+  }
+
+  private fun decrementOnDemandModuleDependentsCount(module: ContentModuleDescriptor) {
+    if (module.getState() is Excluded) {
+      return
+    }
+    val newCount = onDemandModuleActiveDependentCounts.getValue(module) - 1
+    check(newCount >= 0)
+    onDemandModuleActiveDependentCounts[module] = newCount
+    if (newCount == 0) {
+      exclude(OnDemandContentModuleHasNoDependentsLeft(module))
+    }
+  }
+
+  private fun releaseVirtualDemandEdges() {
+    for (module in onDemandModuleActiveDependentCounts.keys) {
+      decrementOnDemandModuleDependentsCount(module)
+    }
   }
 
   private val essentialModulesClosure: Set<PluginModuleDescriptor> by lazy {
@@ -605,6 +652,7 @@ private class ExcludeDependsDescriptorOnParentExclusion(val dependsDescriptor: D
 private class ExcludeContentModuleOnPluginExclusion(val contentModule: ContentModuleDescriptor) : ExclusionListenerData
 private class ExcludePluginOnRequiredContentModuleExclusion(val plugin: PluginMainDescriptor) : ExclusionListenerData
 private class ExcludeDependentDescriptorOnModuleExclusion(val dependentDescriptor: IdeaPluginDescriptorImpl) : ExclusionListenerData
+private class DecrementOnDemandModuleDependentsCountOnModuleExclusion(val onDemandModule: ContentModuleDescriptor) : ExclusionListenerData
 
 private fun UnambiguousPluginSet.sequenceAllDescriptors(): Sequence<IdeaPluginDescriptorImpl> {
   return sequence {

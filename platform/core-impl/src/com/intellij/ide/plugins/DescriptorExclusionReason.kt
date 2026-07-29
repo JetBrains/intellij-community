@@ -79,6 +79,11 @@ class RequiredContentModuleIsExcluded(
 }
 
 @ApiStatus.Internal
+class OnDemandContentModuleHasNoDependentsLeft(
+  override val descriptor: ContentModuleDescriptor,
+) : DescriptorExclusionReason
+
+@ApiStatus.Internal
 class PackagePrefixConflictWithAnotherModule(
   override val descriptor: PluginModuleDescriptor,
   val preferredConflictingModule: PluginModuleDescriptor,
