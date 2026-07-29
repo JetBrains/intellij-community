@@ -38,19 +38,17 @@ internal abstract class DocumentMagicEventDispatcher(
   }
 
   /**
-   * The elf scope around firing matters for changes delivered after their originating scope (reverts and real-change
-   * replays during sync): [ElfCandidate] listeners receive them as ordinary document events, and the scope keeps the
-   * host document on the elf view so event.document reads match the elf snapshot. For typing-time changes the scope
-   * is already active and this nesting is a no-op.
+   * Fires elf text-update events. The caller must already be inside an elf scope: the typing scope for typing-time
+   * changes, or the scope a sync operation enters around its reverts and real-change replays. The scope pins the
+   * host document to the elf view while listeners run, so their event.document reads match the fired event.
    */
   fun <T> withFiringElfTextUpdate(
     revertedEvent: DocumentEvent?,
     changeEvent: DocumentEvent,
     action: () -> T,
   ): T {
-    return Elf.getElf().withElfScope {
-      textElf.withFiringTextUpdate(changeEvent, revertedEvent, action)
-    }
+    assertIsInElfScope()
+    return textElf.withFiringTextUpdate(changeEvent, revertedEvent, action)
   }
 
   fun <T> withFiringBothTextUpdate(changeEvent: DocumentEvent, action: () -> T): T {
