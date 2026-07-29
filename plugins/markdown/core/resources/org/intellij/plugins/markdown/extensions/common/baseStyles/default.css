@@ -484,24 +484,3 @@ span.user-del {
   padding-top: 20px;
   border-top: 1px solid;
 }
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  -webkit-border-radius: 10px;
-}
-
-::-webkit-scrollbar-track:vertical {
-  -webkit-box-shadow: -1px 0 0 #ededed;
-}
-
-::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
