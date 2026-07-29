@@ -1,0 +1,8 @@
+BAD_CHARACTER ('packet-beta')
+EOL ('\n')
+WHITE_SPACE ('  ')
+BAD_CHARACTER ('0-15:')
+WHITE_SPACE (' ')
+BAD_CHARACTER ('"Source')
+WHITE_SPACE (' ')
+BAD_CHARACTER ('Port"')

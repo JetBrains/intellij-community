@@ -69,4 +69,29 @@ class LexerSanityTest: MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test packet diagram`() {
+    val content = """
+    packet-beta
+      0-15: "Source Port"
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test architecture diagram`() {
+    val content = """
+    architecture-beta
+      group api(cloud)[API]
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test kanban diagram`() {
+    val content = """
+    kanban
+      Todo
+        [Create documentation]
+    """.trimIndent()
+    doTest(content)
+  }
 }

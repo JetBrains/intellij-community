@@ -3,6 +3,10 @@ package com.intellij.mermaid.lang.parser
 class FlowchartTest : MermaidParserTestCase("flowchart") {
   fun `test simple flowchart`() = doTest(true)
 
+  fun `test node with shape metadata`() = doTest(true)
+
+  fun `test edge with id`() = doTest(true)
+
   fun `test flowchart with subgraphs`() = doTest(true)
 
   fun `test flowchart with styles`() = doTest(true)

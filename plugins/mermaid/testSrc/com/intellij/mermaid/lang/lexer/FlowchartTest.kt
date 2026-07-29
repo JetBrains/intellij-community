@@ -12,6 +12,23 @@ class FlowchartTest : MermaidLexerTestCase() {
     doTest(content)
   }
 
+  fun `test flowchart node with shape metadata`() {
+    val content = """
+    flowchart TD
+      A@{ shape: rect, label: "Hello" }
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test flowchart edge with id and animation`() {
+    val content = """
+    flowchart LR
+      A e1@--> B
+      e1@{ animate: true }
+    """.trimIndent()
+    doTest(content)
+  }
+
   fun `test flowchart with named nodes`() {
     val content = """
     flowchart TD
