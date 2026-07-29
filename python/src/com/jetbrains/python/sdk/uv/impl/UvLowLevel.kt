@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.PyDependencyGroupKind
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -17,8 +19,6 @@ import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.intellij.python.pyproject.PyDependencyGroupKind
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.pip.PipParseUtils
@@ -72,8 +72,9 @@ private class UvLowLevelImpl<P : PathHolder>(
       venvArgs.add("--clear")
     }
     addPythonArg(venvArgs)
-    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
-      .getOr { return it }
+    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
+      uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray(), "--force").getOr { return it }
+    }.getOr { return it }
 
     val resolvedVenvPath = venvPath?.let { fileSystem.resolvePythonBinary(it) }
     if (resolvedVenvPath != null) {
