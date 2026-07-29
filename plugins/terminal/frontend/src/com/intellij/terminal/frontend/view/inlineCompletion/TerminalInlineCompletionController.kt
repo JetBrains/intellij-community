@@ -5,6 +5,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.impl.syncEditorCaretWithModel
@@ -68,6 +70,7 @@ internal class TerminalInlineCompletionController(
       is TerminalInlineCompletionInputEvent.Typing -> handleTyping(event, cursorOffset)
       TerminalInlineCompletionInputEvent.Backspace -> handleBackspace(cursorOffset)
       TerminalInlineCompletionInputEvent.Invalidate -> {
+        LOG.trace { "Inline completion input invalidated: pending=${pendingEvents.size}" }
         cancelCompletionAndClearSession()
       }
     }
@@ -80,18 +83,22 @@ internal class TerminalInlineCompletionController(
     session.applyPrediction(prediction)
     val confirmation = confirmPredictions(lastOutputEvent)
     if (confirmation is Confirmation.Confirmed) dispatchConfirmedEvents(confirmation)
+    LOG.trace { "Inline completion input deferred: typing '${event.char}'" }
   }
 
   private fun handleBackspace(cursorOffset: TerminalOffset) {
     val session = getOrCreateInputSession()
     if (session.cursorPosition.columnIndex == 0) {
+      LOG.trace("Inline completion ignored backspace at line start")
       return
     }
     val prediction = TerminalBackspacePrediction(session.cursorPosition, isTentative = true)
     addPendingEvent(PendingInputEvent.Backspace())
     session.applyPrediction(prediction)
+
     val confirmation = confirmPredictions(lastOutputEvent)
     if (confirmation is Confirmation.Confirmed) dispatchConfirmedEvents(confirmation)
+    LOG.trace("Inline completion input deferred: backspace")
   }
 
   private fun getOrCreateInputSession(): TerminalTypeAheadSession {
@@ -101,6 +108,10 @@ internal class TerminalInlineCompletionController(
   private fun handleOutputModelUpdate() {
     val outputEvent = createCurrentLineContentEvent()
     lastOutputEvent = outputEvent
+    LOG.trace {
+      "Inline completion output received: position=${outputEvent.cursorLogicalLineIndex}:${outputEvent.cursorColumnIndex}, " +
+      "session=${inputSession != null}"
+    }
     if (inputSession != null) {
       dispatchConfirmedEvents(confirmPredictions(outputEvent))
     }
@@ -117,12 +128,15 @@ internal class TerminalInlineCompletionController(
     val session = inputSession ?: return Confirmation.None
     return when (val result = session.confirmPredictions(event)) {
       TypeAheadConfirmationResult.AllConfirmed -> {
+        LOG.trace { "Inline completion session resolved by output: result=$result, pending=${pendingEvents.size}" }
         Confirmation.Confirmed(pendingEvents.size)
       }
       is TypeAheadConfirmationResult.PartiallyConfirmed -> {
+        LOG.trace { "Inline completion session resolved by output: result=$result, pending=${pendingEvents.size}" }
         Confirmation.Confirmed(result.confirmedCount)
       }
       TypeAheadConfirmationResult.MismatchHappened -> {
+        LOG.trace { "Inline completion session resolved by output: result=$result, pending=${pendingEvents.size}" }
         Confirmation.Mismatch
       }
     }
@@ -161,6 +175,7 @@ internal class TerminalInlineCompletionController(
   }
 
   private fun invokeTyping(input: TerminalInlineCompletionInputEvent.Typing, position: TerminalLogicalPosition) {
+    LOG.trace { "Inline completion dispatched typing: char='${input.char}', position=$position" }
     syncEditorCaretWithModel(editor, model)
     InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(
       InlineCompletionEvent.DocumentChange(TypingEvent.OneSymbol(input.char, (model.logicalPositionToOffset(position) - model.startOffset).toInt()), editor)
@@ -168,6 +183,7 @@ internal class TerminalInlineCompletionController(
   }
 
   private fun invokeBackspace() {
+    LOG.trace("Inline completion dispatched backspace")
     syncEditorCaretWithModel(editor, model)
     InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(InlineCompletionEvent.Backspace(editor))
   }
@@ -178,6 +194,13 @@ internal class TerminalInlineCompletionController(
       delay(1.seconds)
       if (pendingEvents.any { it === event }) {
         cancelCompletionAndClearSession()
+        LOG.trace {
+          val input = when (event) {
+            is PendingInputEvent.Typing -> "typing '${event.input.char}'"
+            is PendingInputEvent.Backspace -> "backspace"
+          }
+          "Inline completion input timed out: $input"
+        }
       }
     }
   }
@@ -200,5 +223,9 @@ internal class TerminalInlineCompletionController(
     data object None : Confirmation
     data object Mismatch : Confirmation
     data class Confirmed(val count: Int) : Confirmation
+  }
+
+  companion object {
+    private val LOG = logger<TerminalInlineCompletionController>()
   }
 }
