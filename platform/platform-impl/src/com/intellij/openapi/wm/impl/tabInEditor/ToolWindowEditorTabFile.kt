@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
@@ -110,8 +109,8 @@ class ToolWindowEditorTabFile internal constructor(
 
   internal fun invalidate() {
     // remove file from recent files
+    // TODO: fix: After restoring the file to the tool window, recent files does not update immediately
     EditorHistoryManager.getInstance(project).removeFile(this)
-    project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentFileHistoryOrderListener.TOPIC).recentFileRemoved(this)
 
     isValid = false
     coroutineScope.cancel()
