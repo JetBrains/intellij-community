@@ -49,6 +49,7 @@ value class URI(val uri: String) {
         const val JRT: String = "jrt"
         const val JAR: String = "jar"
         const val ZIP: String = "zip"
+        const val UNTITLED: String = "untitled"
     }
 }
 
