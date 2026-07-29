@@ -7,10 +7,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.asSafely
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -103,7 +104,7 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         }
 
     private fun KtExpression.getReceiverClassId(): ClassId? = analyze(this) {
-        val resolvedCall = this@getReceiverClassId.resolveToCall() ?: return null
+        val resolvedCall = resolveToCall() ?: return null
         val callPartiallyAppliedSymbol = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return null
         val type = callPartiallyAppliedSymbol.extensionReceiver?.type
             ?: callPartiallyAppliedSymbol.dispatchReceiver?.type

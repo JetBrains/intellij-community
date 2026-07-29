@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -11,8 +12,10 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -180,7 +183,7 @@ object OperatorToFunctionConverter {
         allowAnalysisFromWriteAction {
             analyze(element) {
                 val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
-                val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
+                val targetSymbol = resolvedCall?.symbol
 
                 (targetSymbol as? KaNamedSymbol)?.name
             }

@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.j2k.symbols
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName

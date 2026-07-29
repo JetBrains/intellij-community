@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveCompanionObjectShortReferenceToContainingClassSymbol

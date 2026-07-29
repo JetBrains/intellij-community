@@ -15,21 +15,13 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.EnumEntryValue
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -39,9 +31,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -67,7 +69,16 @@ import org.jetbrains.kotlin.j2k.JKInMemoryFilesSearcher
 import org.jetbrains.kotlin.j2k.PostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.asExplicitLabel
+import org.jetbrains.kotlin.j2k.asGetterName
+import org.jetbrains.kotlin.j2k.asSetterName
+import org.jetbrains.kotlin.j2k.descendantsOfType
 import org.jetbrains.kotlin.j2k.elements
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKFakeFieldData
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKFieldData
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKPhysicalMethodData
+import org.jetbrains.kotlin.j2k.externalCodeProcessing.NewExternalCodeProcessing
+import org.jetbrains.kotlin.j2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.j2k.resolve
 import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -84,15 +95,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.PROTECTED_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.PUBLIC_KEYWORD
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.j2k.asExplicitLabel
-import org.jetbrains.kotlin.j2k.asGetterName
-import org.jetbrains.kotlin.j2k.asSetterName
-import org.jetbrains.kotlin.j2k.descendantsOfType
-import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKFakeFieldData
-import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKFieldData
-import org.jetbrains.kotlin.j2k.externalCodeProcessing.JKPhysicalMethodData
-import org.jetbrains.kotlin.j2k.externalCodeProcessing.NewExternalCodeProcessing
-import org.jetbrains.kotlin.j2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -127,7 +129,6 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
-import kotlin.collections.mutableMapOf
 
 /**
  * This processing tries to convert functions that look like getters and setters

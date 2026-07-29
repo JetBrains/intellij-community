@@ -11,15 +11,20 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -153,7 +158,8 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
             || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
 
-private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<KaValueParameterSymbol>): Boolean {
+context(session: KaSession)
+private fun isStringParameterSignature(signature: KaVariableSignature<KaValueParameterSymbol>): Boolean {
     return signature.symbol.returnType
         .withNullability(false)
         .isStringType

@@ -97,26 +97,29 @@ internal class KotlinSuspendFunctionWrapper(
         var result = false
         KotlinCallProcessor.process(element, object : KotlinCallTargetProcessor {
 
-            override fun KaSession.processCallTarget(target: CallTarget): Boolean {
+            context(session: KaSession)
+            override fun processCallTarget(target: CallTarget): Boolean {
                 if (target.symbol.let { it is KaNamedFunctionSymbol && it.isSuspend }) {
                     result = true
                 }
                 return true
             }
 
-            override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+            context(session: KaSession)
+            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
                 if (callInfo is KaErrorCallInfo
                     && callInfo.candidateCalls.size == 1
                     && callInfo.diagnostic.factoryName == "INVISIBLE_MEMBER"
                 ) {
-                    return processResolvedCall(this, element, callInfo.candidateCalls.single())
+                    return processResolvedCall(element, callInfo.candidateCalls.single())
                 }
                 return true
             }
 
-            private fun processResolvedCall(session: KaSession, element: KtElement, call: KaCall): Boolean {
+            context(session: KaSession)
+            private fun processResolvedCall(element: KtElement, call: KaCall): Boolean {
                 val targetProcessor = this
-                return with(KotlinCallProcessor) { session.processResolvedCall(targetProcessor, element, call) }
+                return with(KotlinCallProcessor) { processResolvedCall(targetProcessor, element, call) }
             }
 
         })

@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -100,6 +102,6 @@ private fun isAnnotationWithClassId(entry: KtAnnotationEntry, classId: ClassId, 
     if (entry.shortName != classId.shortClassName) return false
     if (!withResolve) return true
     return analyze(entry) {
-        entry.typeReference?.type?.isClassType(classId) == true
+        entry.typeReference?.type?.classId == classId
     }
 }

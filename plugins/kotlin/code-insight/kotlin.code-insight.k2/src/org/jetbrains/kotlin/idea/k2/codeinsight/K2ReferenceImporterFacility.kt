@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
@@ -73,7 +72,7 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
             val importFixes = buildList {
                 for (diagnostic in diagnostics) {
                     val importQuickFixesForDiagnostic = with(quickFixService) {
-                        useSiteSession.getImportQuickFixesFor(diagnostic)
+                        getImportQuickFixesFor(diagnostic)
                     }
                     for (importFix in importQuickFixesForDiagnostic) {
                         val element = importFix.element

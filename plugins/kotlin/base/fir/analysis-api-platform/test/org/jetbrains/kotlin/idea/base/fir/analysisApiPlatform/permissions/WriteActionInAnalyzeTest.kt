@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.permissions
 
 import com.intellij.openapi.application.runWriteAction
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction

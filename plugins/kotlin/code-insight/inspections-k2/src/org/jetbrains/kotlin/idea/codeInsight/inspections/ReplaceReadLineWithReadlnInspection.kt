@@ -63,7 +63,7 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
         val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
-        val callableId =     resolvedCall?.symbol?.callableId ?: return null
+        val callableId = resolvedCall?.symbol?.callableId ?: return null
         if (callableId.packageName != StandardKotlinNames.KOTLIN_IO_PACKAGE || callableId.callableName != readLineName) return null
 
         val qualifiedOrCall = element.getQualifiedExpressionForSelectorOrThis()

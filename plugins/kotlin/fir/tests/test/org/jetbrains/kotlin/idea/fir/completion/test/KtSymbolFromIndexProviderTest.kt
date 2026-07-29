@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.fir.completion.test
 import com.intellij.openapi.application.ReadAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.name.ClassId
 

@@ -26,25 +26,31 @@ class KotlinQuickFixService {
     private val importOnTheFlyList: KotlinQuickFixesList =
         KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allImportOnTheFlyQuickFixList())
 
-    fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
+    context(session: KaSession)
+    fun getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         with(list) { getQuickFixesFor(diagnostic) }
 
-    fun KaSession.getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
+    context(session: KaSession)
+    fun getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
         with(list) { getQuickFixesWithCatchingFor(diagnostic) }
 
     @ApiStatus.Experimental
-    fun KaSession.canProduceLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
+    context(session: KaSession)
+    fun canProduceLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
         with(lazyList) { canProduceQuickFixesFor(diagnostic) }
 
     @ApiStatus.Experimental
-    fun KaSession.getLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
+    context(session: KaSession)
+    fun getLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         with(lazyList) { getQuickFixesFor(diagnostic) }
 
     @ApiStatus.Experimental
-    fun KaSession.getLazyQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
+    context(session: KaSession)
+    fun getLazyQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
         with(lazyList) { getQuickFixesWithCatchingFor(diagnostic) }
 
-    fun KaSession.getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> =
+    context(session: KaSession)
+    fun getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> =
         with(importOnTheFlyList) { getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>() }
 }
 

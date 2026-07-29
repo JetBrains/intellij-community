@@ -11,8 +11,10 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -41,7 +43,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.Locale
 
-fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) =
+fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()): JKTypeElement =
     JKTypeElement(this, annotationList)
 
 fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
@@ -105,7 +107,7 @@ private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\
 fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
     analyze(this) { typeFactory.fromKaType(type) }
 
-infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType) =
+infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType): Boolean =
     jvmPrimitiveTypesPriority.getValue(this.jvmPrimitiveType.primitiveType) >
             jvmPrimitiveTypesPriority.getValue(other.jvmPrimitiveType.primitiveType)
 
@@ -214,15 +216,15 @@ fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
         else -> null
     }
 
-fun JKJavaPrimitiveType.isNumberType() =
+fun JKJavaPrimitiveType.isNumberType(): Boolean =
     this == JKJavaPrimitiveType.INT ||
             this == JKJavaPrimitiveType.LONG ||
             this == JKJavaPrimitiveType.FLOAT ||
             this == JKJavaPrimitiveType.DOUBLE
 
-fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
+fun JKJavaPrimitiveType.isBoolean(): Boolean = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
 
-fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
+fun JKJavaPrimitiveType.isChar(): Boolean = jvmPrimitiveType == JvmPrimitiveType.CHAR
 
 fun JKJavaPrimitiveType.isInt(): Boolean = jvmPrimitiveType == JvmPrimitiveType.INT
 
@@ -239,7 +241,7 @@ fun JKJavaPrimitiveType.isDouble(): Boolean = this == JKJavaPrimitiveType.DOUBLE
 fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
     this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
 
-fun JKJavaPrimitiveType.kotlinName() =
+fun JKJavaPrimitiveType.kotlinName(): String =
     jvmPrimitiveType.javaKeywordName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
 
 val primitiveTypes: List<JvmPrimitiveType> =
@@ -267,7 +269,7 @@ private val arrayFqNames = buildList {
     add(StandardNames.FqNames.array.asString())
 }
 
-fun JKType.isArrayType() =
+fun JKType.isArrayType(): Boolean =
     when (this) {
         is JKClassType -> classReference.isArrayType()
         is JKJavaArrayType -> true

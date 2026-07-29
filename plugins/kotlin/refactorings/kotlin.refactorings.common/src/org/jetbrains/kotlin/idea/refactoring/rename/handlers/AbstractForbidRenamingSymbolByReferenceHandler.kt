@@ -12,9 +12,10 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.references.mainReference

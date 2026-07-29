@@ -20,14 +20,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -111,7 +111,7 @@ context(session: KaSession)
 private fun getCleanupQuickFix(
     diagnostic: KaDiagnosticWithPsi<*>,
 ): Collection<CleanupFix> = with(KotlinQuickFixService.getInstance()) {
-    session.getQuickFixesFor(diagnostic).filterIsInstance<CleanupFix>()
+    getQuickFixesFor(diagnostic).filterIsInstance<CleanupFix>()
 }
 
 private fun KaDiagnosticWithPsi<*>.toProblemDescriptor(

@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.j2k.conversions
 
 import com.intellij.lang.jvm.JvmModifier.STATIC
 import com.intellij.psi.PsiModifier
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.RecursiveConversion
 import org.jetbrains.kotlin.j2k.nullIfStubExpression

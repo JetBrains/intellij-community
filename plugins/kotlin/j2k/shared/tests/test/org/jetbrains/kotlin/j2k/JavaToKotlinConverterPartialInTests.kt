@@ -24,8 +24,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.JavaPsiRecordUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.J2kMemberKey
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.OriginalJavaPsiContext

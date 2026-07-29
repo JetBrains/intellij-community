@@ -2,13 +2,14 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.psi.KtElement
 
 internal inline fun <R> withResolvedCall(element: KtElement, crossinline block: KaSession.(KaCall) -> R): R? = analyze(element) {
-    withResolvedCall(element, block)
+    useSiteSession.withResolvedCall(element, block)
 }
 
 internal inline fun <R> KaSession.withResolvedCall(element: KtElement, crossinline block: KaSession.(KaCall) -> R): R? {

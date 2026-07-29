@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.util.findAnnotation

@@ -23,9 +23,14 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.visibility.KaUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
+import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.KaUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -223,7 +228,7 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         return readAction {
             analyze(targetKotlinFile) {
                 val candidateClasses = shortNameCache.getClassesByName(name, scope)
-                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, null, position = targetKotlinFile)
                 candidateClasses.filter { psiClass ->
                     if (!RootKindFilter.everything.matches(psiClass.containingFile)) return@filter false
                     val declarationSymbol = if (psiClass is KtLightClass) {
@@ -244,7 +249,7 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
                 val candidateMembers: List<PsiMember> =
                     shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
                 if (candidateMembers.isEmpty()) return@analyze null
-                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, null, position = targetKotlinFile)
                 candidateMembers.filter { member ->
                     if (member.module == null) return@filter false
                     val callableSymbol = member.callableSymbol ?: return@filter false
@@ -255,7 +260,8 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     }
 
     @OptIn(KaExperimentalApi::class, KaIdeApi::class)
-    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol, visibilityChecker: KaUseSiteVisibilityChecker): Boolean {
+    context(session: KaSession)
+    private fun canBeImported(symbol: KaDeclarationSymbol, visibilityChecker: KaUseSiteVisibilityChecker): Boolean {
         return symbol.importableFqName != null && visibilityChecker.isVisible(symbol)
     }
 

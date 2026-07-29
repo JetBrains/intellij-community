@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.utils.isImplicitInvokeCall
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtCallExpression
