@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.minor.facet
 
 import com.intellij.facet.FacetManager
@@ -8,18 +8,20 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.removeTransferredRoots
 import com.jetbrains.python.sdk.transferRoots
+import com.jetbrains.python.showErrorDialog
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfigurable(project) {
   override fun createModuleConfigurable(module: Module): UnnamedConfigurable {
     return object : PyActiveSdkConfigurable(module) {
       override fun setSdk(item: Sdk?) {
-        setSdkToFacet(item, module)
+        setSdkToFacetImpl(item, module)
       }
 
       override fun getSdk(): Sdk? {
@@ -36,8 +38,13 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
   }
 }
 
+
 @ApiStatus.Internal
 fun setSdkToFacet(item: Sdk?, module: Module) {
+  setSdkToFacetImpl(item, module)
+}
+
+private fun setSdkToFacetImpl(item: Sdk?, module: Module) {
   val facetManager = FacetManager.getInstance(module)
   val facet = facetManager.getFacetByType(MinorPythonFacet.ID)
   if (facet == null) {

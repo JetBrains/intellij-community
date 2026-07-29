@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
@@ -34,13 +34,12 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
 
-@ApiStatus.Internal
 @Service( Service.Level.PROJECT)
 @State(
   name = "PySourceRootDetectionService",
   storages = [Storage(value = "pySourceRootDetection.xml", roamingType = RoamingType.DISABLED)]
 )
-class PySourceRootDetectionService(
+internal class PySourceRootDetectionService(
   private val project: Project,
   private val cs: CoroutineScope
 ) : ModuleRootListener, SerializablePersistentStateComponent<PySourceRootDetectionService.HiddenSourcesState>(HiddenSourcesState()) {

@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.module;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -22,17 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class PythonModuleBuilderBase extends ModuleBuilder {
+class PythonModuleBuilderBase extends ModuleBuilder {
   private final List<Runnable> mySdkChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final DirectoryProjectGenerator myGenerator;
   private Sdk mySdk;
 
-  public PythonModuleBuilderBase() {
+  PythonModuleBuilderBase() {
     myGenerator = null;
-  }
-
-  public PythonModuleBuilderBase(DirectoryProjectGenerator generator) {
-    myGenerator = generator;
   }
 
   @Override

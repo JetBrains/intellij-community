@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.Facet;
@@ -10,7 +10,7 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaPythonFacet extends LibraryContributingFacet<JavaPythonFacetConfiguration> {
+final class JavaPythonFacet extends LibraryContributingFacet<JavaPythonFacetConfiguration> {
   public static final FacetTypeId<JavaPythonFacet> ID = new FacetTypeId<>("python");
 
   public JavaPythonFacet(final @NotNull FacetType facetType,

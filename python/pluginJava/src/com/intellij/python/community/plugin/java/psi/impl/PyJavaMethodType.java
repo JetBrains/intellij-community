@@ -21,10 +21,10 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class PyJavaMethodType implements PyCallableType {
+final class PyJavaMethodType implements PyCallableType {
   private final PsiMethod myMethod;
 
-  public PyJavaMethodType(PsiMethod method) {
+  PyJavaMethodType(PsiMethod method) {
     myMethod = method;
   }
 
