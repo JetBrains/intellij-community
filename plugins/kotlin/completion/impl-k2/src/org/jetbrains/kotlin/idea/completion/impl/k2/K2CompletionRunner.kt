@@ -236,6 +236,10 @@ internal fun createExtensionChecker(
     val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver?.expressionType?.symbol?.classId) {
         receiver
     } else if (receiver != null) {
+        // A local or an anonymous class has no `ClassId`, so it is rendered by its short name, and that name cannot be
+        // resolved in the dangling file of the cast below. The cast receiver would get an error type, which makes every
+        // extension look applicable (KTIJ-39555), so it is better not to check extensions of such a runtime type at all.
+        if (runtimeTypeClassId == null) return null
         // FIXME: check extensions applicable to the runtime type properly KTIJ-35532
         val codeFragment = "(${receiver.text} as $runtimeTypeWithErasedTypeParameters)"
         KtPsiFactory.contextual(receiver).createExpression(codeFragment)
