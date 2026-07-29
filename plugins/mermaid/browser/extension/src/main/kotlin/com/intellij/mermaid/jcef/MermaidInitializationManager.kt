@@ -33,11 +33,16 @@ internal object MermaidInitializationManager {
     config.theme = theme
     Mermaid.core.initialize(config)
     registerExternalDiagrams()
+    registerLayoutLoaders()
   }
 
   private suspend fun registerExternalDiagrams() {
     val externalDiagrams = arrayOf(ZenUML.definition)
 //    val externalDiagrams = arrayOf<ExternalDiagramDefinition>()
     Mermaid.core.registerExternalDiagrams(externalDiagrams).await()
+  }
+
+  private fun registerLayoutLoaders() {
+    Mermaid.core.registerLayoutLoaders(LayoutElk.definitions)
   }
 }

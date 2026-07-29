@@ -31,4 +31,7 @@ external interface MermaidModule {
   ): Promise<Unit>
 
   fun registerExternalDiagrams(diagrams: Array<ExternalDiagramDefinition>): Promise<Unit>
+
+  // declare const registerLayoutLoaders: (loaders: LayoutLoaderDefinition[]) => void;
+  fun registerLayoutLoaders(loaders: Array<LayoutLoaderDefinition>)
 }

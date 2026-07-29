@@ -33,3 +33,8 @@ config.module.rules.push({
     test: /\.css$/i,
     use: ["style-loader", "css-loader"],
 });
+
+config.module.rules.push({
+    test: /\.(woff2?|ttf|eot)$/i,
+    type: "asset/inline",
+});

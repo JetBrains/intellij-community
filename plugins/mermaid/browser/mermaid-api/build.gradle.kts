@@ -12,6 +12,7 @@ dependencies {
   // This dependency is not actually present in the resulting bundle.
   implementation(npm("@mermaid-js/mermaid-mindmap", version = "9.3.0"))
   implementation(npm("@mermaid-js/mermaid-zenuml", version = "0.2.0"))
+  implementation(npm("@mermaid-js/layout-elk", version = "0.2.2"))
 }
 
 kotlin {
