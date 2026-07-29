@@ -4,20 +4,15 @@ package com.intellij.coverage;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.coverage.analysis.CoverageOutputRoots;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -133,8 +128,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     try {
       ExecFileLoader loader = new ExecFileLoader();
       final CoverageBuilder coverageBuilder = new CoverageBuilder();
-      Module mainModule = findMainModule(javaSuite.getConfiguration());
-      loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, javaSuite, reporter);
+      List<Module> modules = javaSuite.getRelatedModules(project);
+      loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, modules, project, loader, javaSuite, reporter);
       loadIntoProjectData(data, coverageBuilder);
     }
     catch (IOException e) {
@@ -227,7 +222,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
   private static void loadReportToCoverageBuilder(@NotNull CoverageBuilder coverageBuilder,
                                                   @NotNull Path sessionDataFile,
-                                                  @Nullable Module mainModule,
+                                                  @NotNull List<Module> modules,
                                                   @NotNull Project project,
                                                   ExecFileLoader loader,
                                                   JavaCoverageSuite suite,
@@ -238,8 +233,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
     final Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), coverageBuilder);
 
-    final Module[] modules = getModules(mainModule, project);
-    if (modules.length == 0) {
+    if (modules.isEmpty()) {
       String message = "Could not find modules in project, the coverage data will not be loaded";
       LOG.warn(message);
       reporter.reportWarning(message, null);
@@ -337,21 +331,6 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     return suite.isClassFiltered(fqn);
   }
 
-  private static Module[] getModules(@Nullable Module mainModule,
-                                     @NotNull Project project) {
-    final Module[] modules;
-    if (mainModule != null) {
-      HashSet<Module> mainModuleWithDependencies = new HashSet<>();
-      ReadAction.runBlocking(() -> ModuleUtilCore.getDependencies(mainModule, mainModuleWithDependencies));
-      modules = mainModuleWithDependencies.toArray(Module.EMPTY_ARRAY);
-    }
-    else {
-      modules = ModuleManager.getInstance(project).getModules();
-    }
-    return modules;
-  }
-
-
   @Override
   public void appendCoverageArgument(String sessionDataFilePath,
                                      String @Nullable [] patterns,
@@ -434,14 +413,14 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     Path targetDirectory = Path.of(settings.OUTPUT_DIRECTORY);
-    Module module = findMainModule(suite.getRunConfiguration());
+    List<Module> modules = BaseCoverageSuite.getRelatedModules(suite.getRunConfiguration(), project);
 
     ExecFileLoader loader = new ExecFileLoader();
     CoverageBuilder coverageBuilder = new CoverageBuilder();
     for (CoverageSuite aSuite : suite.getSuites()) {
       Path coverageFile = Path.of(aSuite.getCoverageDataFileName());
       try {
-        loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0],
+        loadReportToCoverageBuilder(coverageBuilder, coverageFile, modules, project, loader, (JavaCoverageSuite)suite.getSuites()[0],
                                     new DummyCoverageLoadErrorReporter());
       }
       catch (IOException e) {
@@ -459,7 +438,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
     int tabWidth = 4;
     MultiSourceFileLocator multiSourceFileLocator = new MultiSourceFileLocator(tabWidth);
-    for (Module srcModule : getModules(module, project)) {
+    for (Module srcModule : modules) {
       VirtualFile[] roots = ModuleRootManager.getInstance(srcModule).getSourceRoots(true);
       for (VirtualFile root : roots) {
         multiSourceFileLocator.add(
@@ -468,12 +447,6 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     visitor.visitBundle(bundleCoverage, multiSourceFileLocator);
     visitor.visitEnd();
-  }
-
-  private static @Nullable Module findMainModule(RunConfigurationBase<?> configuration) {
-    return configuration instanceof ModuleBasedConfiguration<?, ?> moduleConfig
-           ? moduleConfig.getConfigurationModule().getModule()
-           : null;
   }
 
   @Override

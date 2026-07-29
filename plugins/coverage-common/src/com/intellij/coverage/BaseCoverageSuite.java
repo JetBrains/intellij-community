@@ -4,8 +4,11 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -20,10 +23,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.SoftReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternalizable {
@@ -152,6 +158,28 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     myConfiguration = configuration;
   }
 
+  @ApiStatus.Internal
+  public @NotNull @Unmodifiable List<Module> getRelatedModules(@NotNull Project project) {
+    return getRelatedModules(getConfiguration(), project);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable List<Module> getRelatedModules(@NotNull RunConfigurationBase<?> configuration) {
+    return getRelatedModules(configuration, configuration.getProject());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable List<Module> getRelatedModules(@Nullable RunConfigurationBase<?> configuration,
+                                                                      @NotNull Project project) {
+    Module module = getConfigurationModule(configuration);
+    if (module != null) {
+      LinkedHashSet<Module> modules = new LinkedHashSet<>();
+      ReadAction.runBlocking(() -> ModuleUtilCore.getDependencies(module, modules));
+      return List.copyOf(modules);
+    }
+    return List.of(ModuleManager.getInstance(project).getModules());
+  }
+
   @Override
   public @Nullable ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
     ProjectData data = getCoverageData();
@@ -265,16 +293,19 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
 
   @ApiStatus.Internal
   public GlobalSearchScope getSearchScope(Project project) {
-    RunConfigurationBase<?> configuration = getConfiguration();
     GlobalSearchScope scope = isTrackTestFolders() ? GlobalSearchScope.projectScope(project)
                                                    : GlobalSearchScopesCore.projectProductionScope(project);
-    if (configuration instanceof ModuleBasedConfiguration<?, ?> moduleConfig) {
-      Module module = moduleConfig.getConfigurationModule().getModule();
-      if (module != null) {
-        return GlobalSearchScope.moduleWithDependenciesScope(module).intersectWith(scope);
-      }
+    Module module = getConfigurationModule(getConfiguration());
+    if (module != null) {
+      return GlobalSearchScope.moduleWithDependenciesScope(module).intersectWith(scope);
     }
     return scope;
+  }
+
+  private static @Nullable Module getConfigurationModule(@Nullable RunConfigurationBase<?> configuration) {
+    return configuration instanceof ModuleBasedConfiguration<?, ?> moduleConfiguration
+           ? moduleConfiguration.getConfigurationModule().getModule()
+           : null;
   }
 
   private static String generateName(String path) {
