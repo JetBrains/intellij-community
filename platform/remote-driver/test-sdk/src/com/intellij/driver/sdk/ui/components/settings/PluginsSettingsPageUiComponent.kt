@@ -232,9 +232,9 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       return this
     }
 
-    fun checkRestartBtnInPluginsList(): ListPluginComponent {
+    fun checkRestartBtnInPluginsList(timeout: Duration = 20.seconds): ListPluginComponent {
       step("Wait for the Restart IDE btn appearance in the plugins list") {
-        restartIdeButton.waitFound(20.seconds)
+        restartIdeButton.waitFound(timeout)
       }
       return this
     }
