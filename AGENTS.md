@@ -108,7 +108,8 @@ Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual se
 
 - For content/symbol **search** and semantic operations, prefer ijproxy; fall back to JetBrains MCP, then to the client fallback, only when ijproxy is unavailable.
 - For file **read / edit / write / directory listing**, use the active harness tools; ijproxy has none.
-- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are disabled, and a `PreToolUse` hook denies `grep` and `find` as the primary shell command (piping them is allowed). Use ijproxy search, or `./tools/fd.cmd` and `./tools/rg.cmd` when no MCP is available.
+- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are denied outright, and so are the `grep` and `find` commands, in every pipeline position. Pipe into `./tools/rg.cmd` instead of `| grep` -- it reads stdin. Use ijproxy search, or `./tools/fd.cmd` and `./tools/rg.cmd` when no MCP is available.
+- The repo's documented wrapper commands are allowlisted, so prefer them over a hand-rolled equivalent: a spelling the list knows runs without a prompt, a novel one does not. The list is `community/.ai/tool-permissions.json`, rendered into each harness's own config; add an entry there and rerun `community/.ai/render-guides.mjs` rather than editing a harness allowlist by hand.
 - Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted, except for text/file search — use `./tools/rg.cmd` and `./tools/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
 - `fd.cmd` and `rg.cmd` skip dot-directories by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, `.opencode/` — pass `-H` (`--hidden`) when looking for skills, guidelines, or hooks, or you will conclude they do not exist.
