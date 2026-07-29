@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="netty-codec-protobuf" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-protobuf:4.2.15.Final">
+        <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-protobuf:4.2.16.Final">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.15.Final/netty-codec-protobuf-4.2.15.Final.jar">
-              <sha256sum>ecf3a24695374b3544700d94db56875da90c1dfbe1e43c744dcc15e1e8998a01</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.16.Final/netty-codec-protobuf-4.2.16.Final.jar">
+              <sha256sum>bb66f23ccb543dd842ddda91b6c8e97e222220d2efa5459f6a46a22ade3b2170</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.15.Final/netty-codec-protobuf-4.2.15.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.16.Final/netty-codec-protobuf-4.2.16.Final.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.15.Final/netty-codec-protobuf-4.2.15.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.16.Final/netty-codec-protobuf-4.2.16.Final-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

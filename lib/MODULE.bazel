@@ -10298,248 +10298,248 @@ http_file(
 )
 
 http_file(
-    name = "io_netty-netty-buffer-4_2_15_Final_http",
-    downloaded_file_path = "netty-buffer-4.2.15.Final.jar",
-    sha256 = "1361fd9c9ba85b9831cf54a1b2e45ddc3ce34a768931726c099d3f5ef0efe4a3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.15.Final/netty-buffer-4.2.15.Final.jar",
+    name = "io_netty-netty-buffer-4_2_16_Final_http",
+    downloaded_file_path = "netty-buffer-4.2.16.Final.jar",
+    sha256 = "cc36ae9fbd0b03fe755eb4eb4424ca53b59cfd297d7fd47d49e5b1059beded6c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.16.Final/netty-buffer-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-common-4_2_15_Final_http",
-    downloaded_file_path = "netty-common-4.2.15.Final.jar",
-    sha256 = "78206aa7f6d197caa926291408c01889b6b910ca0f74017d3fcbdaccf9562959",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.15.Final/netty-common-4.2.15.Final.jar",
+    name = "io_netty-netty-common-4_2_16_Final_http",
+    downloaded_file_path = "netty-common-4.2.16.Final.jar",
+    sha256 = "9825ee68a0dc4cd2b53e2f532502401b2211bad9b77e8b04882d9e64487283ff",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.16.Final/netty-common-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-buffer-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-buffer-4.2.15.Final-sources.jar",
-    sha256 = "13259b636c4a91c0f34a8536d621178fba302f9ba61f3e4aaec3a17ca291dc2a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.15.Final/netty-buffer-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-buffer-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-buffer-4.2.16.Final-sources.jar",
+    sha256 = "09da6b10ac7b0e37091d6a4b77725d091d01c79c5d40613f03c61526293e9608",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.16.Final/netty-buffer-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-common-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-common-4.2.15.Final-sources.jar",
-    sha256 = "de720a128534ba1072b354c863d671ab1999900a8fddaadc4a68ee74c2e33fd6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.15.Final/netty-common-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-common-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-common-4.2.16.Final-sources.jar",
+    sha256 = "117dc753e803a626d07bae2a2638755c8762b71118fda0ce8b476f887a7b1449",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.16.Final/netty-common-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-compression-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-compression-4.2.15.Final.jar",
-    sha256 = "4adaa5cdd4d2e9b50b23e4c3eff42e73de6eb40848718b3aa84cd5b454da6ce8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-compression-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-compression-4.2.16.Final.jar",
+    sha256 = "13c8565414dd2115281303ef4ad1f7cc69bd7771d8d12c7d2fb31307dff26d11",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.16.Final/netty-codec-compression-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-compression-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-compression-4.2.15.Final-sources.jar",
-    sha256 = "58d61aa4f781657f955a196f17e28fcd9b02e21658b996571e4604a2dadbd8af",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-compression-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-compression-4.2.16.Final-sources.jar",
+    sha256 = "686b315dabe1c80de8ad1dddba2623122e85d11999c28110b8d563c2efbd4e23",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.16.Final/netty-codec-compression-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-http2-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-http2-4.2.15.Final.jar",
-    sha256 = "4a9b052bd815c765d9c05e27b32abbd32a2c7c3e3364ccb992ce71da1a26bc0d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http2/4.2.15.Final/netty-codec-http2-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-http2-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-http2-4.2.16.Final.jar",
+    sha256 = "fe1ffc7ed6bfb40f91c4e265fe76e3be7f9049deef0e8cf5a992420e4f02b542",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http2/4.2.16.Final/netty-codec-http2-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-4_2_15_Final_http",
-    downloaded_file_path = "netty-transport-4.2.15.Final.jar",
-    sha256 = "9fb671e96651066cf1a28dad3f1382c7c99df5b8326d4a214d9a375b311f8dc1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport/4.2.15.Final/netty-transport-4.2.15.Final.jar",
+    name = "io_netty-netty-transport-4_2_16_Final_http",
+    downloaded_file_path = "netty-transport-4.2.16.Final.jar",
+    sha256 = "cfa3f654caff906653385f4b7ddaa539d795b78f5711a622482b17d2b73484c0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport/4.2.16.Final/netty-transport-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-resolver-4_2_15_Final_http",
-    downloaded_file_path = "netty-resolver-4.2.15.Final.jar",
-    sha256 = "24318497f2a3a645964fed418f48879ba11365cab8e1f8d66c47fa7da15ef19a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-resolver/4.2.15.Final/netty-resolver-4.2.15.Final.jar",
+    name = "io_netty-netty-resolver-4_2_16_Final_http",
+    downloaded_file_path = "netty-resolver-4.2.16.Final.jar",
+    sha256 = "c9eca6a99036485cf1d186b4a6a595b0a54c53808319ee03924270eae04c32bb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-resolver/4.2.16.Final/netty-resolver-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-base-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-base-4.2.15.Final.jar",
-    sha256 = "2c6d39d7270628b8cfc3166fbd7a93d595958e59c461bc32ddb383c8c91bf811",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-base/4.2.15.Final/netty-codec-base-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-base-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-base-4.2.16.Final.jar",
+    sha256 = "feb410225938d9970de6b624a0c031d079804fa5cc5e1ec6e9298f16db5998a7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-base/4.2.16.Final/netty-codec-base-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-handler-4_2_15_Final_http",
-    downloaded_file_path = "netty-handler-4.2.15.Final.jar",
-    sha256 = "99b59e4bea72220d2aed52df8baf37d97431b06ade0b135226cdf73168975eab",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler/4.2.15.Final/netty-handler-4.2.15.Final.jar",
+    name = "io_netty-netty-handler-4_2_16_Final_http",
+    downloaded_file_path = "netty-handler-4.2.16.Final.jar",
+    sha256 = "a259ca496da05ac1981f95cd856211f894a328056a6129e9cd70dbbd5df401f7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler/4.2.16.Final/netty-handler-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-unix-common-4_2_15_Final_http",
-    downloaded_file_path = "netty-transport-native-unix-common-4.2.15.Final.jar",
-    sha256 = "b9ea9fc5ad5eba04e99afdff75b2eb97b5ddfb2ad772e2f2ef5d8f277f3cbd76",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.2.15.Final/netty-transport-native-unix-common-4.2.15.Final.jar",
+    name = "io_netty-netty-transport-native-unix-common-4_2_16_Final_http",
+    downloaded_file_path = "netty-transport-native-unix-common-4.2.16.Final.jar",
+    sha256 = "41ca8fe192083d17917be7ddcecded4da4fc1db1d1656d03d0bcb14e2f431155",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.2.16.Final/netty-transport-native-unix-common-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-http-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-http-4.2.15.Final.jar",
-    sha256 = "76ae57e87af37b3c4107140f50b9244b1456163a6a225510838f7c5a4458ec22",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http/4.2.15.Final/netty-codec-http-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-http-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-http-4.2.16.Final.jar",
+    sha256 = "0d16f981de8d0d304a2ab1a81f0a674892089fbaa8a583100aebb4a5b00456ec",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http/4.2.16.Final/netty-codec-http-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-http2-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-http2-4.2.15.Final-sources.jar",
-    sha256 = "01f8ad714e5abb989b0e782da9ec467068821299cd17d80c2db833a6472507f6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http2/4.2.15.Final/netty-codec-http2-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-http2-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-http2-4.2.16.Final-sources.jar",
+    sha256 = "de0b169eee9c8f95c0f4441432cc21090c4dcf2bfb30afb38faf7b753990586e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http2/4.2.16.Final/netty-codec-http2-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-4.2.15.Final-sources.jar",
-    sha256 = "e17c0a4c7324a93fa01f00bc6ddd2bf2f6eb94702ad8de7af777dec87f89eaf8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport/4.2.15.Final/netty-transport-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-4.2.16.Final-sources.jar",
+    sha256 = "175057281b10859fbea2e710290c8b8b12fd9347e374d66e149ac7a2fcf69568",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport/4.2.16.Final/netty-transport-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-resolver-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-resolver-4.2.15.Final-sources.jar",
-    sha256 = "c87b295c43265b34c749331e12ee667f7d43329338618bee2a08027b839220d2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-resolver/4.2.15.Final/netty-resolver-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-resolver-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-resolver-4.2.16.Final-sources.jar",
+    sha256 = "9b5d8a4b5e9639aec61420047885b6acae63c619b81ba17f95e24730e4aefa42",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-resolver/4.2.16.Final/netty-resolver-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-base-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-base-4.2.15.Final-sources.jar",
-    sha256 = "029bea433dfc710c640338954c7403cc7ac31cc5bf4c192904c837b0ebda5fb2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-base/4.2.15.Final/netty-codec-base-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-base-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-base-4.2.16.Final-sources.jar",
+    sha256 = "3ef09c79317c2785599cfc2a69d00d98e7f8e7b754749b46679f86b1e42705f2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-base/4.2.16.Final/netty-codec-base-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-handler-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-handler-4.2.15.Final-sources.jar",
-    sha256 = "68306697d15d870e7bb29ab9ce725d121ac3170428e8a5d7a33767c5fb0ffa0e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler/4.2.15.Final/netty-handler-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-handler-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-handler-4.2.16.Final-sources.jar",
+    sha256 = "61ca5db43ad0e2a1684972ede2dddca342a9d3979eb21587e850f8c2de556ff8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler/4.2.16.Final/netty-handler-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-unix-common-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-native-unix-common-4.2.15.Final-sources.jar",
-    sha256 = "2b82c54d1b2b9908ec0104664edf58ded4848ae5b34266ee1cf90707efc420ab",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.2.15.Final/netty-transport-native-unix-common-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-native-unix-common-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-native-unix-common-4.2.16.Final-sources.jar",
+    sha256 = "a047a23ba36bc42d9d2b8c3721d0d95412d76c37e256da2711a306adcc38f12d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.2.16.Final/netty-transport-native-unix-common-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-http-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-http-4.2.15.Final-sources.jar",
-    sha256 = "76b25b4884e7bec78cd310415b068204e67da5a87162774abfad9a0e6c7a0e78",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http/4.2.15.Final/netty-codec-http-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-http-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-http-4.2.16.Final-sources.jar",
+    sha256 = "f55e950fe966502975e60245c65d3fbc8a91543743dea3a5d41bb3639a1ab470",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-http/4.2.16.Final/netty-codec-http-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-protobuf-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-protobuf-4.2.15.Final.jar",
-    sha256 = "ecf3a24695374b3544700d94db56875da90c1dfbe1e43c744dcc15e1e8998a01",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-protobuf/4.2.15.Final/netty-codec-protobuf-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-protobuf-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-protobuf-4.2.16.Final.jar",
+    sha256 = "bb66f23ccb543dd842ddda91b6c8e97e222220d2efa5459f6a46a22ade3b2170",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-protobuf/4.2.16.Final/netty-codec-protobuf-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-protobuf-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-protobuf-4.2.15.Final-sources.jar",
-    sha256 = "ce828a37d8b05dfa30abfe0a3d0af36e019c264b544b74b6199ba6f585f1cb7a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-protobuf/4.2.15.Final/netty-codec-protobuf-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-protobuf-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-protobuf-4.2.16.Final-sources.jar",
+    sha256 = "4b3b6db7aaffd165fdd8486500364c1858b9e0f53661d1b0320ba76ec55a9851",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-protobuf/4.2.16.Final/netty-codec-protobuf-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-handler-proxy-4_2_15_Final_http",
-    downloaded_file_path = "netty-handler-proxy-4.2.15.Final.jar",
-    sha256 = "a06aaaaa1a2e6eb26824e53566bfd020ba930a9390d57a1f0bbf57316e357373",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.2.15.Final/netty-handler-proxy-4.2.15.Final.jar",
+    name = "io_netty-netty-handler-proxy-4_2_16_Final_http",
+    downloaded_file_path = "netty-handler-proxy-4.2.16.Final.jar",
+    sha256 = "c53706ebaffd2fcef17b5f675b81eab4be13a714886cb4b2a7d0b73275cd39fe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.2.16.Final/netty-handler-proxy-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-socks-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-socks-4.2.15.Final.jar",
-    sha256 = "4230d43481241e49382a83da2fa9d5980c5702668fc5aa5a980346ce03d30828",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-socks/4.2.15.Final/netty-codec-socks-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-socks-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-socks-4.2.16.Final.jar",
+    sha256 = "e5230b4c467755bb570c846c8e3c0ffadcb1b568c1cd9a3a4ee946734baae54d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-socks/4.2.16.Final/netty-codec-socks-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-handler-proxy-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-handler-proxy-4.2.15.Final-sources.jar",
-    sha256 = "91fa7fc64aaa39982b30cc19974f80021090c91023d1d5f6a8e4179aa3a5056b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.2.15.Final/netty-handler-proxy-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-handler-proxy-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-handler-proxy-4.2.16.Final-sources.jar",
+    sha256 = "60388647118306af08d2b3bda654da76739d143722371e57af28cc633031a632",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.2.16.Final/netty-handler-proxy-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-socks-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-socks-4.2.15.Final-sources.jar",
-    sha256 = "f126a6f94589b56b1c056a5dbbda4e76e4e749cec1591a3e878e4d6854144a43",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-socks/4.2.15.Final/netty-codec-socks-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-socks-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-socks-4.2.16.Final-sources.jar",
+    sha256 = "0214cd35b217ee40668b5a11d467160432dd514b43e7a231f4187dd4332b3ada",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-socks/4.2.16.Final/netty-codec-socks-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final.jar",
-    sha256 = "73a2272656e17483f65fcec78c0e93ed14d5f584bda5a7d51ea5a636d5cf60ef",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final.jar",
+    sha256 = "0e21ede32de7363affc2ae1bc412ed612853957c7081d87ca5320281db3f30bf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-classes-2_0_77_Final_http",
-    downloaded_file_path = "netty-tcnative-classes-2.0.77.Final.jar",
-    sha256 = "d492269308336001b7a7eca02703282c3d74c8c3b4fe08c5078cfefeeda7e34f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.77.Final/netty-tcnative-classes-2.0.77.Final.jar",
+    name = "io_netty-netty-tcnative-classes-2_0_78_Final_http",
+    downloaded_file_path = "netty-tcnative-classes-2.0.78.Final.jar",
+    sha256 = "3ca66d8c6c0f003242f954cc1822a32445109ac25b8582840ba3d8e3c92f0a3e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-linux-x86_64_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-linux-x86_64.jar",
-    sha256 = "7c97f40ca4441aa2c878dd4a5ab3c73c4eb140d31a77d07a00b2396b6288f826",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-linux-x86_64.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-linux-x86_64_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-linux-x86_64.jar",
+    sha256 = "bb830d661dc70fac2df8d147ffb64d61566211455272bb75d09d1662ec843aae",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-linux-aarch_64_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-linux-aarch_64.jar",
-    sha256 = "32f73dd78d8af143a0b2274cdea9ecdb406cfcd536ce200287577bd09ef9a4dc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-linux-aarch_64.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-linux-aarch_64_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-linux-aarch_64.jar",
+    sha256 = "85f6e25942df7308c9a6e66015a5ba87589d6f239231fb5b175138afe451b592",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-linux-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-osx-x86_64_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-osx-x86_64.jar",
-    sha256 = "05edbc65d17a5d21bd5cf8bd07b5ad20a8a7a645f1e56e1fe4194788ad301e46",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-osx-x86_64.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-osx-x86_64_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-osx-x86_64.jar",
+    sha256 = "6c6c574bf9ee85b53f176d7de1101d348cf4374014df2ea26b691e7f335d69ba",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-osx-aarch_64_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-osx-aarch_64.jar",
-    sha256 = "7d2ff3a2527ade2949ccc5f00f48dbe84823a7997d938d47c0c2587acdf23f96",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-osx-aarch_64.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-osx-aarch_64_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-osx-aarch_64.jar",
+    sha256 = "29019bf2e3045acaf4fd17b9e4033536141c8971939cd78cc82a12fe74fe24c1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-osx-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-windows-x86_64_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-windows-x86_64.jar",
-    sha256 = "fb680744cb305a59373f12afdd5d49faaaa054481fc12e0c5877e71ee07328c3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-windows-x86_64.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-windows-x86_64_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-windows-x86_64.jar",
+    sha256 = "c720390d4733fa4997f4648327fcb63a688a72afd3ddd05d368759c6c65aef6b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-windows-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-boringssl-static-2_0_77_Final-sources_http",
-    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.77.Final-sources.jar",
-    sha256 = "516a197d5260b394be25313137b877b941aec331404ae4a31a9da543d25b38ef",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.77.Final/netty-tcnative-boringssl-static-2.0.77.Final-sources.jar",
+    name = "io_netty-netty-tcnative-boringssl-static-2_0_78_Final-sources_http",
+    downloaded_file_path = "netty-tcnative-boringssl-static-2.0.78.Final-sources.jar",
+    sha256 = "00ddf823191e7f0dca9c0a77453a4022fd33aefd6e9505757a82004409eb7d6c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.78.Final/netty-tcnative-boringssl-static-2.0.78.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-tcnative-classes-2_0_77_Final-sources_http",
-    downloaded_file_path = "netty-tcnative-classes-2.0.77.Final-sources.jar",
-    sha256 = "94efab652102e9ed28afdb53f412baab6de5b0b995a41d6cb97962795034d4d7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.77.Final/netty-tcnative-classes-2.0.77.Final-sources.jar",
+    name = "io_netty-netty-tcnative-classes-2_0_78_Final-sources_http",
+    downloaded_file_path = "netty-tcnative-classes-2.0.78.Final-sources.jar",
+    sha256 = "2aa2d71acfa2ae5d4602e65aa88cef64f2b6234244c8ff012a7a94430305b5d8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final-sources.jar",
 )
 
 http_file(
@@ -14862,17 +14862,17 @@ http_file(
 )
 
 http_file(
-    name = "io_netty-netty-all-4_2_15_Final_http",
-    downloaded_file_path = "netty-all-4.2.15.Final.jar",
-    sha256 = "ad636e825d8637328991f5f32223055383dbd17656e28f12418769d44405dfe4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-all/4.2.15.Final/netty-all-4.2.15.Final.jar",
+    name = "io_netty-netty-all-4_2_16_Final_http",
+    downloaded_file_path = "netty-all-4.2.16.Final.jar",
+    sha256 = "b27c6ad392d2186c2f29c263dd0fa2d832a3929666d51c2f080286a18acf81e0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-all/4.2.16.Final/netty-all-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-4.2.15.Final.jar",
-    sha256 = "153b11a166459733af79fb0d4667f30bfa39792896f689b21c93a4a4091387ea",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec/4.2.15.Final/netty-codec-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-4.2.16.Final.jar",
+    sha256 = "41868bcc428954e707e39a30686ceddc0bd238391d3989d04dfb72d5f0735926",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec/4.2.16.Final/netty-codec-4.2.16.Final.jar",
 )
 
 http_file(
@@ -14883,108 +14883,108 @@ http_file(
 )
 
 http_file(
-    name = "io_netty-netty-handler-ssl-ocsp-4_2_15_Final_http",
-    downloaded_file_path = "netty-handler-ssl-ocsp-4.2.15.Final.jar",
-    sha256 = "f2d1799a5e8df81cd959bc8e9c3cd1328b39e261b6cbe0b5df60463abcdca368",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-ssl-ocsp/4.2.15.Final/netty-handler-ssl-ocsp-4.2.15.Final.jar",
+    name = "io_netty-netty-handler-ssl-ocsp-4_2_16_Final_http",
+    downloaded_file_path = "netty-handler-ssl-ocsp-4.2.16.Final.jar",
+    sha256 = "d914fcf20ef940a9788680460bd95bd1b4086cd9fb68393b3824064946d8c22c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-ssl-ocsp/4.2.16.Final/netty-handler-ssl-ocsp-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-classes-epoll-4_2_15_Final_http",
-    downloaded_file_path = "netty-transport-classes-epoll-4.2.15.Final.jar",
-    sha256 = "be509407fd71a4b83378567c613420db544d659bb522df7b253a1dbe8ca297fe",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.2.15.Final/netty-transport-classes-epoll-4.2.15.Final.jar",
+    name = "io_netty-netty-transport-classes-epoll-4_2_16_Final_http",
+    downloaded_file_path = "netty-transport-classes-epoll-4.2.16.Final.jar",
+    sha256 = "9f2b53210db9c8d24e787ed43f3896aaf30d686ed270c7afbb29ab6330c6aa23",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.2.16.Final/netty-transport-classes-epoll-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-classes-kqueue-4_2_15_Final_http",
-    downloaded_file_path = "netty-transport-classes-kqueue-4.2.15.Final.jar",
-    sha256 = "2a15e2213a1fe49e73b4bb39bc746e7196dba8c1b182bc0d21a719a4d1be2c00",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.2.15.Final/netty-transport-classes-kqueue-4.2.15.Final.jar",
+    name = "io_netty-netty-transport-classes-kqueue-4_2_16_Final_http",
+    downloaded_file_path = "netty-transport-classes-kqueue-4.2.16.Final.jar",
+    sha256 = "6599b495f69420cb240ab0a1aa60a19a2df3bc72791729170e0993727637a689",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.2.16.Final/netty-transport-classes-kqueue-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-classes-quic-4_2_15_Final_http",
-    downloaded_file_path = "netty-codec-classes-quic-4.2.15.Final.jar",
-    sha256 = "ec1d5da906ea0139741cd8c570907c399df5995e48a2b07fe3155272e0be21a6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-classes-quic/4.2.15.Final/netty-codec-classes-quic-4.2.15.Final.jar",
+    name = "io_netty-netty-codec-classes-quic-4_2_16_Final_http",
+    downloaded_file_path = "netty-codec-classes-quic-4.2.16.Final.jar",
+    sha256 = "9b2856532681b109ecc1d15ba81341665fea4ba1aab78788e3d74c1aff38ca00",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-classes-quic/4.2.16.Final/netty-codec-classes-quic-4.2.16.Final.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-epoll-4_2_15_Final-linux-x86_64_http",
-    downloaded_file_path = "netty-transport-native-epoll-4.2.15.Final-linux-x86_64.jar",
-    sha256 = "5440e38f5ca2858fee8d7898e65291e05b665736c9e8a14c832e707511f5dba6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-x86_64.jar",
+    name = "io_netty-netty-transport-native-epoll-4_2_16_Final-linux-x86_64_http",
+    downloaded_file_path = "netty-transport-native-epoll-4.2.16.Final-linux-x86_64.jar",
+    sha256 = "2e00548e731948881d0c73ee79d2ead759254e750929406a1d595484758f0267",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.16.Final/netty-transport-native-epoll-4.2.16.Final-linux-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-epoll-4_2_15_Final-linux-aarch_64_http",
-    downloaded_file_path = "netty-transport-native-epoll-4.2.15.Final-linux-aarch_64.jar",
-    sha256 = "5a401e9dfb4f937e37a2221f6b91da25a008eac1f08ddd4bb0d9ed20e0e32668",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-aarch_64.jar",
+    name = "io_netty-netty-transport-native-epoll-4_2_16_Final-linux-aarch_64_http",
+    downloaded_file_path = "netty-transport-native-epoll-4.2.16.Final-linux-aarch_64.jar",
+    sha256 = "212cc7d81390e31b580a1fb91b6c8d963b43e762ed072c555e2b09ad4476e928",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.16.Final/netty-transport-native-epoll-4.2.16.Final-linux-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-epoll-4_2_15_Final-linux-riscv64_http",
-    downloaded_file_path = "netty-transport-native-epoll-4.2.15.Final-linux-riscv64.jar",
-    sha256 = "a33cd69712a264b6e6a8f1bcedbb52ee069169021f46c6ea3b8e6c49561b1eeb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-riscv64.jar",
+    name = "io_netty-netty-transport-native-epoll-4_2_16_Final-linux-riscv64_http",
+    downloaded_file_path = "netty-transport-native-epoll-4.2.16.Final-linux-riscv64.jar",
+    sha256 = "453eaeae88b7acf3edb17e0b01897dbc587825b3e8240c68b32f861915d6c0e9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.16.Final/netty-transport-native-epoll-4.2.16.Final-linux-riscv64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-kqueue-4_2_15_Final-osx-x86_64_http",
-    downloaded_file_path = "netty-transport-native-kqueue-4.2.15.Final-osx-x86_64.jar",
-    sha256 = "6095c29661abe1f2fbc2c79c54a94de4fdaddd6e99c702927fd3c00e66872574",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.15.Final/netty-transport-native-kqueue-4.2.15.Final-osx-x86_64.jar",
+    name = "io_netty-netty-transport-native-kqueue-4_2_16_Final-osx-x86_64_http",
+    downloaded_file_path = "netty-transport-native-kqueue-4.2.16.Final-osx-x86_64.jar",
+    sha256 = "05a09a4ab51f488f0c22f42ccce6c06935afbfac51173fae44170465aa072828",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.16.Final/netty-transport-native-kqueue-4.2.16.Final-osx-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-kqueue-4_2_15_Final-osx-aarch_64_http",
-    downloaded_file_path = "netty-transport-native-kqueue-4.2.15.Final-osx-aarch_64.jar",
-    sha256 = "c9696a41e549eb42432f1e2cc3f387c85435034b73a3bf8748ffff40d00f921a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.15.Final/netty-transport-native-kqueue-4.2.15.Final-osx-aarch_64.jar",
+    name = "io_netty-netty-transport-native-kqueue-4_2_16_Final-osx-aarch_64_http",
+    downloaded_file_path = "netty-transport-native-kqueue-4.2.16.Final-osx-aarch_64.jar",
+    sha256 = "796c503f7a80217177bd315f6448263134ee0f9042627d5fd698c760bcf99c8c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.16.Final/netty-transport-native-kqueue-4.2.16.Final-osx-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-linux-x86_64_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-linux-x86_64.jar",
-    sha256 = "850ed59fac6679b5e205bf53187b45dbaf2d105ee5f669440645d2acd89524ec",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-linux-x86_64.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-linux-x86_64_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-linux-x86_64.jar",
+    sha256 = "3c29587f8b2953032bd37fc20e3eda5bb7270e5e1e09b496f2c024f8ac8b5dc1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-linux-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-linux-aarch_64_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-linux-aarch_64.jar",
-    sha256 = "59a8e59aa9d3a886cd7fae30fb3d3a18ebee40fa9dc08b83eb88bee58cf46774",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-linux-aarch_64.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-linux-aarch_64_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-linux-aarch_64.jar",
+    sha256 = "b338c76fee30c1b8b655e3e992e88dffa71591fecb35e1fed70089dc3696e0f6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-linux-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-osx-x86_64_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-osx-x86_64.jar",
-    sha256 = "10999923bf08ff5e3a75106bd8dbc5b5e4d06b5e614f8c135981ecb4377c944a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-osx-x86_64.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-osx-x86_64_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-osx-x86_64.jar",
+    sha256 = "15cecee5ab661a650fa5c3513fd0c6d84f27d5dcc0eddcdc1b9619649b08fe12",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-osx-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-osx-aarch_64_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-osx-aarch_64.jar",
-    sha256 = "ce18ffeccef21adb3caca5534061c921ef750662f29028fdde62d65196d63a9d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-osx-aarch_64.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-osx-aarch_64_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-osx-aarch_64.jar",
+    sha256 = "93c4fcc7a63888cbbc621ff2774632234344518503fca967b77d6cb7f241a8ce",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-osx-aarch_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-windows-x86_64_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-windows-x86_64.jar",
-    sha256 = "40adba6df605302bf98a4a462bb002c4697f60958cea7cfec38f0fab6331eb7a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-windows-x86_64.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-windows-x86_64_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-windows-x86_64.jar",
+    sha256 = "ebe477b5374382f0d34583907b7441dc59c52492c890f946154deff47883041d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-windows-x86_64.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-4.2.15.Final-sources.jar",
-    sha256 = "674a3a88063d0243e853f967175a6dc6f9cc272a1902bb82e779e52d1249fbe1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec/4.2.15.Final/netty-codec-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-4.2.16.Final-sources.jar",
+    sha256 = "f61404d9f8d68c3106836607fca3c7eedcc376805d4976b3f9225017794cbfdc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec/4.2.16.Final/netty-codec-4.2.16.Final-sources.jar",
 )
 
 http_file(
@@ -14995,52 +14995,52 @@ http_file(
 )
 
 http_file(
-    name = "io_netty-netty-handler-ssl-ocsp-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-handler-ssl-ocsp-4.2.15.Final-sources.jar",
-    sha256 = "fd889615771c6df32faa15eb546e9af03ae5b29105052d29ffcc540f7b2844f5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-ssl-ocsp/4.2.15.Final/netty-handler-ssl-ocsp-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-handler-ssl-ocsp-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-handler-ssl-ocsp-4.2.16.Final-sources.jar",
+    sha256 = "ec5eae9f235059cde54350da94001c1b1751b5c686f460f295a207d716f2b91b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-handler-ssl-ocsp/4.2.16.Final/netty-handler-ssl-ocsp-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-classes-epoll-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-classes-epoll-4.2.15.Final-sources.jar",
-    sha256 = "bb095191a070714f769bff1dd0e5d2496305d10bd566bdc16dbca5773df48b4e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.2.15.Final/netty-transport-classes-epoll-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-classes-epoll-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-classes-epoll-4.2.16.Final-sources.jar",
+    sha256 = "2ae39f0d953cdbfa9c9cb0fa7c8ef5ee6008e1d1912783e7cc0c8afc22e06819",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.2.16.Final/netty-transport-classes-epoll-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-classes-kqueue-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-classes-kqueue-4.2.15.Final-sources.jar",
-    sha256 = "ae8396911466c44cf4d641708f2e18db91105102693d08c7568b8c860d78ac1f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.2.15.Final/netty-transport-classes-kqueue-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-classes-kqueue-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-classes-kqueue-4.2.16.Final-sources.jar",
+    sha256 = "0396ffc3b900d8d371173f7542d720a8fd9347f20981fd25195c228ceda08d5b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.2.16.Final/netty-transport-classes-kqueue-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-classes-quic-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-classes-quic-4.2.15.Final-sources.jar",
-    sha256 = "edfbbece45f21e8f214c0f08f33666ef09ae4580322ffa27020633b5fdee6250",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-classes-quic/4.2.15.Final/netty-codec-classes-quic-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-classes-quic-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-classes-quic-4.2.16.Final-sources.jar",
+    sha256 = "49d880123f5a8f95d5cbbf48b39e08ae382379c0386c2f029388adf0bf58d36a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-classes-quic/4.2.16.Final/netty-codec-classes-quic-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-epoll-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-native-epoll-4.2.15.Final-sources.jar",
-    sha256 = "d48e8de50b0994842bec4e65725a7f8e9734144dd4f08b78ffe5396a70ab06b6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-native-epoll-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-native-epoll-4.2.16.Final-sources.jar",
+    sha256 = "4214820072afc0571bda42e18ee6ad36c9da5810f1132dd6bed95061e3e4f710",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.2.16.Final/netty-transport-native-epoll-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-transport-native-kqueue-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-transport-native-kqueue-4.2.15.Final-sources.jar",
-    sha256 = "3dae5152b534b6c8b41b8da93c741dae7eb7a3f1bdede50f92ed7592cffb45d1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.15.Final/netty-transport-native-kqueue-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-transport-native-kqueue-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-transport-native-kqueue-4.2.16.Final-sources.jar",
+    sha256 = "aaba3dffff599c148e4a9cb9a1f6d684252e326fbad8fafad914b8eb1b2a0065",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-transport-native-kqueue/4.2.16.Final/netty-transport-native-kqueue-4.2.16.Final-sources.jar",
 )
 
 http_file(
-    name = "io_netty-netty-codec-native-quic-4_2_15_Final-sources_http",
-    downloaded_file_path = "netty-codec-native-quic-4.2.15.Final-sources.jar",
-    sha256 = "d9772d6d7d0eb6fdf82ccaeb9558f88b5600c6f0696a724f5e067b67bdc049f3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.15.Final/netty-codec-native-quic-4.2.15.Final-sources.jar",
+    name = "io_netty-netty-codec-native-quic-4_2_16_Final-sources_http",
+    downloaded_file_path = "netty-codec-native-quic-4.2.16.Final-sources.jar",
+    sha256 = "e20de0c4165cbbd6b6e126d91295e3623a61532624b1ade013e694b4caeeb0bf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-native-quic/4.2.16.Final/netty-codec-native-quic-4.2.16.Final-sources.jar",
 )
 
 http_file(
