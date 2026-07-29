@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.ToByteArraySequenceExternalizer;
@@ -84,7 +85,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
 
     IdEntryToScopeMapImpl map = new IdEntryToScopeMapImpl(entriesCount);
     while (((InputStream)in).available() > 0) {
-      int occurenceMask = in.readByte();
+      int occurenceMask = in.readByte()& UsageSearchContext.ANY;
 
       //decode diff-compressed array (see DataInputOutputUtil.writeDiffCompressed() for a format):
       int hashesCount = DataInputOutputUtil.readINT(in);
