@@ -1,4 +1,5 @@
 JvmStatics.class
 public final class <1>JvmStatics public constructor() {
     public companion object {
-        @kotlin.jvm.JvmStatic public final fun <2>`is`(key: kotlin.String): kotlin.Boolean { /* compiled code */ }
+        @kotlin.jvm.JvmStatic
+        public final fun <2>`is`(key: kotlin.String): kotlin.Boolean { /* compiled code */ }

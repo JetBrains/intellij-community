@@ -15,7 +15,8 @@ public val kotlin.Int.exProp: kotlin.Int /* compiled code */
 public val <T> java.util.List<T>.<13>exProp: kotlin.String /* compiled code */
     public final get() { /* compiled code */ }
 
-context(_: kotlin.String) public val <T> java.util.List<T>.<18>exPropWithContextReceiver: kotlin.String /* compiled code */
+context(_: kotlin.String)
+public val <T> java.util.List<T>.<18>exPropWithContextReceiver: kotlin.String /* compiled code */
  PrintStream.class
     public void <3><11><16>println(String var1) {
  String.class
