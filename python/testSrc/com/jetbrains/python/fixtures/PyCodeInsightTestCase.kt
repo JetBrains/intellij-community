@@ -57,6 +57,7 @@ import com.jetbrains.python.inspections.PyDunderSlotsInspection
 import com.jetbrains.python.inspections.PyEnumInspection
 import com.jetbrains.python.inspections.PyFinalInspection
 import com.jetbrains.python.inspections.PyInitNewSignatureInspection
+import com.jetbrains.python.inspections.PyMethodOverridingInspection
 import com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection
 import com.jetbrains.python.inspections.PyNewTypeInspection
 import com.jetbrains.python.inspections.PyOverloadsInspection
@@ -203,6 +204,7 @@ abstract class PyCodeInsightTestCase {
     PyEnumInspection::class.java,
     PyFinalInspection::class.java,
     PyInitNewSignatureInspection::class.java,
+    PyMethodOverridingInspection::class.java,
     PyNewStyleGenericSyntaxInspection::class.java,
     PyNewTypeInspection::class.java,
     PyOverloadsInspection::class.java,

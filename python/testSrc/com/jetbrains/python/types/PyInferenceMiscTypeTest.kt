@@ -604,6 +604,8 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       class Base2(Base1):
           def test(self, param: int) -> int: pass
+      #           │                     ^^^ WARNING Return type of method 'Base2.test()' does not match return type the base method in class 'Base1'
+      #           ^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'Base2.test()' does not match signature of the base method in class 'Base1'
 
       class Base3(Base1):
           pass

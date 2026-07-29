@@ -301,6 +301,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B(A):
           def f(self, x: str = "ok"): ...
+      #        ^^^^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'B.f()' does not match signature of the base method in class 'A'
+          
       """)
 
     @Test
@@ -553,6 +555,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[int] = A[int]()
@@ -573,6 +576,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[object] = A[object]()

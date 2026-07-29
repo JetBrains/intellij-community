@@ -264,6 +264,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class B[BT](A[BT]):
     #       └ INFERRED_VARIANCE INVARIANT
         def method(self) -> BT: pass
+    #             ^^^^^^ WARNING Signature of method 'B.method()' does not match signature of the base method in class 'A'
     """.trimIndent())
 
   @Test
@@ -509,6 +510,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class A[T](Box[T]):
     #       └ INFERRED_VARIANCE CONTRAVARIANT
         def method(self, t: T): pass
+    #             ^^^^^^^^^^^^ WARNING Signature of method 'A.method()' does not match signature of the base method in class 'Box'
     """.trimIndent())
 
   @Test
