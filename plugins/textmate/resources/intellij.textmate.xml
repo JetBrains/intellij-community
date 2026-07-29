@@ -50,4 +50,9 @@
     <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>
     <requiredForSmartModeStartupActivity implementation="org.jetbrains.plugins.textmate.TextMateRequiredForSmartModeActivity"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.textmate.TextMateAppLifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>
