@@ -491,7 +491,7 @@ describe('render-guides skills', () => {
           communityClaudeDir,
           edition: 'COMMUNITY',
         }),
-        /Invalid community skill source .*\/testing\/SKILL\.md: missing YAML frontmatter\./,
+        /Invalid community skill source .*[/\\]testing[/\\]SKILL\.md: missing YAML frontmatter\./,
       )
 
       ok(existsSync(staleGeneratedTestingDir), 'render should fail before deleting stale generated stubs')
@@ -517,7 +517,7 @@ describe('render-guides skills', () => {
           communityClaudeDir,
           edition: 'ULTIMATE',
         }),
-        /Invalid ultimate skill source .*\/platform-deep-dives\/SKILL\.md: missing YAML frontmatter\./,
+        /Invalid ultimate skill source .*[/\\]platform-deep-dives[/\\]SKILL\.md: missing YAML frontmatter\./,
       )
     } finally {
       rmSync(rootDir, {recursive: true, force: true})

@@ -122,9 +122,9 @@ function rewriteLinkTarget(rawTarget, sourcePath, outputPath) {
   }
   const absolutePath = resolve(dirname(sourcePath), path);
   const outputDir = dirname(outputPath);
-  let relativePath = relative(outputDir, absolutePath);
+  let relativePath = toPosixPath(relative(outputDir, absolutePath));
   relativePath = ensureDotSlash(relativePath);
-  return toPosixPath(relativePath) + suffix;
+  return relativePath + suffix;
 }
 
 const inlineLinkPattern = /(!?\[[^\]]*])\(([^)\s]+)(\s+[^)]+)?\)/g;

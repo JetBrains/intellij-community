@@ -112,6 +112,7 @@ Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual se
 - The repo's documented wrapper commands are allowlisted, so prefer them over a hand-rolled equivalent: a spelling the list knows runs without a prompt, a novel one does not. The list is `community/.ai/tool-permissions.json`, rendered into each harness's own config; add an entry there and rerun `community/.ai/render-guides.mjs` rather than editing a harness allowlist by hand.
 - Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted, except for text/file search — use `./tools/rg.cmd` and `./tools/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
+- Windows/PowerShell exception: do not pass literal shell metacharacters such as `<`, `>`, `|`, or `&` through `.cmd` search wrappers. For single-file conflict-marker checks, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>` instead of retrying `rg.cmd` with different quoting.
 - `fd.cmd` and `rg.cmd` skip dot-directories by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, `.opencode/` — pass `-H` (`--hidden`) when looking for skills, guidelines, or hooks, or you will conclude they do not exist.
 
 ### Skills
