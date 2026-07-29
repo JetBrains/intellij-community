@@ -9059,17 +9059,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_jcef-jcef-144_0_15-g72717cf-chromium-144_0_7559_172-api-1_21-262-b37_http",
-    downloaded_file_path = "jcef-144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37.jar",
-    sha256 = "1899c0290d492ecb45ff2e12b9fbf63e52b262e989d55da8eb40812bf8a06030",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37/jcef-144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37.jar",
+    name = "org_jetbrains_intellij_deps_jcef-jcef-150_0_14-g7c1aa68-chromium-150_0_7871_129-api-1_21-263-b10_http",
+    downloaded_file_path = "jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10.jar",
+    sha256 = "83f1422859ebb0c5bbf8c9a2dd2ebe4b342a6e156cf5f3a4bb9910a2daabc391",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_jcef-jcef-144_0_15-g72717cf-chromium-144_0_7559_172-api-1_21-262-b37-sources_http",
-    downloaded_file_path = "jcef-144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37-sources.jar",
-    sha256 = "d6bdb53acf704f3208eaf3c50cc6c8847b71631bc01642c3d14a03bd22005496",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37/jcef-144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37-sources.jar",
+    name = "org_jetbrains_intellij_deps_jcef-jcef-150_0_14-g7c1aa68-chromium-150_0_7871_129-api-1_21-263-b10-sources_http",
+    downloaded_file_path = "jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10-sources.jar",
+    sha256 = "87451b66bd03864a0f91a14facf052f02af431c2dd7df817c1cb90300055c883",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b10-sources.jar",
 )
 
 http_file(
