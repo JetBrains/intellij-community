@@ -364,6 +364,10 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
    * Things that must be considered if you'd love to change this logic: IDEA-342103
    */
   private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTime {
+    val stackTrace = RuntimeException().stackTrace
+    if (stackTrace.size < 6) {
+      return@addMeasuredTime
+    }
     val stackStraceIterator = RuntimeException().stackTrace.iterator()
     // Skip six methods of the current update
     repeat(6) { stackStraceIterator.next() }
