@@ -566,4 +566,36 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             n +=<EOLError descr="Expression expected"></EOLError>
         """);
   }
+
+  @TestFor(issues = "PY-91164")
+  public void testTypeVarSubstitutionCausedSOE() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, TypeVarTuple, Unpack, ParamSpec, Concatenate, Callable
+                   
+                   WT = TypeVar('WT')
+                   WTT = TypeVar('WTT', bound=type)
+                   Ps = TypeVarTuple('Ps')
+                   Q = ParamSpec('Q')
+                   
+                   
+                   class WalkerFilterRegistry(Generic[Unpack[Ps], WT]):
+                       def __init__(self,
+                                    enter_cbs: dict[type[WT], Callable[[Unpack[Ps], WT], bool]]):
+                           self.enter_cbs = enter_cbs
+                   
+                       def instantiate(self):
+                           return BasicFilteredWalker[WT](  # Removing the [WT] fixes the StackOverflowError
+                               self._instantiate_dict(self.enter_cbs),
+                           )
+                   
+                       def _instantiate_dict(
+                               self, d: dict[WTT, Callable[Concatenate[Unpack[Ps], Q], bool]]
+                       ) -> dict[WTT, Callable[Q, bool]]:
+                           ...
+                   
+                   
+                   class BasicFilteredWalker(WalkerFilterRegistry[WT], Generic[WT]):
+                       ...
+                   """);
+  }
 }
