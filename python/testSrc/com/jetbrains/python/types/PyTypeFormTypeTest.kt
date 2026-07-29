@@ -3,7 +3,6 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.types.PyTypeFormType
 import org.junit.jupiter.api.Nested
@@ -36,11 +35,9 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       """)
 
 
-    // PEP 747: bare `TypeForm` is equivalent to `TypeForm[Any]`. The `PyTypeHintsInspection` diagnostic on the
-    // bare form is out of scope here; this checks only the inferred type.
+    // PEP 747: bare `TypeForm` is equivalent to `TypeForm[Any]`.
     @Test
-    fun `bare TypeForm resolves to TypeForm of Any`() = test(
-      defaultTestOptions.copy(disableInspections = setOf(PyTypeHintsInspection::class.java)), """
+    fun `bare TypeForm resolves to TypeForm of Any`() = test("""
       from typing_extensions import TypeForm
 
       def f(x: TypeForm):
@@ -62,7 +59,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
     // `null` rather than the explicit `PyAnyType.Any`. Both must still render as `TypeForm[Any]`.
     @Test
     fun `bare TypeForm resolves to TypeForm of Any with the legacy engine`() = test(
-      defaultTestOptions.copy(enablePyAnyType = false, disableInspections = setOf(PyTypeHintsInspection::class.java)), """
+      defaultTestOptions.copy(enablePyAnyType = false), """
       from typing_extensions import TypeForm
 
       def f(x: TypeForm):
@@ -84,11 +81,12 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
   @Nested
   inner class Validation {
+    // PEP 747: `TypeForm` may be used unparameterized, so the bare form is not a diagnostic.
     @Test
-    fun `bare TypeForm requires a type argument`() = test("""
+    fun `bare TypeForm is valid`() = test("""
       from typing_extensions import TypeForm
 
-      def func(x: TypeForm): ... # ISSUES *
+      def func(x: TypeForm): ...
       """)
 
     @Test
