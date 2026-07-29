@@ -259,6 +259,7 @@
   {"apiName": "com.intellij.ide.projectView.ProjectViewNodeDecorator", "extensionPointNames": ["com.intellij.projectViewNodeDecorator"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.ide.projectView.ProjectViewNestingRulesProvider", "extensionPointNames": ["com.intellij.projectViewNestingRulesProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.intention.IntentionAction", "extensionPointNames": ["com.intellij.intentionAction"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper", "extensionPointNames": ["com.intellij.flipCommaIntention.flipper"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
 
 
 
@@ -283,7 +284,6 @@
   {"apiName": "com.intellij.psi.templateLanguages.MultipleLangCommentProvider", "extensionPointNames": ["com.intellij.multiLangCommenter"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.psi.codeStyle.arrangement.Rearranger", "extensionPointNames": ["com.intellij.lang.rearranger"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler.UnquotingFilter", "extensionPointNames": ["com.intellij.selectionUnquotingFilter"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
-  {"apiName": "com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper", "extensionPointNames": ["com.intellij.flipCommaIntention.flipper"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.lang.Commenter", "extensionPointNames": ["com.intellij.lang.commenter"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.editorActions.QuoteHandler", "extensionPointNames": ["com.intellij.quoteHandler", "com.intellij.lang.quoteHandler"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.codeInsight.editorActions.TypedHandlerDelegate", "extensionPointNames": ["com.intellij.typedHandler"], "targetModules": ["shared"], "restrictionKind": "genericPlatformApi"},
