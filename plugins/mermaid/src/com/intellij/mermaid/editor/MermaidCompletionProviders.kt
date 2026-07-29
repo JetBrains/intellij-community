@@ -32,8 +32,13 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "quadrantChart",
       "timeline",
       "zenuml",
+      // mermaid 11.10.0 dropped the "-beta" suffix; both spellings still parse, but the bare form is
+      // what current upstream documentation shows, so offer it first.
+      "sankey",
       "sankey-beta",
+      "xychart",
       "xychart-beta",
+      "block",
       "block-beta",
     )
 

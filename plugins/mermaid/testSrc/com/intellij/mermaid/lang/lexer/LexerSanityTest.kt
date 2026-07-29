@@ -94,4 +94,41 @@ class LexerSanityTest: MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test bare sankey spelling`() {
+    val content = """
+    sankey
+      a,b,1
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test bare xychart spelling`() {
+    val content = """
+    xychart
+      line [1, 2, 3]
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test bare block spelling`() {
+    val content = """
+    block
+      a b c
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test bare requirement spelling`() {
+    val content = """
+    requirement
+      requirement test_req {
+      id: 1
+      text: some text
+      risk: high
+      verifymethod: test
+      }
+    """.trimIndent()
+    doTest(content)
+  }
 }

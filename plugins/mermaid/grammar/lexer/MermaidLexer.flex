@@ -105,7 +105,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "stateDiagram" { yybegin(state_diagram); return StateDiagram.STATE_DIAGRAM; }
   "erDiagram" { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP; }
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
-  "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
+  "requirement"("Diagram")? { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
   "gitGraph"/:? { yybegin(gitgraph); return GitGraph.GIT_GRAPH; }
   "C4Context" { yybegin (c4); return C4.C4_CONTEXT; }
   "C4Container" { yybegin (c4); return C4.C4_CONTAINER; }
@@ -116,9 +116,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
   "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
   "zenuml"[^]* { return ZenUML.ZEN_UML; }
-  "sankey-beta" { yybegin(sankey); return Sankey.SANKEY; }
-  "xychart-beta" { yybegin(xy_chart); return XYChart.XY_CHART; }
-  "block-beta" { yybegin(block_diagram); return Block.BLOCK_DIAGRAM; }
+  // mermaid 11.10.0 dropped the "-beta" suffix; both spellings are accepted upstream.
+  "sankey"("-beta")? { yybegin(sankey); return Sankey.SANKEY; }
+  "xychart"("-beta")? { yybegin(xy_chart); return XYChart.XY_CHART; }
+  "block"("-beta")? { yybegin(block_diagram); return Block.BLOCK_DIAGRAM; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 

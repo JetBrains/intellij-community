@@ -24,8 +24,12 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "quadrantChart",
     "timeline",
     "zenuml",
+    // mermaid 11.10.0 dropped the "-beta" suffix; both spellings are offered.
+    "sankey",
     "sankey-beta",
+    "xychart",
     "xychart-beta",
+    "block",
     "block-beta",
   )
 

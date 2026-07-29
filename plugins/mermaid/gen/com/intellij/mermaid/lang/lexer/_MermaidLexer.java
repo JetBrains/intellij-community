@@ -564,72 +564,73 @@ public class _MermaidLexer implements FlexLexer {
     "\2\70\2\167\24\55\20\70\1\u0119\1\u011a\1\70\2\162"+
     "\2\20\1\u011b\2\20\1\u011c\1\70\1\u011d\14\70\1\u011d"+
     "\6\0\1\u011e\10\0\6\232\3\237\1\u011f\4\237\12\70"+
-    "\1\u0120\3\0\10\20\1\u0121\1\20\1\u0122\12\20\2\32"+
-    "\3\20\1\u0123\3\55\1\u0124\2\0\2\70\1\u0125\1\u0126"+
-    "\2\70\1\u0127\1\70\1\107\2\0\2\u010a\2\0\1\126"+
-    "\2\u010a\2\126\3\70\1\u0128\1\70\1\u0129\4\70\1\0"+
-    "\1\u012a\4\70\1\u0124\1\0\5\u0114\1\0\4\u012b\4\u0116"+
-    "\4\136\1\u0126\2\136\1\0\1\u0127\2\147\4\165\1\0"+
-    "\1\u0127\2\70\1\u012c\1\70\1\u012d\1\u012e\1\173\2\10"+
-    "\1\0\1\175\1\u012f\2\70\3\0\1\70\1\0\1\70"+
-    "\1\0\2\167\3\55\1\u0126\12\55\1\u0130\5\55\21\70"+
-    "\2\162\4\20\12\70\1\u0131\1\u0132\1\70\1\u0133\11\0"+
-    "\1\u0134\1\u0135\1\u0136\1\u0137\3\0\1\u0124\1\0\3\232"+
-    "\1\u0124\2\232\3\237\1\u0124\3\237\2\70\1\u0138\1\u0125"+
-    "\4\70\1\u0139\1\u0127\1\0\22\20\1\u013a\1\32\3\20"+
-    "\3\55\2\0\6\70\1\107\4\0\3\126\4\70\1\u013b"+
-    "\3\70\1\0\1\u013c\2\70\1\0\3\u0114\4\u012b\3\u0116"+
-    "\3\136\1\u013d\2\136\1\0\2\147\1\165\1\u013d\2\165"+
-    "\4\70\2\10\1\0\1\175\2\70\4\0\1\70\1\0"+
-    "\1\70\1\0\2\167\5\55\1\u013e\2\55\1\u013f\2\55"+
-    "\1\u0140\7\55\21\70\2\162\3\20\1\u0141\1\u0142\1\70"+
-    "\1\u0143\3\70\1\u0144\2\70\1\u0145\1\u0146\5\0\1\u0147"+
-    "\1\u0148\1\u0149\5\0\1\u0137\1\u014a\3\0\3\232\1\u014b"+
-    "\1\u014c\4\237\1\u014b\1\u014c\2\70\1\u014d\5\70\12\20"+
-    "\1\u014e\1\u014f\12\20\2\55\1\u0150\2\0\6\70\1\u0151"+
-    "\1\112\1\0\1\126\6\70\1\u0152\1\u0153\2\70\1\0"+
-    "\1\u0114\3\u012b\1\u0116\3\136\3\u013d\2\136\1\0\2\147"+
-    "\3\165\4\70\2\10\1\0\1\u0154\2\70\2\0\1\70"+
-    "\1\0\1\70\1\0\2\167\10\55\1\u0155\3\55\1\u0156"+
-    "\1\u0157\1\55\1\u0158\3\70\1\0\1\u0159\12\70\1\0"+
-    "\1\u015a\2\70\2\162\3\20\1\70\1\u015b\4\70\22\0"+
-    "\1\u015c\3\232\4\237\3\70\1\u015d\1\u015e\2\70\11\20"+
-    "\1\u015f\5\20\1\u0160\1\20\1\u0161\1\u0162\1\u0163\1\u0161"+
-    "\1\u0162\1\u0161\1\u0162\1\u0161\1\u0162\1\u0164\2\70\1\u0165"+
-    "\1\u0161\1\u0162\1\u0166\1\70\1\u0167\1\70\1\u0168\1\70"+
-    "\1\u0169\1\u012b\1\u0161\1\u0162\1\u016a\3\u013d\2\136\1\u016b"+
-    "\1\u0161\1\u0162\1\u016a\2\165\1\u0161\1\u0162\1\u016c\1\70"+
-    "\1\u0161\1\u0162\1\u016d\1\u0161\1\u0162\2\0\1\70\1\0"+
-    "\1\70\1\0\1\u0161\1\u0162\1\u0161\1\u0162\2\55\1\u016e"+
-    "\1\u016f\1\55\1\u0170\1\u0171\3\55\1\u0161\1\u0162\1\70"+
-    "\1\0\1\u0172\1\70\1\0\4\70\1\0\1\u0173\4\70"+
-    "\1\u0161\1\u0162\1\u0174\2\20\1\70\1\u0161\1\u0162\1\u0175"+
-    "\1\70\1\u0176\5\0\1\u0177\1\u0178\1\u0134\1\u0135\1\0"+
-    "\1\u0179\7\0\1\u0161\1\u0162\1\232\1\u0161\1\u0162\1\u017a"+
-    "\1\u0161\1\u0162\1\u0164\2\70\2\20\1\u017b\1\20\1\u017c"+
-    "\2\20\1\u017d\1\u0122\1\u015f\6\20\1\u017e\1\u017f\3\70"+
-    "\1\u013d\1\u017e\1\u0180\1\u017e\1\u0180\1\u0181\3\0\1\70"+
-    "\1\0\1\70\2\0\5\55\1\u0182\1\0\1\u0183\1\70"+
-    "\1\0\6\70\1\0\1\u0184\1\70\2\20\1\u0185\1\70"+
-    "\1\u0186\1\u0187\3\0\1\u0136\7\0\1\u0181\1\232\1\70"+
-    "\1\u0188\3\20\1\u0189\10\20\1\u018a\1\u018b\1\70\3\0"+
-    "\1\70\1\0\1\70\3\0\1\u018c\1\u018d\3\55\1\70"+
-    "\1\0\1\u018e\5\70\1\0\1\u018f\1\70\1\20\1\u0190"+
-    "\1\70\10\0\1\u0191\3\0\1\u0192\3\0\1\u0193\1\70"+
-    "\1\u0194\1\u0195\5\20\1\u0196\3\20\1\u0197\2\0\1\70"+
-    "\2\0\2\55\1\u0198\7\70\1\20\1\u0199\1\u019a\2\0"+
-    "\1\u019b\6\0\1\u019c\4\0\1\u019d\1\u019e\1\u019f\4\20"+
-    "\1\u01a0\1\u01a1\3\0\1\55\1\u01a2\5\70\1\0\1\u01a3"+
-    "\1\20\11\0\1\u01a4\5\0\1\20\1\u01a5\3\20\1\55"+
-    "\5\70\1\0\1\u01a6\2\0\1\u01a7\3\0\1\u01a8\7\0"+
-    "\4\20\1\55\5\70\1\0\1\u01a9\1\0\1\u01aa\1\0"+
-    "\1\u01ab\7\0\1\u01ac\1\u019f\1\20\1\u01ad\1\u01a0\1\55"+
-    "\5\70\1\u01ae\1\0\1\u01af\2\0\1\u011e\1\0\1\u01b0"+
-    "\1\u01b1\2\0\1\20\1\55\5\70\6\0\1\20\1\u01b2"+
-    "\1\0\4\70\6\0\1\u01b3\1\0\4\70\1\u01b4\1\u01b5"+
-    "\1\u01b6\1\0\1\u01b7\1\u01b8\1\0\1\u01b9\4\70\1\u01ba"+
-    "\3\70\1\0\1\70\1\0\1\70\3\0\1\70\1\0"+
-    "\1\u01bb\2\0\1\u01bc\2\0\1\u01bd\2\0\1\u01be";
+    "\1\u0120\3\0\4\20\1\u0121\3\20\1\u0122\1\20\1\u0123"+
+    "\12\20\2\32\3\20\1\u0124\3\55\1\u0125\2\0\2\70"+
+    "\1\u0126\1\u0127\2\70\1\u0128\1\70\1\107\2\0\2\u010a"+
+    "\2\0\1\126\2\u010a\2\126\3\70\1\u0129\1\70\1\u012a"+
+    "\4\70\1\0\1\u012b\4\70\1\u0125\1\0\5\u0114\1\0"+
+    "\4\u012c\4\u0116\4\136\1\u0127\2\136\1\0\1\u0128\2\147"+
+    "\4\165\1\0\1\u0128\2\70\1\u012d\1\70\1\u012e\1\u012f"+
+    "\1\173\2\10\1\0\1\175\1\u0130\2\70\3\0\1\70"+
+    "\1\0\1\70\1\0\2\167\3\55\1\u0127\12\55\1\u0131"+
+    "\5\55\21\70\2\162\4\20\12\70\1\u0132\1\u0133\1\70"+
+    "\1\u0134\11\0\1\u0135\1\u0136\1\u0137\1\u0138\3\0\1\u0125"+
+    "\1\0\3\232\1\u0125\2\232\3\237\1\u0125\3\237\2\70"+
+    "\1\u0139\1\u0126\4\70\1\u013a\1\u0128\1\0\15\20\1\u013b"+
+    "\4\20\1\u013c\1\32\3\20\3\55\2\0\6\70\1\107"+
+    "\4\0\3\126\4\70\1\u013d\3\70\1\0\1\u013e\2\70"+
+    "\1\0\3\u0114\4\u012c\3\u0116\3\136\1\u013f\2\136\1\0"+
+    "\2\147\1\165\1\u013f\2\165\4\70\2\10\1\0\1\175"+
+    "\2\70\4\0\1\70\1\0\1\70\1\0\2\167\5\55"+
+    "\1\u0140\2\55\1\u0141\2\55\1\u0142\7\55\21\70\2\162"+
+    "\3\20\1\u0143\1\u0144\1\70\1\u0145\3\70\1\u0146\2\70"+
+    "\1\u0147\1\u0148\5\0\1\u0149\1\u014a\1\u014b\5\0\1\u0138"+
+    "\1\u014c\3\0\3\232\1\u014d\1\u014e\4\237\1\u014d\1\u014e"+
+    "\2\70\1\u014f\5\70\12\20\1\u0150\1\u0151\6\20\1\u0152"+
+    "\3\20\2\55\1\u0153\2\0\6\70\1\u0154\1\112\1\0"+
+    "\1\126\6\70\1\u0155\1\u0156\2\70\1\0\1\u0114\3\u012c"+
+    "\1\u0116\3\136\3\u013f\2\136\1\0\2\147\3\165\4\70"+
+    "\2\10\1\0\1\u0157\2\70\2\0\1\70\1\0\1\70"+
+    "\1\0\2\167\10\55\1\u0158\3\55\1\u0159\1\u015a\1\55"+
+    "\1\u015b\3\70\1\0\1\u015c\12\70\1\0\1\u015d\2\70"+
+    "\2\162\3\20\1\70\1\u015e\4\70\22\0\1\u015f\3\232"+
+    "\4\237\3\70\1\u0160\1\u0161\2\70\11\20\1\u0162\5\20"+
+    "\1\u0163\1\20\1\u0164\1\u0165\1\u0166\1\u0164\1\u0165\1\u0164"+
+    "\1\u0165\1\u0164\1\u0165\1\u0167\2\70\1\u0168\1\u0164\1\u0165"+
+    "\1\u0169\1\70\1\u016a\1\70\1\u016b\1\70\1\u016c\1\u012c"+
+    "\1\u0164\1\u0165\1\u016d\3\u013f\2\136\1\u016e\1\u0164\1\u0165"+
+    "\1\u016d\2\165\1\u0164\1\u0165\1\u016f\1\70\1\u0164\1\u0165"+
+    "\1\u0170\1\u0164\1\u0165\2\0\1\70\1\0\1\70\1\0"+
+    "\1\u0164\1\u0165\1\u0164\1\u0165\2\55\1\u0171\1\u0172\1\55"+
+    "\1\u0173\1\u0174\3\55\1\u0164\1\u0165\1\70\1\0\1\u0175"+
+    "\1\70\1\0\4\70\1\0\1\u0176\4\70\1\u0164\1\u0165"+
+    "\1\u0177\2\20\1\70\1\u0164\1\u0165\1\u0178\1\70\1\u0179"+
+    "\5\0\1\u017a\1\u017b\1\u0135\1\u0136\1\0\1\u017c\7\0"+
+    "\1\u0164\1\u0165\1\232\1\u0164\1\u0165\1\u017d\1\u0164\1\u0165"+
+    "\1\u0167\2\70\2\20\1\u017e\1\20\1\u017f\2\20\1\u0180"+
+    "\1\u0123\1\u0162\6\20\1\u0181\1\u0182\3\70\1\u013f\1\u0181"+
+    "\1\u0183\1\u0181\1\u0183\1\u0184\3\0\1\70\1\0\1\70"+
+    "\2\0\5\55\1\u0185\1\0\1\u0186\1\70\1\0\6\70"+
+    "\1\0\1\u0187\1\70\2\20\1\u0188\1\70\1\u0189\1\u018a"+
+    "\3\0\1\u0137\7\0\1\u0184\1\232\1\70\1\u018b\3\20"+
+    "\1\u0121\10\20\1\u018c\1\u018d\1\70\3\0\1\70\1\0"+
+    "\1\70\3\0\1\u018e\1\u018f\3\55\1\70\1\0\1\u0190"+
+    "\5\70\1\0\1\u0191\1\70\1\20\1\u0192\1\70\10\0"+
+    "\1\u0193\3\0\1\u0194\3\0\1\u0195\1\70\1\u0196\1\u0197"+
+    "\4\20\1\u0198\1\u013b\3\20\1\u0199\2\0\1\70\2\0"+
+    "\2\55\1\u019a\7\70\1\20\1\u019b\1\u019c\2\0\1\u019d"+
+    "\6\0\1\u019e\4\0\1\u019f\1\u01a0\1\u01a1\4\20\1\u01a2"+
+    "\1\u0152\3\0\1\55\1\u01a3\5\70\1\0\1\u01a4\1\20"+
+    "\11\0\1\u01a5\5\0\1\20\1\u01a6\3\20\1\55\5\70"+
+    "\1\0\1\u01a7\2\0\1\u01a8\3\0\1\u01a9\7\0\4\20"+
+    "\1\55\5\70\1\0\1\u01aa\1\0\1\u01ab\1\0\1\u01ac"+
+    "\7\0\1\u01ad\1\u01a1\1\20\1\u01ae\1\u01a2\1\55\5\70"+
+    "\1\u01af\1\0\1\u01b0\2\0\1\u011e\1\0\1\u01b1\1\u01b2"+
+    "\2\0\1\20\1\55\5\70\6\0\1\20\1\u01b3\1\0"+
+    "\4\70\6\0\1\u0198\1\0\4\70\1\u01b4\1\u01b5\1\u01b6"+
+    "\1\0\1\u01b7\1\u01b8\1\0\1\u01b9\4\70\1\u01ba\3\70"+
+    "\1\0\1\70\1\0\1\70\3\0\1\70\1\0\1\u01bb"+
+    "\2\0\1\u01bc\2\0\1\u01bd\2\0\1\u01be";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[2711];
@@ -6488,56 +6489,61 @@ public class _MermaidLexer implements FlexLexer {
           // fall through
           case 734: break;
           case 289:
-            { yybegin(gantt); return Gantt.GANTT;
+            { yybegin(block_diagram); return Block.BLOCK_DIAGRAM;
             }
           // fall through
           case 735: break;
           case 290:
-            { yybegin(flowchart); return Flowchart.FLOWCHART;
+            { yybegin(gantt); return Gantt.GANTT;
             }
           // fall through
           case 736: break;
           case 291:
-            { yybegin(pie_title); return TITLE;
+            { yybegin(flowchart); return Flowchart.FLOWCHART;
             }
           // fall through
           case 737: break;
           case 292:
-            { yypushstate(title); return TITLE;
+            { yybegin(pie_title); return TITLE;
             }
           // fall through
           case 738: break;
           case 293:
-            { yypushstate(flowchart_class); return CLASS;
+            { yypushstate(title); return TITLE;
             }
           // fall through
           case 739: break;
           case 294:
-            { yypushstate(click); return CLICK;
+            { yypushstate(flowchart_class); return CLASS;
             }
           // fall through
           case 740: break;
           case 295:
-            { yypushstate(style); return STYLE;
+            { yypushstate(click); return CLICK;
             }
           // fall through
           case 741: break;
           case 296:
-            { yybegin(sequence_id); return Sequence.ACTOR;
+            { yypushstate(style); return STYLE;
             }
           // fall through
           case 742: break;
           case 297:
-            { yybegin(sequence_control_id); return Sequence.BREAK;
+            { yybegin(sequence_id); return Sequence.ACTOR;
             }
           // fall through
           case 743: break;
           case 298:
-            { yybegin(sequence_links); return Sequence.LINKS;
+            { yybegin(sequence_control_id); return Sequence.BREAK;
             }
           // fall through
           case 744: break;
           case 299:
+            { yybegin(sequence_links); return Sequence.LINKS;
+            }
+          // fall through
+          case 745: break;
+          case 300:
             // general lookahead, find correct zzMarkedPos
             { int zzFState = 124;
               int zzFPos = zzStartRead;
@@ -6570,720 +6576,715 @@ public class _MermaidLexer implements FlexLexer {
             { yybegin(class_relation_start); return ClassDiagram.CLASS_ID;
             }
           // fall through
-          case 745: break;
-          case 300:
-            { yybegin(state_class); return CLASS;
-            }
-          // fall through
           case 746: break;
           case 301:
-            { yybegin(state_scale); return StateDiagram.SCALE;
+            { yybegin(state_class); return CLASS;
             }
           // fall through
           case 747: break;
           case 302:
-            { yybegin(state_statement); return StateDiagram.STATE;
+            { yybegin(state_scale); return StateDiagram.SCALE;
             }
           // fall through
           case 748: break;
           case 303:
-            { yybegin(state_diagram); return StateDiagram.WIDTH;
+            { yybegin(state_statement); return StateDiagram.STATE;
             }
           // fall through
           case 749: break;
           case 304:
-            { yypushstate(gantt_title); return TITLE;
+            { yybegin(state_diagram); return StateDiagram.WIDTH;
             }
           // fall through
           case 750: break;
           case 305:
-            { return GitGraph.MERGE;
+            { yypushstate(gantt_title); return TITLE;
             }
           // fall through
           case 751: break;
           case 306:
-            { return GitGraph.ORDER;
+            { return GitGraph.MERGE;
             }
           // fall through
           case 752: break;
           case 307:
-            { yybegin(birel); return C4.BIREL;
+            { return GitGraph.ORDER;
             }
           // fall through
           case 753: break;
           case 308:
-            { yybegin(rel_d); return C4.REL_D;
+            { yybegin(birel); return C4.BIREL;
             }
           // fall through
           case 754: break;
           case 309:
-            { yybegin(rel_l); return C4.REL_L;
+            { yybegin(rel_d); return C4.REL_D;
             }
           // fall through
           case 755: break;
           case 310:
-            { yybegin(rel_r); return C4.REL_R;
+            { yybegin(rel_l); return C4.REL_L;
             }
           // fall through
           case 756: break;
           case 311:
-            { yybegin(rel_u); return C4.REL_U;
+            { yybegin(rel_r); return C4.REL_R;
             }
           // fall through
           case 757: break;
           case 312:
-            { return Block.BLOCK;
+            { yybegin(rel_u); return C4.REL_U;
             }
           // fall through
           case 758: break;
           case 313:
-            { return Block.SPACE;
+            { return Block.BLOCK;
             }
           // fall through
           case 759: break;
           case 314:
-            { return ZenUML.ZEN_UML;
+            { return Block.SPACE;
             }
           // fall through
           case 760: break;
           case 315:
-            { return Sequence.CREATE;
+            { yybegin(sankey); return Sankey.SANKEY;
             }
           // fall through
           case 761: break;
           case 316:
-            { yybegin(sequence_control_id); return Sequence.OPTION;
+            { return ZenUML.ZEN_UML;
             }
           // fall through
           case 762: break;
           case 317:
+            { return Sequence.CREATE;
+            }
+          // fall through
+          case 763: break;
+          case 318:
+            { yybegin(sequence_control_id); return Sequence.OPTION;
+            }
+          // fall through
+          case 764: break;
+          case 319:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 5);
             { return CLASS;
             }
           // fall through
-          case 763: break;
-          case 318:
-            { return Gantt.FRIDAY;
-            }
-          // fall through
-          case 764: break;
-          case 319:
-            { return Gantt.MONDAY;
-            }
-          // fall through
           case 765: break;
           case 320:
-            { return Gantt.SUNDAY;
+            { return Gantt.FRIDAY;
             }
           // fall through
           case 766: break;
           case 321:
-            { yybegin(requirement); return Requirement.MEDIUM;
+            { return Gantt.MONDAY;
             }
           // fall through
           case 767: break;
           case 322:
-            { return Requirement.DOCREF;
+            { return Gantt.SUNDAY;
             }
           // fall through
           case 768: break;
           case 323:
-            { return GitGraph.NORMAL;
+            { yybegin(requirement); return Requirement.MEDIUM;
             }
           // fall through
           case 769: break;
           case 324:
-            { return GitGraph.BRANCH;
+            { return Requirement.DOCREF;
             }
           // fall through
           case 770: break;
           case 325:
-            { return GitGraph.COMMIT;
+            { return GitGraph.NORMAL;
             }
           // fall through
           case 771: break;
           case 326:
-            { return GitGraph.PARENT;
+            { return GitGraph.BRANCH;
             }
           // fall through
           case 772: break;
           case 327:
-            { yybegin(node_l); return C4.NODE_L;
+            { return GitGraph.COMMIT;
             }
           // fall through
           case 773: break;
           case 328:
-            { yybegin(node_r); return C4.NODE_R;
+            { return GitGraph.PARENT;
             }
           // fall through
           case 774: break;
           case 329:
-            { yybegin(person); return C4.PERSON;
+            { yybegin(node_l); return C4.NODE_L;
             }
           // fall through
           case 775: break;
           case 330:
-            { yybegin(system); return C4.SYSTEM;
+            { yybegin(node_r); return C4.NODE_R;
             }
           // fall through
           case 776: break;
           case 331:
-            { return X_AXIS;
+            { yybegin(person); return C4.PERSON;
             }
           // fall through
           case 777: break;
           case 332:
-            { return Y_AXIS;
+            { yybegin(system); return C4.SYSTEM;
             }
           // fall through
           case 778: break;
           case 333:
+            { return X_AXIS;
+            }
+          // fall through
+          case 779: break;
+          case 334:
+            { return Y_AXIS;
+            }
+          // fall through
+          case 780: break;
+          case 335:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 5);
             { yybegin(block_id); return Block.BLOCK;
             }
           // fall through
-          case 779: break;
-          case 334:
-            { yybegin(journey); return Journey.JOURNEY;
-            }
-          // fall through
-          case 780: break;
-          case 335:
-            { yybegin(mindmap); return Mindmap.MINDMAP;
-            }
-          // fall through
           case 781: break;
           case 336:
-            { yypushstate(journey_section); return SECTION;
+            { yybegin(journey); return Journey.JOURNEY;
             }
           // fall through
           case 782: break;
           case 337:
-            { yybegin(style_opt); return DEFAULT;
+            { yybegin(mindmap); return Mindmap.MINDMAP;
             }
           // fall through
           case 783: break;
           case 338:
-            { yybegin(sequence_id); return Sequence.DESTROY;
+            { yybegin(xy_chart); return XYChart.XY_CHART;
             }
           // fall through
           case 784: break;
           case 339:
-            { return LEFT_OF;
+            { yypushstate(journey_section); return SECTION;
             }
           // fall through
           case 785: break;
           case 340:
-            { yypushstate(state_style_opt); return DEFAULT;
+            { yybegin(style_opt); return DEFAULT;
             }
           // fall through
           case 786: break;
           case 341:
-            { yypushstate(gantt_section); return SECTION;
+            { yybegin(sequence_id); return Sequence.DESTROY;
             }
           // fall through
           case 787: break;
           case 342:
-            { return Gantt.TOP_AXIS;
+            { return LEFT_OF;
             }
           // fall through
           case 788: break;
           case 343:
-            { return Gantt.TUESDAY;
+            { yypushstate(state_style_opt); return DEFAULT;
             }
           // fall through
           case 789: break;
           case 344:
-            { return Gantt.WEEKDAY;
+            { yypushstate(gantt_section); return SECTION;
             }
           // fall through
           case 790: break;
           case 345:
+            { return Gantt.TOP_AXIS;
+            }
+          // fall through
+          case 791: break;
+          case 346:
+            { return Gantt.TUESDAY;
+            }
+          // fall through
+          case 792: break;
+          case 347:
+            { return Gantt.WEEKDAY;
+            }
+          // fall through
+          case 793: break;
+          case 348:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 6);
             { return Requirement.COPIES;
             }
           // fall through
-          case 791: break;
-          case 346:
+          case 794: break;
+          case 349:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 6);
             { return Requirement.TRACES;
             }
           // fall through
-          case 792: break;
-          case 347:
-            { return GitGraph.REVERSE;
-            }
-          // fall through
-          case 793: break;
-          case 348:
-            { yypushstate(icon); return Mindmap.OPEN_ICON;
-            }
-          // fall through
-          case 794: break;
-          case 349:
-            { yybegin(block_diagram_columns); return Block.COLUMNS;
-            }
-          // fall through
           case 795: break;
           case 350:
-            { return DEFAULT;
+            { return GitGraph.REVERSE;
             }
           // fall through
           case 796: break;
           case 351:
+            { yypushstate(icon); return Mindmap.OPEN_ICON;
+            }
+          // fall through
+          case 797: break;
+          case 352:
+            { yybegin(block_diagram_columns); return Block.COLUMNS;
+            }
+          // fall through
+          case 798: break;
+          case 353:
+            { return DEFAULT;
+            }
+          // fall through
+          case 799: break;
+          case 354:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 8);
             { yybegin(gitgraph); return GitGraph.GIT_GRAPH;
             }
           // fall through
-          case 797: break;
-          case 352:
-            { yybegin(timeline); return Timeline.TIMELINE;
-            }
-          // fall through
-          case 798: break;
-          case 353:
-            { yypushstate(acc_descr); return ACC_DESCR;
-            }
-          // fall through
-          case 799: break;
-          case 354:
-            { yypushstate(acc_title); return ACC_TITLE;
-            }
-          // fall through
           case 800: break;
           case 355:
-            { return Pie.SHOW_DATA;
+            { yybegin(timeline); return Timeline.TIMELINE;
             }
           // fall through
           case 801: break;
           case 356:
-            { yypushstate(class_def); return CLASS_DEF;
+            { yypushstate(acc_descr); return ACC_DESCR;
             }
           // fall through
           case 802: break;
           case 357:
-            { return Flowchart.SUBGRAPH;
+            { yypushstate(acc_title); return ACC_TITLE;
             }
           // fall through
           case 803: break;
           case 358:
-            { return Sequence.ACTIVATE;
+            { return Pie.SHOW_DATA;
             }
           // fall through
           case 804: break;
           case 359:
-            { yybegin(sequence_control_id); return Sequence.CRITICAL;
+            { yypushstate(class_def); return CLASS_DEF;
             }
           // fall through
           case 805: break;
           case 360:
-            { yybegin(sequence_control_id); return Sequence.PAR_OVER;
+            { return Flowchart.SUBGRAPH;
             }
           // fall through
           case 806: break;
           case 361:
-            { return RIGHT_OF;
+            { return Sequence.ACTIVATE;
             }
           // fall through
           case 807: break;
           case 362:
-            { yypushstate(click); return CALLBACK;
+            { yybegin(sequence_control_id); return Sequence.CRITICAL;
             }
           // fall through
           case 808: break;
           case 363:
-            { return ClassDiagram.NOTE_FOR;
+            { yybegin(sequence_control_id); return Sequence.PAR_OVER;
             }
           // fall through
           case 809: break;
           case 364:
-            { yybegin(state_class_def); return CLASS_DEF;
+            { return RIGHT_OF;
             }
           // fall through
           case 810: break;
           case 365:
-            { yypopstate(); return END;
+            { yypushstate(click); return CALLBACK;
             }
           // fall through
           case 811: break;
           case 366:
-            { yybegin(gantt_value); return Gantt.EXCLUDES;
+            { return ClassDiagram.NOTE_FOR;
             }
           // fall through
           case 812: break;
           case 367:
-            { yybegin(gantt_value); return Gantt.INCLUDES;
+            { yybegin(state_class_def); return CLASS_DEF;
             }
           // fall through
           case 813: break;
           case 368:
-            { return Gantt.SATURDAY;
+            { yypopstate(); return END;
             }
           // fall through
           case 814: break;
           case 369:
-            { return Gantt.THURSDAY;
+            { yybegin(gantt_value); return Gantt.EXCLUDES;
             }
           // fall through
           case 815: break;
           case 370:
+            { yybegin(gantt_value); return Gantt.INCLUDES;
+            }
+          // fall through
+          case 816: break;
+          case 371:
+            { return Gantt.SATURDAY;
+            }
+          // fall through
+          case 817: break;
+          case 372:
+            { return Gantt.THURSDAY;
+            }
+          // fall through
+          case 818: break;
+          case 373:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 7);
             { return Requirement.DERIVES;
             }
           // fall through
-          case 816: break;
-          case 371:
+          case 819: break;
+          case 374:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 7);
             { return Requirement.REFINES;
             }
           // fall through
-          case 817: break;
-          case 372:
-            { yybegin(requirement); return Requirement.ANALYSIS;
-            }
-          // fall through
-          case 818: break;
-          case 373:
-            { return GitGraph.CHECKOUT;
-            }
-          // fall through
-          case 819: break;
-          case 374:
-            { yybegin(boundary); return C4.BOUNDARY;
-            }
-          // fall through
           case 820: break;
           case 375:
-            { yybegin(rel_index); return C4.REL_INDEX;
+            { yybegin(requirement); return Requirement.ANALYSIS;
             }
           // fall through
           case 821: break;
           case 376:
-            { yybegin(rel_b); return C4.REL_B;
+            { return GitGraph.CHECKOUT;
             }
           // fall through
           case 822: break;
           case 377:
-            { yybegin(system_db); return C4.SYSTEM_DB;
+            { yybegin(boundary); return C4.BOUNDARY;
             }
           // fall through
           case 823: break;
           case 378:
-            { return XYChart.ORIENTATION_VALUE;
+            { yybegin(rel_index); return C4.REL_INDEX;
             }
           // fall through
           case 824: break;
           case 379:
-            { yybegin (c4); return C4.C4_CONTEXT;
+            { yybegin(rel_b); return C4.REL_B;
             }
           // fall through
           case 825: break;
           case 380:
-            { yybegin (c4); return C4.C4_DYNAMIC;
+            { yybegin(system_db); return C4.SYSTEM_DB;
             }
           // fall through
           case 826: break;
           case 381:
-            { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP;
+            { return XYChart.ORIENTATION_VALUE;
             }
           // fall through
           case 827: break;
           case 382:
-            { yypushstate(direction_value); return DIRECTION;
+            { yybegin (c4); return C4.C4_CONTEXT;
             }
           // fall through
           case 828: break;
           case 383:
-            { yypushstate(link_style); return Flowchart.LINK_STYLE;
+            { yybegin (c4); return C4.C4_DYNAMIC;
             }
           // fall through
           case 829: break;
           case 384:
-            { yybegin(namespace_body); return ClassDiagram.NAMESPACE;
+            { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP;
             }
           // fall through
           case 830: break;
           case 385:
-            { yypushstate(simple_direction_value); return DIRECTION;
+            { yypushstate(direction_value); return DIRECTION;
             }
           // fall through
           case 831: break;
           case 386:
-            { return Gantt.WEDNESDAY;
+            { yypushstate(link_style); return Flowchart.LINK_STYLE;
             }
           // fall through
           case 832: break;
           case 387:
+            { yybegin(namespace_body); return ClassDiagram.NAMESPACE;
+            }
+          // fall through
+          case 833: break;
+          case 388:
+            { yypushstate(simple_direction_value); return DIRECTION;
+            }
+          // fall through
+          case 834: break;
+          case 389:
+            { return Gantt.WEDNESDAY;
+            }
+          // fall through
+          case 835: break;
+          case 390:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 8);
             { return Requirement.CONTAINS;
             }
           // fall through
-          case 833: break;
-          case 388:
+          case 836: break;
+          case 391:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 8);
             { return Requirement.VERIFIES;
             }
           // fall through
-          case 834: break;
-          case 389:
-            { return GitGraph.HIGHLIGHT;
-            }
-          // fall through
-          case 835: break;
-          case 390:
-            { yybegin(component); return C4.COMPONENT;
-            }
-          // fall through
-          case 836: break;
-          case 391:
-            { yybegin(container); return C4.CONTAINER;
-            }
-          // fall through
           case 837: break;
           case 392:
-            { return Flowchart.LINK_STYLE;
+            { return GitGraph.HIGHLIGHT;
             }
           // fall through
           case 838: break;
           case 393:
-            { yybegin(block_diagram); return Block.BLOCK_DIAGRAM;
+            { yybegin(component); return C4.COMPONENT;
             }
           // fall through
           case 839: break;
           case 394:
-            { yypushstate(autonumbers); return Sequence.AUTONUMBER;
+            { yybegin(container); return C4.CONTAINER;
             }
           // fall through
           case 840: break;
           case 395:
-            { return Sequence.DEACTIVATE;
+            { return Flowchart.LINK_STYLE;
             }
           // fall through
           case 841: break;
           case 396:
-            { yybegin(gantt_value); return Gantt.AXIS_FORMAT;
+            { yypushstate(autonumbers); return Sequence.AUTONUMBER;
             }
           // fall through
           case 842: break;
           case 397:
-            { yybegin(gantt_value); return Gantt.DATE_FORMAT;
+            { return Sequence.DEACTIVATE;
             }
           // fall through
           case 843: break;
           case 398:
+            { yybegin(gantt_value); return Gantt.AXIS_FORMAT;
+            }
+          // fall through
+          case 844: break;
+          case 399:
+            { yybegin(gantt_value); return Gantt.DATE_FORMAT;
+            }
+          // fall through
+          case 845: break;
+          case 400:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 7);
             { yybegin(req_element); return Requirement.ELEMENT;
             }
           // fall through
-          case 844: break;
-          case 399:
+          case 846: break;
+          case 401:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 9);
             { return Requirement.SATISFIES;
             }
           // fall through
-          case 845: break;
-          case 400:
-            { yybegin(requirement); return Requirement.INSPECTION;
-            }
-          // fall through
-          case 846: break;
-          case 401:
-            { yybegin(person_ext); return C4.PERSON_EXT;
-            }
-          // fall through
           case 847: break;
           case 402:
-            { yybegin(system_ext); return C4.SYSTEM_EXT;
+            { yybegin(requirement); return Requirement.INSPECTION;
             }
           // fall through
           case 848: break;
           case 403:
-            { return Quadrant.QUADRANT;
+            { yybegin(person_ext); return C4.PERSON_EXT;
             }
           // fall through
           case 849: break;
           case 404:
-            { yybegin (c4); return C4.C4_COMPONENT;
+            { yybegin(system_ext); return C4.SYSTEM_EXT;
             }
           // fall through
           case 850: break;
           case 405:
-            { yybegin (c4); return C4.C4_CONTAINER;
+            { return Quadrant.QUADRANT;
             }
           // fall through
           case 851: break;
           case 406:
-            { yybegin(sankey); return Sankey.SANKEY;
+            { yybegin (c4); return C4.C4_COMPONENT;
             }
           // fall through
           case 852: break;
           case 407:
-            { yybegin(sequence_id); return Sequence.PARTICIPANT;
+            { yybegin (c4); return C4.C4_CONTAINER;
             }
           // fall through
           case 853: break;
           case 408:
-            { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER;
+            { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM;
             }
           // fall through
           case 854: break;
           case 409:
-            { return GitGraph.CHERRY_PICK;
+            { yybegin(sequence_id); return Sequence.PARTICIPANT;
             }
           // fall through
           case 855: break;
           case 410:
-            { yybegin(component_db); return C4.COMPONENT_DB;
+            { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER;
             }
           // fall through
           case 856: break;
           case 411:
-            { yybegin(container_db); return C4.CONTAINER_DB;
+            { return GitGraph.CHERRY_PICK;
             }
           // fall through
           case 857: break;
           case 412:
-            { yybegin(system_queue); return C4.SYSTEM_QUEUE;
+            { yybegin(component_db); return C4.COMPONENT_DB;
             }
           // fall through
           case 858: break;
           case 413:
-            { return Block.INTERPOLATE;
+            { yybegin(container_db); return C4.CONTAINER_DB;
             }
           // fall through
           case 859: break;
           case 414:
-            { yybegin (c4); return C4.C4_DEPLOYMENT;
+            { yybegin(system_queue); return C4.SYSTEM_QUEUE;
             }
           // fall through
           case 860: break;
           case 415:
-            { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM;
+            { return Block.INTERPOLATE;
             }
           // fall through
           case 861: break;
           case 416:
-            { yybegin(state_diagram); return StateDiagram.STATE_DIAGRAM;
+            { yybegin (c4); return C4.C4_DEPLOYMENT;
             }
           // fall through
           case 862: break;
           case 417:
-            { yybegin(xy_chart); return XYChart.XY_CHART;
+            { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM;
             }
           // fall through
           case 863: break;
           case 418:
-            { yybegin(gantt_value); return Gantt.TICK_INTERVAL;
+            { yybegin(state_diagram); return StateDiagram.STATE_DIAGRAM;
             }
           // fall through
           case 864: break;
           case 419:
-            { yybegin(requirement_constant_value); return Requirement.VERIFY_METHOD;
+            { yybegin(gantt_value); return Gantt.TICK_INTERVAL;
             }
           // fall through
           case 865: break;
           case 420:
-            { yybegin(system_ext_db); return C4.SYSTEM_EXT_DB;
+            { yybegin(requirement_constant_value); return Requirement.VERIFY_METHOD;
             }
           // fall through
           case 866: break;
           case 421:
-            { yybegin(quadrant); return Quadrant.QUADRANT_CHART;
+            { yybegin(system_ext_db); return C4.SYSTEM_EXT_DB;
             }
           // fall through
           case 867: break;
           case 422:
-            { yybegin(requirement); return Requirement.DEMONSTRATION;
+            { yybegin(quadrant); return Quadrant.QUADRANT_CHART;
             }
           // fall through
           case 868: break;
           case 423:
-            { yybegin(component_ext); return C4.COMPONENT_EXT;
+            { yybegin(requirement); return Requirement.DEMONSTRATION;
             }
           // fall through
           case 869: break;
           case 424:
-            { yybegin(container_ext); return C4.CONTAINER_EXT;
+            { yybegin(component_ext); return C4.COMPONENT_EXT;
             }
           // fall through
           case 870: break;
           case 425:
+            { yybegin(container_ext); return C4.CONTAINER_EXT;
+            }
+          // fall through
+          case 871: break;
+          case 426:
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL, zzStartRead, 11);
             { yybegin(requirement); return Requirement.REQUIREMENT;
             }
           // fall through
-          case 871: break;
-          case 426:
-            { yybegin(component_queue); return C4.COMPONENT_QUEUE;
-            }
-          // fall through
           case 872: break;
           case 427:
-            { yybegin(container_queue); return C4.CONTAINER_QUEUE;
+            { yybegin(component_queue); return C4.COMPONENT_QUEUE;
             }
           // fall through
           case 873: break;
           case 428:
-            { yybegin(update_rel_style); return C4.UPDATE_REL_STYLE;
+            { yybegin(container_queue); return C4.CONTAINER_QUEUE;
             }
           // fall through
           case 874: break;
           case 429:
-            { yybegin(sequence); return Sequence.SEQUENCE;
+            { yybegin(update_rel_style); return C4.UPDATE_REL_STYLE;
             }
           // fall through
           case 875: break;
           case 430:
-            { yybegin(component_ext_db); return C4.COMPONENT_EXT_DB;
+            { yybegin(sequence); return Sequence.SEQUENCE;
             }
           // fall through
           case 876: break;
           case 431:
-            { yybegin(container_ext_db); return C4.CONTAINER_EXT_DB;
+            { yybegin(component_ext_db); return C4.COMPONENT_EXT_DB;
             }
           // fall through
           case 877: break;
           case 432:
-            { yybegin(system_ext_queue); return C4.SYSTEM_EXT_QUEUE;
+            { yybegin(container_ext_db); return C4.CONTAINER_EXT_DB;
             }
           // fall through
           case 878: break;
           case 433:
-            { yybegin(system_boundary); return C4.SYSTEM_BOUNDARY;
+            { yybegin(system_ext_queue); return C4.SYSTEM_EXT_QUEUE;
             }
           // fall through
           case 879: break;
           case 434:
-            { return Gantt.INCLUSIVE_END_DATES;
+            { yybegin(system_boundary); return C4.SYSTEM_BOUNDARY;
             }
           // fall through
           case 880: break;
           case 435:
-            { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM;
+            { return Gantt.INCLUSIVE_END_DATES;
             }
           // fall through
           case 881: break;

@@ -1,0 +1,8 @@
+Sankey.SANKEY ('sankey')
+EOL ('\n')
+WHITE_SPACE ('  ')
+Sankey.SANKEY_TEXT ('a')
+COMMA (',')
+Sankey.SANKEY_TEXT ('b')
+COMMA (',')
+Sankey.SANKEY_TEXT ('1')
