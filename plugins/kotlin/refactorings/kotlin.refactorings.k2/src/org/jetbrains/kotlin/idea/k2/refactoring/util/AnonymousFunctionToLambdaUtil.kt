@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.openapi.util.Key
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -146,6 +149,7 @@ object AnonymousFunctionToLambdaUtil {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private class ReturnSaver(val function: KtNamedFunction) {
         companion object {
             private val RETURN_KEY = Key<Unit>("RETURN_KEY")
@@ -159,7 +163,7 @@ object AnonymousFunctionToLambdaUtil {
                 val functionSymbol = function.symbol
                 val body = function.bodyExpression!!
                 body.forEachDescendantOfType<KtReturnExpression> {
-                    if (it.targetSymbol == functionSymbol) {
+                    if (it.resolveSymbol() == functionSymbol) {
                         hasReturn = true
                         it.putCopyableUserData(RETURN_KEY, Unit)
                     }

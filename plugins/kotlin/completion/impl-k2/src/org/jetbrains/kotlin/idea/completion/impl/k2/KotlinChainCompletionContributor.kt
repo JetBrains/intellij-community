@@ -11,7 +11,8 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.references.mainReference

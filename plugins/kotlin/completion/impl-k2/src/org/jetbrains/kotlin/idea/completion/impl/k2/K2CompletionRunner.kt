@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -252,7 +253,8 @@ internal fun createExtensionChecker(
     }
 }
 
-private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
+context(session: KaSession)
+private fun <P : KotlinRawPositionContext> createCommonSectionData(
     completionContext: K2CompletionContext<P>,
 ): K2CompletionSectionCommonData<P>? {
     CompletionCommonSectionDataSetupEvent().timeEvent {
@@ -270,7 +272,7 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
             visibilityChecker = visibilityChecker,
             symbolFromIndexProvider = symbolFromIndexProvider,
             importStrategyDetector = importStrategyDetector,
-            session = this@createCommonSectionData,
+            session = useSiteSession,
         )
     }
 }

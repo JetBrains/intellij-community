@@ -13,11 +13,13 @@ import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor

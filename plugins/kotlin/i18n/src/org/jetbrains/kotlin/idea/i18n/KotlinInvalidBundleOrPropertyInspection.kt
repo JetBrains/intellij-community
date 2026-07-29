@@ -11,9 +11,10 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.references.PropertyReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil

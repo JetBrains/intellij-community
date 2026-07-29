@@ -16,7 +16,7 @@ import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction

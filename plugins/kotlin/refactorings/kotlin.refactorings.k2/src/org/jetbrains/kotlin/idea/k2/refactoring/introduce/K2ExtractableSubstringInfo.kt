@@ -2,11 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory

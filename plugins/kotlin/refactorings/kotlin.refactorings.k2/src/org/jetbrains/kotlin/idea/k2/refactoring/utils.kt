@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.RenamerFactory
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName

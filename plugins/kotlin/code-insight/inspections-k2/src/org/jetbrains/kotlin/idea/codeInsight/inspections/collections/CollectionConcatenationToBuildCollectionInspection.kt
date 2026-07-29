@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
@@ -146,10 +147,10 @@ class CollectionConcatenationToBuildCollectionInspection :
         val expressionToConvert = element.safeDeparenthesize().expressionToConvert()
         val expressionType = expressionToConvert.expressionType ?: return null
         val collectionType = when {
-            expressionType.isClassType(StandardClassIds.List) -> Context.CollectionType.List
-            expressionType.isClassType(StandardClassIds.Set) -> Context.CollectionType.Set
-            else -> return null
-        }
+            expressionType.classId == StandardClassIds.List -> Context.CollectionType.List
+            expressionType.classId == StandardClassIds.Set -> Context.CollectionType.Set
+            else -> null
+        } ?: return null
         if (expressionToConvert !is KtBinaryExpression && expressionToConvert.isBuildCollectionCall(collectionType)) return null
 
         val operations = when (expressionToConvert) {

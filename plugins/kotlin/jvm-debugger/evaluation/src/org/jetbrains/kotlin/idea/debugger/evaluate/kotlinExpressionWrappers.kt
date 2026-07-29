@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats

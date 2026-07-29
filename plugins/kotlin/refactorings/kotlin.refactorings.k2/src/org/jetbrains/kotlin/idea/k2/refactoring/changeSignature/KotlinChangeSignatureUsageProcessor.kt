@@ -23,13 +23,14 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -409,7 +410,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val brokenSignature = allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
                     analyze(element) {
-                        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                             .any { it.diagnosticClass == KaFirDiagnostic.InapplicableOperatorModifier::class }
                     }
                 }

@@ -9,9 +9,11 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
@@ -19,6 +21,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -46,6 +50,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
@@ -161,9 +166,9 @@ internal fun ExtractionData.inferParametersInfo(
                 }
             }
             if (call is KaErrorCallInfo) {
-                val diagnostics = (referenceExpression.parent as? KtCallExpression ?: referenceExpression).diagnostics(
-                        KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-                    ).takeIf { it.isNotEmpty() } ?: listOf(call.diagnostic)
+                val diagnostics = (referenceExpression.parent as? KtCallExpression ?: referenceExpression).directDiagnostics(
+                    KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+                ).takeIf { it.isNotEmpty() } ?: listOf(call.diagnostic)
                 diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
                     val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
                     if (parameter != null) {

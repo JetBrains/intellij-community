@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf

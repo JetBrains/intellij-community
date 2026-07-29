@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -127,8 +128,8 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
 
     private fun KaSession.isApplicablePlusAssign(symbol: KaFunctionSymbol): Boolean {
         if (symbol.callableId != plusAssignCallableId) return false
-        if (symbol.receiverType?.isClassType(StandardClassIds.MutableCollection) != true) return false
-        if (symbol.valueParameters.singleOrNull()?.returnType?.isClassType(StandardClassIds.Iterable) != true) return false
+        if (symbol.receiverType?.classId != StandardClassIds.MutableCollection) return false
+        if (symbol.valueParameters.singleOrNull()?.returnType?.classId != StandardClassIds.Iterable) return false
         return true
     }
 

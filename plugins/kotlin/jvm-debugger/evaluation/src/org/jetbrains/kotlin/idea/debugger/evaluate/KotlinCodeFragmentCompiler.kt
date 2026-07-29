@@ -17,13 +17,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.compile.KaCodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptions
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationTarget
 import org.jetbrains.kotlin.analysis.api.compilation.isClassFile
 import org.jetbrains.kotlin.analysis.api.compilation.compile
+import org.jetbrains.kotlin.analysis.api.compilation.createCompilationOptions
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter

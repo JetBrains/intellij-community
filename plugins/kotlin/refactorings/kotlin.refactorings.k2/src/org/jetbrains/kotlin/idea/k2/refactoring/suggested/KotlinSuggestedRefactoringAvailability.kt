@@ -14,19 +14,18 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -83,8 +82,6 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     private data class TypeInfo(val typeFQN: String, val typeError: Boolean)
     private data class SignatureTypes(val returnType: TypeInfo, val parameterTypes: List<TypeInfo>, val receiverType: TypeInfo?)
 
-
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun signatureTypes(declaration: KtCallableDeclaration): SignatureTypes? {
         if ((declaration as? KtParameter)?.isFunctionTypeParameter == true) return null

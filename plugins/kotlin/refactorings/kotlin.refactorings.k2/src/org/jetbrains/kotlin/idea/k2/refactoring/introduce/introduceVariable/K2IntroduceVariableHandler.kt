@@ -32,24 +32,27 @@ import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.types.builtinTypes
-import org.jetbrains.kotlin.analysis.api.types.isDenotable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.isDenotable
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -201,7 +204,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 allowAnalysisFromWriteAction {
                     analyze(property) {
                         if (initializer is KtObjectLiteralExpression &&
-                            property.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+                            property.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
                                 it is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
                             }
                         ) {
@@ -667,7 +670,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         if (call.typeArgumentList != null) return false
         val callee = call.calleeExpression ?: return false
         val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            callee.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            callee.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         }
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }

@@ -13,9 +13,10 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange

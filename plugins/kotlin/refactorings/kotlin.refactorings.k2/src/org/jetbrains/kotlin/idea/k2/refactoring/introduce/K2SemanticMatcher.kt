@@ -7,11 +7,11 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDestructuringDeclarationSymbol
@@ -955,7 +956,7 @@ object K2SemanticMatcher {
 
         if (call == null) return allArguments
 
-        val signature = call.partiallyAppliedSymbol.signature
+        val signature = call.signature
         val mappedArguments = mapArgumentsToParameterIndices(sourceElement = this, signature, call.valueArgumentMapping)
         val sortedMappedArguments = mappedArguments.toList()
             .sortedWith(compareBy({ (_, parameterIndex) -> parameterIndex }, { (argument, _) -> argument.startOffset }))

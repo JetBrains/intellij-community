@@ -15,11 +15,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
 
-fun KaSession.isBackingFieldRequired(property: KtProperty): Boolean {
+context(session: KaSession)
+fun isBackingFieldRequired(property: KtProperty): Boolean {
     val getter = property.getter
     val resolvedGetter = getter?.symbol
     val setter = property.setter
