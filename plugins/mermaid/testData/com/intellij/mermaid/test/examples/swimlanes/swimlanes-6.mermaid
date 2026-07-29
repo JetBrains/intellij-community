@@ -1,0 +1,17 @@
+swimlane-beta LR
+  subgraph Customer
+    submit[Submit order]
+    confirm[Confirm delivery]
+  end
+
+  subgraph Store
+    check[Check order]
+    pack[Pack items]
+  end
+
+  subgraph Carrier
+    collect[Collect package]
+    deliver[Deliver package]
+  end
+
+  submit --> check --> pack --> collect --> deliver --> confirm

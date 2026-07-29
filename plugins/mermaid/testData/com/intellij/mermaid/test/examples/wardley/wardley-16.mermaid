@@ -1,9 +1,12 @@
 wardley-beta
-title Custom Widths
+title Forces
 
-evolution Genesis@0.2 -> Custom@0.4 -> Product@0.75 -> Commodity@1.0
+component Legacy [0.20, 0.85]
+component Modern [0.55, 0.60]
+component AI [0.70, 0.35]
 
-component Novel [0.75, 0.15]
-component Bespoke [0.70, 0.35]
-component Product [0.65, 0.65]
-component Utility [0.60, 0.90]
+Legacy -> Modern
+Modern -> AI
+
+accelerator "AI Adoption" [0.55, 0.25]
+deaccelerator "Legacy Constraints" [0.15, 0.75]

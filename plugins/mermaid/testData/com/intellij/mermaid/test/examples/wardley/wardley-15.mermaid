@@ -1,9 +1,14 @@
 wardley-beta
-title Dual Label Stages
+title Annotations
 
-evolution Genesis / Concept -> Custom / Emerging -> Product / Converging -> Commodity / Accepted
+component API [0.60, 0.70]
+component Cache [0.50, 0.55]
+component Database [0.40, 0.40]
 
-component Novel Idea [0.05, 0.20]
-component Custom Solution [0.35, 0.50]
-component Product [0.65, 0.70]
-component Utility [0.95, 0.90]
+API -> Cache
+Cache -> Database
+
+annotations [0.10, 0.90]
+annotation 1,[0.60, 0.65] "Critical component"
+annotation 2,[0.50, 0.50] "Performance layer"
+annotation 3,[0.40, 0.35] "Data persistence"

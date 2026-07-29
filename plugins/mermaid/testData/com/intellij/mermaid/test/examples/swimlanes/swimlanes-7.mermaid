@@ -1,0 +1,20 @@
+swimlane-beta LR
+  subgraph Applicant
+    apply[Submit application]
+    sign[Sign agreement]
+  end
+
+  subgraph Reviewer
+    screen[Screen application]
+    decide{Approved?}
+  end
+
+  subgraph System
+    create[Create account]
+    notify[Send welcome email]
+  end
+
+  apply -->|Application received| screen
+  screen --> decide
+  decide -->|Approved| create --> notify --> sign
+  decide -->|Needs changes| apply

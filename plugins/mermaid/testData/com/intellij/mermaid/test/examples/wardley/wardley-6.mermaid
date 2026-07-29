@@ -1,10 +1,7 @@
 wardley-beta
-title Anchors
+title Inertia
 
-anchor Customer [0.90, 0.95]
-anchor Business [0.85, 0.90]
+component Legacy System [0.45, 0.40] (inertia)
+component New Platform [0.65, 0.45]
 
-component Service [0.70, 0.75]
-
-Customer -> Service
-Business -> Service
+Legacy System -> New Platform

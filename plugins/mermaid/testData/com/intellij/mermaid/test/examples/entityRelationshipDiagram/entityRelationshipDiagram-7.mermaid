@@ -1,9 +1,6 @@
 erDiagram
-    p[Person] {
+    PERSON {
         string firstName
+        string? middleName
         string lastName
     }
-    a["Customer Account"] {
-        string email
-    }
-    p ||--o| a : has

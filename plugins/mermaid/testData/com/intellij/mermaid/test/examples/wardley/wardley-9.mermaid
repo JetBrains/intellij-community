@@ -1,6 +1,10 @@
-A -> B              # Basic dependency
-A -> B; label       # With annotation
-A +> B              # Flow (with arrow marker)
-A +< B              # Reverse flow
-A +<> B             # Bi-directional flow
-A +'text'> B        # Labeled flow
+wardley-beta
+title Evolution
+
+component Database [0.40, 0.50]
+component API [0.55, 0.60]
+
+Database -> API
+
+evolve Database 0.75
+evolve API 0.80
