@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -200,6 +201,52 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
     assertNotNull(hintComponentAfter.getComponentHint());
     assertTrue("Shown:"+shown+"; hint:"+hintComponentAfter.getComponentHint(), shown.contains(hintComponentAfter.getComponentHint()));
     assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
+  }
+
+  public void testLastIntentionHintMustBeDroppedAsSoonAsItIsDisposed() {
+    IntentionHintComponent hintComponent = showBulb();
+
+    // dispose the hint bypassing IntentionsUIImpl, as e.g. IntentionHintComponent.IntentionPopup.cancelled() does;
+    // the last hint reference must not outlive the component, otherwise it would retain the released editor (IJPL-251590)
+    Disposer.dispose(hintComponent);
+    assertNull(myDaemonCodeAnalyzer.getLastIntentionHint());
+  }
+
+  public void testLastIntentionHintMustBeDroppedForItsOwnEditorOnlyAndSurviveReleaseOfUnrelatedEditor() {
+    IntentionHintComponent hintComponent = showBulb();
+
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    Editor unrelated = editorFactory.createEditor(editorFactory.createDocument("unrelated"), getProject());
+    try {
+      // DaemonListeners calls this on editorReleased; the hint of another editor must stay (EA-627551)
+      IntentionsUI.getInstance(getProject()).invalidateForEditor(unrelated);
+      assertSame(hintComponent, myDaemonCodeAnalyzer.getLastIntentionHint());
+      assertFalse(hintComponent.isDisposed());
+    }
+    finally {
+      editorFactory.releaseEditor(unrelated);
+    }
+
+    IntentionsUI.getInstance(getProject()).invalidateForEditor(getEditor());
+    assertNull(myDaemonCodeAnalyzer.getLastIntentionHint());
+    assertTrue(hintComponent.isDisposed());
+  }
+
+  private @NotNull IntentionHintComponent showBulb() {
+    @Language("JAVA")
+    String text = "class S { ArrayList<caret>XXX x;}";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+
+    assertNotEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+
+    IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
+    assertNotNull(hintComponent);
+    assertFalse(hintComponent.isDisposed());
+    return hintComponent;
   }
 
   public void testLightBulbDoesNotUpdateIntentionsInEDT() {

@@ -66,6 +66,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.ExperimentalUI;
@@ -261,6 +262,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (isDisposed() || !isVisible() || editor != myEditor) return false;
     hide();
     return true;
+  }
+
+  /**
+   * @return whether this component was created for the supplied editor;
+   * for a component created for an injected editor, its host editor matches as well
+   */
+  @ApiStatus.Internal
+  public boolean isForEditor(@NotNull Editor editor) {
+    return editor == myEditor || editor == InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
   }
 
   public boolean hasVisibleLightBulbOrPopup() {
