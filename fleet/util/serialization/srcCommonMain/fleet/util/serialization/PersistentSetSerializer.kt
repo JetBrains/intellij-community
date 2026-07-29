@@ -2,13 +2,13 @@
 package fleet.util.serialization
 
 import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.toPersistentHashSet
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.SetSerializer
 
 class PersistentSetSerializer<T>(elementSer: KSerializer<T>): DataSerializer<PersistentSet<T>, Set<T>>(SetSerializer(elementSer)) {
   override fun fromData(data: Set<T>): PersistentSet<T> {
-    return data.toPersistentHashSet()
+    return data.toPersistentSet()
   }
 
   override fun toData(value: PersistentSet<T>): Set<T> {
