@@ -41,14 +41,4 @@ class KotlinSuppressActionsSortTest {
 
     private fun suppressPriorities(element: PsiElement) =
         KotlinInspectionSuppressor().getSuppressActions(element, "unused").map { it.priority }
-
-    companion object {
-        @JvmStatic
-        @AfterAll
-        fun cleanupProject() {
-            runInEdtAndGet {
-                LeakHunter.cleanupAllProjects()
-            }
-        }
-    }
 }
