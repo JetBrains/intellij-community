@@ -43,6 +43,10 @@ data class WorkspaceSymbolParams(
     val query: String,
     override val partialResultToken: ProgressToken? = null,
     override val workDoneToken: ProgressToken? = null,
+    /**
+     * When true, return symbols from the project only.
+     */
+    val excludeLibraries: Boolean? = null,
 ) : WorkDoneProgressParams, PartialResultParams
 
 
