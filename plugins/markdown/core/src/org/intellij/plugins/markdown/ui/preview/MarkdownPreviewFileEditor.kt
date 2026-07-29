@@ -221,9 +221,9 @@ class MarkdownPreviewFileEditor(
   }
 
   private suspend fun doUpdateHtml() {
-    logger.info("MarkdownPreviewFileEditor: updateHtml")
+    logger.debug("MarkdownPreviewFileEditor: updateHtml")
     val panel = this.panel ?: run {
-      logger.warn("MarkdownPreviewFileEditor: panel is null, cannot update preview")
+      logger.debug("MarkdownPreviewFileEditor: panel is null, cannot update preview")
       return
     }
 
@@ -245,7 +245,7 @@ class MarkdownPreviewFileEditor(
         val textPreprocessor = retrievePanelProvider(MarkdownSettings.getInstance(project)).sourceTextPreprocessor
         textPreprocessor.preprocessText(project, document, file)
       }
-      logger.info("MarkdownPreviewFileEditor: readAction finished")
+      logger.debug("MarkdownPreviewFileEditor: readAction finished")
       text
     }
 
@@ -257,14 +257,14 @@ class MarkdownPreviewFileEditor(
     writeIntentReadAction {
       val offset = editor.caretModel.offset
       val line = editor.document.getLineNumber(offset)
-      logger.info("MarkdownPreviewFileEditor: setContent length: ${lastRenderedContent.length}, offset: $offset, line: $line")
+      logger.debug("MarkdownPreviewFileEditor: setContent length: ${lastRenderedContent.length}, offset: $offset, line: $line")
       if (panel is MarkdownContentPanel) {
         panel.setMarkdown(lastRenderedContent, offset, line, file)
       }
       else {
         panel.setHtml(lastRenderedContent, offset, line, file)
       }
-      logger.info("MarkdownPreviewFileEditor: setContent finished")
+      logger.debug("MarkdownPreviewFileEditor: setContent finished")
     }
   }
 
