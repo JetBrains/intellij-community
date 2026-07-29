@@ -8,8 +8,10 @@ import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReference
+import org.jetbrains.annotations.ApiStatus
 
-internal class UnresolvedLinkLabelInspection: LocalInspectionTool() {
+@ApiStatus.Internal
+class UnresolvedLinkLabelInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object: MarkdownElementVisitor() {
       override fun visitElement(element: PsiElement) {
