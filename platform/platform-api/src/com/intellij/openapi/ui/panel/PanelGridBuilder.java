@@ -35,8 +35,7 @@ public class PanelGridBuilder implements PanelBuilder {
    * Allow resizing vertically all panel grid. By default all rows take only preferred height being
    * anchored to the top of the panel and don't resize vertically. All free space is filled with a
    * blank area.
-   * This setting is useful when one or more rows are resizable also. To turn on row vertical
-   * resizing use {@link ComponentPanelBuilder#resizeX(boolean)}.
+   * This setting is useful when one or more rows are resizable also.
    *
    * @return <code>this</code>
    */

@@ -303,7 +303,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       gc.gridy++;
       JButton abracadabraButton = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
-      topPanel.add(UI.PanelFactory.panel(abracadabraButton).resizeX(false).createPanel(), gc);
+      topPanel.add(UI.PanelFactory.panel(abracadabraButton).createPanel(), gc);
 
       try {
         new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).

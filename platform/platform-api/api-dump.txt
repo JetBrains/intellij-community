@@ -4453,7 +4453,7 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - gridWidth():I
 - moveCommentRight():com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - moveLabelOnTop():com.intellij.openapi.ui.panel.ComponentPanelBuilder
-- resizeX(Z):com.intellij.openapi.ui.panel.ComponentPanelBuilder
+- b:resizeX(Z):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - resizeY(Z):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withComment(java.lang.String):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withComment(java.lang.String,Z):com.intellij.openapi.ui.panel.ComponentPanelBuilder
