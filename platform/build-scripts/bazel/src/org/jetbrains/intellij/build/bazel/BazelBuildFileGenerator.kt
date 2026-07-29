@@ -1238,6 +1238,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("x_allow_unstable_dependencies", true)
     }
   }
+  //x_compiler_plugin_order: -Xcompiler-plugin-order=<pluginId1>><pluginId2> execution order constraints.
+  handleArgument(K2JVMCompilerArguments::pluginOrderConstraints) { pluginOrderConstraints ->
+    if (pluginOrderConstraints.isNotEmpty()) {
+      options.put("x_compiler_plugin_order", pluginOrderConstraints.asList())
+    }
+  }
   //x_consistent_data_class_copy_visibility
   handleArgument(K2JVMCompilerArguments::consistentDataClassCopyVisibility) {
     if (it) {
