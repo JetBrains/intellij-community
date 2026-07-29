@@ -1,0 +1,10 @@
+eventmodeling
+
+timeframe 01 ui CartUI
+timeframe 02 command AddItem
+timeframe 03 event ItemAdded
+
+resetframe 04 event External.InventoryChanged
+timeframe 05 processor InventoryProcessor
+timeframe 06 command ChangeInventory
+timeframe 07 event Cart.InventoryChanged

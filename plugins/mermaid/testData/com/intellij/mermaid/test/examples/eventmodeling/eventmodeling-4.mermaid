@@ -1,0 +1,25 @@
+eventmodeling
+
+timeframe 01 ui CartUI
+timeframe 02 command AddItem [[AddItem01]]
+timeframe 03 event ItemAdded [[ItemAdded]]
+timeframe 04 command AddItem [[AddItem02]]
+timeframe 05 event ItemAdded [[ItemAdded]]
+
+data AddItem01 {
+  description: 'john'
+  image: 'avatar_john'
+  price: 20.4
+}
+
+data AddItem02 {
+  description: 'jack'
+  image: 'avatar_jack'
+  price: 12.5
+}
+
+data ItemAdded {
+  description: string
+  image: string
+  price: number
+}
