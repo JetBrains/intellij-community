@@ -51,17 +51,17 @@ class ElfTest {
   }
 
   @Test
-  fun `psi interaction is allowed outside elf scope`() = runOnUi {
-    assertTrue(isPsiInteractionAllowed())
+  fun `unsupported operation guard is inactive outside elf scope`() = runOnUi {
+    assertFalse(isUnsupportedOperationGuardActive())
   }
 
   @Test
-  fun `psi interaction is blocked inside elf scope`() = runOnUi {
-    assertTrue(isPsiInteractionAllowed())
+  fun `unsupported operation guard is active inside elf scope`() = runOnUi {
+    assertFalse(isUnsupportedOperationGuardActive())
     withElfScope {
-      assertFalse(isPsiInteractionAllowed())
+      assertTrue(isUnsupportedOperationGuardActive())
     }
-    assertTrue(isPsiInteractionAllowed())
+    assertFalse(isUnsupportedOperationGuardActive())
   }
 
   private fun runOnUi(action: () -> Unit) {
@@ -70,8 +70,8 @@ class ElfTest {
     }
   }
 
-  private fun isPsiInteractionAllowed(): Boolean {
-    return Elf.getElf().isPsiInteractionAllowed()
+  private fun isUnsupportedOperationGuardActive(): Boolean {
+    return Elf.getElf().isUnsupportedOperationGuardActive()
   }
 
   private fun isInElfScope(): Boolean {

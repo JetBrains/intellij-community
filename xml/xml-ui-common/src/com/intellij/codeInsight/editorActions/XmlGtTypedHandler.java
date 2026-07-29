@@ -41,7 +41,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
   public @NotNull Result beforeCharTyped(final char c, final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, final @NotNull FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
-      if (!Elf.getElf().isPsiInteractionAllowed()) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
         // commitDocument is not supported yet for lock-free typing
         return Result.CONTINUE;
       }

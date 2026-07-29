@@ -25,11 +25,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * This API is intentionally a no-op when [ElfFeatureFlag] is disabled or when the
  * platform implementation is not available. In that mode [getElfDocument] and
  * [getRealDocument] return the original document, [withElfScope] simply runs the
- * action, and PSI interaction is allowed.
+ * action, and the unsupported-operation guard is never active.
  *
- * The current implementation supports only pure text editing. Code that needs PSI
- * or committed document semantics should check [isPsiInteractionAllowed] before
- * touching PSI from typing-time code.
+ * The current implementation supports only pure text editing. Code that needs
+ * operations requiring locking (PSI, workspace model, virtual files, etc.) should
+ * check [isUnsupportedOperationGuardActive] before performing them from typing-time code.
  */
 interface Elf {
 
@@ -60,13 +60,18 @@ interface Elf {
   fun isInElfScope(): Boolean
 
   /**
-   * Returns whether typing-time code may interact with PSI in the current context.
+   * Returns `true` when the current execution is inside lock-free typing and must not
+   * call operations that are not supported there yet.
    *
-   * This is currently `false` inside an elf scope because lock-free PSI is not fully
-   * integrated yet. Callers that need PSI should skip their smart behavior instead
-   * of forcing document commit or PSI access from the lock-free typing path.
+   * Some operations require locking, so they cannot be used during lock-free typing:
+   * PSI, document commit, workspace model, virtual files, etc. Callers should check
+   * this guard and skip their smart behavior instead of performing such operations
+   * from the lock-free typing path.
+   *
+   * This guard is temporary and will be removed once all operations are supported
+   * or reworked for lock-free typing.
    */
-  fun isPsiInteractionAllowed(): Boolean
+  fun isUnsupportedOperationGuardActive(): Boolean
 
   /**
    * Returns the UI-side elf document corresponding to [document], or [document]
@@ -140,8 +145,8 @@ private object OffDuty : Elf {
     return false
   }
 
-  override fun isPsiInteractionAllowed(): Boolean {
-    return true
+  override fun isUnsupportedOperationGuardActive(): Boolean {
+    return false
   }
 
   override fun getElfDocument(document: Document): Document {

@@ -82,12 +82,12 @@ class ElfDocumentTest {
   }
 
   @Test
-  fun `test psi interaction is only blocked inside elf scope`() = runOnUi {
-    assertTrue(Elf.getElf().isPsiInteractionAllowed())
+  fun `test unsupported operation guard is only active inside elf scope`() = runOnUi {
+    assertFalse(Elf.getElf().isUnsupportedOperationGuardActive())
     withElfScope {
-      assertFalse(Elf.getElf().isPsiInteractionAllowed())
+      assertTrue(Elf.getElf().isUnsupportedOperationGuardActive())
     }
-    assertTrue(Elf.getElf().isPsiInteractionAllowed())
+    assertFalse(Elf.getElf().isUnsupportedOperationGuardActive())
   }
 
   @Test

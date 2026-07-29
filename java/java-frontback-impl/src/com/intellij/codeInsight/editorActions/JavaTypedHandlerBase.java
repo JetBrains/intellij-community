@@ -227,7 +227,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
           return Result.STOP;
         }
       }
-      if (!Elf.getElf().isPsiInteractionAllowed()) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
         // commitDocument is not supported yet for lock-free typing
         return Result.CONTINUE;
       }
@@ -277,7 +277,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   private static boolean isAtTopLevelInClassBody(int offset, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
       // commitDocument is not supported yet for lock-free typing
       return false;
     }
@@ -451,7 +451,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       int line = document.getLineNumber(offset);
       int lineStart = document.getLineStartOffset(line);
       if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
-        if (!Elf.getElf().isPsiInteractionAllowed()) {
+        if (Elf.getElf().isUnsupportedOperationGuardActive()) {
           // commitDocument is not supported yet for lock-free typing
           return false;
         }

@@ -49,8 +49,8 @@ internal class ElfImpl : Elf {
     return inElfScope && EDT.isCurrentThreadEdt()
   }
 
-  override fun isPsiInteractionAllowed(): Boolean {
-    return !isInElfScope() || isLockFreePsiSupported()
+  override fun isUnsupportedOperationGuardActive(): Boolean {
+    return isInElfScope()
   }
 
   override fun getElfDocument(document: Document): Document {
@@ -135,11 +135,6 @@ internal class ElfImpl : Elf {
     if (!isInElfScope()) {
       ThreadingAssertions.assertWriteAccess()
     }
-  }
-
-  private fun isLockFreePsiSupported(): Boolean {
-    // TODO: integrate new mvcc psi
-    return false
   }
 
   companion object {

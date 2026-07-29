@@ -98,7 +98,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final Editor editor = lookup.getEditor();
     final int offset = editor.getCaretModel().getOffset();
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
       // commitDocument is not supported yet for lock-free typing
       return false;
     }
