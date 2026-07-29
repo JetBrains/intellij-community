@@ -14,6 +14,9 @@ public interface MermaidClassBody extends MermaidDiagramBlock {
   List<MermaidAnnotationStatement> getAnnotationStatementList();
 
   @NotNull
+  List<MermaidClassDefStatement> getClassDefStatementList();
+
+  @NotNull
   List<MermaidClassDiagramClickStatement> getClassDiagramClickStatementList();
 
   @NotNull

@@ -10,4 +10,7 @@ public interface MermaidNamespaceHeader extends MermaidPsiElement {
   @NotNull
   MermaidNamespaceIdentifier getNamespaceIdentifier();
 
+  @Nullable
+  MermaidNamespaceLabel getNamespaceLabel();
+
 }

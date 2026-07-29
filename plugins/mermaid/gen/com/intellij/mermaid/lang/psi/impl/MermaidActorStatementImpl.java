@@ -39,4 +39,10 @@ public class MermaidActorStatementImpl extends ASTWrapperPsiElement implements M
     return findChildByClass(MermaidIdAlias.class);
   }
 
+  @Override
+  @Nullable
+  public MermaidMetadata getMetadata() {
+    return findChildByClass(MermaidMetadata.class);
+  }
+
 }

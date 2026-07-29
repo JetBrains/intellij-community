@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface MermaidNodeMetadata extends MermaidPsiElement {
+public interface MermaidNamespaceLabel extends MermaidPsiElement {
 
   @NotNull
-  List<MermaidMetadataEntry> getMetadataEntryList();
+  MermaidString getString();
 
 }

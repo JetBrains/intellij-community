@@ -1,6 +1,8 @@
 package com.intellij.mermaid.lang.parser
 
 class SequenceTest : MermaidParserTestCase("sequence") {
+  fun `test participant metadata`() = doTest(true)
+
   fun `test simple sequence`() = doTest(true)
 
   fun `test sequence with short activations`() = doTest(true)

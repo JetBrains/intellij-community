@@ -11,14 +11,14 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidClassHeaderImpl extends ASTWrapperPsiElement implements MermaidClassHeader {
+public class MermaidNamespaceLabelImpl extends ASTWrapperPsiElement implements MermaidNamespaceLabel {
 
-  public MermaidClassHeaderImpl(@NotNull ASTNode node) {
+  public MermaidNamespaceLabelImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitClassHeader(this);
+    visitor.visitNamespaceLabel(this);
   }
 
   @Override
@@ -28,27 +28,9 @@ public class MermaidClassHeaderImpl extends ASTWrapperPsiElement implements Merm
   }
 
   @Override
-  @Nullable
-  public MermaidAnnotation getAnnotation() {
-    return findChildByClass(MermaidAnnotation.class);
-  }
-
-  @Override
   @NotNull
-  public MermaidClassDiagramIdentifier getClassDiagramIdentifier() {
-    return findNotNullChildByClass(MermaidClassDiagramIdentifier.class);
-  }
-
-  @Override
-  @Nullable
-  public MermaidClassLabel getClassLabel() {
-    return findChildByClass(MermaidClassLabel.class);
-  }
-
-  @Override
-  @Nullable
-  public MermaidGeneric getGeneric() {
-    return findChildByClass(MermaidGeneric.class);
+  public MermaidString getString() {
+    return findNotNullChildByClass(MermaidString.class);
   }
 
 }

@@ -54,7 +54,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states journey,section_task, journey_section, journey_section_title
 
-%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id, node_metadata
+%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id, metadata
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
@@ -279,7 +279,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   // `@` is not part of an identifier in a flowchart body: it only ever introduces node metadata
   // (`A@{ ... }`, mermaid 11.3+) or binds an edge id to its arrow (`A e1@--> B`, 11.5+). Excluding it
   // from ID keeps the identifier itself clean, which matters because ids feed rename and find-usages.
-  "@{" { yybegin(node_metadata); return Flowchart.METADATA_START; }
+  "@{" { yypushstate(metadata); return Flowchart.METADATA_START; }
   "@" { return Flowchart.EDGE_ID_MARKER; }
 
   [^\s\n\r;:%\[({><\^\|\-\=\.~\"@]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
@@ -407,8 +407,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 // numbers, or quoted strings (`A@{ img: "https://...", h: 60 }`). Keys are told apart from bare values
 // only by the following colon, hence the lookahead. Newlines are allowed: upstream accepts the mapping
 // spread over several lines.
-<node_metadata> {
-  "}" { yybegin(flowchart_body); return Flowchart.METADATA_END; }
+//
+// Shared by flowchart nodes and edges (mermaid 11.3+) and by sequence participants and actors
+// (`participant Alice@{ "type": "boundary" }`, 11.13+). Entered with yypushstate and left with yypopstate
+// so it returns to whichever diagram opened it: sequence must get back to sequence_id for a following
+// `as` alias to still be recognised. Sequence quotes its keys where flowchart writes them bare, so both
+// spellings are accepted.
+<metadata> {
+  "}" { yypopstate(); return Flowchart.METADATA_END; }
   "," { return COMMA; }
   ":" { return COLON; }
 
@@ -509,7 +515,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <sequence_id> {
   "as" { yybegin(sequence_alias); return AS; }
-  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)? { return ID; }
+  // `participant Alice@{ "type": "boundary" }` (mermaid 11.13+). As in flowcharts, `@` is excluded from
+  // the identifier so the id stays clean; without that the whole of `Alice@{` lexes as one ID.
+  "@{" { yypushstate(metadata); return Flowchart.METADATA_START; }
+  [^\+\->:\s,;@]([\-]*[^\+\->:\s,;@]+)? { return ID; }
   [^\S\n\r]+ { return WHITE_SPACE; }
 }
 <sequence_alias> {
@@ -565,6 +574,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "direction" { yypushstate(direction_value); return DIRECTION; }
   "namespace" { yybegin(namespace_body); return ClassDiagram.NAMESPACE; }
   "style" { yypushstate(style); return STYLE; }
+  // classDef reached class diagrams in mermaid 11.4. It has to be declared before the CLASS_ID rule
+  // below, which matches "classDef" too and at the same length -- among equal-length matches JFlex
+  // prefers the earlier rule. ("class" cannot swallow it: that rule requires whitespace after the word.)
+  "classDef" { yypushstate(class_def); return CLASS_DEF; }
 }
 <class_diagram> {
   [\w_-]+/[^\S\n\r]*[oO]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }
@@ -573,7 +586,12 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\w_-]+ { yybegin(pre_generic_class_diagram); return ClassDiagram.CLASS_ID; }
 }
 <namespace_body> {
-  [\w_-]+ { return ClassDiagram.CLASS_ID; }
+  // Dots are part of the name: `namespace Company.Engineering.Backend` is one namespace, not three.
+  [\w_.-]+ { return ClassDiagram.CLASS_ID; }
+  // `namespace Auth["Authentication Service"]` gives the namespace a display label.
+  "[" { return OPEN_SQUARE; }
+  "]" { return CLOSE_SQUARE; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "{" { yybegin(class_diagram); return OPEN_CURLY; }
 }
 <class_diagram, pre_generic_class_diagram> {

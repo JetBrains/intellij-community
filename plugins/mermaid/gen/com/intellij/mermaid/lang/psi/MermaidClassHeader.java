@@ -7,6 +7,9 @@ import com.intellij.psi.PsiElement;
 
 public interface MermaidClassHeader extends MermaidClassDiagramIdentifierDeclarationHolder {
 
+  @Nullable
+  MermaidAnnotation getAnnotation();
+
   @NotNull
   MermaidClassDiagramIdentifier getClassDiagramIdentifier();
 

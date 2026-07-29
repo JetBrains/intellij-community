@@ -175,6 +175,7 @@ public interface MermaidElements {
   IElementType MEMBER_ATTRIBUTE = new MermaidElementType("MEMBER_ATTRIBUTE");
   IElementType MEMBER_STATEMENT = new MermaidElementType("MEMBER_STATEMENT");
   IElementType MERGE_STATEMENT = new MermaidElementType("MERGE_STATEMENT");
+  IElementType METADATA = new MermaidElementType("METADATA");
   IElementType METADATA_ENTRY = new MermaidElementType("METADATA_ENTRY");
   IElementType METADATA_ENTRY_VALUE = new MermaidElementType("METADATA_ENTRY_VALUE");
   IElementType MINDMAP_BODY = new MermaidElementType("MINDMAP_BODY");
@@ -186,9 +187,9 @@ public interface MermaidElements {
   IElementType NAMESPACE_BLOCK = new MermaidElementType("NAMESPACE_BLOCK");
   IElementType NAMESPACE_HEADER = new MermaidElementType("NAMESPACE_HEADER");
   IElementType NAMESPACE_IDENTIFIER = new MermaidElementType("NAMESPACE_IDENTIFIER");
+  IElementType NAMESPACE_LABEL = new MermaidElementType("NAMESPACE_LABEL");
   IElementType NAMESPACE_STATEMENT = new MermaidElementType("NAMESPACE_STATEMENT");
   IElementType NODE_DESCRIPTION = new MermaidElementType("NODE_DESCRIPTION");
-  IElementType NODE_METADATA = new MermaidElementType("NODE_METADATA");
   IElementType NODE_STATEMENT = new MermaidElementType("NODE_STATEMENT");
   IElementType NODE_TEXT = new MermaidElementType("NODE_TEXT");
   IElementType NOTE_HEADER = new MermaidElementType("NOTE_HEADER");
@@ -782,6 +783,9 @@ public interface MermaidElements {
       else if (type == MERGE_STATEMENT) {
         return new MermaidMergeStatementImpl(node);
       }
+      else if (type == METADATA) {
+        return new MermaidMetadataImpl(node);
+      }
       else if (type == METADATA_ENTRY) {
         return new MermaidMetadataEntryImpl(node);
       }
@@ -815,14 +819,14 @@ public interface MermaidElements {
       else if (type == NAMESPACE_IDENTIFIER) {
         return new MermaidNamespaceIdentifierImpl(node);
       }
+      else if (type == NAMESPACE_LABEL) {
+        return new MermaidNamespaceLabelImpl(node);
+      }
       else if (type == NAMESPACE_STATEMENT) {
         return new MermaidNamespaceStatementImpl(node);
       }
       else if (type == NODE_DESCRIPTION) {
         return new MermaidNodeDescriptionImpl(node);
-      }
-      else if (type == NODE_METADATA) {
-        return new MermaidNodeMetadataImpl(node);
       }
       else if (type == NODE_STATEMENT) {
         return new MermaidNodeStatementImpl(node);

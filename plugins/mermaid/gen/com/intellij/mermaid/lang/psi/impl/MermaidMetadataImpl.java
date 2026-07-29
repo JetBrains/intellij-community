@@ -11,14 +11,14 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidNodeMetadataImpl extends ASTWrapperPsiElement implements MermaidNodeMetadata {
+public class MermaidMetadataImpl extends ASTWrapperPsiElement implements MermaidMetadata {
 
-  public MermaidNodeMetadataImpl(@NotNull ASTNode node) {
+  public MermaidMetadataImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitNodeMetadata(this);
+    visitor.visitMetadata(this);
   }
 
   @Override

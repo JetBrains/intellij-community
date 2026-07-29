@@ -666,6 +666,10 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitGitGraphBranchIdentifierHolder(o);
   }
 
+  public void visitMetadata(@NotNull MermaidMetadata o) {
+    visitPsiElement(o);
+  }
+
   public void visitMetadataEntry(@NotNull MermaidMetadataEntry o) {
     visitPsiElement(o);
   }
@@ -710,15 +714,15 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitNamespaceLabel(@NotNull MermaidNamespaceLabel o) {
+    visitPsiElement(o);
+  }
+
   public void visitNamespaceStatement(@NotNull MermaidNamespaceStatement o) {
     visitPsiElement(o);
   }
 
   public void visitNodeDescription(@NotNull MermaidNodeDescription o) {
-    visitPsiElement(o);
-  }
-
-  public void visitNodeMetadata(@NotNull MermaidNodeMetadata o) {
     visitPsiElement(o);
   }
 

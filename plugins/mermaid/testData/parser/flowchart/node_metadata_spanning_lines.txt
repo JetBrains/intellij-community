@@ -11,7 +11,7 @@ FILE
         MermaidVertexImpl(VERTEX)
           MermaidComplexIdentifierImpl(COMPLEX_IDENTIFIER)
             PsiElement(ID)('A')
-          MermaidNodeMetadataImpl(NODE_METADATA)
+          MermaidMetadataImpl(METADATA)
             PsiElement(Flowchart.METADATA_START)('@{')
             PsiElement(EOL)('\n')
             PsiWhiteSpace('    ')

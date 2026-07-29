@@ -140,7 +140,7 @@ styledVertex ::= vertex STYLE_SEPARATOR STYLE_TARGET
 // A node carries either the classic bracket shape or `@{ ... }` metadata, not both. Standalone
 // `e1@{ animate: true }` lines land here too: an id plus metadata is the same shape, and only the id's
 // meaning differs.
-vertex ::= complexIdentifier [nodeMetadata | vertexText]
+vertex ::= complexIdentifier [metadata | vertexText]
 vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | OPEN_ROUND nodeText CLOSE_ROUND
   | STADIUM_START nodeText STADIUM_END
@@ -157,12 +157,13 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
   | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
 
 // `A@{ shape: rect, label: "Hello" }` (mermaid 11.3+). An inline mapping, which upstream also accepts
-// spread over several lines, hence the EOL tolerance.
-nodeMetadata ::= METADATA_START EOL* [metadataEntries] METADATA_END
+// spread over several lines, hence the EOL tolerance. Shared with sequence participants and actors
+// (`participant Alice@{ "type": "boundary" }`, 11.13+), which is why keys may be quoted as well as bare.
+metadata ::= METADATA_START EOL* [metadataEntries] METADATA_END
 private metadataEntries ::= metadataEntry (EOL* COMMA EOL* metadataEntry)* EOL*
 // Named metadataEntryValue, not metadataValue: the generated element type would otherwise collide with
 // the METADATA_VALUE token, and both are static-imported into the generated parser.
-metadataEntry ::= METADATA_KEY COLON metadataEntryValue
+metadataEntry ::= (METADATA_KEY | string) COLON metadataEntryValue
 metadataEntryValue ::= METADATA_VALUE | string
 
 nodeText ::=
@@ -248,7 +249,7 @@ deactivateStatement ::= DEACTIVATE complexIdentifier
 
 idAlias ::= ALIAS+
 
-actorStatement ::= [CREATE] (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
+actorStatement ::= [CREATE] (PARTICIPANT | ACTOR) complexIdentifier [metadata] [AS idAlias]
   | DESTROY complexIdentifier
 
 signalStatement ::= complexIdentifier signal complexIdentifier COLON complexMessage
@@ -332,6 +333,7 @@ private classDiagramStatement ::= directionStatement
   | classDiagramClickStatement
   | accStatement
   | styleStatement
+  | classDefStatement
 
 classDiagramIdentifier ::= CLASS_ID+ | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
@@ -341,7 +343,10 @@ quotedClassIdentifier ::= STRING_VALUE {
 }
 
 classStatement ::= classHeader [classBlock]
-classHeader ::= CLASS classDiagramIdentifier [generic] [classLabel] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+// The trailing annotation is `class Shape <<interface>>`, the one-line alternative to a separate
+// `<<interface>> Shape` statement (which annotationStatement already covers). The lexer already enters
+// the annotation state from pre_generic_class_diagram, so only the rule was missing.
+classHeader ::= CLASS classDiagramIdentifier [generic] [classLabel] [annotation] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
 classBlock ::= OPEN_CURLY EOL* classMembers? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 classLabel ::= OPEN_SQUARE maybeEmptyString CLOSE_SQUARE
 
@@ -385,12 +390,15 @@ genericTypeId ::= GENERIC_TYPE+ {
 }
 
 namespaceStatement ::= namespaceHeader [namespaceBlock]
-namespaceHeader ::= NAMESPACE namespaceIdentifier
+// The optional label is `namespace Auth["Authentication Service"]`.
+namespaceHeader ::= NAMESPACE namespaceIdentifier [namespaceLabel]
+namespaceLabel ::= OPEN_SQUARE string CLOSE_SQUARE
 namespaceIdentifier ::= CLASS_ID+ { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
 namespaceBlock ::= OPEN_CURLY EOL* namespaceStatements? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private namespaceStatements ::= namespaceLines
 private namespaceLines ::= namespaceLine [namespaceLines]
-private namespaceLine ::= classStatement [EOL] | EOL
+// Namespaces nest as of mermaid 11.15, so a namespace body may contain further namespaces.
+private namespaceLine ::= classStatement [EOL] | namespaceStatement [EOL] | EOL
 
 relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
 cardinality ::= maybeEmptyString

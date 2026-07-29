@@ -33,4 +33,10 @@ public class MermaidNamespaceBlockImpl extends ASTWrapperPsiElement implements M
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidClassStatement.class);
   }
 
+  @Override
+  @NotNull
+  public List<MermaidNamespaceStatement> getNamespaceStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidNamespaceStatement.class);
+  }
+
 }

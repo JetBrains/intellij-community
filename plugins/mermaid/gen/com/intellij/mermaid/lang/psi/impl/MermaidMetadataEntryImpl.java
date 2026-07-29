@@ -33,4 +33,10 @@ public class MermaidMetadataEntryImpl extends ASTWrapperPsiElement implements Me
     return findNotNullChildByClass(MermaidMetadataEntryValue.class);
   }
 
+  @Override
+  @Nullable
+  public MermaidString getString() {
+    return findChildByClass(MermaidString.class);
+  }
+
 }

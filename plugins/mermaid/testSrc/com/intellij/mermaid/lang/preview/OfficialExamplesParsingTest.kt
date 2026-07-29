@@ -31,15 +31,6 @@ class OfficialExamplesParsingTest {
   private val ignoredTests = listOf(
     // block (1)
     "block-28",
-    // classDiagram (8)
-    "classDiagram-16",
-    "classDiagram-17",
-    "classDiagram-18",
-    "classDiagram-19",
-    "classDiagram-21",
-    "classDiagram-31",
-    "classDiagram-32",
-    "classDiagram-33",
     // entityRelationshipDiagram (5)
     "entityRelationshipDiagram-7",
     "entityRelationshipDiagram-12",
@@ -61,16 +52,6 @@ class OfficialExamplesParsingTest {
     "requirementDiagram-4",
     "requirementDiagram-5",
     "requirementDiagram-6",
-    // sequenceDiagram (9)
-    "sequenceDiagram-3",
-    "sequenceDiagram-4",
-    "sequenceDiagram-5",
-    "sequenceDiagram-6",
-    "sequenceDiagram-7",
-    "sequenceDiagram-8",
-    "sequenceDiagram-10",
-    "sequenceDiagram-11",
-    "sequenceDiagram-12",
     // xyChart (3)
     "xyChart-1",
     "xyChart-4",

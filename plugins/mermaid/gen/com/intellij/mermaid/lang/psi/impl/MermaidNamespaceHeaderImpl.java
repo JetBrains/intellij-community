@@ -33,4 +33,10 @@ public class MermaidNamespaceHeaderImpl extends ASTWrapperPsiElement implements 
     return findNotNullChildByClass(MermaidNamespaceIdentifier.class);
   }
 
+  @Override
+  @Nullable
+  public MermaidNamespaceLabel getNamespaceLabel() {
+    return findChildByClass(MermaidNamespaceLabel.class);
+  }
+
 }

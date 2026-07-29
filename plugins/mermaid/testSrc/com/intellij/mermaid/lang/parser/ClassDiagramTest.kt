@@ -1,6 +1,14 @@
 package com.intellij.mermaid.lang.parser
 
 class ClassDiagramTest : MermaidParserTestCase("class") {
+  fun `test namespace with label and dotted name`() = doTest(true)
+
+  fun `test nested namespaces`() = doTest(true)
+
+  fun `test class def statement`() = doTest(true)
+
+  fun `test class with trailing annotation`() = doTest(true)
+
   fun `test simple class definition`() = doTest(true)
 
   fun `test class definition in brackets`() = doTest(true)

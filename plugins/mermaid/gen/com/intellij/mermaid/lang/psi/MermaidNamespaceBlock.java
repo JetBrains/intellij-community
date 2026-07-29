@@ -10,4 +10,7 @@ public interface MermaidNamespaceBlock extends MermaidDiagramBlock {
   @NotNull
   List<MermaidClassStatement> getClassStatementList();
 
+  @NotNull
+  List<MermaidNamespaceStatement> getNamespaceStatementList();
+
 }

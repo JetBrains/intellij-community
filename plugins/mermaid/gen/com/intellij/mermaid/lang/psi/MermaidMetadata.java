@@ -5,15 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface MermaidActorStatement extends MermaidPsiElement {
+public interface MermaidMetadata extends MermaidPsiElement {
 
   @NotNull
-  MermaidComplexIdentifier getComplexIdentifier();
-
-  @Nullable
-  MermaidIdAlias getIdAlias();
-
-  @Nullable
-  MermaidMetadata getMetadata();
+  List<MermaidMetadataEntry> getMetadataEntryList();
 
 }

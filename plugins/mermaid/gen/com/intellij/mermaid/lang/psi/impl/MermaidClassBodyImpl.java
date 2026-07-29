@@ -41,6 +41,12 @@ public class MermaidClassBodyImpl extends ASTWrapperPsiElement implements Mermai
 
   @Override
   @NotNull
+  public List<MermaidClassDefStatement> getClassDefStatementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidClassDefStatement.class);
+  }
+
+  @Override
+  @NotNull
   public List<MermaidClassDiagramClickStatement> getClassDiagramClickStatementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MermaidClassDiagramClickStatement.class);
   }

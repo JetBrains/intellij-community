@@ -10,4 +10,7 @@ public interface MermaidMetadataEntry extends MermaidPsiElement {
   @NotNull
   MermaidMetadataEntryValue getMetadataEntryValue();
 
+  @Nullable
+  MermaidString getString();
+
 }
