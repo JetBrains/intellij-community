@@ -82,4 +82,13 @@ public interface ModuleFileIndex extends FileIndex {
    */
   @Override
   boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
+
+
+  /**
+   * Iterate indexable content files in the module
+   * @see WorkspaceFileIndexEx.processIndexableContentUnderDirectory
+   * @see iterateContent
+   */
+  @ApiStatus.Internal
+  boolean iterateIndexableContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
 }
