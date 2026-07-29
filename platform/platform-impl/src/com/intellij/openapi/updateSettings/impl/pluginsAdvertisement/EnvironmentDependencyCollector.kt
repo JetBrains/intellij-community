@@ -5,15 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.project.Project
-import com.intellij.util.EnvironmentUtil
-import com.intellij.util.system.OS
-import org.jetbrains.annotations.ApiStatus
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
-import kotlin.io.path.isExecutable
-import kotlin.io.path.isRegularFile
+import com.intellij.openapi.util.EnvironmentScanner
 
 internal class EnvironmentDependencyCollector : DependencyCollector {
   private val ALLOWED_EXECUTABLES: List<String> = listOf(
@@ -34,44 +26,5 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     return ALLOWED_EXECUTABLES
       .filter { EnvironmentScanner.hasToolInLocalPath(pathNames, it) }
       .map { DependencyInformation(it, IdeBundle.message("plugins.configurable.suggested.features.executable", it)) }
-  }
-}
-
-@ApiStatus.Internal
-object EnvironmentScanner {
-  fun getPathNames(): List<Path> {
-    val fs = FileSystems.getDefault()
-
-    @Suppress("IO_FILE_USAGE")
-    val pathDelimiter = java.io.File.pathSeparatorChar
-
-    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(pathDelimiter)
-      ?.mapNotNull {
-        try {
-          fs.getPath(it)
-        }
-        catch (_: InvalidPathException) {
-          null
-        }
-      }
-      ?.filter(Files::exists)
-    return pathNames ?: emptyList()
-  }
-
-  fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {
-    val baseNames = if (OS.CURRENT == OS.Windows) {
-      sequenceOf(".bat", ".cmd", ".com", ".exe")
-        .map { exeSuffix -> executableWithoutExt + exeSuffix }
-    }
-    else {
-      sequenceOf(executableWithoutExt)
-    }
-
-    return pathNames.asSequence()
-      .flatMap { pathEntry ->
-        baseNames.map { basename -> pathEntry.resolve(basename) }
-      }
-      .filter(Path::isRegularFile)
-      .any(Path::isExecutable)
   }
 }

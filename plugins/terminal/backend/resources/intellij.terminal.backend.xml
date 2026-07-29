@@ -10,6 +10,7 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.menu.BackendHyperlinkInfoService"
       serviceImplementation="com.intellij.terminal.backend.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.terminal.backend.CliUtilInstallCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
