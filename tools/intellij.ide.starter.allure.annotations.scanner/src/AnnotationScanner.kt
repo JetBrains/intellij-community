@@ -95,8 +95,6 @@ private fun parseArgs(args: Array<String>): Args {
     }
   }
 
-  // Resolved after the loop so that --repo-root may be passed in any order. There is deliberately no default
-  // set of roots: a hardcoded one silently drifts away from the roots the callers actually care about.
   val roots = when {
     sourceRoots != null && sourceRootsFile != null -> error("--source-roots and --source-roots-file are mutually exclusive (use --help for usage)")
     sourceRoots != null -> sourceRoots
@@ -113,8 +111,6 @@ private fun parseArgs(args: Array<String>): Args {
 
 /**
  * Reads a source-root list: one repository-relative path per line, blank lines and `#` comments ignored.
- * Keeping the list in a file instead of a caller's command line lets the scanner and whoever else needs the
- * same scope (see `PyCharmTestLabelsTest` in `intellij.projectStructureTests`) share a single definition.
  */
 private fun readSourceRoots(file: Path): List<String> {
   if (!Files.exists(file)) error("Source roots file does not exist: $file")
