@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -136,6 +137,50 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
                                                () -> unfinishedImportsCount.get() == 0, 5);
     joinAll(threads, 100);
     assertFalse("DataNodes must not be processed concurrently", detectingService.wasConcurrentRunDetected());
+  }
+
+  public void testDataImportExtensionLifecycleOrdering() {
+    final List<String> callTrace = Collections.synchronizedList(new ArrayList<>());
+
+    ProjectDataManager.ProjectDataImportExtension extension = new ProjectDataManager.ProjectDataImportExtension() {
+      @Override
+      public void prepareImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {
+        callTrace.add("prepareImportData");
+      }
+
+      @Override
+      public void finalizeImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {
+        callTrace.add("finalizeImportData");
+      }
+    };
+    com.intellij.testFramework.ExtensionTestUtil.maskExtensions(ProjectDataManager.ProjectDataImportExtension.EP_NAME, Collections.singletonList(extension), getTestRootDisposable());
+
+    TestDataService serviceWithPostProcess = new TestDataService(callTrace) {
+      @Override
+      public void importData(Collection<? extends DataNode<Object>> toImport,
+                             @Nullable ProjectData projectData,
+                             @NotNull Project project,
+                             @NotNull IdeModifiableModelsProvider modelsProvider) {
+        myTrace.add("importData");
+      }
+
+      @Override
+      public void postProcess(@NotNull Collection<? extends DataNode<Object>> toImport,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModifiableModelsProvider modelsProvider) {
+        myTrace.add("postProcess");
+      }
+    };
+    maskProjectDataServices(serviceWithPostProcess);
+
+    new ProjectDataManagerImpl().importData(createProjectDataStub(), myProject);
+
+    assertOrderedEquals(callTrace,
+                        "prepareImportData",
+                        "importData",
+                        "postProcess",
+                        "finalizeImportData");
   }
 
   @NotNull
