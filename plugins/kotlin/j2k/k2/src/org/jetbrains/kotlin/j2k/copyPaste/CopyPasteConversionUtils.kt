@@ -68,7 +68,7 @@ fun ElementAndTextList.convertCodeToKotlin(
             val originalText = element.text
             originalCodeBuilder.append(originalText)
 
-            val result = results[resultIndex]
+            val result = results.getOrNull(resultIndex)
             resultIndex++
 
             if (result != null) {
