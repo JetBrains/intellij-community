@@ -13,8 +13,8 @@ public abstract class ProtoMember extends Proto {
   private final @NotNull TypeRepr type;
   private final @Nullable Object value;
 
-  public ProtoMember(JVMFlags flags, String signature, String name, @NotNull TypeRepr type, @NotNull Iterable<ElementAnnotation> annotations, @Nullable Object value) {
-    super(flags, signature, name, annotations);
+  public ProtoMember(JVMFlags flags, String signature, String name, @NotNull TypeRepr type, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<ElementAnnotation> typeAnnotations, @Nullable Object value) {
+    super(flags, signature, name, annotations, typeAnnotations);
     this.type = type;
     this.value = value;
   }

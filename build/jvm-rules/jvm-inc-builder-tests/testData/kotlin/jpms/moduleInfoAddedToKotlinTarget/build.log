@@ -1,0 +1,17 @@
+================ Step #1 =================
+Compiling files:
+  kotlin/jpms/moduleInfoAddedToKotlinTarget/a/module-info.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_jpms_moduleInfoAddedToKotlinTarget-a.kotlin_module
+  module-info.class
+  ppp/UtilKt.class
+End of files
+Compiling files:
+  kotlin/jpms/moduleInfoAddedToKotlinTarget/a/ppp/util.kt
+End of files
+Compiling files:
+  kotlin/jpms/moduleInfoAddedToKotlinTarget/a/module-info.java
+End of files
+------------------------------------------
+Exit code: OK

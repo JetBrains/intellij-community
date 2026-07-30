@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo.class
+  META-INF/kotlin_resolution_widenedConstructorVsFun-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/resolution/widenedConstructorVsFun/a/foo.kt
+End of files
+Cleaning output files:
+  FooFunKt.class
+  META-INF/kotlin_resolution_widenedConstructorVsFun-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/resolution/widenedConstructorVsFun/a/fooFun.kt
+  kotlin/resolution/widenedConstructorVsFun/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

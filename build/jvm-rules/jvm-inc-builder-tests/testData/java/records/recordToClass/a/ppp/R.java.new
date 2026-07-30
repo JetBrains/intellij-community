@@ -1,0 +1,2 @@
+package ppp;
+public class R { public R(int x) { } public int x() { return 0; } }  // accessor+ctor preserved; Record supertype gone

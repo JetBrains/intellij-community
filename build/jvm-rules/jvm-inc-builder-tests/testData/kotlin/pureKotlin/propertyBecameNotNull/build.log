@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_propertyBecameNotNull-a.kotlin_module
+  O.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/propertyBecameNotNull/a/o.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_propertyBecameNotNull-a.kotlin_module
+  WKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/propertyBecameNotNull/a/w.kt
+End of files
+------------------------------------------
+Exit code: ERROR

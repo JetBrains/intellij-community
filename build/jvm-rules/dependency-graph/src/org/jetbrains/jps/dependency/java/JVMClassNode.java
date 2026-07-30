@@ -29,8 +29,8 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   private final Iterable<Usage> myUsages;
   private final Iterable<JvmMetadata<?, ?>> myMetadata;
 
-  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
-    super(flags, signature, name, annotations);
+  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<ElementAnnotation> typeAnnotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
+    super(flags, signature, name, annotations, typeAnnotations);
     myId = GraphElementInterner.intern(new JvmNodeReferenceID(getName()));
     this.outFilePath = outFilePath;
     myUsages = collect(map(usages, GraphElementInterner::intern), new ArrayList<>());
@@ -138,11 +138,6 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
       return Iterators.find(
         Iterators.unique(map(Iterators.flat(myPast.getMetadata(), getMetadata()), JvmMetadata::getClass)), metaClass -> !metadata(metaClass).unchanged()
       ) != null;
-    }
-
-    public boolean metadataKindChanged() {
-      // whether any metadata has been added or removed
-      return !Difference.diff(map(myPast.getMetadata(), JvmMetadata::getClass), map(getMetadata(), JvmMetadata::getClass)).unchanged();
     }
 
     public <MT extends JvmMetadata<MT, MD>, MD extends Difference> Specifier<MT, MD> metadata(Class<MT> metaClass) {

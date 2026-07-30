@@ -40,7 +40,9 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -587,6 +589,8 @@ public abstract class BazelIncBuildTest {
       Files.createDirectories(targetFile.getParent());
       Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
     }
+    // On Windows Files.copy (CopyFileEx) preserves the source's lastModifiedTime. Always stamp a fresh mtime.
+    Files.setLastModifiedTime(targetFile, FileTime.from(Instant.now()));
   }
 
   private static @NotNull String getExtension(Path path) {

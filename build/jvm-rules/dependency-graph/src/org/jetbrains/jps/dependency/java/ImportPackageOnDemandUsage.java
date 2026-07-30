@@ -6,14 +6,22 @@ import org.jetbrains.jps.dependency.GraphDataInput;
 
 import java.io.IOException;
 
+/**
+ * Tracks a type-import-on-demand scope: {@code import p.q.*;} (package) or {@code import p.Outer.Mid.*;} (class).
+ * The scope is a namespace path, not a node reference: it is canonicalized to '/'-separated form on construction,
+ * so a class scope "p/Outer$Mid" and its source spelling "p.Outer.Mid" produce the same usage.
+ * Consequently '$' occurring in source-level identifiers is not supported for on-demand-import tracking.
+ * (Sibling usages keying by class-node identity, e.g. {@link ClassUsage} and {@link ImportStaticMemberUsage},
+ * keep binary '$'-form names.)
+ */
 public final class ImportPackageOnDemandUsage extends JvmElementUsage {
 
-  public ImportPackageOnDemandUsage(@NotNull String packageName) {
-    this(new JvmNodeReferenceID(packageName));
+  public ImportPackageOnDemandUsage(@NotNull String packageOrClassName) {
+    this(new JvmNodeReferenceID(packageOrClassName));
   }
 
-  public ImportPackageOnDemandUsage(@NotNull JvmNodeReferenceID packageId) {
-    super(packageId);
+  public ImportPackageOnDemandUsage(@NotNull JvmNodeReferenceID scopeId) {
+    super(toOnDemandScope(scopeId));
   }
 
   public ImportPackageOnDemandUsage(GraphDataInput in) throws IOException {

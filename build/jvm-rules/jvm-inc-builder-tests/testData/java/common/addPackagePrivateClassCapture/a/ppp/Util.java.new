@@ -1,0 +1,2 @@
+package ppp;
+class Util { }  // NEW package-private class, same package as Use; deliberately has no f()

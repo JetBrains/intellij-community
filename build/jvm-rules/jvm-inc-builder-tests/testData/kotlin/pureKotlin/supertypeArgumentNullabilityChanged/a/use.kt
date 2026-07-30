@@ -1,0 +1,1 @@
+fun u(): I<String> = C()

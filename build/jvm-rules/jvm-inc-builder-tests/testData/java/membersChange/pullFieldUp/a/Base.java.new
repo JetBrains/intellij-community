@@ -1,0 +1,3 @@
+public class Base {
+  public int x = 1;
+}

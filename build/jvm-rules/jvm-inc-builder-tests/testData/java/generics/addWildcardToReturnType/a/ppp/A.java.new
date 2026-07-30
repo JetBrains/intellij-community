@@ -1,0 +1,3 @@
+package ppp;
+import java.util.List;
+public class A { public static List<? extends String> get() { return null; } }  // erasure ()Ljava/util/List; unchanged

@@ -25,7 +25,9 @@ import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.ModuleVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.RecordComponentVisitor;
 import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.TypePath;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 import org.jetbrains.org.objectweb.asm.util.Textifier;
@@ -376,6 +378,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       if (providers != null) {
         for (String provider : providers) {
           addUsage(new ClassUsage(provider));
+          addUsage(new MethodUsage(provider, "<init>", "()V"));  // every service provider is expected to have a public no-arg constructor
         }
       }
     }
@@ -441,6 +444,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private final List<JvmMethod> myMethods = new ArrayList<>();
   private final List<JvmField> myFields = new ArrayList<>();
+  private final List<String> myRecordComponents = new ArrayList<>();
+  private final List<String> myPermittedSubclasses = new ArrayList<>();
   private final Set<Usage> myUsages = new HashSet<>();
   private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
   private RetentionPolicy myRetentionPolicy = null;
@@ -448,6 +453,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Map<TypeRepr.ClassType, Set<String>> myAnnotationArguments = new HashMap<>();
   private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<>();
   private final Set<ElementAnnotation> myAnnotations = new HashSet<>();
+  private final Set<ElementAnnotation> myTypeAnnotations = new HashSet<>();
 
   private final Set<ModuleRequires> myModuleRequires = new HashSet<>();
   private final Set<ModulePackage> myModuleExports = new HashSet<>();
@@ -550,11 +556,21 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
     }
 
+    if (flags.isRecord()) {
+      // preserve the Record attribute data: deconstruction patterns bind components positionally (JVMS 4.7.30);
+      // attached for zero-component records too, so that arity transitions from/to 'record R()' remain visible
+      myMetadata.add(new RecordMetadata(myRecordComponents));
+    }
+    if (flags.isSealed()) {
+      // preserve the PermittedSubclasses attribute data (JVMS 4.7.31)
+      myMetadata.add(new SealedMetadata(myPermittedSubclasses));
+    }
+
     var fields = myIsLibraryMode? Iterators.filter(myFields, JvmClassNodeBuilder::isAbiNode) : myFields;
     var methods = myIsLibraryMode? Iterators.filter(myMethods, JvmClassNodeBuilder::isAbiNode) : myMethods;
     var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
     return new JvmClass(
-      flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
+      flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTypeAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
     );
   }
 
@@ -619,7 +635,21 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   @Override
+  public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+    // type annotations in the class declaration: type parameters, their bounds and supertypes (JVMS 4.7.20);
+    return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElemType.TYPE_USE, myTypeAnnotations::add);
+  }
+
+  @Override
   public void visitSource(String source, String debug) {
+  }
+
+  @Override
+  public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+    // track component declaration order: record deconstruction patterns bind positionally,
+    // while the component types and names are covered by the derived field/accessor/constructor members
+    myRecordComponents.add(name);
+    return null;
   }
 
   @Override
@@ -628,10 +658,16 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     return new FieldVisitor(ASM_API_VERSION) {
       final Set<ElementAnnotation> annotations = new HashSet<>();
+      final Set<ElementAnnotation> typeAnnotations = new HashSet<>();
 
       @Override
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElemType.FIELD, res -> annotations.add(res));
+      }
+
+      @Override
+      public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElemType.TYPE_USE, typeAnnotations::add);
       }
 
       @Override
@@ -641,7 +677,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         }
         finally {
           if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_PRIVATE) == 0) {
-            myFields.add(new JvmField(new JVMFlags(access), signature, name, desc, annotations, value));
+            myFields.add(new JvmField(new JVMFlags(access), signature, name, desc, annotations, typeAnnotations, value));
           }
         }
       }
@@ -651,6 +687,17 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private boolean isInlined(String methodName, String methodDescriptor) {
     KmDeclarationContainer container = findKotlinDeclarationContainer();
     if (container != null) {
+      if (methodName.endsWith("$default")) {
+        // the synthetic '<name>$default' dispatcher carries the function's default-argument EXPRESSIONS; for an
+        // inline function those expressions are inlined into call sites omitting arguments, just like the body itself
+        String origin = methodName.substring(0, methodName.length() - "$default".length());
+        for (KmFunction f : container.getFunctions()) {
+          JvmMethodSignature originSig = JvmExtensionsKt.getSignature(f);
+          if (Attributes.isInline(f) && originSig != null && origin.equals(originSig.getName())) {
+            return true;
+          }
+        }
+      }
       JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
       for (KmFunction f : container.getFunctions()) {
         if (Attributes.isInline(f) && sig.equals(JvmExtensionsKt.getSignature(f))) {
@@ -680,6 +727,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     final Ref<Object> defaultValue = Ref.create();
     final Set<ElementAnnotation> annotations = new HashSet<>();
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
+    final Set<ElementAnnotation> typeAnnotations = new HashSet<>();
     processSignature(signature);
 
     boolean isInlined = isInlined(n, desc);
@@ -694,7 +742,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
             defaultValue.set(buildContentHash(ContentHashBuilder.create(), printer.getText()).getResult());
           }
-          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
+          myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, typeAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
       }
 
@@ -716,6 +764,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
 
       @Override
+      public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+        // type annotations in the method declaration: type parameters and bounds, return/receiver/parameter types and the throws clause (JVMS 4.7.20);
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElemType.TYPE_USE, typeAnnotations::add);
+      }
+
+      @Override
       public AnnotationVisitor visitAnnotationDefault() {
         return new AnnotationVisitor(ASM_API_VERSION) {
           private @Nullable List<Object> myAcc;
@@ -728,6 +782,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
           @Override
           public void visitEnum(String name, String desc, String value) {
             collectValue(value);
+          }
+
+          @Override
+          public AnnotationVisitor visitAnnotation(String name, String desc) {
+            collectValue(desc);
+            return null;
           }
 
           @Override
@@ -999,7 +1059,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visitPermittedSubclass(String permittedSubclass) {
     mySealedClassFlag.set(true);
     addUsage(new ClassUsage(permittedSubclass));
-    addUsage(new ClassPermitsUsage(permittedSubclass));
+    myPermittedSubclasses.add(permittedSubclass);
   }
 
   private static boolean isAnnotationTracked(TypeRepr.ClassType annotationType) {

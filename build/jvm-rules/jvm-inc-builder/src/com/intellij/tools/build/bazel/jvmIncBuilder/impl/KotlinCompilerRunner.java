@@ -318,7 +318,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Map<String, Collection<String>> importMap = importTracker.getFilePathToImportedFqNamesMap();
     Collection<String> importedFqNames = importMap.get(output.getNormalizedSourcePath());
     if (importedFqNames != null) {
-      callback.registerImports(output.jvmClassName, importedFqNames, List.of());
+      callback.registerImports(output.jvmClassName, importedFqNames, collect(filter(importedFqNames, name -> name.endsWith(".*")), new ArrayList<>()));
     }
   }
 

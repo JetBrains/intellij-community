@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_operatorConventions_operatorAndInfixModifiersRemoved-a.kotlin_module
+  V.class
+End of files
+Compiling files:
+  kotlin/operatorConventions/operatorAndInfixModifiersRemoved/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_operatorConventions_operatorAndInfixModifiersRemoved-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/operatorConventions/operatorAndInfixModifiersRemoved/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

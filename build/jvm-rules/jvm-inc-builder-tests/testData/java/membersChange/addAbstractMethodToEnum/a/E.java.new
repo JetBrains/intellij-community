@@ -1,0 +1,4 @@
+public enum E {
+  A, B;
+  public abstract int f();
+}

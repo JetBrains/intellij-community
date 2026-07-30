@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  C.class
+  DeclKt.class
+  META-INF/kotlin_pureKotlin_defaultValueMovedBetweenParameters-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueMovedBetweenParameters/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueMovedBetweenParameters-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueMovedBetweenParameters/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

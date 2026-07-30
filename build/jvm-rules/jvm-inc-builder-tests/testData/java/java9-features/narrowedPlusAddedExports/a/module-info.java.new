@@ -1,0 +1,4 @@
+module A {
+  exports ppp to C;
+  exports qqq;
+}
