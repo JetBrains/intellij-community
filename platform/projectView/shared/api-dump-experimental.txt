@@ -162,6 +162,7 @@
 - a:asSettingsAccessor():com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 - a:asSuspendingBackendStateAccessor():com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - a:clear(kotlin.coroutines.Continuation):java.lang.Object
+- a:moveNodeChild(J,com.intellij.platform.projectView.pane.ProjectViewNodeModel,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChild(J,I,kotlin.coroutines.Continuation):java.lang.Object
 - a:removeNodeChildren(J,kotlin.coroutines.Continuation):java.lang.Object
 - a:selectNode(com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.coroutines.Continuation):java.lang.Object

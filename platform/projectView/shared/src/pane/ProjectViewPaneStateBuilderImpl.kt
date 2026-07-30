@@ -70,6 +70,17 @@ internal class ProjectViewPaneStateBuilderImpl(
           val node = nodeById[update.model.id] ?: return null
           node.model = update.model
         }
+        is ProjectViewNodeMoved -> {
+          val parent = nodeById[update.parentId] ?: return null
+          val children = parent.children ?: return null
+          val node = nodeById[update.childModel.id] ?: return null
+          node.model = update.childModel
+          val from = children.indexOf(node)
+          if (from >= 0 && from != update.newIndex) {
+            children.removeAt(from)
+            children.add(update.newIndex.coerceIn(0, children.size), node)
+          }
+        }
         is ProjectViewSettingsStateEvent -> {
           actionState = update.settingsState
         }
@@ -233,6 +244,10 @@ internal class ProjectViewPaneStateBuilderImpl(
 
   override suspend fun updateNode(nodeModel: ProjectViewNodeModel) {
     updateState(ProjectViewNodeUpdated(nodeModel as ProjectViewNodeModelImpl<*>))
+  }
+
+  override suspend fun moveNodeChild(parentId: Long, childModel: ProjectViewNodeModel, newIndex: Int) {
+    updateState(ProjectViewNodeMoved(parentId, childModel as ProjectViewNodeModelImpl<*>, newIndex))
   }
 
   override suspend fun removeNodeChildren(parentId: Long) {

@@ -647,17 +647,21 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
         }
       }
 
-      // Now oldModelsByUserObject contain only removed children.
-      for ((index, oldModel) in oldModels.withIndex()) { // "child removed" calls expect before-removal indices
-        if (oldModelsByUserObject.containsKey(oldModel.userObject)) {
+      // Now oldModelsByUserObject contains only removed children. Remove them in descending index
+      // order, so that the remaining (lower) indices stay valid as the list shrinks.
+      for (index in oldModels.indices.reversed()) {
+        if (oldModelsByUserObject.containsKey(oldModels[index].userObject)) {
           builder.removeNodeChild(parentModel.id, index)
         }
       }
 
-      // Now we can proceed with add/update events, both expect after-event indices.
+      // Now establish the new order left to right. New children are inserted at their target index;
+      // surviving children are moved to their target index (which also refreshes their model, and is a
+      // no-op reposition if they're already there). Processing ascending indices guarantees the wanted
+      // node currently sits at a position >= index, so placing it at index yields the correct final order.
       for ((index, newModel) in newModels.withIndex()) {
         if (newModelIsUpdatedModel[index]) {
-          builder.updateNode(newModel)
+          builder.moveNodeChild(parentModel.id, newModel, index)
         }
         else {
           builder.addNode(parentModel.id, index, newModel)

@@ -40,6 +40,7 @@ import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
+import com.intellij.platform.projectView.pane.ProjectViewNodeMoved
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
@@ -261,6 +262,18 @@ internal class TreeBasedFrontendProjectViewPane(
       is ProjectViewNodeUpdated -> {
         val node = getNodeById(event.model.id) ?: return
         treeModel.updateNode(node, event.model)
+      }
+      is ProjectViewNodeMoved -> {
+        val parent = getNodeById(event.parentId) ?: return
+        val node = getNodeById(event.childModel.id) ?: return
+        treeModel.updateNode(node, event.childModel) // refresh the presentation
+        // Reposition the same Node object (preserving its subtree and its nodeById entry) by
+        // detaching and re-attaching it. removeChild + insertChild keep the Swing model consistent.
+        val from = parent.getIndex(node)
+        if (from >= 0 && from != event.newIndex) {
+          treeModel.removeChild(parent, from)
+          treeModel.insertChild(parent, event.newIndex, node)
+        }
       }
       is ProjectViewChildRemoved -> {
         val parent = getNodeById(event.parentId) ?: return

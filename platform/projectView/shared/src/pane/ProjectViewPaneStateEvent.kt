@@ -116,3 +116,25 @@ internal data class ProjectViewNodeUpdatedDTO(
     modelDTO.toModel(),
   )
 }
+
+@ApiStatus.Internal
+data class ProjectViewNodeMoved(
+  val parentId: Long,
+  val childModel: ProjectViewNodeModelImpl<*>,
+  val newIndex: Int,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeMovedDTO(
+    parentId, childModel.toDTO(), newIndex
+  )
+}
+
+@Serializable
+internal data class ProjectViewNodeMovedDTO(
+  val parentId: Long,
+  val childModelDTO: ProjectViewNodeModelDTO,
+  val newIndex: Int,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeMoved(
+    parentId, childModelDTO.toModel(), newIndex
+  )
+}
