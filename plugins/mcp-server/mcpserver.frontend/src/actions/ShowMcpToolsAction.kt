@@ -17,6 +17,9 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckboxTreeTable
 import com.intellij.ui.CheckedTreeNode
@@ -38,10 +41,17 @@ import kotlin.io.path.writeText
 class ShowMcpToolsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    // Get all tools without filtering to show the complete list with current filter state
-    val allMcpTools = McpServerService.getInstance().getMcpTools(useFiltersFromEP = false)
-    // Get currently enabled tools to determine initial checkbox state
-    val enabledTools = McpServerService.getInstance().getMcpTools().map { it.descriptor.fullyQualifiedName }.toSet()
+    // Building the tool list is reflection-heavy and must not run on the EDT (IJPL-251556)
+    val (allMcpTools, enabledTools) = runWithModalProgressBlocking(ModalTaskOwner.project(project),
+                                                                   McpServerBundle.message("dialog.mcp.tools.title"),
+                                                                   TaskCancellation.nonCancellable()) {
+      val service = McpServerService.getInstance()
+      // Get all tools without filtering to show the complete list with current filter state
+      val allTools = service.getMcpToolsAsync(useFiltersFromEP = false)
+      // Get currently enabled tools to determine initial checkbox state
+      val enabled = service.getMcpToolsAsync().mapTo(mutableSetOf()) { it.descriptor.fullyQualifiedName }
+      allTools to enabled
+    }
     McpToolsDialog(project, allMcpTools, enabledTools).show()
   }
 

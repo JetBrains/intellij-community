@@ -15,12 +15,17 @@ import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.ActionLink
@@ -39,8 +44,14 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.initOnShow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -240,6 +251,8 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   private val categoryViews = mutableMapOf<String, CategoryView>()
   private val toolRowViews = mutableMapOf<String, ToolRowView>()
   private var updatingUiState = false
+  private var toolsLoaded = false
+  private var toolsLoadingJob: Job? = null
 
   // endregion
 
@@ -292,8 +305,37 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     toolsContainerPanel = toolsPanel
     panel.add(toolsPanel, BorderLayout.CENTER)
 
-    rebuildToolGroups()
+    // Converting the toolsets to MCP tools is reflection-heavy and must not run on the EDT (IJPL-251556),
+    // so the page shows up right away and the tool list is filled in once it has been built in the background.
+    showToolsLoadingState()
+    toolsLoadingJob = panel.initOnShow("MCP tool filter tools") { loadToolsAndUpdateUi() }
     return panel
+  }
+
+  private fun showToolsLoadingState() {
+    val panel = toolsContainerPanel ?: return
+    panel.add(JBLabel(McpServerBundle.message("configurable.mcp.tool.filter.loading")).apply {
+      icon = AnimatedIcon.Default.INSTANCE
+      foreground = UIUtil.getContextHelpForeground()
+    })
+  }
+
+  /**
+   * Builds the tool list off the EDT and populates the UI with it.
+   *
+   * Visible for tests: [initOnShow] never fires for a component that is not showing.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  suspend fun loadToolsAndUpdateUi() {
+    val tools = McpServerService.getInstance()
+      .getMcpToolsFilteredAsync(excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java))
+      .let(::userConfigurableTools)
+    withContext(Dispatchers.EDT) {
+      if (toolsContainerPanel == null) return@withContext // the page was disposed while the tools were loading
+      toolsLoaded = true
+      rebuildToolGroups(tools)
+    }
   }
 
   private val searchTextField = SearchTextField(false).apply {
@@ -369,10 +411,16 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     )
     val saveDialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, null)
     val fileWrapper = saveDialog.save(null as Path?, "mcp_tools.md") ?: return
-
-    val markdown = McpToolsMarkdownExporter.generateMarkdownForAllTools()
     val virtualFile = fileWrapper.getVirtualFile(true) ?: return
-    virtualFile.toNioPath().writeText(markdown)
+
+    runWithModalProgressBlocking(ModalTaskOwner.guess(),
+                                 McpServerBundle.message("dialog.mcp.tools.export.title"),
+                                 TaskCancellation.nonCancellable()) {
+      val markdown = McpToolsMarkdownExporter.generateMarkdownForAllTools()
+      withContext(Dispatchers.IO) {
+        virtualFile.toNioPath().writeText(markdown)
+      }
+    }
   }
 
   override fun isModified(): Boolean {
@@ -404,7 +452,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     }
 
     if (filterChanged) {
-      rebuildToolGroups()
+      rebuildToolGroupsIfLoaded()
     }
   }
 
@@ -424,10 +472,13 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       toolsFilterTextArea?.text = initialToolsFilter
     }
 
-    rebuildToolGroups()
+    rebuildToolGroupsIfLoaded()
   }
 
   override fun disposeUIResources() {
+    toolsLoadingJob?.cancel()
+    toolsLoadingJob = null
+    toolsLoaded = false
     toolsContainerPanel = null
     searchField = null
     allToolStates.clear()
@@ -447,7 +498,22 @@ class McpToolFilterConfigurable : SearchableConfigurable {
 
   // endregion
 
-  private fun rebuildToolGroups() {
+  /**
+   * Rebuilds the UI from the already loaded tool list.
+   *
+   * Only the initial load is expensive, so re-reading the tools here is safe on the EDT: it degrades to a state flow
+   * read plus the filter providers, which work on settings only. Before the initial load there is nothing to rebuild —
+   * the pending [loadToolsAndUpdateUi] picks up the current settings anyway.
+   */
+  private fun rebuildToolGroupsIfLoaded() {
+    if (!toolsLoaded) return
+    val tools = McpServerService.getInstance().getMcpToolsFiltered(
+      excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java),
+    ).let(::userConfigurableTools)
+    rebuildToolGroups(tools)
+  }
+
+  private fun rebuildToolGroups(tools: List<McpTool>) {
     val panel = toolsContainerPanel ?: return
     panel.removeAll()
     currentVisibleToolKeys = emptyList()
@@ -456,9 +522,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     toolRowViews.clear()
     emptyStateLabel = null
 
-    allTools = McpServerService.getInstance().getMcpToolsFiltered(
-      excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java),
-    ).let(::userConfigurableTools)
+    allTools = tools
     initialToolStates = normalizeToolStateKeys(initialToolStates)
     val normalizedToolStates = normalizeToolStateKeys(allToolStates)
     allToolStates.clear()

@@ -8,12 +8,12 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.annotations.McpToolHintValue
 import com.intellij.mcpserver.annotations.McpToolHints
 import com.intellij.mcpserver.impl.ReflectionCallableMcpTool
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import io.modelcontextprotocol.kotlin.sdk.types.ToolAnnotations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.Nls
 import kotlin.reflect.KClass
@@ -57,8 +57,18 @@ import kotlin.reflect.jvm.kotlinFunction
  * val tools = myToolset.asTools()
  * ```
  */
+@RequiresBackgroundThread
 fun McpToolset.asTools(json: Json = McpServerJson): List<ReflectionCallableMcpTool> {
   return this::class.asTools(json = json, thisRef = this)
+}
+
+/**
+ * Same as [asTools], but converts the tools concurrently.
+ *
+ * @see asTools
+ */
+suspend fun McpToolset.asToolsAsync(json: Json = McpServerJson): List<ReflectionCallableMcpTool> {
+  return this::class.asToolsAsync(json = json, thisRef = this)
 }
 
 /**
@@ -71,6 +81,27 @@ fun McpToolset.asTools(json: Json = McpServerJson): List<ReflectionCallableMcpTo
  */
 @RequiresBackgroundThread
 fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: T? = null): List<ReflectionCallableMcpTool> {
+  return toolConversions(json = json, thisRef = thisRef).map { it() }.requireAnyTool(this)
+}
+
+/**
+ * Same as [asTools], but converts the tools concurrently.
+ *
+ * Building the input and output schemas of every tool dominates MCP server initialization (IJPL-244160), so this is
+ * the preferred entry point. The parallelism deliberately lives here rather than inside [asTools]: [asTools] is
+ * reachable from synchronous public API that callers may invoke on the EDT, where `runBlocking` throws (IJPL-251556).
+ *
+ * @see asTools
+ */
+suspend fun <T : McpToolset> KClass<out T>.asToolsAsync(json: Json = McpServerJson, thisRef: T? = null): List<ReflectionCallableMcpTool> {
+  val toolsetClass = this
+  val conversions = toolConversions(json = json, thisRef = thisRef)
+  return coroutineScope {
+    conversions.map { conversion -> async(Dispatchers.Default) { conversion() } }.awaitAll()
+  }.requireAnyTool(toolsetClass)
+}
+
+private fun <T : McpToolset> KClass<out T>.toolConversions(json: Json, thisRef: T?): List<() -> ReflectionCallableMcpTool> {
   val category = McpToolCategory(
     shortName = this.simpleName ?: "Unknown",
     fullyQualifiedName = this.qualifiedName ?: "Unknown",
@@ -80,24 +111,26 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: 
     displayDescription = thisRef?.displayDescription(),
   )
   val presentableDescriptionProvider: ((String) -> @Nls String?)? = thisRef?.let { ts -> { toolName -> ts.displayDescription(toolName) } }
-  return runBlockingMaybeCancellable {
-    this@asTools.functions.map {
-      async(Dispatchers.Default) {
-        if (it.getPreferredToolAnnotation() == null) return@async null
-        it.asToolWithUserConfigurability(
-          json = json,
-          thisRef = thisRef,
-          category = category,
-          fullyQualifiedName = this@asTools.qualifiedName + "." + it.name,
-          presentableDescriptionProvider = presentableDescriptionProvider,
-          isUserConfigurable = thisRef?.isUserConfigurable() ?: true,
-          additionalImplicitParameters = arrayOf(projectPathParameter),
-        )
-      }
-    }.awaitAll().filterNotNull()
-  }.apply {
-    require(isNotEmpty()) { "No tools found in ${this@asTools}" }
+  val isUserConfigurable = thisRef?.isUserConfigurable() ?: true
+  val toolsetFqn = this.qualifiedName
+  return this.functions.filter { it.getPreferredToolAnnotation() != null }.map { function ->
+    {
+      function.asToolWithUserConfigurability(
+        json = json,
+        thisRef = thisRef,
+        category = category,
+        fullyQualifiedName = toolsetFqn + "." + function.name,
+        presentableDescriptionProvider = presentableDescriptionProvider,
+        isUserConfigurable = isUserConfigurable,
+        additionalImplicitParameters = arrayOf(projectPathParameter),
+      )
+    }
   }
+}
+
+private fun List<ReflectionCallableMcpTool>.requireAnyTool(toolsetClass: KClass<*>): List<ReflectionCallableMcpTool> {
+  require(isNotEmpty()) { "No tools found in $toolsetClass" }
+  return this
 }
 
 
