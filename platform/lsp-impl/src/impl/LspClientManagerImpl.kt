@@ -41,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val logger = logger<LspClientManagerImpl>()
-private const val MAX_LSP_CLIENTS = 10 //
+private const val MAX_LSP_CLIENTS = 10
 
 /**
  * Project service for managing LSP servers for the current project
