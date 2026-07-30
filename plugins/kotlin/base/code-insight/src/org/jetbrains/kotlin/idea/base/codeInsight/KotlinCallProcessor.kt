@@ -14,11 +14,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedVariableSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -51,7 +48,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentName
 
 sealed interface CallTarget {
     val caller: KtElement
-    val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
+    val call: KaCall?
     val symbol: KaCallableSymbol
 
     val anchor: PsiElement
@@ -74,24 +71,24 @@ sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KaCallableSig
 
 class VariableCallTarget(
     override val caller: KtElement,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
+    override val call: KaVariableAccessCall
 ) : TypedCallTarget<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> {
     override val symbol: KaVariableSymbol
-        get() = partiallyAppliedSymbol.symbol
+        get() = call.symbol
 }
 
 class FunctionCallTarget(
     override val caller: KtElement,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
+    override val call: KaFunctionCall<*>
 ) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> {
     override val symbol: KaFunctionSymbol
-        get() = partiallyAppliedSymbol.symbol
+        get() = call.symbol
 }
 
 class DesugaredFunctionCallTarget(
     override val caller: KtElement,
     override val symbol: KaFunctionSymbol,
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>? = null,
+    override val call: KaCall? = null
 ) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>>
 
 interface KotlinCallTargetProcessor {
@@ -229,20 +226,20 @@ object KotlinCallProcessor {
     fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
         with(targetProcessor) {
             return when (call) {
-                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
-                is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
+                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call))
+                is KaFunctionCall<*> -> processCallTarget(FunctionCallTarget(element, call))
                 is KaCompoundVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call.variablePartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call.compoundOperation.operationPartiallyAppliedSymbol))
+                    processCallTarget(VariableCallTarget(element, call.variableCall))
+                    processCallTarget(FunctionCallTarget(element, call.compoundOperation.operationCall))
                 }
 
-                is KaSimpleVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call.partiallyAppliedSymbol))
+                is KaVariableAccessCall -> {
+                    processCallTarget(VariableCallTarget(element, call))
                 }
 
                 is KaCompoundArrayAccessCall -> {
-                    processCallTarget(FunctionCallTarget(element, call.getPartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call.setPartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call.getterCall))
+                    processCallTarget(FunctionCallTarget(element, call.setterCall))
                 }
 
                 else -> true

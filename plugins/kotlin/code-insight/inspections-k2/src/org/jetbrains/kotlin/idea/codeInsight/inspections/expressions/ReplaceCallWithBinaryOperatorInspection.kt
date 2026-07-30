@@ -11,8 +11,6 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -231,7 +229,7 @@ private fun KaCallableSymbol.isAnyEquals(): Boolean {
 
 context(_: KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return false
+    val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
 

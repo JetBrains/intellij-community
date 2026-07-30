@@ -118,12 +118,8 @@ internal class OperatorToFunctionIntention :
     }
 
     context(_: KaSession)
-    private fun isApplicableCall(element: KtCallExpression): Boolean {
-        if (element.isImplicitInvokeCall() == true) {
-            return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
-        }
-        return false
-    }
+    private fun isApplicableCall(element: KtCallExpression): Boolean =
+        element.isImplicitInvokeCall() && (element.valueArgumentList != null || element.lambdaArguments.isNotEmpty())
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
 

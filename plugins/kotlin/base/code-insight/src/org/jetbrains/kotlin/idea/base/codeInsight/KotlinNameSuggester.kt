@@ -7,12 +7,17 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.isAnyType
 import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.analysis.api.types.isByteType
@@ -29,12 +34,7 @@ import org.jetbrains.kotlin.analysis.api.types.isUByteType
 import org.jetbrains.kotlin.analysis.api.types.isUIntType
 import org.jetbrains.kotlin.analysis.api.types.isULongType
 import org.jetbrains.kotlin.analysis.api.types.isUShortType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
 import org.jetbrains.kotlin.psi.KtNullableType
@@ -217,13 +218,16 @@ class KotlinNameSuggester(
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
-    @OptIn(KaContextParameterApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(_: KaSession)
     private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
-        val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySequence()
+
+        val resolvedCall =
+            callElement.tryResolveCall()?.calls?.singleOrNull { it is KaFunctionCall<*> } as? KaFunctionCall<*> ?: return emptySequence()
+
         val argExpr = valueArgument.getArgumentExpression()
         val parameter = resolvedCall.valueArgumentMapping[argExpr]?.symbol
         // either a parameter or a context argument is expected in this position
@@ -242,7 +246,6 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun suggestTypeNames(type: KaType): Sequence<String> {
         return sequence {

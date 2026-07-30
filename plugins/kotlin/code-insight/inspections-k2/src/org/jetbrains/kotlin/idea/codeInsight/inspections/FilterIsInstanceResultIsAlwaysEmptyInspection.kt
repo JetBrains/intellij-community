@@ -6,8 +6,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -98,7 +97,7 @@ class FilterIsInstanceResultIsAlwaysEmptyInspection: AbstractKotlinInspection() 
                 if (calleeExpression.text !in filterIsInstanceShortNames) return@callExpressionVisitor
 
                 val callSymbol =
-                    calleeExpression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()
+                    calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()
                         ?: return@callExpressionVisitor
 
                 val callableId = callSymbol.symbol.callableId ?: return@callExpressionVisitor

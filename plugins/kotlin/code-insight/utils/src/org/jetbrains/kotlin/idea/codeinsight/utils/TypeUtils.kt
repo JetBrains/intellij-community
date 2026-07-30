@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -92,7 +92,7 @@ private fun KtExpression.isFunctionCallee(): Boolean {
     val callExpression = parent as? KtCallExpression ?: return false
     if (callExpression.calleeExpression != this) return false
     analyzeForShowExpressionType(this) {
-        return callExpression.isImplicitInvokeCall() == false
+        return !callExpression.isImplicitInvokeCall()
     }
 }
 

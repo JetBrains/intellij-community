@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -172,7 +172,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             analyze(expression) {
                 val declarationSymbol = decl.symbol as? KaCallableSymbol ?: return@forEachDescendantOfType
                 val functionCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return@forEachDescendantOfType
-                if (expression is KtCallExpression && (functionCall as? KaSimpleFunctionCall)?.isImplicitInvoke != true) return@forEachDescendantOfType
+                if (expression is KtCallExpression && (functionCall !is KaImplicitInvokeCall)) return@forEachDescendantOfType
                 val resolvedSymbol = functionCall.partiallyAppliedSymbol
                 if (declarationSymbol.allOverriddenSymbols.firstOrNull { it == resolvedSymbol.symbol } != null) return@forEachDescendantOfType
                 if (resolvedSymbol.contextArguments.any { (it.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol == element.symbol }) {

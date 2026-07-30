@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -26,7 +25,7 @@ data class LambdaCallsBehaviour(private val sliceProducer: SliceProducer) : Kotl
                         analyze(sliceElement) {
                             val targetElement =
                                 (sliceElement.parent as? KtCallExpression)?.takeIf { it.calleeExpression == sliceElement } ?: sliceElement
-                            val resolvedCall = targetElement.resolveToCall()?.singleFunctionCallOrNull() as? KaSimpleFunctionCall
+                            val resolvedCall = targetElement.resolveToCall()?.singleFunctionCallOrNull()
                             if (resolvedCall != null &&
                                 (resolvedCall.symbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
                                 val originalMode = sliceUsage.mode.dropBehaviour()

@@ -400,7 +400,7 @@ sealed class IfThenTransformationStrategy {
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this
             .parentsOfType<KtExpression>(withSelf = true)
             .mapNotNull { it.getSelectorOrThis() as? KtCallExpression }
-            .filter { it.isImplicitInvokeCall() == true }
+            .filter { it.isImplicitInvokeCall() }
             .toSet()
     }
 }

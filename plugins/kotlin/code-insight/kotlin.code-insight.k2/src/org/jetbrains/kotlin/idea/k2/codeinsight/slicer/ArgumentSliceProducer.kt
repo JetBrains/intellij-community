@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
@@ -28,7 +28,7 @@ data class ArgumentSliceProducer(
         return listOf(KotlinSliceUsage(argumentExpression, parent, mode, forcedExpressionMode = true))
     }
 
-    override val testPresentation = "ARGUMENT #$parameterIndex".let { if (isExtension) "$it EXTENSION" else it }
+    override val testPresentation: String = "ARGUMENT #$parameterIndex".let { if (isExtension) "$it EXTENSION" else it }
 
     private fun extractArgumentExpression(refElement: PsiElement): PsiElement? {
         val refParent = refElement.parent
@@ -41,11 +41,11 @@ data class ArgumentSliceProducer(
                 analyze(callElement) {
                     val callInfo = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
 
-                    val parameterIndexToUse = parameterIndex + (if (isExtension && (callInfo as? KaSimpleFunctionCall)?.isImplicitInvoke == true) 1 else 0)
+                    val parameterIndexToUse = parameterIndex + (if (isExtension && (callInfo is KaImplicitInvokeCall)) 1 else 0)
 
                     val variableSignature = callInfo.signature.valueParameters[parameterIndexToUse]
 
-                    callInfo.valueArgumentMapping.entries.firstOrNull { (k, v) -> v == variableSignature }?.key ?: variableSignature.symbol.defaultValue
+                    callInfo.valueArgumentMapping.entries.firstOrNull { (_, v) -> v == variableSignature }?.key ?: variableSignature.symbol.defaultValue
                 }
             }
 

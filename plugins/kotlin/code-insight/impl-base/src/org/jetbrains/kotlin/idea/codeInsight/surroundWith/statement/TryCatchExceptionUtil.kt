@@ -12,10 +12,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccess
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ClassIdBasedLocality
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -112,13 +112,13 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         val call = (callInfo as? KaSuccessCallInfo)?.call ?: return
 
         when (call) {
-            is KaSimpleFunctionCall -> processCallable(call.symbol)
-            is KaSimpleVariableAccessCall -> {
+            is KaFunctionCall<*> -> processCallable(call.symbol)
+            is KaVariableAccessCall -> {
                 val symbol = call.symbol
                 if (symbol is KaPropertySymbol) {
-                    when (call.simpleAccess) {
-                        is KaSimpleVariableAccess.Read -> symbol.getter?.let { processCallable(it) }
-                        is KaSimpleVariableAccess.Write -> symbol.setter?.let { processCallable(it) }
+                    when (call.kind) {
+                        is KaVariableAccessCall.Kind.Read -> symbol.getter?.let { processCallable(it) }
+                        is KaVariableAccessCall.Kind.Write -> symbol.setter?.let { processCallable(it) }
                     }
                 }
             }
@@ -152,6 +152,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
 
     }
 
+    @OptIn(ClassIdBasedLocality::class)
     private fun processAnnotationValue(value: KaAnnotationValue) {
         when (value) {
             is KaAnnotationValue.ArrayValue -> value.values.forEach(::processAnnotationValue)

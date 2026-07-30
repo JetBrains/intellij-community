@@ -11,6 +11,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
@@ -95,7 +96,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : AbstractKotlinLineMarkerP
 
 context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
-        var dispatchReceiver = target.partiallyAppliedSymbol?.dispatchReceiver ?: return true
+        var dispatchReceiver = (target.call as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.dispatchReceiver ?: return true
         while (dispatchReceiver is KaSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original
         }

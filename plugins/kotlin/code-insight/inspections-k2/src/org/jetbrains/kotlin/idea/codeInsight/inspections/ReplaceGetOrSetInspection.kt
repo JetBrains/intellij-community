@@ -9,8 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -67,7 +66,7 @@ internal class ReplaceGetOrSetInspection :
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCallOld()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
-        val call = element.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
+        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val functionSymbol = call.symbol
         if (functionSymbol !is KaNamedFunctionSymbol || !functionSymbol.isOperator) {
             return null

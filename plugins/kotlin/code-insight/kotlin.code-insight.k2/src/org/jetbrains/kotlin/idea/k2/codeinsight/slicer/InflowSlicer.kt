@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -291,7 +290,7 @@ class InflowSlicer(
             is KtCallExpression -> {
                 analyze(expression) {
                     val call = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-                    if (call is KaSimpleFunctionCall && call is KaImplicitInvokeCall) {
+                    if (call is KaImplicitInvokeCall) {
                         (call.dispatchReceiver as? KaExplicitReceiverValue)?.expression?.passToProcessorAsValue(mode.withBehaviour(LambdaResultInflowBehaviour))
                     } else {
                         call?.symbol?.psi?.passToProcessorInCallMode(expression, withOverriders = true)

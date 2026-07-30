@@ -13,8 +13,8 @@ import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -63,7 +63,7 @@ internal object AbstractSuperCallFixFactories {
         val expression = element as? KtNameReferenceExpression ?: return null
         val containingClass = expression.getNonStrictParentOfType<KtClassOrObject>() ?: return null
         val containingFunction = expression.parentOfType<KtNamedFunction>() ?: return null
-        val functionSymbol = expression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()?.symbol ?: return null
+        val functionSymbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
 
         context(session: KaSession)
         fun computeInfoIfNotInObject(containingClass: KtClassOrObject): Info? {
@@ -185,7 +185,7 @@ private class SpecifySuperTypeExplicitlyFix(
 context(session: KaSession)
 private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
     fun tryViaCalledFunction(): KaCallableSymbol? = expression.resolveToCall()
-        ?.successfulCallOrNull<KaSimpleFunctionCall>()
+        ?.successfulFunctionCallOrNull()
         ?.symbol
         ?.allOverriddenSymbols?.find { (it as? KaFunctionSymbol)?.modality != KaSymbolModality.ABSTRACT }
 

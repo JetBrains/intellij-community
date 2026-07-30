@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -135,7 +135,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         callExpression.resolveToCallCandidates()
             .asSequence()
             .map { it.candidate }
-            .filterIsInstance<KaSimpleFunctionCall>()
+            .filterIsInstance<KaFunctionCall<*>>()
             .map { it.signature }
             .mapNotNull { FunctionLookupElementFactory.getTrailingFunctionSignature(it, checkDefaultValues = false) }
             .mapNotNull { FunctionLookupElementFactory.createTrailingFunctionDescriptor(it) }

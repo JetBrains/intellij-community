@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -302,12 +302,12 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
     fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
 
     if (call == null) {
-        val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType
+        val paramType = resolveCall.successfulVariableAccessCall()?.symbol?.returnType
         if (paramType != null && paramType.isFunctionalType()) {
             return true
         }
         val calls =
-            (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaSimpleFunctionCall>() ?:
+            (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaFunctionCall<*>>() ?:
             emptyList()
 
         return calls.isEmpty() || calls.all { functionalCall ->

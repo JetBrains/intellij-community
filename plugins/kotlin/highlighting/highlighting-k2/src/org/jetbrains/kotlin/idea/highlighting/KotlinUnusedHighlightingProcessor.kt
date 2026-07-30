@@ -28,8 +28,9 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -162,11 +163,11 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
 
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
                 val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
-                if (call is KaSimpleFunctionCall) {
+                if (call is KaFunctionCall<*>) {
                     refHolder.registerLocalRef(call.symbol.psi)
                 }
                 if (call is KaCompoundAccessCall) {
-                    refHolder.registerLocalRef(call.compoundOperation.operationPartiallyAppliedSymbol.symbol.psi)
+                    refHolder.registerLocalRef(call.compoundOperation.operationCall.symbol.psi)
                 }
             }
 
@@ -179,8 +180,8 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 val callee = expression.calleeExpression ?: return
                 val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
-                refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi)
-                if (call is KaSimpleFunctionCall && call.isImplicitInvoke) {
+                refHolder.registerLocalRef((call as? KaFunctionCall<*>)?.symbol?.psi)
+                if (call is KaImplicitInvokeCall) {
                     call.contextArguments.forEach {
                         refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
                     }
