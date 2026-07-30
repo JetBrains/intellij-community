@@ -13,7 +13,6 @@ import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
@@ -63,7 +62,7 @@ internal object AbstractSuperCallFixFactories {
         val expression = element as? KtNameReferenceExpression ?: return null
         val containingClass = expression.getNonStrictParentOfType<KtClassOrObject>() ?: return null
         val containingFunction = expression.parentOfType<KtNamedFunction>() ?: return null
-        val functionSymbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val functionSymbol = expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return null
 
         context(session: KaSession)
         fun computeInfoIfNotInObject(containingClass: KtClassOrObject): Info? {

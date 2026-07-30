@@ -19,11 +19,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.ClassIdBasedLocality
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -152,18 +152,16 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
 
     }
 
-    @OptIn(ClassIdBasedLocality::class)
     private fun processAnnotationValue(value: KaAnnotationValue) {
         when (value) {
             is KaAnnotationValue.ArrayValue -> value.values.forEach(::processAnnotationValue)
             is KaAnnotationValue.ClassLiteralValue -> {
                 val type = value.type
                 if (type is KaClassType) {
-                    val classId = type.classId
-                    if (classId.isLocal) {
+                    if (type.symbol.isLocal) {
                         hasLocalClasses = true
                     } else {
-                        mutableExceptionClasses.add(classId)
+                        mutableExceptionClasses.add(type.classId)
                     }
                 }
             }

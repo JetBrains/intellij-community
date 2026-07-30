@@ -95,8 +95,7 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
 /**
  * Determines whether [this] call expression is an implicit `invoke` operator call.
  *
- * @return `true` if the expression is an implicit `invoke` call, `false` if it is not,
- * and `null` if the function resolve was unsuccessful.
+ * @return `true` if the expression is an implicit `invoke` call, `false` otherwise.
  */
 context(_: KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean =

@@ -61,7 +61,7 @@ fun <Descriptor, ResolvedCall> IExtractionData.encodeReferences(
             if (processImplicitInvoke) {
                 val implicitInvoke =
                     analyze(expression) { expression.isImplicitInvokeCall() }
-                if (implicitInvoke == true) {
+                if (implicitInvoke) {
                     expression.resolveResult = resolveResultProvider(expression)
                 }
             }
