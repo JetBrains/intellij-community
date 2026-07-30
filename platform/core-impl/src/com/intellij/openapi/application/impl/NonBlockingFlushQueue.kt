@@ -213,15 +213,15 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
           require(currentWriteIntentLockMode == WriteIntentLockMode.UI_ONLY) {
             "Write action finished, but FlushQueue is unexpectedly allowed to run all runnables"
           }
+          synchronized(lockObject) {
+            uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
+          }
           if (threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) {
-            threadingSupport.runWhenWriteActionIsCompleted {
-              requestFlush()
-            }
-            return null
+            scheduleFlushOnWriteActionTermination()
+            // this requestFlush is needed because suspending edtWriteAction might be residing in this queue after the current WriteActionFinished
+            // so if current write action is pending, we need to continue processing UI runnables
+            continue
           } else {
-            synchronized(lockObject) {
-              uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
-            }
             currentWriteIntentLockMode = WriteIntentLockMode.ALL
           }
         }
@@ -337,12 +337,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
           // we failed, which means that there is a background write action;
           // now we can to transition to the UI_ONLY state and execute only non-locking runnables
           currentWriteIntentLockMode = WriteIntentLockMode.UI_ONLY
-          threadingSupport.runWhenWriteActionIsCompleted {
-            synchronized(lockObject) {
-              uiQueue.enqueue(WriteActionFinished(timeCounter.getAndIncrement()))
-              requestFlush()
-            }
-          }
+          scheduleFlushOnWriteActionTermination()
         }
       } else {
         synchronized(lockObject) {
@@ -365,6 +360,15 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
       }
     } finally {
       reportStatistics(watcher, waitingFinishedNs, nextRunnable)
+    }
+  }
+
+  private fun scheduleFlushOnWriteActionTermination() {
+    threadingSupport.runWhenWriteActionIsCompleted {
+      synchronized(lockObject) {
+        uiQueue.enqueue(WriteActionFinished(timeCounter.getAndIncrement()))
+        requestFlush()
+      }
     }
   }
 
