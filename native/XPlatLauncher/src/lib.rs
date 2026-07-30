@@ -61,6 +61,7 @@ pub mod mini_logger;
 pub mod ui;
 pub mod default;
 pub mod remote_dev;
+mod managed_vm_options;
 pub mod java;
 pub mod docker;
 pub mod cef_sandbox;
@@ -147,7 +148,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
 
     debug!("** Collecting JVM options");
     let vm_options = get_full_vm_options(&*configuration, &cef_sandbox).context("Cannot collect JVM options")?;
-    debug!("VM options: {vm_options:?}");
+    debug!("Collected {} VM options", vm_options.len());
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
