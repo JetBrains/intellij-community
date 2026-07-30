@@ -2,7 +2,9 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.community"/>

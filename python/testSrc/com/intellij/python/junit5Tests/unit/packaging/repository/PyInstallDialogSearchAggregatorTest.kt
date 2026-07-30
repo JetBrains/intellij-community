@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.unit.packaging.repository
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
