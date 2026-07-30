@@ -1237,7 +1237,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == effectiveNewActions.size) {
+    if (pairs.isNotEmpty() && pairs.size == effectiveNewActions.size) {
       return false // no gain from in-place updates
     }
 
