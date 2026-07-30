@@ -57,9 +57,11 @@ object PyRequirementParser {
   fun fromFile(file: VirtualFile): List<PyRequirement> = fromFile(file, ProjectManager.getInstance().defaultProject)
 
   @JvmStatic
-  fun fromFile(file: VirtualFile, project: Project): List<PyRequirement> = runReadActionBlocking {
+  fun fromFile(file: VirtualFile, project: Project): List<PyRequirement> = fromFile(file, project, HashSet())
+
+  private fun fromFile(file: VirtualFile, project: Project, visitedFiles: MutableSet<VirtualFile>): List<PyRequirement> = runReadActionBlocking {
     val document = FileDocumentManager.getInstance().getDocument(file)
-    if (document == null) emptyList() else fromText(document.text, project, file)
+    if (document == null) emptyList() else fromText(document.text, project, file, visitedFiles)
   }
 
   @JvmStatic
@@ -97,7 +99,7 @@ object PyRequirementParser {
           .filter { it.shortOption?.shortOptionName?.text == "-r" || it.longOption?.longOptionName?.text == "--requirement" }
           .mapNotNull { it.shortOption?.optionValue?.text ?: it.longOption?.optionValue?.text }
           .mapNotNull { parent.findFileByRelativePath(it) }
-          .forEach { requirements.addAll(fromFile(it, project)) }
+          .forEach { requirements.addAll(fromFile(it, project, visitedFiles)) }
       }
 
       requirements

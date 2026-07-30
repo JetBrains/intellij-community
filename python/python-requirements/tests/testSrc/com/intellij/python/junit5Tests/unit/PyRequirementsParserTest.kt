@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
@@ -17,8 +18,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.writeText
 
 @PyDefaultTestApplication
 @TestClassInfo(repository = Repository.PY_PROFESSIONAL)
@@ -201,5 +206,25 @@ class PyRequirementsParserTest(val project: Project) {
     assertEquals(0, req.versionSpecs.size)
     assertEquals("mypackage", req.name)
     assertEquals(listOf(option, "mypackage"), req.installOptions)
+  }
+
+  @Test
+  fun testMutuallyReferencingFilesDoNotOverflow(@TempDir dir: Path) {
+    (dir / "a.txt").writeText("-r b.txt\npkg-a==1.0")
+    (dir / "b.txt").writeText("-r a.txt\npkg-b==1.0")
+    val aVf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir / "a.txt")!!
+
+    // fromFile acquires its own read action; a StackOverflowError here would mean the cycle guard is broken.
+    val names = PyRequirementParser.fromFile(aVf, project).map { it.name }.toSet()
+    assertEquals(setOf("pkg-a", "pkg-b"), names)
+  }
+
+  @Test
+  fun testSelfReferencingFileDoesNotOverflow(@TempDir dir: Path) {
+    (dir / "self.txt").writeText("-r self.txt\npkg-c==1.0")
+    val selfVf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir / "self.txt")!!
+
+    val names = PyRequirementParser.fromFile(selfVf, project).map { it.name }.toSet()
+    assertEquals(setOf("pkg-c"), names)
   }
 }
