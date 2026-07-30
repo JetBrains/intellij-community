@@ -20,7 +20,7 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
   override suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): TreeStructureProjectViewNodeProvider {
     return TreeStructureProjectViewNodeProvider(
       project = project,
-      structure = createTreeStructure(ProjectViewPaneViewSettings(settingsAccessor)),
+      structure = createTreeStructure(createTreeStructureViewSettings(settingsAccessor)),
       settings = settingsAccessor,
     )
   }
@@ -72,7 +72,13 @@ open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectView
   override fun isStructureView(): Boolean = false
 
   override fun isFoldersAlwaysOnTop(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.FoldersAlwaysOnTop)
+    // Mirror the bug in ProjectViewPaneTreeStructure and alike, as they don't override it,
+    // and the platform code is symmetrically broken so it works correctly when we return true.
+    // It happens because the comparator accesses the settings directly, bypassing ViewSettings,
+    // but PsiDirectoryNode doesn't, and always returns getWeight() == 20, thus delegating to the comparator.
+    // Returning the correct value here will break the comparator because PsiDirectoryNode will return a different weight.
+    // This, of course, has to be fixed someday, but it's out of scope of PV redesign.
+    return true
   }
 
   override fun isShowMembers(): Boolean {
