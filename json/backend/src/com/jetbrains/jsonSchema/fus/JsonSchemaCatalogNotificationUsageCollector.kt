@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaInfo
 internal object JsonSchemaCatalogNotificationUsageCollector : CounterUsagesCollector() {
   private val group = EventLogGroup(
     id = "json.schema.catalog.notification",
-    version = 1,
+    version = 2,
   )
 
   private val schemaCatalogActionEvent = group.registerEvent(
