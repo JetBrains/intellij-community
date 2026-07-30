@@ -79,7 +79,6 @@ import com.intellij.platform.testFramework.plugins.includePackageClassFiles
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
-import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
 import com.intellij.platform.testFramework.unloadAndUninstallPlugin
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.DisposableRule
@@ -100,6 +99,9 @@ import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
+private const val ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY =
+  "ide.plugins.allow.load.non.dynamic.extension.points.with.extensions.in.the.same.module"
 
 @Suppress("UnresolvedPluginConfigReference")
 @RunsInEdt
@@ -903,62 +905,96 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun `loading of plugin with an extension of non-dynamic EP is prohibited`() {
+  fun `loading of non-dynamic EP and extension from different RMGs is prohibited even if registry allows same RMG`() {
+    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("bar") {
-        extensionPoints = """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>"""
+        content(namespace = "custom") {
+          module("bar.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            extensionPoints = """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>"""
+          }
+        }
       }
-      plugin("quux") {}
       plugin("main") {
-        depends("bar", "bar.xml") {
-          depends("quux", "quux.xml") {
+        content {
+          module("main.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            dependencies {
+              module("bar.embedded", "custom")
+            }
             extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
           }
         }
       }
     }
-    val (bar, quux, main) = pluginSet.getEnabledPlugins("bar", "quux", "main")
+    val (bar, main) = pluginSet.getEnabledPlugins("bar", "main")
+    val extensionPointSource = bar.contentModules.single()
+    val extensionSource = main.contentModules.single()
     loadPluginInTest(bar) {
-      loadPluginInTest(quux) {
-        if (isNewSupportEnabled()) {
-          assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).isEqualTo(
-            "<depends> config 'quux.xml' of plugin main cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'foo.barExtension' from ${bar.shortLogDescription}."
-          )
-        } else {
-          setPluginClassLoaderForMainAndSubPlugins(main, DynamicPluginsTest::class.java.classLoader)
-          assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).isEqualTo(
-            "Plugin '${main.pluginId}' is not unload-safe because of extension to non-dynamic EP 'foo.barExtension' in optional dependency on ${quux.pluginId} in optional dependency on ${bar.pluginId}"
-          )
-        }
-      }
+      Registry.get(ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY).setValue(true, testDisposable.disposable)
+      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).contains(
+        extensionSource.shortLogDescription,
+        "non-dynamic extension point 'foo.barExtension'",
+        extensionPointSource.shortLogDescription
+      )
     }
   }
 
   @Test
-  fun `loading of plugin with an extension of non-dynamic EP is prohibited - even if EP is registered in the same plugin`() {
-    val epName = "one.foo"
+  fun `loading of non-dynamic EP and extension from different descriptors in the same RMG is prohibited by default`() {
+    assumeNewSupportEnabled()
+    Registry.get(ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY).setValue(false, testDisposable.disposable)
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
-      plugin("nonDynamic") {
-        extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>"""
+      plugin("nonDynamicDisabled") {
+        content {
+          module("nonDynamicDisabled.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            extensionPoints = """<extensionPoint qualifiedName="one.foo" interface="java.lang.Runnable"/>"""
+          }
+        }
+        dependencies {
+          module("nonDynamicDisabled.embedded")
+        }
         extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
       }
     }
-    val plugin = pluginSet.getPlugin("nonDynamic")
-    if (isNewSupportEnabled()) {
-      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
-        .isEqualTo("${plugin.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'one.foo' from ${plugin.shortLogDescription}.")
-    } else {
-      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
-        .isEqualTo("Plugin '${plugin.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'")
-    }
+    val plugin = pluginSet.getPlugin("nonDynamicDisabled")
+    assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
+      .contains(plugin.shortLogDescription, "non-dynamic extension point 'one.foo'", "nonDynamicDisabled.embedded")
   }
 
   @Test
-  fun `loading of plugin with an extension of dynamic EP is allowed - EP is registered in the same plugin`() {
-    val epName = "one.foo"
+  fun `loading of non-dynamic EP and extension from different descriptors in the same RMG is allowed by registry`() {
+    assumeNewSupportEnabled()
+    Registry.get(ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY).setValue(true, testDisposable.disposable)
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("nonDynamicAllowed") {
+        content {
+          module("nonDynamicAllowed.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            extensionPoints = """<extensionPoint qualifiedName="one.foo" interface="java.lang.Runnable"/>"""
+          }
+        }
+        dependencies {
+          module("nonDynamicAllowed.embedded")
+        }
+        extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
+      }
+    }
+
+    assertThat(DynamicPlugins.validateCanLoadWithoutRestart(pluginSet.getPlugin("nonDynamicAllowed"))).isNull()
+  }
+
+  @Test
+  fun `loading of dynamic EP and extension from different descriptors in the same RMG is allowed`() {
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("dynamic") {
-        extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable" dynamic="true"/>"""
+        content {
+          module("dynamic.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            extensionPoints = """<extensionPoint qualifiedName="one.foo" interface="java.lang.Runnable" dynamic="true"/>"""
+          }
+        }
+        dependencies {
+          module("dynamic.embedded")
+        }
         extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
       }
     }
@@ -1192,20 +1228,36 @@ class DynamicPluginsTest {
   fun `test ide-plugins-allow-dynamic-services-overrides registry flag`() {
     for (dynamicServiceOverridesAllowed in listOf(true, false)) {
       Registry.get("ide.plugins.allow.dynamic.services.overrides").setValue(dynamicServiceOverridesAllowed, testDisposable.disposable)
-      val fooPath = plugin("foo") {
-        extensions("""
-        <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
-                            serviceImplementation="${DefaultService::class.qualifiedName}"
-                            open="true"/>
-                            
-        <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
-                            serviceImplementation="${DefaultService::class.qualifiedName}"
-                            overrides="true"/>
-      """.trimIndent())
-        includePackageClassFiles<DefaultService>()
-      }.installAt(pluginsDir)
-      val foo = loadDescriptorInTest(fooPath)
-      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(foo) == null).isEqualTo(dynamicServiceOverridesAllowed)
+      val pluginId = "serviceOverride.$dynamicServiceOverridesAllowed"
+      val pluginSet = buildPluginSet(pluginsDir.resolve(dynamicServiceOverridesAllowed.toString()), configureClassLoaders = false) {
+        plugin(pluginId) {
+          content {
+            module("$pluginId.embedded", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+              dependencies {
+                plugin(pluginId)
+              }
+              extensions("""
+                <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}"
+                                    serviceImplementation="${DefaultService::class.qualifiedName}"
+                                    overrides="true"/>
+              """.trimIndent())
+            }
+          }
+          extensions("""
+            <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}"
+                                serviceImplementation="${DefaultService::class.qualifiedName}"
+                                open="true"/>
+          """.trimIndent())
+        }
+      }
+      val foo = pluginSet.getPlugin(pluginId)
+      val validationIssue = DynamicPlugins.validateCanLoadWithoutRestart(foo)
+      if (dynamicServiceOverridesAllowed) {
+        assertThat(validationIssue).isNull()
+      }
+      else {
+        assertThat(validationIssue).contains("service override")
+      }
     }
   }
 
