@@ -21,10 +21,6 @@ final class SlowLineMarkersPassFactory implements TextEditorHighlightingPassFact
 
   @Override
   public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
-    boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(psiFile.getProject())).isSerializeCodeInsightPasses();
-
-    LineMarkersPass.Mode myMode = serializeCodeInsightPasses ? LineMarkersPass.Mode.SLOW : LineMarkersPass.Mode.NONE;
-    return LineMarkersPassFactory.createLineMarkersPass(psiFile, editor, myMode, Pass.SLOW_LINE_MARKERS);
+    return LineMarkersPassFactory.createLineMarkersPass(psiFile, editor, LineMarkersPass.Mode.NONE, Pass.SLOW_LINE_MARKERS);
   }
 }

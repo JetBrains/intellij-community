@@ -1663,31 +1663,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return editorWindow == null;
   }
 
-  /**
-   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behavior.
-   *
-   * @param flag if {@code true}: enables code insight passes serialization:
-   *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
-   *             completion of Syntax analysis {@link GeneralHighlightingPass}.
-   *             if {@code false} (default behavior) code insight passes are running in parallel
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public void serializeCodeInsightPasses(boolean flag) {
-    ThreadingAssertions.assertEventDispatchThread();
-    setUpdateByTimerEnabled(false);
-    try {
-      cancelAllUpdateProgresses(false, "serializeCodeInsightPasses");
-      TextEditorHighlightingPassRegistrarImpl registrar =
-        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-      registrar.serializeCodeInsightPasses(flag);
-    }
-    finally {
-      setUpdateByTimerEnabled(true);
-    }
-  }
-
   // tell the next restarted highlighting that it should start in the "full mode" and run all inspections/external annotators/etc
   void requestRestartToCompleteEssentialHighlighting() {
     restart("restartToCompleteEssentialHighlighting");

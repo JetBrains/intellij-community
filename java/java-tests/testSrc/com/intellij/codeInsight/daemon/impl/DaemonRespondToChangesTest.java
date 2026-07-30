@@ -1370,9 +1370,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertTrue("codeblocks :"+N_BLOCKS, N_BLOCKS > 1000);
     Random random = new Random();
     int N = 10;
-    // try with both serialized and not-serialized passes
-    myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
-    for (int i=0; i<N*2; i++) {
+    for (int i=0; i<N; i++) {
       PsiCodeBlock block = codeBlocks(psiFile).get(random.nextInt(N_BLOCKS));
       getEditor().getCaretModel().moveToOffset(block.getLBrace().getTextOffset() + 1);
       type("\n/*xxx*/");
@@ -1381,10 +1379,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         System.out.println("\n-----\n"+getEditor().getDocument().getText()+"\n--------\n");
       }
       assertEmpty(warnings);
-      if (i == N) {
-        // repeat the same steps with serialized passes
-        myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
-      }
     }
   }
 
@@ -1497,38 +1491,32 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   }
 
   public void testHighlightingInSplittedWindowFinishesEventually() {
-    myDaemonCodeAnalyzer.serializeCodeInsightPasses(true); // reproduced only for serialized passes
-    try {
-      Collection<Editor> applied = ContainerUtil.createConcurrentList();
-      Collection<Editor> collected = ContainerUtil.createConcurrentList();
-      registerFakePass(applied, collected);
+    Collection<Editor> applied = ContainerUtil.createConcurrentList();
+    Collection<Editor> collected = ContainerUtil.createConcurrentList();
+    registerFakePass(applied, collected);
 
-      @Language("JAVA")
-      String text = "class X {" + "\n".repeat(1000) +
-                    "}";
-      configureByText(JavaFileType.INSTANCE, text);
-      Editor editor1 = getEditor();
-      Editor editor2 = EditorFactory.getInstance().createEditor(editor1.getDocument(),getProject());
-      Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
-      setActiveEditors(editor1, editor2);
+    @Language("JAVA")
+    String text = "class X {" + "\n".repeat(1000) +
+                  "}";
+    configureByText(JavaFileType.INSTANCE, text);
+    Editor editor1 = getEditor();
+    Editor editor2 = EditorFactory.getInstance().createEditor(editor1.getDocument(),getProject());
+    Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
+    setActiveEditors(editor1, editor2);
 
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
 
-      assertSameElements(collected, Arrays.asList(editor1, editor2));
-      assertSameElements(applied, Arrays.asList(editor1, editor2));
+    assertSameElements(collected, Arrays.asList(editor1, editor2));
+    assertSameElements(applied, Arrays.asList(editor1, editor2));
 
-      applied.clear();
-      collected.clear();
-      setActiveEditors(editor1, editor2);
-      type("/* xxx */");
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+    applied.clear();
+    collected.clear();
+    setActiveEditors(editor1, editor2);
+    type("/* xxx */");
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
 
-      assertSameElements(collected, Arrays.asList(editor1, editor2));
-      assertSameElements(applied, Arrays.asList(editor1, editor2));
-    }
-    finally {
-      myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
-    }
+    assertSameElements(collected, Arrays.asList(editor1, editor2));
+    assertSameElements(applied, Arrays.asList(editor1, editor2));
   }
 
   private void registerFakePass(@NotNull Collection<? super Editor> applied, @NotNull Collection<? super Editor> collected) {
