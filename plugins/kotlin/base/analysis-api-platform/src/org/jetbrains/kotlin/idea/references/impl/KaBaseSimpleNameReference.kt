@@ -8,6 +8,7 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
@@ -57,7 +58,8 @@ internal class KaBaseSimpleNameReference(
         return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()
     }
 
-    override fun getResolvedToPsi(analysisSession: KaSession): Collection<PsiElement> = with(analysisSession) {
+    context(session: KaSession)
+    override fun getResolvedToPsi(): Collection<PsiElement> {
         if (expression is KtLabelReferenceExpression) {
             when (val loopJumpExpression = expression.parent?.parent) {
                 // continue/break expressions might reference only loops,
@@ -71,9 +73,9 @@ internal class KaBaseSimpleNameReference(
         }
 
         val referenceTargetSymbols = resolveToSymbols()
-        val psiOfReferenceTarget = super.getResolvedToPsi(analysisSession, referenceTargetSymbols)
+        val psiOfReferenceTarget = super.getResolvedToPsi(referenceTargetSymbols)
         if (psiOfReferenceTarget.isNotEmpty()) return psiOfReferenceTarget
-        referenceTargetSymbols.flatMap { symbol ->
+        return referenceTargetSymbols.flatMap { symbol ->
             when (symbol) {
                 is KaSyntheticJavaPropertySymbol ->
                     if (isRead) {
