@@ -192,8 +192,8 @@ class RequirementsFileTest(val project: Project) {
       val file = PsiFileFactory.getInstance(project).createFileFromText("", RequirementsLanguage, text) as RequirementsFile
       val requirements = file.requirements()
       assertEquals(2, requirements.size)
-      assertEquals(requirements[0].name, "working-package")
-      assertEquals(requirements[1].name, "another-working-package")
+      assertEquals("working-package", requirements[0].name)
+      assertEquals("another-working-package", requirements[1].name)
       assertEquals(1, requirements[1].versionSpecs.size)
     }
   }

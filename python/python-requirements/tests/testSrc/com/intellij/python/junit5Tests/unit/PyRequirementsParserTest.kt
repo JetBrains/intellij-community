@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
@@ -31,7 +30,7 @@ class PyRequirementsParserTest(val project: Project) {
   @ParameterizedTest
   @ValueSource(strings = ["mypackage >= 1.23.4a2, < 2.0", "mypackage>=1.23.4a2,<2.0"])
   fun testVersionedRequirement(text: String) {
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals("mypackage", req.name)
     assertEquals("", req.extras)
@@ -48,7 +47,7 @@ class PyRequirementsParserTest(val project: Project) {
   fun testComplexRequirement(basePart: String) {
     val text = "${basePart} --hash=sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" +
                " ; python_version < '3.14' and platform_system != 'Windows'"
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals("mypackage", req.name)
     assertEquals("extra1,extra2", req.extras)
@@ -97,7 +96,7 @@ class PyRequirementsParserTest(val project: Project) {
                "--global-option=\"build_ext\" " +
                "--global-option \"build_ext\" " +
                "--hash sha256:09a6bb58a2f46ac7c9fd8ca824ff20ce19899b6009be888a8952de2235f2612c"
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals(7, req.installOptions.size)
     assertEquals("mypackage", req.installOptions[0])
@@ -113,7 +112,7 @@ class PyRequirementsParserTest(val project: Project) {
   fun testComplexEnvironmentMarker() {
     val text = "mypackage; (python_version < '3.14' and platform_system != 'Windows') or " +
                "(platform_python_implementation == 'PyPy' and python_version >= '7.3.8')"
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
 
     assertEquals("mypackage", req.name)
@@ -168,7 +167,7 @@ class PyRequirementsParserTest(val project: Project) {
     "python_version<\"3.14\" and platform_system!=\"Windows\"",
   ])
   fun testUrlRequirement(text: String) {
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals("extra1,extra2", req.extras)
     assertEquals(0, req.versionSpecs.size)
@@ -189,7 +188,7 @@ class PyRequirementsParserTest(val project: Project) {
   ])
   fun testVCSRequirement(uri: String) {
     val text = "example-project @ $uri"
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals(0, req.versionSpecs.size)
     assertEquals("example-project", req.name)
@@ -200,7 +199,7 @@ class PyRequirementsParserTest(val project: Project) {
   @ValueSource(strings = ["-e", "--editable"])
   fun testEditableRequirement(option: String) {
     val text = "${option} mypackage"
-    val req = runReadAction { PyRequirementParser.fromLine(text, project) }
+    val req = PyRequirementParser.fromLine(text, project)
     assertNotNull(req)
     assertEquals("", req.extras)
     assertEquals(0, req.versionSpecs.size)
