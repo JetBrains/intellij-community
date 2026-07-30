@@ -1175,9 +1175,19 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/stringTemplate/GlobalValInCurlyBraces.kt");
             }
 
+            @TestMetadata("IndexingOperator.kt")
+            public void testIndexingOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/stringTemplate/IndexingOperator.kt");
+            }
+
             @TestMetadata("InsertCurlyBracesBeforeLetter.kt")
             public void testInsertCurlyBracesBeforeLetter() throws Exception {
                 runTest("../../completion/testData/handlers/basic/stringTemplate/InsertCurlyBracesBeforeLetter.kt");
+            }
+
+            @TestMetadata("InvokeOperator.kt")
+            public void testInvokeOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/stringTemplate/InvokeOperator.kt");
             }
 
             @TestMetadata("NotEmptyPrefix.kt")

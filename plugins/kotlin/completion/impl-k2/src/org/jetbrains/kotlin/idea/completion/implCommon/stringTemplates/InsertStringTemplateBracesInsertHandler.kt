@@ -33,6 +33,9 @@ object InsertStringTemplateBracesInsertHandler : SerializableInsertHandler {
         val tailOffset = insertionContext.tailOffset
         document.insertString(tailOffset, "}")
         insertionContext.tailOffset = tailOffset
+        // We need to commit this document again to ensure the braces are reflected in the PSI
+        // because it will lead to changes in the way the file is parsed.
+        psiDocumentManager.commitDocument(document)
 
         lookupElement.handleInsert(insertionContext)
     }
