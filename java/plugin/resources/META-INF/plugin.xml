@@ -72,7 +72,7 @@
     <module name="intellij.java.compiler.instrumentationUtil" loading="embedded"/>
     <module name="intellij.java.compiler.instrumentationUtil.java8" loading="embedded"/>
 
-    <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/> <!--todo-->
+    <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
 
     <module name="intellij.java.frontend.split" required-if-available="intellij.platform.frontend.split"/>
     <module name="intellij.java.frontend" required-if-available="intellij.platform.frontend"/>
