@@ -14,7 +14,6 @@ import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
@@ -123,9 +122,9 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1403,12 +1402,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       LOG.trace("submitInBackground: " + virtualFile + "; viewProvider.hashCode()={"+psiFile.getViewProvider().hashCode()+"}");
     }
     try {
+      CodeInsightContext[] context = new CodeInsightContext[1];
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         HighlightingPass[] passes = ReadAction.computeBlocking(() -> {
-          CodeInsightContext context = fileEditor instanceof TextEditor te ?
-                                       EditorContextManager.getEditorContext(te.getEditor(), myProject) :
-                                       CodeInsightContextManager.getInstance(myProject).getCodeInsightContext(psiFile.getViewProvider());
-          PsiFile renewedPsiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
+          context[0] = CodeInsightContextUtil.getCodeInsightContext(psiFile);
+          PsiFile renewedPsiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context[0]);
           if (renewedPsiFile == null) {
             return HighlightingPass.EMPTY_ARRAY;
           }
@@ -1474,7 +1472,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
+          myPassExecutorService.submitPasses(document, context[0], virtualFile, psiFile, fileEditor, passes, progress);
         }
         //clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
