@@ -63,6 +63,14 @@ object PluginInstaller {
   @JvmField
   internal val ourLock: Any = Any()
 
+  @ApiStatus.Internal
+  @JvmStatic
+  fun verifyPluginSignatureIfRequired(
+    descriptor: IdeaPluginDescriptor,
+    pluginFile: Path,
+    isMarketplace: Boolean,
+  ): Boolean = PluginSignatureVerifier.verifyIfRequired(descriptor, pluginFile, isMarketplace, false)
+
   /**
    * @return true if restart is needed
    */
