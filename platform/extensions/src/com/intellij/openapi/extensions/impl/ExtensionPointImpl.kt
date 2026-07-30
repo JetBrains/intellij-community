@@ -626,7 +626,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         val pluginId = (listenerSource::class.java.classLoader as? PluginAwareClassLoader)?.pluginId?.toString()
         val msg = "(EDT) ExtensionPoint listener notification took too long: ${duration} for ${listenerSource::class.java.name}" +
                   (pluginId?.let { " (plugin: $it)" } ?: "")
-        LOG.warn(msg)
+        if (duration.inWholeMilliseconds > 500) {
+          LOG.error(msg)
+        } else {
+          LOG.warn(msg)
+        }
       }
     }
     for (listener in listeners) {
