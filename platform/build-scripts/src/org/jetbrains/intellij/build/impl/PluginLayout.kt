@@ -407,6 +407,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
+    fun withPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
+      layout.pluginXmlPatcher = pluginXmlPatcher
+    }
+
     fun withDeprecatedPostProcessor(layoutPatcher: LayoutPatcher, pluginXmlPatcher: DeprecatedPostScrambleProcessor) {
       // if scrambling is not performed, we need to execute layout patcher (no idea why as we cannot investigate and fix Gateway error)
       layout.withPatch { moduleOutputPatcher, platformLayout, context ->

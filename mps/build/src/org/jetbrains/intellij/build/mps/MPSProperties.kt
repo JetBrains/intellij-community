@@ -16,8 +16,10 @@ import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
@@ -98,7 +100,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
 
-        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin()
+        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin(patchPluginXml())
         productLayout.pluginLayouts = pluginLayouts.toPersistentList()
 
         productLayout.addPlatformSpec { layout, _ ->
@@ -233,4 +235,14 @@ class MPSProperties : JetBrainsProductProperties() {
             installerImagesPath = projectHome.resolve("build/resources")
         }
     }
+}
+
+private fun patchPluginXml(): (PluginLayout.PluginLayoutSpec) -> Unit = { spec ->
+  spec.withPluginXmlPatcher { text, _ ->
+    checkedReplace(
+      oldText = text,
+      regex = """<version>([^.]+)\.([^.]+)\.?(.*)</version>""",
+      newText = """<version>$1.100$2.$3-MPS</version>""",
+    )
+  }
 }
