@@ -46,6 +46,79 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testFastjson2MissingKotlinReflectGroovy() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testFastjson2MissingKotlinReflectKts() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testFastjson2MissingKotlinReflectStringExtension() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testFastjson2MissingKotlinReflectTransitiveFastjson2() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testNoWarningFastjson2WhenKotlinReflectFromJackson() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testNoWarningFastjson2WhenKotlinReflectPresent() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testNoWarningFastjson2ForNonTargetedCall() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testNoWarningFastjson2WhenKotlinReflectTransitive() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
     @PluginTargetVersions(pluginVersion = "1.9.20+")
     fun testAddKotlinCoroutinesLibraryKmpNativeMain() {
         doMultiFileQuickFixTest(

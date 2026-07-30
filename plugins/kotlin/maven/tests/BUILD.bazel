@@ -159,6 +159,10 @@ jvm_library(
         "//libraries/junit5-params:junit5-params_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.maven.tests` end
