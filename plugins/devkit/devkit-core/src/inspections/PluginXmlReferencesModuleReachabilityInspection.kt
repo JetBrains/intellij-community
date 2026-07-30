@@ -31,6 +31,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitBundle.message
+import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.processing.isClassRegistration
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -41,46 +42,64 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (!isAllowed(holder)) return
-    if (element !is GenericDomValue<*>) return
 
-    val module = element.module ?: return
-    val value = element.value
-    if (value is PsiClass) {
-      if (isClassRegistration(element)) return // handled by ComponentModuleRegistrationChecker
-      if (!isReachableFromModule(element, value, module)) {
-        val referencedClassName = value.qualifiedName ?: value.name ?: ""
-        holder.reportUnreachableClassProblem(
-          element, value, referencedClassName, module.name, "inspection.plugin.xml.references.module.reachability.class"
-        )
+    when (element) {
+      is Extension -> {
+        val module = element.module ?: return
+        val extensionPoint = element.extensionPoint ?: return
+        val epTag = extensionPoint.xmlTag
+        if (!isReachableFromModule(element, epTag, module)) {
+          holder.reportUnreachableClassProblem(
+            element, epTag, extensionPoint.effectiveQualifiedName, module.name,
+            "inspection.plugin.xml.references.module.reachability.extension.point"
+          )
+        }
       }
-    }
 
-    val referencesElement = (if (element is GenericAttributeValue<*>) element.xmlAttributeValue else element.xmlElement)
-      ?: return
-    for (ref in referencesElement.references) {
-      when (ref) {
-        is ActionOrGroupIdReference -> {
-          val target = ref.resolve() ?: continue
-          if (!isReachableFromModule(element, target, module)) {
+      is GenericDomValue<*> -> {
+        val module = element.module ?: return
+        val value = element.value
+        if (value is PsiClass) {
+          if (isClassRegistration(element)) return // handled by ComponentModuleRegistrationChecker
+          if (!isReachableFromModule(element, value, module)) {
+            val referencedClassName = value.qualifiedName ?: value.name ?: ""
             holder.reportUnreachableClassProblem(
-              element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.action.or.group"
+              element, value, referencedClassName, module.name,
+              "inspection.plugin.xml.references.module.reachability.class"
             )
           }
         }
 
-        is ResourceBundleReference -> {
-          val target = ref.resolve() ?: continue
-          if (!isReachableFromModule(element, target, module)) {
-            holder.reportUnreachableClassProblem(
-              element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.bundle"
-            )
+        val referencesElement = (if (element is GenericAttributeValue<*>) element.xmlAttributeValue else element.xmlElement)
+          ?: return
+        for (ref in referencesElement.references) {
+          when (ref) {
+            is ActionOrGroupIdReference -> {
+              val target = ref.resolve() ?: continue
+              if (!isReachableFromModule(element, target, module)) {
+                holder.reportUnreachableClassProblem(
+                  element, target, ref.canonicalText, module.name,
+                  "inspection.plugin.xml.references.module.reachability.action.or.group"
+                )
+              }
+            }
+
+            is ResourceBundleReference -> {
+              val target = ref.resolve() ?: continue
+              if (!isReachableFromModule(element, target, module)) {
+                holder.reportUnreachableClassProblem(
+                  element, target, ref.canonicalText, module.name,
+                  "inspection.plugin.xml.references.module.reachability.bundle"
+                )
+              }
+            }
           }
         }
       }
     }
   }
 
-  private fun isReachableFromModule(element: GenericDomValue<*>, target: PsiElement, module: Module): Boolean {
+  private fun isReachableFromModule(element: DomElement, target: PsiElement, module: Module): Boolean {
     val targetFile = PsiUtilCore.getVirtualFile(target) ?: return true
     val elementFile = DomUtil.getFile(element).virtualFile
     val includeTests = elementFile != null && ProjectFileIndex.getInstance(module.project).isInTestSourceContent(elementFile)
@@ -115,11 +134,13 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
   private fun createFixes(target: PsiElement): Array<LocalQuickFix> {
     val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return emptyArray()
     val descriptorDependency = resolveDescriptorDependency(targetModule)
-    return arrayOf(AddModuleDependencyFix(
-      targetModuleName = targetModule.name,
-      descriptorDependencyId = descriptorDependency?.first,
-      isContentModuleDependency = descriptorDependency?.second ?: false,
-    ))
+    return arrayOf(
+      AddModuleDependencyFix(
+        targetModuleName = targetModule.name,
+        descriptorDependencyId = descriptorDependency?.first,
+        isContentModuleDependency = descriptorDependency?.second ?: false,
+      )
+    )
   }
 
   private fun resolveDescriptorDependency(targetModule: Module): Pair<String, Boolean>? {
@@ -161,8 +182,7 @@ private class AddModuleDependencyFix(
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
     val text = if (descriptorDependencyId != null) {
       message("inspection.plugin.xml.references.module.reachability.fix.preview.with.descriptor", targetModuleName, descriptorDependencyId)
-    }
-    else {
+    } else {
       message("inspection.plugin.xml.references.module.reachability.fix.preview", targetModuleName)
     }
     return IntentionPreviewInfo.Html(HtmlChunk.text(text))
@@ -198,14 +218,12 @@ private class AddModuleDependencyFix(
       if (dependencies.moduleEntry.none { it.name.stringValue == descriptorDependencyId }) {
         dependencies.addModuleEntry().name.stringValue = descriptorDependencyId
       }
-    }
-    else if (ideaPlugin.isV2Descriptor) {
+    } else if (ideaPlugin.isV2Descriptor) {
       val dependencies = ideaPlugin.dependencies
       if (dependencies.plugin.none { it.id.stringValue == descriptorDependencyId }) {
         dependencies.addPlugin().id.stringValue = descriptorDependencyId
       }
-    }
-    else {
+    } else {
       if (ideaPlugin.depends.none { (it.rawText ?: it.stringValue) == descriptorDependencyId }) {
         ideaPlugin.addDependency().stringValue = descriptorDependencyId
       }

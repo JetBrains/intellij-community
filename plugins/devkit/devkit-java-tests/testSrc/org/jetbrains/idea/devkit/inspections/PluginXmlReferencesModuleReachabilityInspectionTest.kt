@@ -703,6 +703,65 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     testHighlighting(testedFile)
   }
 
+  fun `test extension point in unrelated module - error`() {
+    val unrelatedModule = addModuleWithSourceRoot("unrelatedModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("unrelatedModule/resources")
+    PsiTestUtil.addSourceRoot(unrelatedModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject(
+      "unrelatedModule/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <extensions defaultExtensionNs="com.example">
+              <<error descr="Extension point 'com.example.myTestEp' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">myTestEp</error> implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test extension point in dependency module - no error`() {
+    val depModule = addModuleWithSourceRoot("depModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("depModule/resources")
+    PsiTestUtil.addSourceRoot(depModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    ModuleRootModificationUtil.addDependency(myFixture.module, depModule)
+    myFixture.addFileToProject(
+      "depModule/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <extensions defaultExtensionNs="com.example">
+              <myTestEp implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
   private fun addPluginXml(@Language("XML") content: String): PsiFile {
     return myFixture.addFileToProject("plugin.xml", content)
   }
