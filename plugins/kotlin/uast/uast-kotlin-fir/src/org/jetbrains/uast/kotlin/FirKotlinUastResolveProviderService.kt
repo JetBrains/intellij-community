@@ -22,12 +22,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccess
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
@@ -329,7 +328,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         }
 
                         is KaCompoundVariableAccessCall -> {
-                            when (val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol) {
+                            when (val variableSymbol = candidate.variableCall.symbol) {
                                 is KaSyntheticJavaPropertySymbol -> {
                                     add(variableSymbol.javaGetterSymbol)
                                     addIfNotNull(variableSymbol.javaSetterSymbol)
@@ -341,13 +340,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                                 else ->
                                     add(variableSymbol)
                             }
-                            add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
+                            add(candidate.compoundOperation.operationCall.symbol)
                         }
 
                         is KaCompoundArrayAccessCall -> {
-                            add(candidate.getPartiallyAppliedSymbol.symbol)
-                            add(candidate.setPartiallyAppliedSymbol.symbol)
-                            add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
+                            add(candidate.getterCall.symbol)
+                            add(candidate.setterCall.symbol)
+                            add(candidate.compoundOperation.operationCall.symbol)
                         }
 
                         else -> {}
@@ -386,15 +385,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 ?.symbol
                 ?.let { return toPsiMethod(it, ktElement, kaCallInfo) }
             // Simple access: =
-            kaCallInfo.singleCallOrNull<KaSimpleVariableAccessCall>()?.let { variableAccessCall ->
+            kaCallInfo.singleVariableAccessCall()?.let { variableAccessCall ->
                 (variableAccessCall.symbol as? KaPropertySymbol)?.let { propertySymbol ->
-                    when (variableAccessCall.simpleAccess) {
-                        is KaSimpleVariableAccess.Read -> {
+                    when (variableAccessCall.kind) {
+                        is KaVariableAccessCall.Kind.Read -> {
                             propertySymbol.getter?.let {
                                 return toPsiMethod(it, ktElement, kaCallInfo)
                             }
                         }
-                        is KaSimpleVariableAccess.Write -> {
+                        is KaVariableAccessCall.Kind.Write -> {
                             propertySymbol.setter?.let {
                                 return toPsiMethod(it, ktElement, kaCallInfo)
                             }
@@ -409,7 +408,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 is KtPostfixExpression -> {
                     kaCallInfo.singleCallOrNull<KaCompoundVariableAccessCall>()
                         ?.compoundOperation
-                        ?.operationPartiallyAppliedSymbol
+                        ?.operationCall
                         ?.signature
                         ?.symbol
                         ?.let { toPsiMethod(it, ktElement, kaCallInfo) }
@@ -423,13 +422,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
             val kaCallInfo = ktSimpleNameExpression.resolveToCall() ?: return null
-            val variableAccessCall = kaCallInfo.singleCallOrNull<KaSimpleVariableAccessCall>() ?: return null
+            val variableAccessCall = kaCallInfo.singleVariableAccessCall() ?: return null
             val propertySymbol = variableAccessCall.symbol as? KaSyntheticJavaPropertySymbol ?: return null
-            when (variableAccessCall.simpleAccess) {
-                is KaSimpleVariableAccess.Read -> {
+            when (variableAccessCall.kind) {
+                is KaVariableAccessCall.Kind.Read -> {
                     toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression, kaCallInfo)
                 }
-                is KaSimpleVariableAccess.Write -> {
+                is KaVariableAccessCall.Kind.Write -> {
                     toPsiMethod(propertySymbol.javaSetterSymbol?: return null, ktSimpleNameExpression, kaCallInfo)
                 }
             }
