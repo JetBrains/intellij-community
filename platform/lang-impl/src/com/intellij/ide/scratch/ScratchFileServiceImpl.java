@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.FileIconPatcher;
@@ -119,7 +119,8 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   private static boolean shouldResetIndex(@NotNull VFileEvent event) {
     if (event instanceof VFileContentChangeEvent) return false;
     VirtualFile file = event instanceof VFileCreateEvent create ? create.getParent() : event.getFile();
-    return file != null && FileUtil.isAncestor(PathManager.getScratchPath(), file.getPath(), false);
+    return file != null && file.isInLocalFileSystem() &&
+           FileUtil.isAncestor(PathManager.getScratchPath(), file.getPath(), false);
   }
 
   @Override
