@@ -70,8 +70,11 @@ internal class ProjectPaneModel(project: Project) : TreeStructureBasedProjectVie
   override fun supportsFileNesting(): Boolean = true
 
   override suspend fun onStateChanged(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>) {
-    hasSeveralTopLevelModuleNodes.store(hasSeveralTopLevelModuleNodes(state))
-    updateSettings()
+    val newValue = hasSeveralTopLevelModuleNodes(state)
+    val oldValue = hasSeveralTopLevelModuleNodes.exchange(newValue)
+    if (newValue != oldValue) { // this avoids endless onStateChanged -> updateSettings -> onStateChanged loop
+      updateSettings()
+    }
   }
 
   private suspend fun hasSeveralTopLevelModuleNodes(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>): Boolean {
