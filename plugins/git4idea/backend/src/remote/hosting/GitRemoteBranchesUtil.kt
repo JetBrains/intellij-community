@@ -59,15 +59,49 @@ object GitRemoteBranchesUtil {
   /**
    * Checks if the current HEAD is tracking a branch on remote
    */
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, remote, branchName)"))
+  @RequiresBackgroundThread
   fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
     val existingRemote = findRemote(repository, remote) ?: return false
     return isRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
   }
 
+  /**
+   * Checks if the current HEAD is tracking a branch on remote
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
+    val existingRemote = findRemote(repository, remote) ?: return false
+    return testRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
+  }
+
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, branch)"))
+  @RequiresBackgroundThread
   fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
     return when (branch) {
       is GitSpecialRefRemoteBranch -> {
         val hash = Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+        repository.currentRevision == hash
+      }
+      else -> {
+        val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
+        repository.currentBranchName == localBranch.name
+      }
+    }
+  }
+
+  /**
+   * Checks if the current HEAD is either tracking remote [branch] or has the same hash
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    return when (branch) {
+      is GitSpecialRefRemoteBranch -> {
+        val hash = withContext(Dispatchers.IO) {
+          coroutineToIndicator {
+            Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+          }
+        }
         repository.currentRevision == hash
       }
       else -> {

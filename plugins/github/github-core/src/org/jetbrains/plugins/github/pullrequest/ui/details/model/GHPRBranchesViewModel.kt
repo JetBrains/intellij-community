@@ -65,7 +65,7 @@ class GHPRBranchesViewModel internal constructor(
   override val isCheckedOut: StateFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(detailsState) { _, details ->
       val remote = details.getHeadRemoteDescriptor(mapping.remote) ?: return@combine false
-      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
+      GitRemoteBranchesUtil.testRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
     }.stateIn(cs, SharingStarted.Eagerly, false)
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
