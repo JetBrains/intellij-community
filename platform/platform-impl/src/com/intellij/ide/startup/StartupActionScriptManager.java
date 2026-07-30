@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("UseOptimizedEelFunctions")
 public final class StartupActionScriptManager {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"}) private static final char PATH_SEPARATOR = java.io.File.pathSeparatorChar;
+
   @ApiStatus.Internal
   public static final String ACTION_SCRIPT_FILE = "action.script";
 
@@ -192,11 +194,10 @@ public final class StartupActionScriptManager {
   }
 
   private static void writeStrings(BufferedWriter out, String... data) throws IOException {
-    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"}) var separator = java.io.File.pathSeparatorChar;
     for (int i = 0; i < data.length; i++) {
       out.write(data[i]);
       if (i < data.length - 1) {
-        out.write(separator);
+        out.write(PATH_SEPARATOR);
       }
       else {
         out.newLine();
@@ -270,6 +271,11 @@ public final class StartupActionScriptManager {
     void execute(@NotNull FileSystem fs) throws IOException;
   }
 
+  private static String validatePath(String path) {
+    if (path.indexOf(PATH_SEPARATOR) != -1 || path.indexOf('\n') != -1) throw new IllegalArgumentException("invalid path: " + path);
+    return path;
+  }
+
   public static final class CopyCommand implements Serializable, ActionCommand {
     @Serial private static final long serialVersionUID = 201708031943L;
 
@@ -281,16 +287,15 @@ public final class StartupActionScriptManager {
     }
 
     private CopyCommand(String source, String destination) {
-      mySource = source;
-      myDestination = destination;
+      mySource = validatePath(source);
+      myDestination = validatePath(destination);
     }
 
     /// @deprecated Use [#CopyCommand(Path, Path)]
     @Deprecated(forRemoval = true)
     @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
     public CopyCommand(@NotNull java.io.File source, @NotNull java.io.File destination) {
-      mySource = source.getAbsolutePath();
-      myDestination = destination.getAbsolutePath();
+      this(source.toPath(), destination.toPath());
     }
 
     @Override
@@ -335,14 +340,14 @@ public final class StartupActionScriptManager {
     @Deprecated(forRemoval = true)
     @SuppressWarnings("DeprecatedIsStillUsed")
     public UnzipCommand(@NotNull Path source, @NotNull Path destination, @Nullable Predicate<? super String> filenameFilter) {
-      mySource = source.toAbsolutePath().toString();
-      myDestination = destination.toAbsolutePath().toString();
+      mySource = validatePath(source.toAbsolutePath().toString());
+      myDestination = validatePath(destination.toAbsolutePath().toString());
       myFilenameFilter = filenameFilter;
     }
 
     private UnzipCommand(String source, String destination) {
-      mySource = source;
-      myDestination = destination;
+      mySource = validatePath(source);
+      myDestination = validatePath(destination);
       myFilenameFilter = null;
     }
 
@@ -380,14 +385,14 @@ public final class StartupActionScriptManager {
     }
 
     private DeleteCommand(String source) {
-      mySource = source;
+      mySource = validatePath(source);
     }
 
     /// @deprecated Use [#DeleteCommand(Path)]
     @Deprecated(forRemoval = true)
     @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
     public DeleteCommand(@NotNull java.io.File source) {
-      mySource = source.getAbsolutePath();
+      this(source.toPath());
     }
 
     @Override
