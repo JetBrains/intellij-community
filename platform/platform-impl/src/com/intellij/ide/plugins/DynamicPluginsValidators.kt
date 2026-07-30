@@ -20,6 +20,12 @@ import kotlinx.coroutines.CancellationException
 
 private val LOG get() = Logger.getInstance(DynamicPluginsValidators::class.java)
 
+internal data class DynamicPluginsValidationConfig(
+  val skipDynamicPluginReconfigurationValidation: Boolean,
+  val allowServiceOverridesUnloading: Boolean,
+  val allowUnloadingWhenRunFromSources: Boolean,
+)
+
 internal object DynamicPluginsValidators {
   private val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
@@ -39,31 +45,30 @@ internal object DynamicPluginsValidators {
     }
   }
 
+  context(config: DynamicPluginsValidationConfig)
   fun IssueReporter.validateGroupCanBeLoaded(
     group: RuntimeModuleGroup,
     elementsModel: MutableAppElementsModel,
-    allowServiceOverridesUnloading: Boolean,
   ) {
     for (descriptor in group.sortedDescriptors) {
-      if (!allowServiceOverridesUnloading) {
+      if (!config.allowServiceOverridesUnloading) {
         validateDescriptorHasNoServiceOverrides(descriptor)
       }
     }
     validateModuleGroupHasAllExtensionsFromDynamicEPs(group, elementsModel)
   }
 
+  context(config: DynamicPluginsValidationConfig)
   fun IssueReporter.validateGroupCanBeUnloaded(
     group: RuntimeModuleGroup,
     elementsModel: MutableAppElementsModel,
-    allowServiceOverridesUnloading: Boolean,
-    allowUnloadingWhenRunFromSources: Boolean,
   ) {
     for (descriptor in group.sortedDescriptors.asReversed()) {
       validateActionsCanBeUnloaded(descriptor)
-      if (!allowServiceOverridesUnloading) {
+      if (!config.allowServiceOverridesUnloading) {
         validateDescriptorHasNoServiceOverrides(descriptor)
       }
-      if (!allowUnloadingWhenRunFromSources) {
+      if (!config.allowUnloadingWhenRunFromSources) {
         validateDescriptorUsesPluginClassloader(descriptor)
       }
     }
