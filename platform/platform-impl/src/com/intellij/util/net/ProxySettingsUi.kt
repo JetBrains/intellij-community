@@ -304,9 +304,10 @@ internal class ProxySettingsUi(
   }
 
   private fun parseCredentials(): Result<Credentials?> = runCatching {
+    if (!proxyAuthCheckBox.isSelected) return@runCatching null
     val login = proxyLoginTextField.text
     val password = proxyPasswordTextField.password
-    if (useHttpProxyRb.isSelected && proxyAuthCheckBox.isSelected) {
+    if (useHttpProxyRb.isSelected) {
       if (login.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.login.empty"))
       if (password.isEmpty()) throw ConfigurationException(IdeBundle.message("dialog.message.password.empty"))
     }
