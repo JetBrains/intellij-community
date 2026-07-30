@@ -12660,6 +12660,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.5.0-dev-2414.jar_copy",
+    src = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414_http//file",
+    out = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.5.0-dev-2414.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2",
+    jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414_http//file",
+    source_jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar_copy",
     src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http//file",
     out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",

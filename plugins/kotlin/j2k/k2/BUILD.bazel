@@ -33,7 +33,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//plugins/kotlin/references",
         "//platform/statistics",
         "//platform/projectModel-api:projectModel",
@@ -94,6 +94,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-j2k",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",

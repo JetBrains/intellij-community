@@ -6378,20 +6378,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-3229_http",
-    downloaded_file_path = "analysis-api-k2-for-ide-2.5.0-dev-3229.jar",
-    sha256 = "1f105f39ffc72413d73faa6941695798b02f79a3846744d611752c538b2c7e35",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-3229/analysis-api-k2-for-ide-2.5.0-dev-3229.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-3229-sources_http",
-    downloaded_file_path = "analysis-api-k2-for-ide-2.5.0-dev-3229-sources.jar",
-    sha256 = "f98a15d8678bab147e5249f0092a92ba73dfd3b62e9f309e44e5ed23e1666b5b",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-3229/analysis-api-k2-for-ide-2.5.0-dev-3229-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_5_0-dev-3229_http",
     downloaded_file_path = "analysis-api-platform-interface-for-ide-2.5.0-dev-3229.jar",
     sha256 = "ba7ac74621dd665e1585788e4ed317d22d4b5801bbad43874df04e9c76694077",
@@ -9945,6 +9931,20 @@ http_file(
     downloaded_file_path = "kotlin-tooling-core-1.9.20-dev-8162-sources.jar",
     sha256 = "1b13cee4e9b562f5cd553370840c9b91d283235a61ffe87ca1efb069ede88294",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-8162/kotlin-tooling-core-1.9.20-dev-8162-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414_http",
+    downloaded_file_path = "analysis-api-k2-for-ide-2.5.0-dev-2414.jar",
+    sha256 = "e45fe49b56544392f688579715091d9e8f8157feb3b5172dabfe0ab620041744",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-2414/analysis-api-k2-for-ide-2.5.0-dev-2414.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414-sources_http",
+    downloaded_file_path = "analysis-api-k2-for-ide-2.5.0-dev-2414-sources.jar",
+    sha256 = "0f433663ab3b75c3718302f5c79584be1cc42334fcd4c71782c59bec1a867c4d",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-2414/analysis-api-k2-for-ide-2.5.0-dev-2414-sources.jar",
 )
 
 http_file(

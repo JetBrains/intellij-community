@@ -6,8 +6,6 @@
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
-  <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
-
   <xi:include href="file-types.xml"/>
   <xi:include href="language.xml"/>
   <xi:include href="jps.xml"/>
@@ -202,5 +200,6 @@
     <module name="intellij.libraries.kotlin.gradle.plugin.idea" loading="required"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" loading="required"/>
     <module name="intellij.kotlin.codeInsight.vcs"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2" loading="embedded"/>
   </content>
 </idea-plugin>

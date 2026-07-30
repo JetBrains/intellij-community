@@ -51,7 +51,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.kotlin-scripting-common",
       "kotlinc.kotlin-scripting-dependencies",
       "kotlinc.kotlin-gradle-statistics",
-      "kotlinc.analysis-api-k2",
       "kotlinc.kotlin-compiler-fir",
       "kotlinc.low-level-api-fir",
       "kotlinc.symbol-light-classes",

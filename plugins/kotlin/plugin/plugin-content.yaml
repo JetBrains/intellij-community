@@ -115,6 +115,12 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
+- name: lib/intellij.libraries.kotlinc.analysis.api.k2.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.k2
+    libraries:
+      kotlinc.analysis-api-k2:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -140,9 +146,6 @@
   - name: kotlinc.analysis-api-impl-base
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
-  - name: kotlinc.analysis-api-k2
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
   - name: kotlinc.analysis-api-platform-interface
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar

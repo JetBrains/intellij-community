@@ -1,11 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.k2` start
 create_kotlinc_options(
     name = "custom_ide-plugin-k2",
     x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api-k2_provided",
+    lib = "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
 )
 
 jvm_library(
@@ -46,12 +51,12 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/base/code-insight",
-        "@lib//:kotlinc-analysis-api-k2-provided",
         "@lib//:kotlinc-compose-compiler-plugin-provided",
         "//platform/projectModel-api:projectModel",
         "//plugins/gradle",
         "//platform/external-system-impl:externalSystem-impl",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api-k2_provided",
     ],
 )
 
@@ -86,7 +91,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "@lib//:kotlinc-analysis-api-k2-provided",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "@lib//:kotlinc-compose-compiler-plugin-provided",
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/gradle:gradle_test_lib",

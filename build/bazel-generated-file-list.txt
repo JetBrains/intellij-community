@@ -495,6 +495,7 @@ libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
 libraries/kotlin/tooling-core
+libraries/kotlinc/analysis-api-k2
 libraries/kotlinx/collections-immutable
 libraries/kotlinx/coroutines/core
 libraries/kotlinx/coroutines/debug
