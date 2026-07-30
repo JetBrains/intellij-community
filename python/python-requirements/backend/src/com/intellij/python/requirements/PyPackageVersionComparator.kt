@@ -1,24 +1,22 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.packaging
+package com.intellij.python.requirements
 
 import com.intellij.webcore.packaging.PackageVersionComparator
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import one.util.streamex.EntryStream
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
 import java.util.stream.Stream
 
 /**
  * Compares [PyPackageVersions][PyPackageVersion].
  *
- * Based on [PEP-440](https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering).
+ * Based on [PEP-440][https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering].
  */
-@ApiStatus.Experimental
 object PyPackageVersionComparator : Comparator<PyPackageVersion> {
 
   /**
-   * Compares versions by normalizing them or using [PackageVersionComparator.VERSION_COMPARATOR] as a fallback
+   * Compares versions by normalizing them or using [com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR] as a fallback
    */
   @JvmStatic
   val STR_COMPARATOR: Comparator<String> = Comparator { o1, o2 ->

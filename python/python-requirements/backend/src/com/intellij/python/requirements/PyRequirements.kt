@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.packaging
+package com.intellij.python.requirements
 
 import com.intellij.openapi.util.NlsSafe
+import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.requirement.PyRequirementEnvMarker
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
@@ -19,12 +21,14 @@ fun pyRequirement(
   name: String,
   versionSpecs: List<PyRequirementVersionSpec>,
   extras: List<String>,
+  envMarker: PyRequirementEnvMarker?
 ): PyRequirement {
   val extrasString = extras.joinToString(prefix = "[", postfix = "]", separator = ",") { it }
   return PyRequirementImpl(name,
                            versionSpecs,
                            listOf(name),
-                           extrasString)
+                           extrasString,
+                           envMarker)
 }
 
 
@@ -35,7 +39,8 @@ fun pyRequirement(
 ): PyRequirement = PyRequirementImpl(name,
                                      listOfNotNull(versionSpec),
                                      listOf(name),
-                                     "")
+                                     "",
+                                     null)
 
 @ApiStatus.Internal
 fun pyRequirement(
@@ -45,7 +50,8 @@ fun pyRequirement(
 ): PyRequirement = PyRequirementImpl(name,
                                      listOfNotNull(versionSpec),
                                      listOf(name),
-                                     extras)
+                                     extras,
+                                     null)
 
 /**
  * This helper is not an API, consider using methods listed below.
@@ -71,7 +77,7 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 @ApiStatus.Internal
 fun pyRequirement(name: String, relation: PyRequirementRelation, version: String, extras: String = ""): PyRequirement {
   val versionSpec = pyRequirementVersionSpec(relation, version)
-  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras)
+  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras, null)
 }
 
 @ApiStatus.Internal
