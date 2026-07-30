@@ -23,7 +23,6 @@ import com.intellij.util.ui.JBUI
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import java.awt.Dimension
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionListener
@@ -67,8 +66,6 @@ object CodeReviewDetailsBranchComponentFactory {
     scope.launchNow {
       branchesVm.showBranchesRequests.collectLatest { (source, target, hasRemoteBranch) ->
         val point = RelativePoint.getSouthWestOf(panelWithIcon)
-        // A new worktree can't be created for a branch that is already checked out in the current one.
-        val checkedOut = branchesVm.isCheckedOut.first()
         val advertiser = if (!hasRemoteBranch) {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.cannot.checkout.as.branch"), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT).apply {
             icon = AllIcons.General.Warning
@@ -79,7 +76,7 @@ object CodeReviewDetailsBranchComponentFactory {
         }
         val actions = buildList {
           add(ReviewAction.Checkout)
-          if (branchesVm.canCheckoutInNewWorktree && !checkedOut) {
+          if (branchesVm.canCheckoutInNewWorktree) {
             add(ReviewAction.CheckoutInNewWorktree)
           }
           if (branchesVm.canShowInLog) {

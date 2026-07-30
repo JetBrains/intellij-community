@@ -4,14 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
@@ -23,9 +21,11 @@ import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHRepository
@@ -62,11 +62,11 @@ class GHPRBranchesViewModel internal constructor(
     }
   }
 
-  override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
+  override val isCheckedOut: StateFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(detailsState) { _, details ->
       val remote = details.getHeadRemoteDescriptor(mapping.remote) ?: return@combine false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
-    }.modelFlow(cs, thisLogger())
+    }.stateIn(cs, SharingStarted.Eagerly, false)
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
@@ -80,7 +80,8 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   override val canCheckoutInNewWorktree: Boolean
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository)
+    // A new worktree can't be created for a branch that is already checked out in the current one.
+    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
 
   override fun checkoutInNewWorktree() {
     val details = detailsState.value
