@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.platform.commons.support.AnnotationSupport
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
 internal class EdtInterceptorExtension : InvocationInterceptor {
@@ -120,12 +121,14 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
     }
 
     fun shouldIntercept(invocationContext: ReflectiveInvocationContext<*>): Boolean {
-      val runInEdt = AnnotationSupport.findAnnotation(invocationContext.targetClass, RunInEdt::class.java).get()
+      val runInEdt = AnnotationSupport.findAnnotation(invocationContext.targetClass, RunInEdt::class.java).getOrNull()
+      if (runInEdt == null) return false
       return runInEdt.allMethods || AnnotationSupport.findAnnotation(invocationContext.executable, RunMethodInEdt::class.java).isPresent
     }
 
     fun getWriteIntent(invocationContext: ReflectiveInvocationContext<*>): Boolean {
-      val runInEdt = AnnotationSupport.findAnnotation(invocationContext.targetClass, RunInEdt::class.java).get()
+      val runInEdt = AnnotationSupport.findAnnotation(invocationContext.targetClass, RunInEdt::class.java).getOrNull()
+      if (runInEdt == null) return false
       val runMethodInEdtOpt = AnnotationSupport.findAnnotation(invocationContext.executable, RunMethodInEdt::class.java)
       if (runMethodInEdtOpt.isEmpty) {
         return runInEdt.writeIntent
