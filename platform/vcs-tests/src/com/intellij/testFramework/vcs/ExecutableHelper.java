@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +33,9 @@ public final class ExecutableHelper {
     if (exec != null) {
       return exec;
     }
-    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? winExec : unixExec);
+    var fileExec = PathEnvironmentVariableUtil.findFirst(OS.CURRENT == OS.Windows ? winExec : unixExec);
     if (fileExec != null) {
-      return fileExec.getAbsolutePath();
+      return fileExec.toString();
     }
     throw new IllegalStateException(programName + " executable not found. " + (!envs.isEmpty() ?
                                                                                "Please define a valid environment variable " +

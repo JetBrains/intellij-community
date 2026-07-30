@@ -7,6 +7,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
+import com.intellij.util.system.OS.CURRENT
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
@@ -117,14 +120,15 @@ private fun findExecutable(condaName: String, condaFolder: Path): Path? {
   if (!Files.exists(bin)) return null
   return PythonSdkUtil.getExecutablePath(bin, condaName)
 }
-internal fun getSystemCondaExecutable(): Path? {
-  val condaName = if (SystemInfo.isWindows) CONDA_BAT_NAME else CONDA_BINARY_NAME
 
-  // TODO we need another findInPath() that works with Path-s
-  val condaInPath = PathEnvironmentVariableUtil.findInPath(condaName)
+@OptIn(LowLevelLocalMachineAccess::class)
+internal fun getSystemCondaExecutable(): Path? {
+  val condaName = if (OS.CURRENT == OS.Windows) CONDA_BAT_NAME else CONDA_BINARY_NAME
+
+  val condaInPath = PathEnvironmentVariableUtil.findFirst(condaName)
   if (condaInPath != null) {
     LOG.info("Using $condaInPath as a conda executable (found in PATH)")
-    return condaInPath.toPath()
+    return condaInPath
   }
 
   val condaInRoots = getCondaExecutableByName(condaName)
