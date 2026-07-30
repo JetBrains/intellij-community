@@ -58,6 +58,9 @@ class BazelJvmBackendPipelinePhase(
 
 class BazelConfigurationUpdaterPipelinePhase(private val updater: (CompilerConfiguration) -> Unit) : PipelinePhase<ConfigurationPipelineArtifact, ConfigurationPipelineArtifact>(
   name = "BazelConfigurationUpdaterPipelinePhase",
+  // fail fast on errors reported by the updater (e.g. plugin order-constraint problems),
+  // the same way JvmConfigurationPipelinePhase does for the compiler's own configuration errors
+  postActions = setOf(CheckCompilationErrors.CheckDiagnosticCollector),
 ) {
   override fun executePhase(input: ConfigurationPipelineArtifact): ConfigurationPipelineArtifact? {
     val configurationPipelineArtifact = input
