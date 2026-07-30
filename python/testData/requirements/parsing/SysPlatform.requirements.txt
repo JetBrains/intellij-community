@@ -1,2 +1,0 @@
-attrs; sys_platform == 'win32'
-attrs; sys_platform != 'win32'

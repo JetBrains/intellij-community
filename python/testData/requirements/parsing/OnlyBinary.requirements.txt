@@ -1,3 +1,0 @@
---only-binary :all:
---only-binary :none:
---only-binary bin1,bin2

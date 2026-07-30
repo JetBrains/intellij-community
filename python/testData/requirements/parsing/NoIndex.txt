@@ -1,5 +1,0 @@
-Requirements File(0,10)
-  OptionImpl(OPTION)(0,10)
-    PsiElement(RequirementsTokenType.LONG_OPTION)('--')(0,2)
-    NoIndexReqImpl(NO_INDEX_REQ)(2,10)
-      PsiElement(RequirementsTokenType.NO_INDEX)('no-index')(2,10)
