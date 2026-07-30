@@ -437,8 +437,16 @@ internal class PyPackagesTree(
     val from = items.size
     val to = minOf(from + LOAD_MORE_PAGE, sorted.size)
     if (from >= to) return
+    val previousSelection = selectionRows?.firstOrNull()
     setItemsKeepingCache(sorted.subList(0, to))
     pendingMore = (sorted.size - to).coerceAtLeast(0)
+    if (previousSelection != null) {
+      val next = (previousSelection + 1).coerceAtMost(rowCount - 1)
+      if (next >= 0) {
+        setSelectionRow(next)
+        scrollRowToVisible(next)
+      }
+    }
   }
 
   private fun setItemsKeepingCache(value: List<DisplayablePackage>) {

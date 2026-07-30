@@ -235,7 +235,7 @@ internal class PyPackageDescriptionController(
 
   private val component = PyPackagesUiComponents.borderPanel {
     add(PyPackagesUiComponents.borderPanel {
-      border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
+      border = SideBorder(JBColor.border(), SideBorder.BOTTOM)
       leftPanel.border = BorderFactory.createEmptyBorder(0, 10, 0, 0)
       rightPanel.border = BorderFactory.createEmptyBorder(0, 0, 0, 10)
 

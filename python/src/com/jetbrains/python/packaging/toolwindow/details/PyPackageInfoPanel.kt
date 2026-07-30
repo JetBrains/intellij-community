@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
@@ -69,15 +70,18 @@ internal class PyPackageInfoPanel(
   private val noPackagePanel = JBPanelWithEmptyText().apply {
     emptyText.text = message("python.toolwindow.packages.description.panel.placeholder")
     emptyText.setShowAboveCenter(false)
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
   private val loadingPanel = JBPanelWithEmptyText().apply {
     emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
     emptyText.setShowAboveCenter(false)
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
   private var updateJob: Job? = null
 
   val component: JPanel = JPanel(BorderLayout()).apply {
+    background = JBUI.CurrentTheme.ToolWindow.background()
     add(noPackagePanel, BorderLayout.CENTER)
   }
 
