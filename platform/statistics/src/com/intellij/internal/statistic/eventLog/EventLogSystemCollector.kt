@@ -37,7 +37,7 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 5,
+    eventLoggerProvider.version + 6,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
@@ -81,6 +81,10 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   private val fileMetricsCalculated: EventId2<Long, Int> = GROUP.registerEvent("logs.file.metrics.calculated",
                                                                                fileSizeBytes, eventsCount
+  )
+
+  private val backlogSnapshot: EventId3<Int, Long, Long> = GROUP.registerEvent("logs.backlog.snapshot",
+                                                                               pendingFilesCountField, pendingTotalBytesField, oldestPendingFileWaitMsField
   )
 
   private val dictionaryListLoadFailed = GROUP.registerEvent(
@@ -168,6 +172,10 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   fun logFileMetricsCalculated(fileSizeBytes: Long, eventsCount: Int,) {
     fileMetricsCalculated.log(fileSizeBytes, eventsCount)
+  }
+
+  fun logBacklogSnapshot(pendingFilesCount: Int, pendingTotalBytes: Long, oldestPendingFileWaitMs: Long) {
+    backlogSnapshot.log(pendingFilesCount, pendingTotalBytes, oldestPendingFileWaitMs)
   }
 
   fun logFileDeleted(
@@ -264,6 +272,9 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     private val failedDeletingFilesCount = EventFields.Int("failed_deleting_files_count", "The number of log files which were failed to delete")
     private val fileSizeBytes = EventFields.Long("file_size_bytes", "File size in bytes")
     private val eventsCount = EventFields.Int("events_count", "Number of events in the file")
+    private val pendingFilesCountField = EventFields.Int("pending_files_count", "Number of log files waiting to be sent")
+    private val pendingTotalBytesField = EventFields.Long("pending_total_bytes", "Total size on disk of the pending log files, in bytes")
+    private val oldestPendingFileWaitMsField = EventFields.Long("oldest_pending_file_wait_ms", "How long the longest-waiting pending file has been idle: now minus its last-modified time, in milliseconds")
 
     private val deletedFileAgeMsField = EventFields.Long("deleted_file_age_ms", "Age of the data in the deleted file: now minus the timestamp of its oldest event, in milliseconds (-1 if unknown)")
     private val deletedFileQueuedMsField = EventFields.Long("deleted_file_queued_ms", "How long the deleted file waited since its last write before being deleted: now minus last modified time, in milliseconds")
