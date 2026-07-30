@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.nio.file.Files
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
@@ -98,6 +99,7 @@ internal class EditorEmptyTextPainterTest {
     originalShortcuts.forEach { (actionId, shortcuts) -> resetShortcuts(actionId, shortcuts) }
     val splitters = manager.mainSplitters
     splitters.setEmptyStateComponentCreationGateForTests(null)
+    splitters.setEmptyStateComponentFocusRequesterForTests(null)
     // a creation left waiting out an inflated delay must not survive into the next test
     splitters.suppressRichEmptyStateComponents()
     splitters.setEmptyStateComponentCreationDelayForTests(null)
@@ -874,6 +876,192 @@ internal class EditorEmptyTextPainterTest {
     assertThat(disposedComponents).hasValue(1)
   }
 
+  @Test
+  fun aClaimingEmptyStateIsFocusedWhenItIsPresented(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+
+    // the request is made where project open makes it: before anything is built, and honoured only once the empty state is presented
+    splitters.requestEmptyStateFocusWhenPresented()
+    splitters.finishStartupEditorRestore()
+    dispatchEventsFor(100.milliseconds)
+
+    assertThat(focusRequests).isEmpty()
+
+    releaseStartupHoldFromProjectOpensHop(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
+
+    assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+  }
+
+  @Test
+  fun anEmptyStateThatDoesNotClaimFocusIsNotFocused(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerComponentProvider(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+
+    assertThat(splitters.emptyStateClaimsFocus()).isFalse()
+
+    splitters.requestEmptyStateFocusWhenPresented()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponent(splitters, "The empty state was not presented")
+
+    assertThat(focusRequests).isEmpty()
+    assertThat(splitters.emptyStatePreferredFocusedComponent()).isNull()
+  }
+
+  @Test
+  fun aClaimingEmptyStateClaimsFocusBeforeItIsBuilt(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+
+    // project open asks this while the empty state is still being prepared, so the answer must not depend on a mounted component
+    assertThat(splitters.emptyStateClaimsFocus()).isTrue()
+    assertThat(splitters.emptyStatePreferredFocusedComponent()).isNull()
+
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
+
+    assertThat(splitters.emptyStateClaimsFocus()).isTrue()
+    assertThat(splitters.emptyStatePreferredFocusedComponent()).isSameAs(findFocusTargetComponent(splitters))
+  }
+
+  @Test
+  fun aFocusRequestIsDroppedWhenAnEditorTakesTheAreaOver(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.requestEmptyStateFocusWhenPresented()
+    splitters.enableRichEmptyStateComponents()
+
+    val file = LightVirtualFile("empty-state-focus-drop.txt", "content")
+    manager.openFile(file, false)
+    waitForEmptyStateComponentCreation(splitters)
+
+    // the editor that took the area over owns the focus the request was made for
+    assertThat(findEmptyStateComponent(splitters)).isNull()
+    assertThat(focusRequests).isEmpty()
+
+    manager.closeFile(file)
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented after the editor was closed")
+
+    // and closing that editor is a request of its own rather than the dropped one coming back
+    assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+  }
+
+  @Test
+  fun closingTheLastEditorFocusesAClaimingEmptyState(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
+
+    val file = LightVirtualFile("empty-state-last-tab.txt", "content")
+    manager.openFile(file, false)
+    waitForNoEmptyStateComponent(splitters)
+    val focusRequests = recordFocusRequests(splitters)
+
+    manager.closeFile(file)
+    waitForEmptyStateComponent(splitters, "The claimed empty state did not come back after the last editor was closed")
+
+    // the focus of the editor the user just closed is inherited by the empty state that replaces it
+    assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+  }
+
+  @Test
+  fun aClaimIsPendingUntilTheEmptyStateTakesTheFocus(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    val handedBack = AtomicInteger()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.beginStartupEmptyStatePresentationHold()
+
+    splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { handedBack.incrementAndGet() })
+    splitters.finishStartupEditorRestore()
+    dispatchEventsFor(100.milliseconds)
+
+    // what the tool window manager stands down for while the claimed component is still being prepared
+    assertThat(splitters.isEmptyStateFocusRequestPending()).isTrue()
+
+    releaseStartupHoldFromProjectOpensHop(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
+
+    assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+    assertThat(splitters.isEmptyStateFocusRequestPending()).isFalse()
+    assertThat(handedBack).hasValue(0)
+  }
+
+  @Test
+  fun aClaimThatIsNeverPresentedHandsTheFocusBack(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProviderThatBuildsNothing(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    val handedBack = AtomicInteger()
+
+    // the claim is made on an available provider, before it is known that the provider will build nothing
+    assertThat(splitters.emptyStateClaimsFocus()).isTrue()
+
+    splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { handedBack.incrementAndGet() })
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponentCreation(splitters)
+
+    // nothing was presented for the area to focus, so whoever stood down for the claim gets it back
+    assertThat(focusRequests).isEmpty()
+    assertThat(handedBack).hasValue(1)
+    assertThat(splitters.isEmptyStateFocusRequestPending()).isFalse()
+  }
+
+  @Test
+  fun aClaimingEmptyStateThatNamesNoComponentHandsTheFocusBack(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProviderWithoutFocusTarget(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    val handedBack = AtomicInteger()
+
+    splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { handedBack.incrementAndGet() })
+    enableRichEmptyStateComponentsWithoutDelay(splitters)
+    waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
+
+    assertThat(focusRequests).isEmpty()
+    assertThat(handedBack).hasValue(1)
+  }
+
+  @Test
+  fun anEditorTakingTheAreaOverDoesNotHandTheFocusBack(@TestDisposable disposable: Disposable) {
+    val splitters = manager.mainSplitters
+    registerFocusClaimingComponentProvider(disposable)
+    manager.closeAllFiles()
+    val focusRequests = recordFocusRequests(splitters)
+    val handedBack = AtomicInteger()
+    splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
+    splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { handedBack.incrementAndGet() })
+    splitters.enableRichEmptyStateComponents()
+
+    // the editor that took the area over owns the focus the claim was made for — the README on a project's first open
+    val file = LightVirtualFile("empty-state-focus-handback.txt", "content")
+    manager.openFile(file, false)
+    waitForEmptyStateComponentCreation(splitters)
+    dispatchEventsFor(100.milliseconds)
+
+    assertThat(focusRequests).isEmpty()
+    assertThat(handedBack).hasValue(0)
+    assertThat(splitters.isEmptyStateFocusRequestPending()).isFalse()
+  }
+
   private fun registerDefaultEmptyTextProvider(disposable: Disposable) {
     ExtensionTestUtil.maskExtensions(EditorEmptyTextProvider.EP_NAME, listOf(DefaultEditorEmptyTextProvider()), disposable)
   }
@@ -925,6 +1113,44 @@ internal class EditorEmptyTextPainterTest {
     }, disposable)
   }
 
+  /** A provider whose empty state is the focus target of the area it is shown in, and whose focus target is inside its component. */
+  private fun registerFocusClaimingComponentProvider(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
+        JPanel().apply {
+          name = EMPTY_STATE_COMPONENT_NAME
+          add(JPanel().apply { name = FOCUS_TARGET_COMPONENT_NAME })
+        }
+      }
+
+      override fun claimsFocus(splitters: EditorsSplitters): Boolean = true
+
+      override fun getPreferredFocusedComponent(component: JComponent): JComponent? {
+        return UIUtil.uiTraverser(component).find { it is JComponent && it.name == FOCUS_TARGET_COMPONENT_NAME } as? JComponent
+      }
+    }), disposable)
+  }
+
+  /** A provider that claims the area's focus and then builds nothing, so the claim it made cannot be kept. */
+  private fun registerFocusClaimingComponentProviderThatBuildsNothing(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent? = null
+
+      override fun claimsFocus(splitters: EditorsSplitters): Boolean = true
+    }), disposable)
+  }
+
+  /** A provider that claims the area's focus and presents a component that names nothing to focus inside it. */
+  private fun registerFocusClaimingComponentProviderWithoutFocusTarget(disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
+      override suspend fun createComponent(splitters: EditorsSplitters): JComponent = withContext(Dispatchers.EDT) {
+        JPanel().apply { name = EMPTY_STATE_COMPONENT_NAME }
+      }
+
+      override fun claimsFocus(splitters: EditorsSplitters): Boolean = true
+    }), disposable)
+  }
+
   private fun registerNullAndFallbackComponentProviders(disposable: Disposable) {
     ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, buildList {
       add(object : EditorEmptyStateComponentProvider {
@@ -950,6 +1176,17 @@ internal class EditorEmptyTextPainterTest {
 
   private fun findEmptyStateComponent(splitters: EditorsSplitters): JComponent? {
     return UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == EMPTY_STATE_COMPONENT_NAME } as? JComponent
+  }
+
+  private fun findFocusTargetComponent(splitters: EditorsSplitters): JComponent {
+    return checkNotNull(UIUtil.uiTraverser(splitters).find { it is JComponent && it.name == FOCUS_TARGET_COMPONENT_NAME } as? JComponent)
+  }
+
+  /** Records what the empty state asks to focus, which is all a headless test can observe of a focus request. */
+  private fun recordFocusRequests(splitters: EditorsSplitters): List<JComponent> {
+    val requests = CopyOnWriteArrayList<JComponent>()
+    splitters.setEmptyStateComponentFocusRequesterForTests { requests.add(it) }
+    return requests
   }
 
   private fun findEmptyTextComponent(splitters: EditorsSplitters): JComponent? {
@@ -1112,6 +1349,7 @@ internal class EditorEmptyTextPainterTest {
     const val PROVIDER_ACTION_ID: String = "EditorEmptyTextPainterTest.ProviderAction"
     const val PROVIDER_ACTION_TEXT: String = "Provider Action"
     const val EMPTY_STATE_COMPONENT_NAME: String = "EditorEmptyTextPainterTest.EmptyStateComponent"
+    const val FOCUS_TARGET_COMPONENT_NAME: String = "EditorEmptyTextPainterTest.FocusTarget"
 
     /** Long enough that a test which reaches the delay fails on its own timeout rather than passing slowly. */
     val NEVER_ELAPSING_CREATION_DELAY: Duration = 10.minutes
