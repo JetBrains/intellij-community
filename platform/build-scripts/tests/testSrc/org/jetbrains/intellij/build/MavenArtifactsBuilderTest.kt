@@ -10,20 +10,21 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.junit.Assert
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class MavenArtifactsBuilderTest {
-  private val builder by lazy {
+  private val context by lazy {
     runBlocking {
-      MavenArtifactsBuilder(
-        createBuildContext(
-          projectHome = ULTIMATE_HOME,
-          productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-          setupTracer = false,
-        )
+      createBuildContext(
+        projectHome = ULTIMATE_HOME,
+        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+        setupTracer = false,
       )
     }
   }
+
+  private val builder by lazy { MavenArtifactsBuilder(context) }
 
   @Test
   fun `maven coordinates`() {
@@ -107,4 +108,77 @@ class MavenArtifactsBuilderTest {
       Assert.assertTrue("${dependency.coordinates} must include transitive dependencies", dependency.includeTransitiveDeps)
     }
   }
+
+  /**
+   * The Icons API modules depend on the IJP fork of coroutines, which shares the `kotlinx.coroutines.*` packages
+   * with the stock artifact but uses a different groupId. Neither Gradle nor Maven can conflict-resolve the two, so
+   * publishing the fork leaves standalone consumers with both jars on the classpath, and the fork can shadow API
+   * that only stock has. The published POMs must therefore point at the stock artifact instead. See JEWEL-1384.
+   */
+  @Test
+  fun `icons poms declare stock coroutines instead of the ijp fork`() {
+    val iconsImpl = context.outputProvider.findRequiredModule("intellij.platform.icons.impl")
+    val dependencies = listOf(
+      forkDependency("1.10.2-intellij-1"),
+      MavenArtifactDependency(
+        coordinates = MavenCoordinates("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm", "1.9.0"),
+        includeTransitiveDeps = false,
+        excludedDependencies = emptyList(),
+        scope = null,
+      ),
+    )
+
+    val patched = context.productProperties.mavenArtifacts.patchDependencies(iconsImpl, dependencies)
+
+    val coroutines = patched.single { it.coordinates.artifactId == "kotlinx-coroutines-core-jvm" }.coordinates
+    Assert.assertEquals("The IJP coroutines fork must not be published", "org.jetbrains.kotlinx", coroutines.groupId)
+    Assert.assertEquals("The stock version the fork is based on must be used", "1.10.2", coroutines.version)
+
+    Assert.assertEquals(
+      "Dependencies that are not the coroutines fork must be left untouched",
+      dependencies.filterNot { it.coordinates.groupId == "org.jetbrains.intellij.deps.kotlinx" },
+      patched.filterNot { it.coordinates.artifactId == "kotlinx-coroutines-core-jvm" },
+    )
+  }
+
+  @Test
+  fun `unexpected coroutines fork version fails the build`() {
+    val iconsImpl = context.outputProvider.findRequiredModule("intellij.platform.icons.impl")
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      context.productProperties.mavenArtifacts.patchDependencies(iconsImpl, listOf(forkDependency("1.10.2-ij-1")))
+    }
+
+    Assert.assertTrue(
+      "The failure must explain that the fork's versioning scheme changed, but was: ${exception.message}",
+      exception.message!!.contains("-intellij"),
+    )
+  }
+
+  @Test
+  fun `coroutines from an unknown group fail the build`() {
+    val iconsImpl = context.outputProvider.findRequiredModule("intellij.platform.icons.impl")
+    val renamedFork = MavenArtifactDependency(
+      coordinates = MavenCoordinates("com.example.repackaged", "kotlinx-coroutines-core-jvm", "1.10.2"),
+      includeTransitiveDeps = false,
+      excludedDependencies = emptyList(),
+      scope = null,
+    )
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      context.productProperties.mavenArtifacts.patchDependencies(iconsImpl, listOf(renamedFork))
+    }
+
+    Assert.assertTrue(
+      "The failure must name the offending coordinates, but was: ${exception.message}",
+      exception.message!!.contains("com.example.repackaged"),
+    )
+  }
+
+  private fun forkDependency(version: String) = MavenArtifactDependency(
+    coordinates = MavenCoordinates("org.jetbrains.intellij.deps.kotlinx", "kotlinx-coroutines-core-jvm", version),
+    includeTransitiveDeps = false,
+    excludedDependencies = emptyList(),
+    scope = null,
+  )
 }
