@@ -215,6 +215,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   }
 
   override suspend fun setSortKey(sortKeyValue: ProjectViewPaneSortKey) {
+    currentTreeState.load()?.scheduleSetSortKey(sortKeyValue)
   }
 
   override suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue) {
@@ -365,6 +366,9 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
                 is SetOptionRequest -> {
                   applyOptionChange(request.option, request.newValue)
                 }
+                is SetSortKeyRequest -> {
+                  applySortKeyChange(request.sortKey)
+                }
                 is SelectNodeRequest -> {
                   builder.selectNode(request.nodePath)
                 }
@@ -421,6 +425,10 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
     fun scheduleSetOption(option: ProjectViewPaneOption, newValue: Boolean) {
       schedule { SetOptionRequest(it, option, newValue) }
+    }
+
+    fun scheduleSetSortKey(sortKey: ProjectViewPaneSortKey) {
+      schedule { SetSortKeyRequest(it, sortKey) }
     }
 
     fun scheduleSelectElement(element: PsiElement) {
@@ -657,6 +665,19 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
       }
     }
 
+    private suspend fun applySortKeyChange(sortKey: ProjectViewPaneSortKey) {
+      val settingsService = ProjectViewPaneSettingsService.getInstance(project)
+      val changed = settingsService.getSortKey() != sortKey
+      // Persist regardless (matches ProjectViewImpl.setSortKey, which always writes the per-project,
+      // default and shared settings).
+      settingsService.setSortKey(sortKey)
+      if (!changed) return
+      // Refresh the settings DTO (selected/available sort keys) so the frontend menu reflects the change,
+      // then rebuild the tree with the new comparator.
+      applySettings()
+      updateAll(withComparator = true)
+    }
+
     private fun updateAll(withComparator: Boolean) {
       updateNode(SUPER_ROOT_ID) { it.deep = true }
       if (withComparator) {
@@ -863,6 +884,7 @@ private data class LoadChildrenRequest(override val epoch: Long, val parentId: L
 private data class ProcessPendingUpdatesRequest(override val epoch: Long) : StateUpdateRequest()
 private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdateRequest()
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
+private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()

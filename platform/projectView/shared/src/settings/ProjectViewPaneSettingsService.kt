@@ -171,6 +171,13 @@ class ProjectViewPaneSettingsService(private val project: Project) {
     return state.sortKey.toSettingValue()
   }
 
+  fun setSortKey(sortKey: ProjectViewPaneSortKey) {
+    val legacySortKey = sortKey.toLegacySortKey()
+    state.sortKey = legacySortKey
+    ProjectViewState.getDefaultInstance().sortKey = legacySortKey
+    ProjectViewSharedSettings.instance.sortKey = legacySortKey
+  }
+
   fun getFileNesting(): ProjectViewPaneFileNestingValue {
     return ProjectViewPaneFileNestingValueImpl(
       state.useFileNestingRules,
