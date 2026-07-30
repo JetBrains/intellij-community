@@ -57,7 +57,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-impl",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/util:util-ui",
     ],
 )
@@ -102,6 +102,7 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
 )
@@ -205,7 +206,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.util.tests` end

@@ -24,7 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//java/testFramework",
         "//java/java-psi-api:psi",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -74,7 +74,8 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin/plugin/k2",
         "//plugins/kotlin/plugin/k2:k2_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//java/java-indexing-api:indexing",
         "//java/java-indexing-api:indexing_test_lib",
         "//java/testFramework",

@@ -28,7 +28,7 @@ jvm_library(
         "//platform/execution.serviceView/plugin",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/gradle:gradle-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
@@ -159,7 +159,8 @@ jvm_library(
         "//platform/backend/observation:observation_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//platform/backend/workspace",

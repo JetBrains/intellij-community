@@ -43,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="PROVIDED" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />

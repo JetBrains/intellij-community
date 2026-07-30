@@ -17,6 +17,11 @@ jvm_provided_library(
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
+    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+)
+
 jvm_library(
     name = "k2",
     srcs = glob(
@@ -37,7 +42,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-analysis-api-provided",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -51,6 +55,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core",
         "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
 
@@ -69,7 +74,8 @@ jvm_library(
         ":k2",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

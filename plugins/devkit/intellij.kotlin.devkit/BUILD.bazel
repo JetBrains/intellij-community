@@ -12,6 +12,11 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
+    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+)
+
+jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
@@ -50,7 +55,6 @@ jvm_library(
         "//xml/xml-analysis-api:analysis",
         "//java/java-analysis-api:analysis",
         "//plugins/kotlin/code-insight/utils",
-        "@lib//:kotlinc-analysis-api-provided",
         "//platform/editor-ui-api:editor-ui",
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
@@ -73,6 +77,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
         "//plugins/kotlin/references",
         "//plugins/kotlin/base/psi",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
@@ -104,7 +109,8 @@ jvm_library(
         "//xml/xml-analysis-api:analysis_test_lib",
         "//java/java-analysis-api:analysis_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

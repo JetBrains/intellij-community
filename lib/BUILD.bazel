@@ -7981,28 +7981,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/analysis-api-for-ide-2.5.0-dev-2414.jar_copy",
-    src = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414_http//file",
-    out = "org.jetbrains.kotlin/analysis-api-for-ide-2.5.0-dev-2414.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-analysis-api",
-    jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414_http//file",
-    source_jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-analysis-api-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar_copy",
     src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414_http//file",
     out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar",
@@ -12627,6 +12605,21 @@ jvm_import(
     name = "libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2",
     jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414_http//file",
     source_jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_0-dev-2414-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/analysis-api-for-ide-2.5.0-dev-2414.jar_copy",
+    src = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414_http//file",
+    out = "org.jetbrains.kotlin/analysis-api-for-ide-2.5.0-dev-2414.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-analysis-api-kotlinc-analysis-api",
+    jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414_http//file",
+    source_jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_5_0-dev-2414-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

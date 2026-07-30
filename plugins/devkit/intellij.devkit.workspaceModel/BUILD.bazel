@@ -13,6 +13,11 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
+    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+)
+
+jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
@@ -37,7 +42,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
-        "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-jps-common-provided",
@@ -85,6 +89,7 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl",
         "//platform/progress/shared:ide-progress",
         "//plugins/copyright",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
@@ -103,7 +108,8 @@ jvm_library(
         # do not sort,
         ":workspaceModel",
         "//java/java-indexing-api:indexing_test_lib",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
