@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlin.concurrent.Volatile
 
 /**
  * Entry point for the experimental Editor Lock-Free (elf) typing infrastructure.
@@ -151,10 +152,26 @@ interface Elf {
   fun assertWriteAllowed()
 
   companion object {
+    /**
+     * Caches the resolved application service to keep [getElf] cheap on hot document paths;
+     * [ApplicationManager.registerCleaner] drops the cache when the application is replaced.
+     * The [OffDuty] fallback is intentionally never cached: resolving too early — before the
+     * application or the service exists — must not pin the no-op implementation for the rest
+     * of the session.
+     */
+    @Volatile private var ELF: Elf? = null
+
+    init {
+      ApplicationManager.registerCleaner { ELF = null }
+    }
+
     @JvmStatic
     fun getElf(): Elf {
-      val application = ApplicationManager.getApplication()
-      return application?.serviceOrNull<Elf>() ?: OffDuty
+      ELF?.let { return it }
+      val application = ApplicationManager.getApplication() ?: return OffDuty
+      val elf = application.serviceOrNull<Elf>() ?: return OffDuty
+      ELF = elf
+      return elf
     }
   }
 }
