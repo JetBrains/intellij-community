@@ -8707,28 +8707,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.5.0-dev-2414.jar_copy",
-    src = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414_http//file",
-    out = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.5.0-dev-2414.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-symbol-light-classes",
-    jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414_http//file",
-    source_jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-symbol-light-classes-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-symbol-light-classes"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
     src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
     out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
@@ -12614,6 +12592,21 @@ jvm_import(
     name = "libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
     jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414_http//file",
     source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.5.0-dev-2414.jar_copy",
+    src = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414_http//file",
+    out = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.5.0-dev-2414.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes",
+    jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414_http//file",
+    source_jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

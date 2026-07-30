@@ -201,5 +201,6 @@
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" loading="required"/>
     <module name="intellij.kotlin.codeInsight.vcs"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes" loading="embedded"/>
   </content>
 </idea-plugin>

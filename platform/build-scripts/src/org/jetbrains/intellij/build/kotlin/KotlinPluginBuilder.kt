@@ -49,7 +49,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.kotlin-scripting-dependencies",
       "kotlinc.kotlin-gradle-statistics",
       "kotlinc.kotlin-compiler-fir",
-      "kotlinc.symbol-light-classes",
       "kotlin-metadata",
       "kotlinc.kotlin-build-tools-api",
       "kotlinc.kotlin-build-tools-impl",
@@ -132,6 +131,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
   /** paired with [excludeKotlinLibraries] */
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
+    spec.withModule("intellij.libraries.kotlinc.symbol.light.classes")
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }

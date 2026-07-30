@@ -127,6 +127,12 @@
     libraries:
       kotlinc.kotlin-compiler-common:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.symbol.light.classes.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.symbol.light.classes
+    libraries:
+      kotlinc.symbol-light-classes:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -176,9 +182,6 @@
   - name: kotlinc.kotlin-scripting-jvm
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
-  - name: kotlinc.symbol-light-classes
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
   modules:
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2

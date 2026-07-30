@@ -1,3 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+  </dependencies>
+  <!-- endregion -->
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 </idea-plugin>

@@ -34,7 +34,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
         "//java/java-analysis-api:analysis",
-        "@lib//:kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
     ],
     deps = [
@@ -159,6 +159,7 @@ jvm_library(
         "//java/java-analysis-api:analysis_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//java/java-impl:impl_test_lib",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",

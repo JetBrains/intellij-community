@@ -6812,20 +6812,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414_http",
-    downloaded_file_path = "symbol-light-classes-for-ide-2.5.0-dev-2414.jar",
-    sha256 = "6cb8c62f59c044d7cba51dc215c61d39124052478762ad91b0d0d79d4d932747",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-2414/symbol-light-classes-for-ide-2.5.0-dev-2414.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-2414-sources_http",
-    downloaded_file_path = "symbol-light-classes-for-ide-2.5.0-dev-2414-sources.jar",
-    sha256 = "6b696cfc68c75b958ad9965dcfdfa99a4645b0d748a26b564aa6da4b6c71ac87",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-2414/symbol-light-classes-for-ide-2.5.0-dev-2414-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http",
     downloaded_file_path = "binary-compatibility-validator-0.17.0.jar",
     sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
@@ -9945,6 +9931,20 @@ http_file(
     downloaded_file_path = "low-level-api-fir-for-ide-2.5.0-dev-3229-sources.jar",
     sha256 = "50e8e5abb9c6b63b89e57315aabaf921de5334ea8c15e531a0c6747faf9941c4",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.0-dev-3229/low-level-api-fir-for-ide-2.5.0-dev-3229-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-3229_http",
+    downloaded_file_path = "symbol-light-classes-for-ide-2.5.0-dev-3229.jar",
+    sha256 = "0fac333e121aef3083ed1131e81e03735f22710a9a6bd6632c4ad756aabbc884",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-3229/symbol-light-classes-for-ide-2.5.0-dev-3229.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-symbol-light-classes-for-ide-2_5_0-dev-3229-sources_http",
+    downloaded_file_path = "symbol-light-classes-for-ide-2.5.0-dev-3229-sources.jar",
+    sha256 = "8908febdf6d1cd3a3ba06ec6601ffb9eb811770dee8928f04635f59c62a2ad02",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-3229/symbol-light-classes-for-ide-2.5.0-dev-3229-sources.jar",
 )
 
 http_file(

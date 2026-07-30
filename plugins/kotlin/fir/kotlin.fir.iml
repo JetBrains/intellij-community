@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />

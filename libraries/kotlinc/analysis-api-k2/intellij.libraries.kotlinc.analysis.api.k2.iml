@@ -45,6 +45,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" />
-    <orderEntry type="library" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
   </component>
 </module>

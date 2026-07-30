@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.incremental-compilation-impl-tests" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-cli" level="project" />
