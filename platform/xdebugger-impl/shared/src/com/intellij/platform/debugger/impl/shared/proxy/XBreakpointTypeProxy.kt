@@ -38,5 +38,6 @@ interface XBreakpointTypeProxy {
   fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomTopMostPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun isAddBreakpointButtonVisible(): Boolean
+  fun isNewBadgeVisible(): Boolean
   suspend fun addBreakpoint(project: Project): XBreakpointProxy?
 }

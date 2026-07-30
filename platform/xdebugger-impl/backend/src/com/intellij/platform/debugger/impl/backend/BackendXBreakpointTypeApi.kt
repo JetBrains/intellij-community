@@ -352,6 +352,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
       standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
       isAddBreakpointButtonVisible,
+      isNewBadgeVisible,
       icons
     )
   }

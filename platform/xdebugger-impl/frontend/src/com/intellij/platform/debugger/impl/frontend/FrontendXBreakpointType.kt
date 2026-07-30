@@ -196,6 +196,10 @@ private open class FrontendXBreakpointType(
     return dto.isAddBreakpointButtonVisible
   }
 
+  override fun isNewBadgeVisible(): Boolean {
+    return dto.isNewBadgeVisible
+  }
+
   override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
     val breakpointId = XBreakpointTypeApi.getInstance().addBreakpointThroughLux(project.projectId(), dto.id).await() ?: return null
     return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).awaitBreakpointCreation(breakpointId)

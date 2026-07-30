@@ -213,6 +213,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
+   * Override to return {@code true} while this type is newly added — the add-breakpoint "+" popup then shows a "New"
+   * badge on its item (time-limited on the client: it disappears about a month after the user first sees it).
+   */
+  public boolean isNewBadgeVisible() {
+    return false;
+  }
+
+  /**
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
    * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
