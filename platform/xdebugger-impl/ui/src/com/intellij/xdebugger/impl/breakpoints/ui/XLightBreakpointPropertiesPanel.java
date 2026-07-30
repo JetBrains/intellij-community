@@ -112,6 +112,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private final JPanel myCustomRightPropertiesPanelWrapper;
   private JBCheckBox myConditionEnabledCheckbox;
   private final JPanel myCustomTopPropertiesPanelWrapper;
+  private final JPanel myCustomTopMostPropertiesPanelWrapper;
   private final JBLabel myBreakpointNameLabel;
   private final JPanel myConditionCheckboxPanel;
   private final JPanel myLanguageChooserPanel;
@@ -158,10 +159,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       // >>> IMPORTANT!! <<<
       // DO NOT EDIT OR ADD ANY CODE HERE!
       myMainPanel = new JPanel();
-      myMainPanel.setLayout(new GridLayoutManager(11, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myMainPanel.setLayout(new GridLayoutManager(12, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myCustomTopMostPropertiesPanelWrapper = new JPanel();
+      myCustomTopMostPropertiesPanelWrapper.setLayout(new BorderLayout(0, 0));
+      myMainPanel.add(myCustomTopMostPropertiesPanelWrapper,
+                      new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
+                                          false));
       myConditionPanel = new JPanel();
       myConditionPanel.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, 0));
-      myMainPanel.add(myConditionPanel, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+      myMainPanel.add(myConditionPanel, new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             null, null, null, 0, false));
@@ -191,36 +199,36 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
                                                         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
       mySuspendPolicyPanel = new XSuspendPolicyPanel();
       myMainPanel.add(mySuspendPolicyPanel.$$$getRootComponent$$$(),
-                      new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
       myActionsPanel = new XBreakpointActionsPanel();
       myMainPanel.add(myActionsPanel.$$$getRootComponent$$$(),
-                      new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
       myMasterBreakpointPanel = new XMasterBreakpointPanel();
       myMainPanel.add(myMasterBreakpointPanel.$$$getRootComponent$$$(),
-                      new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
       myCustomPropertiesPanelWrapper = new JPanel();
       myCustomPropertiesPanelWrapper.setLayout(new BorderLayout(0, 0));
       myMainPanel.add(myCustomPropertiesPanelWrapper,
-                      new GridConstraints(9, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(10, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
       final Spacer spacer2 = new Spacer();
-      myMainPanel.add(spacer2, new GridConstraints(10, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+      myMainPanel.add(spacer2, new GridConstraints(11, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, new Dimension(400, -1), null, 0, false));
       myCustomConditionsPanelWrapper = new JPanel();
       myCustomConditionsPanelWrapper.setLayout(new BorderLayout(0, 0));
       myMainPanel.add(myCustomConditionsPanelWrapper,
-                      new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(6, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
@@ -229,7 +237,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myCustomRightPropertiesPanelWrapper.setEnabled(true);
       myCustomRightPropertiesPanelWrapper.setVisible(true);
       myMainPanel.add(myCustomRightPropertiesPanelWrapper,
-                      new GridConstraints(6, 1, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                      new GridConstraints(7, 1, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 2,
                                           false));
@@ -237,18 +245,18 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
         BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0), null, TitledBorder.DEFAULT_JUSTIFICATION,
                                          TitledBorder.DEFAULT_POSITION, null, null));
       final Spacer spacer3 = new Spacer();
-      myMainPanel.add(spacer3, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+      myMainPanel.add(spacer3, new GridConstraints(9, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
       myCustomTopPropertiesPanelWrapper = new JPanel();
       myCustomTopPropertiesPanelWrapper.setLayout(new BorderLayout(0, 0));
       myMainPanel.add(myCustomTopPropertiesPanelWrapper,
-                      new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                      new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
                                           false));
       final JPanel panel1 = new JPanel();
       panel1.setLayout(new GridLayoutManager(1, 1, new Insets(5, 0, 0, 0), -1, -1));
-      myMainPanel.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+      myMainPanel.add(panel1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                   null, 0, false));
@@ -367,6 +375,19 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
     else {
       myCustomTopPropertiesPanelWrapper.getParent().remove(myCustomTopPropertiesPanelWrapper);
+    }
+
+    XBreakpointCustomPropertiesPanel customTopMostPropertiesPanel = breakpointType.createCustomTopMostPropertiesPanel(project);
+    if (customTopMostPropertiesPanel != null && (myShowAllOptions || isVisibleOnPopup(customTopMostPropertiesPanel))) {
+      myCustomTopMostPropertiesPanelWrapper.add(customTopMostPropertiesPanel.getComponent(), BorderLayout.CENTER);
+      myCustomPanels.add(customTopMostPropertiesPanel);
+      if (customTopMostPropertiesPanel.hidesBreakpointNameLabel()) {
+        // The panel opted to identify the breakpoint itself, so the generic name/description label is redundant.
+        myBreakpointNameLabel.setVisible(false);
+      }
+    }
+    else {
+      myCustomTopMostPropertiesPanelWrapper.getParent().remove(myCustomTopMostPropertiesPanelWrapper);
     }
 
     myMainPanel.addFocusListener(new FocusAdapter() {

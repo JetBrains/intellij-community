@@ -185,6 +185,13 @@ private open class FrontendXBreakpointType(
     return monolithType.createCustomTopPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   }
 
+  @Suppress("UNCHECKED_CAST")
+  override fun createCustomTopMostPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+    // TODO Custom panels are only supported in monolith
+    val monolithType = XDebuggerEntityConverter.getBreakpointType(id) ?: return null
+    return monolithType.createCustomTopMostPropertiesPanel(project) as XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  }
+
   override fun isAddBreakpointButtonVisible(): Boolean {
     return dto.isAddBreakpointButtonVisible
   }

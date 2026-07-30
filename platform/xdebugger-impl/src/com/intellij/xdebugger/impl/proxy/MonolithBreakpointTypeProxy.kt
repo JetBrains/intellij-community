@@ -84,6 +84,11 @@ internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() 
     return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
   }
 
+  @Suppress("UNCHECKED_CAST")
+  override fun createCustomTopMostPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+    return breakpointType.createCustomTopMostPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+  }
+
   override fun isAddBreakpointButtonVisible(): Boolean {
     return breakpointType.isAddBreakpointButtonVisible
   }

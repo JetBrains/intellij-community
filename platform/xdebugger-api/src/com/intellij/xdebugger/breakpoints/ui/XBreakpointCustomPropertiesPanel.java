@@ -22,4 +22,12 @@ public abstract class XBreakpointCustomPropertiesPanel<B extends XBreakpoint<?>>
   public boolean isVisibleOnPopup(@NotNull B breakpoint) {
     return true;
   }
+
+  /**
+   * Whether this panel already identifies the breakpoint and the generic breakpoint name/description label should be
+   * hidden while it is shown. Opt-in: returns {@code false} by default, so existing panels keep the standard name label.
+   */
+  public boolean hidesBreakpointNameLabel() {
+    return false;
+  }
 }

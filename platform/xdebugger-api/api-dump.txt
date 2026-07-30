@@ -287,6 +287,7 @@ a:com.intellij.xdebugger.breakpoints.XBreakpointType
 - createCustomConditionsPanel():com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - createCustomPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - createCustomRightPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- createCustomTopMostPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - createCustomTopPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - createDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType$XBreakpointCreator):com.intellij.xdebugger.breakpoints.XBreakpoint
 - createProperties():com.intellij.xdebugger.breakpoints.XBreakpointProperties
@@ -392,6 +393,7 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - <init>():V
 - dispose():V
 - a:getComponent():javax.swing.JComponent
+- hidesBreakpointNameLabel():Z
 - isVisibleOnPopup(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
 - a:loadFrom(com.intellij.xdebugger.breakpoints.XBreakpoint):V
 - a:saveTo(com.intellij.xdebugger.breakpoints.XBreakpoint):V

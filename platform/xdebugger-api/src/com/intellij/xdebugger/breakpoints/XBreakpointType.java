@@ -172,6 +172,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
+   * A custom panel placed at the very top of the breakpoint properties editor, above the "Enabled" checkbox and the
+   * breakpoint name. Use it for information that identifies the breakpoint itself (e.g. the watched address and size
+   * of a data breakpoint), as opposed to editable settings which belong to {@link #createCustomPropertiesPanel}.
+   * If the panel fully identifies the breakpoint, it may override
+   * {@link XBreakpointCustomPropertiesPanel#hidesBreakpointNameLabel()} to hide the generic name label.
+   */
+  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomTopMostPropertiesPanel(@NotNull Project project) {
+    return null;
+  }
+
+  /**
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
   @Deprecated(forRemoval = true)
