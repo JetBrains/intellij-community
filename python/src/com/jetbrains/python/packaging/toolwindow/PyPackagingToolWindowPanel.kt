@@ -97,6 +97,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     contentPanel = PyPackagesUiComponents.borderPanel {
       add(createContentPanel(), BorderLayout.CENTER)
     }
+    contentPanel.background = JBUI.CurrentTheme.ToolWindow.background()
     setContent(contentPanel)
     setupToolWindowTitleActions()
     rebuildCenterLayout()
@@ -131,12 +132,14 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     toolWindow.component.putClientProperty(ToolWindowContentUi.DONT_HIDE_TOOLBAR_IN_HEADER, true)
     val gearActions = ActionManager.getInstance().getAction(ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID) as ActionGroup
     toolWindow.setAdditionalGearActions(gearActions)
-    toolWindow.setTitleActions(listOf(PyTogglePackagingToolWindowAnchorAction()))
-
     headerTitleRenderer = PyInterpreterHeaderTitleRenderer(
       toolWindow = toolWindow,
       plainTitle = message("toolwindow.stripe.Python_Packages_Tool"),
     )
+    toolWindow.setTitleActions(listOfNotNull(
+      headerTitleRenderer?.headerAction,
+      PyTogglePackagingToolWindowAnchorAction(),
+    ))
     addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
         SwingUtilities.invokeLater { headerTitleRenderer?.refit() }
@@ -163,7 +166,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     lastIsHorizontal = horizontal
     centerSlot.removeAll()
     if (horizontal) {
-      val splitter = OnePixelSplitter(false, "py.packages.tool.window.splitter", 0.55f).apply {
+      val splitter = OnePixelSplitter(false, "py.packages.tool.window.splitter.v2", 0.3f).apply {
         firstComponent = listWithSearchPanel
         secondComponent = infoPanel.component
       }

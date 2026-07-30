@@ -154,23 +154,9 @@ internal class UvPackageManager internal constructor(
     val workspaceTree = buildWorkspaceStructure(allTrees, declaredPackageNames)
     if (workspaceTree != null) return workspaceTree
 
-    val declaredPackages = extractDeclaredPackagesFromParsedTrees(allTrees, declaredPackageNames)
-    val undeclaredPackages = extractUndeclaredPackages(declaredPackageNames)
-    return PackageCollectionPackageStructureNode(declaredPackages, undeclaredPackages)
+    val undeclaredRoots = extractUndeclaredPackages(declaredPackageNames)
+    return buildNonWorkspacePackageStructure(allTrees, declaredPackageNames, undeclaredRoots)
   }
-
-  private fun extractDeclaredPackagesFromParsedTrees(
-    allTrees: List<PackageTreeNode>,
-    declaredPackageNames: Set<String>,
-  ): List<PackageTreeNode> {
-    val projectRoot = allTrees.firstOrNull()
-                      ?: return declaredPackageNames.map { createLeafNode(it) }
-    val childrenByName = projectRoot.children.associateBy { it.name.name }
-    return declaredPackageNames.map { name -> childrenByName[name] ?: createLeafNode(name) }
-  }
-
-  private fun createLeafNode(packageName: String): PackageTreeNode =
-    PackageTreeNode(PyPackageName.from(packageName))
 
   private suspend fun buildWorkspaceStructure(
     allTrees: List<PackageTreeNode>,
@@ -189,7 +175,7 @@ internal class UvPackageManager internal constructor(
 
     val shownPackageNames = collectAllPackageNames(rootTree, subMembers)
     val undeclared = extractUndeclaredPackages(declaredPackageNames)
-      .filter { it.name.name !in shownPackageNames }
+      .filter { it.name.name !in shownPackageNames && it.name.name !in allMemberNames }
 
     return WorkspaceMemberPackageStructureNode(rootName, subMembers, rootTree, undeclared)
   }
@@ -395,3 +381,36 @@ internal class UvPackageManagerProvider : PythonPackageManagerProvider {
     return UvPackageManager(project, sdk, uvExecutionContext)
   }
 }
+
+/**
+ * Builds the non-workspace package structure: keeps declared depth-1 dependencies with their
+ * transitive subtrees, and filters out any `uv pip tree` root that either matches a project root
+ * name or already appears inside a declared subtree (transitive of a declared package).
+ */
+@ApiStatus.Internal
+fun buildNonWorkspacePackageStructure(
+  allTrees: List<PackageTreeNode>,
+  declaredPackageNames: Set<String>,
+  undeclaredRoots: List<PackageTreeNode>,
+): PackageCollectionPackageStructureNode {
+  val rootProjectNames = allTrees.mapTo(mutableSetOf()) { it.name.name }
+  val declaredPackages = extractDeclaredPackagesFromParsedTrees(allTrees, declaredPackageNames)
+  val shownPackageNames = declaredPackages.flatMapTo(mutableSetOf()) { it.collectAllNames() }
+  val filtered = undeclaredRoots.filter {
+    it.name.name !in shownPackageNames && it.name.name !in rootProjectNames
+  }
+  return PackageCollectionPackageStructureNode(declaredPackages, filtered)
+}
+
+private fun extractDeclaredPackagesFromParsedTrees(
+  allTrees: List<PackageTreeNode>,
+  declaredPackageNames: Set<String>,
+): List<PackageTreeNode> {
+  val projectRoot = allTrees.firstOrNull()
+                    ?: return declaredPackageNames.map { createLeafNode(it) }
+  val childrenByName = projectRoot.children.associateBy { it.name.name }
+  return declaredPackageNames.map { name -> childrenByName[name] ?: createLeafNode(name) }
+}
+
+private fun createLeafNode(packageName: String): PackageTreeNode =
+  PackageTreeNode(PyPackageName.from(packageName))

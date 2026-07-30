@@ -12,6 +12,7 @@ import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.packaging.packageRequirements.TreeParser.parseTrees
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
+import com.jetbrains.python.sdk.uv.buildNonWorkspacePackageStructure
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -742,6 +743,103 @@ class UvTreeParsingTest {
     @Test
     fun `empty line is not root line`() {
       assertThat(TreeParser.isRootLine("")).isFalse()
+    }
+  }
+
+  @Nested
+  inner class NonWorkspaceUndeclaredFilter {
+
+    /**
+     * Reproduces PTW jupyter case: `jupyterlab` is the only declared dependency; all other packages
+     * are transitive deps of `jupyterlab`. Exercises the pure non-workspace branch of
+     * `UvPackageManager.getPackageTree` via [buildNonWorkspacePackageStructure].
+     */
+    private fun undeclaredNames(projectTreeOutput: String, pipTreeOutput: String): List<String> {
+      val allTrees = parseTrees(projectTreeOutput.lines())
+      val declaredPackageNames = extractDeclaredDependencies(allTrees).mapTo(mutableSetOf()) { it.name }
+      val undeclaredRoots = parseTrees(pipTreeOutput.lines())
+      val structure = buildNonWorkspacePackageStructure(allTrees, declaredPackageNames, undeclaredRoots)
+      return structure.undeclaredPackages.map { it.name.name }
+    }
+
+    @Test
+    fun `jupyter transitives of declared package are not marked undeclared`() {
+      val projectTree = """
+        jupyterproject v0.1.0
+        └── jupyterlab v4.6.2
+            ├── async-lru v2.3.0
+            ├── httpx v0.28.1
+            │   ├── anyio v4.14.2
+            │   │   └── idna v3.18
+            │   ├── certifi v2026.7.22
+            │   ├── httpcore v1.0.9
+            │   │   ├── certifi v2026.7.22
+            │   │   └── h11 v0.16.0
+            │   └── idna v3.18
+            ├── ipykernel v7.3.0
+            │   └── traitlets v5.15.1
+            ├── jinja2 v3.1.6
+            │   └── markupsafe v3.0.3
+            ├── packaging v26.2
+            ├── tornado v6.5.7
+            └── traitlets v5.15.1
+      """.trimIndent()
+
+      // `uv pip tree` roots include the project itself + a few transitives that no other installed
+      // package depends on (typical for jupyter installs — build backends, prompt helpers, etc.).
+      val pipTree = """
+        jupyterproject v0.1.0
+        └── jupyterlab v4.6.2
+        packaging v26.2
+        idna v3.18
+        markupsafe v3.0.3
+        setuptools v75.0.0
+      """.trimIndent()
+
+      val undeclared = undeclaredNames(projectTree, pipTree)
+
+      // jupyterproject (root) and jupyterlab (declared) are filtered.
+      // packaging, idna, markupsafe are transitives of jupyterlab -> filtered too.
+      // setuptools is truly undeclared (not in project tree) -> remains.
+      assertThat(undeclared).containsExactly("setuptools")
+    }
+
+    @Test
+    fun `simple project without transitives keeps unrelated pip tree roots`() {
+      val projectTree = """
+        myapp v1.0.0
+        └── requests v2.31.0
+            └── urllib3 v2.1.0
+      """.trimIndent()
+
+      val pipTree = """
+        myapp v1.0.0
+        └── requests v2.31.0
+        urllib3 v2.1.0
+        pip v24.0
+      """.trimIndent()
+
+      val undeclared = undeclaredNames(projectTree, pipTree)
+
+      // urllib3 is transitive of declared requests -> filtered; myapp is project root -> filtered.
+      assertThat(undeclared).containsExactly("pip")
+    }
+
+    @Test
+    fun `project root name itself is filtered from undeclared`() {
+      val projectTree = """
+        jupyterproject v0.1.0
+        └── jupyterlab v4.6.2
+      """.trimIndent()
+
+      val pipTree = """
+        jupyterproject v0.1.0
+        └── jupyterlab v4.6.2
+      """.trimIndent()
+
+      val undeclared = undeclaredNames(projectTree, pipTree)
+
+      assertThat(undeclared).isEmpty()
     }
   }
 }

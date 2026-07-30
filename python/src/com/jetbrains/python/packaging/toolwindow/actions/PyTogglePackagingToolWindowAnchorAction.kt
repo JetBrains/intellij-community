@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,7 +22,7 @@ internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
     }
     e.presentation.isEnabledAndVisible = true
     val (icon, text) = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) {
-      AllIcons.Actions.MoveToBottomRight to PyBundle.message("python.toolwindow.packages.move.to.bottom.action")
+      AllIcons.Actions.MoveToBottomLeft to PyBundle.message("python.toolwindow.packages.move.to.bottom.action")
     }
     else {
       AllIcons.Actions.MoveToRightBottom to PyBundle.message("python.toolwindow.packages.move.to.right.action")
@@ -32,8 +33,13 @@ internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val toolWindow = findToolWindow(e) ?: return
-    val target = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) ToolWindowAnchor.BOTTOM else ToolWindowAnchor.RIGHT
-    toolWindow.setAnchor(target, null)
+    val target = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) {
+      ToolWindowMoveAction.Anchor.BottomLeft
+    }
+    else {
+      ToolWindowMoveAction.Anchor.RightBottom
+    }
+    target.applyTo(toolWindow)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
