@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
@@ -52,17 +52,14 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,
-        reviewerActionProvider = { reviewer ->
-          DefaultActionGroup(GitLabMergeRequestRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction())
+        reviewerName = { reviewer -> reviewer.name },
+        reviewerAvatar = { reviewer -> avatarIconsProvider.getIcon(reviewer, Avatar.Sizes.OUTLINED) },
+        actionGroup = { reviewer, reviewState ->
+          if (reviewState != ReviewState.ACCEPTED) {
+            DefaultActionGroup(GitLabMergeRequestRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction())
+          }
+          else null
         },
-        reviewerNameProvider = { reviewer -> reviewer.name },
-        avatarKeyProvider = { reviewer -> reviewer },
-        iconProvider = { reviewState, iconKey, iconSize ->
-          CodeReviewAvatarUtils.createIconWithOutline(
-            avatarIconsProvider.getIcon(iconKey, iconSize),
-            ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
-          )
-        }
       ))
     }
 
