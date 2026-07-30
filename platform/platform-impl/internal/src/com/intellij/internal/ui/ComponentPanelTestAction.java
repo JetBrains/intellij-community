@@ -670,7 +670,6 @@ final class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
-                                 resize().
         createPanel());
 
       Objects.requireNonNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
@@ -687,7 +686,6 @@ final class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
-                                 resize().
         createPanel());
 
       Objects.requireNonNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
