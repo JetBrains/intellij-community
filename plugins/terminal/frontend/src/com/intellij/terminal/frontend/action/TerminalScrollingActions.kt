@@ -4,9 +4,8 @@ package com.intellij.terminal.frontend.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actions.EditorActionUtil
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
@@ -45,12 +44,10 @@ private class LineDownHandler : ScrollingHandlerImpl(Unit.LINE, +1)
 
 private abstract class ScrollingHandlerImpl(private val unit: Unit, private val direction: Int) : ScrollingHandler {
   override fun doExecute(editor: Editor) {
-    val amount = when (unit) {
-      Unit.LINE -> 1
-      Unit.PAGE -> editor.scrollingModel.visibleArea.height / editor.lineHeight
-    }
-    editor.doTerminalOutputScrollChangingAction {
-      EditorActionUtil.scrollRelatively(editor, amount * direction, 0, false)
+    val scrollingModel = editor.getUserData(TerminalOutputScrollingModel.KEY) ?: return
+    when (unit) {
+      Unit.LINE -> scrollingModel.scrollByLines(direction)
+      Unit.PAGE -> scrollingModel.scrollByPages(direction)
     }
   }
 }

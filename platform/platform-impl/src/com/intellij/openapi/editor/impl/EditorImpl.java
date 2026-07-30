@@ -425,6 +425,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
 
+  private @NotNull EditorScrollableIncrementProvider myScrollableIncrementProvider = EditorScrollableIncrementProvider.DEFAULT;
+
   @MouseSelectionState
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
@@ -1355,6 +1357,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull ScrollingModelEx getScrollingModel() {
     return myScrollingModel;
+  }
+
+  /**
+   * Returns the provider that computes the Swing {@link javax.swing.Scrollable} unit/block increments this editor
+   * reports, i.e., the granularity the platform's wheel/scrollbar scrolling snaps to.
+   */
+  @ApiStatus.Internal
+  public @NotNull EditorScrollableIncrementProvider getScrollableIncrementProvider() {
+    return myScrollableIncrementProvider;
+  }
+
+  /**
+   * Overrides the scroll increment granularity for this editor.
+   */
+  @ApiStatus.Internal
+  public void setScrollableIncrementProvider(@NotNull EditorScrollableIncrementProvider provider) {
+    myScrollableIncrementProvider = provider;
   }
 
   @Override

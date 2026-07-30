@@ -44,7 +44,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -547,36 +546,6 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
     result = block()
   }
   return result!!
-}
-
-private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMINAL_EDITOR_SIZE_CHANGING_ACTION")
-
-/**
- * Indicates that **the user-triggered** action that modifies the editor viewport (scroll position and size) is in progress.
- *
- * It should be used only to indicate **user-triggered** scroll changes,
- * for example, [com.intellij.terminal.frontend.action.TerminalScrollingAction]
- *
- * This property is used in `TerminalOutputScrollingModelImpl` to control the state of `shouldScrollToCursor` property.
- */
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
-  get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
-  set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
-
-@ApiStatus.Internal
-inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
-  isTerminalOutputScrollChangingActionInProgress = true
-  return try {
-    action()
-  }
-  finally {
-    // Will execute immediately if there is no animation or after the current animation request is finished.
-    scrollingModel.runActionOnScrollingFinished {
-      isTerminalOutputScrollChangingActionInProgress = false
-    }
-  }
 }
 
 /**

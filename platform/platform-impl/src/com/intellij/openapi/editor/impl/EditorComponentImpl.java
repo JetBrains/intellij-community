@@ -54,7 +54,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
@@ -98,7 +97,6 @@ import javax.accessibility.AccessibleText;
 import javax.accessibility.AccessibleTextSequence;
 import javax.swing.JViewport;
 import javax.swing.Scrollable;
-import javax.swing.SwingConstants;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.AttributeSet;
@@ -417,31 +415,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    return EditorThreading.compute(() -> {
-      if (orientation == SwingConstants.VERTICAL) {
-        return editor.getLineHeight();
-      }
-      // if orientation == SwingConstants.HORIZONTAL
-      return EditorUtil.getSpaceWidth(Font.PLAIN, editor);
-    });
+    return EditorThreading.compute(
+      () -> editor.getScrollableIncrementProvider().getScrollableUnitIncrement(editor, visibleRect, orientation, direction)
+    );
   }
 
   @DirtyUI
   @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-    if (orientation == SwingConstants.VERTICAL) {
-      int lineHeight = editor.getLineHeight();
-      if (direction > 0) {
-        int lineNumber = (visibleRect.y + visibleRect.height) / lineHeight;
-        return lineHeight * lineNumber - visibleRect.y;
-      }
-      else {
-        int lineNumber = (visibleRect.y - visibleRect.height) / lineHeight;
-        return visibleRect.y - lineHeight * lineNumber;
-      }
-    }
-    // if orientation == SwingConstants.HORIZONTAL
-    return visibleRect.width;
+    return editor.getScrollableIncrementProvider().getScrollableBlockIncrement(editor, visibleRect, orientation, direction);
   }
 
   @Override

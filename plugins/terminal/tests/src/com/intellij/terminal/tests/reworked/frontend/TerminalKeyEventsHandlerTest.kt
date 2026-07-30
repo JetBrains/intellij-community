@@ -481,6 +481,14 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
     override fun scrollToCursor(force: Boolean) {
       scrollRequests += force
     }
+
+    override fun scrollByLines(lines: Int) {
+      throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun scrollByPages(pages: Int) {
+      throw UnsupportedOperationException("not implemented")
+    }
   }
 
   companion object {
