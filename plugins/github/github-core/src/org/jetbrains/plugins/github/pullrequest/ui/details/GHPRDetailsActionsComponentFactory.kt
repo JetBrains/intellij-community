@@ -23,10 +23,12 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerState
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRCloseAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRCommitMergeAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRPostReviewAction
@@ -95,7 +97,8 @@ object GHPRDetailsActionsComponentFactory {
     val reRequestReviewButton = CodeReviewDetailsActionsComponentFactory.createReRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
     )
-    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions,
+                                                          reviewState.map { it == ReviewState.ACCEPTED })
     val moreActionsGroup = createMoreActionGroup()
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -132,9 +135,7 @@ object GHPRDetailsActionsComponentFactory {
       bindTextIn(cs, reviewFlowVm.pendingComments.map { pendingComments ->
         GithubBundle.message("pull.request.review.actions.submit", pendingComments)
       })
-      bindVisibilityIn(cs, reviewFlowVm.reviewState.map {
-        it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
-      })
+      bindVisibilityIn(cs, reviewFlowVm.currentUserReviewState.map { myState -> myState != GHPRReviewerState.APPROVED })
     }.also { btn ->
       btn.addActionListener {
         reviewFlowVm.submitReview()
@@ -153,7 +154,11 @@ object GHPRDetailsActionsComponentFactory {
         reviewFlowVm.submitReviewInputHandler = null
       }
     }
-    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions,
+      combine(reviewFlowVm.reviewState, reviewFlowVm.currentUserReviewState) { overallState, myState ->
+        overallState == ReviewState.ACCEPTED && myState?.isAwaitingReview != true
+      }
+    )
     val moreActionsGroup = createMoreActionGroup()
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -203,6 +208,7 @@ object GHPRDetailsActionsComponentFactory {
     cs: CoroutineScope,
     reviewFlowVm: GHPRReviewFlowViewModel,
     reviewActions: Actions,
+    visibleWhen: Flow<Boolean>,
   ): JBOptionButton {
     // Usual order: [0] -- "Merge", [1] -- "Squash and Merge", [2] -- "Rebase"
     val actions = mutableListOf(reviewActions.mergeReviewAction, reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
@@ -214,7 +220,7 @@ object GHPRDetailsActionsComponentFactory {
     }
 
     return JBOptionButton(mainAction, actions.toTypedArray()).apply {
-      bindVisibilityIn(cs, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
+      bindVisibilityIn(cs, visibleWhen)
     }
   }
 

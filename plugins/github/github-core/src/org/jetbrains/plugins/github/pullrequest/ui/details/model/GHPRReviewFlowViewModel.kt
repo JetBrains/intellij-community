@@ -5,15 +5,19 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerState
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import javax.swing.JComponent
 
 interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequestedReviewer>, GHPRReviewViewModel {
-  val isBusy: Flow<Boolean>
-  val requestedReviewers: Flow<List<GHPullRequestRequestedReviewer>>
-  val reviewState: Flow<ReviewState>
+  val isBusy: StateFlow<Boolean>
+  val requestedReviewers: StateFlow<List<GHPullRequestRequestedReviewer>>
+  val reviewerReviewStates: StateFlow<Map<GHPullRequestRequestedReviewer, GHPRReviewerState>>
+  val currentUserReviewState: StateFlow<GHPRReviewerState?>
+  val reviewState: StateFlow<ReviewState>
   val role: Flow<ReviewRole>
   val pendingComments: Flow<Int>
 
@@ -58,6 +62,7 @@ interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequest
   fun removeReviewer(reviewer: GHPullRequestRequestedReviewer)
   fun requestReview(parentComponent: JComponent)
   fun reRequestReview()
+  fun reRequestReview(reviewer: GHPullRequestRequestedReviewer)
   fun setMyselfAsReviewer()
 }
 

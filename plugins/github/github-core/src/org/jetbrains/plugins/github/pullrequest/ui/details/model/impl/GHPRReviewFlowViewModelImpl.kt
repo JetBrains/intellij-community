@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.childScope
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
@@ -53,7 +54,9 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateC
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.getBatchedPotentialReviewers
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerState
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
+import org.jetbrains.plugins.github.pullrequest.ui.toReviewState
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -83,39 +86,44 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val currentUser = securityService.currentUser
   private val ghostUser = securityService.ghostUser
 
-  override val isBusy: Flow<Boolean> = taskLauncher.busy
+  override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   // TODO: handle error
   private val mergeabilityState: StateFlow<GHPRMergeabilityState?> =
     detailsData.mergeabilityStateComputationFlow.mapNotNull { it.getOrNull() }
     .stateIn(cs, SharingStarted.Eagerly, null)
 
-  override val requestedReviewers: SharedFlow<List<GHPullRequestRequestedReviewer>> =
-    detailsState.map { it.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer) }
-      .shareIn(cs, SharingStarted.Lazily, 1)
+  override val requestedReviewers: StateFlow<List<GHPullRequestRequestedReviewer>> =
+    detailsState.mapState { it.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer) }
 
-  override val reviewerReviews: SharedFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> = detailsState.map { details ->
+  override val reviewerReviewStates: StateFlow<Map<GHPullRequestRequestedReviewer, GHPRReviewerState>> = detailsState.mapState { details ->
     val author = details.author
     val reviews = details.reviews
     val reviewers = details.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer)
     GHReviewersUtils.getReviewsByReviewers(author, reviews, reviewers, ghostUser)
-  }.shareIn(cs, SharingStarted.Lazily, 1)
+  }
 
-  private val isApproved: SharedFlow<Boolean> = combine(reviewerReviews, mergeabilityState) { reviews, state ->
+  override val reviewerReviews: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
+    reviewerReviewStates.mapState { states -> states.mapValues { (_, state) -> state.toReviewState() } }
+
+  override val currentUserReviewState: StateFlow<GHPRReviewerState?> =
+    reviewerReviewStates.mapState { states -> states[currentUser] }
+
+  private val isApproved: StateFlow<Boolean> = reviewerReviewStates.combineState(mergeabilityState) { reviews, state ->
     val requiredApprovingReviewsCount = state?.requiredApprovingReviewsCount ?: 0
-    val approvedReviews = reviews.count { it.value == ReviewState.ACCEPTED }
-    return@combine if (requiredApprovingReviewsCount == 0) approvedReviews > 0 else approvedReviews >= requiredApprovingReviewsCount
-  }.modelFlow(cs, LOG)
+    val approvedReviews = reviews.count { it.value == GHPRReviewerState.APPROVED }
+    if (requiredApprovingReviewsCount == 0) approvedReviews > 0 else approvedReviews >= requiredApprovingReviewsCount
+  }
 
-  override val reviewState: SharedFlow<ReviewState> = combine(detailsState, isApproved) { detailsState, isApproved ->
-    if (isApproved) return@combine ReviewState.ACCEPTED
-    return@combine when (detailsState.reviewDecision) {
+  override val reviewState: StateFlow<ReviewState> = detailsState.combineState(isApproved) { detailsState, isApproved ->
+    if (isApproved) return@combineState ReviewState.ACCEPTED
+    return@combineState when (detailsState.reviewDecision) {
       GHPullRequestReviewDecision.APPROVED -> ReviewState.ACCEPTED
       GHPullRequestReviewDecision.CHANGES_REQUESTED -> ReviewState.WAIT_FOR_UPDATES
       GHPullRequestReviewDecision.REVIEW_REQUIRED -> ReviewState.NEED_REVIEW
       null -> ReviewState.NEED_REVIEW
     }
-  }.modelFlow(cs, LOG)
+  }
 
   override val role: SharedFlow<ReviewRole> = detailsState.map { details ->
     when {
@@ -232,6 +240,13 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val delta = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       CollectionDelta(reviewers, reviewers + reviews.keys)
     }.first()
+    detailsData.adjustReviewers(delta)
+  }
+
+  override fun reRequestReview(reviewer: GHPullRequestRequestedReviewer) = runAction {
+    val reviewers = requestedReviewers.first()
+    val delta = CollectionDelta(reviewers, reviewers + reviewer)
+    if (delta.isEmpty) return@runAction
     detailsData.adjustReviewers(delta)
   }
 

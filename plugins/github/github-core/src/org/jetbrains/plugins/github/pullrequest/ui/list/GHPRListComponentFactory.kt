@@ -3,8 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.list
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
-import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.list.NamedCollection
 import com.intellij.collaboration.ui.codereview.list.ReviewListComponentFactory
 import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
@@ -33,6 +31,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerState
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewerStateUIUtil
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -119,11 +119,11 @@ internal class GHPRListComponentFactory(
 
   private fun getReviewersPresentation(
     avatarIconsProvider: GHAvatarIconsProvider,
-    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, ReviewState>
+    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, GHPRReviewerState>
   ): NamedCollection<UserPresentation>? {
-    val presentations = createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.ACCEPTED) +
-                        createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.WAIT_FOR_UPDATES) +
-                        createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, ReviewState.NEED_REVIEW)
+    val presentations = REVIEWER_DISPLAY_ORDER.flatMap { state ->
+      createUserPresentationByFilter(avatarIconsProvider, reviewsByReviewers, state)
+    }
 
     return NamedCollection.create(GithubBundle.message("pull.request.reviewers.popup", presentations.size), presentations)
   }
@@ -135,8 +135,8 @@ internal class GHPRListComponentFactory(
 
   private fun createUserPresentationByFilter(
     avatarIconsProvider: GHAvatarIconsProvider,
-    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, ReviewState>,
-    reviewStateFilter: ReviewState
+    reviewsByReviewers: Map<GHPullRequestRequestedReviewer, GHPRReviewerState>,
+    reviewStateFilter: GHPRReviewerState
   ): List<UserPresentation> {
     return reviewsByReviewers
       .filterValues { reviewState -> reviewState == reviewStateFilter }
@@ -147,9 +147,9 @@ internal class GHPRListComponentFactory(
   private fun createUserPresentation(
     avatarIconsProvider: GHAvatarIconsProvider,
     user: GHPullRequestRequestedReviewer,
-    reviewState: ReviewState?
+    reviewState: GHPRReviewerState?
   ): UserPresentation {
-    val outlineColor = reviewState?.let(ReviewDetailsUIUtil::getReviewStateIconBorder)
+    val outlineColor = reviewState?.let(GHPRReviewerStateUIUtil::getBorderColor)
     val avatarIcon = avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.OUTLINED)
     val icon = when (outlineColor) {
       null -> avatarIcon
@@ -157,5 +157,16 @@ internal class GHPRListComponentFactory(
     }
 
     return UserPresentation.Simple(user.shortName, user.name, icon)
+  }
+
+  companion object {
+    /** Order in which reviewers are grouped in the PR list popup. */
+    private val REVIEWER_DISPLAY_ORDER: List<GHPRReviewerState> = listOf(
+      GHPRReviewerState.APPROVED,
+      GHPRReviewerState.CHANGES_REQUESTED,
+      GHPRReviewerState.COMMENTED,
+      GHPRReviewerState.RE_REQUESTED,
+      GHPRReviewerState.NEEDS_REVIEW,
+    )
   }
 }
