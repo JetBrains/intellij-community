@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding.maven
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.platform.backend.observation.launchTracked
@@ -8,6 +9,8 @@ import com.intellij.task.ModuleBuildTask
 import com.intellij.task.ProjectTaskListener
 import com.intellij.task.ProjectTaskManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 
@@ -34,10 +37,13 @@ internal class MavenBuildProcessSatisfactionListener(
 
         val satisfactionSurveyStore = MavenBuildProcessSatisfactionSurveyStore.getInstance()
         coroutineScope.launchTracked {
-            if (hasKotlinPluginEnabled) {
-                satisfactionSurveyStore.recordKotlinBuild()
-            } else {
-                satisfactionSurveyStore.recordNonKotlinBuild()
+            val kotlinPluginEnabled = hasKotlinPluginEnabled
+            withContext(Dispatchers.EDT) {
+                if (kotlinPluginEnabled) {
+                    satisfactionSurveyStore.recordKotlinBuild()
+                } else {
+                    satisfactionSurveyStore.recordNonKotlinBuild()
+                }
             }
         }
     }
