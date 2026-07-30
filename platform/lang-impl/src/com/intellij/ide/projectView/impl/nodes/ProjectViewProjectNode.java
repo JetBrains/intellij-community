@@ -14,7 +14,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -52,37 +51,35 @@ public class ProjectViewProjectNode extends AbstractProjectNode implements PathE
       return Collections.emptyList();
     }
 
-    ProjectViewDirectoryHelper projectViewHelper = ProjectViewDirectoryHelper.getInstance(project);
+    Set<VirtualFile> topLevelRoots = ProjectViewDirectoryHelper.getInstance(project).topLevelBaseDirectories();
 
-    // All project roots except those that are under module content roots
-    List<VirtualFile> projectRoots = ProjectRootUtilsKt.getProjectRoots(project);
-
-    // top level roots but not under project roots
-    List<VirtualFile> topLevelRootsOutsideOfProjectRoots = ContainerUtil
-      .filter(projectViewHelper.getTopLevelRoots(), topLevelRoot -> !VfsUtilCore.isUnderFiles(topLevelRoot, projectRoots));
-
-    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelRootsOutsideOfProjectRoots.size());
-    for (VirtualFile root : topLevelRootsOutsideOfProjectRoots) {
+    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelRoots.size());
+    List<VirtualFile> nonModuleRoots = new ArrayList<>();
+    for (VirtualFile root : topLevelRoots) {
       Module module = ModuleUtilCore.findModuleForFile(root, project);
       if (module != null) {
         modules.add(new LoadedModuleDescriptionImpl(module));
+        continue;
+      }
+
+      String unloadedModuleName = ProjectRootsUtil.findUnloadedModuleByContentRoot(root, project);
+      if (unloadedModuleName != null) {
+        ContainerUtil.addIfNotNull(modules, ModuleManager.getInstance(project).getUnloadedModuleDescription(unloadedModuleName));
       }
       else {
-        String unloadedModuleName = ProjectRootsUtil.findUnloadedModuleByContentRoot(root, project);
-        if (unloadedModuleName != null) {
-          ContainerUtil.addIfNotNull(modules, ModuleManager.getInstance(project).getUnloadedModuleDescription(unloadedModuleName));
-        }
+        nonModuleRoots.add(root);
       }
     }
 
     List<AbstractTreeNode<?>> nodes = new ArrayList<>(modulesAndGroups(modules));
     PsiManager psiManager = PsiManager.getInstance(project);
-    for (var projectRoot : projectRoots) {
-      var psiDirectory = psiManager.findDirectory(projectRoot);
+    for (var root : nonModuleRoots) {
+      var psiDirectory = psiManager.findDirectory(root);
       if (psiDirectory != null) {
         nodes.add(new PsiDirectoryNode(myProject, psiDirectory, getSettings()));
-      } else {
-        var psiFile = psiManager.findFile(projectRoot);
+      }
+      else {
+        var psiFile = psiManager.findFile(root);
         if (psiFile != null) {
           nodes.add(new PsiFileNode(myProject, psiFile, getSettings()));
         }

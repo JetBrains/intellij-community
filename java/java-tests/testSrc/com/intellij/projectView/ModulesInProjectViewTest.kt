@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import com.intellij.workspaceModel.ide.registerProjectRoot
 
 abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
@@ -118,6 +119,29 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)
+  }
+
+  fun `test module and plain project root`() {
+    val root = directoryContent {
+      dir("module") {
+        dir("subdir") {}
+      }
+      dir("projectRoot") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
+    runWithModalProgressBlocking(myProject, "") {
+      registerProjectRoot(myProject, root.findChild("projectRoot")!!.toNioPath())
+    }
+    assertStructureEqual("""
+          |Project
+          | module
+          |  subdir
+          | projectRoot
+          |  subdir
+          |
+          """.trimMargin())
   }
 
   fun `test do not show parent groups for single module`() {

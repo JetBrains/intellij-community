@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
@@ -43,6 +44,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -267,6 +269,30 @@ public class ProjectViewDirectoryHelper {
     return topLevelContentRoots;
   }
 
+  @NotNull Set<VirtualFile> topLevelBaseDirectories() {
+    // A root's parent may still be recognized as a content root by the file index even after its module is
+    // unloaded (see ProjectRootsUtil#findUnloadedModuleByContentRoot), so isFileUnderContentRoot() - and not just
+    // membership in the (loaded-only) BaseProjectDirectories set - is needed to correctly detect nested roots.
+    Set<VirtualFile> result = new LinkedHashSet<>();
+    for (VirtualFile root : BaseProjectDirectories.getBaseDirectories(myProject)) {
+      if (!isFileUnderContentRoot(root.getParent())) {
+        result.add(root);
+      }
+    }
+
+    // Unloaded modules' entities live in a separate workspace-model storage and aren't tracked by
+    // BaseProjectDirectories, so their top-level content roots have to be collected separately.
+    for (UnloadedModuleDescription description : ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions()) {
+      for (VirtualFilePointer pointer : description.getContentRoots()) {
+        VirtualFile root = pointer.getFile();
+        if (root != null && !isFileUnderContentRoot(root.getParent())) {
+          result.add(root);
+        }
+      }
+    }
+    return result;
+  }
+
   @NotNull
   @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
@@ -288,8 +314,7 @@ public class ProjectViewDirectoryHelper {
       .collect(Collectors.toList());
   }
 
-
-   boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+  boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
     return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
@@ -319,7 +344,7 @@ public class ProjectViewDirectoryHelper {
 
     PsiManager manager = psiDirectory.getManager();
     Set<PsiElement> directoriesOnTheWayToContentRoots = new HashSet<>();
-    for (VirtualFile root : getTopLevelRoots()) {
+    for (VirtualFile root : topLevelBaseDirectories()) {
       VirtualFile current = root;
       while (current != null) {
         VirtualFile parent = current.getParent();
