@@ -3,27 +3,43 @@
 
 package com.intellij.platform.projectView.impl
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
+import com.intellij.ide.SelectInContext
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.projectView.HelpID
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.SelectableTreeStructureProvider
+import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.idea.AppMode
+import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
@@ -37,6 +53,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
+import com.intellij.platform.projectView.pane.SelectByContext
+import com.intellij.platform.projectView.pane.SelectByEditor
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
@@ -50,13 +68,18 @@ import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.containers.nullize
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -67,6 +90,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
@@ -256,7 +280,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
-    return null
+    return currentTreeState.load()?.findNodeForSelectIn(selectInRequest)
   }
 
   private inner class MyIdeView(private val selectedNodes: List<BackendProjectViewNodeModel<T>>) : IdeView {
@@ -453,23 +477,146 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
       // so that a just-created element can be found (the equivalent of the old myNodeUpdater.updateImmediately).
       awaitPendingUpdates()
       val file = readAction { if (element.isValid) PsiUtilCore.getVirtualFile(element) else null }
-      val visitorProvider = createSelectNodeVisitorProvider()
-      // First attempt: try to find and select the element itself.
-      if (trySelect(visitorProvider.createSelectNodeVisitor(element, file))) return
-      // A node may report that it doesn't contain the element even though it does contain its file
-      // (reportedly the case with top-level Kotlin functions and Kotlin files),
-      // so make a second attempt looking for the file only.
-      if (file == null) return
-      if (Registry.`is`("async.project.view.support.extra.select.disabled", false)) return
-      trySelect(visitorProvider.createSelectNodeVisitor(element = null, file = file))
-    }
-
-    private suspend fun trySelect(visitor: ProjectViewSelectNodeVisitor<T>): Boolean {
-      val node = visitTree { node -> visitor.visitNodeForSelect(node) } ?: return false
-      val nodePath = suspendingState.getNodePathById(node.id) ?: return false // the node has just been removed
+      val nodePath = findNodePathForTarget(element, file) ?: return
       // Route the actual state-flow emission through the single update-requests writer (see run()).
       schedule { SelectNodeRequest(it, nodePath) }
-      return true
+    }
+
+    suspend fun findNodeForSelectIn(request: SelectInRequest): ProjectViewNodePath? {
+      // Reproduce the classic Project View "Select In" (ProjectViewSelectInTarget / SelectInTargetPsiWrapper):
+      // derive the target the same way the legacy code does (which happens before the pane is even touched),
+      // then make the tree reflect everything submitted so far (the equivalent of the old updateImmediately),
+      // then search. The result is the same node the legacy Project View would select.
+      val target = computeSelectTarget(request) ?: return null
+      if (target.element == null && target.file == null) return null
+      awaitPendingUpdates()
+      return findNodePathForTarget(target.element, target.file)
+    }
+
+    /**
+     * The two-pass search shared by [selectElementImpl] and [findNodeForSelectIn]. First try to match the element
+     * itself; a node may report that it doesn't contain the element even though it does contain its file (reportedly
+     * the case with top-level Kotlin functions and Kotlin files), so fall back to matching the file only. Unlike
+     * [selectElementImpl] this neither awaits pending updates nor schedules a selection: it only finds the path.
+     */
+    private suspend fun findNodePathForTarget(element: PsiElement?, file: VirtualFile?): ProjectViewNodePath? {
+      val visitorProvider = createSelectNodeVisitorProvider()
+      tryFindPath(visitorProvider.createSelectNodeVisitor(element, file))?.let { return it }
+      if (element == null) return null // we've already tried looking for the file only
+      if (file == null) return null // no file to try
+      if (Registry.`is`("async.project.view.support.extra.select.disabled", false)) return null
+      return tryFindPath(visitorProvider.createSelectNodeVisitor(element = null, file = file))
+    }
+
+    private suspend fun tryFindPath(visitor: ProjectViewSelectNodeVisitor<T>): ProjectViewNodePath? {
+      val node = visitTree { node -> visitor.visitNodeForSelect(node) } ?: return null
+      return suspendingState.getNodePathById(node.id) // null if the node has just been removed
+    }
+
+    private suspend fun computeSelectTarget(request: SelectInRequest): SelectTarget? = when (request) {
+      is SelectByContext -> computeContextTarget(request.context)
+      is SelectByEditor -> computeEditorTarget(request)
+    }
+
+    private suspend fun computeContextTarget(context: SelectInContext): SelectTarget? {
+      if (!canSelectContext(context)) return null
+      return normalizeContextSelector(context)
+    }
+
+    private suspend fun canSelectContext(context: SelectInContext): Boolean = readAction {
+      if (project.isDisposed || !project.isInitialized) return@readAction false
+      if (!context.virtualFile.isValid) return@readAction false
+      val psiItem = contextPsiFile(project, context) ?: return@readAction false
+      val vFile = PsiUtilCore.getVirtualFile(psiItem)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
+      if (vFile == null || !vFile.isValid) return@readAction false
+      ProjectViewPane.canBeSelectedInProjectView(project, vFile)
+    }
+
+    private suspend fun normalizeContextSelector(context: SelectInContext): SelectTarget? = readAction {
+      if (project.isDisposed) return@readAction null
+      normalizeSelector(context.virtualFile, context.selectorInFile)
+    }
+
+    private suspend fun computeEditorTarget(request: SelectByEditor): SelectTarget? {
+      val useLastFocused = request.considerOnlyLastFocusedEditor && AppMode.isMonolith()
+      val editors = withContext(Dispatchers.UI) {
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val lastFocused = if (useLastFocused) (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedEditor() else null
+        if (lastFocused != null) {
+          listOf(lastFocused)
+        }
+        else {
+          (listOf(fileEditorManager.selectedEditor) + fileEditorManager.selectedEditors).filterNotNull()
+        }
+      }
+      for (fileEditor in editors) {
+        val target = computeEditorTargetFor(fileEditor)
+        if (target != null) return target // stop at the first editor with a PSI file, like the classic code
+      }
+      return null
+    }
+
+    private suspend fun computeEditorTargetFor(fileEditor: FileEditor): SelectTarget? {
+      // A data context may provide its own SelectInContext (SelectInProjectViewImpl.createSelectInContext).
+      val providedContext = withContext(Dispatchers.UI) {
+        DataManager.getInstance().getDataContext(fileEditor.component).getData(SelectInContext.DATA_KEY)
+      }
+      if (providedContext != null) return normalizeContextSelector(providedContext)
+      val psiFile = editorPsiFile(fileEditor) ?: return null // no PSI file => skip (getPsiFilePointer == null)
+      // EditorSelectInContext.getSelectorInFile is the caret element;
+      // SimpleSelectInContext.getSelectorInFile is the file itself.
+      val selector: PsiElement = if (fileEditor is TextEditor) editorCaretElement(fileEditor, psiFile) ?: psiFile else psiFile
+      return readAction {
+        if (project.isDisposed) return@readAction null
+        normalizeSelector(psiFile.viewProvider.virtualFile, selector)
+      }
+    }
+
+    private suspend fun editorPsiFile(fileEditor: FileEditor): PsiFile? {
+      if (!withContext(Dispatchers.UI) { fileEditor.isValid }) return null
+      return if (fileEditor is TextEditor) {
+        val editor = fileEditor.editor
+        if (withContext(Dispatchers.UI) { editor.isDisposed }) return null
+        readAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }
+      }
+      else {
+        val file = withContext(Dispatchers.UI) { fileEditor.file } ?: return null
+        readAction { if (file.isValid) PsiManager.getInstance(project).findFile(file) else null }
+      }
+    }
+
+    private suspend fun editorCaretElement(fileEditor: TextEditor, psiFile: PsiFile): PsiElement? {
+      val editor = fileEditor.editor
+      val offset = withContext(Dispatchers.UI) { if (editor.isDisposed) -1 else editor.caretModel.offset }
+      if (offset < 0) return null
+      return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+        if (psiFile.isValid) psiFile.findElementAt(offset) else null
+      }
+    }
+
+    private fun normalizeSelector(file: VirtualFile, rawSelector: Any?): SelectTarget? {
+      val selector = rawSelector ?: PsiUtilCore.findFileSystemItem(project, file)
+      if (selector !is PsiElement) return SelectTarget(element = null, file = file) // non-PSI (or no) selector => file-only search
+      if (!selector.isValid) return null // an invalid PSI selector: the classic code throws, we treat it as "no target"
+      val original = selector.originalElement
+      return if (original != null && original.isValid) normalizeElement(original) else null
+    }
+
+    private fun normalizeElement(element: PsiElement): SelectTarget {
+      var topLevel: PsiElement? = null
+      val providers = DumbService.getInstance(project).filterByDumbAwareness(TreeStructureProvider.EP.getExtensions(project))
+      for (provider in providers) {
+        if (provider is SelectableTreeStructureProvider) {
+          topLevel = provider.getTopLevelElement(element)
+        }
+        if (topLevel != null) {
+          if (!topLevel.isValid) return SelectTarget(element = null, file = null) // classic throws; treat as "no target"
+          break
+        }
+      }
+      val toSelect = findElementToSelect(element, topLevel) ?: return SelectTarget(element = null, file = null)
+      val vFile = PsiUtilCore.getVirtualFile(toSelect)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
+      return SelectTarget(toSelect, vFile)
     }
 
     private suspend fun applySettings() {
@@ -719,3 +866,46 @@ private data class SetOptionRequest(override val epoch: Long, val option: Projec
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()
+
+/** The (element, file) pair to look for in the tree, as computed from a [SelectInRequest]. */
+private class SelectTarget(val element: PsiElement?, val file: VirtualFile?)
+
+/**
+ * Replica of the package-private `SelectInTargetPsiWrapper.findElementToSelect` (which is `protected static`, so it
+ * can't be called from here): a file/directory selects as itself, any other element collapses to the base-language
+ * PSI of its containing file, and the result is then replaced by its original (physical) element.
+ */
+private fun findElementToSelect(element: PsiElement, candidate: PsiElement?): PsiElement? {
+  var toSelect = candidate
+  if (toSelect == null) {
+    toSelect = if (element is PsiFile || element is PsiDirectory) {
+      element
+    }
+    else {
+      element.containingFile?.viewProvider?.let { viewProvider -> viewProvider.getPsi(viewProvider.baseLanguage) }
+    }
+  }
+  if (toSelect != null) {
+    val original = try {
+      toSelect.originalElement
+    }
+    catch (_: IndexNotReadyException) {
+      null
+    }
+    if (original != null) {
+      toSelect = original
+    }
+  }
+  return toSelect
+}
+
+/** Replica of the package-private `SelectInTargetPsiWrapper.getContextPsiFile`. */
+private fun contextPsiFile(project: Project, context: SelectInContext): PsiFileSystemItem? {
+  val file = context.virtualFile
+  PsiManager.getInstance(project).findFile(file)?.let { return it }
+  (context.selectorInFile as? PsiFile)?.let { return it }
+  if (file.isDirectory) {
+    return PsiManager.getInstance(project).findDirectory(file)
+  }
+  return null
+}

@@ -270,7 +270,7 @@ private class LegacyBackendProjectViewPaneModel(
 
   private suspend fun selectAndGetPath(select: () -> Unit): ProjectViewNodePath? {
     return withContext(Dispatchers.EDT) {
-      val tree = legacyPaneManager.legacyPane.tree
+      val tree = legacyPaneManager.legacyPane.tree ?: return@withContext null
       // Even with the REAL_SELECTION_IN_PROGRESS hack,
       // there's a case when this listener prevents us from detecting the "real" selection:
       // 1. We set the selection to null.
