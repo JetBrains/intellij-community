@@ -96,7 +96,8 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param resize `true` to enable resize, `false` to disable. Default is `true`
    * @return `this`
    */
-  @Deprecated("Use Kotlin UI DSL", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use Kotlin UI DSL")
+  @ApiStatus.ScheduledForRemoval
   open fun resizeX(resize: Boolean): ComponentPanelBuilder {
     myResizeX = resize
     return this

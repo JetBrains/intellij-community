@@ -126,16 +126,6 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(final @NlsContexts.DialogTitle String chooserTitle,
-                                                            final @NlsContexts.Label String treeLabel,
-                                                            final ListTable table,
-                                                            boolean removeHeader,
-                                                            @NonNls String... ancestorClasses) {
-    if (removeHeader) table.setTableHeader(null);
-    final JPanel panel = createAddRemoveTreeClassChooserPanel(table, chooserTitle, ancestorClasses);
-    return UI.PanelFactory.panel(panel).withLabel(treeLabel).moveLabelOnTop().resizeY(true).createPanel();
-  }
-
   private static void editTableCell(final ListTable table, final int row, final int column) {
     final ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.setSelectionInterval(row, row);
