@@ -2,6 +2,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` start
 jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
+    lib = "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+)
+
+jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
 )
@@ -38,7 +43,6 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//plugins/kotlin/base/analysis",
-        "@lib//:kotlinc-analysis-api-platform-interface-provided",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
         "//plugins/kotlin/kotlin.searching/base",
@@ -59,6 +63,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
@@ -88,7 +93,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
-        "@lib//:kotlinc-analysis-api-platform-interface-provided",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",

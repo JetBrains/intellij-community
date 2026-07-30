@@ -149,9 +149,6 @@
   - name: kotlinc.analysis-api-impl-base
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
-  - name: kotlinc.analysis-api-platform-interface
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
   - name: kotlinc.kotlin-build-tools-api
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2/kotlin-build-tools-api-2.jar

@@ -11,6 +11,11 @@ jvm_provided_library(
     lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
 )
 
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
+    lib = "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+)
+
 jvm_library(
     name = "lombok",
     srcs = glob(
@@ -41,7 +46,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/project-structure",
-        "@lib//:kotlinc-analysis-api-platform-interface-provided",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/psi",
         "//platform/indexing-api:indexing",
@@ -54,6 +58,7 @@ jvm_library(
         "@lib//:kotlinc-lombok-compiler-plugin",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
+        ":libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
     ],
 )
 
@@ -84,7 +89,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "@lib//:kotlinc-analysis-api-platform-interface-provided",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "//plugins/kotlin/base/psi:psi_test_lib",
         "//platform/indexing-api:indexing_test_lib",

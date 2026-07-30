@@ -28,7 +28,7 @@ jvm_library(
         "//uast/uast-java:java-uast",
         "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
         "@lib//:kotlinc-low-level-api-fir",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "@lib//:kotlinc-symbol-light-classes",
     ],
 )
@@ -105,7 +105,8 @@ jvm_library(
         "//uast/uast-java:java-uast_test_lib",
         "@lib//:kotlinc-kotlin-compiler-cli",
         "@lib//:kotlinc-low-level-api-fir",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "@lib//:kotlinc-symbol-light-classes",
         "//uast/testFramework",
         "//uast/testFramework:testFramework_test_lib",

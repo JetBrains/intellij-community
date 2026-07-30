@@ -49,7 +49,7 @@ jvm_library(
         "//uast/uast-java:java-uast",
         "//java/java-frontback-psi-api:frontback-psi",
         "@lib//:kotlinc-low-level-api-fir",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "@lib//:kotlinc-symbol-light-classes",
         "//plugins/kotlin/references",
     ],
@@ -84,6 +84,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//uast/uast-java:java-uast_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//plugins/kotlin/references:references_test_lib",
     ],
 )

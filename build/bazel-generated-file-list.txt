@@ -497,6 +497,7 @@ libraries/kotlin/test-assertions-core-jvm
 libraries/kotlin/tooling-core
 libraries/kotlinc/analysis-api
 libraries/kotlinc/analysis-api-k2
+libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/kotlin-compiler-common
 libraries/kotlinx/collections-immutable
 libraries/kotlinx/coroutines/core

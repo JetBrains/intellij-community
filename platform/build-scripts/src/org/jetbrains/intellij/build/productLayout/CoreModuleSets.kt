@@ -39,6 +39,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.libraries.kotlin.reflect")
     embeddedModule("intellij.libraries.kotlinc.analysis.api")
+    embeddedModule("intellij.libraries.kotlinc.analysis.api.platform.interface")
     embeddedModule("intellij.libraries.kotlinc.kotlin.compiler.common")
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
     embeddedModule("intellij.libraries.kotlinx.io")

@@ -18,7 +18,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2",
         "@lib//:kotlinc-analysis-api-impl-base",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-low-level-api-fir",
         "@lib//:kotlinc-symbol-light-classes",
@@ -39,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )

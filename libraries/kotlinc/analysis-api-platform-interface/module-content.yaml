@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.analysis.api.platform.interface.jar
+  modules:
+  - name: intellij.libraries.kotlinc.analysis.api.platform.interface
+    libraries:
+      kotlinc.analysis-api-platform-interface:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
