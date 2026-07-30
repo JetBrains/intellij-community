@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -54,11 +55,12 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
       }
     }
 
-    val xmlElement = element.xmlElement ?: return
-    for (ref in xmlElement.references) {
-      val target = ref.resolve() ?: continue
+    val referencesElement = (if (element is GenericAttributeValue<*>) element.xmlAttributeValue else element.xmlElement)
+      ?: return
+    for (ref in referencesElement.references) {
       when (ref) {
         is ActionOrGroupIdReference -> {
+          val target = ref.resolve() ?: continue
           if (!isReachableFromModule(element, target, module)) {
             holder.reportUnreachableClassProblem(
               element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.action.or.group"
@@ -67,6 +69,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         }
 
         is ResourceBundleReference -> {
+          val target = ref.resolve() ?: continue
           if (!isReachableFromModule(element, target, module)) {
             holder.reportUnreachableClassProblem(
               element, target, ref.canonicalText, module.name, "inspection.plugin.xml.references.module.reachability.bundle"

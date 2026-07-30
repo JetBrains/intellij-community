@@ -638,6 +638,71 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
       dependencies.any { it.name == unrelatedModule.name })
   }
 
+  fun `test action or group id references in unrelated module - error`() {
+    val unrelatedModule = addModuleWithSourceRoot("unrelatedModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("unrelatedModule/resources")
+    PsiTestUtil.addSourceRoot(unrelatedModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject(
+      "unrelatedModule/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="UnrelatedGroup"/>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="UnrelatedAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>" relative-to-action="<error descr="Action or group 'UnrelatedAction' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedAction</error>" anchor="after"/>
+              </action>
+              <reference ref="<error descr="Action or group 'UnrelatedAction' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedAction</error>"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action or group id references in dependency module - no error`() {
+    val depModule = addModuleWithSourceRoot("depModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("depModule/resources")
+    PsiTestUtil.addSourceRoot(depModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    ModuleRootModificationUtil.addDependency(myFixture.module, depModule)
+    myFixture.addFileToProject(
+      "depModule/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="DepGroup"/>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="DepAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="DepGroup" relative-to-action="DepAction" anchor="after"/>
+              </action>
+              <reference ref="DepAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
   private fun addPluginXml(@Language("XML") content: String): PsiFile {
     return myFixture.addFileToProject("plugin.xml", content)
   }
