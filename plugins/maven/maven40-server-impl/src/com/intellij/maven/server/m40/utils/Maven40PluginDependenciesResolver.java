@@ -27,6 +27,7 @@ import java.util.List;
 @Priority(10)
 public class Maven40PluginDependenciesResolver implements PluginDependenciesResolver {
   private static final MethodHandle RESOLVE_PLUGIN_AND_FLATTEN = findResolvePluginAndFlatten();
+  private static final MethodHandle RESOLVE_CORE_EXTENSION_AND_FLATTEN = findResolveCoreExtensionAndFlatten();
 
   private final PluginDependenciesResolver delegate;
 
@@ -42,6 +43,19 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
         List.class, RepositorySystemSession.class);
       //noinspection JavaLangInvokeHandleSignature - the method is absent in the Maven version we compile against, resolved at runtime
       return MethodHandles.lookup().findVirtual(PluginDependenciesResolver.class, "resolvePluginAndFlatten", type);
+    }
+    catch (NoSuchMethodException | IllegalAccessException e) {
+      return null;
+    }
+  }
+
+  private static MethodHandle findResolveCoreExtensionAndFlatten() {
+    try {
+      MethodType type = MethodType.methodType(
+        DependencyResult.class, Plugin.class, DependencyFilter.class,
+        List.class, RepositorySystemSession.class);
+      //noinspection JavaLangInvokeHandleSignature - the method is absent in the Maven version we compile against, resolved at runtime
+      return MethodHandles.lookup().findVirtual(PluginDependenciesResolver.class, "resolveCoreExtensionAndFlatten", type);
     }
     catch (NoSuchMethodException | IllegalAccessException e) {
       return null;
@@ -102,6 +116,47 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
     return retryResolution(
       () -> invokeResolvePluginAndFlatten(handle, plugin, pluginArtifact, dependencyFilter, repositories, session)
     );
+  }
+
+  /*@Override - see IDEA-392152*/
+  public DependencyResult resolveCoreExtensionAndFlatten(
+    Plugin plugin,
+    DependencyFilter dependencyFilter,
+    List<RemoteRepository> repositories,
+    RepositorySystemSession session)
+    throws PluginResolutionException {
+    MethodHandle handle = RESOLVE_CORE_EXTENSION_AND_FLATTEN;
+    if (handle == null) {
+      throw new AbstractMethodError(
+        "Receiver class com.intellij.maven.server.m40.utils.Maven40PluginDependenciesResolver " +
+        "does not define or inherit an implementation of the resolved method " +
+        "'abstract org.eclipse.aether.resolution.DependencyResult resolveCoreExtensionAndFlatten(" +
+        "org.apache.maven.model.Plugin, org.eclipse.aether.graph.DependencyFilter, " +
+        "java.util.List, org.eclipse.aether.RepositorySystemSession)' " +
+        "of interface org.apache.maven.plugin.internal.PluginDependenciesResolver.");
+    }
+    return retryResolution(
+      () -> invokeResolveCoreExtensionAndFlatten(handle, plugin, dependencyFilter, repositories, session)
+    );
+  }
+
+  private DependencyResult invokeResolveCoreExtensionAndFlatten(
+    MethodHandle handle,
+    Plugin plugin,
+    DependencyFilter dependencyFilter,
+    List<RemoteRepository> repositories,
+    RepositorySystemSession session)
+    throws PluginResolutionException {
+    try {
+      return (DependencyResult)handle.invoke(
+        delegate, plugin, dependencyFilter, repositories, session);
+    }
+    catch (PluginResolutionException | RuntimeException | Error e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private DependencyResult invokeResolvePluginAndFlatten(
