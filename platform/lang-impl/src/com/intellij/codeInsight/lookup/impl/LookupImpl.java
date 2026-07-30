@@ -1321,6 +1321,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         // Cache current item result
         ReadAction.nonBlocking(
           () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
+          .withDocumentsCommitted(getProject())
           .expireWith(this)
           .expireWhen(() -> stamp != finalActionContext.file().getFileDocument().getModificationStamp())
           .submit(AppExecutorUtil.getAppExecutorService());
