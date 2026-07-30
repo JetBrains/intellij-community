@@ -1,7 +1,6 @@
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 
 # This is the very first draft, many things are missing (todo):
-# * rewrite implementation from shell to Kotlin;
 # * exclude files not used in production (e.g., icon-robots.txt);
 # * investigate differences in __index__ files;
 # * add `version` and `since-build`/`until-build` attribute in plugin.xml
@@ -11,39 +10,26 @@ def _ij_plugin_impl(ctx):
   dir_name = ctx.attr.name
   output_dir = ctx.actions.declare_directory(dir_name)
 
-  inputs = []
-  inputs.append(ctx.attr.descriptor_module[_KtJvmInfo].all_output_jars[0])
   plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
+  plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
+  inputs = [plugin_descriptor_jar]
   args = ctx.actions.args()
   args.add(output_dir.path)
-  args.add(plugin_descriptor_module_info.all_output_jars[0])
+  args.add("--descriptor_module")
+  args.add(plugin_descriptor_module_info.module_name + ":" + plugin_descriptor_jar.path)
   for content_module in ctx.attr.content_modules:
     content_module_info = content_module[_KtJvmInfo]
-    args.add(content_module_info.all_output_jars[0])
-    args.add(content_module_info.module_name + ".jar")
-    inputs.append(content_module_info.all_output_jars[0])
+    content_module_jar = content_module_info.all_output_jars[0]
+    args.add("--content_module")
+    args.add(content_module_info.module_name + ":" + content_module_jar.path)
+    inputs.append(content_module_jar)
 
-  ctx.actions.run_shell(
+  ctx.actions.run(
     inputs = inputs,
     outputs = [output_dir],
     arguments = [args],
-    command = """
-set -eu
-out="$1/lib"
-shift
-mkdir -p "$out"
-cp "$1" "$out"
-shift
-
-while [ "$#" -gt 0 ]; do
-  input="$1"
-  output_name="$2"
-  shift 2
-  mkdir -p "$out/modules"
-  cp "$input" "$out/modules/$output_name"
-done
-""",
-    mnemonic = "BuildIjPlugin",
+    executable = ctx.executable._packager,
+    mnemonic = "IjPluginPackaging",
   )
   return [
     DefaultInfo(files = depset([output_dir]))
@@ -56,6 +42,11 @@ Builds a directory containing distribution of a plugin for IntelliJ-based IDEs.
 This is an experimental rule, its API will change, please do not migrate the plugins to it yet.
 """,
   attrs = {
+    "_packager": attr.label(
+      default = Label("//platform/build-scripts/ij-plugin-rules/ij-plugin-packager:ij-plugin-packager"),
+      executable = True,
+      cfg = "exec",
+    ),
     "descriptor_module": attr.label(
       doc = """The target that contains the plugin descriptor (META-INF/plugin.xml)""",
       providers = [_KtJvmInfo],

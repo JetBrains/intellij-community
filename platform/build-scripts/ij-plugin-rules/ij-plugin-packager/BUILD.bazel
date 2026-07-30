@@ -1,0 +1,19 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_java//java:defs.bzl", "java_binary")
+
+java_binary(
+  name = "ij-plugin-packager",
+  main_class = "com.intellij.tools.build.bazel.ijPluginPackager.IjPluginPackager",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":ij-plugin-packager-lib"],
+)
+
+kt_jvm_library(
+  name = "ij-plugin-packager-lib",
+  srcs = glob(["src/**/*.kt"]),
+  kotlinc_opts = "@rules_jvm//:rules_jvm_bootstrap_kotlinc_options",
+  visibility = ["//platform/build-scripts/ij-plugin-rules/ij-plugin-packager/tests:__pkg__"],
+  deps = [
+      "@rules_jvm//:annotations_import",
+  ]
+)

@@ -1,0 +1,18 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "ij-plugin-packager-tests-lib",
+  srcs = glob(["src/**/*.kt"]),
+  associates = ["//platform/build-scripts/ij-plugin-rules/ij-plugin-packager:ij-plugin-packager-lib"],
+  kotlinc_opts = "@rules_jvm//:rules_jvm_bootstrap_kotlinc_options",
+  deps = [
+    "//libraries/junit5",
+    "//platform/testFramework",
+  ],
+)
+
+jps_test(
+  name = "ij-plugin-packager-tests",
+  runtime_deps = [":ij-plugin-packager-tests-lib"],
+)
