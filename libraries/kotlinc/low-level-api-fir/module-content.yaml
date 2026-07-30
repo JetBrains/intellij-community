@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.low.level.api.fir.jar
+  modules:
+  - name: intellij.libraries.kotlinc.low.level.api.fir
+    libraries:
+      kotlinc.low-level-api-fir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2/low-level-api-fir-for-ide-2.jar

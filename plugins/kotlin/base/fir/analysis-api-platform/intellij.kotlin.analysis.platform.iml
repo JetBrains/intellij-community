@@ -36,7 +36,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
-    <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" />
     <orderEntry type="module-library">
       <library name="ehcache.sizeof" type="repository">
         <properties include-transitive-deps="false" maven-id="org.ehcache:sizeof:0.4.0">

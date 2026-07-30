@@ -8619,28 +8619,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.5.0-dev-2414.jar_copy",
-    src = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414_http//file",
-    out = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.5.0-dev-2414.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-low-level-api-fir",
-    jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414_http//file",
-    source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-low-level-api-fir-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-low-level-api-fir"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.5.0-dev-2414.jar_copy",
     src = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_5_0-dev-2414_http//file",
     out = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.5.0-dev-2414.jar",
@@ -12621,6 +12599,21 @@ jvm_import(
     name = "libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
     jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-2414_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_5_0-dev-2414-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.5.0-dev-2414.jar_copy",
+    src = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414_http//file",
+    out = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.5.0-dev-2414.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
+    jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414_http//file",
+    source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-2414-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

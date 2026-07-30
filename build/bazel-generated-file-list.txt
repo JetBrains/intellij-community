@@ -500,6 +500,7 @@ libraries/kotlinc/analysis-api-impl-base
 libraries/kotlinc/analysis-api-k2
 libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/kotlin-compiler-common
+libraries/kotlinc/low-level-api-fir
 libraries/kotlinx/collections-immutable
 libraries/kotlinx/coroutines/core
 libraries/kotlinx/coroutines/debug
