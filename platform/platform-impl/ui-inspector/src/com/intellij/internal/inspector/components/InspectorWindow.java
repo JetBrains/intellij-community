@@ -967,16 +967,22 @@ public final class InspectorWindow extends JDialog implements Disposable {
       String text = myHierarchyTree.exportTreeAsJson();
       if (text.isEmpty()) return;
       CopyPasteManager.getInstance().setContents(new TextTransferable(text));
+      JLabel hint = new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.exported.hint"));
+      // The hint is shown in a bare popup, so it has to pad itself away from the popup border.
+      hint.setBorder(JBUI.Borders.empty(4, 8));
       HintManager.getInstance().showHint(
-        new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.exported.hint")),
-        RelativePoint.getSouthWestOf(myHierarchyTree),
+        hint, getHintPoint(e),
         HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_OTHER_HINT, 3000);
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
+    /** Right below the toolbar button that was pressed, or the middle of the inspector window if there is no button to anchor to. */
+    private @NotNull RelativePoint getHintPoint(@NotNull AnActionEvent e) {
+      InputEvent inputEvent = e.getInputEvent();
+      Component source = inputEvent == null ? null : inputEvent.getComponent();
+      if (source instanceof JComponent jSource && jSource.isShowing()) {
+        return RelativePoint.getSouthWestOf(jSource);
+      }
+      return RelativePoint.getCenterOf(getRootPane());
     }
   }
 

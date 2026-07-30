@@ -5,68 +5,52 @@ import com.intellij.internal.inspector.ComponentPropertiesCollector
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider
 import com.intellij.internal.inspector.UiInspectorUtil
-import com.intellij.openapi.util.text.StringUtil
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object ComponentTreeJsonExporter {
+  @OptIn(ExperimentalSerializationApi::class)
+  private val json = Json {
+    prettyPrint = true
+    prettyPrintIndent = "  "
+  }
+
   @JvmStatic
   fun export(root: Any?): String {
     if (root !is HierarchyTree.ComponentNode) return ""
 
-    return buildString {
-      appendNode(this, root, 0)
-    }
+    return json.encodeToString(buildNode(root))
   }
 
-  private fun appendNode(builder: StringBuilder, node: HierarchyTree.ComponentNode, depth: Int) {
-    builder.append("  ".repeat(depth)).append("{\n")
-    appendJsonProperty(builder, "class", getNodeName(node), depth + 1, true)
+  private fun buildNode(node: HierarchyTree.ComponentNode): JsonObject = buildJsonObject {
+    put("class", getNodeName(node))
 
     node.component?.let { component ->
-      appendJsonProperty(builder, "size", "${component.width}x${component.height}", depth + 1, true)
+      put("size", "${component.width}x${component.height}")
     }
 
-    builder.append("  ".repeat(depth + 1)).append("\"property\": [")
-    appendPropertiesJson(builder, getNodeProperties(node), depth + 2)
-    builder.append("],\n")
+    put("property", buildJsonArray {
+      val properties = getNodeProperties(node)
+      if (properties.isNotEmpty()) {
+        add(buildJsonObject {
+          for (property in properties) {
+            put(property.propertyName, getPropertyValue(property))
+          }
+        })
+      }
+    })
 
-    builder.append("  ".repeat(depth + 1)).append("\"children\": [")
-    val childCount = node.childCount
-    if (childCount > 0) builder.append('\n')
-    for (i in 0 until childCount) {
-      appendNode(builder, node.getChildAt(i) as HierarchyTree.ComponentNode, depth + 2)
-      if (i + 1 < childCount) builder.append(',')
-      builder.append('\n')
-    }
-    if (childCount > 0) builder.append("  ".repeat(depth + 1))
-    builder.append("]\n")
-    builder.append("  ".repeat(depth)).append('}')
-  }
-
-  private fun appendPropertiesJson(builder: StringBuilder, properties: List<PropertyBean>, depth: Int) {
-    if (properties.isEmpty()) return
-
-    builder.append('\n').append("  ".repeat(depth)).append('{').append('\n')
-    properties.forEachIndexed { index, property ->
-      appendJsonProperty(builder, property.propertyName, getPropertyValue(property), depth + 1, index + 1 < properties.size)
-    }
-    builder.append("  ".repeat(depth)).append('}').append('\n').append("  ".repeat(depth - 1))
-  }
-
-  private fun appendJsonProperty(builder: StringBuilder, name: String, value: String, depth: Int, appendComma: Boolean) {
-    builder.append("  ".repeat(depth))
-    appendJsonString(builder, name)
-    builder.append(": ")
-    appendJsonString(builder, value)
-    if (appendComma) builder.append(',')
-    builder.append('\n')
-  }
-
-  private fun appendJsonString(builder: StringBuilder, value: String) {
-    builder.append('"')
-    StringUtil.escapeStringCharacters(value.length, value, builder)
-    builder.append('"')
+    put("children", buildJsonArray {
+      for (i in 0 until node.childCount) {
+        add(buildNode(node.getChildAt(i) as HierarchyTree.ComponentNode))
+      }
+    })
   }
 
   private fun getNodeName(node: HierarchyTree.ComponentNode): String {
