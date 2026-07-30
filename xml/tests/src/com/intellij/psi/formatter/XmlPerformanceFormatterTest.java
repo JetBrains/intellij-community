@@ -59,12 +59,14 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       final FileEditor selectedEditor = editorManager.getSelectedEditor(myFile.getVirtualFile());
 
       assertTrue(undoManager.isUndoAvailable(selectedEditor));
-      Benchmark.newBenchmark("xml formatter undo", () -> undoManager.undo(selectedEditor)).attempts(1).start();
+      Benchmark.newBenchmark("xml formatter undo", () -> undoManager.undo(selectedEditor))
+        .warmupIterations(0).attempts(1).start();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
       highlight();
 
-      Benchmark.newBenchmark("xml formatter redo", () -> undoManager.redo(selectedEditor)).attempts(1).start();
+      Benchmark.newBenchmark("xml formatter redo", () -> undoManager.redo(selectedEditor))
+        .warmupIterations(0).attempts(1).start();
     }
     finally {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
