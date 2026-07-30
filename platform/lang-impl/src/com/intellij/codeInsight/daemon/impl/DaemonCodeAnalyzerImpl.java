@@ -604,8 +604,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return false;
     }
     assertFileFromMyProject(psiFile.getProject(), psiFile);
-    PsiFile originalFile = psiFile.getOriginalFile();
-    VirtualFile virtualFile = originalFile.getVirtualFile();
+    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
     if (virtualFile != null && myDisabledHighlightingFiles.contains(virtualFile)) {
       return false;
     }
