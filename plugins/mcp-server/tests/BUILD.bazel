@@ -154,6 +154,8 @@ jvm_library(
         "//platform/util/progress",
         "//platform/util/progress:progress_test_lib",
         "//platform/progress/shared:ide-progress",
+        "//platform/compose/swing-ui:swing",
+        "//platform/compose/swing-ui:swing_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.tests` end

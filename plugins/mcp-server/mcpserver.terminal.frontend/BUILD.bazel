@@ -37,6 +37,7 @@ jvm_library(
         "//plugins/terminal",
         "//plugins/terminal/frontend",
         "//libraries/kotlinx/coroutines/core",
+        "//platform/compose/swing-ui:swing",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//plugins/terminal:terminal_test_lib",
         "//plugins/terminal/frontend:frontend_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/compose/swing-ui:swing_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.terminal.frontend` end

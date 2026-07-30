@@ -7,6 +7,7 @@
     <module name="intellij.mcpserver"/>
     <module name="intellij.mcpserver.frontend"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.compose.swing"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
