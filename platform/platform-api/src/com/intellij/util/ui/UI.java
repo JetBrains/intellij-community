@@ -86,7 +86,7 @@ public final class UI {
      *
      * @return a newly created {@link PanelGridBuilder}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static PanelGridBuilder grid() {
       return new PanelGridBuilder();
     }

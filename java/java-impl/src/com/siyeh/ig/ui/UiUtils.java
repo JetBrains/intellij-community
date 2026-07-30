@@ -74,12 +74,6 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemovePanel(final ListTable table, final @NlsContexts.Label String panelLabel, boolean removeHeader) {
-    if (removeHeader) table.setTableHeader(null);
-    final JPanel panel = createAddRemovePanel(table);
-    return UI.PanelFactory.panel(panel).withLabel(panelLabel).moveLabelOnTop().resizeY(true).createPanel();
-  }
-
   public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final @NlsContexts.DialogTitle String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
