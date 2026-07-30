@@ -227,7 +227,13 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override fun getOptionSupport(): ProjectViewActionSupport = optionSupport
 
-  override fun applyStateChange(event: ProjectViewPaneStateEvent) {
+  override suspend fun applyStateChange(event: ProjectViewPaneStateEvent) {
+    withContext(Dispatchers.UI) {
+      applyStateChangeImpl(event)
+    }
+  }
+
+  private suspend fun applyStateChangeImpl(event: ProjectViewPaneStateEvent) {
     when (event) {
       is ProjectViewClearStateEvent -> {
         treeModel.root = null
@@ -285,14 +291,7 @@ internal class TreeBasedFrontendProjectViewPane(
         optionSupport.updateActionState(event.settingsState)
       }
       is ProjectViewSelectNodeEvent -> {
-        // The event is emitted after all pending updates, so the target node is already in the tree.
-        val node = getNodeById(event.nodePath.nodeIds.last())
-        if (node != null) {
-          TreeUtil.selectPath(tree, CachingTreePath(node.path))
-        }
-        else {
-          LOG.debug { "Cannot select ${event.nodePath}: the target node is not loaded" }
-        }
+        selectNode(event.nodePath)
       }
     }
     updateEpoch.update { it + 1 }

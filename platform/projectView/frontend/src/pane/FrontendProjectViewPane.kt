@@ -39,8 +39,7 @@ interface FrontendProjectViewPane {
   
   val selectInTargets: Collection<SelectInTarget>
 
-  @RequiresEdt
-  fun applyStateChange(event: ProjectViewPaneStateEvent)
+  suspend fun applyStateChange(event: ProjectViewPaneStateEvent)
   
   @RequiresEdt
   fun saveStateTo(element: Element)

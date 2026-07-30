@@ -18,5 +18,8 @@ fun projectViewNodePath(paneId: ProjectViewPaneId, nodeIds: List<Long>): Project
 @Serializable
 data class ProjectViewNodePathImpl(
   override val paneId: ProjectViewPaneId,
-  override val nodeIds: List<Long>,
-) : ProjectViewNodePath
+  val nodeIdsAfterSuperRoot: List<Long>,
+) : ProjectViewNodePath {
+  override val nodeIds: List<Long>
+    get() = listOf(SUPER_ROOT_ID) + nodeIdsAfterSuperRoot
+}

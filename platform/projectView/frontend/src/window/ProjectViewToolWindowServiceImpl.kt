@@ -220,20 +220,18 @@ internal class ProjectViewToolWindowServiceImpl(
             LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
             try {
               rpc.getPaneStateFlow(toolWindow.project.projectId(), pane.id).collect { eventDTO ->
-                withContext(Dispatchers.UI) {
-                  try {
-                    val event = eventDTO.toEvent()
-                    LOG.trace { "Update pane state for ${pane.id}: $event" }
-                    pane.applyStateChange(event)
-                  }
-                  catch (e: Exception) {
-                    rethrowControlFlowException(e)
-                    LOG.error(
-                      "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
-                      "The problematic event was $eventDTO",
-                      e
-                    )
-                  }
+                try {
+                  val event = eventDTO.toEvent()
+                  LOG.trace { "Update pane state for ${pane.id}: $event" }
+                  pane.applyStateChange(event)
+                }
+                catch (e: Exception) {
+                  rethrowControlFlowException(e)
+                  LOG.error(
+                    "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
+                    "The problematic event was $eventDTO",
+                    e
+                  )
                 }
               }
             }

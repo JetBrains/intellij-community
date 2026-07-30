@@ -591,7 +591,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
     private suspend fun updateChildren(parentModel: BackendProjectViewNodeModel<T>, allowLoading: Boolean, deep: Boolean) {
       parentModel as ProjectViewNodeModelImpl<T>
-      val newChildren = nodeProvider.getChildren(parentModel.userObject) ?: return
+      val newChildren = nodeProvider.getChildren(if (parentModel.id == SUPER_ROOT_ID) null else parentModel.userObject) ?: return
       val oldModels = suspendingState.getChildren(parentModel)
 
       if (oldModels == null && !allowLoading) return
@@ -683,6 +683,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     }
 
     private suspend fun createUpdatedModel(node: BackendProjectViewNodeModel<T>): BackendProjectViewNodeModel<T>? {
+      if (node.id == SUPER_ROOT_ID) return state.getNodeById(SUPER_ROOT_ID) // immutable, reuse (and avoid NPE, because userObject is null)
       return nodeProvider.createNodeModel(node.id, node.userObject)
     }
 
