@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.analysis
 
+import com.intellij.coverage.BaseCoverageSuite
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageSuite
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.text.StringUtil
@@ -16,34 +14,39 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal suspend fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): List<ModuleRequest> {
-  val coverageDataManager = CoverageDataManager.getInstance(project)
-
+internal fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project): List<ModuleRequest> {
   val javaSuites = bundle.suites.filterIsInstance<JavaCoverageSuite>()
-  val packageNames = readAction {
-    javaSuites.flatMap { it.getCurrentSuitePackages(project).mapNotNull { psiPackage -> psiPackage.qualifiedName } }
-  }.filter { isPackageFiltered(bundle, it) }.removeSubPackages()
+  val modules = javaSuites.flatMap { BaseCoverageSuite.getRelatedModules(it.configuration, project) }.distinct()
+  return collectOutputRoots(project, modules, javaSuites, javaSuites.any { it.isTrackTestFolders })
+}
 
-  val searchScope = bundle.getSearchScope(project)
-  val psiClasses = readAction { javaSuites.flatMap { it.getCurrentSuiteClasses(project) }.distinct() }
-  val classPackageEntries = readAction { psiClasses.mapNotNull { it.qualifiedName } }
+internal fun collectOutputRoots(
+  project: Project,
+  modules: List<Module>,
+  javaSuites: List<JavaCoverageSuite>,
+  includeTests: Boolean,
+): List<ModuleRequest> {
+  if (javaSuites.isEmpty()) return emptyList()
+
+  val packageNames = javaSuites.flatMap { suite ->
+    val includedPackages = suite.filteredPackageNames.toList()
+    if (includedPackages.isEmpty() && suite.filteredClassNames.isEmpty()) listOf("") else includedPackages
+  }.filter { packageName -> javaSuites.any { suite -> suite.isPackageFiltered(packageName) } }
+    .removeSubPackages()
+
+  val classPackageEntries = javaSuites.asSequence()
+    .flatMap { it.filteredClassNames.toList() }
+    .map { className -> AnalysisUtils.getSourceToplevelFQName(AnalysisUtils.fqnToInternalName(className)) }
+    .distinct()
     .filter { className -> packageNames.none { className.isInPackage(it) } }
     .groupBy { StringUtil.getPackageName(it) }
     .map { (packageName, names) -> PackageEntry(packageName, names.map { StringUtil.getShortName(it) }) }
+    .toList()
 
   val packageEntries = packageNames.map { PackageEntry(it, null) } + classPackageEntries
-
-  val modules = readAction {
-    if (packageNames.isNotEmpty()) {
-      ModuleManager.getInstance(project).modules.toList()
-    }
-    else {
-      psiClasses.mapNotNull { ModuleUtilCore.findModuleForPsiElement(it) }.distinct()
-    }
-  }.filter(searchScope::isSearchInModuleContent)
-
+  val coverageDataManager = CoverageDataManager.getInstance(project)
   return modules.flatMap { module ->
-    CoverageOutputRoots.getRoots(coverageDataManager, module, bundle.isTrackTestFolders)
+    CoverageOutputRoots.getRoots(coverageDataManager, module, includeTests)
       .asSequence()
       .map(VirtualFile::toNioPath)
       .filter(::isValidOutputRoot)
@@ -86,13 +89,4 @@ private fun String.isInPackage(packageName: String): Boolean {
 
 private fun isValidOutputRoot(root: Path): Boolean {
   return Files.isDirectory(root) || Files.isRegularFile(root) && root.fileName.toString().endsWith(".jar", ignoreCase = true)
-}
-
-private fun isPackageFiltered(bundle: CoverageSuitesBundle, qualifiedName: String): Boolean {
-  for (coverageSuite in bundle.suites) {
-    if (coverageSuite is JavaCoverageSuite && coverageSuite.isPackageFiltered(qualifiedName)) {
-      return true
-    }
-  }
-  return false
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
+import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -146,6 +147,34 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   }
 
   @Test
+  fun `test jacoco loads the requested report file`() {
+    val reportFile = Path.of(SIMPLE_JACOCO_REPORT_PATH)
+    val missingStoredReport = Path.of("$SIMPLE_JACOCO_REPORT_PATH.missing")
+    assertFalse(Files.exists(missingStoredReport))
+
+    val runner = JaCoCoCoverageRunner()
+    val engine = CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine::class.java)
+    val suite = JavaCoverageSuite(
+      "suite with a missing stored report",
+      DefaultCoverageFileProvider(missingStoredReport),
+      DEFAULT_FILTER,
+      null,
+      -1,
+      false,
+      true,
+      true,
+      runner,
+      engine,
+      myProject,
+    )
+
+    val result = runner.loadCoverageData(reportFile, suite, DummyCoverageLoadErrorReporter())
+
+    assertTrue(result is SuccessCoverageLoadingResult)
+    assertNotNull(result.projectData?.getClassData("foo.FooClass"))
+  }
+
+  @Test
   fun testJaCoCo() = assertHits(loadJaCoCoSuite())
 
   @Test
@@ -170,6 +199,24 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(bundle.getSearchScope(myProject))
     val sourceFile = CoverageSourceResolver.findFile(myProject, searchScope, "foo.MissingClass", "FooClass.java")
     assertEquals("FooClass.java", sourceFile?.name)
+  }
+
+  @Test
+  fun `test project data source lookup uses class data file name`() = runBlocking {
+    val bundle = loadJaCoCoSuite()
+    val classData = bundle.coverageData!!.getOrCreateClassData("foo.MissingClass")
+    val lineData = LineData(1, "missing()V")
+    lineData.setStatus(LineCoverage.FULL)
+    lineData.setHits(1)
+    lineData.fillArrays()
+    classData.setSource("FooClass.java")
+    classData.registerMethodSignature(lineData)
+    classData.setLines(arrayOf(lineData))
+
+    val consumer = PackageAnnotationConsumer()
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
+
+    assertEquals("FooClass.java", consumer.myClassSourceFiles["foo.MissingClass"]?.name)
   }
 
   @Test
@@ -204,7 +251,20 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertHTMLReportGenerated(loadJaCoCoSuite(), JaCoCoCoverageRunner())
   }
 
-  private fun assertHTMLReportGenerated(bundle: CoverageSuitesBundle, runner: JavaCoverageRunner) {
+  @Test
+  fun `test combined JaCoCo HTML report`() {
+    val fooSuite = loadJaCoCoSuite(arrayOf("foo.FooClass")).suites.single()
+    val barSuite = loadJaCoCoSuite(arrayOf("foo.bar.BarClass")).suites.single()
+    val bundle = CoverageSuitesBundle(arrayOf(fooSuite, barSuite))
+
+    assertHTMLReportGenerated(bundle, JaCoCoCoverageRunner(), listOf("FooClass", "BarClass"))
+  }
+
+  private fun assertHTMLReportGenerated(
+    bundle: CoverageSuitesBundle,
+    runner: JavaCoverageRunner,
+    expectedClassNames: List<String> = listOf("FooClass"),
+  ) {
     val settings = ExportToHTMLSettings.getInstance(myProject)
     val originalOutputDirectory = settings.OUTPUT_DIRECTORY
     val htmlDir = Files.createTempDirectory("html").toFile()
@@ -213,7 +273,12 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       runner.generateReport(bundle, myProject)
       assertTrue(htmlDir.exists())
       assertTrue(File(htmlDir, "index.html").exists())
-      assertTrue(htmlDir.walkTopDown().filter { it.isFile }.any { it.readText().contains("FooClass") })
+      for (className in expectedClassNames) {
+        assertTrue(
+          "Class $className is missing from the report",
+          htmlDir.walkTopDown().filter { it.isFile }.any { it.readText().contains(className) },
+        )
+      }
     }
     finally {
       settings.OUTPUT_DIRECTORY = originalOutputDirectory

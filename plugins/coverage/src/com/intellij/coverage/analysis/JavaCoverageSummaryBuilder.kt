@@ -46,18 +46,18 @@ object JavaCoverageSummaryBuilder {
     val flattenDirectories = hashMapOf<VirtualFile, PackageCoverageInfo>()
     val searchScope = bundle.getSearchScope(project)
 
-    val classes = projectData.classesCollection.map { it.name }.groupBy { fqn ->
-      val vmName = AnalysisUtils.fqnToInternalName(fqn)
+    val classes = projectData.classesCollection.groupBy { classData ->
+      val vmName = AnalysisUtils.fqnToInternalName(classData.name)
       AnalysisUtils.getSourceToplevelFQName(vmName)
-    }.mapValues { (_, names) -> names.map(StringUtil::getShortName) }
+    }
     val packageAnnotator = PackageAnnotator(bundle, project, projectData)
-    for ((topLevelName, simpleNames) in classes) {
-      val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName) ?: continue
+    for ((topLevelName, classData) in classes) {
+      val fileName = classData.firstNotNullOfOrNull { it.source }
+      val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName, fileName) ?: continue
       val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
       val info = ClassCoverageInfo()
-      for (simpleName in simpleNames) {
-        val className = AnalysisUtils.internalNameToFqn(AnalysisUtils.buildVMName(packageVMName, simpleName))
-        packageAnnotator.collectClassCoverage(className, null)?.let(info::append)
+      for (data in classData) {
+        packageAnnotator.collectClassCoverage(data.name, null)?.let(info::append)
       }
       collector.addClass(topLevelName, info, file)
       flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
@@ -174,11 +174,12 @@ object JavaCoverageSummaryBuilder {
   @JvmStatic
   fun getSourceRoots(module: Module): Set<VirtualFile> = getSourceFolders(module).mapNotNullTo(HashSet()) { it.file }
 
-  private fun getWorkingThreads(): Int {
-    val configuredThreads = Registry.intValue("idea.coverage.loading.threads")
-    val maxThreads = Runtime.getRuntime().availableProcessors() - 1
-    return (if (configuredThreads == 0) maxThreads else configuredThreads).coerceIn(1, maxThreads.coerceAtLeast(1))
-  }
+}
+
+internal fun getWorkingThreads(): Int {
+  val configuredThreads = Registry.intValue("idea.coverage.loading.threads")
+  val maxThreads = Runtime.getRuntime().availableProcessors() - 1
+  return (if (configuredThreads == 0) maxThreads else configuredThreads).coerceIn(1, maxThreads.coerceAtLeast(1))
 }
 
 private fun getPackageRoots(module: Module, rootPackageVMName: String): Set<VirtualFile> {
