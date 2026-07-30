@@ -1,0 +1,48 @@
+// This is a generated file. Not intended for manual editing.
+package com.intellij.python.requirements.parser.psi.impl;
+
+import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
+import static com.intellij.python.requirements.parser.psi.RequirementsTypes.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.python.requirements.parser.psi.*;
+
+public class GitUriImpl extends ASTWrapperPsiElement implements GitUri {
+
+  public GitUriImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public void accept(@NotNull Visitor visitor) {
+    visitor.visitGitUri(this);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof Visitor) accept((Visitor)visitor);
+    else super.accept(visitor);
+  }
+
+  @Override
+  @Nullable
+  public Fragment getFragment() {
+    return findChildByClass(Fragment.class);
+  }
+
+  @Override
+  @Nullable
+  public GitUriPath getGitUriPath() {
+    return findChildByClass(GitUriPath.class);
+  }
+
+  @Override
+  @Nullable
+  public Host getHost() {
+    return findChildByClass(Host.class);
+  }
+
+}
