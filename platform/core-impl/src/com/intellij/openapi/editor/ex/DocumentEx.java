@@ -99,6 +99,7 @@ public interface DocumentEx extends Document {
 
   boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
+  @ApiStatus.Internal
   void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
                            int start,
                            int end,
