@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameterList
+import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
 import java.util.BitSet
@@ -167,6 +168,23 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         isPreview: Boolean
     ): String {
         return buildString {
+            val declarationRenderer = if (isPreview) {
+                KaDeclarationRendererForSource.WITH_SHORT_NAMES
+            } else {
+                KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+                    annotationRenderer = annotationRenderer.with {
+                        annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> targetFile != null && keepAnnotation(annotation, targetFile) }
+                    }
+                }
+            }
+
+            if (superFunction.contextParameters.isNotEmpty()) {
+                append(superFunction.contextParameters.joinToString(", ", "context(", ") ") { contextParameterSymbol ->
+                    (contextParameterSymbol.name.takeUnless { it.isSpecial }?.render() ?: "_") +
+                            ": " +
+                            contextParameterSymbol.returnType.render(declarationRenderer.typeRenderer, Variance.INVARIANT)
+                })
+            }
             if (superFunction.isSuspend) {
                 append("suspend ")
             }
@@ -187,15 +205,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             }
 
             append("fun ")
-            val declarationRenderer = if (isPreview) {
-                KaDeclarationRendererForSource.WITH_SHORT_NAMES
-            } else {
-                KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    annotationRenderer = annotationRenderer.with {
-                        annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> targetFile != null && keepAnnotation(annotation, targetFile) }
-                    }
-                }
-            }
+
             if (superFunction.typeParameters.isNotEmpty()) {
                 append(superFunction.typeParameters.joinToString(prefix = "<", postfix = "> ") {
                     it.render(declarationRenderer.with {
@@ -320,6 +330,30 @@ internal object ChangeMemberFunctionSignatureFixFactory {
 
             if (patternFunction.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
                 function.addModifier(KtTokens.SUSPEND_KEYWORD)
+            }
+
+            val modifierList = function.modifierList
+            val newModifierList = patternFunction.modifierList
+            if (newModifierList != null) {
+                if (modifierList != null) {
+                    val contextParameterList = modifierList.contextParameterList
+                    val newContextParameterList = newModifierList.contextParameterList
+                    if (newContextParameterList != null) {
+                        val contextParameters = if (contextParameterList == null) {
+                            modifierList.addBefore(newContextParameterList, modifierList.firstChild)
+                        } else {
+                            contextParameterList.replace(newContextParameterList)
+                        }
+                        shortenReferences(contextParameters as KtElement)
+                    } else {
+                        contextParameterList?.delete()
+                    }
+                } else {
+                    function.setModifierList(newModifierList)
+                    shortenReferences(function.modifierList!!)
+                }
+            } else {
+                modifierList?.contextParameterList?.delete()
             }
 
             val newTypeRef = function.setTypeReference(patternFunction.typeReference)

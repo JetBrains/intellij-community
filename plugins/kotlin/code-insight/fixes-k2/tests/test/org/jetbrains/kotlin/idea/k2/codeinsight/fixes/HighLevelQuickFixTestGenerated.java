@@ -11252,6 +11252,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("addContextParameter.kt")
+            public void testAddContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addContextParameter.kt");
+            }
+
             @TestMetadata("addFunction.kt")
             public void testAddFunction() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunction.kt");
@@ -11472,6 +11477,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethod.kt");
             }
 
+            @TestMetadata("removeContextParameter.kt")
+            public void testRemoveContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeContextParameter.kt");
+            }
+
             @TestMetadata("removeFunctionReciever.kt")
             public void testRemoveFunctionReciever() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeFunctionReciever.kt");
@@ -11495,6 +11505,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("removeTypeParameter.kt")
             public void testRemoveTypeParameter() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeTypeParameter.kt");
+            }
+
+            @TestMetadata("replaceContextParameter.kt")
+            public void testReplaceContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/replaceContextParameter.kt");
             }
 
             @TestMetadata("suspendFunction.kt")
