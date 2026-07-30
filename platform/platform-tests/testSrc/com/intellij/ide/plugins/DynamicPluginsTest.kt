@@ -92,7 +92,6 @@ import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
-import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import java.lang.ref.WeakReference
@@ -165,7 +164,6 @@ class DynamicPluginsTest {
 
   @Test
   fun `loading of a plugin also loads dependent content modules of other plugins`() {
-    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir) {
       plugin("foo") { }
       plugin("listeners") {
@@ -447,16 +445,9 @@ class DynamicPluginsTest {
         val barService = application.getTestHandleService<BarService, _, _>(bar)!!
         barService.test(Unit)
         val fooBarClass = foo.loadClassInsideSelf<FooBarService>()!! // loaded because packed into the same jar with the main descriptor
-        if (isNewSupportEnabled()) {
-          assertThat(application.getService(fooBarClass)).isNotNull()
-          assertThat(foo.dependencies.first().subDescriptor!!.isLoaded).isTrue
-          assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNotNull()
-        } else {
-          // why was it like that...?
-          assertThat(application.getService(fooBarClass)).isNull()
-          assertThat(foo.dependencies.first().subDescriptor!!.isLoaded).isFalse
-          assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
-        }
+        assertThat(application.getService(fooBarClass)).isNotNull()
+        assertThat(foo.dependencies.first().subDescriptor!!.isLoaded).isTrue
+        assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNotNull()
       }
     }
   }
@@ -893,20 +884,19 @@ class DynamicPluginsTest {
       val weakHandleClass = WeakReference(plugin.loadClassInsideSelf<MyPersistentComponent>())
       val disabled = PluginEnabler.getInstance().disable(listOf(plugin))
       assertThat(disabled).isTrue()
-      assertThat(plugin.isEnabled).isFalse()
+      assertThat(plugin.isLoaded).isFalse()
       val handleClass = weakHandleClass.get()
       if (handleClass != null) assertThat(application.getService(handleClass)).isNull()
 
       val enabled = PluginEnabler.getInstance().enable(listOf(plugin))
       assertThat(enabled).isTrue()
-      assertThat(plugin.isEnabled).isTrue()
+      assertThat(plugin.isLoaded).isTrue()
       assertThat(application.getService(plugin.loadClassInsideSelf<MyPersistentComponent>()!!)).isNotNull()
     }
   }
 
   @Test
   fun `loading of non-dynamic EP and extension from different RMGs is prohibited even if registry allows same RMG`() {
-    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("bar") {
         content(namespace = "custom") {
@@ -942,7 +932,6 @@ class DynamicPluginsTest {
 
   @Test
   fun `loading of non-dynamic EP and extension from different descriptors in the same RMG is prohibited by default`() {
-    assumeNewSupportEnabled()
     Registry.get(ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY).setValue(false, testDisposable.disposable)
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("nonDynamicDisabled") {
@@ -964,7 +953,6 @@ class DynamicPluginsTest {
 
   @Test
   fun `loading of non-dynamic EP and extension from different descriptors in the same RMG is allowed by registry`() {
-    assumeNewSupportEnabled()
     Registry.get(ALLOW_NON_DYNAMIC_EPS_IN_SAME_RMG_REGISTRY_KEY).setValue(true, testDisposable.disposable)
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("nonDynamicAllowed") {
@@ -1200,7 +1188,6 @@ class DynamicPluginsTest {
 
   @Test
   fun `IJPL-207058 dynamic load of a plugin with service overrides is declined`() {
-    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("foo") {
         content {
@@ -1310,7 +1297,6 @@ class DynamicPluginsTest {
 
   @Test
   fun `IJPL-218420 dependent modules loading order is correct - transitive dependency`() {
-    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("ai") {}
       plugin("completion") {
@@ -1347,12 +1333,6 @@ class DynamicPluginsTest {
       }
     }
   }
-
-  private fun assumeNewSupportEnabled() {
-    Assume.assumeTrue("new dynamic plugins support is enabled", isNewSupportEnabled())
-  }
-
-  private fun isNewSupportEnabled(): Boolean = DynamicPluginsSupport.getInstance() != null
 }
 
 private class MyInspectionTool : GlobalInspectionTool()
