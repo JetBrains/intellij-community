@@ -11,10 +11,10 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.progress.reportProgressScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
@@ -49,10 +49,12 @@ internal object JaCoCoReportLoader {
     // must analyze test dirs, as inline function calls might be only in tests
     val requests = collectOutputRoots(project, modules, suites, includeTests = true)
     val executionDataStore = loader.executionDataStore
-    val results = coroutineScope {
+    val results = reportProgressScope(requests.size) { progress ->
       requests.map { request ->
         async(dispatcher) {
-          analyzeOutputRoot(request, executionDataStore, suites, reporter)
+          progress.itemStep {
+            analyzeOutputRoot(request, executionDataStore, suites, reporter)
+          }
         }
       }.awaitAll()
     }

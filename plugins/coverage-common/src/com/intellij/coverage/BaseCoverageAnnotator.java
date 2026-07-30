@@ -2,9 +2,6 @@
 package com.intellij.coverage;
 
 import com.intellij.coverage.filters.ModifiedFilesFilter;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,26 +33,15 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     if (request != null) {
       if (myProject.isDisposed()) return;
       final Project project = myProject;
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.view.loading.data"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
+      CoverageBackgroundProgressKt.launchCoverageDataRenewal(
+        project,
+        () -> {
           myModifiedFilesFilter = ModifiedFilesFilter.create(project);
           request.run();
-        }
-
-        @Override
-        public void onSuccess() {
-          if (project.isDisposed()) return;
-          dataManager.coverageDataCalculated(suite);
-        }
-
-        @Override
-        public void onCancel() {
-          super.onCancel();
-          if (project.isDisposed()) return;
-          dataManager.closeSuitesBundle(suite);
-        }
-      });
+        },
+        () -> dataManager.coverageDataCalculated(suite),
+        () -> dataManager.closeSuitesBundle(suite)
+      );
     }
   }
 

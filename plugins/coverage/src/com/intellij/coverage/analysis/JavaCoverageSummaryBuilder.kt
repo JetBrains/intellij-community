@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.analysis
 
+import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageEngineExtension
 import com.intellij.coverage.JavaCoverageSuite
@@ -10,19 +11,18 @@ import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.reportProgressScope
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.ProjectData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -30,18 +30,32 @@ private val LOG = Logger.getInstance(JavaCoverageSummaryBuilder::class.java)
 
 @ApiStatus.Internal
 object JavaCoverageSummaryBuilder {
-  suspend fun build(suite: CoverageSuitesBundle, project: Project, collector: CoverageInfoCollector) {
-    if (suite.suites.all { it is JavaCoverageSuite && it.isSkipUnloadedClassesAnalysis }) {
-      buildFromProjectData(suite, project, collector)
-    }
-    else {
-      buildWithUnloadedClassesCollection(suite, project, collector)
+  suspend fun build(
+    suite: CoverageSuitesBundle,
+    project: Project,
+    collector: CoverageInfoCollector,
+  ) {
+    reportSequentialProgress(size = 2) { progress ->
+      val projectData = progress.itemStep(CoverageBundle.message("coverage.view.load.report")) { suite.coverageData } ?: return
+      if (suite.suites.all { it is JavaCoverageSuite && it.isSkipUnloadedClassesAnalysis }) {
+        progress.itemStep(CoverageBundle.message("coverage.view.build.statistics")) {
+          buildFromProjectData(suite, project, projectData, collector)
+        }
+      }
+      else {
+        progress.itemStep(CoverageBundle.message("coverage.view.build.statistics")) {
+          buildWithUnloadedClassesCollection(suite, project, projectData, collector)
+        }
+      }
     }
   }
 
-  private suspend fun buildFromProjectData(bundle: CoverageSuitesBundle, project: Project, collector: CoverageInfoCollector) {
-    val projectData = bundle.coverageData ?: return
-
+  private suspend fun buildFromProjectData(
+    bundle: CoverageSuitesBundle,
+    project: Project,
+    projectData: ProjectData,
+    collector: CoverageInfoCollector,
+  ) {
     val flattenPackages = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectories = hashMapOf<VirtualFile, PackageCoverageInfo>()
     val searchScope = bundle.getSearchScope(project)
@@ -51,18 +65,22 @@ object JavaCoverageSummaryBuilder {
       AnalysisUtils.getSourceToplevelFQName(vmName)
     }
     val packageAnnotator = PackageAnnotator(bundle, project, projectData)
-    for ((topLevelName, classData) in classes) {
-      val fileName = classData.firstNotNullOfOrNull { it.source }
-      val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName, fileName) ?: continue
-      val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
-      val info = ClassCoverageInfo()
-      for (data in classData) {
-        packageAnnotator.collectClassCoverage(data.name, null)?.let(info::append)
-      }
-      collector.addClass(topLevelName, info, file)
-      flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
-      file.parent?.let { directory ->
-        flattenDirectories.getOrPut(directory) { PackageCoverageInfo() }.append(info)
+    reportProgressScope(classes.size) { progress ->
+      for ((topLevelName, classData) in classes) {
+        progress.itemStep {
+          val fileName = classData.firstNotNullOfOrNull { it.source }
+          val file = CoverageSourceResolver.findFile(project, searchScope, topLevelName, fileName) ?: return@itemStep
+          val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
+          val info = ClassCoverageInfo()
+          for (data in classData) {
+            packageAnnotator.collectClassCoverage(data.name, null)?.let(info::append)
+          }
+          collector.addClass(topLevelName, info, file)
+          flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
+          file.parent?.let { directory ->
+            flattenDirectories.getOrPut(directory) { PackageCoverageInfo() }.append(info)
+          }
+        }
       }
     }
 
@@ -73,17 +91,18 @@ object JavaCoverageSummaryBuilder {
   private suspend fun buildWithUnloadedClassesCollection(
     suite: CoverageSuitesBundle,
     project: Project,
+    projectData: ProjectData,
     collector: CoverageInfoCollector,
   ) {
-    val projectData = suite.coverageData ?: return
     val requests = collectOutputRoots(suite, project)
-    val progress = CoverageProgress(requests.sumOf { it.packages.size })
     val dispatcher = Dispatchers.IO.limitedParallelism(getWorkingThreads())
 
-    val results = coroutineScope {
+    val results = reportProgressScope(requests.size) { progress ->
       requests.map { moduleRequest ->
         async(dispatcher) {
-          ModuleCoverageBuilder(suite, project, projectData, moduleRequest, progress).build()
+          progress.itemStep {
+            ModuleCoverageBuilder(suite, project, projectData, moduleRequest).build()
+          }
         }
       }.awaitAll()
     }
@@ -202,7 +221,6 @@ private class ModuleCoverageBuilder(
   private val project: Project,
   projectData: ProjectData,
   private val moduleRequest: ModuleRequest,
-  private val progress: CoverageProgress,
 ) {
   private val classes = HashMap<String, CollectedClass>()
   private val pendingClasses = HashMap<String, PendingClassCoverage>()
@@ -214,7 +232,6 @@ private class ModuleCoverageBuilder(
     val module = moduleRequest.module
     if (module.isDisposed) {
       LOG.warn("Module is already disposed: $module")
-      progress.rootsVisited(moduleRequest.packages.size)
       return ModuleCoverageResult(emptyMap(), emptyMap(), emptyMap(), emptySet())
     }
 
@@ -225,18 +242,12 @@ private class ModuleCoverageBuilder(
       sourceRoots.addAll(getPackageRoots(module, packageVMName))
     }
 
-    try {
-      ClassFilesLocator.findClassFiles(moduleRequest.root, moduleRequest.packages).use { classFiles ->
-        for (classFile in classFiles) {
-          collectClassCoverage(classFile)
-        }
+    ClassFilesLocator.findClassFiles(moduleRequest.root, moduleRequest.packages).use { classFiles ->
+      for (classFile in classFiles) {
+        collectClassCoverage(classFile)
       }
-      finalizeCollectedClasses(searchScope)
     }
-    finally {
-      progress.rootsVisited(moduleRequest.packages.size)
-    }
-
+    finalizeCollectedClasses(searchScope)
     return ModuleCoverageResult(
       classes,
       flattenPackages,
@@ -275,11 +286,11 @@ private class ModuleCoverageBuilder(
   }
 
   private fun keepCoverageInfoForClassWithoutSource(classFile: Path): Boolean {
-    return JavaCoverageEngineExtension.EP_NAME.extensionList.any { it.keepCoverageInfoForClassWithoutSource(suite, classFile) }
+    return JavaCoverageEngineExtension.EP_NAME.findFirstSafe { it.keepCoverageInfoForClassWithoutSource(suite, classFile) } != null
   }
 
   private fun ignoreClass(classFile: Path): Boolean {
-    return JavaCoverageEngineExtension.EP_NAME.extensionList.any { it.ignoreCoverageForClass(suite, classFile) }
+    return JavaCoverageEngineExtension.EP_NAME.findFirstSafe { it.ignoreCoverageForClass(suite, classFile) } != null
   }
 
   private fun isClassExcluded(fqn: String): Boolean {
@@ -301,24 +312,3 @@ private data class ModuleCoverageResult(
   val flattenDirectories: Map<VirtualFile, PackageCoverageInfo>,
   val sourceRoots: Set<VirtualFile>,
 )
-
-private class CoverageProgress(private val rootsCount: Int) {
-  private val indicator: ProgressIndicator? = ProgressIndicatorProvider.getGlobalProgressIndicator()
-  private var visitedRoots = 0
-
-  init {
-    updateProgress()
-  }
-
-  @Synchronized
-  fun rootsVisited(count: Int) {
-    visitedRoots += count
-    updateProgress()
-  }
-
-  private fun updateProgress() {
-    if (rootsCount <= 1) return
-    indicator?.isIndeterminate = false
-    indicator?.fraction = visitedRoots / rootsCount.toDouble()
-  }
-}
