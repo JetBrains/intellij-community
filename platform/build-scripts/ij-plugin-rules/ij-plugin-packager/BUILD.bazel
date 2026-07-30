@@ -15,5 +15,6 @@ kt_jvm_library(
   visibility = ["//platform/build-scripts/ij-plugin-rules/ij-plugin-packager/tests:__pkg__"],
   deps = [
       "@rules_jvm//:annotations_import",
+      "//platform/pluginSystem/parser/impl",
   ]
 )

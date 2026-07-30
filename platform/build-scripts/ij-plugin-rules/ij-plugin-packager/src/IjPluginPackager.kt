@@ -1,7 +1,10 @@
 package com.intellij.tools.build.bazel.ijPluginPackager
 
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipFile
 
 /**
  * Builds a plugin distribution from JARs of its modules.
@@ -36,13 +39,23 @@ object IjPluginPackager {
     val descriptorJar = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }.jar
     Files.copy(descriptorJar, libDirectory.resolve(descriptorJar.fileName))
 
-    if (contentModules.isNotEmpty()) {
-      val modulesDirectory = libDirectory.resolve("modules")
-      Files.createDirectories(modulesDirectory)
-      for (module in contentModules) {
-        Files.copy(module.jar, modulesDirectory.resolve("${module.name}.jar"))
-      }
+    val embeddedContentModules = loadEmbeddedContentModules(descriptorJar)
+    for ((name, jar) in contentModules) {
+      val destinationDirectory = if (name in embeddedContentModules) libDirectory else libDirectory.resolve("modules")
+      Files.createDirectories(destinationDirectory)
+      Files.copy(jar, destinationDirectory.resolve("$name.jar"))
     }
+  }
+
+  private fun loadEmbeddedContentModules(descriptorJar: Path): Set<String> {
+    val descriptorContent = ZipFile(descriptorJar.toFile()).use { jar ->
+      val descriptorEntry = requireNotNull(jar.getEntry("META-INF/plugin.xml")) {
+        "META-INF/plugin.xml is not found in $descriptorJar"
+      }
+      jar.getInputStream(descriptorEntry).use { it.readAllBytes() }
+    }
+    val contentModules = parseContentAndXIncludes(descriptorContent, descriptorJar.toString()).contentModules
+    return contentModules.filter { it.loadingRule == ModuleLoadingRuleValue.EMBEDDED }.mapTo(HashSet()) { it.name }
   }
 
   private fun parseModuleArgument(argument: String): ModuleArgument {

@@ -9,17 +9,25 @@ import java.nio.file.Path
 internal class IjPluginPackagerTest {
   @Test
   fun packagesPlugin(@TempDir tempDirectory: Path) {
+    val pluginXml = """
+      <idea-plugin>
+        <content>
+          <module name="embedded.module" loading="embedded"/>
+          <module name="optional.module"/>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
       zip("descriptor.jar") {
         dir("META-INF") {
-          file("plugin.xml", "<idea-plugin/>")
+          file("plugin.xml", pluginXml)
         }
       }
-      zip("content-one.jar") {
+      zip("embedded-module.jar") {
         file("one.txt", "one")
       }
-      zip("content-two.jar") {
+      zip("optional-module.jar") {
         file("two.txt", "two")
       }
     }.generate(inputDirectory)
@@ -30,23 +38,23 @@ internal class IjPluginPackagerTest {
       "--descriptor_module",
       "descriptor:${inputDirectory.resolve("descriptor.jar")}",
       "--content_module",
-      "content.one:${inputDirectory.resolve("content-one.jar")}",
+      "embedded.module:${inputDirectory.resolve("embedded-module.jar")}",
       "--content_module",
-      "content.two:${inputDirectory.resolve("content-two.jar")}",
+      "optional.module:${inputDirectory.resolve("optional-module.jar")}",
     ))
 
     outputDirectory.assertMatches(directoryContent {
       dir("lib") {
         zip("descriptor.jar") {
           dir("META-INF") {
-            file("plugin.xml", "<idea-plugin/>")
+            file("plugin.xml", pluginXml)
           }
         }
+        zip("embedded.module.jar") {
+          file("one.txt", "one")
+        }
         dir("modules") {
-          zip("content.one.jar") {
-            file("one.txt", "one")
-          }
-          zip("content.two.jar") {
+          zip("optional.module.jar") {
             file("two.txt", "two")
           }
         }

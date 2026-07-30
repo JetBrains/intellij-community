@@ -5,7 +5,6 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 # * investigate differences in __index__ files;
 # * add `version` and `since-build`/`until-build` attribute in plugin.xml
 # * inline descriptors of content modules in plugin.xml
-# * put content modules with loading=embedded to lib/, not lib/modules/;
 def _ij_plugin_impl(ctx):
   dir_name = ctx.attr.name
   output_dir = ctx.actions.declare_directory(dir_name)
