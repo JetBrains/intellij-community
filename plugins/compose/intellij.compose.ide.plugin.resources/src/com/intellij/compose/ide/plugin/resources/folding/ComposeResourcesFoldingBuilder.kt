@@ -24,8 +24,7 @@ internal class ComposeResourcesFoldingBuilder : FoldingBuilderEx() {
 
   override fun isCollapsedByDefault(node: ASTNode): Boolean = true
 
-  override fun getPlaceholderText(node: ASTNode): String? =
-    null
+  override fun getPlaceholderText(node: ASTNode): String? = null
 
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<out FoldingDescriptor?> {
     if (root.language !is KotlinLanguage || quick) return emptyArray()
@@ -62,7 +61,11 @@ private fun KtSimpleNameExpression.getFoldingDescriptor(): FoldingDescriptor? {
 }
 
 private fun getResourcePlaceholderText(psiElements: List<PsiElement>): String? {
-  for (psiElement in psiElements) {
+  val sortedPsiElements = psiElements.sortedBy { psiElement ->
+    psiElement.containingFile.parent?.name != ResourceType.STRING.dirName
+  }
+
+  for (psiElement in sortedPsiElements) {
     val xmlTag = psiElement.parent.parent as? XmlTag ?: continue
     val textValue = when (xmlTag.name) {
       ResourceType.STRING.typeName -> xmlTag.value.text.trim()
