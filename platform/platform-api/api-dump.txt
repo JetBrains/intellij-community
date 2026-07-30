@@ -6702,7 +6702,6 @@ c:com.intellij.ui.OptionGroup
 a:com.intellij.ui.OptionalChooserComponent
 - com.intellij.ui.CheckBoxListListener
 - com.intellij.util.ui.ComponentWithEmptyText
-- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(java.util.List):V
 - apply():V
 - checkBoxSelectionChanged(I,Z):V
