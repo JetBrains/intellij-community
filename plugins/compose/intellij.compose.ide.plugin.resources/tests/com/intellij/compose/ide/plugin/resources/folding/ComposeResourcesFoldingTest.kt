@@ -5,6 +5,8 @@ import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +14,13 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
+
+private const val DEFAULT_STRINGS_FILE_SUFFIX =
+  "composeApp/src/commonMain/composeResources/values/strings.xml"
+private const val ORIGINAL_STRING_VALUE = "<string name=\"test\">test</string>"
+private const val PRIORITIZED_STRING_TEXT = "default value"
+private const val PRIORITIZED_STRING_VALUE =
+  "<string name=\"test\">$PRIORITIZED_STRING_TEXT</string>"
 
 class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
 
@@ -23,6 +32,18 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
     assertNotNull("Folding descriptor for Res.string.test should exist", folding)
     assertEquals("\"test\"", folding?.placeholderText)
   }
+
+  @TargetVersions(TARGET_GRADLE_VERSION)
+  @Test
+  @TestMetadata("ComposeResources")
+  fun `test default value is preferred over translations`() =
+    doFoldingTest(prepareResources = { files ->
+      replaceDefaultStringValue(files)
+    }) { descriptors ->
+      val folding = descriptors.findByResourceRef("Res.string.test")
+      assertNotNull("Folding descriptor for Res.string.test should exist", folding)
+      assertEquals("\"$PRIORITIZED_STRING_TEXT\"", folding?.placeholderText)
+    }
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
@@ -58,12 +79,22 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
     assertTrue("Quick mode should return no folding descriptors", descriptors.isEmpty())
   }
 
-  private fun doFoldingTest(quick: Boolean = false, assertions: (Array<out FoldingDescriptor?>) -> Unit) {
+  private fun doFoldingTest(
+    quick: Boolean = false,
+    prepareResources: (List<VirtualFile>) -> Unit = {},
+    assertions: (Array<out FoldingDescriptor?>) -> Unit,
+  ) {
     val files = importProjectFromTestData()
 
     timeoutRunBlocking(context = Dispatchers.EDT) {
-
-      codeInsightTestFixture.openFileInEditor(files.first { it.path.endsWith("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt") })
+      prepareResources(files)
+      codeInsightTestFixture.openFileInEditor(
+        files.first {
+          it.path.endsWith(
+            "composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt"
+          )
+        }
+      )
 
       val foldingBuilder = ComposeResourcesFoldingBuilder()
       val psiFile = codeInsightTestFixture.file
@@ -72,6 +103,31 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
       val descriptors = foldingBuilder.buildFoldRegions(psiFile, document, quick)
 
       assertions(descriptors)
+    }
+  }
+
+  private fun replaceDefaultStringValue(files: List<VirtualFile>) {
+    val stringsFile = files.first { it.path.endsWith(DEFAULT_STRINGS_FILE_SUFFIX) }
+    val documentManager = PsiDocumentManager.getInstance(myProject)
+    val psiFile = kAssertNotNull(
+      com.intellij.psi.PsiManager.getInstance(myProject).findFile(stringsFile),
+      "Default strings.xml should have a PSI file",
+    )
+    val document = kAssertNotNull(
+      documentManager.getDocument(psiFile),
+      "Default strings.xml should have a document",
+    )
+
+    val valueOffset = document.text.indexOf(ORIGINAL_STRING_VALUE)
+    assertTrue("Default string resource should exist", valueOffset >= 0)
+
+    WriteCommandAction.runWriteCommandAction(myProject) {
+      document.replaceString(
+        valueOffset,
+        valueOffset + ORIGINAL_STRING_VALUE.length,
+        PRIORITIZED_STRING_VALUE,
+      )
+      documentManager.commitDocument(document)
     }
   }
 
