@@ -3,7 +3,7 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.requirements"/>
+    <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.yaml"/>
     <!-- endregion -->

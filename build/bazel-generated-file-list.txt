@@ -1672,7 +1672,9 @@ python/python-pyright
 python/python-pytools
 python/python-pytools-ui
 python/python-pytools/tests
-python/python-requirements
+python/python-requirements/backend
+python/python-requirements/common
+python/python-requirements/tests
 python/python-restructuredtext
 python/python-ruff
 python/python-sdk

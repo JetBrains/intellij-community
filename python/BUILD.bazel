@@ -369,7 +369,7 @@ jvm_library(
         "//platform/ide-core-impl",
         "//RegExpSupport:regexp",
         "//python/python-psi-impl:psi-impl",
-        "//python/python-requirements:requirements",
+        "//python/python-requirements/backend",
     ],
     runtime_deps = [
         # do not sort,
@@ -508,7 +508,7 @@ jvm_library(
         "//python/python-external-index:externalIndex",
         "//python/conda",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//python/python-requirements:requirements",
+        "//python/python-requirements/backend",
         "//python/python-pytools:pytools",
         "//python/python-uv/backend",
         "//platform/testIntegration",
@@ -537,8 +537,8 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//python/python-psi-impl:psi-impl",
         "//python/python-psi-impl:psi-impl_test_lib",
-        "//python/python-requirements:requirements",
-        "//python/python-requirements:requirements_test_lib",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/backend:backend_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -666,7 +666,7 @@ jvm_library(
         "//python/python-external-index:externalIndex_test_lib",
         "//python/conda:conda_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//python/python-requirements:requirements_test_lib",
+        "//python/python-requirements/backend:backend_test_lib",
         "//python/python-pytools:pytools_test_lib",
         "//python/python-uv/backend:backend_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
@@ -1426,6 +1426,8 @@ jvm_library(
         "//plugins/toml/core:core_test_lib",
         "//python/python-poetry/backend",
         "//python/python-poetry/backend:backend_test_lib",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end
