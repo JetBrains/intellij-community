@@ -77,12 +77,14 @@ mod tests {
 
     #[test]
     fn remote_dev_launch_via_common_launcher_test() {
-        let test = prepare_test_env(LauncherLocation::Standard);
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_managed_vm_options("-Dmanaged.marker=from-tbe\n");
 
         let remote_dev_command = &["serverMode", "print-cwd"];
         let launch_result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(remote_dev_command));
 
         check_output(&launch_result, |output| output.contains("Started in server mode"));
+        check_output(&launch_result, |output| output.contains("managed.marker=from-tbe"));
         check_output(&launch_result, |output| output.contains("Mode: remote-dev"));
         check_output(&launch_result, |output| output.contains("CWD="));
     }
@@ -159,6 +161,63 @@ mod tests {
         let args = &["status"];
         run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args).assert_status());
         // app will exit with an error if debug option has been passed to it along with 'status' command
+    }
+
+    #[test]
+    fn remote_dev_backend_uses_managed_vm_options() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        let config_dir = test.create_temp_dir("managed-config");
+        test.create_managed_vm_options_in(&config_dir, "-Dmanaged.marker=from-tbe\n-Dprivate.token=must-not-appear-in-launcher-log\n");
+        test.create_toolbox_vm_options(&format!("-Dmanaged.marker=from-user\n-Didea.config.path={}\n", config_dir.display()));
+        let args = &["run", &test.project_dir.display().to_string()];
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args));
+
+        check_output(&result, |output| output.contains("managed.marker=from-tbe"));
+        assert!(!result.stdout.contains("must-not-appear-in-launcher-log"), "secret leaked to stdout: {result:?}");
+        assert!(!result.stderr.contains("must-not-appear-in-launcher-log"), "secret leaked to stderr: {result:?}");
+    }
+
+    #[test]
+    fn remote_dev_backend_resolves_managed_options_from_custom_properties() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        let config_dir = test.create_temp_dir("custom-managed-config");
+        test.create_managed_vm_options_in(&config_dir, "-Dmanaged.marker=from-custom-properties\n");
+        let custom_properties = test.create_temp_file(
+            "custom-idea.properties",
+            &format!("idea.config.path={}\n", config_dir.to_string_lossy().replace('\\', "\\\\")),
+        );
+        test.create_toolbox_vm_options(&format!("-Didea.properties.file={}\n", custom_properties.display()));
+        let args = &["run", &test.project_dir.display().to_string()];
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args));
+
+        assert!(result.exit_status.success(), "backend failed: {result:?}");
+        check_output(&result, |output| output.contains("managed.marker=from-custom-properties"));
+    }
+
+    #[test]
+    fn malformed_managed_options_fail_a_backend_but_do_not_affect_status() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        test.create_managed_vm_options("\n");
+        let args = &["run", &test.project_dir.display().to_string()];
+
+        let backend = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args));
+
+        assert!(!backend.exit_status.success(), "backend accepted a malformed overlay: {backend:?}");
+        run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(&["status"]).assert_status());
+    }
+
+    #[test]
+    fn remote_dev_helper_commands_ignore_managed_vm_options() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        test.create_managed_vm_options("-Dmanaged.marker=from-tbe\n-javaagent:/missing/tbe-agent.jar\n");
+
+        run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(&["status"]).assert_status());
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_dump()).dump();
+        assert_vm_option_absence(&dump, "-Dmanaged.marker=from-tbe");
+        assert_vm_option_absence(&dump, "-javaagent:/missing/tbe-agent.jar");
     }
 
     fn check_output<Check>(run_result: &LauncherRunResult, check: Check) where Check: FnOnce(&String) -> bool {

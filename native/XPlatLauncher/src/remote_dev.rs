@@ -10,6 +10,7 @@ use anyhow::{bail, Context, Result};
 use log::{debug, error, info};
 
 use crate::docker::is_running_in_docker;
+use crate::managed_vm_options::load_for_launch;
 use crate::*;
 
 pub struct RemoteDevLaunchConfiguration {
@@ -38,10 +39,8 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         }
 
         let remote_dev_properties = self.get_remote_dev_properties()?;
-        for p in remote_dev_properties {
-            let key = p.key.as_str();
-            let value = p.value.as_str();
-            vm_options.push(format!("-D{key}={value}"));
+        for property in remote_dev_properties {
+            vm_options.push(format!("-D{}={}", property.key, property.value));
         }
 
         if let Some(command) = self.get_args().first() {
@@ -58,6 +57,20 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
                 }
                 _ => {}
             }
+        }
+
+        let normal_backend = self
+            .get_args()
+            .first()
+            .is_some_and(|command| matches!(command.as_str(), "remoteDevHost" | "serverMode"));
+        if normal_backend {
+            let managed_vm_options = load_for_launch(
+                &vm_options,
+                &self.default.user_config_dir,
+                &self.default.ide_home,
+            )?;
+            debug!("Collected {} managed VM options", managed_vm_options.len());
+            vm_options.extend(managed_vm_options);
         }
 
         Ok(vm_options)
@@ -351,6 +364,7 @@ fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
         ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
         ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("provisionTbeBackend", IjStarterCommand {ij_command: "provisionTbeBackend".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "registerBackendLocationForGateway".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
@@ -593,4 +607,16 @@ fn is_wsl2() -> bool {
     std::fs::read_to_string("/proc/sys/kernel/osrelease")
         .map(|x| x.contains("WSL2"))
         .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::get_known_intellij_commands;
+
+    #[test]
+    fn exposes_only_the_current_backend_provisioning_command() {
+        let commands = get_known_intellij_commands();
+        assert!(commands.contains_key("provisionTbeBackend"));
+        assert!(!commands.contains_key("installTbeBackendPlugins"));
+    }
 }

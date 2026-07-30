@@ -73,6 +73,21 @@ impl<'a> TestEnvironment<'a> {
         vm_options_file
     }
 
+    pub fn create_managed_vm_options(&mut self, content: &str) -> PathBuf {
+        let config_dir = self.create_temp_dir("managed-config");
+        let overlay = self.create_managed_vm_options_in(&config_dir, content);
+        self.create_toolbox_vm_options(&format!("-Didea.config.path={}\n", config_dir.display()));
+        overlay
+    }
+
+    pub fn create_managed_vm_options_in(&self, config_dir: &Path, content: &str) -> PathBuf {
+        let overlay_dir = config_dir.join("tbe");
+        fs::create_dir(&overlay_dir).unwrap();
+        let overlay = overlay_dir.join("managed-backend.vmoptions");
+        Self::create_file(&overlay, content);
+        overlay
+    }
+
     fn create_file(file: &Path, content: &str) {
         fs::create_dir_all(file.parent().unwrap())
             .unwrap_or_else(|_| panic!("Cannot create: {:?}", file));

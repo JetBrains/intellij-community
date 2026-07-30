@@ -18,6 +18,7 @@ public class TestMain {
   public static void main(String[] args) throws Throwable {
     if (args.length > 0 && "serverMode".equals(args[0])) {
       System.out.println("Started in server mode");
+      System.out.println("managed.marker=" + System.getProperty("managed.marker"));
       args = Arrays.copyOfRange(args, 1, args.length);
     }
 
@@ -32,6 +33,7 @@ public class TestMain {
         case "sigsegv" -> segmentationViolation();
         case "main-class" -> mainClassName();
         case "remoteDevStatus" -> checkStatus();
+        case "remoteDevHost" -> printManagedMarker();
         case "stdout-redirect" -> stdoutRedirect(args);
         default -> {
           System.err.println(
@@ -164,6 +166,10 @@ public class TestMain {
       System.err.println("VM options contain the debug option: " + debugOption.get());
       System.exit(1);
     }
+  }
+
+  private static void printManagedMarker() {
+    System.out.println("managed.marker=" + System.getProperty("managed.marker"));
   }
 
   private static void stdoutRedirect(String[] args) throws Throwable {
