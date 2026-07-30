@@ -125,6 +125,14 @@ class MermaidPreviewEditor internal constructor(
     }
   }
 
+  /**
+   * The loaded diagram component, awaiting the preview's initial load if it is still in flight.
+   *
+   * Exposed for [PreviewSyntaxValidator], which reuses this preview's mermaid instance to check whether a
+   * diagram parses instead of starting a browser of its own.
+   */
+  internal suspend fun diagramComponent(): MermaidDiagramPreviewComponent = component.diagramComponent()
+
   private fun createComponent(): MermaidPreviewComponentContainer {
     val container = MermaidPreviewComponentContainer(
       parentDisposable = this,

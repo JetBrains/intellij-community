@@ -50,6 +50,14 @@
     <module name="intellij.mermaid.spellchecker"/>
   </content>
 
+  <extensionPoints>
+    <!-- Implemented by the JCEF content module, which is optional: with nothing registered here the
+         render-error annotator simply reports nothing. -->
+    <extensionPoint qualifiedName="com.intellij.mermaid.syntaxValidator"
+                    interface="com.intellij.mermaid.lang.validation.MermaidSyntaxValidator"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Mermaid"
               implementationClass="com.intellij.mermaid.lang.MermaidFileType"

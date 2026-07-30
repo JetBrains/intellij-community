@@ -1,17 +1,23 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.mermaid.markdown"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.project"/>
-    <module name="intellij.platform.frontend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="com.intellij.mermaid.frontend.preview.MermaidEditorWithPreviewProvider"/>
+
+    <annotator language="Mermaid"
+               implementationClass="com.intellij.mermaid.frontend.validation.MermaidRenderErrorAnnotator"/>
   </extensions>
 </idea-plugin>
