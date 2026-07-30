@@ -40,7 +40,7 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
 
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType type) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType type) {
     return pack(ATTRIBUTES.get(type));
   }
 }

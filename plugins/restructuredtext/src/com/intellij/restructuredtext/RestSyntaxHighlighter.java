@@ -90,7 +90,7 @@ public class RestSyntaxHighlighter extends SyntaxHighlighterBase implements Rest
 
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     return SyntaxHighlighterBase.pack(ATTRIBUTES.get(tokenType));
   }
 

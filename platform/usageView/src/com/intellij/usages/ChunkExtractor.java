@@ -194,7 +194,8 @@ public final class ChunkExtractor {
 
     boolean isBeginning = true;
 
-    for (int j = 0; lexer.getTokenType() != null; lexer.advance(), j++) {
+    IElementType tokenType;
+    for (int j = 0; (tokenType = lexer.getTokenType()) != null; lexer.advance(), j++) {
       if (j % 50 == 0) {
         ProgressManager.checkCanceled();
       }
@@ -215,7 +216,6 @@ public final class ChunkExtractor {
         }
       }
       isBeginning = false;
-      IElementType tokenType = lexer.getTokenType();
       TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
       if (!tokenHighlightProcessor.process(hiStart, hiEnd, tokenHighlights)) {
         return;

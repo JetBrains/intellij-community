@@ -17,7 +17,7 @@ open class MarkdownSyntaxHighlighter: SyntaxHighlighterBase() {
 
   override fun getHighlightingLexer(): Lexer = lexer
 
-  override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> {
+  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> {
     val attributes = ATTRIBUTES[tokenType]
     if (attributes != null) return pack(attributes)
     return pack(htmlSyntaxHighlighter?.getTokenHighlights(tokenType)?.lastOrNull())

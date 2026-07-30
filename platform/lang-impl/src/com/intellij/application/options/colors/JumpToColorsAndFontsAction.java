@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -202,7 +203,8 @@ public final class JumpToColorsAndFontsAction extends DumbAwareAction {
       if (syntaxHighlighter != null && !hasEraseMarkerRef.get()) {
         HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
         while (!iterator.atEnd()) {
-          for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
+          IElementType type = iterator.getTokenType();
+          for (TextAttributesKey key : type == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type)) {
             if (key != null) {
               keys.add(key);
             }

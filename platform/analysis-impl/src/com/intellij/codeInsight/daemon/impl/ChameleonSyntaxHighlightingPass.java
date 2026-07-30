@@ -134,7 +134,7 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
       if (tokenRange.isEmpty()) continue;
       IElementType type = PsiUtilCore.getElementType(token);
       @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
-      TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
+      TextAttributesKey[] keys = type==null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type);
       List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys, null);
       for (HighlightInfo info : infos) {
         holder.add(info);

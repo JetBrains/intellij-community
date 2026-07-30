@@ -173,7 +173,7 @@ private object TestHighlighterFactory : SyntaxHighlighterFactory() {
 /** Treats the whole input as one keyword-colored token. */
 private object TestHighlighter : SyntaxHighlighterBase() {
   override fun getHighlightingLexer(): Lexer = DummyLexer(TEST_TOKEN)
-  override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> = pack(KEYWORD)
+  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> = pack(KEYWORD)
 }
 
 private val LOW_KEY = TextAttributesKey.createTextAttributesKey("ANSI_TEST_LOW_KEY")
@@ -186,5 +186,5 @@ private object MultiKeyHighlighterFactory : SyntaxHighlighterFactory() {
 /** Returns the whole input as one token carrying two keys, the least specific first. */
 private object MultiKeyHighlighter : SyntaxHighlighterBase() {
   override fun getHighlightingLexer(): Lexer = DummyLexer(TEST_TOKEN)
-  override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> = pack(LOW_KEY, HIGH_KEY)
+  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> = pack(LOW_KEY, HIGH_KEY)
 }

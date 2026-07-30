@@ -508,7 +508,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     val tokenPresentations = mutableListOf<InlayPresentation>()
     while (lexer.tokenType != null) {
       val tokenText = lexer.tokenText
-      val tokenType = lexer.tokenType
+      val tokenType = lexer.tokenType!!
       val textKeys = highlighter.getTokenHighlights(tokenType)
       if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
         tokenPresentations.add(if (smallText) smallText(tokenText) else text(tokenText))

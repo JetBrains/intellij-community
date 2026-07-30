@@ -13,7 +13,7 @@ public class PropertiesHighlighterImpl extends PropertiesHighlighter {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     final PropertiesComponent type = PropertiesComponent.getByTokenType(tokenType);
 
     TextAttributesKey key = null;

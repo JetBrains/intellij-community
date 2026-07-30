@@ -303,7 +303,7 @@ public final class SimpleEditorPreview implements PreviewPanel {
       HighlighterIterator iterator = editor.getHighlighter().createIterator(0);
       do {
         IElementType tokenType = iterator.getTokenType();
-        TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
+        TextAttributesKey[] tokenHighlights = tokenType == null ? TextAttributesKey.EMPTY_ARRAY : highlighter.getTokenHighlights(tokenType);
         for (final TextAttributesKey tokenHighlight : tokenHighlights) {
           String type = tokenHighlight.getExternalName();
           if (type.equals(attrKey)) {

@@ -33,7 +33,7 @@ interface HtmlSyntaxHighlighter {
       lexer.start(text)
 
       while (lexer.tokenType != null) {
-        val type = lexer.tokenType
+        val type = lexer.tokenType!!
         val highlights = highlighter.getTokenHighlights(type).lastOrNull()
         val color = highlights?.let {
           colorScheme.getAttributes(it)?.foregroundColor

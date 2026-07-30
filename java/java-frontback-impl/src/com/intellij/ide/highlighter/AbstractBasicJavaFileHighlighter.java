@@ -88,7 +88,7 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
                                          @NotNull Map<IElementType, TextAttributesKey> map2);
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     while (tokenType instanceof ParentProviderElementType parentProviderElementType) {
       if (parentProviderElementType.getParents().size() == 1) {
         tokenType = parentProviderElementType.getParents().iterator().next();

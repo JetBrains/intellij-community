@@ -33,7 +33,7 @@ public final class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFac
     }
 
     @Override
-    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+    public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
       return pack(myAttributes.get(tokenType));
     }
   };

@@ -98,7 +98,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(final IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(final @NotNull IElementType tokenType) {
     return pack(map.get(tokenType));
   }
 

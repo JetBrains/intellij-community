@@ -151,7 +151,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     return pack(ourMap.get(tokenType));
   }
 }
