@@ -8,7 +8,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -35,7 +34,7 @@ import org.junit.jupiter.api.Test
  * round-trip.
  */
 @TestApplication
-internal class PyDefaultProfileFormatterTest {
+class PyDefaultProfileFormatterTest {
   companion object {
     private val tempDir = tempPathFixture()
     private val project = projectFixture(tempDir, openAfterCreation = true)

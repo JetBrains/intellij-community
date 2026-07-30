@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -15,6 +16,7 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -99,6 +102,7 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.fail
 import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
@@ -179,7 +183,8 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
-    val copyDirectoryToProject: List<Pair<String, String>> = emptyList(),
+    val copyDirectoryToProject: Map<String, String> = emptyMap(),
+    val additionalSdkRoots: Map<String, OrderRootType> = emptyMap(),
   )
 
 
@@ -281,6 +286,31 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
+  protected fun setAdditionalSdkRoots(additionalSdkRoots:  Map<String, OrderRootType>, addElseRemove: Boolean) {
+    if (additionalSdkRoots.isEmpty()) return
+    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)!!
+
+    runWriteAction {
+      val modificator = sdk.getSdkModificator()
+      for ((relativeTestDataPath, rootType) in additionalSdkRoots.entries) {
+        val absPath = PythonTestUtil.getTestDataPath() + "/" + relativeTestDataPath
+        val testDataDir = StandardFileSystems.local().findFileByPath(absPath)
+        if (testDataDir == null) {
+          fail("Could not find additional SDK root at $absPath")
+          break
+        }
+        if (addElseRemove) {
+          modificator.addRoot(testDataDir, rootType)
+        }
+        else {
+          modificator.removeRoot(testDataDir, rootType)
+        }
+      }
+      modificator.commitChanges()
+    }
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
+
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
     test(defaultTestOptions, defaultTestFileName, fileContent, *otherFiles)
   }
@@ -315,10 +345,13 @@ abstract class PyCodeInsightTestCase {
     val oldAnyType = anyTypeKey.asBoolean()
     anyTypeKey.setValue(options.enablePyAnyType)
 
+    setAdditionalSdkRoots(options.additionalSdkRoots, true)
+
     try {
       doTest(options, fileName, fileContent, otherFiles)
     }
     finally {
+      setAdditionalSdkRoots(options.additionalSdkRoots, false)
       setLanguageLevel(null)
       anyTypeKey.setValue(oldAnyType)
       Disposer.dispose(recursionFlagDisposable)
@@ -327,7 +360,7 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun doTest(options: TestOptions, fileName: String, fileContent: String, otherFiles: Array<out Pair<String, String>>) {
-    for ((from, to) in options.copyDirectoryToProject) {
+    for ((from, to) in options.copyDirectoryToProject.entries) {
       myFixture.copyDirectoryToProject(from, to)
     }
     for ((filename, content) in otherFiles) {

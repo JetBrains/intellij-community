@@ -44,7 +44,7 @@ import org.junit.Test
 
 @Subsystems.Interpreters
 @Layers.Functional
-internal class PySdkPathsTest {
+class PySdkPathsTest {
 
   companion object {
     @JvmField
