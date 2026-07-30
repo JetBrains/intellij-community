@@ -26,12 +26,14 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -117,6 +119,20 @@ import javax.swing.JRootPane
 
 private val LOG = logger<ToolWindowManagerImpl>()
 private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show.separate.task", "false").toBoolean()
+
+/**
+ * Whether the editor area has claimed the focus of the editor that was just closed, because its empty state is that area's focus target.
+ *
+ * The claimed component is mounted a creation delay later, so focusing a tool window by default here would take focus the empty state is
+ * about to be given — and take it visibly, only to lose it again. A claim that ends up with nothing to focus calls
+ * [ToolWindowManagerImpl.focusToolWindowByDefault] itself, so standing down cannot leave the frame without a focus owner.
+ */
+@RequiresEdt
+private fun emptyEditorAreaClaimsClosedEditorFocus(project: Project): Boolean {
+  val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return false
+  // the init job is awaited because `splitters` reaches `mainSplitters`, which exists only once that job has completed
+  return fileEditorManager.initJob.isCompleted && fileEditorManager.splitters.isEmptyStateFocusRequestPending()
+}
 
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
 
@@ -437,7 +453,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         coroutineScope.launch(Dispatchers.EDT) {
           @Suppress("DEPRECATION")
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+            if (!FileEditorManager.getInstance(project).hasOpenFiles() && !emptyEditorAreaClaimsClosedEditorFocus(project)) {
               focusToolWindowByDefault()
             }
           })
@@ -1889,7 +1905,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ToolWindowManagerEventType.MovedOrResized, toolWindow)
   }
 
-  private fun focusToolWindowByDefault() {
+  /**
+   * Focuses the most recently active visible tool window, where the editor area has nothing to hand focus to.
+   *
+   * Also called from the editor area itself, for a claim on the focus of an emptied area that could not be kept — see
+   * [EditorsSplitters.requestEmptyStateFocusWhenPresented].
+   */
+  @RequiresEdt
+  internal fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {
       if (each.readOnlyWindowInfo.isVisible) {

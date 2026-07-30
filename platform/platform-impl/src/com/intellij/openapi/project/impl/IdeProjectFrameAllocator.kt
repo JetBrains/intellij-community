@@ -54,6 +54,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
@@ -83,6 +84,7 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CancellationException
@@ -609,8 +611,29 @@ private suspend fun postOpenEditors(
     // check after `initDockableContentFactory` - editor in a docked window
     if (!fileEditorManager.hasOpenFiles()) {
       stopOpenFilesActivity(project)
+      // An editor area whose empty state claims focus is where the caret belongs on a project that restored no editors, the same way it
+      // would belong in a restored editor. The request is made here, where "project open restored nothing" is known, and honoured when
+      // the empty state is presented — the hold released below. An editor opened after this point (the README) drops it again.
+      // Not on a remote dev host, which does not focus anything of its own on project open either — see `openProjectViewIfNeeded`.
+      val emptyStateClaimKept = AtomicBoolean(true)
+      val emptyStateTakesFocus = !AppMode.isRemoteDevHost() &&
+                                 withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                                   val splitters = fileEditorManager.mainSplitters
+                                   splitters.emptyStateClaimsFocus().also { takesFocus ->
+                                     if (takesFocus) {
+                                       // The Project view below is opened without focus for this claim, which is a promise made before
+                                       // there is a component to keep it with. Where it cannot be kept — a provider that builds nothing,
+                                       // an empty state that is never presented — the Project view is focused after all, either here or
+                                       // at the point it is opened, whichever comes second.
+                                       splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = {
+                                         emptyStateClaimKept.set(false)
+                                         focusProjectViewIfOpened(project)
+                                       })
+                                     }
+                                   }
+                                 }
       if (!isNotificationSilentMode(project)) {
-        openProjectViewIfNeeded(project, toolWindowInitJob)
+        openProjectViewIfNeeded(project, toolWindowInitJob, focusProjectView = { !emptyStateTakesFocus || !emptyStateClaimKept.get() })
         findAndOpenReadmeIfNeeded(project)
       }
       FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
@@ -788,7 +811,12 @@ private fun installMaximizeListener(frame: IdeFrameImpl) {
   })
 }
 
-private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job) {
+/**
+ * @param focusProjectView `false` when something else on this project's editor area takes focus instead — an empty state that claims
+ * it — so the Project view is opened without focus rather than focused and then focused away from. Asked at the moment the Project view
+ * is activated rather than in advance, because a claim on the editor area's focus can be given up before that moment.
+ */
+private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job, focusProjectView: () -> Boolean) {
   if (!serviceAsync<RegistryManager>().`is`("ide.open.project.view.on.startup")) {
     return
   }
@@ -799,14 +827,33 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
   withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
     if (toolWindowManager.activeToolWindowId == null) {
-      val toolWindow = toolWindowManager.getToolWindow("Project")
+      val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
       if (toolWindow != null) {
         // maybe readAction
         withContext(Dispatchers.EDT) {
-          toolWindow.activate(null, !AppMode.isRemoteDevHost())
+          toolWindow.activate(null, focusProjectView() && !AppMode.isRemoteDevHost())
         }
       }
     }
+  }
+}
+
+/**
+ * Focuses the Project view that [openProjectViewIfNeeded] opened without focus, because the editor area's empty state claimed that focus
+ * and then found nothing to take it with.
+ *
+ * Does nothing when the Project view is not showing: it was never opened — notification silent mode, the registry key off — and there is
+ * nothing here to focus. Where that is only because it has not been opened *yet*, the claim is already known to be given up by the time
+ * it is, and it is opened focused instead.
+ */
+@RequiresEdt
+private fun focusProjectViewIfOpened(project: Project) {
+  if (project.isDisposed) {
+    return
+  }
+  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW) ?: return
+  if (toolWindow.isVisible) {
+    toolWindow.activate(null, true)
   }
 }
 

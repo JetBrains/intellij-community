@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WelcomeScreenTabService
@@ -70,6 +71,7 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.parseFileEntry
@@ -178,7 +180,10 @@ open class EditorsSplitters internal constructor(
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
-      return getSplittersToFocus(project)?.currentCompositeFlow?.value?.preferredFocusedComponent
+      val splitters = getSplittersToFocus(project) ?: return null
+      // an editor area with no editor in it still has a default component when its empty state claims focus — that is what Focus Editor
+      // and a tool window returning focus reach there
+      return splitters.currentCompositeFlow.value?.preferredFocusedComponent ?: splitters.emptyStatePreferredFocusedComponent()
     }
 
     @JvmStatic
@@ -282,6 +287,45 @@ open class EditorsSplitters internal constructor(
 
   internal fun enableRichEmptyStateComponents() {
     emptyStateComponentController.enableRichComponents()
+  }
+
+  /**
+   * Whether this area's empty state takes the focus an editor would have taken, so that whoever else focuses something on an empty
+   * editor area — project open activating the Project tool window — can leave it to the empty state instead.
+   */
+  @Internal
+  @RequiresEdt
+  fun emptyStateClaimsFocus(): Boolean = emptyStateComponentController.claimsFocus()
+
+  /** The default focus component of an area with no editor in it; `null` unless a mounted empty state claims focus. */
+  @Internal
+  @RequiresEdt
+  fun emptyStatePreferredFocusedComponent(): JComponent? = emptyStateComponentController.preferredFocusedComponent()
+
+  /**
+   * Asks this area's empty state to take focus once it is presented — where the platform would have focused an editor: project open
+   * that restored none, and an area whose last tab the user just closed.
+   *
+   * @param onFocusUnclaimed run on the EDT when the claim leaves that focus unclaimed, so that whoever stood down for it can focus its
+   * own target after all; see [EditorEmptyStateComponentController.requestFocusWhenPresented].
+   */
+  @Internal
+  @RequiresEdt
+  fun requestEmptyStateFocusWhenPresented(onFocusUnclaimed: (() -> Unit)? = null) {
+    emptyStateComponentController.requestFocusWhenPresented(onFocusUnclaimed)
+  }
+
+  /**
+   * Whether this area's empty state has been asked to take focus and has not settled that claim yet, so that whoever else would focus
+   * something on an empty editor area can leave it to the empty state — see [requestEmptyStateFocusWhenPresented].
+   */
+  @Internal
+  @RequiresEdt
+  fun isEmptyStateFocusRequestPending(): Boolean = emptyStateComponentController.isFocusRequestPending()
+
+  @TestOnly
+  internal fun setEmptyStateComponentFocusRequesterForTests(requester: ((JComponent) -> Unit)?) {
+    emptyStateComponentController.setFocusRequesterForTests(requester)
   }
 
   /**
@@ -847,6 +891,12 @@ open class EditorsSplitters internal constructor(
 
   internal open fun afterFileClosed(file: VirtualFile) {
     cancelEmptyStateComponentCreation()
+    if (showEmptyText()) {
+      // The closed editor's focus is inherited by what replaces it, and on an area with nothing left that is its empty state; the
+      // request is dropped again if this turns out to be a close that another editor takes over (a preview replacement, say).
+      // The tool window manager stands down for this claim, so a claim that finds nothing to focus hands that focus back to it.
+      requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { focusToolWindowByDefaultOnEmptiedArea(manager) })
+    }
     updateEmptyStateComponent()
   }
 
@@ -1748,6 +1798,23 @@ private fun getSplitCount(component: JComponent): Int {
     return getSplitCount(component.firstComponent) + getSplitCount(component.secondComponent)
   }
   return 1
+}
+
+/**
+ * Focuses what [ToolWindowManagerImpl] focuses when the last editor is closed: the most recently active visible tool window.
+ *
+ * It stands down while a claim on the focus of the emptied area is pending, because that focus is the empty state's a creation delay
+ * later. This is the other half of standing down — the claim found nothing to focus, so the focus goes where it would have gone.
+ */
+@RequiresEdt
+private fun focusToolWindowByDefaultOnEmptiedArea(manager: FileEditorManagerImpl) {
+  val project = manager.project
+  // `hasOpenFiles` is the condition the tool window manager stood down under, so this hands back exactly the focus it gave up: an area
+  // this one shares an editor with — a docked editor window — is one it never stood down for
+  if (project.isDisposed || manager.hasOpenFiles()) {
+    return
+  }
+  (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.focusToolWindowByDefault()
 }
 
 private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
