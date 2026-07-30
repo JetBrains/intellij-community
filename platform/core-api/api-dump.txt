@@ -1059,6 +1059,7 @@ f:com.intellij.openapi.editor.colors.ColorKey
 - getFallbackColorKey():com.intellij.openapi.editor.colors.ColorKey
 f:com.intellij.openapi.editor.colors.TextAttributesKey
 - java.lang.Comparable
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
 - <init>(org.jdom.Element):V
 - s:createTextAttributesKey(java.lang.String):com.intellij.openapi.editor.colors.TextAttributesKey
 - equals(java.lang.Object):Z

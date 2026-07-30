@@ -33,35 +33,28 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
     assertNoNulls(base);
-    if (key == null) {
-      return base;
-    }
-    TextAttributesKey[] result = Arrays.copyOf(base, base.length + 1);
-    result[base.length] = key;
-    return result;
+    return key == null ? base : ArrayUtil.append(base, key, TextAttributesKey.ARRAY_FACTORY);
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey @NotNull [] base) {
     assertNoNulls(base);
-    if (key == null) {
-      return base;
-    }
-    TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
-    System.arraycopy(base, 0, result, 1, base.length);
-    result[0] = key;
-    return result;
+    return key == null ? base : ArrayUtil.prepend(key, base, TextAttributesKey.ARRAY_FACTORY);
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
     assertNoNulls(base);
-    int add = 0;
-    if (t1 != null) add++;
-    if (t2 != null) add++;
-    if (add == 0) return base;
-    TextAttributesKey[] result = Arrays.copyOf(base, base.length + add);
-    add = base.length;
-    if (t1 != null) result[add++] = t1;
-    if (t2 != null) result[add] = t2;
+    int newSize = base.length + (t1 == null ? 0 : 1) + (t2 == null ? 0 : 1);
+    if (newSize == base.length) {
+      return base;
+    }
+    TextAttributesKey[] result = new TextAttributesKey[newSize];
+    System.arraycopy(base, 0, result, 0, base.length);
+    if (t1 != null) {
+      result[base.length] = t1;
+    }
+    if (t2 != null) {
+      result[newSize - 1] = t2;
+    }
     return result;
   }
 
