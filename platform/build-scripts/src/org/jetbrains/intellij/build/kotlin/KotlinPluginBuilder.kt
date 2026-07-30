@@ -44,7 +44,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(
-      "kotlinc.analysis-api-impl-base",
       "kotlinc.kotlin-scripting-compiler-impl",
       "kotlinc.kotlin-scripting-common",
       "kotlinc.kotlin-scripting-dependencies",

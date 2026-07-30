@@ -135,7 +135,7 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" exported="" />
-    <orderEntry type="library" exported="" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />

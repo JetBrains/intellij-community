@@ -8,7 +8,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.symbol-light-classes" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.incremental-compilation-impl-tests" level="project" />

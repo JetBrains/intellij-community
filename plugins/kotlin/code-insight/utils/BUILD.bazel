@@ -45,7 +45,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/editor-ui-api:editor-ui",
         "//java/java-psi-api:psi",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//platform/core-ui",
     ],
 )
@@ -80,6 +80,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//java/java-psi-api:psi_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//platform/core-ui:core-ui_test_lib",
     ],
 )

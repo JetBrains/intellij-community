@@ -7981,28 +7981,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar_copy",
-    src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414_http//file",
-    out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-analysis-api-impl-base",
-    jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414_http//file",
-    source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-analysis-api-impl-base-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-analysis-api-impl-base"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-2414.jar_copy",
     src = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-2414_http//file",
     out = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-2414.jar",
@@ -12568,6 +12546,21 @@ jvm_import(
     name = "libraries-kotlin-tooling-core-kotlin-tooling-core",
     jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar_copy",
+    src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414_http//file",
+    out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.0-dev-2414.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
+    jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414_http//file",
+    source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_0-dev-2414-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
