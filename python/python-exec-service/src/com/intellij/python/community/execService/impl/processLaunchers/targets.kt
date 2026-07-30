@@ -246,10 +246,7 @@ private class TargetProcessCommands(
 
     targetEnv.downloadVolumes.forEach { (_, volume) ->
       if (!workingDirOnTarget.startsWith(volume.targetRoot)) return@forEach
-      val downloadRelativeDir = if (workingDirOnTarget != volume.targetRoot) {
-        workingDirOnTarget.substringAfter(volume.targetRoot + "/") + "/"
-      }
-      else workingDirOnTarget
+      val downloadRelativeDir = computeDownloadRelativeDir(workingDirOnTarget, volume.targetRoot)
       val paths = downloadConfig.relativePaths.takeIf { it.isNotEmpty() } ?: listOf(".")
       for (path in paths) {
         coroutineToIndicator {
@@ -315,6 +312,19 @@ fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: 
   val duration = measureTime { upload() }
   logger.debug { "upload ${genMessage()} : $duration" }
 }
+
+/**
+ * Path of [workingDirOnTarget] relative to [targetRoot], formatted for prepending to the
+ * relative paths passed to [TargetEnvironment.DownloadableVolume.download], whose argument must be
+ * relative to [targetRoot] (see the [TargetEnvironment.Volume] contract).
+ *
+ * Returns an empty string when the working dir *is* the volume root (the common single-module
+ * case) so `download` receives just the plain relative path (e.g. `pyproject.toml`); otherwise the
+ * subpath with a trailing `/`. Never returns an absolute path.
+ */
+internal fun computeDownloadRelativeDir(workingDirOnTarget: String, targetRoot: String): String =
+  if (workingDirOnTarget == targetRoot) ""
+  else workingDirOnTarget.substringAfter("$targetRoot/") + "/"
 
 /**
  * Maps download roots using existing upload roots.
