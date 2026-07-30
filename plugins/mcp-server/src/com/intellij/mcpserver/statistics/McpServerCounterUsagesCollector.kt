@@ -2,7 +2,6 @@ package com.intellij.mcpserver.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -18,12 +17,41 @@ import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.CoroutineScope
 
-object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 5)
+/**
+ * Outcome of a single MCP tool call as seen by the server-side call wrapper in `McpSessionHandler`.
+ *
+ * [SUCCESS] and [RESULT_ERROR] are both "the tool ran to completion": a tool may report a failure to
+ * the client by returning `McpToolCallResult.isError` instead of throwing, so the two are
+ * distinguished rather than merged into a single boolean.
+ */
+internal enum class McpToolCallOutcome {
+  /** The tool returned normally and did not mark its result as an error. */
+  SUCCESS,
 
-  private val MCP_TOOL_CALL_EVENT: EventId1<String> = GROUP.registerEvent(
+  /** The tool returned normally but marked its own result as an error (`McpToolCallResult.isError`). */
+  RESULT_ERROR,
+
+  /** The tool signalled an expected, LLM-facing failure via `mcpFail` / `McpExpectedError`. */
+  EXPECTED_ERROR,
+
+  /** The tool threw an unexpected exception. */
+  FAILURE,
+
+  /** The call was cancelled, typically by a user interaction or a client-side cancellation. */
+  CANCELLED,
+}
+
+object McpServerCounterUsagesCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("mcpserver.events", 6)
+
+  private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
+  private val OUTCOME = EventFields.Enum("outcome", McpToolCallOutcome::class.java)
+
+  private val MCP_TOOL_CALL_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.tool.call",
-    EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name"),
+    TOOL_NAME,
+    OUTCOME,
+    EventFields.DurationMs,
   )
 
   private val DISPATCHED_TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("dispatched_tool_name")
@@ -82,7 +110,13 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun logMcpToolCall(descriptor: McpToolDescriptor) = MCP_TOOL_CALL_EVENT.log(descriptor.name)
+  internal fun logMcpToolCall(descriptor: McpToolDescriptor, outcome: McpToolCallOutcome, durationMs: Long) {
+    MCP_TOOL_CALL_EVENT.log(
+      TOOL_NAME.with(descriptor.name),
+      OUTCOME.with(outcome),
+      EventFields.DurationMs.with(durationMs),
+    )
+  }
 
   fun logExecuteToolDispatch(dispatchedToolName: String, argCount: Int, found: Boolean, success: Boolean, durationMs: Long) {
     EXECUTE_TOOL_DISPATCH_EVENT.log(
