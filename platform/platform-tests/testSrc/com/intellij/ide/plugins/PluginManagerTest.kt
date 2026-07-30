@@ -256,7 +256,15 @@ class PluginManagerTest {
         "- intellij.platform.split",
         "+ intellij.platform.split.connection",
         "- intellij.rd.client",
-      ))
+      ),
+      ProductMode.LANGUAGE_SERVER to listOf(
+        "+ intellij.platform.backend",
+        "- intellij.platform.backend.split",
+        "- intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.frontend.split.base",
+      ),
+    )
     for ((currentMode, expectedValues) in modes) {
       val map = buildMap {
         configureProductModeModules(currentMode.id)

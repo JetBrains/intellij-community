@@ -187,10 +187,11 @@ class ProductPluginInitContext(
       FRONTEND("frontend"),
       BACKEND("backend"),
       LIGHT("light"),
-      LIGHT_WITH_RD_CONNECTION("light_with_rd_connection");
+      LIGHT_WITH_RD_CONNECTION("light_with_rd_connection"),
+      LANGUAGE_SERVER("language_server");
 
-      val hasBackend get() = this == MONOLITH || this == BACKEND;
-      val hasFrontend get() = this != BACKEND;
+      val hasBackend get() = this == MONOLITH || this == BACKEND || this == LANGUAGE_SERVER
+      val hasFrontend get() = this != BACKEND && this != LANGUAGE_SERVER
       val isLight get() = this == LIGHT || this == LIGHT_WITH_RD_CONNECTION
     }
 
@@ -238,8 +239,10 @@ class ProductPluginInitContext(
         }
       }
 
-      val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
-      setModuleAvailability(backendJpsGraph, productMode.hasBackend)
+      if (productMode != ProductModes.LANGUAGE_SERVER) { // this condition is a workaround for LSP-1549
+        val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
+        setModuleAvailability(backendJpsGraph, productMode.hasBackend)
+      }
     }
 
     @VisibleForTesting
