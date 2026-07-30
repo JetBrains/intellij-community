@@ -24,6 +24,7 @@ internal data class DynamicPluginsValidationConfig(
   val skipDynamicPluginReconfigurationValidation: Boolean,
   val allowServiceOverridesUnloading: Boolean,
   val allowUnloadingWhenRunFromSources: Boolean,
+  val allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup: Boolean,
 )
 
 internal object DynamicPluginsValidators {
@@ -217,6 +218,7 @@ internal object DynamicPluginsValidators {
     }
   }
 
+  context(config: DynamicPluginsValidationConfig)
   fun IssueReporter.validateModuleGroupHasAllExtensionsFromDynamicEPs(
     group: RuntimeModuleGroup,
     elementsModel: MutableAppElementsModel,
@@ -246,7 +248,9 @@ internal object DynamicPluginsValidators {
         }
         else {
           val (source, ep) = epResult
-          if (!ep.isDynamic) {
+          val allowed = ep.isDynamic ||
+                        (config.allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup && ownElementsModel.getExtensionPoint(epFqn) != null)
+          if (!allowed) {
             reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
               "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}.",
               descriptor.getMainDescriptor()

@@ -395,6 +395,8 @@ internal class DynamicPluginsSupportImpl(
         SystemProperties.getBooleanProperty("idea.plugins.skip.dynamic.plugin.reconfiguration.validation", false),
       allowServiceOverridesUnloading = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false),
       allowUnloadingWhenRunFromSources = Registry.`is`("ide.plugins.allow.unload.from.sources", false),
+      allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup =
+        Registry.`is`("ide.plugins.allow.load.non.dynamic.extension.points.with.extensions.in.the.same.module", false)
     )
   }
 
