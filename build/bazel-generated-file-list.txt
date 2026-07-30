@@ -575,6 +575,7 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+libraries/zstd-jni
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 mps/build
 mps/build/intellij.mps.resources

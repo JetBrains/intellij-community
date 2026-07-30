@@ -14453,6 +14453,13 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "libraries-zstd-jni-zstd-jni",
+    jar = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
+    source_jar = "@com_github_luben-zstd-jni-1_5_7-12-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 copy_file(
     name = "org.apache.thrift/libthrift-0.19.0.jar_copy",
     src = "@org_apache_thrift-libthrift-0_19_0_http//file",
@@ -20876,13 +20883,6 @@ jvm_import(
     name = "zip-signer",
     jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
     source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_43-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "zstd-jni",
-    jar = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
-    source_jar = "@com_github_luben-zstd-jni-1_5_7-12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

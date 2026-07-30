@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.zstd.jni.jar
+  modules:
+  - name: intellij.libraries.zstd.jni
+    libraries:
+      zstd-jni:
+      - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar

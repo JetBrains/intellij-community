@@ -253,11 +253,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(outputProvider) { libName, module ->
-    // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
-      return@collectProjectLibrariesFromIncludedModules
-    }
-
     if (libAsProductModule.contains(libName)) {
       return@collectProjectLibrariesFromIncludedModules
     }
