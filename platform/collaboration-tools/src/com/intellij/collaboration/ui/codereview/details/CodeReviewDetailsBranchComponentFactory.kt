@@ -78,9 +78,7 @@ object CodeReviewDetailsBranchComponentFactory {
           HintUtil.createAdComponent(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source), JBUI.CurrentTheme.Advertiser.border(), SwingConstants.LEFT)
         }
         val actions = buildList {
-          if (!checkedOut) {
-            add(ReviewAction.Checkout)
-          }
+          add(ReviewAction.Checkout)
           if (branchesVm.canCheckoutInNewWorktree && !checkedOut) {
             add(ReviewAction.CheckoutInNewWorktree)
           }
