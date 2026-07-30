@@ -207,6 +207,8 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     val searchInLibraries = (scope as? GlobalSearchScope)?.isSearchInLibraries ?: true
     val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
 
+    if (!NonIndexableProductBehaviorService.getInstance().shouldLookupInProjectScopes() && !searchInLibraries) return
+
     val psiManager = PsiManager.getInstance(project)
 
     val installedIndicator = ProgressManager.getInstance().getProgressIndicator()

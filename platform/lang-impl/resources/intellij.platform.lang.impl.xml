@@ -125,6 +125,9 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
     <applicationSettings service="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.NonIndexableProductBehaviorService"
+                        serviceImplementation="com.intellij.ide.actions.searcheverywhere.DefaultNonIndexableProductBehaviorService"
+                        open="true"/>
     <vetoRenameCondition implementation="com.intellij.openapi.paths.WebReferenceVetoRenameCondition"/>
 
     <projectSettings service="com.intellij.analysis.AnalysisUIOptions"/>
