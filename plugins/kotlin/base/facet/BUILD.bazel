@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
@@ -66,6 +66,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":facet",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

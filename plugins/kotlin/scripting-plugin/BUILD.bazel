@@ -22,7 +22,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
         "//platform/util",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-impl",
     ],
 )
@@ -41,6 +41,7 @@ jvm_library(
         ":scripting-plugin",
         "//plugins/kotlin/jsr223:jsr223_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-impl:core-impl_test_lib",
     ],
 )

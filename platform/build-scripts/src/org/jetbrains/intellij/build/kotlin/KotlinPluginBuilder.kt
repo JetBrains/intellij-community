@@ -156,7 +156,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     for (library in COMPILER_PLUGINS) {
       spec.excludeProjectLibrary(library)
     }
-    spec.excludeProjectLibrary("kotlinc.kotlin-compiler-common")
     for (library in LIBRARIES) {
       spec.excludeProjectLibrary(library)
     }
@@ -178,7 +177,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   fun kotlinFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
+      spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
     }
   }
 
@@ -201,10 +200,10 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
+  spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
 
   spec.withPatch { patcher, context ->
-    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -214,6 +213,9 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
     }
   }
 }
+
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
 
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->

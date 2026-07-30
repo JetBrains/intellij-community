@@ -12,7 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/fir",
         "//platform/usageView",
         "//plugins/kotlin/base/analysis",
@@ -39,7 +39,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//java/java-indexing-api:indexing",
         "//java/java-indexing-api:indexing_test_lib",

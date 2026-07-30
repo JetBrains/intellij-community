@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.gradle.completion.kotlin` start
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
 jvm_library(
     name = "kotlin",
     srcs = glob(
@@ -33,13 +38,13 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/editor-ui-api:editor-ui",
         "//platform/workspace/jps",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//java/java-psi-api:psi",
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//platform/projectModel-api:projectModel",
         "//plugins/gradle/java",
         "//platform/lang-api:lang",
         "//plugins/kotlin/base/code-insight",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -68,7 +73,8 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/workspace/jps:jps_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",

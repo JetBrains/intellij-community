@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/native",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/lang-impl",
@@ -41,7 +41,8 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/native",
         "//plugins/kotlin/native:native_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",

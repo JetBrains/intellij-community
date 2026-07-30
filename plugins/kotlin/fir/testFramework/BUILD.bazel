@@ -42,7 +42,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:opentest4j",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",

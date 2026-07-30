@@ -24,7 +24,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/util",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-jvm",
     ],
@@ -46,6 +46,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.jsr223` end

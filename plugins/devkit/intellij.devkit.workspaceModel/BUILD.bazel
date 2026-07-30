@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.devkit.workspaceModel` start
@@ -10,6 +10,11 @@ create_kotlinc_options(
         "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
 jvm_library(
@@ -35,7 +40,6 @@ jvm_library(
         "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:workspace-model-codegen",
@@ -81,6 +85,7 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl",
         "//platform/progress/shared:ide-progress",
         "//plugins/copyright",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -100,7 +105,8 @@ jvm_library(
         "//java/java-indexing-api:indexing_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
         "//plugins/kotlin/references:references_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",

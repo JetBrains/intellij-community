@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/asm",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
         "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
@@ -61,7 +61,8 @@ jvm_library(
         "//plugins/kotlin/plugin/k2",
         "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",

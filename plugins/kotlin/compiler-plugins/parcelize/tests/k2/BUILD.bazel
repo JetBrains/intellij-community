@@ -28,7 +28,8 @@ jvm_library(
     runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlinc-analysis-api",

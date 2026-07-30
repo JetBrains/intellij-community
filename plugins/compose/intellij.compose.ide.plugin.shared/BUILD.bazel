@@ -1,11 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
 create_kotlinc_options(
     name = "custom_ide-plugin-shared",
     x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
 jvm_library(
@@ -45,7 +50,6 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/references",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
@@ -54,6 +58,7 @@ jvm_library(
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/util",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -88,7 +93,8 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
@@ -170,7 +176,8 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-analysis-api",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",

@@ -19,7 +19,7 @@ jvm_library(
         "@lib//:libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2",
         "@lib//:kotlinc-analysis-api-impl-base",
         "@lib//:kotlinc-analysis-api-platform-interface",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-low-level-api-fir",
         "@lib//:kotlinc-symbol-light-classes",
     ],
@@ -36,7 +36,11 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.analysis.api.k2",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2"],
-    runtime_deps = [":libraries-kotlinc-analysis-api-k2"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.k2` end
 

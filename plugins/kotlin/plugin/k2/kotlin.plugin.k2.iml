@@ -12,7 +12,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" scope="RUNTIME" />

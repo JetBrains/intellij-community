@@ -1,6 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jps_test(
     name = "evaluationPlugin-languages-kotlin-tests_test",
@@ -12,6 +12,11 @@ jps_test(
 ### skip generation section `test intellij.evaluationPlugin.languages.kotlin.tests`
 
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` start
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
 jvm_library(
     name = "kotlin",
     srcs = glob(
@@ -39,12 +44,12 @@ jvm_library(
         "//plugins/evaluation-plugin/languages",
         "//platform/core-impl",
         "//plugins/evaluation-plugin/core",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/analysis-api:analysis",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//plugins/kotlin/references",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -67,7 +72,8 @@ jvm_library(
         "//plugins/evaluation-plugin/languages:languages_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/evaluation-plugin/core:core_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
@@ -145,7 +151,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/evaluation-plugin/core",
         "//plugins/evaluation-plugin/core:core_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-core",

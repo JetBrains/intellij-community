@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.devkit.compose` start
@@ -9,6 +9,11 @@ create_kotlinc_options(
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
     ],
     plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
 jvm_library(
@@ -55,7 +60,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/jps",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl",
@@ -74,6 +78,7 @@ jvm_library(
         "//plugins/gradle",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -112,7 +117,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl:lang-impl_test_lib",

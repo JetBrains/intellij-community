@@ -21,7 +21,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
     ],
 )
@@ -47,7 +47,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//platform/core-api:core",

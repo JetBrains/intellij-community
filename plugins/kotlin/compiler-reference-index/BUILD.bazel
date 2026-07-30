@@ -26,7 +26,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:kotlinc-kotlin-build-tools-api",
         "//platform/analysis-api:analysis",
@@ -68,6 +68,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compiler-reference-index",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

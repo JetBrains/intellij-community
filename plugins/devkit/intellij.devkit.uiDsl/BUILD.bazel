@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.devkit.uiDsl` start
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
 jvm_library(
     name = "uiDsl",
     srcs = glob(
@@ -33,9 +38,9 @@ jvm_library(
         "//plugins/devkit/devkit-core:core",
         "//platform/analysis-api:analysis",
         "//java/java-psi-api:psi",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/util:util-ui",
         "//platform/platform-impl/concurrency",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -64,7 +69,8 @@ jvm_library(
         "//plugins/devkit/devkit-core:core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//java/java-psi-api:psi_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
     ],

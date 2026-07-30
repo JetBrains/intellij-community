@@ -34,7 +34,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-kotlin-compiler-ir",
         "@lib//:kotlinc-analysis-api",
@@ -68,6 +68,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-base",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",

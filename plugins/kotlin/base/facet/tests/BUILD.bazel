@@ -14,7 +14,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin/plugin/k2",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/compiler-configuration",
@@ -60,7 +60,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",

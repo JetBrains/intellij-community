@@ -20,7 +20,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
@@ -50,7 +50,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlin-test",
         "//java/java-psi-api:psi",

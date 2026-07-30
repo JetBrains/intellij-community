@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.devkit` start
@@ -9,6 +9,11 @@ create_kotlinc_options(
         "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     ],
     x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
 jvm_library(
@@ -46,7 +51,6 @@ jvm_library(
         "//java/java-analysis-api:analysis",
         "//plugins/kotlin/code-insight/utils",
         "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/editor-ui-api:editor-ui",
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
@@ -69,6 +73,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
         "//plugins/kotlin/references",
         "//plugins/kotlin/base/psi",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -100,7 +105,8 @@ jvm_library(
         "//java/java-analysis-api:analysis_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",

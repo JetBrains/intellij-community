@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin/plugin/k2",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//uast/uast-common:uast",
     ],
 )
@@ -42,7 +42,8 @@ jvm_library(
         "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlin-test",
         "//uast/uast-common:uast",
         "//uast/uast-common:uast_test_lib",

@@ -9,6 +9,11 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
+jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-analysis-api-k2_provided",
     lib = "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
 )
@@ -45,7 +50,6 @@ jvm_library(
         "//platform/core-impl",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-analysis-api-provided",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//java/java-psi-api:psi",
@@ -56,6 +60,7 @@ jvm_library(
         "//plugins/gradle",
         "//platform/external-system-impl:externalSystem-impl",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api-k2_provided",
     ],
 )
@@ -85,7 +90,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//java/java-psi-api:psi_test_lib",
@@ -183,7 +189,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/core",
         "//platform/testFramework/core:core_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-analysis-api-provided",
         "@lib//:kotlin-test-assertions-core-jvm",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",

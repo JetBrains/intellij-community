@@ -59,7 +59,7 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//java/java-psi-impl:psi-impl",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api-platform-interface",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//platform/util/jdom",
@@ -121,6 +121,7 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/statistics:statistics_test_lib",
@@ -156,7 +157,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
@@ -184,7 +185,8 @@ jvm_library(
         "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",

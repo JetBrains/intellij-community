@@ -33,7 +33,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//java/debugger/openapi:java-debugger",
         "@lib//:kotlinc-analysis-api",
         "//libraries/maven-resolver-provider",
@@ -96,6 +96,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":coroutines",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//java/debugger/openapi:java-debugger_test_lib",
         "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
         "//libraries/gson:gson_test_lib",

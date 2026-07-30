@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/toml/core",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
@@ -50,6 +50,7 @@ jvm_library(
         # do not sort,
         ":kotlin-gradle-codeInsight-toml",
         "//plugins/toml/core:core_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",

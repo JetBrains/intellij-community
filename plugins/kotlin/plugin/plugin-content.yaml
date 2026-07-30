@@ -121,6 +121,12 @@
     libraries:
       kotlinc.analysis-api-k2:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.compiler.common
+    libraries:
+      kotlinc.kotlin-compiler-common:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -224,11 +230,6 @@
   library: kotlinc.js-plain-objects-compiler-plugin
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
-  reason: withProjectLibrary
-- name: lib/kotlinc.kotlin-compiler-common.jar
-  library: kotlinc.kotlin-compiler-common
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
   reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-fe10.jar
   library: kotlinc.kotlin-compiler-fe10

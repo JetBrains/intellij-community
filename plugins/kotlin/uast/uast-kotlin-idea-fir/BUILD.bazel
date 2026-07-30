@@ -32,7 +32,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
@@ -69,6 +69,7 @@ jvm_library(
         ":kotlin-uast-idea",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/util:util_test_lib",
