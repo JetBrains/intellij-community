@@ -240,14 +240,25 @@ class MPSProperties : JetBrainsProductProperties() {
             installerImagesPath = projectHome.resolve("build/resources")
         }
     }
-}
 
-private fun patchPluginXml(): (PluginLayout.PluginLayoutSpec) -> Unit = { spec ->
-  spec.withPluginXmlPatcher { text, _ ->
-    checkedReplace(
-      oldText = text,
-      regex = """<version>([^.]+)\.([^.]+)\.?(.*)</version>""",
-      newText = """<version>$1.100$2.$3-MPS</version>""",
-    )
-  }
+    private fun patchPluginXml(): (PluginLayout.PluginLayoutSpec) -> Unit = { spec ->
+      spec.withPluginXmlPatcher { text, _ ->
+        val newText = checkedReplace(
+          oldText = text,
+          regex = """<version>([^.]+)\.([^.]+)\.?(.*)</version>""",
+          newText = """<version>$1.100$2.$3-MPS</version>""",
+        )
+        
+        val regex = """(?m)(?s)(.*)<content namespace="jetbrains">(.+)</idea-plugin>([\n]*)"""
+        val patchedManifestContent = javaClass.classLoader.getResourceAsStream("java-impl.jar/META-INF/plugin.xml")?.use {
+          it.bufferedReader().readText()
+        } ?: throw IllegalStateException("Failed to resolve plugin xml")
+        val matchResult = Regex(regex).matchEntire(patchedManifestContent) ?: throw IllegalStateException("Failed to match regex")
+        checkedReplace(
+          oldText = newText,
+          regex = regex,
+          newText = """$1<content namespace="jetbrains">${matchResult.groups[2]?.value}</idea-plugin>$3""",
+        )
+      }
+    }
 }
