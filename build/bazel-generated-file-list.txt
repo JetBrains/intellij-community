@@ -324,6 +324,7 @@ java/java-indexing-api
 java/java-indexing-impl
 java/java-indexing-serializers
 java/java-promo
+java/java-property-tests
 java/java-psi-api
 java/java-psi-impl
 java/java-runtime

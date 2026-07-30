@@ -1098,6 +1098,8 @@ jvm_library(
         "//plugins/groovy:groovy-tests-main_test_lib",
         "//platform/exploratory-tests:exploratory-tests-main",
         "//platform/exploratory-tests:exploratory-tests-main_test_lib",
+        "//java/java-property-tests:propertyBased-tests",
+        "//java/java-property-tests:propertyBased-tests_test_lib",
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests",
         "//plugins/search-everywhere-ml:searchEverywhereMl-tests_test_lib",
         "//platform/lsp-impl/tests",
