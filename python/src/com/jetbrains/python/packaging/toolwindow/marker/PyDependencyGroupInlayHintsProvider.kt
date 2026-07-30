@@ -21,6 +21,9 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.dependencies.spi.resolveDependencyGroupName
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -107,6 +110,15 @@ internal class PyDependencyGroupInlayHintsProvider : InlayHintsProvider<NoSettin
                                 ?.let { PyProjectToml.parseCached(project, it) }
                                 ?.project?.name
                               ?: module.name
+          // Bind the packaging service to the *clicked* module's SDK before the dialog opens.
+          // Without this, the dialog falls back to `findFirstPythonSdk()`, which in a multi-project
+          // workspace (e.g. poetry subprojects) may pick the wrong SDK — or the service may still
+          // be uninitialized, in which case the install click silently no-ops because
+          // `packagingService.currentSdk` is null (PY-91300).
+          val moduleSdk = readAction { PythonSdkUtil.findPythonSdk(module) }
+          if (moduleSdk != null) {
+            project.service<PyPackagingToolWindowService>().initForSdk(moduleSdk)
+          }
           withContext(Dispatchers.EDT) {
             PyInstallPackageDialog(project).show(preselectModuleName = preselectName, preselectGroupName = groupName)
           }

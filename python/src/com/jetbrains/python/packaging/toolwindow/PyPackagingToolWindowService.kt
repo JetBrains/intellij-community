@@ -114,12 +114,16 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   private val invalidRepositories: List<PyInvalidRepositoryViewData>
     get() = service<PyPackageRepositories>().invalidRepositories.filter { it.enabled }.map(::PyInvalidRepositoryViewData)
 
+  init {
+    subscribeToChanges()
+  }
+
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      initForSdk(readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } })
+      val sdk = currentSdk ?: readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } }
+      initForSdk(sdk)
     }
-    subscribeToChanges()
   }
 
   suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails? {
@@ -428,6 +432,10 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     ApplicationManager.getApplication().messageBus.connect(serviceScope)
       .subscribe(PySdkListener.TOPIC, object : PySdkListener {
         override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+          // `PySdkListener` fires on the application bus, so every open project's service is
+          // notified. Ignore modules that don't belong to *this* project — otherwise creating a
+          // venv in project B repoints project A's PPTW to that venv (PY-91324).
+          if (module.project != project) return
           if (newSdk != null && newSdk == currentSdk) return
           serviceScope.launch(Dispatchers.IO) {
             initForSdk(newSdk)

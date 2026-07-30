@@ -7,7 +7,10 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
@@ -46,7 +49,20 @@ internal class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(unique
     setOpenLinksInExternalBrowser(true)
   }
 
-  override fun prepareHtml(html: String): String = html.replaceFirst("<head>", "<head>$cssStyleCodeToInject")
+  /**
+   * Overrides body background/foreground so the JCEF pane matches the surrounding tool-window
+   * background instead of a hardcoded `#f7f8fa` / `#2b2d30` from the theme CSS file. Computed at
+   * inject time (not cached) so LaF changes are reflected on the next [setHtml] call.
+   */
+  private val bodyColorOverride: String
+    get() {
+      val bg = ColorUtil.toHtmlColor(JBUI.CurrentTheme.ToolWindow.background())
+      val fg = ColorUtil.toHtmlColor(UIUtil.getLabelForeground())
+      return "<style>body { background-color: $bg; color: $fg; }</style>"
+    }
+
+  override fun prepareHtml(html: String): String =
+    html.replaceFirst("<head>", "<head>$cssStyleCodeToInject$bodyColorOverride")
 
   override fun setHtml(html: String) {
     myLastHtml = html
