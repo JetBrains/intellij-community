@@ -178,7 +178,9 @@ public final class PlatformTestUtil {
 
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
+  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(10);
+  private static final long DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS =
+    SystemProperties.getLongProperty("idea.test.dispatch.all.invocation.events.timeout.ms", MAX_WAIT_TIME);
 
   public static @NotNull String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
     name = StringUtil.trimStart(name, "test");
@@ -600,9 +602,34 @@ public final class PlatformTestUtil {
         // so we also want to wait for WI runnables here
         var canary = new AtomicBoolean(false);
         ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
+        // The drain finishes once the queue is empty AND the `ModalityState.any()` canary has run. Under the
+        // non-blocking write-intent lock model that `canary` is a write-intent runnable that `NonBlockingFlushQueue` can starve
+        // indefinitely while it stays in UI_ONLY mode and keeps re-posting FLUSH_NOW invocation events. To fail fast and
+        // diagnosably, we never block unboundedly: we pull an event only when `peekEvent()` reports one, otherwise we
+        // wait in short bounded steps, and we abort with a thread/coroutine dump once the deadline elapses.
+        var start = System.currentTimeMillis();
         while (true) {
           var event = eventQueue.peekEvent();
           if (event == null && canary.get()) break;
+          var elapsed = getMillisSince(start);
+          if (elapsed > DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS) {
+            throw new AssertionError(
+              "dispatchAllInvocationEventsInIdeEventQueue() did not finish draining the IDE event queue within " +
+              DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS + " ms (canary fired=" + canary.get() + "). Suspected " +
+              "`NonBlockingFlushQueue` write-intent livelock: the queued `ModalityState.any()` runnable is starved " +
+              "while FLUSH_NOW invocation events keep being re-posted. Failing fast so that a single hung. Override the " +
+              "bound with -Didea.test.dispatch.all.invocation.events.timeout.ms if a slow environment needs longer.\n" +
+              "Thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n" +
+              "LaterInvocatorEdtQueue dump:\n" + LaterInvocator.getLaterInvocatorEdtQueue() + "\n" +
+              "Coroutine dump:\n" + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
+            );
+          }
+          if (event == null) {
+            // the queue is momentarily empty, and the canary has not run yet; wait briefly for the flush machinery to
+            // post the next event instead of blocking indefinitely in getNextEvent()
+            TimeoutUtil.sleep(1);
+            continue;
+          }
           event = eventQueue.getNextEvent();
           if (event instanceof InvocationEvent) {
             eventQueue.dispatchEvent(event);
