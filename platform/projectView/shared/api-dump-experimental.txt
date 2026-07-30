@@ -236,6 +236,7 @@
 - f:isOptionAlwaysVisible(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionEnabled(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- f:setOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z):V
 *f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 *:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder

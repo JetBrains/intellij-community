@@ -208,6 +208,14 @@ internal class TreeBasedFrontendProjectViewPane(
       launch(CoroutineName("autoscrollToSourceHandler")) {
         autoscrollToSourceHandler.manage()
       }
+      launch(CoroutineName("single-click toggle") + Dispatchers.UI) {
+        optionSupport.getActionStateFlow()
+          .map { it?.optionStates?.get(ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)?.isSelected == true }
+          .distinctUntilChanged()
+          .collectLatest { singleClick ->
+            tree.toggleClickCount = if (singleClick) 1 else 2
+          }
+      }
       if (Registry.`is`("error.stripe.enabled", defaultValue = true)) {
         launch(CoroutineName("error stripe") + Dispatchers.UI) {
           Disposer.register(asDisposable(), MyTreeUpdater(ErrorStripePainter(true), scrollPane, tree))

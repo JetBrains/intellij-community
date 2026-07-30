@@ -4,6 +4,7 @@
 package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.IdeView
+import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.projectView.HelpID
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ModuleGroup
@@ -186,6 +187,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
   }
 
   override suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean) {
+    currentTreeState.load()?.scheduleSetOption(option, newValue)
   }
 
   override suspend fun setSortKey(sortKeyValue: ProjectViewPaneSortKey) {
@@ -336,6 +338,9 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
                 is UpdateSettingsRequest -> {
                   applySettings()
                 }
+                is SetOptionRequest -> {
+                  applyOptionChange(request.option, request.newValue)
+                }
                 is SelectNodeRequest -> {
                   builder.selectNode(request.nodePath)
                 }
@@ -388,6 +393,10 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
     fun scheduleUpdateSettings() {
       schedule { UpdateSettingsRequest(it) }
+    }
+
+    fun scheduleSetOption(option: ProjectViewPaneOption, newValue: Boolean) {
+      schedule { SetOptionRequest(it, option, newValue) }
     }
 
     fun scheduleSelectElement(element: PsiElement) {
@@ -466,6 +475,45 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     private suspend fun applySettings() {
       builder.updateSettingsState { settingsStateBuilder ->
         buildSettingsState(settingsStateBuilder)
+      }
+    }
+
+    private suspend fun applyOptionChange(option: ProjectViewPaneOption, newValue: Boolean) {
+      val settingsService = ProjectViewPaneSettingsService.getInstance(project)
+      val changed = settingsService.isOptionSelected(option) != newValue
+      // Persist the new value regardless (matches ProjectViewImpl.Option.setSelected, which always
+      // writes the per-project, default and shared settings).
+      settingsService.setOptionSelected(option, newValue)
+      if (!changed) return
+      // Refresh the settings part of the state: option check marks, cross-option enablement (e.g.
+      // Abbreviate Package Names depends on Flatten Packages), and so on. The frontend menu reacts
+      // to this via ProjectViewSettingsStateEvent.
+      applySettings()
+      when (option) {
+        is ProjectViewPaneOption.FoldersAlwaysOnTop,
+        is ProjectViewPaneOption.ShowScratchesAndConsoles,
+        is ProjectViewPaneOption.ManualOrder -> {
+          updateAll(withComparator = true)
+        }
+        is ProjectViewPaneOption.ShowMembers,
+        is ProjectViewPaneOption.ShowModules,
+        is ProjectViewPaneOption.FlattenModules,
+        is ProjectViewPaneOption.FlattenPackages,
+        is ProjectViewPaneOption.AbbreviatePackageNames,
+        is ProjectViewPaneOption.HideEmptyMiddlePackages,
+        is ProjectViewPaneOption.CompactDirectories,
+        is ProjectViewPaneOption.ShowLibraryContents,
+        is ProjectViewPaneOption.ShowExcludedFiles,
+        is ProjectViewPaneOption.ShowVisibilityIcons -> {
+          updateAll(withComparator = false)
+        }
+      }
+    }
+
+    private fun updateAll(withComparator: Boolean) {
+      updateNode(SUPER_ROOT_ID) { it.deep = true }
+      if (withComparator) {
+        project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(null)
       }
     }
 
@@ -662,6 +710,7 @@ private sealed class StateUpdateRequest {
 private data class LoadChildrenRequest(override val epoch: Long, val parentId: Long) : StateUpdateRequest()
 private data class ProcessPendingUpdatesRequest(override val epoch: Long) : StateUpdateRequest()
 private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdateRequest()
+private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()

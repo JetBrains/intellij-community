@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.settings
 import com.intellij.application.options.OptionId
 import com.intellij.application.options.OptionsApplicabilityFilter
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
@@ -44,6 +45,101 @@ class ProjectViewPaneSettingsService(private val project: Project) {
       ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> state.compactDirectories
       ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> state.foldersAlwaysOnTop
       ProjectViewPaneOptionDTO.MANUAL_ORDER -> state.manualOrder
+    }
+  }
+
+  fun setOptionSelected(option: ProjectViewPaneOption, isSelected: Boolean) {
+    // The DTO is an enum, so we can use an exhaustive when with it.
+    val dto = (option as ProjectViewPaneOptionImpl).dto
+    // Mirror ProjectViewImpl.Option.setSelected: besides the per-project state, also update the
+    // default-project state (the template for newly created projects) and the application-level
+    // shared settings. The only exception is OPEN_IN_PREVIEW_TAB, which is backed by UISettings.
+    val defaultState = ProjectViewState.getDefaultInstance()
+    val shared = ProjectViewSharedSettings.instance
+    when (dto) {
+      ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> {
+        UISettings.getInstance().openInPreviewTabIfPossible = isSelected
+      }
+      ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> {
+        state.autoscrollToSource = isSelected
+        defaultState.autoscrollToSource = isSelected
+        shared.autoscrollToSource = isSelected
+      }
+      ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> {
+        state.openDirectoriesWithSingleClick = isSelected
+        defaultState.openDirectoriesWithSingleClick = isSelected
+        shared.openDirectoriesWithSingleClick = isSelected
+      }
+      ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> {
+        state.autoscrollFromSource = isSelected
+        defaultState.autoscrollFromSource = isSelected
+        shared.autoscrollFromSource = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_MODULES -> {
+        state.showModules = isSelected
+        defaultState.showModules = isSelected
+        shared.showModules = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_MEMBERS -> {
+        state.showMembers = isSelected
+        defaultState.showMembers = isSelected
+        shared.showMembers = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> {
+        state.showExcludedFiles = isSelected
+        defaultState.showExcludedFiles = isSelected
+        shared.showExcludedFiles = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> {
+        state.showVisibilityIcons = isSelected
+        defaultState.showVisibilityIcons = isSelected
+        shared.showVisibilityIcons = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> {
+        state.showLibraryContents = isSelected
+        defaultState.showLibraryContents = isSelected
+        shared.showLibraryContents = isSelected
+      }
+      ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> {
+        state.showScratchesAndConsoles = isSelected
+        defaultState.showScratchesAndConsoles = isSelected
+        shared.showScratchesAndConsoles = isSelected
+      }
+      ProjectViewPaneOptionDTO.FLATTEN_MODULES -> {
+        state.flattenModules = isSelected
+        defaultState.flattenModules = isSelected
+        shared.flattenModules = isSelected
+      }
+      ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> {
+        state.flattenPackages = isSelected
+        defaultState.flattenPackages = isSelected
+        shared.flattenPackages = isSelected
+      }
+      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> {
+        state.abbreviatePackageNames = isSelected
+        defaultState.abbreviatePackageNames = isSelected
+        shared.abbreviatePackages = isSelected // the shared setting uses a different name
+      }
+      ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> {
+        state.hideEmptyMiddlePackages = isSelected
+        defaultState.hideEmptyMiddlePackages = isSelected
+        shared.hideEmptyPackages = isSelected // the shared setting uses a different name
+      }
+      ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> {
+        state.compactDirectories = isSelected
+        defaultState.compactDirectories = isSelected
+        shared.compactDirectories = isSelected
+      }
+      ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> {
+        state.foldersAlwaysOnTop = isSelected
+        defaultState.foldersAlwaysOnTop = isSelected
+        shared.foldersAlwaysOnTop = isSelected
+      }
+      ProjectViewPaneOptionDTO.MANUAL_ORDER -> {
+        state.manualOrder = isSelected
+        defaultState.manualOrder = isSelected
+        shared.manualOrder = isSelected
+      }
     }
   }
 
