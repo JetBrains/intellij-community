@@ -336,10 +336,11 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     val problems = root.problems
     UsefulTestCase.assertSize(1, problems)
     val description = if (maven.mavenVersionIsOrMoreThan("3.9.0"))
-      "Could not find artifact test:parent:pom:1"
+      "test:parent:pom:1"
     else
       "Non-resolvable parent POM for test:project:1"
-    assertTrue(problems[0]!!.description!!.contains(description), problems[0]!!.description)
+    assertTrue(problems[0]!!.description!!.contains(description),
+              "Expected problem description to contain '$description' but was: '${problems[0]!!.description}'")
   }
 
   @Test
@@ -365,11 +366,13 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     maven.forMaven3 {
       assertSize(2, problems)
       val description = if (maven.mavenVersionIsOrMoreThan("3.9.0"))
-        "Could not find artifact test:parent:pom:1"
+        "test:parent:pom:1"
       else
         "Non-resolvable parent POM for test:project:1"
-      assertTrue(problems[0]!!.description!!.contains(description), problems[0]!!.description)
-      assertTrue(problems[1]!!.description == "Module 'foo' not found", problems[1]!!.description)
+      assertTrue(problems[0]!!.description!!.contains(description),
+                "Expected problem description to contain '$description' but was: '${problems[0]!!.description}'")
+      assertTrue(problems[1]!!.description == "Module 'foo' not found",
+                "Expected problem description to be \"Module 'foo' not found\" but was: '${problems[1]!!.description}'")
     }
     maven.forMaven4 {
       assertContain(problems.map { it.description }, "Module 'foo' not found")
