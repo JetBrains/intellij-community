@@ -1,4 +1,4 @@
-package com.jetbrains.python.packaging.parser
+package com.intellij.python.requirements.parser
 
 import org.jetbrains.annotations.ApiStatus
 
@@ -29,7 +29,4 @@ object RequirementsParserHelper {
     "bzr+ftp",
     "bzr+lp"
   )
-
-  @JvmField
-  val VCS_REGEX_STRING: String = "(${VCS_SCHEMES.joinToString("|") { it.replace("+", "\\+") }})"
 }

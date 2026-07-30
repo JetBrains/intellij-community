@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiManager;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;

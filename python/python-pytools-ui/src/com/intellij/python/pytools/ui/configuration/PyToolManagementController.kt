@@ -19,7 +19,7 @@ import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.pytools.performToolUpgrade
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

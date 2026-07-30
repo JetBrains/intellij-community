@@ -13,7 +13,7 @@ import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvir
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails

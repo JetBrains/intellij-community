@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.intellij.testFramework.common.timeoutRunBlocking

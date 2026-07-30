@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.requirements.PyPackageVersion;
 import com.intellij.python.requirements.PyRequirementImpl;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static com.intellij.python.requirements.PyRequirementsKt.pyRequirement;
 import static com.intellij.python.requirements.PyRequirementsKt.pyRequirementVersionSpec;
-import static com.jetbrains.python.packaging.PyRequirementParser.fromLine;
+import static com.intellij.python.requirements.parser.PyRequirementParser.fromLine;
 import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.COMPATIBLE;
 import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.EQ;
 import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.GT;

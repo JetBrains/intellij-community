@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider
 import com.jetbrains.python.inspections.dependencies.DependencyMap
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.psi.getStringOrNull
 import com.jetbrains.python.requirements.getPythonSdk
 import org.toml.lang.TomlLanguage
