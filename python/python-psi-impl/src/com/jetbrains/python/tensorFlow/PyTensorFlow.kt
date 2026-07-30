@@ -7,7 +7,7 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext

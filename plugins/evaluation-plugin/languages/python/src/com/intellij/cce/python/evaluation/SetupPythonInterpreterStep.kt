@@ -20,12 +20,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.PYTHON_FREE_PLUGIN_ID
 import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
@@ -190,7 +190,7 @@ private class SetupPythonInterpreterStep(
     if (!requirementsTxt.exists()) {
       return emptyList()
     }
-    return PyRequirementParser.fromText(requirementsTxt.readText())
+    return PyRequirementParser.fromText(requirementsTxt.readText(), project)
   }
 
   private fun isProjectLocal(path: String?): Boolean {

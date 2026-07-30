@@ -8,7 +8,7 @@ import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.executeOn
 import com.jetbrains.python.Result as PyR
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersion
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation

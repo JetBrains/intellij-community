@@ -14,7 +14,7 @@ import com.intellij.python.pytools.getToolVersion
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder

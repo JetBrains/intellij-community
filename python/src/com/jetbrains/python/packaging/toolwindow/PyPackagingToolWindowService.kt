@@ -31,7 +31,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageService
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage

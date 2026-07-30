@@ -43,7 +43,7 @@ import com.jetbrains.python.sdk.findFirstPythonSdk
 import com.jetbrains.python.sdk.findModuleForSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import org.jetbrains.annotations.Nls

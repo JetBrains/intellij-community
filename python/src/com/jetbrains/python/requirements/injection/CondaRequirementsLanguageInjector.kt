@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.envFileNames
-import com.jetbrains.python.requirements.RequirementsLanguage
+import com.intellij.python.requirements.RequirementsLanguage
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
@@ -42,7 +42,7 @@ internal class CondaRequirementsLanguageInjector : MultiHostInjector {
     }
 
     registrar
-      .startInjecting(RequirementsLanguage.INSTANCE)
+      .startInjecting(RequirementsLanguage)
       .addPlace(null, null, injectionHost, TextRange.create(0, injectionHost.textLength))
       .doneInjecting()
   }

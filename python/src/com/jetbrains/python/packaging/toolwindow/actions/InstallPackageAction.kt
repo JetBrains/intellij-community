@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog

@@ -6,9 +6,9 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectToolFactory
 import com.intellij.python.pyproject.getOrIssue
 import com.intellij.python.pyproject.safeGetArr
+import com.intellij.python.requirements.parser.PyRequirementParser.fromLine
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.requirements.createNameReq
-import com.jetbrains.python.requirements.psi.NameReq
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.sdk.uv.UvPyProjectIssue.SafeGetError
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus
@@ -29,15 +29,15 @@ internal data class UvPyProject(val project: UvPyProjectTable?, val issues: List
     module: Module,
     pyProject: PyProjectToml,
     outdatedPackages: Map<String, PythonOutdatedPackage>,
-  ): List<NameReq> =
+  ): List<PyRequirement> =
     setOf(
       *(pyProject.project?.dependencies?.project?.toTypedArray() ?: arrayOf()),
       *(pyProject.project?.dependencies?.allDepsFromGroups?.toTypedArray() ?: arrayOf()),
       *(project?.uvDevDependencies?.toTypedArray() ?: arrayOf()),
     ).mapNotNull { depString ->
-      createNameReq(module.project, depString)
+      fromLine(depString, module.project)
     }.filter { pyReq ->
-      pyReq.displayName in outdatedPackages
+      pyReq.name in outdatedPackages
     }
 
   companion object : PyProjectToolFactory<UvPyProject> {

@@ -22,7 +22,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.components.TwoSideComponent
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.requirements.RequirementsFileType
+import com.intellij.python.requirements.RequirementsFileType
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.util.function.Function

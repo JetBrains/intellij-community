@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
+import com.intellij.python.requirements.PyPackageVersion;
+import com.intellij.python.requirements.PyPackageVersionNormalizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import one.util.streamex.StreamEx;

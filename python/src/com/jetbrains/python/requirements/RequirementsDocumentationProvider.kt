@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
+import com.intellij.python.requirements.RequirementsFile
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -31,7 +32,7 @@ import com.intellij.ui.jcef.JBCefApp
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageMetadata
@@ -41,7 +42,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.requirements.psi.NameReq
+import com.intellij.python.requirements.parser.psi.NameReq
+import com.intellij.python.requirements.parser.psi.UrlReq
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -60,10 +62,11 @@ class RequirementsDocumentationProvider : PsiDocumentationTargetProvider {
   override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
     val anchor = originalElement ?: element
     val requirementsFile = (anchor.containingFile as? RequirementsFile) ?: return null
-    val nameReq = PsiTreeUtil.getParentOfType(anchor, NameReq::class.java, false) ?: return null
-    val parsed = PyRequirementParser.fromLine(nameReq.text) ?: return null
+    // `name @ url` requirements parse as UrlReq, not NameReq — accept both so Quick Doc works there too.
+    val requirement = PsiTreeUtil.getParentOfType(anchor, NameReq::class.java, UrlReq::class.java) ?: return null
+    val parsed = PyRequirementParser.fromLine(requirement.text, anchor.project) ?: return null
 
-    return RequirementDocumentationTarget(anchor.project, requirementsFile, parsed, nameReq)
+    return RequirementDocumentationTarget(anchor.project, requirementsFile, parsed, requirement)
   }
 }
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
-import com.jetbrains.python.requirements.RequirementsLanguage
+import com.intellij.python.requirements.RequirementsLanguage
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
@@ -27,13 +27,12 @@ class TomlRequirementsLanguageInjector : MultiHostInjector {
     val injectionHost = (context as PsiLanguageInjectionHost).also {
       it.putUserData(InjectionBackgroundSuppressor.SUPPRESS_INJECTION_BACKGROUND, Unit)
     }
-
     val endOffset = injectionHost.textLength - 1
     if (endOffset < 1) return
 
     val textRange = TextRange.create(1, endOffset)
     registrar
-      .startInjecting(RequirementsLanguage.INSTANCE)
+      .startInjecting(RequirementsLanguage)
       .addPlace(null, null, injectionHost, textRange)
       .doneInjecting()
   }
