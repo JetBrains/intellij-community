@@ -215,7 +215,6 @@ class PluginManagerTest {
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.base",
-        "+ intellij.platform.jps.build",
         "+ intellij.platform.jps.build.dependencyGraph",
       ),
       ProductMode.BACKEND to listOf(
@@ -224,7 +223,6 @@ class PluginManagerTest {
         "- intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.base",
-        "+ intellij.platform.jps.build",
         "+ intellij.platform.jps.build.dependencyGraph",
       ),
       ProductMode.FRONTEND to listOf(
@@ -233,7 +231,6 @@ class PluginManagerTest {
         "+ intellij.platform.frontend",
         "+ intellij.platform.frontend.split",
         "+ intellij.platform.frontend.split.base",
-        "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
       ),
       ProductMode.LIGHT to listOf(
@@ -243,7 +240,6 @@ class PluginManagerTest {
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "+ intellij.platform.frontend.split.base",
-        "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
         "- intellij.platform.split",
         "- intellij.platform.split.connection",
@@ -256,7 +252,6 @@ class PluginManagerTest {
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "+ intellij.platform.frontend.split.base",
-        "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
         "- intellij.platform.split",
         "+ intellij.platform.split.connection",

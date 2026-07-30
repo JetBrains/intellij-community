@@ -238,12 +238,8 @@ class ProductPluginInitContext(
         }
       }
 
-
-      val backendJps = PluginModuleId("intellij.platform.jps.build", PluginModuleId.JETBRAINS_NAMESPACE)
       val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
-      for (moduleId in listOf(backendJps, backendJpsGraph)) {
-        setModuleAvailability(moduleId, productMode.hasBackend)
-      }
+      setModuleAvailability(backendJpsGraph, productMode.hasBackend)
     }
 
     @VisibleForTesting
