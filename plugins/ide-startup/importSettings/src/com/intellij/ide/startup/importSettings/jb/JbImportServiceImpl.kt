@@ -84,6 +84,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
+import javax.swing.SwingUtilities
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
@@ -254,7 +255,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       importer.importRaw()
       logger.info("Performing raw import from '$folderPath'")
       withContext(Dispatchers.EDT) {
-        ApplicationManagerEx.getApplicationEx().restart(true)
+        scheduleRestart()
       }
     }
   }
@@ -556,7 +557,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               logger.warn("Could not write config migration options", it)
             }
           }
-          ApplicationManagerEx.getApplicationEx().restart(true)
+          scheduleRestart()
         }
       }
       else {
@@ -603,6 +604,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       SettingsCategory.TOOLS.name to SettingsCategory.TOOLS,
       SettingsCategory.SYSTEM.name to SettingsCategory.SYSTEM
     )
+  }
+}
+
+private fun scheduleRestart() {
+  SwingUtilities.invokeLater {
+    ApplicationManagerEx.getApplicationEx().restart(true)
   }
 }
 
