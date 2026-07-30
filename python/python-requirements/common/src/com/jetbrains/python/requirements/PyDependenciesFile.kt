@@ -1,7 +1,7 @@
 package com.jetbrains.python.requirements
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.python.requirements.icons.PythonRequirementsIcons
+import com.intellij.python.requirements.common.icons.PythonRequirementsCommonIcons
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -14,10 +14,10 @@ interface PyDependenciesFile {
 
 @ApiStatus.Internal
 data class SetupPyFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
-  override val icon: Icon = PythonRequirementsIcons.Requirements
+  override val icon: Icon = PythonRequirementsCommonIcons.Requirements
 }
 
 @ApiStatus.Internal
 data class RequirementsTxtFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
-  override val icon: Icon = PythonRequirementsIcons.Requirements
+  override val icon: Icon = PythonRequirementsCommonIcons.Requirements
 }
