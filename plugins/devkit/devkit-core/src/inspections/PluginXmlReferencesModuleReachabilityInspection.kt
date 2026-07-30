@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.lang.properties.BundleNameEvaluator
+import com.intellij.lang.properties.PropertiesReferenceManager
 import com.intellij.lang.properties.ResourceBundleReference
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -17,6 +19,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -33,6 +36,8 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
 import org.jetbrains.idea.devkit.dom.processing.isClassRegistration
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.references.ActionOrGroupIdReference
@@ -48,9 +53,10 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         val module = element.module ?: return
         val extensionPoint = element.extensionPoint ?: return
         val epTag = extensionPoint.xmlTag
-        if (!isReachableFromModule(element, epTag, module)) {
+        val epFqn = extensionPoint.effectiveQualifiedName
+        if (!isEpReachableFromModuleByFqn(epFqn, element, module)) {
           holder.reportUnreachableClassProblem(
-            element, epTag, extensionPoint.effectiveQualifiedName, module.name,
+            element, epTag, epFqn, module.name,
             "inspection.plugin.xml.references.module.reachability.extension.point"
           )
         }
@@ -61,8 +67,9 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         val value = element.value
         if (value is PsiClass) {
           if (isClassRegistration(element)) return // handled by ComponentModuleRegistrationChecker
-          if (!isReachableFromModule(element, value, module)) {
-            val referencedClassName = value.qualifiedName ?: value.name ?: ""
+          val qualifiedName = value.qualifiedName
+          if (!isClassReachableFromModuleByFqn(qualifiedName, element, module)) {
+            val referencedClassName = qualifiedName ?: value.name ?: ""
             holder.reportUnreachableClassProblem(
               element, value, referencedClassName, module.name,
               "inspection.plugin.xml.references.module.reachability.class"
@@ -76,7 +83,8 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
           when (ref) {
             is ActionOrGroupIdReference -> {
               val target = ref.resolve() ?: continue
-              if (!isReachableFromModule(element, target, module)) {
+              if (!isReachableFromModule(element, target, module) &&
+                  !isActionOrGroupReachableFromModuleById(ref.canonicalText, element, module)) {
                 holder.reportUnreachableClassProblem(
                   element, target, ref.canonicalText, module.name,
                   "inspection.plugin.xml.references.module.reachability.action.or.group"
@@ -86,7 +94,8 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
 
             is ResourceBundleReference -> {
               val target = ref.resolve() ?: continue
-              if (!isReachableFromModule(element, target, module)) {
+              if (!isReachableFromModule(element, target, module) &&
+                  !isBundleReachableFromModule(ref.canonicalText, element, module)) {
                 holder.reportUnreachableClassProblem(
                   element, target, ref.canonicalText, module.name,
                   "inspection.plugin.xml.references.module.reachability.bundle"
@@ -99,11 +108,33 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
     }
   }
 
+  private fun isEpReachableFromModuleByFqn(fqn: String, element: DomElement, module: Module): Boolean {
+    return ExtensionPointIndex.findExtensionPoint(module.project, moduleRuntimeScope(element, module), fqn) != null
+  }
+
+  private fun isClassReachableFromModuleByFqn(fqn: String?, element: DomElement, module: Module): Boolean {
+    return fqn == null || JavaPsiFacade.getInstance(module.project).findClass(fqn, moduleRuntimeScope(element, module)) != null
+  }
+
   private fun isReachableFromModule(element: DomElement, target: PsiElement, module: Module): Boolean {
     val targetFile = PsiUtilCore.getVirtualFile(target) ?: return true
+    return moduleRuntimeScope(element, module).contains(targetFile)
+  }
+
+  private fun isActionOrGroupReachableFromModuleById(id: String, element: DomElement, module: Module): Boolean {
+    return !IdeaPluginRegistrationIndex.processActionOrGroup(module.project, id, moduleRuntimeScope(element, module)) { false }
+  }
+
+  private fun isBundleReachableFromModule(bundleName: String, element: DomElement, module: Module): Boolean {
+    return PropertiesReferenceManager.getInstance(module.project)
+      .findPropertiesFiles(moduleRuntimeScope(element, module), bundleName, BundleNameEvaluator.DEFAULT)
+      .isNotEmpty()
+  }
+
+  private fun moduleRuntimeScope(element: DomElement, module: Module): GlobalSearchScope {
     val elementFile = DomUtil.getFile(element).virtualFile
     val includeTests = elementFile != null && ProjectFileIndex.getInstance(module.project).isInTestSourceContent(elementFile)
-    return GlobalSearchScope.moduleRuntimeScope(module, includeTests).contains(targetFile)
+    return GlobalSearchScope.moduleRuntimeScope(module, includeTests)
   }
 
   private fun DomElementAnnotationHolder.reportUnreachableClassProblem(
