@@ -16,6 +16,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.debugger.installPythonDapPlugin
 import com.jetbrains.python.debugger.isPythonDapPluginInstalledAndEnabled
+import com.jetbrains.python.debugger.isPythonDapPluginInstalledButDisabled
 
 private const val PYTHON_DAP_PLUGIN_ID = "intellij.python.dap.plugin"
 private const val PYTHON_DAP_SUGGESTION_DISMISSED_KEY = "python.dap.suggestion.dismissed"
@@ -50,7 +51,13 @@ internal class PythonDapPluginSuggestionProvider : PluginSuggestionProvider {
       val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.text = PyBundle.message("advertiser.python.dap.plugin")
 
-      panel.createActionLabel(PyBundle.message("advertiser.python.dap.plugin.install.text")) {
+      val actionText = if (isPythonDapPluginInstalledButDisabled()) {
+        PyBundle.message("advertiser.python.dap.plugin.enable.text")
+      }
+      else {
+        PyBundle.message("advertiser.python.dap.plugin.install.text")
+      }
+      panel.createActionLabel(actionText) {
         FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
         installPythonDapPlugin(project) {
           EditorNotifications.getInstance(project).updateAllNotifications()
