@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerUiMetric
 import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.newui.PluginLogo.endBatchMode
@@ -114,7 +115,10 @@ abstract class SearchResultPanel(
     myQueryJob = coroutineScope.launch(Dispatchers.IO) {
       val searchStart = TimeSource.Monotonic.markNow()
       handleQuery(query, group)
-      tracker.measure(if (isMarketplace) "search.marketplace.latency" else "search.installed.latency", searchStart)
+      tracker.measure(
+        if (isMarketplace) PluginManagerUiMetric.SEARCH_MARKETPLACE_LATENCY else PluginManagerUiMetric.SEARCH_INSTALLED_LATENCY,
+        searchStart,
+      )
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         loading(false)
       }

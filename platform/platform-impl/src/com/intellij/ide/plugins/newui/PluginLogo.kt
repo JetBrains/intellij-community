@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerUiMetric
 import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
@@ -425,7 +426,10 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
             loadPluginIconsFromFile(path = path, idPlugin = idPlugin, lazyIcon = info.second)
           }
           // path == null means the icon is downloaded from the marketplace, otherwise it is read from local plugin files
-          tracker.measure(if (path == null) "icon.load.remote" else "icon.load.local", loadStart)
+          tracker.measure(
+            if (path == null) PluginManagerUiMetric.ICON_LOAD_REMOTE else PluginManagerUiMetric.ICON_LOAD_LOCAL,
+            loadStart,
+          )
         }
       }
     }

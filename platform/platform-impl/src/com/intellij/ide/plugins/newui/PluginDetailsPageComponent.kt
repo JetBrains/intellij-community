@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
+import com.intellij.ide.plugins.PluginManagerUiMetric
 import com.intellij.ide.plugins.PluginManagerUiTracker
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.api.ReviewsPageContainer
@@ -942,7 +943,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           showPluginImpl(component.getPluginModel(), component.getUpdatePluginDescriptor())
           pluginCardOpened(component.getPluginModel().getDescriptor(), component.getGroup())
         }
-        tracker.measure("plugin.card.load", loadStart)
+        tracker.measure(PluginManagerUiMetric.PLUGIN_CARD_LOAD, loadStart)
       }
     }
   }

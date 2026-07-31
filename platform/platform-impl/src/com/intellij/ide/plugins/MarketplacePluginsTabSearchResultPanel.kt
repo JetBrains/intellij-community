@@ -180,8 +180,9 @@ internal class MarketplacePluginsTabSearchResultPanel(
         val requestStart = TimeSource.Monotonic.markNow()
         PluginModelAsyncOperationsExecutor
           .performMarketplaceSearch(parser.urlQuery).let { searchResult ->
-            tracker.measure("search.marketplace.request", requestStart)
-            if (searchResult.error != null) tracker.logEvent("search.marketplace.error")
+            tracker.measure(PluginManagerUiMetric.SEARCH_MARKETPLACE_REQUEST, requestStart)
+            if (searchResult.error != null) tracker.logEvent(PluginManagerUiEvent.SEARCH_MARKETPLACE_ERROR)
+            if (searchResult.pluginModels.isEmpty()) tracker.logEvent(PluginManagerUiEvent.SEARCH_MARKETPLACE_EMPTY)
             applySearchResult(
               result, searchResult, customRepositoriesMap,
               parser, searchIndex

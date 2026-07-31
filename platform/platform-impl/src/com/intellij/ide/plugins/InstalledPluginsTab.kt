@@ -134,14 +134,14 @@ class InstalledPluginsTab @RequiresEdt constructor(
       val totalStart = TimeSource.Monotonic.markNow()
       try {
         val model = fetchInstalledPanelModel(myPluginModel)
-        tracker.measure("installed.tab.fetch", totalStart)
+        tracker.measure(PluginManagerUiMetric.INSTALLED_TAB_FETCH, totalStart)
 
         renderInstalledPanelModel(model)
-        tracker.measure("installed.tab.total", totalStart)
+        tracker.measure(PluginManagerUiMetric.INSTALLED_TAB_TOTAL, totalStart)
       }
       catch (e: Exception) {
         rethrowControlFlowException(e)
-        tracker.logEvent("installed.tab.load.error")
+        tracker.logEvent(PluginManagerUiEvent.INSTALLED_TAB_LOAD_ERROR)
         throw e
       }
     }
@@ -174,7 +174,7 @@ class InstalledPluginsTab @RequiresEdt constructor(
       }
       finally {
         PluginLogo.endBatchMode()
-        tracker.measure("installed.tab.render", renderStart)
+        tracker.measure(PluginManagerUiMetric.INSTALLED_TAB_RENDER, renderStart)
       }
     }
   }

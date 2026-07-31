@@ -159,13 +159,13 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     coroutineScope.launch(Dispatchers.IO) {
       val totalStart = TimeSource.Monotonic.markNow()
       val model = fetchMarketplacePanelModel(myPluginModel, project)
-      tracker.measure("marketplace.tab.fetch", totalStart)
+      tracker.measure(PluginManagerUiMetric.MARKETPLACE_TAB_FETCH, totalStart)
 
       withContext(Dispatchers.EDT + any().asContextElement()) {
         val renderStart = TimeSource.Monotonic.markNow()
         applyMarketplacePanelModel(project, model, selectionListener) {
-          tracker.measure("marketplace.tab.render", renderStart)
-          tracker.measure("marketplace.tab.total", totalStart)
+          tracker.measure(PluginManagerUiMetric.MARKETPLACE_TAB_RENDER, renderStart)
+          tracker.measure(PluginManagerUiMetric.MARKETPLACE_TAB_TOTAL, totalStart)
         }
       }
     }
@@ -225,8 +225,8 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     // PluginSearchResult.error field, so failures are detected here rather than in the catch above.
     val failedQueries = queries.count { marketplaceData[it]?.error != null || marketplaceData[it] == null }
     when {
-      unexpectedLoadError || failedQueries == queries.size -> tracker.logEvent("marketplace.tab.load.error")
-      failedQueries > 0 -> tracker.logEvent("marketplace.tab.load.partial")
+      unexpectedLoadError || failedQueries == queries.size -> tracker.logEvent(PluginManagerUiEvent.MARKETPLACE_TAB_LOAD_ERROR)
+      failedQueries > 0 -> tracker.logEvent(PluginManagerUiEvent.MARKETPLACE_TAB_LOAD_PARTIAL)
     }
     return marketplaceData
   }
@@ -470,7 +470,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
   }
 
   private fun reloadMarketplaceTab() {
-    tracker.logEvent("marketplace.tab.reload")
+    tracker.logEvent(PluginManagerUiEvent.MARKETPLACE_TAB_RELOAD)
     val project = ProjectUtil.getActiveProject()
     marketplacePanel.clear()
     marketplacePanel.showLoadingIcon()
