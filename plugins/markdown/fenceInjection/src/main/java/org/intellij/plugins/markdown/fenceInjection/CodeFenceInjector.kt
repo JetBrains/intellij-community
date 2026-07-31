@@ -5,9 +5,10 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
-import com.intellij.util.text.TextRangeUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -65,18 +66,64 @@ internal open class CodeFenceInjector : MultiHostInjector {
    */
   private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
     val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = false) ?: return
-    val ranges = TextRangeUtil.mergeRanges(elements.map { it.textRangeInParent }).sortedBy { it.startOffset }
+    val places = createInjectionPlaces(elements)
 
     val surroundings = FenceSurroundingsProvider.EP_NAME.extensionList.find { it.language == language }?.getCodeFenceSurroundings()
-    if (ranges.size == 1) {
-      registrar.addPlace(surroundings?.prefix, surroundings?.suffix, host, ranges.first())
+    if (places.size == 1) {
+      val place = places.single()
+      registrar.addPlace(
+        combine(surroundings?.prefix, place.prefix),
+        combine(place.suffix, surroundings?.suffix),
+        host, place.range
+      )
       return
     }
 
-    registrar.addPlace(surroundings?.prefix, null, host, ranges.first())
-    for (range in ranges.drop(1).dropLast(1)) {
-      registrar.addPlace(null, null, host, range)
+    val first = places.first()
+    val last = places.last()
+
+    registrar.addPlace(combine(surroundings?.prefix, first.prefix), first.suffix, host, first.range)
+    for ((range, prefix, suffix) in places.drop(1).dropLast(1)) {
+      registrar.addPlace(prefix, suffix, host, range)
     }
-    registrar.addPlace(null, surroundings?.suffix, host, ranges.last())
+    registrar.addPlace(last.prefix, combine(last.suffix, surroundings?.suffix), host, last.range)
   }
+
+  private fun createInjectionPlaces(elements: List<PsiElement>): List<InjectionPlace> {
+    val places = mutableListOf<InjectionPlace>()
+    var prefix = ""
+    for (group in groupAdjacentElements(elements)) {
+      if (group.all { it is PsiWhiteSpace }) {
+        val whitespace = group.joinToString(separator = "") { it.text }
+        if (places.isEmpty()) {
+          prefix += whitespace
+        } else {
+          val last = places.last()
+          places[places.lastIndex] = last.copy(suffix = last.suffix + whitespace)
+        }
+      } else {
+        val range = TextRange(group.first().startOffsetInParent, group.last().startOffsetInParent + group.last().textLength)
+        places += InjectionPlace(range, prefix)
+        prefix = ""
+      }
+    }
+    return places
+  }
+
+  private fun groupAdjacentElements(elements: List<PsiElement>): List<List<PsiElement>> {
+    val groups = mutableListOf<MutableList<PsiElement>>()
+    for (element in elements) {
+      val previous = groups.lastOrNull()?.lastOrNull()
+      if (previous == null || previous.textRangeInParent.endOffset < element.textRangeInParent.startOffset) {
+        groups += mutableListOf(element)
+      } else {
+        groups.last() += element
+      }
+    }
+    return groups
+  }
+
+  private data class InjectionPlace(val range: TextRange, val prefix: String = "", val suffix: String = "")
+
+  private fun combine(first: String?, second: String?): String? = (first.orEmpty() + second.orEmpty()).ifEmpty { null }
 }

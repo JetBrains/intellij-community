@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.editor.injection
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
@@ -257,6 +258,32 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       type('\n')
       type("class C {}")
     }
+  }
+
+  fun `test blank line in quoted fence is not a separate injection range`() {
+    val text = """
+      > ```shell
+      > pwd
+      >
+      > echo done
+      > ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val contentStart = text.indexOf("pwd")
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, contentStart)
+    assertNotNull(injectedElement)
+    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedElement!!.containingFile) as DocumentWindow
+
+    assertTrue(injectedDocument.hostRanges.all { editor.document.getText(TextRange.create(it)).isNotBlank() })
+    assertEquals(
+      """
+        pwd
+
+        echo done
+      """.trimIndent(),
+      injectedElement.containingFile.text
+    )
   }
 
   private fun doTest(text: String, shouldHaveInjection: Boolean) {
