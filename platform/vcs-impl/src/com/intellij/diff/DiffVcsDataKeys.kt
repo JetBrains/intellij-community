@@ -4,8 +4,10 @@ package com.intellij.diff
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.diff.DiffRequestChainChangeSetProvider
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 object DiffVcsDataKeys {
   @JvmField
@@ -27,4 +29,14 @@ object DiffVcsDataKeys {
    */
   @JvmField
   val PATCH_BASE_INFO: Key<PatchBaseAnnotationInfo> = Key.create("Merge.PatchBaseInfo")
+
+  /**
+   * Provides the full VCS [com.intellij.openapi.vcs.changes.Change] set for the diff request chain.
+   *
+   * The value belongs to [com.intellij.diff.DiffContext]
+   */
+  @JvmField
+  @ApiStatus.Experimental
+  val DIFF_REQUEST_CHAIN_CHANGE_SET_PROVIDER: Key<DiffRequestChainChangeSetProvider> =
+    Key.create("DiffRequestChain.ChangeSetProvider")
 }
