@@ -358,6 +358,12 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testJSpecifyUnboundedWildcardBoundFromUnmarkedScope() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   private void addNullnessUnspecified() {
     myFixture.addClass("""
                          package org.jspecify.annotations;

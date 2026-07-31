@@ -186,8 +186,10 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         assert newBound.isValid() : newBound.getClass() + "; " + bound.isValid();
         if (newBound instanceof PsiWildcardType) {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
-          return !((PsiWildcardType)newBound).isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager())
-                                                          : rebound(wildcardType, newBoundBound);
+          // '? extends T' with 'T <- ?' is the substituted '?', so it keeps the place that one was written at
+          return !((PsiWildcardType)newBound).isBounded()
+                 ? PsiWildcardType.createUnbounded(wildcardType.getManager(), ((PsiWildcardType)newBound).getPsiContext())
+                 : rebound(wildcardType, newBoundBound);
         }
 
         return newBound == PsiTypes.nullType() ? newBound : rebound(wildcardType, newBound);
@@ -200,7 +202,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
 
       if (type.isExtends()) {
         if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return PsiWildcardType.createUnbounded(type.getManager())
+          return PsiWildcardType.createUnbounded(type.getManager(), type.getPsiContext())
             .withNullability(newBound.getNullability());
         }
         return PsiWildcardType.createExtends(type.getManager(), newBound);

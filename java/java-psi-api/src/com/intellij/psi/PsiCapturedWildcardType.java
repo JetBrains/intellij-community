@@ -13,11 +13,15 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public final class PsiCapturedWildcardType extends PsiType.Stub {
   private final @NotNull PsiWildcardType myExistential;
   private final @NotNull PsiElement myContext;
   private final @Nullable PsiTypeParameter myParameter;
   private @Nullable TypeNullability myNullability;
+  private @Nullable Boolean myCapturedInNullMarkedScope;
+  private @Nullable Boolean myWrittenInNullMarkedScope;
 
   private PsiType myUpperBound;
 
@@ -72,7 +76,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
             if (captureUpperBound == capturedWildcard) {
               return null;
             }
-            captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).getUpperBound();
+            captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).myUpperBound;
           }
         }
       }
@@ -98,18 +102,66 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
       TypeNullability nullability = TypeNullability.UNKNOWN;
       if (myExistential.isExtends()) {
         nullability = myExistential.getNullability();
-      } else {
-        NullableNotNullManager manager = NullableNotNullManager.getInstance(myContext.getProject());
-        if (manager != null) {
-          NullabilityAnnotationInfo defaultNullability = manager.findDefaultTypeUseNullability(myContext);
-          if (defaultNullability != null && defaultNullability.getNullability() == Nullability.NOT_NULL) {
-            nullability = getUpperBound().getNullability().inherited();
-          }
-        }
+      }
+      else if (isCapturedInNullMarkedScope()) {
+        // the declared bound of the captured type parameter is only taken into account in a @NullMarked scope; for an
+        // unbounded '?' the bound is already intersected with the implicit bound of the wildcard, see #getUpperBound
+        nullability = valueUpperBoundNullability().inherited();
       }
       myNullability = nullability;
     }
     return myNullability;
+  }
+
+  private @NotNull TypeNullability valueUpperBoundNullability() {
+    return myExistential.isSuper() ? myUpperBound.getNullability() : getUpperBound().getNullability();
+  }
+
+  /**
+   * @return whether the capture conversion happens in a {@code @NullMarked} scope
+   */
+  private boolean isCapturedInNullMarkedScope() {
+    Boolean capturedInNullMarkedScope = myCapturedInNullMarkedScope;
+    if (capturedInNullMarkedScope == null) {
+      myCapturedInNullMarkedScope = capturedInNullMarkedScope = isInNullMarkedScope(myContext);
+    }
+    return capturedInNullMarkedScope;
+  }
+
+  /**
+   * Whether the wildcard itself was <em>written</em> in a {@code @NullMarked} scope, which is not the same question as
+   * {@link #isCapturedInNullMarkedScope()}: an unbounded {@code ?} has an implicit bound of {@code @Nullable Object} only in
+   * a {@code @NullMarked} scope (JSpecify, "Bound of an 'unbounded' wildcard"), while in unmarked code nothing is known
+   * about it -- not even when the captured type parameter is declared with a nullable bound. Both wildcards below are
+   * captured in the same marked scope and still differ:
+   * <pre>{@code
+   * @NullMarked interface Lib<T extends @Nullable Object> {}
+   * interface Unmarked { Lib<?> get(); }          // '?' written in unmarked code: bound nullness is unknown
+   *
+   * @NullMarked interface Marked {
+   *   Lib<?> get();                               // '?' written in marked code: bound is @Nullable Object
+   *   default void use(Unmarked u, Marked m) {
+   *     Lib<? extends Object> fromUnmarked = u.get(); // fine: nothing says the argument may be null
+   *     Lib<? extends Object> fromMarked = m.get();   // nullness mismatch
+   *   }
+   * }}</pre>
+   * A wildcard that does not remember where it was written (inferred, or rebuilt by substitution) falls back to the
+   * capture site.
+   */
+  private boolean isWrittenInNullMarkedScope() {
+    Boolean writtenInNullMarkedScope = myWrittenInNullMarkedScope;
+    if (writtenInNullMarkedScope == null) {
+      PsiElement wildcardContext = myExistential.getPsiContext();
+      myWrittenInNullMarkedScope = writtenInNullMarkedScope =
+        wildcardContext == null ? isCapturedInNullMarkedScope() : isInNullMarkedScope(wildcardContext);
+    }
+    return writtenInNullMarkedScope;
+  }
+
+  private static boolean isInNullMarkedScope(@NotNull PsiElement element) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(element.getProject());
+    NullabilityAnnotationInfo defaultNullability = manager == null ? null : manager.findDefaultTypeUseNullability(element);
+    return defaultNullability != null && defaultNullability.getNullability() == Nullability.NOT_NULL;
   }
 
   /**
@@ -241,11 +293,32 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
     }
     else {
       PsiType type = isCapture() && capture ? PsiUtil.captureToplevelWildcards(myUpperBound, myContext) : myUpperBound;
+      TypeNullability nullability = type.getNullability();
       if (bound != null) {
-        type = type.withNullability(type.getNullability().meet(bound.getNullability()));
+        type = withNullability(type, nullability, nullability.meet(bound.getNullability()));
+      }
+      else if (!isWrittenInNullMarkedScope()) {
+        // The implicit bound of an unbounded '?' is Object with the nullness of the scope the '?' was written in
+        // (see #isWrittenInNullMarkedScope), which here is unspecified; intersecting it with the declared bound keeps a not-null
+        // bound and weakens a nullable one:
+        //
+        //   @NullMarked interface Box<T extends Object> {}
+        //   @NullMarked interface Lib<T extends @Nullable Object> {}
+        //
+        //   interface Unmarked {  // not @NullMarked
+        //     Box<?> box();       // capture is not-null: no argument of Box may ever be nullable, whoever writes the '?'
+        //     Lib<?> lib();       // capture is unspecified: an argument of Lib may be nullable, but not necessarily this one
+        //   }
+        type = withNullability(type, nullability, TypeNullability.intersect(Arrays.asList(nullability, TypeNullability.UNKNOWN)));
       }
       return type;
     }
+  }
+
+  private static @NotNull PsiType withNullability(@NotNull PsiType type,
+                                                  @NotNull TypeNullability oldNullability,
+                                                  @NotNull TypeNullability newNullability) {
+    return newNullability.equals(oldNullability) ? type : type.withNullability(newNullability);
   }
 
   public void setUpperBound(@NotNull PsiType upperBound) {

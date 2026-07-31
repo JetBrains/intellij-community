@@ -25,6 +25,9 @@ import com.intellij.util.JavaTypeNullabilityUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNullMarked;
 import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
 
@@ -290,6 +293,60 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals(Nullability.NULLABLE, captureUpperBoundNullability("@Nullable"));
   }
 
+  public void testSuperCaptureSeparatesContainmentFromValue() {
+    setupJSpecifyAnnotations();
+    PsiType type = configureAndGetExpressionType("""
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class A {
+        interface Lib<T extends @Nullable Object> {
+          T get();
+        }
+
+        static void test(Lib<? super String> lib) {
+          lib.get(<caret>);
+        }
+      }
+      """);
+    // 'lib.get()' returns 'T' substituted with the capture of the wildcard, so this one capture is asked both questions
+    PsiCapturedWildcardType captured = assertInstanceOf(type, PsiCapturedWildcardType.class);
+    assertEquals("which type arguments the wildcard contains", Nullability.NOT_NULL,
+                 captured.getUpperBound().getNullability().nullability());
+    assertEquals("what a value of the capture may be", Nullability.NULLABLE,
+                 captured.getNullability().nullability());
+  }
+
+  public void testUnboundedWildcardFromUnmarkedScopeThroughVar() {
+    setupJSpecifyAnnotations();
+    PsiType type = configureAndGetExpressionType("""
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      class A {
+        @NullMarked
+        interface Lib<T extends @Nullable Object> {
+          T get();
+        }
+
+        interface Unmarked {
+          Lib<?> lib();
+        }
+
+        @NullMarked
+        static class Caller {
+          static void test(Unmarked u) {
+            var x = u.lib();
+            x.get(<caret>);
+          }
+        }
+      }
+      """);
+    PsiCapturedWildcardType captured = assertInstanceOf(type, PsiCapturedWildcardType.class);
+    assertEquals(Nullability.UNKNOWN, captured.getUpperBound().getNullability().nullability());
+  }
+
   public void testArrayType() {
     PsiType type = configureAndGetFieldType("""
       import org.jetbrains.annotations.NotNull;
@@ -464,7 +521,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       final class X<T> {
         native @Nullable T m();
 
-        static void test(X<@NotNull String> x) {>) {
+        static void test(X<@NotNull String> x) {
           x.m(<caret>);
         }
       }
@@ -482,7 +539,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       final class X<T extends @Nullable Object> {
         native T m();
 
-        static void test(X<@NotNull String> x) {>) {
+        static void test(X<@NotNull String> x) {
           x.m(<caret>);
         }
       }
@@ -560,6 +617,52 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       }
       """);
     myFixture.checkHighlighting();
+  }
+
+  /**
+   * The nullness of the implicit bound of an unbounded {@code ?} comes from the scope the wildcard was written in, not from
+   * the scope it is captured in: all three calls below are made in the same {@code @NullMarked} scope.
+   */
+  public void testUnboundedWildcardKeepsTheScopeItWasWrittenIn() {
+    setupJSpecifyAnnotations();
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      class Test {
+        @NullMarked interface Box<T extends Object> {}
+
+        @NullMarked interface Lib<T extends @Nullable Object> {}
+
+        interface Unmarked {
+          Box<?> box();
+          Lib<?> lib();
+        }
+
+        @NullMarked interface Marked {
+          Lib<?> lib();
+        }
+
+        @NullMarked
+        static class Caller {
+          void use(Unmarked u, Marked m) {
+            u.box();
+            u.lib();
+            m.lib();
+          }
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file, PsiMethodCallExpression.class));
+    assertSize(3, calls);
+    assertEquals(Nullability.NOT_NULL, captureUpperBoundNullabilityOf(calls.get(0)));
+    assertEquals(Nullability.UNKNOWN, captureUpperBoundNullabilityOf(calls.get(1)));
+    assertEquals(Nullability.NULLABLE, captureUpperBoundNullabilityOf(calls.get(2)));
+  }
+
+  private static @NotNull Nullability captureUpperBoundNullabilityOf(@NotNull PsiMethodCallExpression call) {
+    PsiType argument = ((PsiClassType)call.getType()).getParameters()[0];
+    return ((PsiCapturedWildcardType)argument).getUpperBound().getNullability().nullability();
   }
 
   public void testInstantiateWithNullable() {

@@ -235,7 +235,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     }
     assert childElement == null : this;
     assert myVariance == VARIANCE_INVARIANT : this + "(" + myVariance + ")";
-    return PsiWildcardType.createUnbounded(getManager());
+    return PsiWildcardType.createUnbounded(getManager(), this);
   }
 
   @Override

@@ -71,7 +71,8 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   public PsiType visitWildcardType(final @NotNull PsiWildcardType wildcardType) {
     PsiType bound = wildcardType.getBound();
     final PsiManager manager = wildcardType.getManager();
-    if (bound == null) return PsiWildcardType.createUnbounded(manager);
+    // the mapped wildcard keeps the place the original was written at, see PsiWildcardType#getPsiContext
+    if (bound == null) return PsiWildcardType.createUnbounded(manager, wildcardType.getPsiContext());
 
     bound = mapType(bound);
     if (bound == null) return null;
