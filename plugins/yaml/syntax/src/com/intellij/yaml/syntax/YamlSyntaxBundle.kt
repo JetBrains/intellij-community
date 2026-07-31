@@ -10,7 +10,7 @@ object YamlSyntaxBundle {
 
   val resourceBundle: ResourceBundle by lazy {
     ResourceBundle(
-      bundleClass = "org.jetbrains.yaml.syntax.YamlSyntaxBundle",
+      bundleClass = YamlSyntaxBundle::class.qualifiedName!!,
       pathToBundle = BUNDLE,
       self = this,
       defaultMapping = DefaultYamlSyntaxResources.mappings,
