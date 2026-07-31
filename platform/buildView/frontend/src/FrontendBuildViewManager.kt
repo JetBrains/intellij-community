@@ -4,6 +4,7 @@ package com.intellij.platform.buildView.frontend
 import com.intellij.build.BuildCategoryId
 import com.intellij.build.BuildContent
 import com.intellij.build.BuildContentId
+import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildId
 import com.intellij.build.BuildViewEvent
 import com.intellij.openapi.application.EDT
@@ -16,12 +17,16 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.buildView.BuildViewApi
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
@@ -44,6 +49,11 @@ private class FrontendBuildViewManager(private val project: Project, private val
       durable {
         BuildViewApi.getInstance().getBuildViewEventsFlow(project.projectId()).collect { event ->
           LOG.debug { "Event: $event" }
+
+          // This is needed for the remote development case. Due to the racy dispatching, we can receive the event here
+          // before the tool window creation on the backend is processed on the frontend.
+          waitForToolWindow()
+
           val buildId = event.buildId
           val view = when (event) {
             is BuildViewEvent.BuildStarted -> getOrCreateView(event.content).also {
@@ -78,4 +88,36 @@ private class FrontendBuildViewManager(private val project: Project, private val
     oldView?.lockContent()
     newView
   }
+
+  private suspend fun waitForToolWindow() {
+    if (!isToolWindowRegistered()) {
+      LOG.info("Waiting for tool window registration")
+      suspendCancellableCoroutine { continuation ->
+        val disposable = Disposer.newDisposable("FrontendBuildViewManager.waitForToolWindow")
+        fun checkDone() {
+          if (isToolWindowRegistered()) {
+            Disposer.dispose(disposable)
+            continuation.resumeWith(Result.success(Unit))
+          }
+        }
+        val connection = project.messageBus.connect(disposable)
+        connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+          override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
+            checkDone()
+          }
+
+          override fun stateChanged(toolWindowManager: ToolWindowManager) {
+            checkDone()
+          }
+        })
+        checkDone() // just in case, since toolWindowsRegistered might be fired not on EDT
+        continuation.invokeOnCancellation {
+          Disposer.dispose(disposable)
+        }
+      }
+      LOG.info("Tool window registered")
+    }
+  }
+
+  private fun isToolWindowRegistered() = ToolWindowManager.getInstance(project).getToolWindow(BuildContentManager.TOOL_WINDOW_ID) != null
 }
