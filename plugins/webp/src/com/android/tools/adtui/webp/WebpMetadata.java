@@ -13,55 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.tools.adtui.webp
+package com.android.tools.adtui.webp;
 
-import com.intellij.ide.ApplicationLoadListener
-import com.intellij.openapi.application.Application
-import org.w3c.dom.Node
-import java.nio.file.Path
-import javax.imageio.metadata.IIOMetadata
-import javax.imageio.metadata.IIOMetadataNode
-import javax.imageio.spi.IIORegistry
-import javax.imageio.spi.ImageReaderSpi
-import javax.imageio.spi.ImageWriterSpi
+import org.w3c.dom.Node;
 
-class WebpMetadata : IIOMetadata() {
-  companion object {
-    const val WEBP_FORMAT_LOWER_CASE: String = "webp"
-    private const val WEBP_FORMAT_UPPER_CASE: String = "WEBP"
-    val WEBP_FORMAT_NAMES: Array<String> = arrayOf(WEBP_FORMAT_UPPER_CASE, WEBP_FORMAT_LOWER_CASE)
-    private const val EXT_WEBP: String = WEBP_FORMAT_LOWER_CASE
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ImageWriterSpi;
 
-    val WEBP_SUFFIXES: Array<String> = arrayOf(EXT_WEBP)
-    val WEBP_MIME_TYPES: Array<String> = arrayOf("image/webp")
+public class WebpMetadata extends IIOMetadata {
+  public static final String WEBP_FORMAT_LOWER_CASE = "webp";
+  public static final String[] WEBP_FORMAT_NAMES = {"WEBP", WEBP_FORMAT_LOWER_CASE};
+  public static final String[] WEBP_SUFFIXES = {WEBP_FORMAT_LOWER_CASE};
+  public static final String[] WEBP_MIME_TYPES = {"image/webp"};
+  public static final String WEBP_VENDOR = "Google LLC";
+  public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
+  public static final boolean DEFAULT_LOSSLESS = true;
 
-    const val WEBP_VENDOR: String = "Google LLC"
-    const val DEFAULT_ENCODING_QUALITY: Float = 0.75f
-    const val DEFAULT_LOSSLESS: Boolean = true
-
-    @Deprecated("Please do not use it. SPI-s loaded via EP")
-    @JvmStatic
-    fun ensureWebpRegistered() {
-      val defaultInstance = IIORegistry.getDefaultInstance()
-      defaultInstance.registerServiceProvider(WebpImageReaderSpi(), ImageReaderSpi::class.java)
-      defaultInstance.registerServiceProvider(WebpImageWriterSpi(), ImageWriterSpi::class.java)
-    }
+  public static void ensureWebpRegistered() {
+    var defaultInstance = IIORegistry.getDefaultInstance();
+    defaultInstance.registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
+    defaultInstance.registerServiceProvider(new WebpImageWriterSpi(), ImageWriterSpi.class);
   }
 
-  override fun isReadOnly(): Boolean = false
-
-  override fun getAsTree(formatName: String): Node = IIOMetadataNode(nativeMetadataFormatName)
-
-  override fun mergeTree(formatName: String, root: Node) {
+  @Override
+  public boolean isReadOnly() {
+    return false;
   }
 
-  override fun reset() {
+  @Override
+  public Node getAsTree(String formatName) {
+    return new IIOMetadataNode(nativeMetadataFormatName);
   }
+
+  @Override
+  public void mergeTree(String formatName, Node root) {}
+
+  @Override
+  public void reset() {}
 }
-
-internal class WebpMetadataRegistrar : ApplicationLoadListener {
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
-    WebpMetadata.ensureWebpRegistered()
-  }
-}
-
