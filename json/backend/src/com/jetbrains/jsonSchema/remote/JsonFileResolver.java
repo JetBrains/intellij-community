@@ -6,10 +6,8 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -17,10 +15,12 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.concurrency.SameThreadExecutor;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ public final class JsonFileResolver {
     if (urlString.startsWith(TEMP_URL)) {
       return TempFileSystem.getInstance().findFileByPath(urlString.substring(TEMP_URL.length() - 1));
     }
-    return VirtualFileManager.getInstance().findFileByUrl(FileUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
+    return VirtualFileManager.getInstance().findFileByUrl(PathUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
   }
 
   @Contract("null -> null; !null -> !null")
@@ -59,18 +59,32 @@ public final class JsonFileResolver {
 
   public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
                                                                @Nullable String schemaUrl) {
+    schemaUrl = resolveSchemaUrlByReference(currentFile, schemaUrl);
+    if (schemaUrl == null) return null;
+
+    if (!schemaUrl.startsWith("http")) {
+      return urlToFile(schemaUrl);
+    }
+    else {
+      return getOrComputeVirtualFileForValidUrlOrNull(schemaUrl);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String resolveSchemaUrlByReference(@Nullable VirtualFile currentFile,
+                                                              @Nullable String schemaUrl) {
     if (schemaUrl == null || StringUtil.isEmpty(schemaUrl)) return null;
 
-    boolean isHttpPath = isHttpPath(schemaUrl);
+    if (isAbsoluteUrl(schemaUrl)) return schemaUrl;
 
-    if (!isHttpPath && currentFile instanceof HttpVirtualFile) {
+    if (currentFile instanceof HttpVirtualFile) {
       // relative http paths
       String url = StringUtil.trimEnd(currentFile.getUrl(), "/");
       int lastSlash = url.lastIndexOf('/');
       assert lastSlash != -1;
       schemaUrl = url.substring(0, lastSlash) + "/" + schemaUrl;
     }
-    else if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
+    else {
       // relative path
       VirtualFile parent = currentFile == null ? null : currentFile.getParent();
       schemaUrl = parent == null ? null :
@@ -78,15 +92,7 @@ public final class JsonFileResolver {
                   VfsUtilCore.pathToUrl(parent.getPath() + File.separator + schemaUrl);
     }
 
-    if (StringUtil.isEmpty(schemaUrl)) {
-      return null;
-    }
-    else if (!schemaUrl.startsWith("http")) {
-      return urlToFile(schemaUrl);
-    }
-    else {
-      return getOrComputeVirtualFileForValidUrlOrNull(schemaUrl);
-    }
+    return StringUtil.isEmpty(schemaUrl) ? null : schemaUrl;
   }
 
   private static @Nullable VirtualFile getOrComputeVirtualFileForValidUrlOrNull(@NotNull String maybeUrl) {
@@ -129,9 +135,7 @@ public final class JsonFileResolver {
   }
 
   public static boolean isAbsoluteUrl(@NotNull String path) {
-    return isHttpPath(path) ||
-           path.startsWith(TEMP_URL) ||
-           FileUtil.toSystemIndependentName(path).startsWith(JarFileSystem.PROTOCOL_PREFIX);
+    return VirtualFileManager.extractProtocol(path) != null;
   }
 
   private static final String MOCK_URL = "mock:///";

@@ -65,7 +65,14 @@ public interface JsonSchemaService {
   JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
 
   @Nullable
-  VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent);
+  VirtualFile findSchemaFileByReference(@NotNull String reference, @NotNull VirtualFile referent);
+
+  /**
+   * Returns whether references originating from {@code referent} must be confined to the project.
+   * The result may change when the project trust state changes and must not be cached.
+   */
+  @ApiStatus.Internal
+  boolean shouldRestrictSchemaReferences(@NotNull VirtualFile referent);
 
   /**
    * Finds a locally registered schema by its {@code $id} without going to the network.

@@ -12,6 +12,7 @@ import com.networknt.schema.resource.IriResourceLoader
 import com.networknt.schema.resource.ResourceLoader
 import com.networknt.schema.resource.SchemaLoader
 import java.io.ByteArrayInputStream
+import java.nio.file.AccessDeniedException
 
 private val LOG = Logger.getInstance("com.intellij.json.networknt.wrapper.IntelliJSchemaLoader")
 
@@ -20,14 +21,13 @@ private val IRI_LOADER_PROTOCOLS = setOf("http", "https", "file")
 /**
  * Bridges IntelliJ's VirtualFile-based schema resolution to networknt's SchemaLoader.
  *
- * Resource loader chain (tried in order):
- * 1. [IntelliJResourceLoader] — resolves via [JsonSchemaService] (catalog, user mappings, bundled schemas)
- * 2. [IriResourceLoader] — fallback for file://, http://, https:// URLs not in IntelliJ's catalog
- *    (e.g., schemas with $ref to local sibling files or remote definitions)
+ * [IntelliJResourceLoader] resolves via [JsonSchemaService] first and delegates to [IriResourceLoader]
+ * only when references from [schemaFile] are unrestricted. Keeping the IRI loader behind that gate
+ * prevents a rejected resource from falling through to a lazy file or network read.
  */
-class IntelliJSchemaLoader(project: Project) : SchemaLoader(
+class IntelliJSchemaLoader(project: Project, schemaFile: VirtualFile) : SchemaLoader(
   emptyList(),
-  listOf(IntelliJResourceLoader(project), IriResourceLoader.getInstance()),
+  listOf(IntelliJResourceLoader(project, schemaFile)),
 )
 
 /**
@@ -40,7 +40,10 @@ class IntelliJSchemaLoader(project: Project) : SchemaLoader(
  * Non-standard protocols (e.g., `temp://`, `mock://`) are resolved via [VirtualFileManager]
  * and are never forwarded to [IriResourceLoader], which would crash with [java.net.MalformedURLException].
  */
-private class IntelliJResourceLoader(private val project: Project) : ResourceLoader {
+private class IntelliJResourceLoader(
+  private val project: Project,
+  private val schemaFile: VirtualFile,
+) : ResourceLoader {
   override fun getResource(location: AbsoluteIri): InputStreamSource? {
     LOG.debug("IntelliJResourceLoader: resolving '$location'")
 
@@ -49,10 +52,18 @@ private class IntelliJResourceLoader(private val project: Project) : ResourceLoa
     // Always try IDE schema service first — resolves catalog, user mappings, bundled schemas,
     // and in-memory test schemas (LightVirtualFile with $id like "https://example.com/...")
     val schemaService = JsonSchemaService.Impl.get(project)
-    val file = schemaService.findSchemaFileByReference(url, null)
+    val file = schemaService.findSchemaFileByReference(url, schemaFile)
     if (file != null) {
       LOG.debug("IntelliJResourceLoader: '$location' resolved to ${file.javaClass.simpleName}: ${file.url}")
-      return readVirtualFile(file, location)
+      val source = readVirtualFile(file, location)
+      if (source != null) return source
+    }
+
+    if (schemaService.shouldRestrictSchemaReferences(schemaFile)) {
+      LOG.debug("IntelliJResourceLoader: '$location' is forbidden for untrusted project schema '${schemaFile.url}'")
+      return InputStreamSource {
+        throw AccessDeniedException(url, null, "Schema reference is forbidden until the project is trusted")
+      }
     }
 
     val protocol = url.substringBefore("://", missingDelimiterValue = "")
@@ -69,8 +80,8 @@ private class IntelliJResourceLoader(private val project: Project) : ResourceLoa
       return null
     }
 
-    LOG.debug("IntelliJResourceLoader: '$location' not found in JsonSchemaService, falling back to IriResourceLoader (protocol='$protocol')")
-    return null
+    LOG.debug("IntelliJResourceLoader: '$location' not found in JsonSchemaService, delegating to IriResourceLoader (protocol='$protocol')")
+    return IriResourceLoader.getInstance().getResource(location)
   }
 
   private fun readVirtualFile(file: VirtualFile, location: AbsoluteIri): InputStreamSource? {
@@ -81,8 +92,8 @@ private class IntelliJResourceLoader(private val project: Project) : ResourceLoa
     }
     catch (e: UnsupportedOperationException) {
       // HttpVirtualFileImpl doesn't support getInputStream()/contentsToByteArray().
-      // Falling back to IriResourceLoader which handles HTTP URLs via java.net.URL.
-      LOG.warn("VFS file ${file.javaClass.simpleName} doesn't support content reading for '$location', falling back to IriResourceLoader", e)
+      // The caller may delegate to IriResourceLoader when the schema origin is unrestricted.
+      LOG.warn("VFS file ${file.javaClass.simpleName} doesn't support content reading for '$location'", e)
       return null
     }
     catch (e: Exception) {

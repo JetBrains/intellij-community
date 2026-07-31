@@ -3,11 +3,13 @@ package com.intellij.json.networknt.wrapper
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.networknt.schema.InputFormat
 import com.networknt.schema.Schema
 import com.networknt.schema.SchemaLocation
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.VisibleForTesting
  * which have 2550+ `$ref` entries (eager DFS would take ~28s).
  */
 @Service(Service.Level.PROJECT)
-class NetworkntSchemaService(private val project: Project, private val scope: CoroutineScope) {
+class NetworkntSchemaService(private val project: Project, private val scope: CoroutineScope) : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance(NetworkntSchemaService::class.java)
@@ -55,6 +57,9 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
    */
   private data class SchemaCacheKey(val file: VirtualFile, val stamp: Long, val version: SpecificationVersion)
 
+  private val schemaService = JsonSchemaService.Impl.get(project)
+  private val schemaServiceResetAction = Runnable { invalidateAllCaches("JSON Schema service reset") }
+
   private val schemaCache: AsyncLoadingCache<SchemaCacheKey, Schema> =
     Caffeine.newBuilder()
       .maximumSize(MAX_CACHE_SIZE.toLong())
@@ -62,12 +67,16 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
         scope.future(Dispatchers.Default) {
           val file = key.file
           val schemaText = String(file.contentsToByteArray(), file.charset)
-          val registry = buildRegistry(key.version)
+          val registry = buildRegistry(key.version, file)
           registry.getSchema(SchemaLocation.of(file.url), schemaText, detectInputFormat(file)).also {
             LOG.debug("Schema compiled asynchronously: ${file.url}")
           }
         }
       }
+
+  init {
+    schemaService.registerResetAction(schemaServiceResetAction)
+  }
 
   /**
    * Returns a compiled Schema for the given schema file.
@@ -98,6 +107,10 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
     map.clear()
   }
 
+  override fun dispose() {
+    schemaService.unregisterResetAction(schemaServiceResetAction)
+  }
+
   /**
    * Picks the parser format based on the schema file extension.
    *
@@ -114,14 +127,14 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
     }
   }
 
-  private fun buildRegistry(version: SpecificationVersion): SchemaRegistry {
+  private fun buildRegistry(version: SpecificationVersion, schemaFile: VirtualFile): SchemaRegistry {
     val registryConfig = SchemaRegistryConfig.builder()
       .regularExpressionFactory(JoniRegularExpressionFactory.getInstance())
       .preloadSchema(false)
       .build()
     return SchemaRegistry.builder()
       .defaultDialectId(version.dialectId)
-      .schemaLoader(IntelliJSchemaLoader(project))
+      .schemaLoader(IntelliJSchemaLoader(project, schemaFile))
       .schemaRegistryConfig(registryConfig)
       .dialectRegistry(FallbackDialectRegistry(version))
       .build()
