@@ -226,7 +226,7 @@ internal fun generateDeps(
           )
 
           if (!isCommunityLib) {
-          require(!module.isCommunity) {
+            require(!module.isCommunity) {
               "Module ${module.module.name} must not depend on a non-community libraries because it is a community module" +
               "(library=${jpsLibrary.name}, files=$files, bazelTargetName=$targetName)"
             }

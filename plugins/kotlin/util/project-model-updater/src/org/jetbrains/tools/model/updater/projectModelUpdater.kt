@@ -17,10 +17,14 @@ import kotlinx.serialization.encoding.encodeStructure
 import org.jetbrains.tools.model.updater.impl.JpsLibrary
 import org.jetbrains.tools.model.updater.impl.JpsResolverSettings
 import org.jetbrains.tools.model.updater.impl.readJpsResolverSettings
+import org.jetbrains.tools.model.updater.impl.readXml
+import org.jetbrains.tools.model.updater.impl.render
 import org.jetbrains.tools.model.updater.impl.xml
 import java.nio.file.Path
 import kotlin.io.path.deleteExisting
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -49,20 +53,23 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     KotlinTestsDependenciesUtil.updateChecksums(isUpToDateCheck = false)
 
+    val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
+    val moduleLibraries = regenerateModuleLibraries(communityRoot, communityLibraries, resolverSettings)
+
     fun processRoot(root: Path, libraries: List<JpsLibrary>) {
         println("Processing kotlinc libraries in '$root'...")
         val dotIdea = root.resolve(".idea")
-        regenerateProjectLibraries(dotIdea, libraries, resolverSettings)
+        regenerateProjectLibraries(dotIdea, libraries.filterNot { it.name in moduleLibraries }, resolverSettings)
         regenerateAnchorsXml(dotIdea, libraries)
     }
 
     if (monorepoRoot != null) {
-        processRoot(monorepoRoot, generateKotlincLibraries(preferences, isCommunity = false))
+        val monorepoLibraries = generateKotlincLibraries(preferences, isCommunity = false)
+        processRoot(monorepoRoot, monorepoLibraries)
     }
 
-    val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
     processRoot(communityRoot, communityLibraries)
-    regenerateCompilerDependenciesIml(communityRoot, communityLibraries)
+    regenerateCompilerDependenciesIml(communityRoot, communityLibraries, moduleLibraries)
     updateKgpVersionForKotlinGradleImportTests(communityRoot, preferences.kotlinGradlePluginArtifactVersion)
     updateKgpVersionForKotlinNativeTests(communityRoot, preferences.kotlinNativeArtifactVersion)
 
@@ -75,6 +82,46 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
             applyPatronusDenyList(monorepoRoot)
         }
     }
+}
+
+private fun regenerateModuleLibraries(
+    root: Path,
+    libraries: List<JpsLibrary>,
+    resolverSettings: JpsResolverSettings,
+): Map<String, String> {
+    val librariesByName = libraries.associateBy { it.name }
+    val moduleLibraries = mutableMapOf<String, String>()
+    val libraryRoot = root.resolve("libraries/kotlinc")
+    if (!libraryRoot.isDirectory()) return emptyMap()
+    val libraryDirs = libraryRoot.listDirectoryEntries().filter { it.isDirectory() }
+    for (libraryDir in libraryDirs) {
+        for (imlFile in libraryDir.listDirectoryEntries("*.iml")) {
+            val document = imlFile.readXml()
+            val moduleManagerElt = document.rootElement.children.firstOrNull { elt ->
+                elt.name == "component" && elt.getAttributeValue("name") == "NewModuleRootManager"
+            } ?: continue
+            val libraryEntries =
+                moduleManagerElt.children.filter { entry ->
+                    entry.name == "orderEntry" && entry.getAttributeValue("type") == "module-library"
+                }.mapNotNull { it.children.singleOrNull() }
+
+            for ((libraryName, library) in librariesByName) {
+                val libraryElement =
+                    libraryEntries.find { it.name == "library" && it.getAttributeValue("name" ) == libraryName }
+                        ?: continue
+                val newLibrary = xml("component") {
+                    library.run { renderLibrary(resolverSettings) }
+                }.toElement().children.single()
+                libraryElement.setAttributes(newLibrary.attributes.map { it.clone() })
+                libraryElement.removeContent()
+                libraryElement.addContent(newLibrary.removeContent())
+                moduleLibraries[libraryName] = imlFile.nameWithoutExtension
+                imlFile.writeText(document.render(true))
+                break
+            }
+        }
+    }
+    return moduleLibraries
 }
 
 private fun convertJpsToBazel(monorepoRoot: Path) {
@@ -219,12 +266,12 @@ private fun updateKgpVersionForKotlinNativeTests(communityRoot: Path, kotlinGrad
     updateKgpVersionsFile(communityRoot, "latestPinned", kotlinGradlePluginVersion)
 }
 
-private fun regenerateCompilerDependenciesIml(communityRoot: Path, libraries: List<JpsLibrary>) {
+private fun regenerateCompilerDependenciesIml(communityRoot: Path, libraries: List<JpsLibrary>, moduleLibraries: Map<String, String>) {
     val imlFile = communityRoot.resolve(
         "plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml"
     )
     println("Rewriting '$imlFile'...")
-    imlFile.writeText(renderCompilerDependenciesIml(libraries))
+    imlFile.writeText(renderCompilerDependenciesIml(libraries, moduleLibraries))
 }
 
 private fun regenerateAnchorsXml(dotIdea: Path, libraries: List<JpsLibrary>) {
@@ -255,15 +302,24 @@ internal fun renderAnchorsXml(libraries: List<JpsLibrary>): String {
     }.render(addXmlDeclaration = true)
 }
 
-internal fun renderCompilerDependenciesIml(libraries: List<JpsLibrary>): String {
+internal fun renderCompilerDependenciesIml(
+    libraries: List<JpsLibrary>,
+    moduleLibraries: Map<String, String> = emptyMap(),
+): String {
     return xml("module", "type" to "JAVA_MODULE", "version" to "4") {
         xml("component", "name" to "NewModuleRootManager", "inherit-compiler-output" to "true") {
             xml("exclude-output")
             xml("content", "url" to $$"file://$MODULE_DIR$")
             xml("orderEntry", "type" to "inheritedJdk")
             xml("orderEntry", "type" to "sourceFolder", "forTests" to "false")
-            for (library in libraries) {
-                xml("orderEntry", "type" to "library", "scope" to "PROVIDED", "name" to library.name, "level" to "project")
+            for ((libraryName) in libraries) {
+                val moduleName = moduleLibraries[libraryName]
+                if (moduleName != null) {
+                    xml("orderEntry", "type" to "module", "module-name" to moduleName)
+                }
+                else {
+                    xml("orderEntry", "type" to "library", "scope" to "PROVIDED", "name" to libraryName, "level" to "project")
+                }
             }
         }
     }.render(addXmlDeclaration = true)

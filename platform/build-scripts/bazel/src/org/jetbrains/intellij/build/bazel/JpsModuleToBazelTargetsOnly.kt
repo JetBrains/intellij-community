@@ -6,7 +6,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -125,12 +124,7 @@ internal class JpsModuleToBazelTargetsOnly {
 
       try {
 
-        val project = JpsSerializationManager.getInstance().loadProject(
-          /* projectPath = */ projectDir,
-          /* externalConfigurationDirectory = */ null,
-          /* pathVariables = */ mapOf("MAVEN_REPOSITORY" to m2Repo.absolutePathString()),
-          /* loadUnloadedModules = */ true,
-        )
+        val project = loadJpsProject(projectDir, communityRoot, m2Repo.absolutePathString())
 
         val generator = BazelBuildFileGenerator(
           ultimateRoot = ultimateRoot,

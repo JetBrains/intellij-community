@@ -10,7 +10,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -84,12 +83,7 @@ internal class JpsModuleToBazel {
       val projectDir = ultimateRoot ?: communityRoot
       val m2RepoPath = Path.of(m2Repo)
 
-      val project = JpsSerializationManager.getInstance().loadProject(
-        /* projectPath = */ projectDir,
-        /* externalConfigurationDirectory = */ null,
-        /* pathVariables = */ mapOf("MAVEN_REPOSITORY" to m2Repo),
-        /* loadUnloadedModules = */ true,
-      )
+      val project = loadJpsProject(projectDir, communityRoot, m2Repo)
       val jarRepositories = loadJarRepositories(projectDir)
 
       val kotlincDefaults = parseKotlincProjectDefaults(communityRoot)

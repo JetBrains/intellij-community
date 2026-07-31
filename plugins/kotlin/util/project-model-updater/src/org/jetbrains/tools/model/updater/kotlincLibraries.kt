@@ -72,23 +72,23 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincCoordinates)
@@ -141,9 +141,10 @@ private fun buildLibraryList(isCommunity: Boolean, builder: LibraryListBuilder.(
 private fun LibraryListBuilder.kotlincForIdeWithStandardNaming(
     name: String,
     coordinates: ArtifactCoordinates,
-    includeSources: Boolean = true
+    includeSources: Boolean = true,
+    convertedToModuleLibrary: Boolean = false,
 ) {
-    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide")
+    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide", convertedToModule = convertedToModuleLibrary)
 }
 
 private fun LibraryListBuilder.kotlincWithStandardNaming(
@@ -154,6 +155,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
     jpsLibraryName: String = name,
+    convertedToModule: Boolean = false,
 ) {
     require(name.startsWith("kotlinc."))
     val jpsLibrary = singleJarMavenLibrary(
@@ -164,7 +166,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
         excludes = excludes,
         repository = coordinates.repository
     )
-    addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity))
+    addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity, convertedToModule))
 }
 
 private fun singleJarMavenLibrary(
@@ -184,13 +186,18 @@ private fun singleJarMavenLibrary(
     )
 }
 
-private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean): JpsLibrary {
+private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean, convertedToModule: Boolean): JpsLibrary {
     fun convertUrl(url: JpsUrl): JpsUrl {
         return when (url.path) {
             is JpsPath.ProjectDir -> url
+            is JpsPath.ModuleDir -> url
             is JpsPath.MavenRepository -> {
                 val snapshotDirectoryPath = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotLocationInsideCommunity
-                JpsUrl.Jar(JpsPath.ProjectDir("$snapshotDirectoryPath/${url.path.relativePath}", isCommunity))
+                if (convertedToModule) {
+                    JpsUrl.Jar(JpsPath.ModuleDir("../../../$snapshotDirectoryPath/${url.path.relativePath}"))
+                } else {
+                    JpsUrl.Jar(JpsPath.ProjectDir("$snapshotDirectoryPath/${url.path.relativePath}", isCommunity))
+                }
             }
         }
     }

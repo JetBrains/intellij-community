@@ -4,6 +4,7 @@ package org.jetbrains.tools.model.updater.impl
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.output.Format
+import org.jdom.output.XMLOutputter
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 
@@ -28,7 +29,7 @@ class XmlNode(private val name: String, private val args: List<Pair<String, Any>
         value = text
     }
 
-    private fun toElement(): Element {
+    internal fun toElement(): Element {
         val element = Element(name)
 
         for (arg in args) {
@@ -49,18 +50,31 @@ class XmlNode(private val name: String, private val args: List<Pair<String, Any>
     }
 
     fun render(addXmlDeclaration: Boolean): String {
+        val element = toElement()
+
         val document = Document()
-        document.rootElement = toElement()
+        document.rootElement = element
 
         val format = Format.getPrettyFormat().apply {
-            omitDeclaration = !addXmlDeclaration
-            lineSeparator = System.lineSeparator()
+            this.omitDeclaration = !addXmlDeclaration
+            this.lineSeparator = System.lineSeparator()
         }
 
-        val output = @Suppress("DEPRECATION") org.jdom.output.XMLOutputter()
+        val output = @Suppress("DEPRECATION") (XMLOutputter())
         output.format = format
         return output.outputString(document).trim()
     }
+}
+
+fun Document.render(addXmlDeclaration: Boolean): String {
+    val format = Format.getPrettyFormat().apply {
+        this.omitDeclaration = !addXmlDeclaration
+        this.lineSeparator = System.lineSeparator()
+    }
+
+    val output = @Suppress("DEPRECATION") (XMLOutputter())
+    output.format = format
+    return output.outputString(this).trim()
 }
 
 fun Path.readXml(): Document = inputStream().use { input ->
