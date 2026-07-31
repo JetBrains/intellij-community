@@ -186,7 +186,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   }
 
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    val mainModuleName = "kotlin.scripting-plugin"
+    val mainModuleName = "intellij.kotlin.jsr223.plugin"
     return PluginLayout.pluginAutoWithCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "KotlinScripting"
       spec.mainJarName = "kotlin-scripting-plugin.jar"
