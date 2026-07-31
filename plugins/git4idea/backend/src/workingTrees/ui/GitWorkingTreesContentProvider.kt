@@ -55,10 +55,13 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
       }
     }
     // content.manager is not yet initialized here
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.contentManager?.addContentManagerListener(object : ContentManagerListener {
+    val contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.contentManager
+    contentManager?.addContentManagerListener(object : ContentManagerListener {
       override fun contentRemoved(event: ContentManagerEvent) {
         if (event.content == content) {
           GitWorkingTreesService.getInstance(project).workingTreesTabClosedByUser()
+          // Stop listening once our own content is gone, so listeners don't pile up across tab reopens.
+          contentManager.removeContentManagerListener(this)
         }
       }
     })

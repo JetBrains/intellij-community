@@ -41,26 +41,16 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
     val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
     if (!isEnabledFor(data, project, repository)) return
 
-    val result = if (data!!.size == 1) {
-      val tree = data.first()
-      Messages.showYesNoDialog(GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.message", tree.path.presentableUrl),
-                               GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
-                               GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option"),
-                               CommonBundle.getCancelButtonText(),
-                               AllIcons.General.QuestionDialog)
-    }
-    else {
-      Messages.showYesNoDialog(GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.message", data.size),
-                               GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.title"),
-                               GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.yes.option"),
-                               CommonBundle.getCancelButtonText(),
-                               AllIcons.General.QuestionDialog)
-    }
+    val tree = data?.singleOrNull() ?: return
+    val result = Messages.showYesNoDialog(
+      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.message", tree.path.presentableUrl),
+      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
+      GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option"),
+      CommonBundle.getCancelButtonText(),
+      AllIcons.General.QuestionDialog)
 
     if (result == Messages.YES) {
-      for (tree in data) {
-        GitWorkingTreesService.getInstance(project).deleteWorkingTree(project, tree, repository!!)
-      }
+      GitWorkingTreesService.getInstance(project).deleteWorkingTree(project, tree, repository!!)
     }
   }
 }

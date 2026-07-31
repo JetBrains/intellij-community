@@ -4,8 +4,10 @@ package git4idea.workingTrees.ui.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
-import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
+import git4idea.workingTrees.GitWorkingTreesService
+import git4idea.workingTrees.GitWorktreeSupportStatus
 
 internal class RefreshWorkingTreesAction : DumbAwareAction() {
 
@@ -15,13 +17,20 @@ internal class RefreshWorkingTreesAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val repository = e.getData(CURRENT_REPOSITORY)
-    e.presentation.isEnabled = repository != null
+    e.presentation.isEnabled = repositoriesToRefresh(e).isNotEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
-    val repository = e.getData(CURRENT_REPOSITORY) ?: return
-    repository.workingTreeHolder.scheduleReload()
+    // Refresh the whole tab: reload every repository's worktrees, regardless of the current selection.
+    repositoriesToRefresh(e).forEach { it.workingTreeHolder.scheduleReload() }
+  }
+
+  private fun repositoriesToRefresh(e: AnActionEvent): List<GitRepository> {
+    return when (val status = GitWorkingTreesService.getWorktreeSupportStatus(e.project)) {
+      is GitWorktreeSupportStatus.SingleRepository -> listOf(status.repository)
+      is GitWorktreeSupportStatus.MultipleRepository -> status.repositories
+      GitWorktreeSupportStatus.Unsupported -> emptyList()
+    }
   }
 }

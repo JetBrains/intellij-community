@@ -3,9 +3,14 @@ package git4idea.workingTrees.ui
 
 import javax.swing.DefaultListModel
 
-internal class GitWorkingTreesListModel : DefaultListModel<GitWorktreeRow>() {
-  fun setRows(rows: List<GitWorktreeRow>) {
+internal class GitWorkingTreesListModel : DefaultListModel<GitWorkingTreesListEntry>() {
+  /** Whether entries are grouped under repository headers (peer multi-root case). */
+  var grouped: Boolean = false
+    private set
+
+  fun setEntries(entries: List<GitWorkingTreesListEntry>) {
+    grouped = entries.any { it is GitRepositoryHeader }
     clear()
-    rows.forEach { addElement(it) }
+    entries.forEach { addElement(it) }
   }
 }

@@ -3,14 +3,20 @@ package git4idea.workingTrees
 
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.config.GitSaveChangesPolicy
+import git4idea.repo.getAndInit
 import git4idea.repo.isSubmodule
 import git4idea.test.gitPlatformContextFixture
 import git4idea.update.GitSubmoduleProjectContext
 import git4idea.update.gitSubmoduleProjectFixture
+import git4idea.workingTrees.ui.GitRepositoryHeader
+import git4idea.workingTrees.ui.GitRepositoryKind
+import git4idea.workingTrees.ui.GitWorktreesTabModel
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -56,5 +62,22 @@ internal class GitSubmoduleWorkingTreeTest {
     assertThat(GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(sub), skipCurrentWorkingTree = true))
       .describedAs("Submodule branch must not be reported as checked out in another worktree")
       .isNull()
+  }
+
+  @Test
+  @RegistryKey("git.enable.working.trees.feature", "true")
+  fun `test the worktrees tab classifies the submodule and its parent`(): Unit = with(context) {
+    GitRepositoriesHolder.getAndInit(project)
+
+    val headers = runBlocking { GitWorktreesTabModel(project).buildEntries() }
+      .filterIsInstance<GitRepositoryHeader>()
+      .associateBy { it.repository.root.path }
+
+    assertThat(headers[sub.root.path]?.kind)
+      .describedAs("The submodule must be marked as a submodule")
+      .isEqualTo(GitRepositoryKind.SUBMODULE)
+    assertThat(headers[main.root.path]?.kind)
+      .describedAs("The parent repository must be top-level")
+      .isEqualTo(GitRepositoryKind.TOP_LEVEL)
   }
 }

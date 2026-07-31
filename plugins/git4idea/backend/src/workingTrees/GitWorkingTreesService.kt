@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationActivationListener
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.wm.IdeFrame
@@ -34,6 +36,8 @@ import com.intellij.util.application
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
+import org.jetbrains.annotations.VisibleForTesting
+import git4idea.workingTrees.ui.GitWorktreesTabModel
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
@@ -162,6 +166,27 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         rootPath = { it.root.path },
         workingTrees = { it.workingTreeHolder.getWorkingTrees() },
       )
+
+    /**
+     * The closest [candidates] path that is [worktreePath] itself or an ancestor of it (deepest wins), or
+     * [worktreePath] when none owns it. Used to reopen the whole owning (possibly multi-root) project.
+     */
+    @VisibleForTesting
+    internal fun resolveOwningProjectPath(worktreePath: Path, candidates: List<Path>): Path =
+      candidates
+        .filter { FileUtil.isAncestor(it.toString(), worktreePath.toString(), false) }
+        .maxByOrNull { it.nameCount }
+      ?: worktreePath
+
+    /**
+     * The path to open for [tree]: its owning project for the main worktree, or the worktree directory itself
+     * for a linked worktree (which must not resolve to a parent project it lives inside).
+     */
+    @VisibleForTesting
+    internal fun resolveProjectPathToOpen(tree: GitWorkingTree, candidates: List<Path>): Path {
+      val worktreePath = Path(tree.path.path)
+      return if (tree.isMain) resolveOwningProjectPath(worktreePath, candidates) else worktreePath
+    }
   }
 
   fun repositoryToModel(repository: GitRepository): GitRepositoryModel? {
@@ -169,8 +194,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    val status = getWorktreeSupportStatus(project)
-    if (status == GitWorktreeSupportStatus.Unsupported) return false
+    val tabModel = GitWorktreesTabModel(project)
+    if (tabModel.isEmpty()) return false
 
     val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
     when (value) {
@@ -178,7 +203,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> return true
     }
 
-    return status is GitWorktreeSupportStatus.SingleRepository && status.repository.workingTreeHolder.getWorkingTrees().size > 1
+    return tabModel.anyRepositoryHasMultipleWorktrees()
   }
 
   fun workingTreesTabOpenedByUser() {
@@ -267,8 +292,10 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   fun openWorkingTreeProject(tree: GitWorkingTree, onProjectOpened: ((Project) -> Unit)? = null) {
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
+    // Opening a new window is intentionally tied to the application scope so it survives this project closing.
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.IO) {
       if (!Path(tree.path.path).exists()) {
+        if (project.isDisposed) return@launch
         VcsNotifier.getInstance(project).notifyMinorWarning(
           GitNotificationIdsHolder.WORKING_TREE_DIRECTORY_NOT_FOUND, "",
           GitBundle.message("Git.WorkingTrees.open.directory.not.found", tree.path.presentableUrl)
@@ -283,39 +310,57 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
 
         return@launch
       }
-      val worktreeProject = openProjectInNewWindow(Path(tree.path.path))
+      val worktreeProject = openProjectInNewWindow(resolveProjectPathToOpen(tree))
       if (worktreeProject != null) {
         onProjectOpened?.invoke(worktreeProject)
       }
     }
   }
 
+  /**
+   * The path to open for [tree]. A **linked** worktree is a standalone checkout — open its own directory,
+   * never a parent project it happens to live inside (e.g. a worktree created under the currently open
+   * project, which would otherwise resolve back to that already-open project and do nothing). Only the
+   * **main** worktree resolves to its owning project, so that opening it restores a whole multi-root project.
+   */
+  private fun resolveProjectPathToOpen(tree: GitWorkingTree): Path {
+    val candidates = buildList {
+      ProjectManager.getInstance().openProjects.forEach { p -> p.basePath?.let { add(Path(it)) } }
+      (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.getRecentPaths()?.forEach { add(Path(it)) }
+    }
+    return resolveProjectPathToOpen(tree, candidates)
+  }
+
   fun deleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository) {
     coroutineScope.launch {
-      val existingProject = ProjectUtil.findProject(Path(tree.path.path))
-      if (existingProject != null) {
-        if (shouldStopDeletion(project, tree, existingProject)) {
-          closeProject(existingProject)
-        }
-        else {
-          return@launch
-        }
-      }
+      doDeleteWorkingTree(project, tree, repository)
+    }
+  }
 
-      val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
-        service<Git>().deleteWorkingTree(repository, tree)
+  private suspend fun doDeleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository) {
+    val existingProject = ProjectUtil.findProject(Path(tree.path.path))
+    if (existingProject != null) {
+      if (shouldStopDeletion(project, tree, existingProject)) {
+        closeProject(existingProject)
       }
+      else {
+        return
+      }
+    }
 
-      if (commandResult.success()) {
-        notifyWorkingTreeDeletedSuccess(project, repository, tree)
-        return@launch
-      }
+    val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
+      service<Git>().deleteWorkingTree(repository, tree)
+    }
 
-      if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
-        handleFailedDeletionOnWindows(project, repository, tree)
-      } else {
-        notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
-      }
+    if (commandResult.success()) {
+      notifyWorkingTreeDeletedSuccess(project, repository, tree)
+      return
+    }
+
+    if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
+      handleFailedDeletionOnWindows(project, repository, tree)
+    } else {
+      notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
     }
   }
 

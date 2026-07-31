@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import git4idea.GitWorkingTree
 import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
@@ -29,13 +28,7 @@ internal class OpenWorkingTreeAction : DumbAwareAction() {
       return false
     }
     val workingTree = trees[0]
-    if (GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree) || workingTree.isPrunable) {
-      return false
-    }
-    val treePath = workingTree.path.path
-    return ProjectManager.getInstance().openProjects.none {
-      project.basePath == treePath
-    }
+    return !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree) && !workingTree.isPrunable
   }
 
   override fun actionPerformed(e: AnActionEvent) {
