@@ -177,6 +177,9 @@ interface DocumentSnapshot {
    *
    * In the current implementation it is hard to remove "redundant" [newWholeText]
    * because [DocumentEx.moveText] precomputes it
+   *
+   * @param clearLineFlags whether all line modification flags of the result should be cleared,
+   *   e.g. when the whole text is replaced or the document is reloaded from disk
    */
   @Contract(pure = true)
   fun withText(
@@ -185,7 +188,6 @@ interface DocumentSnapshot {
     endOffset: Int,
     newFragment: CharSequence,
     newModStamp: Long,
-    wholeTextReplaced: Boolean,
     clearLineFlags: Boolean,
     clearModTree: Boolean,
   ): DocumentSnapshot

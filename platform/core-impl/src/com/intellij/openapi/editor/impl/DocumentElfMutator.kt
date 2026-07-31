@@ -221,8 +221,7 @@ internal abstract class DocumentElfMutator(
         changeEvent.offset + changeEvent.oldLength,
         changeEvent.newFragment,
         newModStamp,
-        changeEvent.isWholeTextReplaced,
-        clearLineFlags,
+        clearLineFlags || changeEvent.isWholeTextReplaced,
         false,
       )
     }

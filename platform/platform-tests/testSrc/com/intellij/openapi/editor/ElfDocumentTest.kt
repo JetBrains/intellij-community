@@ -82,6 +82,25 @@ class ElfDocumentTest {
   }
 
   @Test
+  fun `test whole text replacement in elf scope clears line modification flags when synced`() = runOnEdt {
+    val document = DocumentImpl("one\ntwo")
+    val elfDocument = getElfDocument(document)
+    runWriteCommandAction {
+      document.insertString(0, "x")
+    }
+    waitForTextAndAssertSnapshots(document, elfDocument, "xone\ntwo")
+    assertTrue(document.isLineModified(0))
+    withElfScope {
+      runCommandAction {
+        document.setText("three\nfour")
+      }
+    }
+    waitForTextAndAssertSnapshots(document, elfDocument, "three\nfour")
+    assertFalse(document.isLineModified(0))
+    assertFalse(document.isLineModified(1))
+  }
+
+  @Test
   fun `test unsupported operation guard is only active inside elf scope`() = runOnUi {
     assertFalse(Elf.getElf().isUnsupportedOperationGuardActive())
     withElfScope {

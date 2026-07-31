@@ -67,10 +67,14 @@ public final class LineSet {
     return new LineSet(starts.toIntArray(), flags.toByteArray(), text.length());
   }
 
+  /**
+   * Returns a line set corresponding to the text after the replacement, with all lines touched by the change marked as modified.
+   * Callers implementing "whole text replaced" semantics should call {@link #clearModificationFlags} on the result.
+   */
   @VisibleForTesting
-  public @NotNull LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
+  public @NotNull LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement) {
     if (myLength == 0) {
-      return createLineSet(replacement, !wholeTextReplaced);
+      return createLineSet(replacement, true);
     }
 
     // if we're breaking or creating a '\r\n' pair, expand the changed range to include it fully
@@ -87,11 +91,9 @@ public final class LineSet {
       end++;
     }
 
-    LineSet result = isSingleLineChange(start, end, replacement)
-                     ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
-                     : genericUpdate(start, end, replacement);
-
-    return wholeTextReplaced ? result.clearModificationFlags(0, Integer.MAX_VALUE) : result;
+    return isSingleLineChange(start, end, replacement)
+           ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
+           : genericUpdate(start, end, replacement);
   }
 
   private static boolean hasChar(CharSequence s, int index, char c) {

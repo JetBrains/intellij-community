@@ -35,9 +35,8 @@ public class FrozenDocument implements DocumentEx {
       oldEnd,
       event.getNewFragment(),
       newStamp,
-      event.isWholeTextReplaced(),
-      false,
-      true
+      /* clearLineFlags = */ event.isWholeTextReplaced(),
+      /* clearModTree = */ true
     );
     return new FrozenDocument(newSnapshot);
   }

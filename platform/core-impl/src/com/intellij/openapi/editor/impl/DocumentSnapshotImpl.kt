@@ -246,7 +246,6 @@ internal class DocumentSnapshotImpl private constructor(
     endOffset: Int,
     newFragment: CharSequence,
     newModStamp: Long,
-    wholeTextReplaced: Boolean,
     clearLineFlags: Boolean,
     clearModTree: Boolean,
   ): DocumentSnapshotImpl {
@@ -268,7 +267,6 @@ internal class DocumentSnapshotImpl private constructor(
       startOffset,
       endOffset,
       newFragment,
-      wholeTextReplaced,
     )
     assert(newTextLength == newLineSet.length) {
       "nextTextLength = " + newTextLength +
@@ -284,7 +282,7 @@ internal class DocumentSnapshotImpl private constructor(
       updateModTree(oldFragmentLength, newFragmentLength, startOffset, endOffset)
     }
     val newAspects = aspects.transform {
-      it.withText(this, newWholeText, startOffset, endOffset, newFragment, newModStamp, wholeTextReplaced)
+      it.withText(this, newWholeText, startOffset, endOffset, newFragment, newModStamp)
     }
     return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null, newAspects)
   }

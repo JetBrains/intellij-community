@@ -324,8 +324,7 @@ internal abstract class DocumentMutatorImpl(
             changeEvent.offset + changeEvent.oldLength,
             changeEvent.newFragment,
             newModStamp,
-            changeEvent.isWholeTextReplaced,
-            clearLineFlags,
+            clearLineFlags || changeEvent.isWholeTextReplaced,
             false,
           )
         }

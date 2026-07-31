@@ -9,7 +9,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.ImmutableCharSequence
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -108,7 +107,6 @@ internal class DocumentAspectTest {
     assertEquals(1, rebuilt.endOffset)
     assertEquals("XY", rebuilt.newFragment.toString())
     assertEquals(before.modStamp() + 1, rebuilt.newModStamp)
-    assertFalse(rebuilt.wholeTextReplaced!!)
     assertSame(aspect, before.aspect(KEY_1)) // the old snapshot keeps the old aspect
   }
 
@@ -217,7 +215,6 @@ internal class DocumentAspectTest {
       endOffset = endOffset,
       newFragment = fragment,
       newModStamp = snapshot.modStamp() + 1,
-      wholeTextReplaced = false,
       clearLineFlags = false,
       clearModTree = false,
     )
@@ -231,7 +228,6 @@ internal class DocumentAspectTest {
     val endOffset: Int = -1,
     val newFragment: CharSequence? = null,
     val newModStamp: Long = -1L,
-    val wholeTextReplaced: Boolean? = null,
   ) : DocumentAspect {
     override fun withText(
       oldSnapshot: DocumentSnapshot,
@@ -240,9 +236,8 @@ internal class DocumentAspectTest {
       endOffset: Int,
       newFragment: CharSequence,
       newModStamp: Long,
-      wholeTextReplaced: Boolean,
     ): DocumentAspect {
-      return TestAspect(rebuildCount + 1, oldSnapshot, newWholeText, startOffset, endOffset, newFragment, newModStamp, wholeTextReplaced)
+      return TestAspect(rebuildCount + 1, oldSnapshot, newWholeText, startOffset, endOffset, newFragment, newModStamp)
     }
   }
 
@@ -254,7 +249,6 @@ internal class DocumentAspectTest {
       endOffset: Int,
       newFragment: CharSequence,
       newModStamp: Long,
-      wholeTextReplaced: Boolean,
     ): DocumentAspect {
       return this
     }

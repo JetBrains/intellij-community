@@ -39,6 +39,5 @@ interface DocumentAspect {
     endOffset: Int,
     newFragment: CharSequence,
     newModStamp: Long,
-    wholeTextReplaced: Boolean,
   ): DocumentAspect
 }

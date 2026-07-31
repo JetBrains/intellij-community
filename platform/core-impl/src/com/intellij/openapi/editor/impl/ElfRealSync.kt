@@ -177,8 +177,7 @@ internal abstract class ElfRealSync(
       changeEvent.offset + changeEvent.oldLength,
       changeEvent.newFragment,
       change.newModStamp,
-      changeEvent.isWholeTextReplaced,
-      change.clearLineFlags,
+      change.clearLineFlags || changeEvent.isWholeTextReplaced,
       false,
     )
   }
