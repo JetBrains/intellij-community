@@ -576,6 +576,7 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+libraries/zip-signer
 libraries/zstd-jni
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 mps/build
@@ -802,6 +803,7 @@ platform/platform-impl/initial-config-import
 platform/platform-impl/internal
 platform/platform-impl/internal/jcef
 platform/platform-impl/jcef
+platform/platform-impl/plugin-signature-verifier
 platform/platform-impl/recentProjects
 platform/platform-impl/remote
 platform/platform-impl/rpc

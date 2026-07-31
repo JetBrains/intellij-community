@@ -382,6 +382,11 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.project")
     embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.ide.impl")
+    // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
+    module("intellij.platform.ide.pluginSignatureVerifier")
+    // private wrapper used only by intellij.platform.ide.pluginSignatureVerifier, so it is not embedded
+    // and is not in librariesPlatform() - products without ide.impl do not need it
+    module("intellij.libraries.zip.signer")
 
     embeddedModule("intellij.platform.rd.community")
 

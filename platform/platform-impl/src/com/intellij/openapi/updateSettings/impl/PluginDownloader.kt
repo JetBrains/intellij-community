@@ -17,7 +17,7 @@ import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
-import com.intellij.ide.plugins.marketplace.PluginSignatureChecker
+import com.intellij.ide.plugins.marketplace.PluginSignatureVerifier
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -196,7 +196,7 @@ class PluginDownloader private constructor(
     }
 
     val loaded = LoadingState.COMPONENTS_LOADED.isOccurred  // plugins can be requested during initial IDE setup
-    if (loaded && !PluginSignatureChecker.verifyIfRequired(myDescriptor, file, isFromMarketplace(), true)) {
+    if (loaded && !PluginSignatureVerifier.verifyIfRequired(myDescriptor, file, isFromMarketplace(), true)) {
       myShownErrors = true
       return false
     }

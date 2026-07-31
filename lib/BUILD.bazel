@@ -14453,6 +14453,21 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "org.jetbrains/marketplace-zip-signer-0.1.43.jar_copy",
+    src = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
+    out = "org.jetbrains/marketplace-zip-signer-0.1.43.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-zip-signer-zip-signer",
+    jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
+    source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_43-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 jvm_import(
     name = "libraries-zstd-jni-zstd-jni",
     jar = "@com_github_luben-zstd-jni-1_5_7-12_http//file",
@@ -20869,21 +20884,6 @@ java_library(
         ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
         ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
     ],
-)
-
-copy_file(
-    name = "org.jetbrains/marketplace-zip-signer-0.1.43.jar_copy",
-    src = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
-    out = "org.jetbrains/marketplace-zip-signer-0.1.43.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "zip-signer",
-    jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
-    source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_43-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(

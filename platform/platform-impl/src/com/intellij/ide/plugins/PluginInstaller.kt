@@ -6,7 +6,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
-import com.intellij.ide.plugins.marketplace.PluginSignatureChecker
+import com.intellij.ide.plugins.marketplace.PluginSignatureVerifier
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.newui.PluginManagerSession
@@ -323,7 +323,7 @@ object PluginInstaller {
       val previousVersion = installedPlugin?.getVersion()
       PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor, InstallationSourceEnum.FROM_DISK, previousVersion)
 
-      if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
+      if (!PluginSignatureVerifier.verifyIfRequired(pluginDescriptor, file, false, true)) {
         return
       }
 

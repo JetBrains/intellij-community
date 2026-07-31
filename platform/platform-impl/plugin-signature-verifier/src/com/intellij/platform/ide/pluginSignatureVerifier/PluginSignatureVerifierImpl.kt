@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.marketplace
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.pluginSignatureVerifier
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.certificates.PluginCertificateStore
+import com.intellij.ide.plugins.marketplace.PluginSignatureVerifier
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
@@ -12,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.zip.signer.signer.CertificateUtils
@@ -28,16 +28,16 @@ import java.security.cert.X509Certificate
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 
-internal object PluginSignatureChecker {
-  private val LOG = logger<PluginSignatureChecker>()
+private val LOG = logger<PluginSignatureVerifierImpl>()
 
+internal class PluginSignatureVerifierImpl : PluginSignatureVerifier {
   private val jetBrainsCertificateRevokedCache = Caffeine
     .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, Optional<Boolean>>()
 
   private val jetbrainsCertificate: Certificate? by lazy {
-    val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
+    val cert = PluginSignatureVerifierImpl::class.java.classLoader.getResourceAsStream("ca.crt")
     if (cert == null) {
       LOG.warn(IdeBundle.message("jetbrains.certificate.not.found"))
       null
@@ -47,12 +47,7 @@ internal object PluginSignatureChecker {
     }
   }
 
-  @JvmStatic
-  fun verifyIfRequired(descriptor: IdeaPluginDescriptor, pluginFile: Path, isMarketplace: Boolean, showAcceptDialog: Boolean): Boolean {
-    val key = if (isMarketplace) "marketplace.certificate.signature.check" else "custom-repository.certificate.signature.check"
-    if (!RegistryManager.getInstance().`is`(key)) {
-      return true
-    }
+  override fun verify(descriptor: IdeaPluginDescriptor, pluginFile: Path, showAcceptDialog: Boolean): Boolean {
     val certificates = PluginCertificateStore.customTrustManager.certificates + PluginCertificateStore.managedTrustedCertificates
     return if (showAcceptDialog) isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
            else isSignedInBackground(descriptor, pluginFile, certificates)
