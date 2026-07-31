@@ -168,8 +168,21 @@ fun Path.copy(target: Path): Path {
  */
 @JvmOverloads
 fun Path.copyRecursively(target: Path, overwrite: Boolean = false) {
+  copyRecursively(target, if (overwrite) arrayOf(StandardCopyOption.REPLACE_EXISTING) else emptyArray())
+}
+
+/**
+ * Recursively copies this directory and its contents to the target location using the given [copyOptions].
+ *
+ * @param target the destination path
+ * @param copyOptions options applied to every [Files.copy] call, e.g. [StandardCopyOption.COPY_ATTRIBUTES]
+ * to preserve file modification times, or [StandardCopyOption.REPLACE_EXISTING] to overwrite existing files
+ *
+ * @throws java.nio.file.FileAlreadyExistsException if a target file already exists and [StandardCopyOption.REPLACE_EXISTING] is not set
+ * @throws IOException if an I/O error occurs during copying
+ */
+fun Path.copyRecursively(target: Path, copyOptions: Array<CopyOption>) {
   target.parent?.createDirectories()
-  val copyOptions: Array<CopyOption> = if (overwrite) arrayOf(StandardCopyOption.REPLACE_EXISTING) else emptyArray()
   Files.walk(this).use { stream ->
     stream.forEach { file ->
       Files.copy(file, target.resolve(this.relativize(file)), *copyOptions)
