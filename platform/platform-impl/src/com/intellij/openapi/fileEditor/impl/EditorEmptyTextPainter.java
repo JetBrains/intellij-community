@@ -64,9 +64,6 @@ public class EditorEmptyTextPainter {
     if (!isEnabled()) {
       return;
     }
-    if (splitters instanceof EditorsSplitters && !((EditorsSplitters)splitters).isEmptyTextPaintingAllowed()) {
-      return;
-    }
 
     paintEmptyText(splitters, splitters, g);
   }

@@ -16,11 +16,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -119,6 +122,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
+        // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
+        opensFileAfterProjectOpen = true,
         beforeOpen = { project ->
           project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
           options.beforeOpen?.invoke(project) ?: true
@@ -205,7 +210,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val project = ProjectManagerEx.getInstanceEx().openProject(
         projectStoreBaseDir = baseDir,
-        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+        // the flag is set on exactly the condition under which `openFileFromCommandLine` is called below, so the hold it asks for is
+        // always the one that call releases
+        options = if (baseDir == file) {
+          options
+        }
+        else {
+          options.copy(projectName = file.fileName.toString(), opensFileAfterProjectOpen = true)
+        }
       )
       if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
@@ -273,7 +285,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val project = ProjectManagerEx.getInstanceEx().openProjectAsync(
         projectIdentityFile = baseDir,
-        options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
+        // as in `doOpenProject`: set on exactly the condition under which `openFileFromCommandLine` is called below
+        options = if (baseDir == file) {
+          options
+        }
+        else {
+          options.copy(projectName = file.fileName.toString(), opensFileAfterProjectOpen = true)
+        }
       )
       if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
@@ -404,23 +422,54 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     get() = "text editor"
 }
 
+/**
+ * Opens a file named on the command line, once the project it belongs to is open.
+ *
+ * Every caller opens the project with [OpenProjectTask.opensFileAfterProjectOpen] set, so a hold on the editor empty state is waiting
+ * to be released here: this navigation happens after project open has finished and released its own hold, and without the extra hold
+ * the empty state would be shown for as long as it takes to get here and then immediately replaced by this file.
+ */
 private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
   StartupManager.getInstance(project).runAfterOpened {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      if (project.isDisposed || !Files.exists(file)) {
-        return@Runnable
-      }
+      try {
+        if (project.isDisposed || !Files.exists(file)) {
+          return@Runnable
+        }
 
-      val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
-      val navigatable = if (line > 0) {
-        OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
+        val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
+        val navigatable = if (line > 0) {
+          OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
+        }
+        else {
+          PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+        }
+        navigatable.navigate(true)
       }
-      else {
-        PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+      finally {
+        // in a `finally`, so that a file that turned out not to exist releases the hold as well as one that opened
+        endStartupEmptyStatePresentationHold(project)
       }
-      navigatable.navigate(true)
     }, ModalityState.nonModal(), project.disposed)
   }
+}
+
+/**
+ * Releases the hold [OpenProjectTask.opensFileAfterProjectOpen] asked for.
+ *
+ * Nothing to release if the editor area was never built: `mainSplitters` is a `lateinit` assigned inside `initJob`, and where that job
+ * did not complete, editor restoring never took a hold either.
+ */
+@RequiresEdt
+private fun endStartupEmptyStatePresentationHold(project: Project) {
+  if (project.isDisposed) {
+    return
+  }
+  val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return
+  if (!fileEditorManager.initJob.isCompleted || fileEditorManager.initJob.isCancelled) {
+    return
+  }
+  fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
 }
 
 internal suspend fun attachToProjectAsync(

@@ -26,6 +26,15 @@ data class OpenProjectTask @Internal constructor(
   val callback: ProjectOpenedCallback?,
   val line: Int,
   val column: Int,
+  /**
+   * Whether whoever opens this project is going to open an editor of its own once opening has finished — a file named on the command
+   * line, for instance.
+   *
+   * The editor area holds back what it would otherwise show while project open is still deciding what goes there, and it can only
+   * hold back what it knows about; this reports work that outlives project open itself.
+   */
+  @Internal
+  val opensFileAfterProjectOpen: Boolean = false,
   @Deprecated("Not used")
   val isRefreshVfsNeeded: Boolean,
   /**
@@ -154,6 +163,10 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var line: Int = -1
   var column: Int = -1
 
+  /** See [OpenProjectTask.opensFileAfterProjectOpen]. */
+  @Internal
+  var opensFileAfterProjectOpen: Boolean = false
+
   /**  Shim for Java clients  */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpen = { callback.test(it) }
@@ -209,6 +222,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
 
       line = line,
       column = column,
+      opensFileAfterProjectOpen = opensFileAfterProjectOpen,
 
       project = project,
       projectRootDir = projectRootDir,

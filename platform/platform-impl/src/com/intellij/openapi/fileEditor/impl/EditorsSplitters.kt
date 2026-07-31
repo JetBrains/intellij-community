@@ -244,6 +244,14 @@ open class EditorsSplitters internal constructor(
    */
   private var startupPresentationAbandoned: Boolean = false
 
+  /**
+   * Whether a hold was ever taken, so that a release nobody paired can be told apart from a release that had nothing to pair with.
+   *
+   * Project open releases its hold unconditionally, but takes it only once restoring has returned a component — an open cancelled
+   * before that point releases a hold it never took, which is ordinary rather than a defect worth warning about.
+   */
+  private var startupPresentationHoldTaken: Boolean = false
+
   private val splittersLayout: EditorsSplittersLayout
     get() = layout as EditorsSplittersLayout
 
@@ -265,9 +273,6 @@ open class EditorsSplitters internal constructor(
 
   private fun shouldDelayEmptyStatePresentation(state: EditorSplitterState): Boolean = state.hasFileEntries && shouldReopenEditorsOnStartup()
 
-  @Internal
-  fun isEmptyTextPaintingAllowed(): Boolean = shouldShowRichEmptyState() && emptyStateComponentController.isLegacyEmptyTextPaintingAllowed()
-
   @TestOnly
   internal fun isEmptyStateComponentCreationPending(): Boolean = emptyStateComponentController.isCreationPending()
 
@@ -284,6 +289,10 @@ open class EditorsSplitters internal constructor(
    * file named on the command line, What's New, a file a project wizard generated.
    *
    * The empty state is still prepared under the hold, so the wait costs no latency; see [endStartupEmptyStatePresentationHold].
+   *
+   * Taking or releasing a hold can settle the empty state on the spot, which mounts or disposes a provider's component and therefore
+   * takes the write-intent lock. So this must be called from a context where that lock may be taken — the legacy `Dispatchers.EDT` or
+   * `invokeLater`, not the strict `Dispatchers.UI`, which forbids taking it rather than merely not carrying it.
    */
   @RequiresEdt
   internal fun beginStartupEmptyStatePresentationHold() {
@@ -291,6 +300,7 @@ open class EditorsSplitters internal constructor(
       return
     }
     startupPresentationHolds++
+    startupPresentationHoldTaken = true
     applyStartupPresentationHolds()
   }
 
@@ -298,19 +308,22 @@ open class EditorsSplitters internal constructor(
    * Reports that project open is done opening editors, so whatever this area shows now is what it keeps.
    *
    * That is knowledge rather than a guess, so an empty state prepared under the hold is presented without the creation delay that
-   * exists only to hide a flash before an editor appears.
+   * exists only to hide a flash before an editor appears. Rich components are therefore enabled *before* the gate opens: a creation
+   * that only becomes possible here then starts under a closed gate and mounts at once, instead of waiting out that delay.
+   *
+   * Must be called where the write-intent lock may be taken; see [beginStartupEmptyStatePresentationHold].
    */
   @RequiresEdt
   internal fun endStartupEmptyStatePresentationHold() {
     if (startupPresentationHolds > 0) {
       startupPresentationHolds--
     }
-    else if (!startupPresentationAbandoned) {
+    else if (startupPresentationHoldTaken && !startupPresentationAbandoned) {
       // the counter exists so that an unbalanced release cannot strand presentation, not so that one can pass unnoticed
       LOG.warn("Editor empty state presentation hold released more often than it was taken")
     }
-    applyStartupPresentationHolds()
     enableRichEmptyStateComponents()
+    applyStartupPresentationHolds()
   }
 
   /**
@@ -319,13 +332,15 @@ open class EditorsSplitters internal constructor(
    * Unlike [endStartupEmptyStatePresentationHold] this does not pair with one hold: it ends the whole startup hold, including a hold
    * still on its way in from a restore that outlived project open. Whatever the editor area shows at that point is what it keeps,
    * which is the same conclusion the ordinary release draws — reached by giving up rather than by finishing.
+   *
+   * Must be called where the write-intent lock may be taken; see [beginStartupEmptyStatePresentationHold].
    */
   @RequiresEdt
   internal fun abandonStartupEmptyStatePresentationHold() {
     startupPresentationAbandoned = true
     startupPresentationHolds = 0
-    applyStartupPresentationHolds()
     enableRichEmptyStateComponents()
+    applyStartupPresentationHolds()
   }
 
   /**
@@ -357,9 +372,15 @@ open class EditorsSplitters internal constructor(
   }
 
   @TestOnly
+  internal fun setEmptyStateComponentPresentationGateTimeoutForTests(timeout: Duration?) {
+    emptyStateComponentController.setPresentationGateTimeoutForTests(timeout)
+  }
+
+  @TestOnly
   internal fun resetStartupEmptyStatePresentationHoldForTests() {
     startupPresentationHolds = 0
     startupPresentationAbandoned = false
+    startupPresentationHoldTaken = false
     applyStartupPresentationHolds()
   }
 
