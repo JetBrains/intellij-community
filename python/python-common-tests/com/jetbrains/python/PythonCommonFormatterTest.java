@@ -880,6 +880,11 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-25434")
+  public void testSpacesAroundAsInImports() {
+    doTest();
+  }
+
   // PY-20633
   public void testFromImportParenthesesPlacement() {
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
