@@ -671,6 +671,19 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testJSpecifyNullableParameterOverridesNotNull() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableParameterOverridesNotNullOptionOff() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = false;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testJSpecifyUnspecifiedTypeArgumentInstantiatedWithNullable() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);

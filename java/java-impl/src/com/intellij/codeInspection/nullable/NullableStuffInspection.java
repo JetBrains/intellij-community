@@ -54,6 +54,8 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       checkbox("REPORT_NULLABILITY_ANNOTATION_ON_LOCALS", JavaBundle.message("inspection.nullable.problems.nullability.on.locals")),
       checkbox("REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS", JavaBundle.message(
         "inspection.nullable.problems.notnull.to.nullable.assignment.conflicts")),
+      checkbox("REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL", JavaBundle.message(
+        "inspection.nullable.problems.nullable.parameter.overrides.notnull.option")),
       checkbox("REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER", JavaBundle.message(
         "inspection.nullable.problems.redundant.nullability.inside.container")),
       JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()

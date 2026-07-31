@@ -95,10 +95,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
         new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   28), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
+                   28), // a type parameter that narrows the nullable bound of the overridden method, see IDEA-380143
         new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
-        new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
+                   33), // a type parameter that narrows the nullable bound of the overridden method, see IDEA-380143
 
         new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24)// see: IDEA-377699
       )
@@ -173,6 +172,8 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+      // JSpecify deviates from the JLS here on purpose, see jspecify/jspecify#49
+      nullableStuffInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
@@ -410,6 +411,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "inspection.nullable.problems.at.local.variable" -> warnings.put(anchor, "jspecify_unrecognized_location");
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+             "inspection.nullable.problems.Nullable.parameter.overrides.NotNull",
              "complex.problem.with.nullability",
              "assigning.a.class.with.nullable.elements",
              "assigning.a.class.with.notnull.elements",
