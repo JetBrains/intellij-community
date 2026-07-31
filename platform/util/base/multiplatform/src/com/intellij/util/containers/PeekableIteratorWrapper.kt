@@ -2,7 +2,8 @@
 package com.intellij.util.containers
 
 /**
- * Consider using [com.google.common.collect.Iterators.peekingIterator] instead.
+ * Computes [PeekableIterator] from the plain [Iterator], allowing to peek at elements
+ * @see com.google.common.collect.PeekingIterator
  */
 open class PeekableIteratorWrapper<T>(private val myIterator: Iterator<T>) : PeekableIterator<T> {
   private var myValue: T? = null
