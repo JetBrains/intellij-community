@@ -20,7 +20,7 @@ import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
-import git4idea.actions.workingTree.GitCreateWorkingTreeService
+import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions

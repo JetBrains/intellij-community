@@ -142,19 +142,25 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       return status is GitWorktreeSupportStatus.SingleRepository && status.repository == repository
     }
 
-    /**
-     * Working trees UI currently supports only the `single repository` case.
-     * The returned value distinguishes unsupported, single-repository, and multi-repository project states.
-     */
+    // The returned value distinguishes unsupported, single-repository, and multi-repository project states.
     internal fun getWorktreeSupportStatus(project: Project?): GitWorktreeSupportStatus {
       if (project == null || !GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return GitWorktreeSupportStatus.Unsupported
-      val repositories = GitRepositoryManager.getInstance(project).repositories
+      val repositories = worktreeCapableRepositories(project)
       return when (repositories.size) {
         0 -> GitWorktreeSupportStatus.Unsupported
         1 -> GitWorktreeSupportStatus.SingleRepository(repositories.single())
         else -> GitWorktreeSupportStatus.MultipleRepository(repositories)
       }
     }
+
+    // All repositories a worktree can be created for. A linked working tree may itself be registered as a VCS
+    // root; collapse those into their underlying repository so it is not counted/offered twice.
+    fun worktreeCapableRepositories(project: Project): List<GitRepository> =
+      GitWorkingTreesUtil.mergeLinkedWorktreeRepositories(
+        GitRepositoryManager.getInstance(project).repositories,
+        rootPath = { it.root.path },
+        workingTrees = { it.workingTreeHolder.getWorkingTrees() },
+      )
   }
 
   fun repositoryToModel(repository: GitRepository): GitRepositoryModel? {

@@ -26,7 +26,7 @@ internal class GitWorkingTreeCurrentDetectionTest {
     assertThat(repo.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(
       listOf(GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true))
     )
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true)).isNull()
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(repo.currentBranch!!, listOf(repo), skipCurrentWorkingTree = true)).isNull()
   }
 
   @Test
@@ -44,9 +44,9 @@ internal class GitWorkingTreeCurrentDetectionTest {
     )
 
     val featureTree = trees.single { !it.isMain }
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), repo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(GitStandardLocalBranch("feature"), listOf(repo), skipCurrentWorkingTree = true))
       .isEqualTo(featureTree)
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(repo.currentBranch!!, repo, skipCurrentWorkingTree = true)).isNull()
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(repo.currentBranch!!, listOf(repo), skipCurrentWorkingTree = true)).isNull()
   }
 
   @Test
@@ -64,7 +64,7 @@ internal class GitWorkingTreeCurrentDetectionTest {
     )
 
     val nestedTree = trees.single { !it.isMain }
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("nested"), repo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(GitStandardLocalBranch("nested"), listOf(repo), skipCurrentWorkingTree = true))
       .isEqualTo(nestedTree)
   }
 
@@ -78,11 +78,11 @@ internal class GitWorkingTreeCurrentDetectionTest {
     linkedRepo.ensureWorkingTreesUpToDateForTests()
 
     // The linked worktree's own (feature) branch must not be considered busy.
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(GitStandardLocalBranch("feature"), linkedRepo, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(GitStandardLocalBranch("feature"), listOf(linkedRepo), skipCurrentWorkingTree = true))
       .isNull()
 
     // The main branch is checked out in the (now non-current) main worktree.
-    val blocking = GitSingleRefAction.getWorkingTreeWithRef(mainBranch, linkedRepo, skipCurrentWorkingTree = true)
+    val blocking = GitSingleRefAction.findCheckedOutWorkingTree(mainBranch, listOf(linkedRepo), skipCurrentWorkingTree = true)
     assertThat(blocking).describedAs("Main branch should be reported as checked out in the main worktree").isNotNull()
     assertThat(blocking!!.isMain).describedAs("The blocking worktree should be the main one").isTrue()
     assertThat(blocking.path.path).isEqualTo(repo.root.path)

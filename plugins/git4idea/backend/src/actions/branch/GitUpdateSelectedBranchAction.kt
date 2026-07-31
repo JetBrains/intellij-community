@@ -26,7 +26,7 @@ class GitUpdateSelectedBranchAction
       return
     }
 
-    val workingTreeWithBranch = getWorkingTreeWithRef(branch, repositories, skipCurrentWorkingTree = true)
+    val workingTreeWithBranch = findCheckedOutWorkingTree(branch, repositories, skipCurrentWorkingTree = true)
 
     val (enabled, description) = when {
       workingTreeWithBranch != null -> {

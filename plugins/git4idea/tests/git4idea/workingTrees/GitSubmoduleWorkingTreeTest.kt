@@ -7,6 +7,7 @@ import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.config.GitSaveChangesPolicy
+import git4idea.repo.isSubmodule
 import git4idea.test.gitPlatformContextFixture
 import git4idea.update.GitSubmoduleProjectContext
 import git4idea.update.gitSubmoduleProjectFixture
@@ -30,11 +31,29 @@ internal class GitSubmoduleWorkingTreeTest {
 
   @Test
   @RegistryKey("git.enable.working.trees.feature", "true")
+  fun `test submodule and its parent are both worktree-capable`(): Unit = with(context) {
+    // Worktrees can be created for nested repositories too, so both the main repo and the submodule qualify.
+    val capable = GitWorkingTreesService.worktreeCapableRepositories(project)
+    assertThat(capable).containsExactlyInAnyOrder(main, sub)
+
+    val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
+    assertThat(status)
+      .describedAs("A project with a submodule is a multi-repository project")
+      .isInstanceOf(GitWorktreeSupportStatus.MultipleRepository::class.java)
+    assertThat((status as GitWorktreeSupportStatus.MultipleRepository).repositories).containsExactlyInAnyOrder(main, sub)
+
+    // The tab marks nested repositories; this is the signal it relies on.
+    assertThat(sub.isSubmodule()).describedAs("The submodule must be detected as a submodule").isTrue()
+    assertThat(main.isSubmodule()).describedAs("The main repository is not a submodule").isFalse()
+  }
+
+  @Test
+  @RegistryKey("git.enable.working.trees.feature", "true")
   fun `test branch is not reported as checked out in another worktree`(): Unit = with(context) {
     sub.ensureWorkingTreesUpToDateForTests()
 
     val branch = sub.currentBranch!!
-    assertThat(GitSingleRefAction.getWorkingTreeWithRef(branch, sub, skipCurrentWorkingTree = true))
+    assertThat(GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(sub), skipCurrentWorkingTree = true))
       .describedAs("Submodule branch must not be reported as checked out in another worktree")
       .isNull()
   }

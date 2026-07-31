@@ -485,7 +485,6 @@ a:git4idea.actions.ref.GitSingleRefAction
 - f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - updateIfEnabledAndVisible(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
 f:git4idea.actions.ref.GitSingleRefAction$Companion
-- f:getWorkingTreeWithRef(git4idea.GitReference,git4idea.repo.GitRepository,Z):git4idea.GitWorkingTree
 - f:isCurrentRefInAnyOtherWorkingTree(git4idea.GitReference,java.util.List):Z
 f:git4idea.actions.tag.GitPushTagActionWrapper
 - com.intellij.openapi.actionSystem.AnActionWrapper

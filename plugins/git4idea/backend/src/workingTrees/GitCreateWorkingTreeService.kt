@@ -76,7 +76,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   ) {
     if (!GitWorkingTreesService.isWorktreeCreationSupported(repository)) return
 
-    val existingWorkingTree = GitSingleRefAction.getWorkingTreeWithRef(branch, repository, skipCurrentWorkingTree = false)
+    val existingWorkingTree = GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(repository), skipCurrentWorkingTree = false)
     if (existingWorkingTree != null) {
       // If the branch is checked out in the current worktree there's nothing to open; the popup item is hidden in that case.
       if (!existingWorkingTree.isCurrent) {
