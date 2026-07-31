@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.content.Content
@@ -58,8 +59,12 @@ class ToolWindowEditorTabFile internal constructor(
   internal var icon: Icon? = null
     private set
 
+  @Volatile
+  private var title: @NlsSafe String = ""
+
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
+    isWritable = false
 
     presentationFlow
       .onEach { presentation ->
@@ -77,13 +82,15 @@ class ToolWindowEditorTabFile internal constructor(
       .launchIn(coroutineScope)
   }
 
+  override fun getName(): @NlsSafe String = title
+
   private fun updatePresentation(
     presentation: ToolWindowEditorTabPresentation,
   ): Boolean {
     var changed = false
 
-    if (name != presentation.title) {
-      rename(null, presentation.title)
+    if (title != presentation.title) {
+      title = presentation.title
       changed = true
     }
 
@@ -100,7 +107,10 @@ class ToolWindowEditorTabFile internal constructor(
   // TODO: Enable persistence when tool window editor tabs can be restored between IDE sessions.
   override fun isPersistedInEditorHistory(): Boolean = false
 
-  override fun isWritable(): Boolean = true
+  override fun setWritable(writable: Boolean) {
+    if (writable) throw UnsupportedOperationException()
+    super.setWritable(false)
+  }
 
   internal fun onEditorClosed() {
     if (getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) != true) {

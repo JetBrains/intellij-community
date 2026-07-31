@@ -86,7 +86,7 @@ class ToolWindowEditorTabFileTest {
 
     assertThat(file.name).isEqualTo("Title")
     assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
-    assertThat(file.isWritable).isTrue()
+    assertThat(file.isWritable).isFalse()
     assertThat(file.isValid).isTrue()
     assertThat(file.isIncludedInEditorHistory(project)).isTrue()
     assertThat(file.isPersistedInEditorHistory()).isFalse()
