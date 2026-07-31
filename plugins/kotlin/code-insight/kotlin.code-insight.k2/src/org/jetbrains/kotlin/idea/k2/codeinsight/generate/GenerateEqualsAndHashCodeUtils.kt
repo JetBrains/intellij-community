@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -62,7 +61,7 @@ object GenerateEqualsAndHashCodeUtils {
         val contextMap = mutableMapOf<String, Any?>()
 
 
-        val equalsFunction = if (tryToFindEqualsMethodForClass) useSiteSession.findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
+        val equalsFunction = if (tryToFindEqualsMethodForClass) findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
 
         contextMap[BASE_PARAM_NAME] = "other"
         if (equalsFunction != null) {
@@ -108,7 +107,7 @@ object GenerateEqualsAndHashCodeUtils {
         val klass = info.klass
 
         val contextMap = mutableMapOf<String, Any?>()
-        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) useSiteSession.findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
+        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
         contextMap[SUPER_HAS_HASHCODE] = hashCodeFunction != null && (hashCodeFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
         // Sort variables in `hashCode()` to preserve the same order as in `equals()`
@@ -145,7 +144,7 @@ object GenerateEqualsAndHashCodeUtils {
 
         val contextMap = mutableMapOf<String, Any?>()
 
-        val toStringFunction = useSiteSession.findToStringMethodForClass(klass.symbol as KaClassSymbol)
+        val toStringFunction = findToStringMethodForClass(klass.symbol as KaClassSymbol)
 
         contextMap["generateSuper"] = toStringFunction != null && (toStringFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 

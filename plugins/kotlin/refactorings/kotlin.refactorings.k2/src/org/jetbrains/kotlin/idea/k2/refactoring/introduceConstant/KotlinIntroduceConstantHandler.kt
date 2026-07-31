@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze

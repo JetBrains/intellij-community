@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -83,11 +83,12 @@ private val POSITIONAL_DESTRUCTURING_CLASSES: Set<ClassId> = setOf(
 context(session: KaSession)
 fun KtDestructuringDeclaration.isPositionalDestructuringType(): Boolean {
     val classType = this.getDestructuredClassType() ?: return false
-    return session.isPositionalDestructuringType(classType)
+    return isPositionalDestructuringType(classType)
 }
 
 @ApiStatus.Internal
-fun KaSession.isPositionalDestructuringType(classType: KaClassType): Boolean {
+context(session: KaSession)
+fun isPositionalDestructuringType(classType: KaClassType): Boolean {
     val classId = classType.expandedSymbol?.classId ?: return false
     return classId in POSITIONAL_DESTRUCTURING_CLASSES
 }

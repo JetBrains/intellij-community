@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtElement
 inline fun <R> analyzeInModalWindow(
     contextElement: KtElement,
     @DialogTitle windowTitle: String,
-    crossinline action: KaSession.() -> R
+    crossinline action: context(KaSession) () -> R
 ): R {
     ThreadingAssertions.assertEventDispatchThread()
     val task = object : Task.WithResult<R, Exception>(runReadAction { contextElement.project }, windowTitle, /*canBeCancelled*/ true) {
