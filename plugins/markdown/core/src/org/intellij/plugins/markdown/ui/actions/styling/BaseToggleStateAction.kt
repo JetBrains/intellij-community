@@ -166,6 +166,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       MarkdownElementTypes.LINK_TEXT,
       MarkdownElementTypes.LINK_DESTINATION,
       MarkdownElementTypes.TEST_LINK,
+      MarkdownElementTypes.AT_PATH,
       MarkdownElementTypes.AUTOLINK,
       MarkdownTokenTypes.GFM_AUTOLINK
     )

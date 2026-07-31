@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.lang.references.backtick
+package org.intellij.plugins.markdown.lang.references
 
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.util.TextRange
@@ -12,22 +12,21 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil.isRelativePathLike
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object BacktickPathReferenceProvider {
+object MarkdownPathReferenceProvider {
   private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
   private const val SKILL_MD = "SKILL.md"
 
-  fun getReferences(codeSpan: MarkdownCodeSpan, contentRange: TextRange, content: String): Array<PsiReference> {
+  fun getBacktickReferences(element: PsiElement, contentRange: TextRange, content: String): Array<PsiReference> {
     val pathReference = parsePathReference(content) ?: return PsiReference.EMPTY_ARRAY
-    val contexts = pathReference.getContexts(codeSpan)
+    val contexts = pathReference.getContexts(element)
     if (contexts.isEmpty()) return PsiReference.EMPTY_ARRAY
 
     val startOffset = contentRange.startOffset + pathReference.startOffsetInContent
-    val references = object : FileReferenceSet(pathReference.path, codeSpan, startOffset, null, true, false) {
+    val references = object : FileReferenceSet(pathReference.path, element, startOffset, null, true, false) {
       override fun isSoft(): Boolean = true
       override fun computeDefaultContexts(): Collection<PsiFileSystemItem> = contexts
 
@@ -37,6 +36,19 @@ object BacktickPathReferenceProvider {
         }
         return super.createFileReference(range, index, text)
       }
+    }.allReferences
+    return Array(references.size) { references[it] }
+  }
+
+  fun getAtPathReferences(element: PsiElement, contentRange: TextRange, content: String): Array<PsiReference> {
+    if (content.startsWith('/') || content.any(Char::isWhitespace) || content.contains("://")) return PsiReference.EMPTY_ARRAY
+    val pathReference = PathReferenceInfo(content, 0, PathType.Project)
+    val contexts = pathReference.getContexts(element)
+    if (contexts.isEmpty()) return PsiReference.EMPTY_ARRAY
+
+    val references = object : FileReferenceSet(content, element, contentRange.startOffset, null, true, false) {
+      override fun isSoft(): Boolean = true
+      override fun computeDefaultContexts(): Collection<PsiFileSystemItem> = contexts
     }.allReferences
     return Array(references.size) { references[it] }
   }
@@ -54,8 +66,8 @@ object BacktickPathReferenceProvider {
     return PathReferenceInfo(text, 0, PathType.Project)
   }
 
-  private fun PathReferenceInfo.getContexts(codeSpan: MarkdownCodeSpan): Collection<PsiFileSystemItem> {
-    val file = codeSpan.containingFile?.originalFile ?: return emptyList()
+  private fun PathReferenceInfo.getContexts(element: PsiElement): Collection<PsiFileSystemItem> {
+    val file = element.containingFile?.originalFile ?: return emptyList()
     val virtualFile = file.virtualFile ?: return emptyList()
     val projectDirectory = BaseProjectDirectories.getInstance(file.project).getBaseDirectoryFor(virtualFile)
     val directories = when (type) {

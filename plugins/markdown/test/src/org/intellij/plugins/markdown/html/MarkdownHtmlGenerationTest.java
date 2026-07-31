@@ -76,6 +76,10 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
     doTestByHtmlFile();
   }
 
+  public void testAtPath() {
+    doTestByHtmlFile();
+  }
+
   public void testFootnoteBasic() {
     doTestByHtmlFile();
   }

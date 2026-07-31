@@ -1,0 +1,9 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    PsiElement(Markdown:Markdown:TEXT)('See')
+    PsiWhiteSpace(' ')
+    MarkdownAtPath(Markdown:Markdown:AT_PATH)
+      PsiElement(Markdown:Markdown:AT_PATH_TOKEN)('@src/com/example/KotlinClass.kt')
+    PsiElement(Markdown:Markdown:TEXT)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(Markdown:Markdown:TEXT)('then continue.')
