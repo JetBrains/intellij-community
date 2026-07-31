@@ -37,14 +37,23 @@ object IjPluginPackager {
     val libDirectory = Path.of(args[0]).resolve("lib")
     Files.createDirectories(libDirectory)
     val descriptorJar = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }.jar
-    Files.copy(descriptorJar, libDirectory.resolve(descriptorJar.fileName))
+
+    PluginJarPackager(libDirectory.resolve(descriptorJar.fileName)).use {
+      it.addEntriesFromJar(descriptorJar, ::isIncludedFromModuleOutput)
+    }
 
     val embeddedContentModules = loadEmbeddedContentModules(descriptorJar)
     for ((name, jar) in contentModules) {
       val destinationDirectory = if (name in embeddedContentModules) libDirectory else libDirectory.resolve("modules")
       Files.createDirectories(destinationDirectory)
-      Files.copy(jar, destinationDirectory.resolve("$name.jar"))
+      PluginJarPackager(destinationDirectory.resolve("$name.jar")).use {
+        it.addEntriesFromJar(jar, ::isIncludedFromModuleOutput)
+      }
     }
+  }
+
+  private fun isIncludedFromModuleOutput(filePath: String): Boolean {
+    return filePath != "icon-robots.txt" && !filePath.endsWith("/icon-robots.txt")
   }
 
   private fun loadEmbeddedContentModules(descriptorJar: Path): Set<String> {

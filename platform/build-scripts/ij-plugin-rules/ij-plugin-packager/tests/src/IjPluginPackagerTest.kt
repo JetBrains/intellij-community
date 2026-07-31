@@ -20,12 +20,16 @@ internal class IjPluginPackagerTest {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
       zip("descriptor.jar") {
+        file("icon-robots.txt", "")
         dir("META-INF") {
           file("plugin.xml", pluginXml)
         }
       }
       zip("embedded-module.jar") {
-        file("one.txt", "one")
+        dir("subdir") {
+          file("icon-robots.txt", "")
+          file("one.txt", "one")
+        }
       }
       zip("optional-module.jar") {
         file("two.txt", "two")
@@ -46,15 +50,20 @@ internal class IjPluginPackagerTest {
     outputDirectory.assertMatches(directoryContent {
       dir("lib") {
         zip("descriptor.jar") {
+          file("__index__")
           dir("META-INF") {
             file("plugin.xml", pluginXml)
           }
         }
         zip("embedded.module.jar") {
-          file("one.txt", "one")
+          file("__index__")
+          dir("subdir") {
+            file("one.txt", "one")
+          }
         }
         dir("modules") {
           zip("optional.module.jar") {
+            file("__index__")
             file("two.txt", "two")
           }
         }

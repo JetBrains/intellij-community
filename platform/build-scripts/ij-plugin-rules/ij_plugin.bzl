@@ -1,8 +1,6 @@
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 
 # This is the very first draft, many things are missing (todo):
-# * exclude files not used in production (e.g., icon-robots.txt);
-# * investigate differences in __index__ files;
 # * add `version` and `since-build`/`until-build` attribute in plugin.xml
 # * inline descriptors of content modules in plugin.xml
 def _ij_plugin_impl(ctx):

@@ -3,6 +3,10 @@ load("@rules_java//java:defs.bzl", "java_binary")
 
 java_binary(
   name = "ij-plugin-packager",
+  jvm_flags = [
+      "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+  ],
   main_class = "com.intellij.tools.build.bazel.ijPluginPackager.IjPluginPackager",
   visibility = ["//visibility:public"],
   runtime_deps = [":ij-plugin-packager-lib"],
@@ -15,6 +19,7 @@ kt_jvm_library(
   visibility = ["//platform/build-scripts/ij-plugin-rules/ij-plugin-packager/tests:__pkg__"],
   deps = [
       "@rules_jvm//:annotations_import",
+      "@community//build:zip",
       "//platform/pluginSystem/parser/impl",
   ]
 )
