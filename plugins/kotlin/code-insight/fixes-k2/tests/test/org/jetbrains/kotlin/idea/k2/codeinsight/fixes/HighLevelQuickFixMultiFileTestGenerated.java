@@ -2891,6 +2891,24 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile")
+    public static class AddContextMultiFile extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("typeAliasFromOtherPackage.before.Main.kt")
+        public void testTypeAliasFromOtherPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/typeAliasFromOtherPackage.before.Main.kt");
+        }
+
+        @TestMetadata("typeFromOtherPackage.before.Main.kt")
+        public void testTypeFromOtherPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameter/addContextMultiFile/typeFromOtherPackage.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/convertToAnonymousObject")
     public static class ConvertToAnonymousObject extends AbstractHighLevelQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -1,0 +1,27 @@
+// "Apply all 'Add context parameter to function' fixes in file" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+class Scope
+
+class Vec {
+    context(scope: Scope)
+    operator fun plus(o: Vec): Vec = this
+
+    context(scope: Scope)
+    operator fun get(i: Int): Int = i
+}
+
+context(scope: Scope)
+infix fun Int.combine(o: Int): Int = this + o
+
+fun useG(a: Vec, b: Vec) {
+    a <caret>+ b
+    a[0]
+    1 combine 2
+    1.combine(2)
+}
+
+// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -48,70 +49,81 @@ internal object NoContextParameterFixFactory {
         val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
         val symbol = diagnostic.symbol as? KaContextParameterSymbol ?: return@ModCommandBased emptyList()
         val requiredType = symbol.returnType
-        val requiredTypeText = requiredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
-        val requiredTypeFqNameText = requiredType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
         buildList {
-            val surroundingCall = findSurroundingContextCall(expression)
-            val alreadyContainsType = surroundingCall != null &&
-                    innerContextScopeAlreadyContainsType(expression, surroundingCall, requiredType)
+            addAll(createProvideContextValueFixes(expression, requiredType))
+            addIfNotNull(createExplicitContextArgumentFix(expression, symbol))
+            addIfNotNull(createEnclosingFunctionFix(expression, requiredType))
+        }
+    }
 
-            val innerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, expression, requiredType)
+    /**
+     * Fixes that provide the missing context value at the call site: either by adding an argument
+     * to a surrounding `context(...)` call, or by wrapping the expression into a new one.
+     * One fix per visible candidate value; candidates visible only inside the surrounding lambda
+     * are offered as a new wrapper instead. Without candidates, a single fix with a `TODO(...)`
+     * placeholder argument (represented by a `null` candidate name).
+     */
+    context(session: KaSession)
+    private fun createProvideContextValueFixes(
+        expression: KtExpression,
+        requiredType: KaType,
+    ): List<ModCommandAction> {
+        val typeText = requiredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+        val typeFqNameText = requiredType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 
-            if (surroundingCall != null) {
-                val outerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, surroundingCall, requiredType)
+        val surroundingCall = findSurroundingContextCall(expression)
+        val alreadyContainsType = surroundingCall != null &&
+                innerContextScopeAlreadyContainsType(expression, surroundingCall, requiredType)
 
-                val nestedOnlyCandidates = innerCandidates - outerCandidates
+        val innerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, expression, requiredType)
 
-                outerCandidates.forEach { candidateName ->
-                    add(
-                        AddContextParameterToExistingContextFix(
-                            surroundingCall,
-                            candidateName,
-                            requiredTypeText,
-                            requiredTypeFqNameText
-                        )
-                    )
-                }
-
-                if (nestedOnlyCandidates.isNotEmpty()) {
-                    val wrapper = contextWrapperFor(expression)
-                    nestedOnlyCandidates.forEach { candidateName ->
-                        add(SurroundCallWithContextFix(expression, wrapper, candidateName, requiredTypeText, requiredTypeFqNameText))
-                    }
-                }
-
-                if (outerCandidates.isEmpty() && nestedOnlyCandidates.isEmpty()) {
-                    add(AddContextParameterToExistingContextFix(surroundingCall, null, requiredTypeText, requiredTypeFqNameText))
-                }
-            } else {
-                val wrapper = contextWrapperFor(expression)
-                if (innerCandidates.isNotEmpty()) {
-                    innerCandidates.forEach { candidateName ->
-                        add(SurroundCallWithContextFix(expression, wrapper, candidateName, requiredTypeText, requiredTypeFqNameText))
-                    }
-                } else {
-                    add(SurroundCallWithContextFix(expression, wrapper, null, requiredTypeText, requiredTypeFqNameText))
-                }
-            }
-
-            if (expression is KtCallElement &&
-                expression.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)
-            ) {
-                addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
-            }
-
-            val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
-            if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(
-                    AddContextParameterFix.ForEnclosingFunction(
-                        element = expression,
-                        contextParameter =
-                            AddContextParameterFix.ContextParameter(name = null, type = requiredTypeText),
-                    )
-                )
+        if (surroundingCall == null) {
+            val wrapper = contextWrapperFor(expression)
+            val candidateNames: Collection<String?> = innerCandidates.ifEmpty { listOf(null) }
+            return candidateNames.map { name ->
+                SurroundCallWithContextFix(expression, wrapper, name, typeText, typeFqNameText)
             }
         }
+
+        val outerCandidates = if (alreadyContainsType) emptySet() else findValueCandidates(expression, surroundingCall, requiredType)
+        val nestedOnlyCandidates = innerCandidates - outerCandidates
+
+        return buildList {
+            outerCandidates.mapTo(this) { candidateName ->
+                AddContextParameterToExistingContextFix(surroundingCall, candidateName, typeText, typeFqNameText)
+            }
+            if (nestedOnlyCandidates.isNotEmpty()) {
+                val wrapper = contextWrapperFor(expression)
+                nestedOnlyCandidates.mapTo(this) { candidateName ->
+                    SurroundCallWithContextFix(expression, wrapper, candidateName, typeText, typeFqNameText)
+                }
+            }
+            if (isEmpty()) {
+                add(AddContextParameterToExistingContextFix(surroundingCall, null, typeText, typeFqNameText))
+            }
+        }
+    }
+
+    /**
+     * Adds an anonymous context parameter of the required type to the enclosing function.
+     */
+    context(session: KaSession)
+    private fun createEnclosingFunctionFix(
+        expression: KtExpression,
+        requiredType: KaType,
+    ): AddContextParameterFix? {
+        val containingFunction = expression.getStrictParentOfType<KtNamedFunction>() ?: return null
+        if (containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
+
+        return AddContextParameterFix.ForEnclosingFunction(
+            element = expression,
+            contextParameter = AddContextParameterFix.ContextParameter(
+                name = null,
+                type = requiredType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT),
+                shortType = requiredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
+            )
+        )
     }
 
     private fun contextWrapperFor(expression: KtElement): SurroundCallWithContextFix.Wrapper =
@@ -185,10 +197,13 @@ internal object NoContextParameterFixFactory {
     }
 
     context(_: KaSession)
-    private fun buildExplicitContextArgumentFix(
-        callElement: KtCallElement,
+    private fun createExplicitContextArgumentFix(
+        expression: KtExpression,
         currentSymbol: KaContextParameterSymbol,
     ): AddExplicitContextArgumentFix? {
+        val callElement = expression as? KtCallElement ?: return null
+        if (!callElement.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) return null
+
         val candidate = callElement.resolveToCallCandidates()
             .firstNotNullOfOrNull { it.candidate as? KaFunctionCall<*> } ?: return null
 
@@ -252,5 +267,4 @@ internal object NoContextParameterFixFactory {
             symbol.valueParameters.any { it.name == contextParamName }
         }
     }
-
 }

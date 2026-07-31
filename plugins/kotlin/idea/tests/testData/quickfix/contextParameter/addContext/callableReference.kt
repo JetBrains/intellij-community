@@ -1,0 +1,12 @@
+// "Add context parameter to function" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+// LANGUAGE_VERSION: 2.5
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+context(x: String)
+fun shout(): String = x.uppercase()
+
+fun useG() {
+    ::<caret>shout
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForEnclosingFunction

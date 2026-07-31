@@ -3439,9 +3439,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/annotationsKDoc.kt");
             }
 
+            @TestMetadata("applyAllLocalFunction.kt")
+            public void testApplyAllLocalFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/applyAllLocalFunction.kt");
+            }
+
+            @TestMetadata("applyAllMultipleTypes.kt")
+            public void testApplyAllMultipleTypes() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/applyAllMultipleTypes.kt");
+            }
+
+            @TestMetadata("applyAllSameType.kt")
+            public void testApplyAllSameType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/applyAllSameType.kt");
+            }
+
+            @TestMetadata("availableOnSecondCall.kt")
+            public void testAvailableOnSecondCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/availableOnSecondCall.kt");
+            }
+
             @TestMetadata("callWithArguments.kt")
             public void testCallWithArguments() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/callWithArguments.kt");
+            }
+
+            @TestMetadata("callableReference.kt")
+            public void testCallableReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/callableReference.kt");
+            }
+
+            @TestMetadata("callableReference2.kt")
+            public void testCallableReference2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/callableReference2.kt");
             }
 
             @TestMetadata("expressionBody.kt")

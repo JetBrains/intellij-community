@@ -27,7 +27,7 @@ sealed class AddContextParameterFix(
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
 
     /** Parameter to add. [name] = `null` produces an anonymous `_: Type` entry. */
-    data class ContextParameter(val name: Name?, val type: String) {
+    data class ContextParameter(val name: Name?, val type: String, val shortType: String? = null) {
         fun render(): String = "${name?.render() ?: "_"}: $type"
     }
 
@@ -41,6 +41,10 @@ sealed class AddContextParameterFix(
 
         val psiFactory = KtPsiFactory(context.project)
         val contextClause = targetFunction.modifierList?.contextParameterList
+
+        if (contextClause != null && contextClause.contextParameters.any { it.isDuplicateOf(contextParameter) }) {
+            return
+        }
 
         val addedParameter: KtParameter = if (contextClause != null) {
             val rParen = contextClause.node.findChildByType(KtTokens.RPAR)?.psi ?: return
@@ -75,6 +79,13 @@ sealed class AddContextParameterFix(
         if (updatesCaret) {
             updater.select(addedParameter.nameIdentifier ?: return)
         }
+    }
+
+    private fun KtParameter.isDuplicateOf(contextParameter: ContextParameter): Boolean {
+        val requiredName = contextParameter.name
+        if (requiredName != null) return nameAsName == requiredName
+        val text = typeReference?.text ?: return false
+        return text == contextParameter.type || text == contextParameter.shortType
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =

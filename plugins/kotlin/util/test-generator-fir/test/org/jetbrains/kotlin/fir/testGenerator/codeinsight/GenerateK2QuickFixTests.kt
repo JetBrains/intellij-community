@@ -365,6 +365,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 testMethodName = testMethodName,
             )
             model(
+                "$idea/quickfix/contextParameter/addContextMultiFile",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
                 "$idea/quickfix/convertToAnonymousObject",
                 pattern = pattern,
                 testMethodName = testMethodName,
