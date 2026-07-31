@@ -137,6 +137,7 @@ internal fun CodeContext.implWsBlockCode(objProperty: ObjProperty<*, *>) {
         val notNullAssertion = " ?: error(\"Children list $name not found for ${objProperty.receiver.name}\")"
         val cast = " as? Sequence<${getJavaType(objProperty, propertyType.elementType)}>)?.toList()"
         +"override val $name: ${getJavaType(objProperty, propertyType)}"
+        suppressUncheckedCast()
         +"get() = (snapshot.${Instrumentation.getManyChildren}($connectionId, this)$cast$notNullAssertion"
       }
       else {

@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
+import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
@@ -93,7 +94,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
           line("checkModificationAllowed()")
           line("val _diff = diff")
           `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase}<*, *> && value.diff == null") {
-            backrefSetup(objProperty)
+            backrefSetup(objProperty, checkedForModifiable = true)
+            suppressUncheckedCast()
             line("_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
           }
           section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase}<*, *> || value.diff != null))") {
@@ -124,14 +126,14 @@ private fun CodeContext.implWsBuilderBlockingCode(
           return
         }
         val connectionName = connectionIdForReference(objProperty)
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else {
+        val notNullAssertion = if (optionalSuffix.isBlank()) "!!"
+        else {
           reportPropertyError("Nullable reference lists are prohibited", objProperty)
           return
         }
         if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
           sectionNoBrackets("override var ${objProperty.javaName}: ${
-            getJavaBuilderTypeWithGeneric(objProperty,
-                                          valueType)
+            getJavaBuilderTypeWithGeneric(objProperty, valueType)
           }$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")
@@ -144,6 +146,7 @@ private fun CodeContext.implWsBuilderBlockingCode(
                                               valueType)
               } ?: emptyList())")
               line("} else {")
+              suppressUncheckedCast()
               line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] as ${
                 getJavaBuilderTypeWithGeneric(objProperty,
                                               valueType)
@@ -158,7 +161,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
                 `for`("item_value in value") {
                   `if`("item_value is ${ModifiableWorkspaceEntityBase}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase}<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store an abstract entity")
-                    backrefSetup(objProperty, "item_value")
+                    backrefSetup(objProperty, "item_value", true)
+                    suppressUncheckedCast()
                     line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
@@ -175,7 +179,6 @@ private fun CodeContext.implWsBuilderBlockingCode(
         }
         else {
           lineComment("List of non-abstract referenced types")
-          line("var _${objProperty.javaName}: ${getJavaType(objProperty, valueType)}? = emptyList()")
           sectionNoBrackets("override var ${objProperty.javaName}: ${
             getJavaBuilderTypeWithGeneric(objProperty,
                                           valueType)
@@ -184,7 +187,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
               lineComment("Getter of the list of non-abstract referenced types")
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${
+              suppressUncheckedCast()
+              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this).toList() as ${
                 getJavaBuilderTypeWithGeneric(objProperty,
                                               valueType)
               }) + (this.entityLinks[${EntityLink}($isChild, ${
@@ -192,6 +196,7 @@ private fun CodeContext.implWsBuilderBlockingCode(
                   objProperty)
               })] as? ${getJavaBuilderTypeWithGeneric(objProperty, valueType)} ?: emptyList())")
               line("} else {")
+              suppressUncheckedCast()
               line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] as? ${
                 getJavaBuilderTypeWithGeneric(objProperty,
                                               valueType)
@@ -206,7 +211,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
                 `for`("item_value in value") {
                   `if`("item_value is ${ModifiableWorkspaceEntityBase}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase}<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store")
-                    backrefSetup(objProperty, "item_value")
+                    backrefSetup(objProperty, "item_value", true)
+                    suppressUncheckedCast()
                     line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
@@ -312,6 +318,7 @@ private fun CodeContext.implWsBuilderBlockingCode(
 private fun CodeContext.backrefSetup(
   field: ObjProperty<*, *>,
   varName: String = "value",
+  checkedForModifiable: Boolean = false,
 ) {
   val referencedField = getReferencedField(field) ?: return
   val type = referencedField.valueType
@@ -323,34 +330,29 @@ private fun CodeContext.backrefSetup(
   when (type) {
     is ValueType.List<*> -> {
       lineComment("Setting backref of the list")
-      `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
+      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
+        suppressUncheckedCast()
         line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] as? List<Any> ?: emptyList()) + this")
         line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = data")
       }
-      line("// else you're attaching a new entity to an existing entity that is not modifiable")
+      // else you're attaching a new entity to an existing entity that is not modifiable
     }
 
+    // TODO: sets are not supported ?
     is ValueType.Set<*> -> {
       lineComment("Setting backref of the set")
-      `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
+      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
         line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] as? Set<Any> ?: emptySet()) + this")
         line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = data")
       }
-      line("// else you're attaching a new entity to an existing entity that is not modifiable")
+      // else you're attaching a new entity to an existing entity that is not modifiable
     }
 
-    is ValueType.Optional<*> -> {
-      `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
+    is ValueType.Optional<*>, is ValueType.ObjRef<*> -> {
+      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
         line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = this")
       }
-      line("// else you're attaching a new entity to an existing entity that is not modifiable")
-    }
-
-    is ValueType.ObjRef<*> -> {
-      `if`("$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = this")
-      }
-      line("// else you're attaching a new entity to an existing entity that is not modifiable")
+      // else you're attaching a new entity to an existing entity that is not modifiable
     }
 
     else -> {
@@ -485,5 +487,20 @@ private fun GeneratorContext.constructCode(objProperty: ObjProperty<*, *>, type:
       return null
     }
     RefMethods(Instrumentation.getParent, "getParentBuilder", Instrumentation.addChild)
+  }
+}
+
+fun CodeContext.suppressUncheckedCast() {
+  annotation("Suppress(\"UNCHECKED_CAST\")")
+}
+
+private fun CodeContext.ifif(conditionForCondition: Boolean, conditionCode: String, blockCode: CodeContext.() -> Unit) {
+  if (conditionForCondition) {
+    `if`(conditionCode) {
+      blockCode()
+    }
+  }
+  else {
+    blockCode()
   }
 }
