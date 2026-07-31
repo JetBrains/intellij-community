@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedDiffManager
 import com.intellij.diff.tools.combined.CombinedDiffRegistry
@@ -23,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.diff.DiffRequestChainChangeSetProvider
 import com.intellij.openapi.vcs.changes.ui.installFileDragSource
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GuiUtils
@@ -51,6 +53,9 @@ class VcsLogChangesBrowser(
   parent: Disposable,
 ) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val toolbarWrapper: Wrapper
+  private val changeSetProvider: DiffRequestChainChangeSetProvider = object : DiffRequestChainChangeSetProvider {
+    override suspend fun loadChanges(): List<Change> = model.changes.toList()
+  }
 
   init {
     Disposer.register(parent, this)
@@ -153,6 +158,7 @@ class VcsLogChangesBrowser(
     else {
       processor = VcsLogChangeProcessor(place, viewer, handler, true)
     }
+    processor.context.putUserData(DiffVcsDataKeys.DIFF_REQUEST_CHAIN_CHANGE_SET_PROVIDER, changeSetProvider)
     VcsLogTreeChangeProcessorTracker(viewer, processor, handler, !isInEditor).track()
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
