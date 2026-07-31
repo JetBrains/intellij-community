@@ -100,6 +100,7 @@ import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class PluginManagerConfigurablePanel @RequiresEdt constructor(
@@ -505,7 +506,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
 
     if (!components.isEmpty()) {
-      installedTab.getInstalledPanel().setSelection(components)
+      // Scrolling to the selection relies on component bounds that are only correct after a pending
+      // layout/validation pass (e.g. triggered by a just-added plugin category promotion panel) completes.
+      SwingUtilities.invokeLater {
+        installedTab.getInstalledPanel().setSelection(components)
+      }
     }
   }
 
