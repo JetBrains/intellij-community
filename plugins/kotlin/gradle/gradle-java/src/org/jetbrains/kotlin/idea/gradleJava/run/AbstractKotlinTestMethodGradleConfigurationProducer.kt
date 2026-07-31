@@ -92,6 +92,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         vararg classes: PsiClass
     ) {
         val dataContext = MultiplatformTestTasksChooser.createContext(context.dataContext, psiMethod.name)
+        val availableTestTaskNames = mppTestTasksChooser.listAvailableTasks(classes.asList()).map { it.testName }.distinct()
 
         val contextualSuffix = when (context.location) {
             is PsiMemberParameterizedLocation -> (context.location as? PsiMemberParameterizedLocation)?.paramSetName?.trim('[', ']')
@@ -115,7 +116,12 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
             settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
 
             if (result) {
-                configuration.name = (if (classes.size == 1) classes[0].name!! + "." else "") + psiMethod.name
+                val selectedTestTaskNames = tasks.flatMap { it.values }.map { it.testName }.distinct()
+                configuration.name = if (availableTestTaskNames.size > 1) {
+                    createTaskFirstConfigurationNameFor(selectedTestTaskNames, classes.map { "${it.name}.${psiMethod.name}" })
+                } else {
+                    (if (classes.size == 1) classes[0].name!! + "." else "") + psiMethod.name
+                }
                 performRunnable.run()
             } else {
                 LOG.warn("Cannot apply method test configuration, uses raw run configuration")

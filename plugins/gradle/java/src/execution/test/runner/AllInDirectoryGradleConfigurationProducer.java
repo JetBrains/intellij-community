@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -72,6 +73,23 @@ public class AllInDirectoryGradleConfigurationProducer extends AbstractGradleTes
   ) {
     Module module = Objects.requireNonNull(context.getModule());
     return ExecutionBundle.message("test.in.scope.presentable.text", module.getName());
+  }
+
+  @Override
+  protected @NotNull List<String> getTaskTargetNames(@NotNull ConfigurationContext context,
+                                                      @NotNull PsiElement element,
+                                                      @NotNull List<? extends PsiElement> chosenElements) {
+    Module module = Objects.requireNonNull(context.getModule());
+    String gradleProjectPath = StringUtil.notNullize(resolveGradleIdentityPath(module), module.getName());
+    return List.of("[" + gradleProjectPath + "]");
+  }
+
+  @Override
+  protected @NotNull String suggestTaskFirstConfigurationName(@NotNull ConfigurationContext context,
+                                                               @NotNull PsiElement element,
+                                                               @NotNull List<? extends PsiElement> chosenElements,
+                                                               @NotNull List<String> selectedTestTaskNames) {
+    return createTaskFirstConfigurationNameIn(selectedTestTaskNames, getTaskTargetNames(context, element, chosenElements));
   }
 
   @Override

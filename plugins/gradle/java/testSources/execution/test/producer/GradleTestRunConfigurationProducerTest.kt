@@ -258,6 +258,51 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test configuration uses selected task first`() {
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+    val projectData = generateAndImportTemplateProject()
+
+    runReadActionAndWait {
+      val nonDefaultContext = getContextByLocation(projectData["project"].root.subDirectory("automation"))
+      val nonDefaultConfiguration = getConfigurationFromContext(nonDefaultContext)
+      val producer = nonDefaultConfiguration.configurationProducer as AllInDirectoryGradleConfigurationProducer
+      assertEquals("Tests in 'project'", nonDefaultConfiguration.configuration.name)
+      producer.setTestTasksChooser { it == "automationTest" }
+      producer.onFirstRun(nonDefaultConfiguration, nonDefaultContext) {}
+      assertEquals("automationTest in [:]", nonDefaultConfiguration.configuration.name)
+
+      val testClass = projectData["project"]["AutomationTestCase"]
+      val classContext = getContextByLocation(testClass.element)
+      val classConfiguration = getConfigurationFromContext(classContext)
+      val classProducer = classConfiguration.configurationProducer as TestClassGradleConfigurationProducer
+      classProducer.setTestTasksChooser { it == "automationTest" }
+      classProducer.onFirstRun(classConfiguration, classContext) {}
+      assertEquals("automationTest for AutomationTestCase", classConfiguration.configuration.name)
+
+      val methodContext = getContextByLocation(testClass["test1"].element)
+      val methodConfiguration = getConfigurationFromContext(methodContext)
+      val methodProducer = methodConfiguration.configurationProducer as TestMethodGradleConfigurationProducer
+      methodProducer.setTestTasksChooser { it == "automationTest" }
+      methodProducer.onFirstRun(methodConfiguration, methodContext) {}
+      assertEquals("automationTest for AutomationTestCase.test1", methodConfiguration.configuration.name)
+
+      val patternContext = getContextByLocation(testClass["test1"].element, testClass["test2"].element)
+      val patternConfiguration = getConfigurationFromContext(patternContext)
+      val patternProducer = patternConfiguration.configurationProducer as PatternGradleConfigurationProducer
+      patternProducer.setTestTasksChooser { it == "automationTest" }
+      patternProducer.onFirstRun(patternConfiguration, patternContext) {}
+      assertEquals("automationTest for AutomationTestCase.test1 and 1 more", patternConfiguration.configuration.name)
+
+      val defaultContext = getContextByLocation(projectData["project"].root.subDirectory("src", "test"))
+      val defaultConfiguration = getConfigurationFromContext(defaultContext)
+      val defaultProducer = defaultConfiguration.configurationProducer as AllInDirectoryGradleConfigurationProducer
+      defaultProducer.setTestTasksChooser { it == "test" }
+      defaultProducer.onFirstRun(defaultConfiguration, defaultContext) {}
+      assertEquals("Tests in 'project'", defaultConfiguration.configuration.name)
+    }
+  }
+
+  @Test
   fun `test pattern configuration reuses edited configuration after task selection`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
     val projectData = generateAndImportTemplateProject()
@@ -302,6 +347,7 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       val configuration = configurationFromContext.configuration as GradleRunConfiguration
       assertContainsElements(configuration.settings.taskNames, ":autoTest", ":automationTest")
       assertEquals("--continue", configuration.settings.scriptParameters)
+      assertEquals("autoTest and 1 more for AutomationTestCase", configuration.name)
     }
   }
 

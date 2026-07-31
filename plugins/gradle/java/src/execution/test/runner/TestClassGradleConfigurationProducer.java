@@ -97,6 +97,16 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
   }
 
   @Override
+  protected @NotNull List<String> getTaskTargetNames(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiClass element,
+    @NotNull List<? extends PsiClass> chosenElements
+  ) {
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(element) : chosenElements;
+    return ContainerUtil.map(elements, psiClass -> Objects.requireNonNull(psiClass.getName()));
+  }
+
+  @Override
   protected void chooseSourceElements(
     @NotNull ConfigurationContext context,
     @NotNull PsiClass element,

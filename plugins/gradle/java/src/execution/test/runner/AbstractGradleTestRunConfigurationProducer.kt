@@ -19,8 +19,6 @@ import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 import java.util.StringJoiner
 import java.util.function.Consumer
 
-private const val DEFAULT_TEST_TASK_NAME = "test"
-
 abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : PsiElement> : GradleTestRunConfigurationProducer() {
 
   protected abstract fun getElement(context: ConfigurationContext): E?
@@ -31,6 +29,19 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
   protected abstract fun getLocationName(context: ConfigurationContext, element: E): String
 
   protected abstract fun suggestConfigurationName(context: ConfigurationContext, element: E, chosenElements: List<Ex>): String
+
+  protected open fun getTaskTargetNames(
+    context: ConfigurationContext,
+    element: E,
+    chosenElements: List<Ex>,
+  ): List<String> = listOf(suggestConfigurationName(context, element, chosenElements))
+
+  protected open fun suggestTaskFirstConfigurationName(
+    context: ConfigurationContext,
+    element: E,
+    chosenElements: List<Ex>,
+    selectedTestTaskNames: List<String>,
+  ): String = createTaskFirstConfigurationNameFor(selectedTestTaskNames, getTaskTargetNames(context, element, chosenElements))
 
   protected abstract fun chooseSourceElements(context: ConfigurationContext, element: E, onElementsChosen: Consumer<List<Ex>>)
 
@@ -127,6 +138,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
       val allTestsToRun = getAllTestsTaskToRun(context, element, elements)
         .groupBy { it.tasksToRun.testName }
         .mapValues { it.value }
+      val hasMultipleTestTasks = allTestsToRun.size > 1
       testTasksChooser.chooseTestTasks(project, dataContext, allTestsToRun) { chosenTestsToRun ->
         val chosenTasksAndArguments = chosenTestsToRun.flatten()
           .groupBy { it.tasksToRun }
@@ -140,26 +152,22 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
         else {
           runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
           runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
-          runConfiguration.name = suggestConfigurationName(context, element, elements)
-            .withGradleTestTaskName(chosenTestsToRun)
+
+          val selectedTestTaskNames = chosenTestsToRun.flatten()
+            .map { it.tasksToRun.testName }
+            .distinct()
+
+          runConfiguration.name = if (hasMultipleTestTasks) {
+            suggestTaskFirstConfigurationName(context, element, elements, selectedTestTaskNames)
+          } else {
+            suggestConfigurationName(context, element, elements)
+          }
           setUniqueNameIfNeeded(project, runConfiguration)
         }
 
         super.onFirstRun(configuration, context, startRunnable)
       }
     }
-  }
-
-  private fun String.withGradleTestTaskName(chosenTestsToRun: List<List<TestTasksToRun>>): String {
-    val testTaskName = chosenTestsToRun.flatten().map { it.tasksToRun.testName }.distinct().singleOrNull()
-    if (testTaskName == null || testTaskName == DEFAULT_TEST_TASK_NAME) return this
-    if (endsWith(".$DEFAULT_TEST_TASK_NAME'")) {
-      return removeSuffix(".$DEFAULT_TEST_TASK_NAME'") + ".$testTaskName'"
-    }
-    if (endsWith("'")) {
-      return dropLast(1) + ".$testTaskName'"
-    }
-    return "$this.$testTaskName"
   }
 
   private fun findExistingConfigurationSettings(

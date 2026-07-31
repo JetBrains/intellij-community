@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigur
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.TasksToRun;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
@@ -122,6 +125,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       return;
     }
     TestMappings testMappings = getTestMappings(project, tests);
+    List<String> availableTestTaskNames = getAvailableTestTaskNames(project, testMappings);
     getTestTasksChooser().chooseTestTasks(project, context.getDataContext(), testMappings.getClasses().values(), tasks -> {
       ExternalSystemTaskExecutionSettings settings = runConfiguration.getSettings();
       Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
@@ -137,7 +141,17 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         configuration.setConfigurationSettings(existingConfiguration);
       }
       else {
-        runConfiguration.setName(suggestConfigurationName(tests));
+        List<String> selectedTestTaskNames = tasks.stream()
+          .flatMap(sourceTasks -> sourceTasks.values().stream())
+          .map(TasksToRun::getTestName)
+          .distinct()
+          .toList();
+        if (availableTestTaskNames.size() > 1) {
+          runConfiguration.setName(createTaskFirstConfigurationNameFor(selectedTestTaskNames, getPresentableTestNames(tests, testMappings)));
+        }
+        else {
+          runConfiguration.setName(suggestConfigurationName(tests));
+        }
         setUniqueNameIfNeeded(project, runConfiguration);
       }
       super.onFirstRun(configuration, context, startRunnable);
@@ -173,6 +187,25 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     if (tests.isEmpty()) return "";
     if (tests.size() == 1) return tests.get(0);
     return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", tests.get(0), tests.size() - 1);
+  }
+
+  private static @NotNull List<String> getAvailableTestTaskNames(@NotNull Project project, @NotNull TestMappings testMappings) {
+    return testMappings.getClasses().values().stream()
+      .map(TestGradleConfigurationProducerUtilKt::getSourceFile)
+      .filter(Objects::nonNull)
+      .flatMap(source -> findAllTestsTaskToRun(source, project).stream())
+      .map(TasksToRun::getTestName)
+      .distinct()
+      .toList();
+  }
+
+  private static @NotNull List<String> getPresentableTestNames(@NotNull List<String> tests, @NotNull TestMappings testMappings) {
+    return ContainerUtil.map(tests, test -> {
+      PsiClass psiClass = testMappings.getClasses().get(test);
+      String className = psiClass == null ? test : StringUtil.notNullize(psiClass.getName(), test);
+      String methodName = testMappings.getMethods().get(test);
+      return methodName == null ? className : className + "." + methodName;
+    });
   }
 
   private static @Nullable Module getModuleFromContext(ConfigurationContext context) {
