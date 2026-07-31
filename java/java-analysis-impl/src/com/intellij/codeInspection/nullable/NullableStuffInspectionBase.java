@@ -1258,12 +1258,22 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         // may happen if A extends B implements C and methods are declared in B and C
         substitutor = superSubstitutor;
       }
-      PsiType superType = substitutor.substitute(superParameter.getType());
-      if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE) {
+      PsiType declaredSuperType = superParameter.getType();
+      PsiType superType = substitutor.substitute(declaredSuperType);
+      if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE ||
+          isUnspecifiedInstantiatedWithNullable(declaredSuperType, substitutor)) {
         return superParameter;
       }
     }
     return null;
+  }
+
+  private static boolean isUnspecifiedInstantiatedWithNullable(@NotNull PsiType declaredType,
+                                                               @NotNull PsiSubstitutor substitutor) {
+    if (!JavaTypeNullabilityUtil.isUnspecifiedNullness(declaredType.getNullability())) return false;
+    if (!(PsiUtil.resolveClassInClassTypeOnly(declaredType) instanceof PsiTypeParameter typeParameter)) return false;
+    PsiType substituted = substitutor.substitute(typeParameter);
+    return substituted != null && substituted.getNullability().nullability() == Nullability.NULLABLE;
   }
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,

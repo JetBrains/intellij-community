@@ -174,7 +174,7 @@ public final class JavaTypeNullabilityUtil {
    * @param nullability nullability to check
    * @return true if the nullability comes from an explicit annotation the bound walk may go through
    */
-  private static boolean isUnspecifiedNullness(@NotNull TypeNullability nullability) {
+  public static boolean isUnspecifiedNullness(@NotNull TypeNullability nullability) {
     return isUnspecifiedNullness(nullability, false);
   }
 
