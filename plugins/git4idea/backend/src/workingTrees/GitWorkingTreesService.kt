@@ -37,7 +37,8 @@ import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
@@ -203,14 +204,15 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
   }
 
-  internal suspend fun createWorkingTree(repository: GitRepository, data: GitWorkingTreeDialogData): Result {
+  internal suspend fun createWorkingTree(request: GitWorktreeCreationRequest): Result {
     return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
-      val newBranchName = when {
-        data.newBranchName != null -> data.newBranchName
-        data.sourceRef is GitRemoteBranch -> data.sourceRef.nameForRemoteOperations
-        else -> null
+      val branch = request.branch
+      val newBranchName = when (branch) {
+        is WorktreeBranchSpec.CreateNewBranch -> branch.newBranchName
+        // A remote branch is checked out into a new local branch tracking it.
+        is WorktreeBranchSpec.CheckoutExisting -> (branch.sourceRef as? GitRemoteBranch)?.nameForRemoteOperations
       }
-      val commandResult = Git.getInstance().createWorkingTree(repository, data.workingTreePath, data.sourceRef, newBranchName)
+      val commandResult = Git.getInstance().createWorkingTree(request.repository, request.workingTreePath, branch.sourceRef, newBranchName)
       if (commandResult.success()) {
         Result.SUCCESS
       }

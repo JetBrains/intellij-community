@@ -17,6 +17,7 @@ import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import javax.swing.Icon
 
 internal class GitCreateWorkingTreeAction : DumbAwareAction() {
@@ -25,11 +26,8 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val singleRepository = when (val status = GitWorkingTreesService.getWorktreeSupportStatus(project)) {
-      is GitWorktreeSupportStatus.SingleRepository -> status.repository
-      else -> null
-    }
-    if (singleRepository == null) {
+    val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
+    if (status is GitWorktreeSupportStatus.Unsupported) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -42,7 +40,8 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
     GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
     e.presentation.icon = computeIcon(e)
-    val localBranchFromContext = getRefFromContext(e, singleRepository, explicitRefFromCtx)
+    val contextRepository = resolveContextRepository(e, status)
+    val localBranchFromContext = getRefFromContext(e, contextRepository, explicitRefFromCtx)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.description")
@@ -74,13 +73,24 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
-    val repository = when (val status = GitWorkingTreesService.getWorktreeSupportStatus(project)) {
-      is GitWorktreeSupportStatus.SingleRepository -> status.repository
-      else -> return
-    }
-    val refFromContext = getRefFromContext(e, repository)
-    GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository, refFromContext, e.place)
+    val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
+    val contextRepository = resolveContextRepository(e, status)
+    val refFromContext = getRefFromContext(e, contextRepository)
+
+    // When creating from a specific ref, the ref belongs to a specific repository, so no switching is offered.
+    // Otherwise the dialog lets the user pick/switch the target repository among all worktree-capable ones.
+    val candidates = if (refFromContext != null && contextRepository != null) listOf(contextRepository)
+        else GitWorkingTreesService.worktreeCapableRepositories(project)
+    val initialRepository = contextRepository ?: candidates.firstOrNull() ?: return
+
+    GitCreateWorkingTreeService.getInstance()
+      .collectDataAndCreateWorkingTree(initialRepository, refFromContext, e.place, candidates)
   }
+
+  private fun resolveContextRepository(e: AnActionEvent, status: GitWorktreeSupportStatus): GitRepository? =
+    e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
+    ?: e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY)
+    ?: (status as? GitWorktreeSupportStatus.SingleRepository)?.repository
 
   private fun getRefFromContext(
     e: AnActionEvent,

@@ -10,7 +10,8 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.commands.Git
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -173,11 +174,11 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
     val data = if (workingTreeWithNewBranch) {
       val localBranch = createBranch(repo, "initial-$branchName")
-      GitWorkingTreeDialogData.createForNewBranch(workingTreeDataPath, localBranch, branchName)
+      GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CreateNewBranch(localBranch, branchName))
     }
     else {
       val localBranch = createBranch(repo, branchName)
-      GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, localBranch)
+      GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CheckoutExisting(localBranch))
     }
 
     repo.doTestWorkingTreeCreation(

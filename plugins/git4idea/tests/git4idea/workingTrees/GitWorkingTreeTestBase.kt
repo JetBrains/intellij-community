@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.repo.GitRepository
 import git4idea.repo.expectEvent
 import git4idea.repo.getAndInit
@@ -16,7 +16,7 @@ import java.nio.file.Paths
 
 internal abstract class GitWorkingTreeTestBase {
   protected fun GitRepository.doTestWorkingTreeCreation(
-    data: GitWorkingTreeDialogData,
+    request: GitWorktreeCreationRequest,
     mainRepoPath: Path,
     expectedWorkingTree: GitWorkingTree,
     expectedWorkingTreeBranchName: String?,
@@ -34,7 +34,7 @@ internal abstract class GitWorkingTreeTestBase {
 
     holder.expectEvent(
       {
-        val result = GitWorkingTreesService.getInstance(project).createWorkingTree(repo, data)
+        val result = GitWorkingTreesService.getInstance(project).createWorkingTree(request)
         assertThat(result.success).describedAs(result.errorOutputAsHtmlString).isTrue()
         val worktreesDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mainRepoPath.resolve(".git/worktrees"))
         refresh(worktreesDir!!)
@@ -47,7 +47,7 @@ internal abstract class GitWorkingTreeTestBase {
 
     assertThat(workingTrees).containsExactlyInAnyOrderElementsOf(expected)
 
-    val workingTreeRepo = registerRepo(project, Paths.get(data.workingTreePath.path))
+    val workingTreeRepo = registerRepo(project, Paths.get(request.workingTreePath.path))
     assertThat(workingTreeRepo.currentBranchName)
       .describedAs("Current branch of the created working tree is incorrect")
       .isEqualTo(expectedWorkingTreeBranchName)

@@ -34,8 +34,9 @@ import git4idea.actions.ref.GitSingleRefAction
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.dialog.GitWorkingTreeDialog
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
-import git4idea.workingTrees.dialog.GitWorkingTreePreDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.GitWorktreeDialogContext
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,15 +92,10 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       Files.createDirectories(parentDir)
       parentDir.resolve(UniqueNameGenerator.generateUniqueName(dirName) { !parentDir.resolve(it).exists() })
     }
-    val workingTreePath = VcsUtil.getFilePath(worktreeDir, true)
-    val workingTreeData = if (newBranchName != null) {
-      GitWorkingTreeDialogData.createForNewBranch(workingTreePath, branch, newBranchName)
-    }
-    else {
-      GitWorkingTreeDialogData.createForExistingBranch(workingTreePath, branch)
-    }
+    val branchSpec = if (newBranchName != null) WorktreeBranchSpec.CreateNewBranch(branch, newBranchName) else WorktreeBranchSpec.CheckoutExisting(branch)
+    val request = GitWorktreeCreationRequest(repository, VcsUtil.getFilePath(worktreeDir, true), branchSpec)
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(repository.project, place, branch)
-    doCreateWorkingTree(repository.project, repository, ideActivity, workingTreeData, onProjectOpened)
+    doCreateWorkingTree(ideActivity, request, onProjectOpened)
   }
 
   private fun loadLastParentPath(project: Project): String? =
@@ -119,26 +115,27 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     repository: GitRepository,
     refFromContext: GitReference?,
     place: String,
+    candidateRepositories: List<GitRepository> = listOf(repository),
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
     val project = repository.project
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, refFromContext)
     coroutineScope.launch(Dispatchers.Default) {
       val systemTempDir = withContext(Dispatchers.IO) { getSystemTempDir(project) }
-      val preDialogData = readAction {
+      val dialogContext = readAction {
         val lastParentPath = loadLastParentPath(project)
         val initialParentPath = computeInitialParentPath(project, repository, systemTempDir)
-        GitWorkingTreePreDialogData(project, repository, ideActivity, refFromContext,
-                                    lastParentPath ?: initialParentPath)
+        GitWorktreeDialogContext(project, repository, ideActivity, refFromContext,
+                                 lastParentPath ?: initialParentPath, candidateRepositories)
       }
 
       withContext(Dispatchers.UiWithModelAccess) {
-        val dialog = GitWorkingTreeDialog(preDialogData)
+        val dialog = GitWorkingTreeDialog(dialogContext)
         if (dialog.showAndGet()) {
-          val workingTreeData = dialog.getWorkTreeData()
-          workingTreeData.workingTreePath.parentPath?.path?.let { saveLastParentPath(project, it) }
+          val request = dialog.getWorkTreeData()
+          request.workingTreePath.parentPath?.path?.let { saveLastParentPath(project, it) }
           withContext(Dispatchers.Default) {
-            doCreateWorkingTree(preDialogData.project, preDialogData.repository, preDialogData.ideActivity, workingTreeData, onProjectOpened)
+            doCreateWorkingTree(dialogContext.ideActivity, request, onProjectOpened)
           }
         }
       }
@@ -165,15 +162,14 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   }
 
   private suspend fun doCreateWorkingTree(
-    project: Project,
-    repository: GitRepository,
     ideActivity: StructuredIdeActivity,
-    workingTreeData: GitWorkingTreeDialogData,
+    request: GitWorktreeCreationRequest,
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
-    GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, workingTreeData)
+    GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
 
-    val path = workingTreeData.workingTreePath.path
+    val project = request.repository.project
+    val path = request.workingTreePath.path
     val destinationValidation = CloneDvcsValidationUtils.createDestination(path)
     if (destinationValidation != null) {
       VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKTREE_COULD_NOT_CREATE_TARGET_DIR,
@@ -183,13 +179,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       return
     }
 
-    rootsUnderCreation.add(workingTreeData.workingTreePath)
+    rootsUnderCreation.add(request.workingTreePath)
     val gitWTService = GitWorkingTreesService.getInstance(project)
     val result = try {
-      gitWTService.createWorkingTree(repository, workingTreeData)
+      gitWTService.createWorkingTree(request)
     }
     finally {
-      rootsUnderCreation.remove(workingTreeData.workingTreePath)
+      rootsUnderCreation.remove(request.workingTreePath)
     }
 
     if (!result.success) {
@@ -200,20 +196,20 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       return
     }
 
-    TrustedProjects.setProjectTrusted(Path(workingTreeData.workingTreePath.path), true)
+    TrustedProjects.setProjectTrusted(Path(request.workingTreePath.path), true)
 
     // Opening the worktree project in the same window closes (and disposes) the current project, so this must not run
     // on a scope tied to it - otherwise the operation is cancelled before the new project finishes opening.
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
       val worktreeProject = withProgressText(GitBundle.message("progress.text.worktree.opening.project")) {
-        gitWTService.openProjectInNewWindow(Path(workingTreeData.workingTreePath.path))
+        gitWTService.openProjectInNewWindow(Path(request.workingTreePath.path))
       }
 
       if (worktreeProject != null) {
         GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)
         onProjectOpened?.invoke(worktreeProject)
       } else {
-        repository.workingTreeHolder.scheduleReload()
+        request.repository.workingTreeHolder.scheduleReload()
       }
     }
   }

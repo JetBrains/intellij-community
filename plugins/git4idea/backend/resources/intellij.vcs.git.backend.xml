@@ -633,6 +633,10 @@
       <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>
     </group>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Popup.Repository" popup="true">
+      <reference ref="Git.CreateNewWorkingTree"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

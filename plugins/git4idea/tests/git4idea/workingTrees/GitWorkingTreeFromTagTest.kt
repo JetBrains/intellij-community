@@ -6,7 +6,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitTag
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTestContext
@@ -40,7 +41,7 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
 
     val treeRoot = "treeRoot"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, GitTag(tagName))
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CheckoutExisting(GitTag(tagName)))
 
     repo.doTestWorkingTreeCreation(
       data,
@@ -60,7 +61,7 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
 
     val treeRoot = "treeRoot"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, GitTag(tagName))
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CheckoutExisting(GitTag(tagName)))
 
     repo.doTestWorkingTreeCreation(
       data,
@@ -81,7 +82,7 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
     val treeRoot = "treeRoot"
     val newBranchName = "branch-from-tag"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForNewBranch(workingTreeDataPath, GitTag(tagName), newBranchName)
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CreateNewBranch(GitTag(tagName), newBranchName))
 
     repo.doTestWorkingTreeCreation(
       data,

@@ -7,7 +7,8 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTestContext
@@ -76,17 +77,14 @@ internal class GitWorkingTreeFromRemoteBranchesTest : GitWorkingTreeTestBase() {
     val lastCommitInRemoteBranch = git("log -1 --pretty=%H origin/$REMOTE_BRANCH_NAME")
 
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve("treeRoot"), true)
-    val data = if (withNewBranch) {
-      GitWorkingTreeDialogData.createForNewBranch(workingTreeDataPath, remoteBranch, REMOTE_BRANCH_NAME)
-    }
-    else {
-      GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, remoteBranch)
-    }
+    val branch = if (withNewBranch) WorktreeBranchSpec.CreateNewBranch(remoteBranch, REMOTE_BRANCH_NAME)
+    else WorktreeBranchSpec.CheckoutExisting(remoteBranch)
+    val request = GitWorktreeCreationRequest(repo, workingTreeDataPath, branch)
 
     repo.doTestWorkingTreeCreation(
-      data,
+      request,
       projectNioRoot,
-      GitWorkingTree(data.workingTreePath.path,
+      GitWorkingTree(request.workingTreePath.path,
                      GitRefUtil.addRefsHeadsPrefixIfNeeded(REMOTE_BRANCH_NAME)!!,
                      false, false),
       REMOTE_BRANCH_NAME,
