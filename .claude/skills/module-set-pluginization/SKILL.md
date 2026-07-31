@@ -62,6 +62,8 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
 
   **Naming:** for new hand-written wrappers, use the JPS wrapper module name as the plugin **id** whenever possible: `intellij.platform.FEATURE.plugin` under `community/platform/` (for example, `intellij.platform.tasks.plugin`) or `intellij.FEATURE.plugin` outside the `platform/` subtree. This keeps bundled plugin ids and bundled plugin module names aligned in Product DSL, logs, and dependency declarations. Some older hand-written wrappers still use short ids such as `intellij.navbar.plugin`; do not copy that form for new platform wrappers. Do **not** reuse the legacy `com.intellij.moduleSet.FEATURE` prefix — that is the auto-generated wrapper convention being phased out, kept only on existing wrappers under `community/module-set-plugins/generated/`. The plugin **name** is a short human-readable label (e.g. `Tasks Platform`).
 
+  No wrapper-specific descriptor marker is needed. Add the JPS wrapper module name to `HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES` in `community/platform/build-scripts/product-dsl/src/ModuleSetPlugins.kt`. Generation intersects that build-time registry with each product's `ProductModulesLayout.bundledPluginModules`, avoiding changes to the runtime plugin descriptor model while keeping complete generated dependencies for wrapper content.
+
   Mark **only the shared/anchor module** (the one that loads in every product mode) as `loading="required"` — `intellij.platform.FEATURE` in the example. Plugin-XML inspection requires at least one required/embedded/required-if-available content module per wrapper, so the anchor satisfies that. Do **not** add `loading="required"` to backend / frontend / monolith modules: in frontend product mode (JetBrains Client) the platform's backend module is unavailable, so a required `FEATURE.backend` excludes itself and takes the whole wrapper plugin down — producing a confusing cascade like "Plugin 'FEATURE' depends on plugin 'IDEA CORE' which failed to load".
 
 - `plugin-content.yaml` — list the JAR layout. Mirror the navbar example:
@@ -92,6 +94,7 @@ Remove the now-pluginized modules from the aggregate `ModuleSet`:
 
 - In `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CommunityModuleSets.kt` (and any product-specific layout file that listed them), delete the `module("intellij.platform.<feature>.…")` / `embeddedModule(...)` calls that the wrapper now owns.
 - Add the wrapper JPS module name to `DEFAULT_BUNDLED_PLUGINS` in `community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/ProductModulesLayout.kt`, e.g. `"intellij.platform.<feature>.plugin"`.
+- Add the wrapper JPS module name to `HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES` in `community/platform/build-scripts/product-dsl/src/ModuleSetPlugins.kt`.
 - Check products that override or reset default bundled plugins (Rider's `ReSharperExternalProductProperties`, Gateway, JetBrains Client product-modules XML under `remote-dev/`, etc.) and add the wrapper module name where appropriate.
 
 Do **not** create a new `plugin("<feature>")` DSL block under the old generator path. The wrapper exists as a standalone JPS module instead.

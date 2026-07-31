@@ -140,10 +140,9 @@ internal class PluginGraphBuilder(
     isDslDefined: Boolean = false,
     pluginId: PluginId? = null,
     pluginAliases: List<PluginId> = emptyList(),
-    isModuleSetWrapper: Boolean = false,
     isAlias: Boolean = false,
   ): Int {
-    val moduleSetWrapper = isModuleSetWrapper || isModuleSetPluginModuleName(name.value)
+    val moduleSetWrapper = isModuleSetPluginModuleName(name.value)
     val existing = store.nameIndex[NODE_PLUGIN].getOrDefault(name.value, -1)
     if (existing >= 0) {
       val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or
@@ -420,7 +419,13 @@ internal class PluginGraphBuilder(
     val contentModuleNames = content.contentModules.mapTo(HashSet()) { it.moduleId.contentName() }
     val isTest = content.isTestPlugin || isTestPlugin(pluginModule, contentModuleNames, testFrameworkContentModules)
 
-    addPlugin(pluginModule, isTest = isTest, isDslDefined = content.isDslDefined, pluginId = content.pluginId, pluginAliases = content.pluginAliases)
+    addPlugin(
+      name = pluginModule,
+      isTest = isTest,
+      isDslDefined = content.isDslDefined,
+      pluginId = content.pluginId,
+      pluginAliases = content.pluginAliases,
+    )
     linkPluginMainTarget(pluginModule)
 
     for (module in content.contentModules) {

@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.moduleSet
-import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
@@ -832,107 +831,9 @@ class ContentModuleDependencyGeneratorTest {
   }
 
   @Nested
-  inner class ModuleSetPluginExtensionPointQualificationTest {
+  inner class ExtensionPointNameRewritingTest {
     @Test
-    fun `qualifyModuleSetExtensionPoints rewrites name attribute without reformatting`() {
-      val original = """
-        <idea-plugin>
-          <extensionPoints>
-            <extensionPoint name="frontendChangesViewContentProvider"
-                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
-                            dynamic="true"/>
-          </extensionPoints>
-        </idea-plugin>
-      """.trimIndent()
-
-      val expected = """
-        <idea-plugin>
-          <extensionPoints>
-            <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
-                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
-                            dynamic="true"/>
-          </extensionPoints>
-        </idea-plugin>
-      """.trimIndent()
-
-      assertThat(qualifyModuleSetExtensionPoints(original)).isEqualTo(expected)
-    }
-
-    @Test
-    fun `qualifyModuleSetExtensionPoints leaves existing qualified names intact`() {
-      val original = """
-        <idea-plugin>
-          <extensionPoints>
-            <extensionPoint qualifiedName="com.intellij.frontendChangesViewContentProvider"
-                            interface="com.intellij.platform.vcs.impl.frontend.changes.FrontendChangesViewContentProvider"
-                            dynamic="true"/>
-          </extensionPoints>
-        </idea-plugin>
-      """.trimIndent()
-
-      assertThat(qualifyModuleSetExtensionPoints(original)).isEqualTo(original)
-    }
-
-    @Test
-    fun `wrapper plugin source rewrites extension point names in descriptor`(@TempDir tempDir: Path) {
-      runBlocking(Dispatchers.Default) {
-        val moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", namespace = "jetbrains")
-        val moduleName = moduleId.contentName()
-        val setup = pluginTestSetup(tempDir) {
-          contentModule(moduleName.value) {
-            descriptor = """
-            <idea-plugin>
-              <extensionPoints>
-                <extensionPoint name="recentFiles.navigator"
-                                interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
-                                dynamic="true"/>
-              </extensionPoints>
-            </idea-plugin>
-          """.trimIndent()
-          }
-        }
-
-        val builder = PluginGraphBuilder()
-        builder.addModuleSetContent(moduleSet("recentFiles") {
-          module(moduleName.value)
-        })
-        val wrapperPluginName = moduleSetPluginModuleName("recentFiles")
-        builder.addPlugin(name = wrapperPluginName, isTest = false, isModuleSetWrapper = true)
-        builder.linkPluginContent(wrapperPluginName, moduleId, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
-        val model = testGenerationModel(
-          pluginGraph = builder.build(),
-          outputProvider = setup.jps.outputProvider,
-          fileUpdater = setup.strategy,
-        )
-
-        val ctx = ComputeContextImpl(model)
-        ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
-        ctx.initSlot(Slots.CONTENT_MODULE)
-        val planCtx = ctx.forNode(ContentModuleDependencyPlanner.id)
-        ContentModuleDependencyPlanner.execute(planCtx)
-        ctx.finalizeNodeErrors(ContentModuleDependencyPlanner.id)
-
-        val writeCtx = ctx.forNode(ContentModuleXmlWriter.id)
-        ContentModuleXmlWriter.execute(writeCtx)
-        ctx.finalizeNodeErrors(ContentModuleXmlWriter.id)
-
-        val diff = setup.strategy.getDiffs().single()
-        assertThat(diff.expectedContent).isEqualTo(
-          """
-          <idea-plugin>
-            <extensionPoints>
-              <extensionPoint qualifiedName="com.intellij.recentFiles.navigator"
-                              interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
-                              dynamic="true"/>
-            </extensionPoints>
-          </idea-plugin>
-          """.trimIndent()
-        )
-      }
-    }
-
-    @Test
-    fun `regular plugin source does not rewrite extension point names in shared descriptor`(@TempDir tempDir: Path) {
+    fun `plugin source does not rewrite extension point names in shared descriptor`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", namespace = "jetbrains")
         val moduleName = moduleId.contentName()
@@ -1041,9 +942,9 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
-    fun `content module in module set wrapper keeps embedded dependency`(@TempDir tempDir: Path) {
+    fun `content module in build-declared module set wrapper keeps embedded dependency`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
-        val wrapperPluginName = moduleSetPluginModuleName("my.feature").value
+        val wrapperPluginName = "intellij.platform.tasks.plugin"
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.core") {
             descriptor = """<idea-plugin package="com.intellij.core"/>"""
@@ -1063,7 +964,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED,
               )
             }
           }
@@ -1075,7 +976,7 @@ class ContentModuleDependencyGeneratorTest {
           .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
 
         assertThat(contentResult.writtenDependencies)
-          .describedAs("Module-set wrapper content should keep embedded deps like legacy module-set content")
+          .describedAs("build-declared wrapper content keeps embedded deps needed for extension point resolution")
           .contains(ContentModuleName("intellij.platform.core"))
       }
     }

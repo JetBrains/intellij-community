@@ -1003,9 +1003,9 @@ internal object ModelBuildingStage {
   ) {
     // Compare by string value since TargetName (JPS module) and PluginId are different semantic types.
     val dslTestPluginIdStrings = dslTestPluginIds.mapTo(HashSet()) { it.value }
-    fun addPlugin(target: TargetName, pluginId: PluginId? = null, isModuleSetWrapper: Boolean = false) {
+    fun addPlugin(target: TargetName, pluginId: PluginId? = null) {
       if (target.value in dslTestPluginIdStrings) return
-      builder.addPlugin(name = target, isTest = false, pluginId = pluginId, isModuleSetWrapper = isModuleSetWrapper)
+      builder.addPlugin(name = target, isTest = false, pluginId = pluginId)
     }
 
     for (product in discovery.products) {

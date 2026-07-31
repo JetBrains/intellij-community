@@ -527,7 +527,7 @@ value class GraphScope @PublishedApi internal constructor(
   /** Plugin: is this DSL-defined (auto-computed dependencies)? */
   val PluginNode.isDslDefined: Boolean get() = store.isDslDefined(id)
 
-  /** Plugin: is this node a module-set wrapper? */
+  /** Plugin: is this a build-declared module-set wrapper? */
   val PluginNode.isModuleSetWrapper: Boolean get() = store.isModuleSetWrapper(id)
 
   /** Plugin: does this node have a main target backing it? */

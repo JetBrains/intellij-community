@@ -414,6 +414,7 @@ class TestPluginBuilder(private val name: String) {
 
   /** If true, plugin dependencies are auto-derived from JPS deps. */
   var isTestPlugin: Boolean = false
+
   private val contentModules = LinkedHashSet<String>()
   private val contentLoadings = LinkedHashMap<String, com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue?>()
   private val moduleDependencies = LinkedHashSet<String>()

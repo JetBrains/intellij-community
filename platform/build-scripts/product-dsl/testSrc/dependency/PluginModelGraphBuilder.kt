@@ -74,8 +74,17 @@ internal class TestPluginGraphBuilder {
 
   internal fun getOrCreateTarget(name: TargetName): Int = delegate.addTarget(name)
 
-  internal fun getOrCreatePlugin(name: TargetName, isTest: Boolean = false, isDslDefined: Boolean = false): Int {
-    return delegate.addPlugin(name, isTest, isDslDefined, pluginId = PluginId(name.value))
+  internal fun getOrCreatePlugin(
+    name: TargetName,
+    isTest: Boolean = false,
+    isDslDefined: Boolean = false,
+  ): Int {
+    return delegate.addPlugin(
+      name = name,
+      isTest = isTest,
+      isDslDefined = isDslDefined,
+      pluginId = PluginId(name.value),
+    )
   }
 
   internal fun getOrCreateModule(name: ContentModuleName): Int = delegate.markContentModuleHasDescriptor(name)
