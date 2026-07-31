@@ -86,7 +86,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.vcs.svn",
             "intellij.vcs.github",
             "intellij.vcs.git.commit.modal",
-            "intellij.ant",
+            //"intellij.ant",
             "intellij.sh.plugin",
             "intellij.markdown",
             "intellij.mermaid",
@@ -119,7 +119,7 @@ class MPSProperties : JetBrainsProductProperties() {
             layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", "lib.jar", "withProjectLibrary")
             layout.withProjectLibrary("http-client", "lib.jar", "withProjectLibrary")
-            layout.withoutProjectLibrary("Ant")
+//            layout.withoutProjectLibrary("Ant")
             layout.withoutProjectLibrary("Gradle")
             layout.withProjectLibrary("maven-resolver-provider", LibraryPackMode.STANDALONE_MERGED)
         }
