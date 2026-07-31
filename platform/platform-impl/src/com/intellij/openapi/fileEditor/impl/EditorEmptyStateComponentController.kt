@@ -11,7 +11,11 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +37,7 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager2
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Box
@@ -103,6 +108,16 @@ internal class EditorEmptyStateComponentController(
   private var presentationGateTimeout: Duration = PRESENTATION_GATE_TIMEOUT
   private var creationGate: (suspend () -> Unit)? = null
 
+  /**
+   * A pending request to focus the empty state, made where an editor would have been focused — project open finding no editors to
+   * restore, or the user closing the area's last tab.
+   *
+   * One-shot, and outlives creation rather than the area: the component of an area the user just emptied is mounted a creation delay
+   * later, so the request is remembered until there is something to focus, and dropped as soon as the area stops being empty.
+   */
+  private var focusRequest: EmptyStateFocusRequest? = null
+  private var focusRequesterForTests: ((JComponent) -> Unit)? = null
+
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       disposeComponentsOnEdt()
@@ -112,6 +127,56 @@ internal class EditorEmptyStateComponentController(
   fun isCreationPending(): Boolean = creationJob != null
 
   fun isVisible(): Boolean = componentHost != null
+
+  /**
+   * Whether the empty state of this area is a focus target: a mounted component whose provider claims focus, or — before anything is
+   * mounted — an available provider of the kind that would be presented.
+   *
+   * Answered before the component exists as well as after, because project open asks it while the empty state is still being prepared.
+   * Deliberately not gated on whether rich components are enabled yet: project open asks this while they are still off and enables them
+   * on its way out, so gating would answer for the moment of the question rather than for the moment of the mount.
+   */
+  fun claimsFocus(): Boolean {
+    val entries = componentEntries
+    if (entries.isNotEmpty()) {
+      return entries.any { claimsFocus(it.provider, it.pluginDescriptor) }
+    }
+    return getProvidersToCreate().any { claimsFocus(it.provider, it.pluginDescriptor) }
+  }
+
+  /** The component to focus inside the mounted empty state, or `null` when nothing is mounted or nothing claims focus. */
+  fun preferredFocusedComponent(): JComponent? {
+    return componentEntries.firstNotNullOfOrNull { entry ->
+      if (claimsFocus(entry.provider, entry.pluginDescriptor)) preferredFocusedComponent(entry) else null
+    }
+  }
+
+  /**
+   * Whether a request made through [requestFocusWhenPresented] has not settled yet, so that whoever else would focus something on an
+   * empty editor area can stand down for it — the tool window manager focusing a tool window by default when the last editor closes.
+   */
+  fun isFocusRequestPending(): Boolean = focusRequest != null
+
+  /**
+   * Focuses the empty state where an editor would have been focused, once there is something to focus.
+   *
+   * The component of an area the user just emptied is mounted a creation delay later, and the one prepared during project open is
+   * mounted when the presentation gate opens, so this is a request rather than a focus call. It is honoured at most once, and only
+   * while the area stays empty.
+   *
+   * @param onFocusUnclaimed run on the EDT when this claim leaves the focus it asked for unclaimed — nothing was built for an area that
+   * is still empty, or what was built named no component to focus. Whoever stood down for the claim focuses its own target from here;
+   * it is not run when someone else holds the focus instead, an editor that took the area over or a tool window the user is working in.
+   */
+  fun requestFocusWhenPresented(onFocusUnclaimed: (() -> Unit)?) {
+    val request = EmptyStateFocusRequest(onFocusUnclaimed)
+    if (componentHost != null) {
+      focusRequest = null
+      honourFocusRequest(request)
+      return
+    }
+    focusRequest = request
+  }
 
   fun suppressRichComponents() {
     if (!richComponentsEnabled && componentHost == null && creationJob == null) {
@@ -147,6 +212,85 @@ internal class EditorEmptyStateComponentController(
     }
   }
 
+  private fun claimsFocus(provider: EditorEmptyStateComponentProvider, pluginDescriptor: PluginDescriptor): Boolean {
+    return try {
+      provider.claimsFocus(splitters)
+    }
+    catch (e: Throwable) {
+      LOG.error(PluginException("Cannot check editor empty state focus claim using $provider", e, pluginDescriptor.pluginId))
+      false
+    }
+  }
+
+  private fun preferredFocusedComponent(entry: EditorEmptyStateComponentEntry): JComponent? {
+    return try {
+      entry.provider.getPreferredFocusedComponent(entry.component)
+    }
+    catch (e: Throwable) {
+      LOG.error(PluginException(
+        "Cannot get editor empty state preferred focused component using ${entry.provider}", e, entry.pluginDescriptor.pluginId,
+      ))
+      null
+    }
+  }
+
+  /** Settles a request: the empty state takes the focus it claimed, or hands the claim back to whoever stood down for it. */
+  private fun honourFocusRequest(request: EmptyStateFocusRequest) {
+    if (focusClaimedComponent() == FocusOutcome.UNCLAIMED) {
+      request.onFocusUnclaimed?.invoke()
+    }
+  }
+
+  /**
+   * Drops a pending request that will not be honoured because nothing was built for an area that is still empty, and hands the claim
+   * back. Nothing was mounted, so there is no component and no other focus owner: whoever stood down focuses its own target instead.
+   */
+  private fun abandonFocusRequest() {
+    val request = focusRequest ?: return
+    focusRequest = null
+    LOG.debug { "Editor empty state claimed focus but nothing was presented to take it" }
+    request.onFocusUnclaimed?.invoke()
+  }
+
+  /**
+   * Focuses the mounted empty state, unless the user is working somewhere this must not take focus from.
+   *
+   * Requested through [IdeFocusManager] rather than by [JComponent.requestFocus], for the same reason [focusEditorOnComposite] does:
+   * this runs while the frame may still be settling its own focus.
+   */
+  private fun focusClaimedComponent(): FocusOutcome {
+    val target = preferredFocusedComponent()
+    if (target == null) {
+      // a claim was made for this area before anything was built, and what was built claims nothing or names nothing — see [claimsFocus]
+      LOG.debug { "Editor empty state claimed focus but named no component to focus" }
+      return FocusOutcome.UNCLAIMED
+    }
+    if (!canTakeFocus()) {
+      return FocusOutcome.HELD_ELSEWHERE
+    }
+    val requester = focusRequesterForTests
+    if (requester != null) {
+      requester(target)
+      return FocusOutcome.TAKEN
+    }
+    val project = splitters.manager.project
+    IdeFocusManager.getInstance(project).requestFocusInProject(target, project)
+    return FocusOutcome.TAKEN
+  }
+
+  /**
+   * Whether the focus this empty state claims is focus it may actually take.
+   *
+   * A tool window the user is working in keeps its focus — closing the area's last tab from there is not a request to leave it — and so
+   * does anything outside this area's own window, a dialog or another frame among them. What is left is focus the empty state inherits:
+   * an editor that has just gone, the frame that has not given focus to anything yet, or nothing at all.
+   */
+  private fun canTakeFocus(): Boolean {
+    val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner ?: return true
+    return UIUtil.getParentOfType(InternalDecoratorImpl::class.java, focusOwner) == null &&
+           ComponentUtil.getWindow(focusOwner) === ComponentUtil.getWindow(splitters)
+  }
+
   fun update() {
     if (showEmptyState()) {
       showComponents()
@@ -171,6 +315,9 @@ internal class EditorEmptyStateComponentController(
 
   fun disposeComponents() {
     cancelCreation()
+    // The empty state a pending request was made for is gone; a later one comes with its own request. Dropped silently: this area stops
+    // being empty when an editor takes it over, and that editor is focused by whoever opened it.
+    focusRequest = null
     val host = componentHost ?: return
     // uninstalling fires `removeNotify` on a provider's component, which may release an editor — see [mount]
     WriteIntentReadAction.run {
@@ -208,6 +355,11 @@ internal class EditorEmptyStateComponentController(
 
   fun setCreationGateForTests(gate: (suspend () -> Unit)?) {
     creationGate = gate
+  }
+
+  /** @param requester `null` restores the real [IdeFocusManager] request, which a headless test cannot observe. */
+  fun setFocusRequesterForTests(requester: ((JComponent) -> Unit)?) {
+    focusRequesterForTests = requester
   }
 
   private fun showComponents() {
@@ -284,6 +436,12 @@ internal class EditorEmptyStateComponentController(
             creationJob = null
             if (!mounted && richComponentsEnabled && showEmptyState()) {
               splitters.repaint()
+            }
+            // A creation of this generation that mounted nothing is the last word on what this area shows, so a claim on its focus is
+            // over too — unless the area stopped being empty, where the editor that took it over owns that focus instead, or something
+            // was mounted after all by the creation this one gave way to.
+            if (!mounted && componentHost == null && showEmptyState()) {
+              abandonFocusRequest()
             }
           }
         }
@@ -389,7 +547,7 @@ internal class EditorEmptyStateComponentController(
           null
         }
         if (component != null) {
-          entries.add(EditorEmptyStateComponentEntry(provider, component, kind))
+          entries.add(EditorEmptyStateComponentEntry(provider, component, kind, pluginDescriptor))
         }
       }
       return entries
@@ -419,6 +577,12 @@ internal class EditorEmptyStateComponentController(
       splitters.installEmptyStateOverlay(host)
       splitters.revalidate()
       splitters.repaint()
+    }
+    // outside the lock: the component is in the hierarchy and showing by now, which is what focusing it needs
+    val request = focusRequest
+    if (request != null) {
+      focusRequest = null
+      honourFocusRequest(request)
     }
   }
 
@@ -474,6 +638,21 @@ internal class EditorEmptyStateUiBuildTime : AbstractCoroutineContextElement(Key
     get() = nanos.get().nanoseconds
 }
 
+/** A request to focus the empty state once it is presented, and what to do when the focus it claimed ends up unclaimed. */
+private class EmptyStateFocusRequest(@JvmField val onFocusUnclaimed: (() -> Unit)?)
+
+/**
+ * What became of the focus an empty state claimed.
+ *
+ * [HELD_ELSEWHERE] is told apart from [UNCLAIMED] because only the latter leaves the frame without a focus owner: a claim that was
+ * refused because the user is working somewhere else needs no one to step in, while a claim that found nothing to focus does.
+ */
+private enum class FocusOutcome {
+  TAKEN,
+  HELD_ELSEWHERE,
+  UNCLAIMED,
+}
+
 private data class EditorEmptyStateProviderEntry(
   val provider: EditorEmptyStateComponentProvider,
   val pluginDescriptor: PluginDescriptor,
@@ -484,6 +663,7 @@ private data class EditorEmptyStateComponentEntry(
   val provider: EditorEmptyStateComponentProvider,
   val component: JComponent,
   val kind: EditorEmptyStateComponentProvider.Kind,
+  val pluginDescriptor: PluginDescriptor,
 )
 
 internal class EditorsSplittersLayout : LayoutManager2 {

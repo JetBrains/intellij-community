@@ -35,6 +35,29 @@ interface EditorEmptyStateComponentProvider {
   fun disposeComponent(component: JComponent) {
   }
 
+  /**
+   * Whether this provider's empty state is the focus target of an editor area that shows it — the counterpart, for an area with no
+   * editor in it, of the composite the platform focuses when it opens one.
+   *
+   * Asked synchronously and before the component exists, because project open decides what to focus while the empty state is still
+   * being prepared. A provider that claims focus is focused where an editor would have been: after project open finds no editors to
+   * restore, and after the user closes the area's last tab. It is also offered as the area's default focus component, so
+   * <kbd>Esc</kbd> and Focus Editor reach it. `false` — the default — keeps an empty state out of the focus path entirely.
+   *
+   * Claiming focus is not the same as taking it: focus is never moved out of a tool window the user is working in.
+   */
+  fun claimsFocus(splitters: EditorsSplitters): Boolean = false
+
+  /**
+   * The component to focus inside [component], which this provider created — the editable field of a composer rather than its host
+   * panel, say. Consulted only for a provider that returns `true` from [claimsFocus]; `null` means there is nothing to focus yet.
+   *
+   * `null` is also the default, rather than [component] itself: a host panel is usually not focusable, so returning it would answer a
+   * claim with a focus request that quietly does nothing, where `null` tells the platform that the claim it made on this area's focus
+   * cannot be kept and lets whoever stood down for it focus instead.
+   */
+  fun getPreferredFocusedComponent(component: JComponent): JComponent? = null
+
   enum class Kind {
     RICH,
     FALLBACK,
