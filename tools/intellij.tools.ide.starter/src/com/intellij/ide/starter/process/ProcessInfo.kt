@@ -18,12 +18,15 @@ class ProcessInfo private constructor(
   val name: String,
   val argumentsProvider: () -> List<String>,
   private val startTime: Instant?,
-  private val user: String?,
+  // A provider, not a value: eager fetch of process' user caused tests to run slower on Linux, as oshi uses `getent` for that.
+  private val userProvider: () -> String?,
   val processHandle: ProcessHandle? = null,
   private val portThatIsUsedByProcess: Int? = null,
 ) {
 
   val arguments: List<String> by lazy { argumentsProvider() }
+
+  private val user: String? by lazy(userProvider)
 
   companion object {
     suspend fun create(pid: Long, portThatIsUsedByProcess: Int? = null): ProcessInfo {
@@ -34,7 +37,7 @@ class ProcessInfo private constructor(
         name = internal.name,
         argumentsProvider = { internal.arguments },
         startTime = internal.startTime,
-        user = internal.user,
+        userProvider = { internal.user },
         processHandle = internal.processHandle,
         portThatIsUsedByProcess = portThatIsUsedByProcess
       )
@@ -46,7 +49,7 @@ class ProcessInfo private constructor(
       name = p.name ?: "Not Available",
       argumentsProvider = { p.arguments ?: emptyList() },
       startTime = p.startTime.let(Instant::ofEpochMilli),
-      user = p.user,
+      userProvider = { p.user },
       processHandle = ProcessHandle.of(p.processID.toLong()).getOrNull(),
       portThatIsUsedByProcess = portThatIsUsedByProcess
     )
@@ -99,7 +102,7 @@ class ProcessInfo private constructor(
               name = osProcess?.name ?: "Not Available",
               argumentsProvider = { osProcess?.arguments ?: emptyList() },
               startTime = osProcess?.startTime?.let(Instant::ofEpochMilli),
-              user = osProcess?.user,
+              userProvider = { osProcess?.user },
               processHandle = ProcessHandle.of(pid).getOrNull(),
               portThatIsUsedByProcess = null,
             )
