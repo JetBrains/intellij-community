@@ -171,14 +171,6 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
       return false;
     }
 
-    if (PsiTreeUtil.hasErrorElements(statementBefore)) {
-      if (!autoWrapInProgress) {
-        // code is already bad, don't mess it up even further
-        return false;
-      }
-      // if we're in middle of typing, it's expected that we will have error elements
-    }
-
     final int offset = nodeAtCaret.getTextRange().getStartOffset();
     if (inFromImportParentheses(statementBefore, offset)
         || inWithItemsParentheses(statementBefore, offset)
@@ -209,10 +201,16 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
       return false;
     }
-    if (wrappableAfter == null) {
-      return !(wrappableBefore instanceof PyAstDecoratorList);
+    final boolean wrappingNeedsBackslash = wrappableAfter == null
+                                           ? !(wrappableBefore instanceof PyAstDecoratorList)
+                                           : wrappableBefore != wrappableAfter;
+    if (!wrappingNeedsBackslash) {
+      return false;
     }
-    return wrappableBefore != wrappableAfter;
+    // hasErrorElements() traverses the whole statement, so it must stay behind the cheaper checks: the formatter
+    // asks about every line break of a statement, which makes one huge statement quadratic.
+    // Already broken code is left alone, unless the user is typing, when error elements are expected.
+    return autoWrapInProgress || !PsiTreeUtil.hasErrorElements(statementBefore);
   }
 
   private static @Nullable PsiElement findWrappable(ASTNode nodeAtCaret, boolean before) {
