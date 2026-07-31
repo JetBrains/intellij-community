@@ -37,7 +37,7 @@ import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import org.jetbrains.annotations.VisibleForTesting
-import git4idea.workingTrees.ui.GitWorktreesTabModel
+import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
@@ -48,6 +48,7 @@ import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -150,7 +151,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     // The returned value distinguishes unsupported, single-repository, and multi-repository project states.
     internal fun getWorktreeSupportStatus(project: Project?): GitWorktreeSupportStatus {
       if (project == null || !GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return GitWorktreeSupportStatus.Unsupported
-      val repositories = worktreeCapableRepositories(project)
+      val repositories = findWorktreeCapableRepositories(project)
       return when (repositories.size) {
         0 -> GitWorktreeSupportStatus.Unsupported
         1 -> GitWorktreeSupportStatus.SingleRepository(repositories.single())
@@ -160,10 +161,11 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
 
     // All repositories a worktree can be created for. A linked working tree may itself be registered as a VCS
     // root; collapse those into their underlying repository so it is not counted/offered twice.
-    fun worktreeCapableRepositories(project: Project): List<GitRepository> =
+    fun findWorktreeCapableRepositories(project: Project): List<GitRepository> =
       GitWorkingTreesUtil.mergeLinkedWorktreeRepositories(
         GitRepositoryManager.getInstance(project).repositories,
         rootPath = { it.root.path },
+        commonGitDirPath = { it.repositoryFiles.commonGitDir.path },
         workingTrees = { it.workingTreeHolder.getWorkingTrees() },
       )
 
@@ -194,8 +196,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    val tabModel = GitWorktreesTabModel(project)
-    if (tabModel.isEmpty()) return false
+    if (GitWorktreesUiUtil.isEmpty(project)) return false
 
     val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
     when (value) {
@@ -203,7 +204,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> return true
     }
 
-    return tabModel.anyRepositoryHasMultipleWorktrees()
+    return GitWorktreesUiUtil.anyRepositoryHasMultipleWorktrees(project)
   }
 
   fun workingTreesTabOpenedByUser() {
@@ -425,6 +426,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
 
     try  {
       EelFileUtils.deleteRecursively(Path(tree.path.path))
+    } catch (c: CancellationException) {
+      throw c
     } catch (e: Exception) {
       notifyWorkingTreeDeletedError(project, e.message ?: "Unknown error while deleting working tree")
       return

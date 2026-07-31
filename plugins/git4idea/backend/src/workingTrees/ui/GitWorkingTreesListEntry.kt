@@ -34,10 +34,10 @@ internal fun buildWorkingTreesEntries(
   repositoryKind: (repository: GitRepositoryModel) -> GitRepositoryKind = { GitRepositoryKind.TOP_LEVEL },
 ): List<GitWorkingTreesListEntry> {
   val withHeaders = repositories.size > 1
-  return repositories.sortedBy { it.root.path }.flatMap { repositoryEntries(it, withHeaders, tagNameForCommit, repositoryKind) }
+  return repositories.sortedBy { it.root.path }.flatMap { buildRepositoryEntries(it, withHeaders, tagNameForCommit, repositoryKind) }
 }
 
-private fun repositoryEntries(
+private fun buildRepositoryEntries(
   repository: GitRepositoryModel,
   withHeader: Boolean,
   tagNameForCommit: (repository: GitRepositoryModel, headHash: String) -> String?,
@@ -51,7 +51,7 @@ private fun repositoryEntries(
     entries.add(GitWorktreeRow(
       repository = repository,
       gitWorkingTree = wt,
-      presentableBranchName = presentableBranchName(wt) { headHash -> tagNameForCommit(repository, headHash) },
+      presentableBranchName = resolvePresentableBranchName(wt) { headHash -> tagNameForCommit(repository, headHash) },
       location = FileUtil.getLocationRelativeToUserHome(wt.path.path),
       indented = withHeader,
     ))
@@ -60,7 +60,7 @@ private fun repositoryEntries(
 }
 
 @Nls
-private fun presentableBranchName(worktree: GitWorkingTree, tagName: (headHash: String) -> String?): String {
+private fun resolvePresentableBranchName(worktree: GitWorkingTree, tagName: (headHash: String) -> String?): String {
   worktree.currentBranch?.let { return it.name }
   worktree.headHash?.let { headHash -> tagName(headHash)?.let { return it } }
   return GitBundle.message("toolwindow.working.trees.tab.detached.working.tree.branch.text")
@@ -77,3 +77,8 @@ internal fun resolveSelectedRepository(
     else -> null
   }
 }
+
+// Explain the submodule re-link caveat on hover of a submodule repository header.
+internal fun GitWorkingTreesListEntry.tooltipText(): String? =
+  if (this is GitRepositoryHeader && kind == GitRepositoryKind.SUBMODULE) GitBundle.message("toolwindow.working.trees.submodule.relink.warning")
+  else null

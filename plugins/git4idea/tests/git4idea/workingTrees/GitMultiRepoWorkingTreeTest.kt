@@ -18,11 +18,12 @@ import git4idea.repo.getAndInit
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.createRepository
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitWorktreeRow
-import git4idea.workingTrees.ui.GitWorktreesTabModel
+import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -39,7 +40,7 @@ import kotlin.io.path.writeText
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class GitMultiRepoWorkingTreeTest {
-  private val contextFixture = gitWorkingTreePlatformFixture()
+  private val contextFixture = gitPlatformContextFixture()
   private val context: GitPlatformTestContext get() = contextFixture.get()
 
   private lateinit var repoA: GitRepository
@@ -54,8 +55,6 @@ internal class GitMultiRepoWorkingTreeTest {
     syncWorktrees(repoB)
   }
 
-  private val tabModel: GitWorktreesTabModel get() = GitWorktreesTabModel(context.project)
-
   @Test
   fun `test sibling repositories form a multi-repository project`(): Unit = with(context) {
     setUpRepos()
@@ -67,7 +66,7 @@ internal class GitMultiRepoWorkingTreeTest {
   @Test
   fun `test entries are grouped by repository with a header per repository`(): Unit = with(context) {
     setUpRepos()
-    val entries = runBlocking { tabModel.buildEntries() }
+    val entries = GitWorktreesUiUtil.buildEntries(project)
 
     val headerRoots = entries.filterIsInstance<GitRepositoryHeader>().map { it.repository.root.path }
     assertThat(headerRoots).containsExactlyInAnyOrder(repoA.root.path, repoB.root.path)
@@ -116,15 +115,15 @@ internal class GitMultiRepoWorkingTreeTest {
   @Test
   fun `test selected repository is resolved from the selection`(): Unit = with(context) {
     setUpRepos()
-    val entries = runBlocking { tabModel.buildEntries() }
+    val entries = GitWorktreesUiUtil.buildEntries(project)
     val headerA = entries.filterIsInstance<GitRepositoryHeader>().single { it.repository.root.path == repoA.root.path }
     val rowB = entries.filterIsInstance<GitWorktreeRow>().first { it.repository.root.path == repoB.root.path }
 
-    assertThat(tabModel.resolveSelectedRepositoryModel(listOf(headerA))?.root?.path).isEqualTo(repoA.root.path)
-    assertThat(tabModel.resolveSelectedRepositoryModel(listOf(rowB))?.root?.path).isEqualTo(repoB.root.path)
-    assertThat(tabModel.resolveSelectedRepositoryModel(emptyList()))
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(headerA))?.root?.path).isEqualTo(repoA.root.path)
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(rowB))?.root?.path).isEqualTo(repoB.root.path)
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, emptyList()))
       .describedAs("Empty selection in a multi-repo project must not resolve a repository").isNull()
-    assertThat(tabModel.resolveSelectedRepositoryModel(listOf(headerA, rowB)))
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(headerA, rowB)))
       .describedAs("A selection spanning several repositories must not resolve a single repository").isNull()
   }
 
@@ -138,7 +137,7 @@ internal class GitMultiRepoWorkingTreeTest {
     (repoB.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
     syncWorktrees(repoB)
 
-    val detachedRow = runBlocking { tabModel.buildEntries() }.filterIsInstance<GitWorktreeRow>()
+    val detachedRow = GitWorktreesUiUtil.buildEntries(project).filterIsInstance<GitWorktreeRow>()
       .first { it.repository.root.path == repoB.root.path && !it.gitWorkingTree.isMain }
     assertThat(detachedRow.presentableBranchName).isEqualTo("v1.0")
   }

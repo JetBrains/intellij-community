@@ -9,78 +9,66 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
+import com.intellij.ui.CollectionListModel
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
-import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.i18n.GitBundle
 import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Point
-import java.awt.event.MouseEvent
+import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
-import javax.swing.ToolTipManager
 
 /**
- * The Worktrees tab UI. Renders the grouped worktree list from [GitWorktreesTabModel] (which reads the shared
+ * The Worktrees tab UI. Renders the grouped worktree list from [GitWorktreesViewModel] (which reads the shared
  * repository model) and publishes the selection to the toolbar/popup actions.
  */
-internal class GitWorktreesTabPanel(private val project: Project) {
-  private val tabModel = GitWorktreesTabModel(project)
-  private val listModel = GitWorkingTreesListModel()
-  private val list = object : JBList<GitWorkingTreesListEntry>(listModel) {
-    // Explain the submodule re-link caveat on hover of a submodule repository header.
-    override fun getToolTipText(event: MouseEvent): String? {
-      val index = locationToIndex(event.point)
-      if (index < 0 || !getCellBounds(index, index).contains(event.point)) return null
-      val header = model.getElementAt(index) as? GitRepositoryHeader ?: return null
-      return if (header.kind == GitRepositoryKind.SUBMODULE) GitBundle.message("toolwindow.working.trees.submodule.relink.warning")
-      else null
-    }
-  }.apply {
+internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineScope) {
+  private val viewModel = GitWorktreesViewModel(project, cs)
+  private val listModel = CollectionListModel<GitWorkingTreesListEntry>()
+  private val list = JBList<GitWorkingTreesListEntry>(listModel).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = GitWorkingTreesListRenderer()
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
     addMouseListener(createPopupHandler())
     ActionManager.getInstance().getAction("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, this)
-    ToolTipManager.sharedInstance().registerComponent(this)
   }
 
-  val component: BorderLayoutPanel
+  val component: JComponent
 
   init {
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
 
     val actionManager = ActionManager.getInstance()
     val toolbarActionGroup = actionManager.getAction("Git.WorkingTrees.ToolwindowGroup.Toolbar") as ActionGroup
-    val toolbar = actionManager.createActionToolbar(GitWorkingTreesContentProvider.GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR, toolbarActionGroup, false)
-    toolbar.setTargetComponent(list)
-    toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
-    toolbar.setOrientation(SwingConstants.VERTICAL)
+    val toolbar = actionManager.createActionToolbar(
+      GitWorkingTreesContentProvider.GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR,
+      toolbarActionGroup,
+      false,
+    ).apply {
+      setTargetComponent(list)
+      layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
+      setOrientation(SwingConstants.VERTICAL)
+    }
 
     list.launchOnShow("worktree list") {
-      refresh()
-      // collectLatest: a burst of updates cancels an in-flight rebuild so a stale one can't apply last.
-      GitRepositoriesHolder.getInstance(project).updates.collectLatest { event ->
-        when (event) {
-          GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED,
-          GitRepositoriesHolder.UpdateType.RELOAD_STATE,
-          GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED,
-          GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED -> refresh()
-          else -> {}
+      viewModel.entries.collect { entries ->
+        withContext(Dispatchers.UI) {
+          applyEntries(entries)
         }
       }
     }
@@ -89,7 +77,7 @@ internal class GitWorktreesTabPanel(private val project: Project) {
       val selected = list.selectedValuesList
       sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] =
         selected.filterIsInstance<GitWorktreeRow>().map { it.gitWorkingTree }
-      sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = tabModel.selectedBackendRepository(selected)
+      sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = GitWorktreesUiUtil.resolveSelectedBackendRepository(project, selected)
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
 
@@ -115,19 +103,12 @@ internal class GitWorktreesTabPanel(private val project: Project) {
     }
   }
 
-  private suspend fun refresh() {
-    val entries = tabModel.buildEntries()
-    withContext(Dispatchers.EDT) {
-      applyEntries(entries)
-    }
-  }
-
   private fun applyEntries(entries: List<GitWorkingTreesListEntry>) {
     val previouslySelectedPath = (list.selectedValue as? GitWorktreeRow)?.gitWorkingTree?.path
 
-    listModel.setEntries(entries)
+    listModel.replaceAll(entries)
 
-    val indexToSelect = (0 until listModel.size()).firstOrNull { i ->
+    val indexToSelect = (0 until listModel.size).firstOrNull { i ->
       (listModel.getElementAt(i) as? GitWorktreeRow)?.gitWorkingTree?.path == previouslySelectedPath
     }
     if (indexToSelect != null) {
@@ -141,10 +122,10 @@ internal class GitWorktreesTabPanel(private val project: Project) {
   }
 
   private fun selectDefaultEntry() {
-    val currentIndex = (0 until listModel.size()).firstOrNull { i ->
+    val currentIndex = (0 until listModel.size).firstOrNull { i ->
       (listModel.getElementAt(i) as? GitWorktreeRow)?.gitWorkingTree?.isCurrent == true
     }
-    val rowIndex = currentIndex ?: (0 until listModel.size()).firstOrNull { i ->
+    val rowIndex = currentIndex ?: (0 until listModel.size).firstOrNull { i ->
       listModel.getElementAt(i) is GitWorktreeRow
     }
     if (rowIndex != null) {
@@ -156,12 +137,12 @@ internal class GitWorktreesTabPanel(private val project: Project) {
     val emptyText = list.emptyText
     emptyText.clear()
 
-    val singleRepository = tabModel.repositories().singleOrNull()
+    val singleRepository = GitWorktreesUiUtil.getRepositories(project).singleOrNull()
     if (singleRepository != null) {
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text")).withUnscaledGapAfter(20)
         .appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
-          val repository = tabModel.backendRepository(singleRepository) ?: return@appendLine
+          val repository = GitWorktreesUiUtil.findBackendRepository(project, singleRepository) ?: return@appendLine
           GitCreateWorkingTreeService.getInstance()
             .collectDataAndCreateWorkingTree(repository, null, GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }

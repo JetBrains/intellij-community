@@ -18,6 +18,7 @@ import git4idea.GitWorkingTree
 import git4idea.remoteApi.GitRepositoryToDtoConverter.convertTrackingInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.isSubmodule
 import org.jetbrains.annotations.Nls
 
 internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel {
@@ -27,6 +28,8 @@ internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel 
   override val favoriteRefs: GitFavoriteRefs
     get() = throw UnsupportedOperationException()
   override val root = VcsUtil.getFilePath(repo.root)
+  override val isSubmodule: Boolean = repo.isSubmodule()
+  override val commonGitDirPath: @NlsSafe String = repo.root.path
 
   private class MockGitRepositoryState(repo: GitRepository) : GitRepositoryState {
     override val currentRef: GitCurrentRef? = GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repo))

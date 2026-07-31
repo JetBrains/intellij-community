@@ -19,7 +19,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
@@ -33,6 +32,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.PathUtil.isValidFileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -106,7 +106,7 @@ internal class GitWorkingTreeDialog(
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
   }
 
-  private fun currentRepository(): GitRepository = selectedRepository.get()
+  private fun getCurrentRepository(): GitRepository = selectedRepository.get()
 
   private data class RefWithWorkingTree(val ref: GitReference, val workingTree: GitWorkingTree?)
 
@@ -115,12 +115,12 @@ internal class GitWorkingTreeDialog(
       .filter { it.currentBranch != null }
       .associateBy { it.currentBranch!! }
 
-  private fun localBranchNames(repository: GitRepository): List<String> =
+  private fun getLocalBranchNames(repository: GitRepository): List<String> =
     repository.branches.localBranches.map { it.name }
 
   private fun GitReference.toRefWithWorkingTree(): RefWithWorkingTree {
     return if (this is GitStandardLocalBranch) {
-      RefWithWorkingTree(this, branchToWorkingTreeMap(currentRepository())[this])
+      RefWithWorkingTree(this, branchToWorkingTreeMap(getCurrentRepository())[this])
     }
     else {
       RefWithWorkingTree(this, null)
@@ -151,12 +151,12 @@ internal class GitWorkingTreeDialog(
         icon(AllIcons.General.Warning).gap(RightGap.SMALL)
         text(GitBundle.message("working.tree.dialog.submodule.warning"))
       }.bottomGap(BottomGap.SMALL)
-      submoduleWarningRow.visible(currentRepository().isSubmodule())
+      submoduleWarningRow.visible(getCurrentRepository().isSubmodule())
 
       // Multi-root project: let the user pick which repository the worktree is created for.
       if (candidateRepositories.size > 1) {
         row(GitBundle.message("working.tree.dialog.label.repository")) {
-          comboBox(candidateRepositories, SimpleListCellRenderer.create("") { FileUtil.getLocationRelativeToUserHome(it.root.path) })
+          comboBox(candidateRepositories, textListCellRenderer("") { FileUtil.getLocationRelativeToUserHome(it.root.path) })
             .align(Align.FILL)
             .applyToComponent {
               selectedItem = selectedRepository.get()
@@ -220,7 +220,7 @@ internal class GitWorkingTreeDialog(
     val component = ComboBox<RefWithWorkingTree?>(model)
     component.isSwingPopup = false
     component.isUsePreferredSizeAsMinimum = false
-    component.renderer = RefWithTreeCellRenderer(data.project) { currentRepository() }
+    component.renderer = RefWithTreeCellRenderer(data.project, getCurrentRepository())
     refComboBox = component
 
     // Set prototype to calculate proper size upfront and prevent resizing on first selection
@@ -245,9 +245,10 @@ internal class GitWorkingTreeDialog(
   private fun onRepositoryChanged() {
     val refs = computeRefsWithWorkingTrees()
     refComboBox.model = DefaultComboBoxModel(Vector<RefWithWorkingTree?>(refs))
-    val currentBranch = currentRepository().currentBranch
+    val currentBranch = getCurrentRepository().currentBranch
     existingRefWithWorkingTree.set(refs.firstOrNull { it.ref == currentBranch } ?: refs.firstOrNull())
-    submoduleWarningRow.visible(currentRepository().isSubmodule())
+    submoduleWarningRow.visible(getCurrentRepository().isSubmodule())
+    (refComboBox.renderer as RefWithTreeCellRenderer).updateRepository(getCurrentRepository())
   }
 
   private fun ValidationInfoBuilder.validateExistingRefOnInput(): ValidationInfo? {
@@ -273,7 +274,7 @@ internal class GitWorkingTreeDialog(
       if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(defaultLocalBranchName, ref.name)) {
         return error(GitBundle.message("working.tree.dialog.branch.validation.provide.explicit.local.branch.name", ref.name))
       }
-      if (localBranchNames(currentRepository()).contains(defaultLocalBranchName)) {
+      if (getLocalBranchNames(getCurrentRepository()).contains(defaultLocalBranchName)) {
         return error(GitBundle.message("working.tree.dialog.branch.validation.default.exists", ref.name))
       }
     }
@@ -286,7 +287,7 @@ internal class GitWorkingTreeDialog(
     }
     val name = newBranchName.get()
     checkRefName(name)?.let { return it }
-    if (localBranchNames(currentRepository()).contains(name)){
+    if (getLocalBranchNames(getCurrentRepository()).contains(name)){
       return error(GitBundle.message("working.tree.dialog.branch.validation.already.exists", name))
     }
     return null
@@ -330,7 +331,7 @@ internal class GitWorkingTreeDialog(
   }
 
   private fun computeRefsWithWorkingTrees(): List<RefWithWorkingTree> {
-    val repository = currentRepository()
+    val repository = getCurrentRepository()
     val branches = repository.branches
     val result = branches.localBranches.sortedBy { it.name }
       .map { it.toRefWithWorkingTree() }.toMutableList()
@@ -358,15 +359,15 @@ internal class GitWorkingTreeDialog(
       ""
     }
     else {
-      projectNameBase().name + "-" + refToUse.substringAfterLast("/")
+      resolveProjectNameBase().name + "-" + refToUse.substringAfterLast("/")
     }
   }
 
   //should be the main repo root in case of working in a worktree
-  private fun projectNameBase() = currentRepository().repositoryFiles.configFile.toPath().parent.parent
+  private fun resolveProjectNameBase() = getCurrentRepository().repositoryFiles.configFile.toPath().parent.parent
 
   private fun createBranchNameCompletion(): GitNewBranchDialog.BranchNamesCompletion {
-    val branches = currentRepository().branches
+    val branches = getCurrentRepository().branches
     val localBranches = branches.localBranches.map { it.name }
     val remoteBranches = branches.remoteBranches.map { it.nameForRemoteOperations }
     val localDirectories = GitNewBranchDialog.collectDirectories(localBranches, true)
@@ -388,8 +389,15 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private class RefWithTreeCellRenderer(private val project: Project, private val repositorySupplier: () -> GitRepository) :
+  private class RefWithTreeCellRenderer(private val project: Project, private var repository: GitRepository) :
     ColoredListCellRenderer<RefWithWorkingTree?>() {
+
+    private var repositoryModel = GitWorkingTreesService.getInstance(project).repositoryToModel(repository)
+
+    fun updateRepository(repository: GitRepository) {
+      this.repository = repository
+      repositoryModel = GitWorkingTreesService.getInstance(project).repositoryToModel(repository)
+    }
 
     override fun customizeCellRenderer(
       list: JList<out RefWithWorkingTree?>,
@@ -403,7 +411,6 @@ internal class GitWorkingTreeDialog(
         return
       }
 
-      val repositoryModel = GitWorkingTreesService.getInstance(project).repositoryToModel(repositorySupplier())
       val ref = value.ref
       val isCurrent = repositoryModel?.state?.isCurrentRef(ref) ?: false
       val isFavorite = repositoryModel?.favoriteRefs?.contains(ref) ?: false
@@ -426,7 +433,7 @@ internal class GitWorkingTreeDialog(
     val ref = existingRefWithWorkingTree.get()!!.ref
     val branch = if (createNewBranch.get()) WorktreeBranchSpec.CreateNewBranch(ref, newBranchName.get())
     else WorktreeBranchSpec.CheckoutExisting(ref)
-    return GitWorktreeCreationRequest(currentRepository(), path, branch)
+    return GitWorktreeCreationRequest(getCurrentRepository(), path, branch)
   }
 
   companion object {

@@ -129,6 +129,11 @@ class GitRepositoryDto(
   val state: GitRepositoryStateDto,
   val favoriteRefs: GitFavoriteRefs,
   val root: FilePathDto,
+  val isSubmodule: Boolean,
+  /**
+   * @see com.intellij.vcs.git.repo.GitRepositoryModel.commonGitDirPath
+   */
+  val commonGitDirPath: String,
 )
 
 @Serializable

@@ -257,6 +257,8 @@ git4idea.repo.GitRepository
 - getFullHashLength():I
 git4idea.repo.GitRepositoryChangeListener
 - a:repositoryChanged(git4idea.repo.GitRepository):V
+f:git4idea.repo.GitRepositoryFiles
+- getCommonGitDir():com.intellij.openapi.vfs.VirtualFile
 f:git4idea.repo.GitRepositoryImpl
 - getFullHashLength():I
 f:git4idea.repo.GitRepositoryManager

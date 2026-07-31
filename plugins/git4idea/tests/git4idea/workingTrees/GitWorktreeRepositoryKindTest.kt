@@ -7,10 +7,10 @@ import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.repo.getAndInit
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.createRepository
+import git4idea.test.gitPlatformContextFixture
 import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitRepositoryKind
-import git4idea.workingTrees.ui.GitWorktreesTabModel
-import kotlinx.coroutines.runBlocking
+import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class GitWorktreeRepositoryKindTest {
-  private val contextFixture = gitWorkingTreePlatformFixture()
+  private val contextFixture = gitPlatformContextFixture()
   private val context: GitPlatformTestContext get() = contextFixture.get()
 
   @Test
@@ -30,7 +30,7 @@ internal class GitWorktreeRepositoryKindTest {
     val nested = createRepository(project, projectNioRoot.resolve("nested"), true)
     GitRepositoriesHolder.getAndInit(project)
 
-    val headers = runBlocking { GitWorktreesTabModel(project).buildEntries() }
+    val headers = GitWorktreesUiUtil.buildEntries(project)
       .filterIsInstance<GitRepositoryHeader>()
       .associateBy { it.repository.root.path }
 

@@ -186,6 +186,21 @@ public final class GitRepositoryFiles {
   }
 
   /**
+   * The '.git' directory shared by all working trees of the underlying git repository
+   * (what {@code git rev-parse --git-common-dir} reports):
+   * <ul>
+   *   <li>a regular repository and each of its linked worktrees: {@code <root>/.git};</li>
+   *   <li>a bare repository and each of its worktrees: the bare {@code <root>/.git};</li>
+   *   <li>a submodule and each of its linked worktrees: {@code <parent>/.git/modules/<submodule>}.</li>
+   * </ul>
+   * Unlike {@link #getWorktreeGitDir()}, this is equal for every working tree of the same repository, which makes it
+   * the identity of that repository.
+   */
+  public @NotNull VirtualFile getCommonGitDir() {
+    return myMainDir;
+  }
+
+  /**
    * Returns subdirectories and paths of .git which we are interested in - they should be watched by VFS.
    */
   @NotNull

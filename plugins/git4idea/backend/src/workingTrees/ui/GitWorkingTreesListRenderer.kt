@@ -26,7 +26,7 @@ internal class GitWorkingTreesListRenderer : ColoredListCellRenderer<GitWorkingT
       is GitRepositoryHeader -> {
         icon = AllIcons.Nodes.Folder
         append(value.presentableName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        kindLabel(value.kind)?.let {
+        resolveKindLabel(value.kind)?.let {
           append("  ")
           append(it, SimpleTextAttributes.GRAY_ATTRIBUTES)
         }
@@ -66,7 +66,7 @@ internal class GitWorkingTreesListRenderer : ColoredListCellRenderer<GitWorkingT
     }
   }
 
-  private fun kindLabel(kind: GitRepositoryKind): String? = when (kind) {
+  private fun resolveKindLabel(kind: GitRepositoryKind): String? = when (kind) {
     GitRepositoryKind.SUBMODULE -> GitBundle.message("toolwindow.working.trees.repository.kind.submodule")
     GitRepositoryKind.NESTED -> GitBundle.message("toolwindow.working.trees.repository.kind.nested")
     GitRepositoryKind.TOP_LEVEL -> null

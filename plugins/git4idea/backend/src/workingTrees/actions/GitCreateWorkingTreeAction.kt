@@ -80,7 +80,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     // When creating from a specific ref, the ref belongs to a specific repository, so no switching is offered.
     // Otherwise the dialog lets the user pick/switch the target repository among all worktree-capable ones.
     val candidates = if (refFromContext != null && contextRepository != null) listOf(contextRepository)
-        else GitWorkingTreesService.worktreeCapableRepositories(project)
+        else GitWorkingTreesService.findWorktreeCapableRepositories(project)
     val initialRepository = contextRepository ?: candidates.firstOrNull() ?: return
 
     GitCreateWorkingTreeService.getInstance()
