@@ -94,11 +94,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
-        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   28), // a type parameter that narrows the nullable bound of the overridden method, see IDEA-380143
-        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
-                   33), // a type parameter that narrows the nullable bound of the overridden method, see IDEA-380143
-
         new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24)// see: IDEA-377699
       )
     ),
@@ -412,6 +407,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
              "inspection.nullable.problems.Nullable.parameter.overrides.NotNull",
+             "inspection.nullable.problems.NotNull.type.parameter.bound.overrides.Nullable",
              "complex.problem.with.nullability",
              "assigning.a.class.with.nullable.elements",
              "assigning.a.class.with.notnull.elements",
@@ -427,7 +423,8 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
                                  : "jspecify_nullness_not_enough_information");
           }
         }
-        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
+        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull",
+             "inspection.nullable.problems.unspecified.type.parameter.bound.overrides.Nullable" ->
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
         case "inspection.nullable.problems.Nullable.NotNull.conflict" -> warnings.put(anchor, "jspecify_conflicting_annotations");
       }
