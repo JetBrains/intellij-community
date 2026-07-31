@@ -75,6 +75,7 @@ import com.jetbrains.python.inspections.PyVarianceInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -84,6 +85,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -297,7 +299,6 @@ abstract class PyCodeInsightTestCase {
         val testDataDir = StandardFileSystems.local().findFileByPath(absPath)
         if (testDataDir == null) {
           fail("Could not find additional SDK root at $absPath")
-          break
         }
         if (addElseRemove) {
           modificator.addRoot(testDataDir, rootType)
@@ -536,7 +537,7 @@ abstract class PyCodeInsightTestCase {
       }
     }
 
-    if (parent is PyStringLiteralExpression) {
+    if (parent is PyStringLiteralExpression && parent.findParentOfType<PyAnnotation>() != null) {
       val offsetStart = expectedAssertion.codeOffsetStart - parent.textRange.startOffset - 1
       val strLitValue = parent.stringValue
       val syntheticElement = PyUtil.createExpressionFromFragment(strLitValue, parent)
@@ -547,6 +548,7 @@ abstract class PyCodeInsightTestCase {
 
     val actualContent = when (PyTestAssertionType.fromValue(expectedAssertion.type)) {
       PyTestAssertionType.TYPE -> assertType(expectedAssertion, parent)
+      PyTestAssertionType.EXPECTED_TYPE -> assertExpectedType(parent)
       PyTestAssertionType.IS_BUILTIN -> assertIsBuiltin(parent)
       PyTestAssertionType.EXPECTED_VARIANCE -> assertExpectedVariance(parent)
       PyTestAssertionType.INFERRED_VARIANCE -> assertInferredVariance(parent)
@@ -559,6 +561,7 @@ abstract class PyCodeInsightTestCase {
     return actualAssertion
   }
 
+  /** Asserts the declared or inferred type of a given typable element. */
   private fun assertType(expectedAssertion: PyTestAssertion, elem: PsiElement): String {
     val expr = elem as? PyTypedElement ?: elem.findParentOfType<PyTypedElement>()
     if (expr == null) {
@@ -581,11 +584,32 @@ abstract class PyCodeInsightTestCase {
     return actualTypeCA
   }
 
+  /**
+   * Asserts the expected type based on a given location in the AST.
+   * In the example `a: int = x` x is expected to be `int` or a subtype.
+   *
+   * @see [getExpectedType]
+   */
+  private fun assertExpectedType(elem: PsiElement): String {
+    val expr = elem as? PyExpression ?: elem.findParentOfType<PyExpression>()
+    if (expr == null) {
+      return "Expression not found for expected type assertion"
+    }
+    val context = codeAnalysis(expr.project, expr.containingFile).withTracing()
+    return PythonDocumentationProvider.getTypeName(getExpectedType(expr, context), context)
+  }
+
+  /** Asserts whether a given element is a builtin or not. */
   private fun assertIsBuiltin(element: PsiElement): String {
     val isBuiltin = getInstance(element).isBuiltin(element)
     return if (isBuiltin) "" else "FALSE"
   }
 
+  /**
+   * Asserts the expected variance based on a given location in the AST.
+   *
+   * @see [getExpectedVariance]
+   */
   private fun assertExpectedVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
     if (element !is PyReferenceExpression) {
@@ -595,6 +619,12 @@ abstract class PyCodeInsightTestCase {
     return actualVariance.name
   }
 
+  /**
+   * Asserts the declared or inferred variance based on a given typable element,
+   * usually a type variable.
+   *
+   * @see [getDeclaredOrInferredVariance]
+   */
   private fun assertInferredVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
     if (element !is PyTypedElement) {

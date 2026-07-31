@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 
 enum class PyTestAssertionType {
   TYPE,
+  EXPECTED_TYPE,
   IS_BUILTIN,
   EXPECTED_VARIANCE,
   INFERRED_VARIANCE,
