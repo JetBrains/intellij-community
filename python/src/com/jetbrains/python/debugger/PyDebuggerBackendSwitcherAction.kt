@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.actions.SendFeedbackAction
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -200,6 +201,15 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = !isPythonDapPluginInstalledAndEnabled()
+      val enableOnly = isPythonDapPluginInstalledButDisabled()
+      e.presentation.text = if (enableOnly) {
+        PyBundle.message("debugger.backend.enable.debugpy.plugin")
+      }
+      else {
+        PyBundle.message("debugger.backend.install.debugpy.plugin")
+      }
+      // The plugin is already on disk in the enable case, so nothing is downloaded and the badge would mislead.
+      e.presentation.icon = if (enableOnly) null else AllIcons.Actions.Download
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -255,7 +265,15 @@ private fun getEffectiveSdk(project: Project): Sdk? =
 @ApiStatus.Internal
 fun installPythonDapPlugin(project: Project, onLoaded: Runnable? = null) {
   project.service<PyDapPluginLoadListener>().listen(onLoaded)
-  installAndEnable(project, setOf(PluginId.getId(PYTHON_DAP_PLUGIN_ID)), showDialog = true) {}
+
+  val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
+  val descriptor = PluginManagerCore.getPlugin(pluginId)
+  if (descriptor != null && PluginManagerCore.isDisabled(pluginId)) {
+    PluginEnabler.getInstance().enable(listOf(descriptor))
+    return
+  }
+
+  installAndEnable(project, setOf(pluginId), showDialog = true) {}
 }
 
 // This method exists to provide backward compatibility with older versions of the DAP plugin
@@ -323,6 +341,11 @@ private fun restartDebugSessions(sessions: List<XDebugSession>) {
 internal fun isPythonDapPluginInstalledAndEnabled(): Boolean {
   val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
   return PluginManager.isPluginInstalled(pluginId) && !PluginManagerCore.isDisabled(pluginId)
+}
+
+internal fun isPythonDapPluginInstalledButDisabled(): Boolean {
+  val pluginId = PluginId.getId(PYTHON_DAP_PLUGIN_ID)
+  return PluginManager.isPluginInstalled(pluginId) && PluginManagerCore.isDisabled(pluginId)
 }
 
 private fun switchBackend(project: Project, backend: PyDebuggerBackend) {
