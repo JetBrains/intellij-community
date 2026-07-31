@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 
@@ -24,6 +26,7 @@ internal class PyInstallPackageAction : DumbAwareAction() {
     // when no SDK is available, but invoking it through a keymap binding bypasses that gate in
     // some contexts (Find Action / global shortcut), so re-check before showing the dialog.
     if (project.service<PyPackagingToolWindowService>().currentSdk == null) return
+    PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.SHORTCUT)
     PyInstallPackageDialog(project).show()
   }
 

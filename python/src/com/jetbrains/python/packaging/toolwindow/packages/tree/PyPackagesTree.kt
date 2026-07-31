@@ -37,6 +37,8 @@ import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.packaging.toolwindow.ui.showChangeVersionPopup
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -377,7 +379,8 @@ internal class PyPackagesTree(
   }
 
   private fun showInstallDialog(pkg: InstallablePackage) {
-    PyInstallPackageDialog(project).show(pkg.name)
+    PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.LIST_ICON)
+    PyInstallPackageDialog(project).show(initialSearchText = pkg.name)
   }
 
   private fun updatePackageToLatest(pkg: InstalledPackage) {

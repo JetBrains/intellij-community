@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 
 internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
@@ -33,13 +34,17 @@ internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val toolWindow = findToolWindow(e) ?: return
-    val target = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) {
-      ToolWindowMoveAction.Anchor.BottomLeft
+    // The action only swaps between the two corners its two icons point to, so encoding "from" as
+    // whichever of those two matches the current basic anchor is exact — no need to reach into
+    // `WindowInfo` (internal API) to distinguish split states we never produce ourselves.
+    val (from, to) = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) {
+      ToolWindowMoveAction.Anchor.RightBottom to ToolWindowMoveAction.Anchor.BottomLeft
     }
     else {
-      ToolWindowMoveAction.Anchor.RightBottom
+      ToolWindowMoveAction.Anchor.BottomLeft to ToolWindowMoveAction.Anchor.RightBottom
     }
-    target.applyTo(toolWindow)
+    to.applyTo(toolWindow)
+    PythonPackagesToolwindowStatisticsCollector.anchorToggledEvent.log(from, to)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

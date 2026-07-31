@@ -36,6 +36,8 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.isDependencyGroupSupported
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.sdk.PythonSdkUtil
 import org.toml.lang.psi.TomlKeySegment
@@ -120,6 +122,7 @@ internal class PyDependencyGroupInlayHintsProvider : InlayHintsProvider<NoSettin
             project.service<PyPackagingToolWindowService>().initForSdk(moduleSdk)
           }
           withContext(Dispatchers.EDT) {
+            PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.INLAY_HINT)
             PyInstallPackageDialog(project).show(preselectModuleName = preselectName, preselectGroupName = groupName)
           }
         }
