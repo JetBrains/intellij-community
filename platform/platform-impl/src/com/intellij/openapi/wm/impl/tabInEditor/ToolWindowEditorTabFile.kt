@@ -102,7 +102,7 @@ class ToolWindowEditorTabFile internal constructor(
     return changed
   }
 
-  override fun isIncludedInEditorHistory(project: Project): Boolean = true
+  override fun isIncludedInEditorHistory(project: Project): Boolean = project === this.project
 
   // TODO: Enable persistence when tool window editor tabs can be restored between IDE sessions.
   override fun isPersistedInEditorHistory(): Boolean = false
