@@ -30,7 +30,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.plugin.common",
       "kotlin.plugin.k2",
       "kotlin.scripting",
-      "kotlin.jsr223",
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -192,7 +191,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       spec.directoryName = "KotlinScripting"
       spec.mainJarName = "kotlin-scripting-plugin.jar"
 
-      spec.withModule("kotlin.jsr223")
+      spec.withModule("intellij.kotlin.jsr223")
 
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")

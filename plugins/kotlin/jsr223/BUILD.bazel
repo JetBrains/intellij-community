@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build kotlin.jsr223` start
+### auto-generated section `build intellij.kotlin.jsr223` start
 jvm_library(
     name = "jsr223",
     srcs = glob(
@@ -11,7 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "kotlin.jsr223",
+    module_name = "intellij.kotlin.jsr223",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -37,7 +37,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "kotlin.jsr223",
+    module_name = "intellij.kotlin.jsr223",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -49,13 +49,13 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )
-### auto-generated section `build kotlin.jsr223` end
+### auto-generated section `build intellij.kotlin.jsr223` end
 
-### auto-generated section `iml kotlin.jsr223` start
+### auto-generated section `iml intellij.kotlin.jsr223` start
 exports_files(
     [
-        "kotlin.jsr223.iml",
+        "intellij.kotlin.jsr223.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml kotlin.jsr223` end
+### auto-generated section `iml intellij.kotlin.jsr223` end

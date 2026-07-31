@@ -126,7 +126,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jsr223" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.performanceExtendedPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.evaluation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" scope="RUNTIME" />

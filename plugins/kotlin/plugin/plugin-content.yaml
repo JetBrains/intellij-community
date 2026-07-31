@@ -85,6 +85,9 @@
 - name: lib/intellij.kotlin.ide.jar
   contentModules:
   - name: intellij.kotlin.ide
+- name: lib/intellij.kotlin.jsr223.jar
+  contentModules:
+  - name: intellij.kotlin.jsr223
 - name: lib/intellij.kotlin.jvm.debugger.base.util.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.base.util
@@ -210,7 +213,6 @@
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2
   - name: kotlin.scripting
-  - name: kotlin.jsr223
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs

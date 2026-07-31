@@ -165,7 +165,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" exported="" />
-    <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jsr223" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.internal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />

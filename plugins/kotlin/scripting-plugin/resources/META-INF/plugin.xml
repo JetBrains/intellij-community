@@ -11,6 +11,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.kotlin.jsr223"/>
     <module name="intellij.platform.core.impl"/>
   </dependencies>
   <!-- endregion -->
