@@ -29,18 +29,26 @@ import javax.swing.tree.TreeCellRenderer
 
 internal class CodeReviewProgressRenderer(
   hasViewedState: Boolean,
-  renderer: ColoredTreeCellRenderer,
+  textRenderer: ColoredTreeCellRenderer,
   codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState,
 ) : TreeCellRenderer {
-  private val component = CodeReviewProgressRendererComponent(hasViewedState, renderer, codeReviewProgressStateProvider)
+  private val component = CodeReviewProgressRendererComponent(hasViewedState, textRenderer, codeReviewProgressStateProvider)
 
-  override fun getTreeCellRendererComponent(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component =
+  override fun getTreeCellRendererComponent(
+    tree: JTree,
+    value: Any,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ): Component =
     component.prepareComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 }
 
 internal class CodeReviewProgressRendererComponent(
   private val hasViewedState: Boolean,
-  private val renderer: ColoredTreeCellRenderer,
+  private val textRenderer: ColoredTreeCellRenderer,
   private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState,
 ) : CellRendererPanel() {
   private val checkbox = JCheckBox().apply {
@@ -61,10 +69,6 @@ internal class CodeReviewProgressRendererComponent(
     verticalAlignment = JLabel.CENTER
   }
 
-  private val invisiblePlaceholder = JLabel().apply {
-    isVisible = false
-  }
-
   private val unreadOrCheckboxContainer = JPanel().apply {
     isOpaque = false
     border = JBUI.Borders.empty()
@@ -80,7 +84,9 @@ internal class CodeReviewProgressRendererComponent(
     }
   }
 
-  private val stateContainer = HorizontalListPanel(gap = COMMENT_AND_UNREAD_GAP)
+  private val stateContainer = HorizontalListPanel(gap = COMMENT_AND_UNREAD_GAP).apply {
+    border = JBUI.Borders.emptyLeft(TEXT_STATUS_GAP)
+  }
 
   init {
     layout = BorderLayout()
@@ -89,15 +95,22 @@ internal class CodeReviewProgressRendererComponent(
   }
 
   @RequiresEdt
-  fun checkboxBounds(cellSize: Dimension): Rectangle? {
+  fun getReadCheckboxBounds(cellSize: Dimension): Rectangle? {
     bounds = Rectangle(0, 0, cellSize.width, cellSize.height)
     return checkbox.calculateBoundsWithin(this)
   }
 
   @RequiresEdt
-  fun prepareComponent(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): JComponent {
+  fun prepareComponent(
+    tree: JTree,
+    value: Any,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ): JComponent {
     value as ChangesBrowserNode<*>
-    val state = codeReviewProgressStateProvider(value)
 
     border = JBUI.Borders.empty(0, LEFT_SIDE_GAP, 0, RIGHT_SIDE_GAP)
     background = null
@@ -106,63 +119,73 @@ internal class CodeReviewProgressRendererComponent(
     removeAll()
     add(updateFilenameContainer(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.CENTER)
 
-    // if loading, don't show any icons yet
-    if (isStateContainerShown(leaf, expanded) && !state.isLoading) {
-      add(updateStateContainer(tree, state, row, leaf), BorderLayout.EAST)
+
+    if (leaf || !expanded) {
+      val state = codeReviewProgressStateProvider(value)
+      // if loading, don't show any icons yet
+      if (!state.isLoading) {
+        val isHovered = TreeHoverListener.getHoveredRow(tree) == row
+        val stateContainer = updateStateContainer(state, leaf, isHovered)
+        add(stateContainer, BorderLayout.EAST)
+      }
     }
 
     return this
   }
 
-  private fun updateFilenameContainer(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component =
-    renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus).apply {
+  private fun updateFilenameContainer(
+    tree: JTree,
+    value: Any,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ): Component =
+    textRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus).apply {
       background = null
       minimumSize = Dimension()
       (this as? JComponent)?.border = JBUI.Borders.empty()
     }
 
-  private fun updateStateContainer(tree: JTree, state: NodeCodeReviewProgressState, row: Int, isLeaf: Boolean): JComponent =
+  private fun updateStateContainer(state: NodeCodeReviewProgressState, allowToggleRead: Boolean, isHovered: Boolean): JComponent =
     stateContainer.apply {
       removeAll()
 
-      val commentIconLabel = updateCommentIconLabel(state)
-      commentIconLabel?.let(::add)
+      updateCommentIconLabel(state)?.let(::add)
 
-      val isHovered = TreeHoverListener.getHoveredRow(tree) == row
-      val rightSideComp = if (isLeaf && hasViewedState && (isHovered || state.isRead)) {
-        updateViewedCheckbox(state)
+      val unReadComponent = if (hasViewedState && allowToggleRead && (isHovered || state.isRead)) {
+        checkbox.apply {
+          isSelected = state.isRead
+        }
       }
       else if (!state.isRead) {
         unreadIconLabel
       }
       else null
 
-      if (commentIconLabel != null || rightSideComp != null) {
+      if (componentCount > 0 || unReadComponent != null) {
         add(unreadOrCheckboxContainer.apply {
           removeAll()
-          add(rightSideComp ?: invisiblePlaceholder)
+          unReadComponent?.let(::add)
         })
       }
+
+      isVisible = componentCount > 0
     }
-
-  private fun isStateContainerShown(isLeaf: Boolean, isExpanded: Boolean): Boolean =
-    isLeaf || !isExpanded
-
-  private fun updateViewedCheckbox(valueData: NodeCodeReviewProgressState): JComponent {
-    checkbox.isSelected = valueData.isRead
-    return checkbox
-  }
 
   private fun updateCommentIconLabel(state: NodeCodeReviewProgressState): JComponent? {
     if (state.discussionsCount <= 0) return null
 
-    commentIconLabel.icon = if (state.isRead) CollaborationToolsIcons.Review.CommentUnresolved else CollaborationToolsIcons.Review.CommentUnread
+    commentIconLabel.icon =
+      if (state.isRead) CollaborationToolsIcons.Review.CommentUnresolved else CollaborationToolsIcons.Review.CommentUnread
     commentIconLabel.text = state.discussionsCount.toString()
 
     return commentIconLabel
   }
 
   companion object {
+    private const val TEXT_STATUS_GAP = 4
     private const val TEXT_ICON_GAP = 4
     private const val COMMENT_AND_UNREAD_GAP = 10
 
