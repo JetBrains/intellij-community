@@ -1350,7 +1350,7 @@ class FoldersImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
       """);
     maven.assertModules("project")
-    maven.assertSources("project", maven.projectRoot.toNioPath().relativize(maven.dir).toString())
+    maven.assertSources("project", maven.projectRoot.toNioPath().relativize(dir).toString())
   }
 
   @Test
