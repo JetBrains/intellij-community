@@ -20,9 +20,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -150,6 +152,16 @@ public class InferenceIncorporationPhase {
         typeArgs = args.toArray(PsiType.EMPTY_ARRAY);
       }
       if (parameters.length != typeArgs.length) continue;
+      // JLS 18.4: the fresh variables B1..Bn substitute the captured type parameters P1..Pn inside the bounds.
+      // Map each captured type parameter to *its own* fresh variable so that a self-referential (F-bounded) parameter,
+      // e.g. T in T extends Foo<T, U>, refers to this capture instead of leaking to a sibling capture of the same
+      // wildcard through the session-global inference substitution, which is overwritten across captures that share
+      // the same declaration type parameter.
+      PsiSubstitutor captureSubstitutor = PsiSubstitutor.EMPTY;
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(gClass.getProject());
+      for (InferenceVariable parameter : parameters) {
+        captureSubstitutor = captureSubstitutor.put(parameter.getParameter(), elementFactory.createType(parameter));
+      }
       for (int i = 0; i < typeArgs.length; i++) {
         final PsiType aType = typeArgs[i];
         final InferenceVariable inferenceVariable = parameters[i];
@@ -184,7 +196,7 @@ public class InferenceIncorporationPhase {
 
             for (PsiType upperBound : upperBounds) {
               if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
-                addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
+                addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(captureSubstitutor.substitute(glb))));
               }
             }
 
@@ -204,7 +216,7 @@ public class InferenceIncorporationPhase {
                   addConstraint(new StrictSubtypingConstraint(upperBound, extendsBound));
                 }
                 else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && glb != null) {
-                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
+                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(captureSubstitutor.substitute(glb))));
                 }
               }
             }
@@ -221,7 +233,7 @@ public class InferenceIncorporationPhase {
 
             for (PsiType upperBound : upperBounds) {
               if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
-                addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(glb), upperBound));
+                addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(captureSubstitutor.substitute(glb)), upperBound));
               }
             }
 

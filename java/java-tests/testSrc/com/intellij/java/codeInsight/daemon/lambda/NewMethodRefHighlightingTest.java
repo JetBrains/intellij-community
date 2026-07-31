@@ -170,6 +170,7 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testRawClassTypeOnConstructorWithVarargs() { doTest(); }
   @Test void testIDEA175280() { doTest(); }
   @Test void testDistinguishCapturedWildcardsByDifferentParameters() { doTest(); }
+  @Test void testRestoreCapturedWildcardForFBoundedWithExtraTypeParameter() { doTest(); }
   @Test void testConstructorRefOnClassWithRecursiveTypeParameter() { doTest(); }
   @Test void testWildcardInCheckedCompatibilityConstraints() { doTest(); }
   @Test void testConstructorReferenceWithVarargsParameters() { doTest(); }
