@@ -34,12 +34,12 @@
 - name: lib/modules/intellij.devkit.intelliLang.jar
   contentModules:
   - name: intellij.devkit.intelliLang
-- name: lib/modules/intellij.devkit.mcp.jar
-  contentModules:
-  - name: intellij.devkit.mcp
 - name: lib/modules/intellij.devkit.mcp.inspections.jar
   contentModules:
   - name: intellij.devkit.mcp.inspections
+- name: lib/modules/intellij.devkit.mcp.jar
+  contentModules:
+  - name: intellij.devkit.mcp
 - name: lib/modules/intellij.devkit.modules.jar
   contentModules:
   - name: intellij.devkit.modules
