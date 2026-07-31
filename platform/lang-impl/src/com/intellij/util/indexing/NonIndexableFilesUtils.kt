@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -160,6 +162,16 @@ class NonIndexableFilesDequeImpl internal constructor(
 
     @JvmStatic
     @ApiStatus.Internal
+    fun nonCancellableIfFileIsLocal(file: VirtualFile, block: (VirtualFile) -> Unit) {
+      if (file.toNioPath().getEelDescriptor() == LocalEelDescriptor) {
+        Cancellation.executeInNonCancelableSection { block(file) }
+      } else {
+        block(file)
+      }
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
     fun shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex: WorkspaceFileIndexEx, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
       if (workspaceFileIndex.isExcludedOrInvalid(file)) return false
       val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
@@ -172,7 +184,7 @@ class NonIndexableFilesDequeImpl internal constructor(
       // Would be great but the plaform callsites don't allow this
       //ThreadingAssertions.assertBackgroundThread()
       //ThreadingAssertions.assertNoReadAccess()
-      Cancellation.executeInNonCancelableSection {
+      nonCancellableIfFileIsLocal(file) { file ->
         if (file.isValid && !file.isRecursiveOrCircularSymlink) {
           val children = file.children
           childrenProcessor(children)
