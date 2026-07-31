@@ -28,13 +28,15 @@ import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import java.util.regex.Pattern
 
 internal class KotlinTextExtractor : TextExtractor() {
-  private val kdocBuilder = TextContentBuilder.FromPsi
-    .withUnknown { e -> e.elementType == KDocTokens.MARKDOWN_LINK && e.text.startsWith("[") }
-    .excluding { e -> e.elementType == KDocTokens.MARKDOWN_LINK && !e.text.startsWith("[") }
-    .excluding { e -> val elementType = e.elementType
-        elementType == LEADING_ASTERISK || elementType == CODE_BLOCK_TEXT || elementType == CODE_SPAN_TEXT
-    }
-    .removingIndents(" \t").removingLineSuffixes(" \t")
+    private val kdocBuilder = TextContentBuilder.FromPsi
+        .withUnknown { e -> e.elementType == KDocTokens.MARKDOWN_LINK && e.text.startsWith("[") }
+        .excluding { e -> e.elementType == KDocTokens.MARKDOWN_LINK && !e.text.startsWith("[") }
+        .excluding { e ->
+            val elementType = e.elementType
+            elementType == LEADING_ASTERISK || elementType == CODE_BLOCK_TEXT
+        }
+        .withUnknown { e -> e.elementType == CODE_SPAN_TEXT }
+        .removingIndents(" \t").removingLineSuffixes(" \t")
 
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
       if (InjectedLanguageManager.getInstance(root.project).shouldInspectionsBeLenient(root)) {
@@ -76,7 +78,7 @@ internal class KotlinTextExtractor : TextExtractor() {
     return null
   }
 
-    private val codeFragments = Pattern.compile("(?s)```.+?```|`.+?`")
+    private val codeFragments = Pattern.compile("(?s)```.+?```|~~~.+?~~~|``")
     private val markdownHeading = Pattern.compile("^[ \\t]*#{1,6}[ \\t]+[^\\n]*?(\\n|$)", Pattern.MULTILINE)
 
     private fun TextContent.removeCode(): TextContent? =

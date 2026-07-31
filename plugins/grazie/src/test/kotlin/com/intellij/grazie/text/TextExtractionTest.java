@@ -511,4 +511,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
   public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
     return TextExtractor.findTextAt(createFile(fileName, fileText, project), offset, TextContent.TextDomain.ALL);
   }
+
+  public static Set<TextContent> extractAllTexts(String fileName, String fileText, Project project) {
+    PsiFile file = createFile(fileName, fileText, project);
+    return TextExtractor.findAllTextContents(file.getViewProvider(), TextContent.TextDomain.ALL);
+  }
 }
