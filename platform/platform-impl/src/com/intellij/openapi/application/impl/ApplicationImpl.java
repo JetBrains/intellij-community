@@ -66,6 +66,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -625,10 +626,18 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     final var guarded = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Middle layer: lock and modality
     final var locked = wrapWithRunIntendedWriteActionAndModality(guarded, false, ctxAware ? null : state);
-    // Outer layer context capture & reset
-    final var finalRunnable = AppImplKt.rethrowExceptions(AppScheduledExecutorService::captureContextCancellationForRunnableThatDoesNotOutliveContextScope, locked);
+    // Outer layer context capture & reset.
+    // The captured child job is completed by executing the runnable, so if `LaterInvocator.invokeAndWait` stops waiting and
+    // abandons the runnable, that job has to be cancelled explicitly - otherwise it hangs around forever and prevents completion
+    // of its parent, e.g. of the coroutine of a background task whose progress indicator got cancelled while it was waiting here.
+    final var contextCleanup = new Ref<Runnable>();
+    final var finalRunnable = AppImplKt.rethrowExceptions(r -> {
+      var captured = AppScheduledExecutorService.captureContextCancellationForDiscardableRunnable(r);
+      contextCleanup.set(captured.getSecond());
+      return captured.getFirst();
+    }, locked);
 
-    LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable);
+    LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable, Objects.requireNonNull(contextCleanup.get()));
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteActionAndModality(@NotNull Runnable runnable,

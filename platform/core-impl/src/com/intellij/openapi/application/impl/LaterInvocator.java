@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -126,6 +127,20 @@ public final class LaterInvocator {
   @RequiresBackgroundThread
   @ApiStatus.Internal
   public static void invokeAndWait(@NotNull ModalityState modalityState, boolean wrapWithLocks, final @NotNull Runnable runnable) {
+    invokeAndWait(modalityState, wrapWithLocks, runnable, EmptyRunnable.getInstance());
+  }
+
+  /**
+   * @param onDiscarded is run if, and only if, {@code runnable} is abandoned before it started to execute, which happens when the
+   *                    current thread stops waiting because of cancellation. It gives the caller a chance to release the resources
+   *                    attached to the abandoned {@code runnable} - see {@link ApplicationImpl#doInvokeAndWait}.
+   */
+  @RequiresBackgroundThread
+  @ApiStatus.Internal
+  public static void invokeAndWait(@NotNull ModalityState modalityState,
+                                   boolean wrapWithLocks,
+                                   final @NotNull Runnable runnable,
+                                   final @NotNull Runnable onDiscarded) {
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -161,7 +176,19 @@ public final class LaterInvocator {
       }
     }
     catch (Throwable e) {
-      runnableRef.set(null);
+      if (runnableRef.getAndSet(null) != null) {
+        // We won the race against `runnable1`: the runnable is still queued and will never be executed now.
+        // Notify the caller so that it can release what is attached to the runnable. In particular,
+        // `ApplicationImpl.doInvokeAndWait` has to cancel the structured concurrency child job captured for the runnable:
+        // `ContextRunnable` completes that job only when it is actually executed, so an abandoned runnable would otherwise
+        // leave behind a job which blocks completion of its parent forever.
+        try {
+          onDiscarded.run();
+        }
+        catch (Throwable secondary) {
+          e.addSuppressed(secondary);
+        }
+      }
       throw e;
     }
     if (!exception.isNull()) {
