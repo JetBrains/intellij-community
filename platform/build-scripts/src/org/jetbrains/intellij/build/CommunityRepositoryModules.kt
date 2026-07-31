@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -49,16 +50,19 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp") { spec ->
-      spec.withPlatformBin(OsFamily.WINDOWS, JvmArchitecture.x64, WindowsLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/win", "lib/libwebp/win")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC, "plugins/webp/lib/libwebp/linux", "lib/libwebp/linux")
+      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
+        spec.withGeneratedPlatformResources(os, arch, libc, allowInDevMode = true) { targetDir, context ->
+          copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
+        }
+      }
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.marketplace = true
-      spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
-      spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withResource("lib/libwebp/win", "lib/libwebp/win")
+      spec.withGeneratedResources { targetDir, context ->
+        for ((os, arch, _) in SUPPORTED_DISTRIBUTIONS) {
+          copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
+        }
+      }
     },
     pluginAuto("intellij.platform.ui.webview") { spec ->
       spec.withResource("lib/webview-native/win", "lib/webview-native/win")

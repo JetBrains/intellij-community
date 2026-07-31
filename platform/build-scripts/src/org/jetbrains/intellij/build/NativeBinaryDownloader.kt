@@ -14,6 +14,7 @@ object NativeBinaryDownloader {
   private const val GROUP_ID = "org.jetbrains.intellij.deps"
   private const val LAUNCHER_ID = "launcher"
   private const val RESTARTER_ID = "restarter"
+  private const val LIBWEBP_ID = "libwebp"
   private const val PACKAGING = "tar.gz"
   private const val LICENSE_FILE_NAME = "xplat-launcher-third-party-licenses.html"
 
@@ -64,6 +65,14 @@ object NativeBinaryDownloader {
   suspend fun getRestarter(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "restarterBuild", RESTARTER_ID)
     return findFile(archiveFile, unpackedDir, binName(os, arch, "restarter"))
+  }
+
+  /**
+   * Downloads and unpacks the WebP tarball and returns a path to a library for the given platform.
+   */
+  suspend fun getLibWebp(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    val (archiveFile, unpackedDir) = downloadAndUnpack(context, "libwebpVersion", LIBWEBP_ID)
+    return findFile(archiveFile, unpackedDir, libName(os, arch, "webp_jni"))
   }
 
   private suspend fun downloadAndUnpack(context: BuildContext, propertyName: String, artifactId: String): Pair<Path, Path> {
