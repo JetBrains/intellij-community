@@ -3,11 +3,8 @@ package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.SelectInTarget
-import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
-import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
-import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -28,55 +25,27 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
-import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
-import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
-import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
-import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
-import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
-import com.intellij.platform.projectView.pane.ProjectViewNodeModel
-import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
-import com.intellij.platform.projectView.pane.ProjectViewNodeMoved
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewSelectNodeEvent
-import com.intellij.platform.projectView.pane.ProjectViewSettingsStateEvent
-import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
-import com.intellij.platform.projectView.pane.SuperRootModel
-import com.intellij.platform.projectView.settings.NestingRuleDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
-import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
-import com.intellij.pom.Navigatable
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
-import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.ui.treeStructure.TreeNodePresentationImpl
-import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -85,15 +54,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -102,7 +66,6 @@ import javax.swing.JScrollPane
 import javax.swing.JTree
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import kotlin.time.ComparableTimeMark
 import kotlin.time.TimeSource
@@ -114,12 +77,20 @@ internal class TreeBasedFrontendProjectViewPaneProvider : FrontendProjectViewPan
   ): FrontendProjectViewPane = TreeBasedFrontendProjectViewPane(project, descriptor)
 }
 
+/**
+ * The UI half of the tree-based frontend Project View pane.
+ *
+ * It owns the Swing objects (the [tree], its scroll pane, the content panel and the various handlers)
+ * and delegates everything else to [paneTreeModel], which owns the data model and the logic that
+ * populates it. Keeping the Swing-free logic in [FrontendProjectViewPaneTreeModel] allows testing the
+ * whole pipeline (backend models -> events -> populated tree) without instantiating this UI.
+ */
 internal class TreeBasedFrontendProjectViewPane(
-  private val project: Project,
+  project: Project,
   descriptor: ProjectViewPaneDescriptorImpl,
 ) : FrontendProjectViewPane, UiDataProvider {
-  private val treeModel = DefaultTreeModelWithCachedPresentation()
-  private val tree = Tree(treeModel).also {
+  private val paneTreeModel = FrontendProjectViewPaneTreeModel(project, descriptor)
+  private val tree = Tree(paneTreeModel.treeModel).also {
     it.isRootVisible = false
     CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
   }
@@ -127,9 +98,8 @@ internal class TreeBasedFrontendProjectViewPane(
   private val contentPanel = ContentPanel(scrollPane)
   private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
+  private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
 
-  private val optionSupport = ActionSupport()
-  
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
       setContent(content)
@@ -141,51 +111,36 @@ internal class TreeBasedFrontendProjectViewPane(
       this@TreeBasedFrontendProjectViewPane.uiDataSnapshot(sink)
     }
   }
-  
-  private val nodeById = hashMapOf<Long, Node>().also { 
-    it[SUPER_ROOT_ID] = Node(SuperRootModel)
-  }
 
-  private val updateEpoch = MutableStateFlow(0L)
+  override val id: ProjectViewPaneId
+    get() = paneTreeModel.descriptor.id
 
-  override val id: ProjectViewPaneId = descriptor.id
+  override val displayName: @NlsSafe String
+    get() = paneTreeModel.descriptor.presentableName
 
-  override val displayName: @NlsSafe String = descriptor.presentableName
+  override val order: Int
+    get() = paneTreeModel.descriptor.order
 
-  override val order: Int = descriptor.order
-
-  override val selectInTargets: Collection<SelectInTarget> = descriptor.selectInTargetDescriptors.map {
-    SplitProjectViewSelectInTarget(
-      minorViewId = it.id,
-      presentableName = it.presentableName,
-      weight = it.weight
-    )
-  }
+  override val selectInTargets: Collection<SelectInTarget>
+    get() = paneTreeModel.selectInTargets
 
   override val component: JComponent
     get() = contentPanel
 
-  private val _requestChannel = Channel<ProjectViewPaneRequest>(Channel.UNLIMITED)
-
   override val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
-    get() = _requestChannel
+    get() = paneTreeModel.requestChannel
 
   override var isCurrent: Boolean = false
     set(value) {
       field = value
-      if (isCurrent) {
-        sendRequest(ProjectViewPaneSelectionChanged(id))
-      }
+      paneTreeModel.setCurrent(value)
     }
-
-  private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
 
   init {
     tree.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
         val expandedNodeId = (event.path.lastPathComponent as? Node)?.projectViewNode?.id ?: return
-        val request = ProjectViewPaneLoadChildrenRequest(expandedNodeId)
-        sendRequest(request)
+        paneTreeModel.requestLoadChildren(expandedNodeId)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) { }
@@ -200,22 +155,23 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  private fun sendRequest(request: ProjectViewPaneRequest) {
-    check(_requestChannel.trySend(request).isSuccess)
-  }
-
   override suspend fun manage() {
     coroutineScope {
       launch(CoroutineName("autoscrollToSourceHandler")) {
         autoscrollToSourceHandler.manage()
       }
       launch(CoroutineName("single-click toggle") + Dispatchers.UI) {
-        optionSupport.getActionStateFlow()
+        paneTreeModel.getOptionSupport().getActionStateFlow()
           .map { it?.optionStates?.get(ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)?.isSelected == true }
           .distinctUntilChanged()
           .collectLatest { singleClick ->
             tree.toggleClickCount = if (singleClick) 1 else 2
           }
+      }
+      launch(CoroutineName("select node requests") + Dispatchers.UI) {
+        paneTreeModel.selectionRequests.consumeAsFlow().collectLatest { nodePath ->
+          selectNode(nodePath)
+        }
       }
       if (Registry.`is`("error.stripe.enabled", defaultValue = true)) {
         launch(CoroutineName("error stripe") + Dispatchers.UI) {
@@ -226,187 +182,18 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  override fun getOptionSupport(): ProjectViewActionSupport = optionSupport
+  override fun getOptionSupport(): ProjectViewActionSupport = paneTreeModel.getOptionSupport()
 
   override suspend fun applyStateChange(event: ProjectViewPaneStateEvent) {
     withContext(Dispatchers.UI) {
-      applyStateChangeImpl(event)
-    }
-  }
-
-  private suspend fun applyStateChangeImpl(event: ProjectViewPaneStateEvent) {
-    when (event) {
-      is ProjectViewClearStateEvent -> {
-        treeModel.root = null
-      }
-      is ProjectViewChildrenLoaded -> {
-        val parent = getNodeById(event.parentId) ?: return
-        if (parent.id == SUPER_ROOT_ID) {
-          updateRoot(event.children)
-        }
-        else {
-          updateChildren(parent, event.children)
-        }
-        parent.isChildrenLoaded = true
-      }
-      is ProjectViewNodeAdded -> {
-        val parent = getNodeById(event.parentId) ?: return
-        val newNode = createNode(event.model)
-        if (event.parentId == SUPER_ROOT_ID) {
-          treeModel.setRoot(newNode)
-        }
-        else {
-          treeModel.insertChild(parent, event.index, newNode)
-        }
-      }
-      is ProjectViewNodeUpdated -> {
-        val node = getNodeById(event.model.id) ?: return
-        treeModel.updateNode(node, event.model)
-      }
-      is ProjectViewNodeMoved -> {
-        val parent = getNodeById(event.parentId) ?: return
-        val node = getNodeById(event.childModel.id) ?: return
-        treeModel.updateNode(node, event.childModel) // refresh the presentation
-        // Reposition the same Node object (preserving its subtree and its nodeById entry) by
-        // detaching and re-attaching it. removeChild + insertChild keep the Swing model consistent.
-        val from = parent.getIndex(node)
-        if (from >= 0 && from != event.newIndex) {
-          treeModel.removeChild(parent, from)
-          treeModel.insertChild(parent, event.newIndex, node)
-        }
-      }
-      is ProjectViewChildRemoved -> {
-        val parent = getNodeById(event.parentId) ?: return
-        val child = getChild(parent, event.index) ?: return
-        removeNode(child)
-        if (event.parentId == SUPER_ROOT_ID) {
-          treeModel.setRoot(null)
-        }
-        else {
-          treeModel.removeChild(parent, event.index)
-        }
-      }
-      is ProjectViewChildrenRemoved -> {
-        val parent = getNodeById(event.parentId) ?: return
-        val childCount = parent.childCount
-        val children = (0 until childCount).map { i -> parent.getChildAt(i) as Node }
-        for (child in children) {
-          removeNode(child)
-        }
-        if (event.parentId == SUPER_ROOT_ID) {
-          treeModel.setRoot(null)
-        }
-        else {
-          treeModel.setChildren(parent, emptyList())
-        }
-      }
-      is ProjectViewSettingsStateEvent -> {
-        optionSupport.updateActionState(event.settingsState)
-      }
-      is ProjectViewSelectNodeEvent -> {
-        selectNode(event.nodePath)
-      }
-    }
-    updateEpoch.update { it + 1 }
-  }
-
-  private fun updateRoot(newRootUserObjects: List<ProjectViewNodeModel>) {
-    // The model may provide fake nodes with cached presentations,
-    // so we need to take care to avoid cast exceptions.
-    val existingRoot = treeModel.root as? Node?
-    if (newRootUserObjects.isEmpty()) {
-      LOG.debug { "The root is removed" }
-      if (existingRoot != null) {
-        removeNode(existingRoot)
-      }
-      treeModel.setRoot(null)
-    }
-    else if (newRootUserObjects.size > 1) {
-      LOG.error("Got ${newRootUserObjects.size} roots: $newRootUserObjects")
-    }
-    else {
-      val newRootUserObject = newRootUserObjects.single()
-      if (existingRoot?.projectViewNode?.id != newRootUserObject.id) {
-        if (existingRoot != null) {
-          removeNode(existingRoot)
-        }
-        treeModel.setRoot(createNode(newRootUserObject))
-      }
-      else {
-        treeModel.updateNode(existingRoot, newRootUserObject)
-      }
-    }
-  }
-
-  private fun updateChildren(
-    parent: Node,
-    newChildUserObjects: List<ProjectViewNodeModel>,
-  ) {
-    // It's a bit tricky because updating children in the model will keep
-    // the existing nodes for already-present children.
-    // But we must maintain the nodeById map consistent.
-    // The easiest way is to remove everything and then add everything.
-    // But there's another tricky part: the removed-for-good nodes should be removed recursively.
-    // So we keep track of them and then remove once we're done.
-    val existingChildrenById = Long2ObjectOpenHashMap<Node>()
-    val removedChildrenById = Long2ObjectOpenHashMap<Node>()
-    // The existing children may be fake cached nodes,
-    // so we need to take care to avoid cast exceptions.
-    parent.children().asSequence().filterIsInstance<Node>().forEach { existingChild ->
-      existingChildrenById[existingChild.id] = existingChild
-      nodeById.remove(existingChild.id)
-      removedChildrenById[existingChild.id] = existingChild
-    }
-    // Now there are no child nodes in the nodeById map.
-    val newChildren = ArrayList<Node>()
-    newChildUserObjects.forEach { newChildUserObject ->
-      removedChildrenById.remove(newChildUserObject.id)
-      newChildren.add(Node(newChildUserObject))
-    }
-    // Now removedChildrenById contain only the children that are going to be permanently removed.
-
-    treeModel.updateChildren(parent, newChildren) { newChild ->
-      existingChildrenById[(newChild as Node).id] // safe cast: no cached nodes among the new ones
-    }
-    // Now the parent has the new children: some are reused nodes with updated user objects, some are now.
-
-    // Add back the new nodes.
-    parent.children().asSequence().forEach { newChild ->
-      nodeById[(newChild as Node).id] = newChild // safe cast: all cached children are gone
-    }
-
-    // Remove the permanently removed nodes now.
-    removedChildrenById.values.forEach { removedChild ->
-      removeNode(removedChild) // the node itself is already removed, but this will remove its descendants
-    }
-  }
-
-  private fun getNodeById(id: Long): Node? {
-    return nodeById[id]
-  }
-
-  private fun getChild(parent: Node, index: Int): Node? {
-    return parent.getChildAt(index) as Node?
-  }
-  
-  private fun createNode(model: ProjectViewNodeModel): Node {
-    val result = Node(model)
-    nodeById[model.id] = result
-    return result
-  }
-
-  private fun removeNode(node: Node) {
-    nodeById.remove(node.id)
-    for (child in node.children()) {
-      val childNode = child as? Node ?: continue // skip cached children
-      removeNode(childNode)
+      paneTreeModel.applyStateChange(event)
     }
   }
 
   suspend fun selectNode(nodePath: ProjectViewNodePath) {
     withContext(Dispatchers.UI) {
       LOG.debug { "Resolving $nodePath" }
-      val treePath = awaitNodePath(nodePath.nodeIds.last())
+      val treePath = paneTreeModel.awaitNodePath(nodePath.nodeIds.last())
       LOG.debug { "Resolved $nodePath => $treePath" }
       TreeUtil.selectPath(tree, treePath)
       LOG.debug { "Selected $treePath" }
@@ -472,16 +259,16 @@ internal class TreeBasedFrontendProjectViewPane(
     depth: Int,
   ) {
     val node = path.lastPathComponent
-    if (treeModel.isLeaf(node)) return
+    if (paneTreeModel.treeModel.isLeaf(node)) return
     // For depth == 0 it means that the user explicitly requested to expand this.
     if (depth > 0 && (node as? Node)?.projectViewNode?.isIncludedInExpandAll() == false) {
       LOG.trace { "Won't expand $node because isIncludedInExpandAll == false" }
       return
     }
     result += path
-    val childCount = treeModel.getChildCount(node)
+    val childCount = paneTreeModel.treeModel.getChildCount(node)
     for (i in 0 until childCount) {
-      val childNode = treeModel.getChild(node, i)
+      val childNode = paneTreeModel.treeModel.getChild(node, i)
       val childPath = path.pathByAddingChild(childNode)
       collectAllExpandableDescendants(childPath, result, depth + 1)
     }
@@ -489,7 +276,7 @@ internal class TreeBasedFrontendProjectViewPane(
 
   private suspend fun expandNotLoaded(path: TreePath, depth: Int) {
     // Even with tracing enabled, we don't want to spam messages about the nodes that were already expanded at the fast-path bulk stage.
-    val doTraceLogging = LOG.isTraceEnabled && !tree.isExpanded(path) && !treeModel.isLeaf(path.lastPathComponent)
+    val doTraceLogging = LOG.isTraceEnabled && !tree.isExpanded(path) && !paneTreeModel.treeModel.isLeaf(path.lastPathComponent)
     if (doTraceLogging) {
       LOG.trace { "Expanding not yet loaded descendants of $path" }
     }
@@ -503,7 +290,7 @@ internal class TreeBasedFrontendProjectViewPane(
       }
       return
     }
-    if (treeModel.isLeaf(node)) {
+    if (paneTreeModel.treeModel.isLeaf(node)) {
       if (doTraceLogging) {
         LOG.trace { "Not expanding $node because it's a leaf" }
       }
@@ -529,7 +316,7 @@ internal class TreeBasedFrontendProjectViewPane(
     if (doTraceLogging) { // to avoid spamming confusing trace messages in the already-loaded case
       LOG.trace { "Loading the children of $path" }
     }
-    val children = awaitNodeChildren(node) {
+    val children = paneTreeModel.awaitNodeChildren(node) {
       val isVisible = tree.isVisible(path) // wait while the node is visible, otherwise cancel because the user has collapsed an ancestor
       if (doTraceLogging && !isVisible) {
         LOG.trace { "Cancelling expanding of $node because it's no longer visible (the user has collapsed an ancestor)" }
@@ -550,56 +337,15 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  private suspend fun awaitNodePath(nodeId: Long): TreePath {
-    var epoch = 0L
-    while (true) {
-      val node = nodeById[nodeId]
-      if (node == null) {
-        epoch = updateEpoch.first { it > epoch }
-      }
-      else {
-        return CachingTreePath(node.path)
-      }
-    }
-  }
-
-  private suspend fun awaitNodeChildren(node: Node, condition: () -> Boolean): List<Node>? {
-    if (!condition()) return null
-    if (!node.isChildrenLoaded) { // request in the case it wasn't requested before
-      sendRequest(ProjectViewPaneLoadChildrenRequest(node.id))
-    }
-    var epoch = 0L
-    while (condition()) {
-      if (node.isChildrenLoaded) {
-        // The cast to Node should be safe now, as isChildrenLoaded implies no cached children.
-        return node.children().asSequence().map { it as Node }.toList()
-      }
-      epoch = updateEpoch.first { it > epoch }
-    }
-    return null
-  }
-
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[ProjectViewPaneId.DATA_KEY] = id
+    sink[ProjectViewPaneId.DATA_KEY] = paneTreeModel.descriptor.id
     sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = tree.selectionPaths?.mapNotNull { path ->
-      (path?.lastPathComponent as? Node)?.projectViewNode?.toNavigatable()
+      (path?.lastPathComponent as? Node)?.projectViewNode?.let { paneTreeModel.createNavigatable(it) }
     }?.toTypedArray()
     sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
-  }
-
-  private fun ProjectViewNodeModel.toNavigatable(): Navigatable = NavigatableNode(this)
-
-  private inner class NavigatableNode(private val model: ProjectViewNodeModel) : Navigatable {
-    override fun navigate(requestFocus: Boolean) {
-      sendRequest(ProjectViewPaneNavigateRequest(model.id, requestFocus))
-    }
-
-    override fun canNavigate(): Boolean = model.canNavigate()
-
-    override fun canNavigateToSource(): Boolean = model.canNavigateToSource()
   }
 
   override fun saveStateTo(element: Element) {
@@ -609,58 +355,6 @@ internal class TreeBasedFrontendProjectViewPane(
   override fun restoreStateFrom(element: Element) {
     TreeState.createFrom(element).applyTo(tree)
   }
-  
-  private inner class ActionSupport : ProjectViewActionSupport {
-    private val actionState = MutableStateFlow<ProjectViewPaneSettingsStateDTO?>(null)
-
-    override fun getActionState(): ProjectViewPaneSettingsStateDTO? = actionState.value
-
-    override fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?> = actionState.asStateFlow()
-
-    override fun requestOptionValueChange(option: ProjectViewPaneOptionDTO, newValue: Boolean) {
-      sendRequest(ProjectViewPaneChangeOptionValueRequest(option, newValue))
-    }
-
-    override fun requestSortKeyChange(sortKey: NodeSortKey) {
-      sendRequest(ProjectViewPaneChangeSortKeyRequest(sortKey))
-    }
-
-    override fun requestFileNestingChange(
-      fileNestingOn: Boolean,
-      activeRules: List<NestingRuleDTO>,
-    ) {
-      sendRequest(ProjectViewPaneChangeFileNestingRequest(fileNestingOn, activeRules))
-    }
-
-    fun updateActionState(actionState: ProjectViewPaneSettingsStateDTO) {
-      LOG.debug { "Received updated actions: $actionState" }
-      this.actionState.value = actionState
-      ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
-    }
-  }
-}
-
-private class Node(
-  model: ProjectViewNodeModel,
-) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
-  val projectViewNode: ProjectViewNodeModelImpl<*>
-    get() = userObject as ProjectViewNodeModelImpl<*>
-  
-  var isChildrenLoaded: Boolean = false
-  
-  val id: Long
-    get() = projectViewNode.id
-
-  override val presentation: TreeNodePresentationImpl
-    get() = projectViewNode.presentation
-
-  override fun isLeaf(): Boolean {
-    return projectViewNode.presentation.isLeaf
-  }
-
-  override fun getPathElementId(): String = presentation.mainText
-
-  override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
 
 private class ProjectViewTreeExpander(tree: Tree, private val expandRequests: SendChannel<ExpandRequest>) : DefaultTreeExpander(tree) {
@@ -699,10 +393,10 @@ private class MyAutoscrollToSourceHandler(private val project: Project) : AutoSc
 
   suspend fun manage() {
     // sync the setting from the backend, because it's used on the frontend
-    ProjectViewActionSupport.getInstance(project).getActionStateFlow().map { 
+    ProjectViewActionSupport.getInstance(project).getActionStateFlow().map {
       it?.optionStates?.get(ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB)?.isSelected == true
     }.distinctUntilChanged()
-      .collectLatest { 
+      .collectLatest {
         UISettings.getInstance().openInPreviewTabIfPossible = it
       }
   }
