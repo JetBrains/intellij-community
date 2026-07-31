@@ -22,4 +22,7 @@ public interface InputFileDataProvider {
 
   @Nullable
   Iterable<FileData> list(JavaFileManager.Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse);
+
+  @Nullable
+  FileData find(JavaFileManager.Location location, String path);
 }

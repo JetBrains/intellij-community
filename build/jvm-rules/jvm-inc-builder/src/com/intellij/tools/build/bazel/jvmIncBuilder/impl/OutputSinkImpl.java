@@ -89,6 +89,10 @@ public class OutputSinkImpl implements OutputSink {
       // todo: parse/instrument files and create nodes asynchronously?
       associate(outFile.getPath(), origin.getSources(), new FailSafeClassReader(content), outFile.isFromGeneratedSource());
     }
+    else if (outFile.getKind() == OutputFile.Kind.other && origin.getKind() == OutputOrigin.Kind.java && !Iterators.isEmpty(origin.getSources())) {
+      // associate AP-generated resource with its originating sources
+      myNodes.add(new NodeWithSources(new FileNode(outFile.getPath(), List.of()), origin.getSources()));
+    }
   }
 
   private record BuilderWithSources(JvmClassNodeBuilder builder, Iterable<NodeSource> sources) {}

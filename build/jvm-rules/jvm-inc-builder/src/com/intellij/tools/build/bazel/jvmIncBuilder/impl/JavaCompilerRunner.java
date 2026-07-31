@@ -320,6 +320,11 @@ public class JavaCompilerRunner implements CompilerRunner {
       return filter(map(myOutSink.listFiles(packageName, recurse), this::createFileData), Objects::nonNull);
     }
 
+    @Override
+    public @Nullable FileData find(JavaFileManager.Location location, String path) {
+      return createFileData(path);
+    }
+
     private @Nullable FileData createFileData(String path) {
       byte[] bytes = myOutSink.getFileContent(path);
       return bytes == null? null : new FileData() {

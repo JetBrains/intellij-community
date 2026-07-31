@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/MockHints
+  META-INF/MockList
+  a/BenchSecond.class
+  a/gen/BenchSecondGen.class
+End of files
+Cleaning output files:
+  a/BenchFirst.class
+  a/gen/BenchFirstGen.class
+End of files
+Compiling files:
+  java/apt/mockSourceDeleted/a/BenchFirst.java
+End of files
+------------------------------------------
+Exit code: OK
