@@ -145,8 +145,8 @@ class SmartStepTargetVisitor(
             KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN -> symbol.getter
             KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.setter
         } ?: return false
-        if (propertyAccessSymbol.isDefault) return false
-        if (symbol.isDelegatedProperty) {
+        if (!propertyAccessSymbol.isNotDefault) return false
+        if (symbol.isDelegated) {
             val property = symbol.psi as? KtProperty ?: return false
             val delegate = property.delegate ?: return false
             val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false

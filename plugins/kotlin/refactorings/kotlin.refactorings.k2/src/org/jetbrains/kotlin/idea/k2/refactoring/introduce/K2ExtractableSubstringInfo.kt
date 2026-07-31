@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.isStringType
@@ -45,14 +45,14 @@ class K2ExtractableSubstringInfo(
         }
 
         return when (selectedConstantId) {
-            DefaultTypeClassIds.INT -> builtinTypes.int
-            DefaultTypeClassIds.BOOLEAN -> builtinTypes.boolean
-            DefaultTypeClassIds.BYTE -> builtinTypes.byte
-            DefaultTypeClassIds.CHAR -> builtinTypes.char
-            DefaultTypeClassIds.SHORT -> builtinTypes.short
-            DefaultTypeClassIds.LONG -> builtinTypes.long
-            DefaultTypeClassIds.FLOAT -> builtinTypes.float
-            DefaultTypeClassIds.DOUBLE -> builtinTypes.double
+            KaStandardTypeClassIds.INT -> builtinTypes.int
+            KaStandardTypeClassIds.BOOLEAN -> builtinTypes.boolean
+            KaStandardTypeClassIds.BYTE -> builtinTypes.byte
+            KaStandardTypeClassIds.CHAR -> builtinTypes.char
+            KaStandardTypeClassIds.SHORT -> builtinTypes.short
+            KaStandardTypeClassIds.LONG -> builtinTypes.long
+            KaStandardTypeClassIds.FLOAT -> builtinTypes.float
+            KaStandardTypeClassIds.DOUBLE -> builtinTypes.double
             else -> stringType
         }
     }

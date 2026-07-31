@@ -259,8 +259,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 ): KtImplementableMember? {
                     val ktClassMember = analyze(targetClass) {
                         val symbol = targetClass.symbol
-                        val enumEntryInitializer = symbol.enumEntryInitializer
-                        val existingImplementation = enumEntryInitializer?.memberScope?.findCallableMemberBySignature(symbol.asSignature())
+                        val initializer = symbol.initializer
+                        val existingImplementation = initializer?.memberScope?.findCallableMemberBySignature(symbol.asSignature())
                         if (existingImplementation != null) return null
                         val symbolToImplement = abstractMember.symbol as? KaCallableSymbol ?: return null
                         createKtClassMember(symbolToImplement, preferConstructorParameters)

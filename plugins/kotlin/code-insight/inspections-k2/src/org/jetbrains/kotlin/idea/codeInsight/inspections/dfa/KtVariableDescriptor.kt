@@ -289,8 +289,8 @@ class KtVariableDescriptor(
         }
 
         private fun isKotlinProperty(target: KaVariableSymbol?) =
-            target is KaPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
-                    && !target.isDelegatedProperty && target.modality == KaSymbolModality.FINAL
+            target is KaPropertySymbol && target.getter?.isNotDefault != true && target.setter?.isNotDefault != true
+                    && !target.isDelegated && target.modality == KaSymbolModality.FINAL
                     && !target.isExtension
                     && target.backingFieldSymbol?.annotations?.contains(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
 

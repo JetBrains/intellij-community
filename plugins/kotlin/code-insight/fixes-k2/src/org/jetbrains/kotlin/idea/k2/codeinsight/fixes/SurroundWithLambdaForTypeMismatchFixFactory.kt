@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -40,6 +41,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createFixIfAvailable(
         element: PsiElement?,
@@ -47,7 +49,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         actualType: KaType,
     ): SurroundWithLambdaForTypeMismatchFix? {
         if (element !is KtExpression || expectedType !is KaFunctionType) return null
-        if (expectedType.arity > 1) return null
+        if (expectedType.parameters.size > 1) return null
         val lambdaReturnType = expectedType.returnType
 
         if (actualType.withNullability(isMarkedNullable = false).isSubtypeOf(lambdaReturnType) ||
