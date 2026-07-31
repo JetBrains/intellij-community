@@ -85,6 +85,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyWithAncestors
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -271,11 +272,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
   // PEP 747: the explicit `TypeForm(...)` constructor. `_SpecialForm` has no `__call__`, so intercept the call here and
   // return a callable whose result is the `TypeForm` value denoting the argument's type expression.
-  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: Context): Ref<PyCallableType?>? {
+  override fun prepareCalleeTypeForCall(type: PyType?, callee: PyExpression, context: Context): Ref<PyCallableType?>? {
     if (type is PyClassType && (SPECIAL_FORM == type.classQName || SPECIAL_FORM_EXT == type.classQName)) {
-      val callee = call.callee
-      if (callee != null && isTypeForm(resolveToQualifiedNames(callee, context.typeContext), callee)) {
-        val typeForm = createTypeFormType(call, call.arguments.firstOrNull(), context) ?: return null
+      val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(callee)
+      if (call != null && isTypeForm(resolveToQualifiedNames(callee, context.typeContext), callee)) {
+        // TODO: `prepareCalleeTypeForCall` is used to provide all possible callables for a call site
+        //  and hence must not rely on arguments list
+        val typeForm = createTypeFormType(callee, call.arguments.firstOrNull(), context) ?: return null
         // A single parameter, so that the regular argument-list checks report a wrong number of arguments.
         val parameter = PyCallableParameterImpl.nonPsi(PyAnyType.any)
         return Ref.create<PyCallableType?>(PyCallableTypeImpl(listOf(parameter), typeForm))

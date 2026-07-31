@@ -89,7 +89,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     return null
   }
 
-  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+  override fun prepareCalleeTypeForCall(type: PyType?, callee: PyExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
     if (type is PyClassType && type.isDefinition) {
       val dataclassType = getDataclassTypeForClass(type, context) as? PyCallableType
       if (dataclassType != null) {
