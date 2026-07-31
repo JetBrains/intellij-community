@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
@@ -32,4 +33,5 @@ interface ToolWindowEditorTabSupport {
 data class ToolWindowEditorTabPresentation(
   val title: @NlsContexts.TabTitle String,
   val icon: Icon? = null,
+  val tooltip: HtmlChunk? = null
 )
