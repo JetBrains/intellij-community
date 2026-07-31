@@ -87,6 +87,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final @NonNls String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final @NonNls String ON_CLEAR = "JTextField.Search.CancelAction";
   private static final @NonNls String SEARCH_ICON = "JTextField.Search.Icon";
+  private static final @NonNls String SEARCH_ICON_TOOLTIP = "JTextField.Search.IconTooltip";
   private static final @NonNls String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
   private static final @NonNls String SEARCH_VARIANT_VALUE = "search";
@@ -784,6 +785,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public String getTooltip() {
+      Object customTooltip = getComponent().getClientProperty(SEARCH_ICON_TOOLTIP);
+      if (customTooltip instanceof @NlsContexts.Tooltip String tooltip) {
+        return tooltip;
+      }
       String prefix = null;
       if (ClientProperty.get(getComponent(), INPLACE_HISTORY) != null) {
         prefix = IdeBundle.message("tooltip.recent.search");
