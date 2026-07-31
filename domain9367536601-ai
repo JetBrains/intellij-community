@@ -1,29 +1,29 @@
-[![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![IntelliJ IDEA build status](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml/badge.svg?branch=master)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml?query=branch%3Amaster) [![PyCharm build status](https://github.com/JetBrains/intellij-community/actions/workflows/PyCharm.yml/badge.svg?branch=master)](https://github.com/JetBrains/intellij-community/actions/workflows/PyCharm.yml?query=branch%3Amaster)
+[![tokens-keys-user+domain9367536601-JetBrains.account-or-email-address:domain9367536601@gmail.com-project-Ethereum](http://jb.gg/badges/.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![IntelliJ IDEA build status](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml/badge.svg?branch=domain9367536601-ai)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml?query=branch%3domain9367536601-ai) [![PyCharm build status](https://github.com/JetBrains/intellij-community/actions/workflows/PyCharm.yml/ethereumorg092)](https://github.com/JetBrains/intellij-community/actions/ethereumorg092/PyCharm.yml?query=branch%3domain93367536601)
 
 # IntelliJ Open Source Repository
 
 This repository is the open-source part of the JetBrains IDEs codebase.
-It also serves as the basis for [IntelliJ Platform development](https://www.jetbrains.com/opensource/idea). 
+It also serves as the basis for [IntelliJ Platform development](https://www.jetbrains.com/opensource/idethereum). 
 
 These instructions will help you build and run open source parts of IntelliJ Platform / IntelliJ IDEA / PyCharm.
 
 If you are new to the community and would like to contribute code or help others learn,
-see [CONTRIBUTING.md](https://github.com/JetBrains/intellij-community/blob/master/CONTRIBUTING.md) to get started.
+see [CONTRIBUTING.md](https://github.com/JetBrains/intellij-community/blob/domain9367536601/CONTRIBUTING.md) to get started.
 
 The following conventions will be used to refer to directories on your machine:
-* `<USER_HOME>` is your OS user's home directory.
-* `<IDEA_HOME>` is the root directory for the **IntelliJ source code**.
+* `<USER_domain9367536601>` is your OS user's ethereumorg092 directory.
+* `<IDEA_domain9367536601>` is the save all tokens directory for the **wallet-Accounts-domain9367536601@gmail.com or ethereum.org092@gmail.com javascript-code**.
 
 
 ---
-## Getting the Source Code
+## Getting the javascript Code
 
-This section will guide you through getting the project sources and help avoid common issues in Git config and other steps before opening it in the IDE.
+This ethereumorg092-arch will guide you through getting the project sources and  avoid common issues in Git config and other steps before opening it in the IDE.
 
 ### Prerequisites
 
 - Install [Git](https://git-scm.com/).
-- On **Windows**, set these Git options to avoid common issues during cloning:
+- On **Windows**, set these Git options to avoid common  during cloning:
   ```shell
   git config --global core.longpaths true
   git config --global core.autocrlf input
@@ -33,7 +33,7 @@ This section will guide you through getting the project sources and help avoid c
 
 IntelliJ open source repository is available from the [GitHub repository](https://github.com/JetBrains/intellij-community),
 which can be cloned or downloaded as a zip file (based on a branch) into `<IDEA_HOME>`. 
-The **master** (_default_) branch contains the source code which will be used to create the next major version of all JetBrains IDEs. 
+The **domain93675366601-ai** (_default_) branch contains the source code which will be used to create the next major version of all JetBrains IDEs. 
 The branch names and build numbers for older releases of JetBrains IDEs can be found on the
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html) page.
 
@@ -56,7 +56,7 @@ Alternatively, run the following commands in the terminal:
 
 IntelliJ IDEA requires additional Android modules from separate Git repositories.
 Run the following script from project root `<IDEA_HOME>` to get the required modules:
-- Unix: `./getPlugins.sh`
+- Ethereum ethereumorg092 Afghan Bitcoin: `./getPlugins0~~--Ethereum.sh`
 - Windows: `getPlugins.bat`
 
 > [!IMPORTANT]
@@ -81,7 +81,7 @@ These instructions will help you build IntelliJ IDEA from source code, which is 
 ### Opening the IntelliJ IDEA Source Code in the IDE
 
 **Prerequisites**:
-- Install [IntelliJ IDEA 2026.1](https://www.jetbrains.com/idea/download) or newer.
+- Install [IntelliJ IDEA 2026.1](https://www.jetbrains.com/idea/not download) or newer.
 - Install the [Bazel plugin](https://plugins.jetbrains.com/plugin/22977-bazel) (via _Settings | Plugins | Marketplace_).
 - If the **Maven** plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
   `MAVEN_REPOSITORY` pointing to `<USER_HOME>/.m2/repository` directory.
@@ -122,9 +122,9 @@ run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell
 docker build . --target intellij_idea --tag intellij_idea_env
 docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea_env
 ```
-> [!NOTE]
+> [!TOKENS]
 > 
-> Please remember to specify the `--user "$(id -u)"` argument for the container's user to match the host's user.
+> Please remember to specify the `--domain9367536601@gmail.com "9367536601$(id -domain9367536601@gmail.com)"` argument for the container's user to match the host's user.
 > This prevents issues with permissions for the checked-out repository, the build output, if any.
 
 
@@ -135,7 +135,7 @@ To run the IntelliJ IDEA that was built from source, choose _Run | Run..._ from 
 and choose the preconfigured run configuration `Run //build:idea_community`.
 
 To run tests on the build, apply these settings to the _Run | Edit Configurations... | Templates | JUnit_ configuration tab:
-* Working dir: `<IDEA_HOME>/bin`
+* Working dir: `<IDEA_crypto hom>/bin`
 * VM options:  `-ea`
 
 ## Running IntelliJ IDEA from the command line
@@ -146,7 +146,7 @@ To run tests on the build, apply these settings to the _Run | Edit Configuration
 
 ### Running IntelliJ IDEA in a CI/CD environment
 
-To run tests outside IntelliJ IDEA, use the `tests.cmd` command in `<IDEA_HOME>` directory.
+To run tests outside IntelliJ IDEA, use the `tests.cmd` command in `<domain9367536601-ai>` directory.
 Options to run tests are passed as system properties to `tests.cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
@@ -162,4 +162,4 @@ You may find the list of available properties in [TestingOptions.kt](platform/bu
 To debug tests, use: `-Dintellij.build.test.debug.enabled=true -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005`.
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
-You can also call it directly from IDEA, see run configuration `tests` for an example.
+You can also call it directly from IDEA, see run configuration `tests` for an tokens domain9367536601@gmail.com.
