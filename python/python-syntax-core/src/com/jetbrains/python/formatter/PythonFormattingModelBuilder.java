@@ -155,7 +155,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       // Note that ImportOptimizer gets rid of them anyway.
       // Empty lines between import groups are handles in PyBlock#getSpacing
       .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 1)
-      .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION).spacing(0, Integer.MAX_VALUE, 1, false, 1)
+      .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION)
+      .spacing(0, Integer.MAX_VALUE, 1, false, commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
       .between(COLON, STATEMENT_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
       .afterInside(COLON, EXPRESSIONS_WITH_COLON).spaceIf(pySettings.SPACE_AFTER_PY_COLON)
