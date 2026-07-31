@@ -11,12 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -56,7 +56,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     for (line in firstLinesOfSelectedItems) {
       psiDocumentManager.commitDocument(document)
       val item = file.getListItemAtLine(line, document)!!
-      if (!doIndentUnindent(item, file, document)) {
+      if (!doIndentUnindent(item, file, document, caret)) {
         continue
       }
       indentPerformed = true
@@ -93,7 +93,8 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     val lines = mutableListOf<Int>()
     while (line <= lastLine) {
       val item = file.getListItemAtLine(line, document)
-      if (item == null) {
+      // an item starting before the selection is not considered selected, its inner lines are handled as plain text
+      if (item == null || caret.hasSelection() && document.getLineNumber(item.startOffset) < line) {
         line++
         continue
       }
@@ -105,7 +106,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
   }
 
   /** If this method returns `true`, then the document is committed and [updateNumbering] is called */
-  protected abstract fun doIndentUnindent(item: MarkdownListItem, file: PsiFile, document: Document): Boolean
+  protected abstract fun doIndentUnindent(item: MarkdownListItem, file: PsiFile, document: Document, caret: Caret): Boolean
 
   protected abstract fun updateNumbering(item: MarkdownListItem, file: PsiFile, document: Document)
 }
