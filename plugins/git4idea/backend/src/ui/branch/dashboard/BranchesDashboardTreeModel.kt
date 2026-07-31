@@ -121,7 +121,7 @@ abstract class BranchesDashboardTreeModelBase(
   override var showOnlyMy: Boolean by observable(false) { _, old, new -> if (old != new) updateBranchesIsMyState() }
 
   var rootsToFilter: Set<VirtualFile>? by observable(null) { _, old, new ->
-    if (new != null && old != null && old != new) {
+    if (new != null && old != new) {
       updateBranchesTree()
     }
   }
