@@ -89,6 +89,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
       consumer.renameStandardOption("BLANK_LINES_AFTER_IMPORTS", PySyntaxBundle.message("formatter.around.top.level.imports"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_DECLARATIONS", PySyntaxBundle.message("formatter.keep.around.declarations"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_CODE", PySyntaxBundle.message("formatter.keep.in.rest.of.code"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
                                 PySyntaxBundle.message("formatter.around.top.level.classes.and.function"), getInstance().BLANK_LINES);
