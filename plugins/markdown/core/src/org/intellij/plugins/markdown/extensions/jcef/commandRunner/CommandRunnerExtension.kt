@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -338,11 +339,11 @@ class CommandRunnerExtension(
       if (trimmedCmd.isEmpty()) return false
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
-      return runReadAction {
+      return ReadAction.nonBlocking<Boolean> {
         RunAnythingProvider.EP_NAME.extensionList.asSequence()
           .filter { checkForCLI(it, allowRunConfigurations) }
           .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
-      }
+      }.executeSynchronously()
     }
 
     @ApiStatus.Internal
