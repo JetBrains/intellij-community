@@ -16,8 +16,4 @@ val existingOptionalDependsTagInCommunityPlugins = mapOf(
     "com.intellij.modules.idea",
     "intellij.webp",
   ),
-  "Coverage" to setOf( // IDEA-391283
-    "TestNG-J",
-    "JUnit",
-  ),
 )
