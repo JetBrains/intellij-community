@@ -14,8 +14,12 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -91,6 +95,25 @@ internal class McpToolsListProviderTest {
     finally {
       Disposer.dispose(disposable)
     }
+  }
+
+  /**
+   * Unloading the MCP server plugin cancels the scope the extension point listeners are bound to, so
+   * `extensionRemoved` is never delivered for its own toolsets. The converted tools must be released anyway, otherwise
+   * they keep the toolset instances - and through them the contributing plugins' classloaders - alive.
+   */
+  @Test
+  fun `completing the owning scope releases the converted tools`(): Unit = timeoutRunBlocking {
+    @Suppress("RAW_SCOPE_CREATION")
+    val scope = CoroutineScope(SupervisorJob())
+    val provider = McpToolsListProvider(scope, McpToolsListProvider.computeAllMcpToolsAsync())
+
+    assertThat(provider.allTools.value).isNotEmpty()
+
+    scope.cancel()
+    scope.coroutineContext.job.join()
+
+    assertThat(provider.allTools.value).isEmpty()
   }
 
   private class RecordingToolsProvider : McpToolsProvider {

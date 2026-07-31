@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -50,6 +51,16 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
   private val recomputeMutex = Mutex()
 
   init {
+    // The extension point listeners below are unregistered as soon as [scope] completes, because that is how
+    // ExtensionPointName.addExtensionPointListener binds their lifetime. Unloading the MCP server plugin itself cancels
+    // that scope, so `extensionRemoved` is never delivered for its own toolsets and the cached tools would keep the
+    // contributing plugins' classloaders alive through the toolset instances they were reflected from. Releasing the
+    // tools when the scope ends covers that case regardless of who still holds this provider.
+    scope.coroutineContext.job.invokeOnCompletion {
+      toolsByProvider.clear()
+      _allTools.value = emptyList()
+    }
+
     // Extension point callbacks are dispatched inside a write action on the EDT when a plugin is loaded or unloaded, so
     // they only invalidate the cached tools and request an update; the conversion itself runs in a coroutine
     // (IJPL-251556).

@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 
@@ -39,6 +40,12 @@ internal class McpFilteredToolsListProvider(
   private val filterProvidersScope = AtomicReference<CoroutineScope?>(null)
 
   init {
+    // A session outlives neither its scope nor the plugins whose toolsets it exposes: the filtered tools reference the
+    // toolset instances they were reflected from, so hold on to them only while the session is alive (IJPL-251556).
+    scope.coroutineContext.job.invokeOnCompletion {
+      mcpTools.value = emptyList()
+    }
+
     // Subscribe to changes from McpToolsStateProvider
     scope.launch {
       mcpServerService.toolsStateProvider.allTools.collectLatest {
