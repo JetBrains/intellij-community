@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="tanvd.grazi"/>
     <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

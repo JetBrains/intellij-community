@@ -115,18 +115,42 @@
 - name: lib/intellij.kotlin.searching.base.jar
   contentModules:
   - name: intellij.kotlin.searching.base
+- name: lib/intellij.libraries.kotlinc.analysis.api.impl.base.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.impl.base
+    libraries:
+      kotlinc.analysis-api-impl-base:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.analysis.api.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api
+    libraries:
+      kotlinc.analysis-api:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
 - name: lib/intellij.libraries.kotlinc.analysis.api.k2.jar
   contentModules:
   - name: intellij.libraries.kotlinc.analysis.api.k2
     libraries:
       kotlinc.analysis-api-k2:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.analysis.api.platform.interface.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.analysis.api.platform.interface
+    libraries:
+      kotlinc.analysis-api-platform-interface:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
 - name: lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar
   modules:
   - name: intellij.libraries.kotlinc.kotlin.compiler.common
     libraries:
       kotlinc.kotlin-compiler-common:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.low.level.api.fir.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.low.level.api.fir
+    libraries:
+      kotlinc.low-level-api-fir:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2/low-level-api-fir-for-ide-2.jar
 - name: lib/intellij.libraries.kotlinc.symbol.light.classes.jar
   contentModules:
   - name: intellij.libraries.kotlinc.symbol.light.classes

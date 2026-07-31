@@ -1,6 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
   </dependencies>
   <!-- endregion -->

@@ -7,7 +7,12 @@
     <module name="intellij.java.uast"/>
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.libraries.asm"/>
     <module name="intellij.platform.core"/>

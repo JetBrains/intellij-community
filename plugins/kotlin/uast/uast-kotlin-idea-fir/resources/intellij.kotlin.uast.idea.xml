@@ -9,7 +9,9 @@
     <module name="intellij.kotlin.uast"/>
     <module name="intellij.kotlin.uast.base"/>
     <module name="intellij.kotlin.uast.idea.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.projectModel"/>

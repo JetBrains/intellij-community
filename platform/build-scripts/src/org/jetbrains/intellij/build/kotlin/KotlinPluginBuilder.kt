@@ -43,6 +43,15 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.highlighting.minimal"
     )
 
+    private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
+      "intellij.libraries.kotlinc.analysis.api",
+      "intellij.libraries.kotlinc.analysis.api.impl.base",
+      "intellij.libraries.kotlinc.analysis.api.k2",
+      "intellij.libraries.kotlinc.analysis.api.platform.interface",
+      "intellij.libraries.kotlinc.low.level.api.fir",
+      "intellij.libraries.kotlinc.symbol.light.classes",
+    )
+
     private val LIBRARIES_UNPACKED = java.util.List.of(
       "kotlinc.kotlin-scripting-compiler-impl",
       "kotlinc.kotlin-scripting-common",
@@ -131,7 +140,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
   /** paired with [excludeKotlinLibraries] */
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
-    spec.withModule("intellij.libraries.kotlinc.symbol.light.classes")
+    spec.withModules(KOTLINC_LIBRARY_MODULES)
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }

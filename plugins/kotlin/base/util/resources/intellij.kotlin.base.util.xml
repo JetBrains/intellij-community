@@ -5,6 +5,8 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>

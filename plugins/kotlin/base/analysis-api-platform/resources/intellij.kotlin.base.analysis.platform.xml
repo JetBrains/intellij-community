@@ -8,6 +8,9 @@
     <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.analysis.impl"/>

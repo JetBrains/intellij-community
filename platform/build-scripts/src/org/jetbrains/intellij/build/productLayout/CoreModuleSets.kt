@@ -38,11 +38,6 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.java.compatibility")
 
     embeddedModule("intellij.libraries.kotlin.reflect")
-    embeddedModule("intellij.libraries.kotlinc.analysis.api")
-    embeddedModule("intellij.libraries.kotlinc.analysis.api.impl.base")
-    embeddedModule("intellij.libraries.kotlinc.analysis.api.platform.interface")
-    embeddedModule("intellij.libraries.kotlinc.kotlin.compiler.common")
-    embeddedModule("intellij.libraries.kotlinc.low.level.api.fir")
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
     embeddedModule("intellij.libraries.kotlinx.io")
 

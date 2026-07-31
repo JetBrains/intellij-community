@@ -2,6 +2,7 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
