@@ -11407,6 +11407,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeDefinitelyNotNull.kt");
             }
 
+            @TestMetadata("changeParameterTypeFunctionType.kt")
+            public void testChangeParameterTypeFunctionType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeFunctionType.kt");
+            }
+
             @TestMetadata("changeParameterTypeInInterface.kt")
             public void testChangeParameterTypeInInterface() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeInInterface.kt");
@@ -11422,9 +11427,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeModifyOrder.kt");
             }
 
+            @TestMetadata("changeParameterTypeNullable.kt")
+            public void testChangeParameterTypeNullable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeNullable.kt");
+            }
+
             @TestMetadata("changeParameterTypeOpenOverride.kt")
             public void testChangeParameterTypeOpenOverride() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeOpenOverride.kt");
+            }
+
+            @TestMetadata("changeParameterTypeOperator.kt")
+            public void testChangeParameterTypeOperator() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeOperator.kt");
             }
 
             @TestMetadata("changeParameterTypeSingleExpressionFunction.kt")
