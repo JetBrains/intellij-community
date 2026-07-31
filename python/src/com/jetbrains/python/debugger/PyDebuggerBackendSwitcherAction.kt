@@ -166,16 +166,17 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
       if (backend == PyDebuggerBackend.DEBUGPY && !isDebugpyAvailableInProject(project)) {
         e.presentation.isEnabled = false
         @Suppress("DialogTitleCapitalization")
-        val disabledMsg = if (!isPythonDapPluginInstalledAndEnabled()) {
-          PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
-        }
-        else {
-          val sdk = getEffectiveSdk(project)
-          if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
-            PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
-          }
-          else {
-            PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
+        val disabledMsg = when {
+          isPythonDapPluginInstalledButDisabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.enabled.tooltip")
+          !isPythonDapPluginInstalledAndEnabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
+          else -> {
+            val sdk = getEffectiveSdk(project)
+            if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
+              PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
+            }
+            else {
+              PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
+            }
           }
         }
         e.presentation.description = disabledMsg
