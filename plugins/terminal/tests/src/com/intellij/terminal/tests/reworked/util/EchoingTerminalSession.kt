@@ -223,7 +223,18 @@ internal class EchoingTerminalSession(
   }
 
   override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto {
-    return KeyEventProcessingResultDto.Unhandled
+    if (e.id == KeyEvent.KEY_TYPED && !Character.isISOControl(e.keyChar)) {
+      return KeyEventProcessingResultDto.StringResult(e.keyChar.toString(), shouldScrollToBottom = true)
+    }
+
+    val bytes = when (e.keyCode) {
+      KeyEvent.VK_BACK_SPACE -> byteArrayOf(Ascii.BS)
+      KeyEvent.VK_ENTER -> byteArrayOf(Ascii.CR)
+      KeyEvent.VK_LEFT -> byteArrayOf(Ascii.ESC, '['.code.toByte(), 'D'.code.toByte())
+      KeyEvent.VK_RIGHT -> byteArrayOf(Ascii.ESC, '['.code.toByte(), 'C'.code.toByte())
+      else -> return KeyEventProcessingResultDto.Unhandled
+    }
+    return KeyEventProcessingResultDto.BytesResult(bytes, shouldScrollToBottom = true)
   }
 
   override suspend fun hasRunningCommands(): Boolean {

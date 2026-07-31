@@ -15,11 +15,14 @@ import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -43,12 +46,20 @@ internal open class TerminalKeyEventsHandlerImpl(
   private var ignoreNextKeyTypedEvent: Boolean = false
   private val bufferedEvents: ArrayDeque<TimedKeyEvent> = ArrayDeque()
   private var readySession: TerminalSession? = null
+  private val sessionInitializationJob: Job?
 
   init {
-    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      val session = sessionDeferred.await()
-      drainBufferedEvents(session)
+    val session = sessionDeferred.getNow()
+    if (session == null) {
+      sessionInitializationJob = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+        val session = sessionDeferred.await()
+        drainBufferedEvents(session)
+        readySession = session
+      }
+    }
+    else {
       readySession = session
+      sessionInitializationJob = null
     }
   }
 
@@ -203,6 +214,11 @@ internal open class TerminalKeyEventsHandlerImpl(
            && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
            && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
            && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
+  }
+
+  @TestOnly
+  suspend fun awaitBufferedEventsDrained() {
+    sessionInitializationJob?.join()
   }
 
   companion object {

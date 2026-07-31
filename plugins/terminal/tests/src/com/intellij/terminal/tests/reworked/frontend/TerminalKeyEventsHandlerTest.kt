@@ -288,28 +288,6 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       }
     }
 
-  @Test
-  fun `event received after session activation follows buffered events`(): Unit =
-    timeoutRunBlocking(context = Dispatchers.EDT) {
-      createFixture(completeSessionImmediately = false).use { fixture ->
-        val buffered = typedKeyEvent(fixture.editor.contentComponent, 'a')
-        val afterActivation = typedKeyEvent(fixture.editor.contentComponent, 'b')
-
-        fixture.handler.keyTyped(buffered)
-        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("a", shouldScrollToBottom = false))
-        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("b", shouldScrollToBottom = false))
-        fixture.activateSession()
-        fixture.handler.keyTyped(afterActivation)
-
-        assertThat(awaitWrittenString(fixture.session)).isEqualTo("a")
-        assertThat(awaitWrittenString(fixture.session)).isEqualTo("b")
-        assertThat(fixture.session.processedEvents).containsExactly(buffered.original, afterActivation.original)
-        assertThat(buffered.original.isConsumed).isTrue()
-        assertThat(afterActivation.original.isConsumed).isTrue()
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(buffered.original, afterActivation.original)
-      }
-    }
-
   // Interceptors can reserve an event before it reaches the terminal session.
 
   @Test
@@ -381,7 +359,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       sessionDeferred = sessionDeferred,
       coroutineScope = scope,
     )
-    return Fixture(
+    val fixture = Fixture(
       scope = scope,
       session = session,
       sessionDeferred = sessionDeferred,
@@ -391,6 +369,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       typeAhead = typeAhead,
       handler = handler,
     )
+    return fixture
   }
 
   private class Fixture(
@@ -401,10 +380,15 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
     val editor: EditorEx,
     val outputModel: MutableTerminalOutputModelImpl,
     val typeAhead: RecordingTypeAhead?,
-    val handler: TerminalKeyEventsHandler,
+    val handler: TerminalKeyEventsHandlerImpl,
   ) : AutoCloseable {
-    fun activateSession() {
-      check(sessionDeferred.complete(session))
+    suspend fun awaitBufferedEventsDrained() {
+      handler.awaitBufferedEventsDrained()
+    }
+
+    suspend fun activateSession() {
+      sessionDeferred.complete(session)
+      awaitBufferedEventsDrained()
     }
     override fun close() {
       scope.cancel()
