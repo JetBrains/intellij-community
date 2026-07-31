@@ -54,7 +54,8 @@ class ToolWindowEditorTabFile internal constructor(
     "ToolWindowEditorTabFile[$toolWindowId]",
   )
 
-  internal var tabIcon: Icon? = null
+  @Volatile
+  internal var icon: Icon? = null
     private set
 
   init {
@@ -86,8 +87,8 @@ class ToolWindowEditorTabFile internal constructor(
       changed = true
     }
 
-    if (tabIcon != presentation.icon) {
-      tabIcon = presentation.icon
+    if (icon != presentation.icon) {
+      icon = presentation.icon
       changed = true
     }
 

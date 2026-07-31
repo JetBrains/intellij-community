@@ -72,7 +72,7 @@ class ToolWindowEditorTabFileTest {
     icon: Icon?,
   ) {
     withTimeout(10.seconds) {
-      while (file.name != title || file.tabIcon != icon) {
+      while (file.name != title || file.icon != icon) {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
         delay(20.milliseconds)
       }
@@ -85,7 +85,7 @@ class ToolWindowEditorTabFileTest {
     awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
 
     assertThat(file.name).isEqualTo("Title")
-    assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
+    assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
     assertThat(file.isWritable).isTrue()
     assertThat(file.isValid).isTrue()
     assertThat(file.isIncludedInEditorHistory(project)).isTrue()
@@ -134,11 +134,11 @@ class ToolWindowEditorTabFileTest {
       manager.openFile(file, true)
       awaitPresentation(file, title = "Stable title", icon = AllIcons.General.Gear)
       assertThat(file.name).isEqualTo("Stable title")
-      assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
 
       presentations.trySend(ToolWindowEditorTabPresentation("Stable title", AllIcons.General.Add))
       awaitPresentation(file, title = "Stable title", icon = AllIcons.General.Add)
-      assertThat(file.tabIcon).isEqualTo(AllIcons.General.Add)
+      assertThat(file.icon).isEqualTo(AllIcons.General.Add)
       assertThat(file.name).isEqualTo("Stable title")
     }
 
@@ -155,7 +155,7 @@ class ToolWindowEditorTabFileTest {
       awaitPresentation(file, title = "Renamed title", icon = AllIcons.General.Gear)
       assertThat(file.name).isEqualTo("Renamed title")
       // The icon is unchanged across the rename.
-      assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
     }
 
   @Test
@@ -167,12 +167,12 @@ class ToolWindowEditorTabFileTest {
       manager.openFile(file, true)
       awaitPresentation(file, title = "Initial title", icon = AllIcons.General.Gear)
       assertThat(file.name).isEqualTo("Initial title")
-      assertThat(file.tabIcon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
 
       // A single presentation update changes both the title and the icon at once.
       presentations.trySend(ToolWindowEditorTabPresentation("Renamed title", AllIcons.General.Add))
       awaitPresentation(file, title = "Renamed title", icon = AllIcons.General.Add)
       assertThat(file.name).isEqualTo("Renamed title")
-      assertThat(file.tabIcon).isEqualTo(AllIcons.General.Add)
+      assertThat(file.icon).isEqualTo(AllIcons.General.Add)
     }
 }
