@@ -4,7 +4,7 @@
   <name>WebP</name>
   <description><![CDATA[
     <p>Allows viewing images in the <a href="https://developers.google.com/speed/webp">WebP</a> format in the IDE.</p>
-    ]]></description>
+  ]]></description>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.platform.images"/>

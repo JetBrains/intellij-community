@@ -15,6 +15,7 @@
  */
 package com.android.tools.adtui.webp;
 
+import org.jetbrains.annotations.TestOnly;
 import org.w3c.dom.Node;
 
 import javax.imageio.metadata.IIOMetadata;
@@ -32,6 +33,7 @@ public class WebpMetadata extends IIOMetadata {
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
 
+  @TestOnly
   public static void ensureWebpRegistered() {
     var defaultInstance = IIORegistry.getDefaultInstance();
     defaultInstance.registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
