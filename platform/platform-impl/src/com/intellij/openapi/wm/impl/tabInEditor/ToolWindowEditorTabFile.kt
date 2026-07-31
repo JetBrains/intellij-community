@@ -56,11 +56,11 @@ class ToolWindowEditorTabFile internal constructor(
   )
 
   @Volatile
-  internal var icon: Icon? = null
+  internal var tabPresentation: ToolWindowEditorTabPresentation? = null
     private set
 
-  @Volatile
-  private var title: @NlsSafe String = ""
+  internal val icon: Icon?
+    get() = tabPresentation?.icon
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
@@ -82,24 +82,15 @@ class ToolWindowEditorTabFile internal constructor(
       .launchIn(coroutineScope)
   }
 
-  override fun getName(): @NlsSafe String = title
+  override fun getName(): @NlsSafe String = tabPresentation?.title ?: ""
 
-  private fun updatePresentation(
-    presentation: ToolWindowEditorTabPresentation,
-  ): Boolean {
-    var changed = false
-
-    if (title != presentation.title) {
-      title = presentation.title
-      changed = true
+  private fun updatePresentation(newPresentation: ToolWindowEditorTabPresentation): Boolean {
+    if (tabPresentation == newPresentation) {
+      return false
     }
 
-    if (icon != presentation.icon) {
-      icon = presentation.icon
-      changed = true
-    }
-
-    return changed
+    tabPresentation = newPresentation
+    return true
   }
 
   override fun isIncludedInEditorHistory(project: Project): Boolean = project === this.project
