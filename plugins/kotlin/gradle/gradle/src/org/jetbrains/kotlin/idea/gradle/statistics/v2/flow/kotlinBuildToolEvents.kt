@@ -67,6 +67,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
             KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED,
             KotlinBuildToolFusMetricName.WASM_COMPILER_MODE,
+            KotlinBuildToolFusMetricName.KMP_JVM_CLASSPATH_METADATA_ENABLED,
+            KotlinBuildToolFusMetricName.KMP_JVM_UNSAFE_OPTIMIZATIONS_ENABLED
         )
     ),
 
