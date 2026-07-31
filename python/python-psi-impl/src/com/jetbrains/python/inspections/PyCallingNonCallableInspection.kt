@@ -84,6 +84,11 @@ private fun isCallable(element: PyExpression, context: TypeEvalContext): Boolean
   if (element is PyQualifiedExpression && PyNames.__CLASS__ == element.name) return true
 
   if (element is PyReferenceExpression) {
+    // PEP 747: `TypeForm(...)` is callable, even though the declared type of `TypeForm` is the non-callable `_SpecialForm`.
+    val qNames = PyTypingTypeProvider.resolveToQualifiedNames(element, context)
+    if (PyTypingTypeProvider.TYPE_FORM in qNames || PyTypingTypeProvider.TYPE_FORM_EXT in qNames) {
+      return true
+    }
     val resolved = element.getReference(PyResolveContext.defaultContext(context)).resolve()
     if (resolved is PyTargetExpression) {
       if (isExplicitTypeAliasWithNonCallableValue(resolved, context)) return false

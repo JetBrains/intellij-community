@@ -489,6 +489,11 @@ private object ConstraintReducer {
     }
 
 
+    if (left is PyTypeFormType || right is PyTypeFormType) {
+      reduceTypeFormType(left, right, variance, cp)
+      return
+    }
+
     if (left is PyClassLikeType && right is PyClassLikeType) {
       reduceNominalType(left, right, variance, cp)
       return
@@ -556,6 +561,17 @@ private object ConstraintReducer {
     val rReturnType = right.getReturnType(cp.context)
     val retTypeVariance = variance.multiply(Variance.COVARIANT)
     reduce(lReturnType, rReturnType, retTypeVariance, cp)
+  }
+
+  /** Reduces a PEP 747 `TypeForm` constraint to a constraint between the represented types. */
+  private fun reduceTypeFormType(left: PyType?, right: PyType?, variance: Variance, cp: ConstraintProblem) {
+    val leftRepr = PyTypeFormType.representedTypeOf(left)
+    val rightRepr = PyTypeFormType.representedTypeOf(right)
+    if (leftRepr == null || rightRepr == null) {
+      cp.fail()
+      return
+    }
+    reduce(leftRepr, rightRepr, variance, cp)
   }
 
   /**

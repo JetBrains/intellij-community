@@ -211,5 +211,10 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     public @NotNull List<@Nullable PyType> visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
       return Collections.singletonList(narrowedType.getNarrowedType());
     }
+
+    @Override
+    public @NotNull List<@Nullable PyType> visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+      return Collections.singletonList(typeFormType.getRepresentedType());
+    }
   }
 }

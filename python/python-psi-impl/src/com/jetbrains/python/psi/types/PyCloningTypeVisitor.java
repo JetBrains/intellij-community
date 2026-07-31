@@ -161,6 +161,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    return typeFormType.substitute(clone(typeFormType.getRepresentedType()));
+  }
+
+  @Override
   public PyType visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {
     return new PyConcatenateType(
       ContainerUtil.map(concatenateType.getFirstTypes(), this::clone),

@@ -1267,6 +1267,8 @@ class PyTypeHintsInspection : PyInspection() {
       val typingExtSelf = QualifiedName.fromDottedString(PyTypingTypeProvider.SELF_EXT)
       val unionQName = QualifiedName.fromDottedString(PyTypingTypeProvider.UNION)
       val optionalQName = QualifiedName.fromDottedString(PyTypingTypeProvider.OPTIONAL)
+      val typeFormQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_FORM)
+      val typeFormExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_FORM_EXT)
 
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
@@ -1290,6 +1292,7 @@ class PyTypeHintsInspection : PyInspection() {
             checkGenericTypeArguments(node)
             checkOptionalParameter(index)
           }
+          typeFormQName, typeFormExtQName -> checkTypeFormParameter(index)
           callableQName -> {
             callableExists = true
             checkGenericTypeArguments(node, isCallable = true)
@@ -1554,6 +1557,16 @@ class PyTypeHintsInspection : PyInspection() {
       if (elements.size != 1) {
         registerProblem(flatIndexExpr,
                         PyPsiBundle.message("INSP.type.hints.optional.must.have.exactly.one.argument"),
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+    }
+
+    private fun checkTypeFormParameter(index: PyExpression) {
+      val flatIndexExpr = PyPsiUtils.flattenParens(index)
+      val elements = (flatIndexExpr as? PyTupleExpression)?.elements ?: arrayOf(flatIndexExpr)
+      if (elements.size != 1) {
+        registerProblem(flatIndexExpr,
+                        PyPsiBundle.message("INSP.type.hints.type.form.must.have.exactly.one.argument"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
