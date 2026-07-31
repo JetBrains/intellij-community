@@ -30,6 +30,8 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.actions.PyTogglePackagingToolWindowAnchorAction
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -207,6 +209,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
       PyPackageIcons.AddPackage,
     ) {
       override fun actionPerformed(e: AnActionEvent) {
+        PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.HEADER)
         PyInstallPackageDialog(project).show(packageSearchController.text.trim().takeIf { it.isNotEmpty() })
       }
     }.apply {

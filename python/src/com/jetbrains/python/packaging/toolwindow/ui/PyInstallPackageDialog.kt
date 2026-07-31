@@ -38,6 +38,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.sdk.findFirstPythonSdk
 import com.jetbrains.python.sdk.findModuleForSdk
@@ -553,6 +554,10 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   }
 
   private fun performInstall() {
+    PythonPackagesToolwindowStatisticsCollector.installDialogInstallEvent.log(
+      currentMode.name,
+      versionPanel.editableCheckbox.isSelected,
+    )
     when (currentMode) {
       DialogMode.DIRECT_INSTALL -> performDirectInstall()
       DialogMode.COMMAND -> performCommandExecution(mySearchField.text.trim())
