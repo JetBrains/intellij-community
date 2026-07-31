@@ -7,9 +7,12 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle.message
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
@@ -43,7 +46,8 @@ class RpcInterfaceDoesNotExtendRemoteApiInspection : LocalInspectionTool() {
         }
       }
 
-      private fun KaSession.doesNotExtendRemoteApi(defaultType: KaType): Boolean {
+      context(session: KaSession)
+      private fun doesNotExtendRemoteApi(defaultType: KaType): Boolean {
         return defaultType.allSupertypes.none { superType ->
           val superTypeName = superType.symbol?.classId?.asSingleFqName()?.asString()
           superTypeName == "fleet.rpc.RemoteApi"

@@ -5,8 +5,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.BLOCKING
 import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.SUSPENDING_FUNCTION
 import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.SUSPENDING_LAMBDA
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -39,7 +41,7 @@ private fun PsiElement.findParentSuspendingLambda(): KtLambdaExpression? {
       val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return@getParentOfTypesAndPredicate false
       analyze(callExpression) {
         val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@getParentOfTypesAndPredicate false
-        val lambdaArgumentType = functionCall.argumentMapping[it]?.returnType ?: return@getParentOfTypesAndPredicate false
+        val lambdaArgumentType = functionCall.valueArgumentMapping[it]?.returnType ?: return@getParentOfTypesAndPredicate false
         return@getParentOfTypesAndPredicate lambdaArgumentType.isSuspendFunctionType
       }
     }

@@ -18,8 +18,12 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
+import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -27,10 +31,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.containingModule
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
+import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.sealedClassInheritors
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.name.StandardClassIds
 import java.util.concurrent.ConcurrentHashMap
@@ -55,7 +68,8 @@ internal class WorkspaceMetaModelBuilder(
     getObjModule(packageName, packageSymbol, kaModule)
   }
 
-  private fun KaSession.getObjModule(
+  context(session: KaSession)
+  private fun getObjModule(
     packageName: String,
     packageSymbol: KaPackageSymbol,
     kaModule: KaModule,
@@ -68,7 +82,8 @@ internal class WorkspaceMetaModelBuilder(
     return compiledObjModule
   }
 
-  private fun KaSession.registerObjModuleContent(
+  context(session: KaSession)
+  private fun registerObjModuleContent(
     packageSymbol: KaPackageSymbol,
     objModuleStub: ObjModuleStub,
     kaModule: KaModule,
@@ -83,10 +98,11 @@ internal class WorkspaceMetaModelBuilder(
           ?.takeIf { isEntityReference(propertySymbol.returnType) }
           ?.let { propertySymbol to it }
       }
-    return objModuleStub.registerContent(this@registerObjModuleContent, extensionProperties.toList())
+    return objModuleStub.registerContent(useSiteSession, extensionProperties.toList())
   }
 
-  private fun KaSession.createObjModuleStub(
+  context(session: KaSession)
+  private fun createObjModuleStub(
     packageName: String,
     packageSymbol: KaPackageSymbol,
     kaModule: KaModule,
@@ -95,7 +111,7 @@ internal class WorkspaceMetaModelBuilder(
 
     val entityTypes = packageSymbol.packageScope.declarations
       .filterIsInstance<KaClassSymbol>()
-      .filter(::isEntityInterface)
+      .filter { isEntityInterface(it) }
       .filter { it.containingModule == kaModule }
       .sortedBy { it.name }
       .map { it to createObjTypeStub(it, module) }
@@ -105,7 +121,8 @@ internal class WorkspaceMetaModelBuilder(
     return ObjModuleStub(module, entityTypes, moduleAbstractTypes, kaModule)
   }
 
-  private fun KaSession.getObjClass(entityInterface: KaClassSymbol): ObjClass<*> {
+  context(session: KaSession)
+  private fun getObjClass(entityInterface: KaClassSymbol): ObjClass<*> {
     val packageSymbol = getPackageSymbol(entityInterface)
     if (packageSymbol == null) {
       throw MetaModelBuilderException("Cannot find package for ${entityInterface.name ?: entityInterface}", entityInterface.sourcePsiSafe())
@@ -186,7 +203,8 @@ internal class WorkspaceMetaModelBuilder(
         compiledObjModule
       }
 
-    private fun KaSession.registerModuleAbstractTypes() {
+    context(session: KaSession)
+    private fun registerModuleAbstractTypes() {
       for (abstractTypeClassSymbol in moduleAbstractTypes) {
         val javaClassFqn = abstractTypeClassSymbol.javaClassFqn
         val superTypes = abstractTypeClassSymbol.superTypesJavaFqns
@@ -217,7 +235,8 @@ internal class WorkspaceMetaModelBuilder(
       }
     }
 
-    private fun KaSession.createOwnProperty(
+    context(session: KaSession)
+    private fun createOwnProperty(
       property: KaPropertySymbol,
       propertyId: Int,
       receiver: ObjClassImpl<Obj>,
@@ -230,7 +249,8 @@ internal class WorkspaceMetaModelBuilder(
                              property.sourcePsiSafe())
     }
 
-    private fun KaSession.createExtProperty(
+    context(session: KaSession)
+    private fun createExtProperty(
       extProperty: KaPropertySymbol,
       receiverClass: KaClassSymbol,
       extPropertyId: Int,
@@ -256,7 +276,8 @@ internal class WorkspaceMetaModelBuilder(
                              extProperty.sourcePsiSafe())
     }
 
-    private fun KaSession.convertType(
+    context(session: KaSession)
+    private fun convertType(
       type: KaType,
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
       hasParentAnnotation: Boolean,
@@ -300,7 +321,8 @@ internal class WorkspaceMetaModelBuilder(
       return unsupportedType(type.toString())
     }
 
-    private fun KaSession.findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {
+    context(session: KaSession)
+    private fun findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {
       if (classSymbol.packageOrDie.asString() == compiledObjModule.name) {
         return entityTypes.find { it.first.classId == classSymbol.classId }?.second
                ?: throw MetaModelBuilderException("Cannot find ${classSymbol.name} in ${compiledObjModule.name}",
@@ -309,7 +331,8 @@ internal class WorkspaceMetaModelBuilder(
       return getObjClass(classSymbol)
     }
 
-    private fun KaSession.classSymbolToValueType(
+    context(session: KaSession)
+    private fun classSymbolToValueType(
       classSymbol: KaClassSymbol,
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
       processAbstractTypes: Boolean,
@@ -359,7 +382,8 @@ internal class WorkspaceMetaModelBuilder(
       }
     }
 
-    private fun KaSession.createProperties(classSymbol: KaClassSymbol, knownTypes: MutableMap<String, ValueType.Blob<*>>) =
+    context(session: KaSession)
+    private fun createProperties(classSymbol: KaClassSymbol, knownTypes: MutableMap<String, ValueType.Blob<*>>) =
       classSymbol.memberScope.callables
         .filterIsInstance<KaPropertySymbol>()
         .sortedBy { symbol -> symbol.name }

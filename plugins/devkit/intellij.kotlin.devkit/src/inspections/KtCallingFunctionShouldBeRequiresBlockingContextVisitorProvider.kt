@@ -11,9 +11,10 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection
 import org.jetbrains.idea.devkit.util.QuickFixWithReferenceToElement
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -39,7 +40,7 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
         val functionCall = expression.resolveToCall()?.singleFunctionCallOrNull()
-        val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
+        val calledSymbol = functionCall?.symbol
 
         if (calledSymbol !is KaNamedSymbol) return
         val hasAnnotation = RequiresBlockingContextAnnotationId in calledSymbol.annotations

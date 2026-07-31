@@ -40,7 +40,7 @@ internal abstract class BlockingContextFunctionBodyVisitor : KtTreeVisitorVoid()
   }
 
   protected fun checkInlineLambdaArguments(call: KaFunctionCall<*>) {
-    for ((psi, descriptor) in call.argumentMapping) {
+    for ((psi, descriptor) in call.valueArgumentMapping) {
       if (
         descriptor.returnType is KaFunctionType &&
         !descriptor.symbol.isCrossinline &&

@@ -4,9 +4,10 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.inspections.CancellationCheckProvider
 import org.jetbrains.idea.devkit.kotlin.util.getContext
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
