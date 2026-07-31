@@ -392,6 +392,14 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   companion object {
     private const val UPDATE_PROPERTY_KEY = "intellij.workspace.model.update.entities"
 
+    /**
+     * Optional comma-separated list of module names to scope generation to. When set, only the
+     * listed modules are generated/compared (headless scoped regeneration, e.g. via a JUnit run
+     * configuration VM option or a Bazel `--jvmopt`); when unset, every module that requires
+     * workspace code is processed (the default behaviour).
+     */
+    private const val GENERATION_MODULES_PROPERTY_KEY = "intellij.workspace.model.generation.modules"
+
     @JvmStatic
     fun modules(): List<Arguments> = runBlocking {
       val (storage, jpsProjectSerializer) = loadProjectIntellijProject()
@@ -430,10 +438,16 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     private fun findModulesWhichRequireWorkspace(storage: EntityStorage): List<Pair<ModuleEntity, SourceRootEntity>> {
       val modulesToCheck = mutableListOf<Pair<ModuleEntity, SourceRootEntity>>()
 
+      val moduleScope: Set<String>? = System.getProperty(GENERATION_MODULES_PROPERTY_KEY)
+        ?.split(',')
+        ?.mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+        ?.toSet()
+        ?.takeIf { it.isNotEmpty() }
+
       srcRoots@ for (sourceRoot in storage.entities<SourceRootEntity>()) {
         val moduleEntity = sourceRoot.contentRoot.module
 
-        //if (moduleEntity.name != "intellij.platform.externalSystem") continue
+        if (moduleScope != null && moduleEntity.name !in moduleScope) continue
         if (sourceRoot.javaSourceRoots.none { !it.generated }) continue
 
         var toCheck = false
