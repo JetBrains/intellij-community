@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
+package org.jetbrains.kotlin.idea.refactoring.intentions
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
@@ -121,18 +121,18 @@ object OperatorToFunctionConverter {
         val left = element.left!!
         val right = element.right!!
 
-        if (op == KtTokens.EQ) {
-            if (left is KtArrayAccessExpression) {
-                convertArrayAccess(left)
-            }
-            return element
-        }
-
         val functionName = getCalledFunctionName(element)?.asString()
         val receiverIsNullable = isOfNullableType(left)
 
         @NonNls
         val pattern = when (op) {
+            KtTokens.EQ -> {
+                when (left) {
+                    // for `=` only array assignment is applicable
+                    is KtArrayAccessExpression -> return convertArrayAccess(left)
+                    else -> return element
+                }
+            }
             KtTokens.PLUS -> "$0.plus($1)"
             KtTokens.MINUS -> "$0.minus($1)"
             KtTokens.MUL -> "$0.times($1)"
