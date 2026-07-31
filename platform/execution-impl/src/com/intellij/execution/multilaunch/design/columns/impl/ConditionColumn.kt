@@ -129,7 +129,10 @@ internal class ConditionColumn(
       }
 
       private fun createContentPanel() = panel {
-        buttonsGroup(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when"), indent = true) {
+        row {
+          label(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when")).bold()
+        }
+        buttonsGroup(indent = true) {
           ConditionTemplate.EP_NAME.extensionList.forEach { template ->
             val rowCondition = executableRow.condition
             val condition = when {
@@ -137,7 +140,7 @@ internal class ConditionColumn(
               else -> ConditionFactory.getInstance(viewModel.project).create(template)
             }
             row {
-              val button = radioButton(condition.text, ConditionOption(condition))
+              val button = radioButton(condition.optionLabel, ConditionOption(condition))
               condition.provideEditor(this)?.enabledIf(button.selected)
             }
           }

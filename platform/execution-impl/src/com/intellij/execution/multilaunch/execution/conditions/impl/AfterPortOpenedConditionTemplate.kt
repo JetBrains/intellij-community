@@ -30,6 +30,7 @@ class AfterPortOpenedConditionTemplate : ConditionTemplate {
 
     private var port: Int = DEFAULT_PORT
     override val text get() = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened", port)
+    override val optionLabel = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened.label")
 
     override fun provideEditor(row: Row) = row
       .intTextField(IntRange(0, 65536))
