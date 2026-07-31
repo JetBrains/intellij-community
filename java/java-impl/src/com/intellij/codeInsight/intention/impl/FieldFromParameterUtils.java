@@ -17,6 +17,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
@@ -50,10 +51,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -282,13 +285,25 @@ public final class FieldFromParameterUtils {
     }
 
     if (targetClass.findFieldByName(fieldName, false) == null) {
-      if (!anchor.isNull()) {
-        PsiField inField = anchor.get();
-        if (isBefore.get()) {
-          return (PsiField)targetClass.addBefore(field, inField);
+      PsiElement anchorElement = anchor.get();
+      boolean before = isBefore.get();
+      if (anchorElement == null) {
+        if (targetClass.isEnum()) {
+          PsiElement lastConstant = ContainerUtil.findLast(Arrays.asList(targetClass.getChildren()), c -> c instanceof PsiEnumConstant);
+          anchorElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastConstant);
+          before = true;
+        }
+        if (anchorElement == null) {
+          before = false;
+          anchorElement = targetClass.getLBrace();
+        }
+      }
+      if (anchorElement != null) {
+        if (before) {
+          return (PsiField)targetClass.addBefore(field, anchorElement);
         }
         else {
-          return (PsiField)targetClass.addAfter(field, inField);
+          return (PsiField)targetClass.addAfter(field, anchorElement);
         }
       }
       else {

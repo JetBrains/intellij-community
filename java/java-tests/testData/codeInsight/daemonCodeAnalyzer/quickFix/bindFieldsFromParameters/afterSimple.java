@@ -1,10 +1,10 @@
 // "Bind constructor parameters to fields" "true-preview"
 
 class Bar {
-
     private final int myI1;
     private final int myI2;
     private final String myI3;
+
     private int myi1;
     private int myi2;
 

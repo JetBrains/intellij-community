@@ -3,7 +3,6 @@
 import org.jetbrains.annotations.NotNull;
 
 public class TestBefore {
-
     @NotNull
     private final String myName;
 

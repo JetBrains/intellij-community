@@ -3,9 +3,9 @@
 import java.util.Objects;
 
 class Test{
-    String s;
     private String myVal;
-
+    String s;
+    
     public void Test(String val, String message) {
         myVal = val;
         s = Objects.requireNonNull(message, val);
