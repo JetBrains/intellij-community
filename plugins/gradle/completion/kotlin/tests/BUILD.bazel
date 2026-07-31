@@ -102,8 +102,6 @@ jvm_library(
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
         "//plugins/groovy:groovy-tests",
         "//plugins/groovy:groovy-tests_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util/jdom",

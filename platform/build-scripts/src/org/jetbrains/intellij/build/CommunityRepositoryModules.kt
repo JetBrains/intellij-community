@@ -246,9 +246,6 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
     },
-    plugin("intellij.repository.search") { spec ->
-      spec.withProjectLibrary("package-search-api-client")
-    },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
       spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")

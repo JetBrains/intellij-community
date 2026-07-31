@@ -1925,7 +1925,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.tests.iml" filepath="$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.tests.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" filepath="$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/common/intellij.repository.search.common.iml" filepath="$PROJECT_DIR$/plugins/repository-search/common/intellij.repository.search.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.iml" filepath="$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.tests.iml" filepath="$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.tests.iml" />

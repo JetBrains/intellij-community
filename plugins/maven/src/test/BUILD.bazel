@@ -91,8 +91,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/external-system-api/dependency-updater",

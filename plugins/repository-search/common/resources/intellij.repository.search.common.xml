@@ -1,4 +1,5 @@
 <idea-plugin visibility="public">
+  <module value="org.jetbrains.idea.reposearch"/>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.maven.model"/>

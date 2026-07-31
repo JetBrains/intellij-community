@@ -65,8 +65,6 @@ jvm_library(
         "//plugins/gradle/completion:completion_test_lib",
         "//plugins/gradle/completion/kotlin",
         "//plugins/gradle/completion/kotlin:kotlin_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/groovy:groovy-tests",

@@ -1532,7 +1532,6 @@ plugins/properties/property-tests
 plugins/properties/tests
 plugins/rareJavaRefactorings
 plugins/remote-control
-plugins/repository-search
 plugins/repository-search/common
 plugins/repository-search/completion
 plugins/restructuredtext
