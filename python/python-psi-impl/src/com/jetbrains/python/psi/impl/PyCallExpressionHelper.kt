@@ -149,22 +149,23 @@ object PyCallExpressionHelper {
    * constructor or a `__call__` method. Otherwise, returns the callee type as is.
    */
   @JvmStatic
-  fun getCalleeType(callExpression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
-    return PyUtil.getNullableParameterizedCachedValue(callExpression, resolveContext) {
+  fun getCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
+    return PyUtil.getNullableParameterizedCachedValue(callee, resolveContext) {
       PyUnionType.union(
         buildList {
-          add(getExplicitCalleeType(callExpression, it))
-          addIfNotNull(getImplicitCalleeType(callExpression, it))
-          addIfNotNull(getRemoteCalleeType(callExpression, it))
+          add(getExplicitCalleeType(callee, it))
+          addIfNotNull(getImplicitCalleeType(callee, it))
+          addIfNotNull(getRemoteCalleeType(callee, it))
         }
       )
     }
   }
 
-  @Deprecated(message = "Use `getCalleeType(PyCallExpression, PyResolveContext)`")
+  @Deprecated(message = "Use `getCalleeType(PyExpression, PyResolveContext)`")
   @JvmStatic
   fun multiResolveCallee(callExpression: PyCallExpression, resolveContext: PyResolveContext): List<PyCallableType> {
-    return getCalleeType(callExpression, resolveContext).flattenToCallables()
+    val calleeType = callExpression.callee?.let { getCalleeType(it, resolveContext) } ?: PyAnyType.unknown
+    return calleeType.flattenToCallables()
   }
 
   private fun PyType?.flattenToCallables(): List<PyCallableType> {
@@ -206,12 +207,10 @@ object PyCallExpressionHelper {
       .toList()
   }
 
-  private fun getExplicitCalleeType(callExpression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
-    val callee = callExpression.callee ?: return PyAnyType.unknown
-
+  private fun getExplicitCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
     val context = resolveContext.typeEvalContext
     return context.getType(callee).compositeMap { type ->
-      val provided = PyTypeProvider.EP_NAME.computeSafeIfAny { it.prepareCalleeTypeForCall(type, callExpression, context) }
+      val provided = PyTypeProvider.EP_NAME.computeSafeIfAny { it.prepareCalleeTypeForCall(type, callee, context) }
       if (provided != null) {
         provided.get() ?: PyAnyType.unknown
       }
@@ -228,10 +227,9 @@ object PyCallExpressionHelper {
     }
   }
 
-  private fun getImplicitCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+  private fun getImplicitCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
     if (!resolveContext.allowImplicits()) return null
 
-    val callee = expression.callee
     val context = resolveContext.typeEvalContext
     if (callee is PyQualifiedExpression) {
       val referencedName = callee.referencedName
@@ -261,17 +259,18 @@ object PyCallExpressionHelper {
     return null
   }
 
-  private fun getRemoteCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+  private fun getRemoteCalleeType(callee: PyExpression, resolveContext: PyResolveContext): PyType? {
     if (!resolveContext.allowRemote()) return null
-    val file = expression.containingFile
+    val file = callee.containingFile
     if (file == null || !PythonRuntimeService.getInstance().isInPydevConsole(file)) return null
 
-    val callee = expression.callee ?: return null
     val context = resolveContext.typeEvalContext
     if (callee !is PyReferenceExpression) {
       val callables = context.getType(callee).compositeComponents.filterIsInstance<PyCallableType>()
       return if (callables.isEmpty()) null else PyUnionType.union(callables)
     }
+
+    val expression = PyCallExpressionNavigator.getPyCallExpressionByCallee(callee) ?: return null
 
     val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
     val results = PyUtil.filterTopPriorityResults(
@@ -537,7 +536,8 @@ object PyCallExpressionHelper {
       }
     }
     val resolveContext = PyResolveContext.defaultContext(context)
-    return getCallType(getCalleeType(expression, resolveContext), expression, context).type
+    val calleeType = callee?.let { getCalleeType(it, resolveContext) } ?: PyAnyType.unknown
+    return getCallType(calleeType, expression, context).type
   }
 
   /**

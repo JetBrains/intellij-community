@@ -1003,7 +1003,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         // (a member that is not callable at all is reported by PyCallingNonCallableInspection). This differs from an
         // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
         // TODO: intersection type
-        for (component in PyCallExpressionHelper.getCalleeType(callSite, resolveContext).compositeComponents) {
+        for (component in PyCallExpressionHelper.getCalleeType(callee, resolveContext).compositeComponents) {
           val argumentsMappings = getCallableItems(component).map { mapArguments(callSite, it, myTypeEvalContext) }
           if (reportIfNoneMatches(callSite, argumentsMappings)) break
         }
