@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -136,7 +137,6 @@ internal abstract class ElfRealSync(
     if (!matchesOldFragment(real.text(), startOffset, changeEvent.oldFragment)) {
       return null
     }
-    val newWholeText = real.text().replace(startOffset, endOffset, changeEvent.newFragment)
     val initialStartOffset = if (changeEvent is DocumentEventImpl) {
       rebaseRangeStart(changeEvent.initialStartOffset, changeEvent.initialOldLength, realSpans) ?: return null
     } else {
@@ -158,9 +158,16 @@ internal abstract class ElfRealSync(
     return ElfTextChange(
       real,
       rebasedEvent,
-      newWholeText,
-      DocumentModStamp.next(),
-      change.clearLineFlags,
+      DocumentTextPatch.complex(
+        startOffset = startOffset,
+        endOffset = endOffset,
+        newFragment = changeEvent.newFragment,
+        newModStamp = DocumentModStamp.next(),
+        clearLineFlags = change.patch.clearLineFlags() || rebasedEvent.isWholeTextReplaced,
+        clearModTree = false,
+        originStartOffset = initialStartOffset,
+        originEndOffset = initialStartOffset + initialOldLength,
+      ),
       change.isInBulkUpdate,
       change.project,
       change.commandName,
@@ -170,16 +177,7 @@ internal abstract class ElfRealSync(
   }
 
   private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
-    val changeEvent = change.changeEvent
-    return change.snapshotBefore.withText(
-      change.newWholeText,
-      changeEvent.offset,
-      changeEvent.offset + changeEvent.oldLength,
-      changeEvent.newFragment,
-      change.newModStamp,
-      change.clearLineFlags || changeEvent.isWholeTextReplaced,
-      false,
-    )
+    return change.snapshotBefore.withText(change.patch)
   }
 
   private fun matchesOldFragment(wholeText: CharSequence, startOffset: Int, oldFragment: CharSequence): Boolean {

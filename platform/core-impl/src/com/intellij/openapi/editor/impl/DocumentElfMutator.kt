@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -72,12 +73,17 @@ internal abstract class DocumentElfMutator(
       try {
         for (change in changes) {
           dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          val snapshotBefore = getSnapshot()
           changeText(
-            getSnapshot(),
+            snapshotBefore,
             change.changeEvent,
-            change.snapshotAfter.text(),
-            DocumentModStamp.next(),
-            false, // TODO: why false?
+            syncPatch(
+              change.changeEvent,
+              snapshotBefore,
+              change.snapshotAfter.text(),
+              DocumentModStamp.next(),
+              false, // TODO: why false?
+            ),
           )
         }
       } finally {
@@ -171,16 +177,14 @@ internal abstract class DocumentElfMutator(
   final override fun changeText(
     snapshotBefore: DocumentSnapshot,
     changeEvent: DocumentEvent,
-    newWholeText: ImmutableCharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
+    patch: DocumentTextPatch,
   ): DocumentSnapshot {
     assertNotNestedModification()
     val snapshotAfter: DocumentSnapshot
     textChangeInProgress = true
     try {
       snapshotAfter = dispatcher.withFiringElfTextUpdate(revertingChangeEvent, changeEvent) {
-        updateText(snapshotBefore, changeEvent, newWholeText, newModStamp, clearLineFlags)
+        updateText(snapshotBefore, patch)
       }
     } finally {
       textChangeInProgress = false
@@ -191,9 +195,7 @@ internal abstract class DocumentElfMutator(
         ElfTextChange(
           snapshotBefore,
           changeEvent,
-          newWholeText,
-          newModStamp,
-          clearLineFlags,
+          patch,
           dispatcher.elf().isInBulkUpdate(),
           CommandProcessor.getInstance().currentCommandProject,
           CommandProcessor.getInstance().currentCommandName,
@@ -207,23 +209,12 @@ internal abstract class DocumentElfMutator(
 
   private fun updateText(
     snapshotBefore: DocumentSnapshot,
-    changeEvent: DocumentEvent,
-    newWholeText: ImmutableCharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
+    patch: DocumentTextPatch,
   ): DocumentSnapshot {
     return updateAndGet { latest ->
       // modStamp or other metadata could be changed during before-change listeners, should merge it into final snapshot
       val merged = snapshotBefore.withMetadata(latest)
-      merged.withText(
-        newWholeText,
-        changeEvent.offset,
-        changeEvent.offset + changeEvent.oldLength,
-        changeEvent.newFragment,
-        newModStamp,
-        clearLineFlags || changeEvent.isWholeTextReplaced,
-        false,
-      )
+      merged.withText(patch)
     }
   }
 
@@ -251,13 +242,65 @@ internal abstract class DocumentElfMutator(
       changeText(
         currentSnapshot,
         changeEvent,
-        change.snapshotBefore.text(),
-        DocumentModStamp.next(),
-        change.clearLineFlags,
+        syncPatch(
+          changeEvent,
+          currentSnapshot,
+          change.snapshotBefore.text(),
+          DocumentModStamp.next(),
+          change.patch.clearLineFlags(),
+        ),
       )
     } finally {
       revertingChangeEvent = null
     }
+  }
+
+  /**
+   * Patch applying [changeEvent] on top of [snapshotBefore] during synchronization.
+   * A whole-text replacement takes [wholeText] as the resulting text, reusing the instance
+   * (restoring the original text for a revert, sharing the real snapshot's text for a replay).
+   */
+  private fun syncPatch(
+    changeEvent: DocumentEvent,
+    snapshotBefore: DocumentSnapshot,
+    wholeText: ImmutableCharSequence,
+    newModStamp: Long,
+    clearLineFlags: Boolean,
+  ): DocumentTextPatch {
+    val originStartOffset = if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialStartOffset
+    } else {
+      changeEvent.offset
+    }
+    val originEndOffset = originStartOffset + (if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialOldLength
+    } else {
+      changeEvent.oldLength
+    })
+    if (changeEvent.isWholeTextReplaced) {
+      return DocumentTextPatch.complex(
+        startOffset = 0,
+        endOffset = snapshotBefore.textLength(),
+        newFragment = wholeText,
+        newModStamp = newModStamp,
+        clearLineFlags = true,
+        clearModTree = false,
+        originStartOffset = originStartOffset,
+        originEndOffset = originEndOffset,
+        moveOffset = changeEvent.moveOffset,
+      )
+    }
+    return DocumentTextPatch.complex(
+      startOffset = changeEvent.offset,
+      endOffset = changeEvent.offset + changeEvent.oldLength,
+      newFragment = changeEvent.newFragment,
+      newModStamp = newModStamp,
+      clearLineFlags = clearLineFlags,
+      clearModTree = false,
+      originStartOffset = originStartOffset,
+      originEndOffset = originEndOffset,
+      moveOffset = changeEvent.moveOffset,
+    )
   }
 
   private fun getRevertMoveOffset(changeEvent: DocumentEvent): Int {

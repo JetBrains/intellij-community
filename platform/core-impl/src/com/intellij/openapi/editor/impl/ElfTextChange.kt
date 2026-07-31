@@ -3,24 +3,22 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
-import com.intellij.util.text.ImmutableCharSequence
 
 /**
  * Text change produced on the elf document and waiting to be replayed to real.
  *
  * The record keeps enough state to revert the original elf event, rebase it over
  * real-document edits, and replay it later with the same command and bulk-update
- * context. [newWholeText] is stored because the original elf snapshot may no
- * longer be the current one by the time synchronization starts.
+ * context. [patch] is stored so the replay applies exactly the original snapshot
+ * update, including the whole-text instance of a whole-text replacement.
  */
 internal class ElfTextChange(
   val snapshotBefore: DocumentSnapshot,
   val changeEvent: DocumentEvent,
-  val newWholeText: ImmutableCharSequence,
-  val newModStamp: Long,
-  val clearLineFlags: Boolean,
+  val patch: DocumentTextPatch,
   val isInBulkUpdate: Boolean,
   val project: Project?,
   val commandName: @Command String?,

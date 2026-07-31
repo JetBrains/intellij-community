@@ -101,6 +101,25 @@ class ElfDocumentTest {
   }
 
   @Test
+  fun `test whole text elf replacement is reverted when a real change conflicts with its origin range`() = runOnEdt {
+    val document = DocumentImpl("abc")
+    val elfDocument = getElfDocument(document)
+    withElfScope {
+      runCommandAction {
+        // a whole-text replacement narrowed to a pure insert: "abc" -> "abcX" trims the common prefix
+        document.replaceString(0, 3, 0, "abcX", document.modificationStamp + 1, true)
+      }
+    }
+    assertEquals("abc", document.text)
+    assertEquals("abcX", elfDocument.text)
+    runWriteCommandAction {
+      document.deleteString(0, 3)
+    }
+    // the whole-text request range spans the entire document, so any conflicting real change drops the elf change
+    waitForTextAndAssertSnapshots(document, elfDocument, "")
+  }
+
+  @Test
   fun `test unsupported operation guard is only active inside elf scope`() = runOnUi {
     assertFalse(Elf.getElf().isUnsupportedOperationGuardActive())
     withElfScope {

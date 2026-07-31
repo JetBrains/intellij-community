@@ -171,24 +171,9 @@ interface DocumentSnapshot {
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
 
   /**
-   * Returns snapshot with specified text and metadata.
-   * [newWholeText] should be consistent with the rest parameters:
-   * `newWholeText == snapshot.text.replace(startOffset, endOffset, newFragment)`.
-   *
-   * In the current implementation it is hard to remove "redundant" [newWholeText]
-   * because [DocumentEx.moveText] precomputes it
-   *
-   * @param clearLineFlags whether all line modification flags of the result should be cleared,
-   *   e.g. when the whole text is replaced or the document is reloaded from disk
+   * Returns snapshot with [patch] applied: the result's text is this snapshot's text after replacing
+   * `[patch.startOffset, patch.endOffset)` with [DocumentTextPatch.newFragment].
    */
   @Contract(pure = true)
-  fun withText(
-    newWholeText: ImmutableCharSequence,
-    startOffset: Int,
-    endOffset: Int,
-    newFragment: CharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
-    clearModTree: Boolean,
-  ): DocumentSnapshot
+  fun withText(patch: DocumentTextPatch): DocumentSnapshot
 }

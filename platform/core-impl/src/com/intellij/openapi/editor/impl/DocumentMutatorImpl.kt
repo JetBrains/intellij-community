@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.ProperTextRange
@@ -51,23 +52,23 @@ internal abstract class DocumentMutatorImpl(
     if (insertString.isEmpty()) {
       return
     }
-    val oldWholeText: ImmutableCharSequence = snapshot.text()
-    val newWholeText: ImmutableCharSequence = oldWholeText.insert(insertOffset, insertString)
-    val newFragment: CharSequence = newWholeText.subtext(insertOffset, insertOffset + insertString.length)
+    val newFragment: CharSequence = ImmutableCharSequence.asImmutable(insertString)
     changeText(
       hostDocument,
       snapshot,
-      newWholeText,
-      insertOffset,
+      DocumentTextPatch.simple(
+        startOffset = insertOffset,
+        endOffset = insertOffset,
+        newFragment = newFragment,
+        newModStamp = DocumentModStamp.next(),
+        clearLineFlags = false,
+        clearModTree = false,
+      ),
       insertOffset,
       insertOffset,
       "",
       newFragment,
       false,
-      false,
-      DocumentModStamp.next(),
-      insertOffset,
-      0,
     )
   }
 
@@ -194,22 +195,23 @@ internal abstract class DocumentMutatorImpl(
       return snapshot
     }
     val oldText: ImmutableCharSequence = snapshot.text()
-    val newText: ImmutableCharSequence = oldText.delete(startOffset, endOffset)
     val oldString: CharSequence = oldText.subtext(startOffset, endOffset)
     return changeText(
       hostDocument,
       snapshot,
-      newText,
+      DocumentTextPatch.simple(
+        startOffset = startOffset,
+        endOffset = endOffset,
+        newFragment = "",
+        newModStamp = DocumentModStamp.next(),
+        clearLineFlags = false,
+        clearModTree = false,
+      ),
       startOffset,
       endOffset,
-      startOffset,
       oldString,
       "",
       false,
-      false,
-      DocumentModStamp.next(),
-      startOffset,
-      endOffset - startOffset,
     )
   }
 
@@ -240,6 +242,8 @@ internal abstract class DocumentMutatorImpl(
       moveOffset,
       s,
       wholeText,
+      newModStamp,
+      clearLineFlags,
     )
     if (replacement.perform()) {
       return snapshot
@@ -247,34 +251,24 @@ internal abstract class DocumentMutatorImpl(
     return changeText(
       hostDocument,
       snapshot,
-      replacement.newWholeText,
+      replacement.patch,
       replacement.startOffset,
       replacement.endOffset,
-      replacement.moveOffset,
       replacement.oldFragment,
       replacement.newFragment,
       replacement.isWholeTextReplaced,
-      clearLineFlags,
-      newModStamp,
-      replacement.initialStartOffset,
-      replacement.initialOldLength,
     )
   }
 
   private fun changeText(
     hostDocument: Document,
     snapshotBefore: DocumentSnapshot,
-    newWholeText: ImmutableCharSequence,
+    patch: DocumentTextPatch,
     startOffset: Int,
     endOffset: Int,
-    moveOffset: Int,
     oldFragment: CharSequence,
     newFragment: CharSequence,
     wholeTextReplaced: Boolean,
-    clearLineFlags: Boolean,
-    newModStamp: Long,
-    initialStartOffset: Int,
-    initialOldLength: Int,
   ): DocumentSnapshot {
     val changeEvent: DocumentEvent = DocumentEventImpl(
       hostDocument,
@@ -283,19 +277,13 @@ internal abstract class DocumentMutatorImpl(
       newFragment,
       snapshotBefore.modStamp(),
       wholeTextReplaced,
-      initialStartOffset,
-      initialOldLength,
-      moveOffset,
+      patch.originStartOffset(),
+      patch.originEndOffset() - patch.originStartOffset(),
+      patch.moveOffset(),
       snapshotBefore.textLength(),
     )
     assertChangeAllowed(changeEvent, endOffset, snapshotBefore.textLength())
-    val snapshotAfter = changeText(
-      snapshotBefore,
-      changeEvent,
-      newWholeText,
-      newModStamp,
-      clearLineFlags,
-    )
+    val snapshotAfter = changeText(snapshotBefore, changeEvent, patch)
     if (newFragment.length > oldFragment.length) {
       return trimToSize(hostDocument, snapshotAfter)
     }
@@ -305,9 +293,7 @@ internal abstract class DocumentMutatorImpl(
   protected open fun changeText(
     snapshotBefore: DocumentSnapshot,
     changeEvent: DocumentEvent,
-    newWholeText: ImmutableCharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
+    patch: DocumentTextPatch,
   ): DocumentSnapshot {
     assertNotNestedModification()
     val snapshotAfterChange: DocumentSnapshot
@@ -318,15 +304,7 @@ internal abstract class DocumentMutatorImpl(
           // modStamp or other metadata could be changed during fireBeforeTextChange,
           // should merge it into final snapshot
           val merged = snapshotBefore.withMetadata(latest)
-          merged.withText(
-            newWholeText,
-            changeEvent.offset,
-            changeEvent.offset + changeEvent.oldLength,
-            changeEvent.newFragment,
-            newModStamp,
-            clearLineFlags || changeEvent.isWholeTextReplaced,
-            false,
-          )
+          merged.withText(patch)
         }
       }
     } finally {

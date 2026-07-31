@@ -5,13 +5,14 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,19 +26,19 @@ public class FrozenDocument implements DocumentEx {
   }
 
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
-    int offset = event.getOffset();
-    int oldEnd = offset + event.getOldLength();
-    ImmutableCharSequence oldWholeText = mySnapshot.text();
-    ImmutableCharSequence nextWholeText = oldWholeText.replace(offset, oldEnd, event.getNewFragment());
-    DocumentSnapshot newSnapshot = mySnapshot.withText(
-      nextWholeText,
-      offset,
-      oldEnd,
+    int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
+    int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
+    DocumentSnapshot newSnapshot = mySnapshot.withText(DocumentTextPatch.complex(
+      event.getOffset(),
+      event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
       newStamp,
       /* clearLineFlags = */ event.isWholeTextReplaced(),
-      /* clearModTree = */ true
-    );
+      /* clearModTree = */ true,
+      originStartOffset,
+      originStartOffset + originOldLength,
+      event.getMoveOffset()
+    ));
     return new FrozenDocument(newSnapshot);
   }
 

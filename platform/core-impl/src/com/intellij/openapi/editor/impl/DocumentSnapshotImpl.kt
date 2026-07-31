@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentAspectList
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.editor.impl.modTree.ModificationTree
 import com.intellij.openapi.editor.impl.modTree.ModificationTreeImpl
@@ -240,25 +241,22 @@ internal class DocumentSnapshotImpl private constructor(
     )
   }
 
-  override fun withText(
-    newWholeText: ImmutableCharSequence,
-    startOffset: Int,
-    endOffset: Int,
-    newFragment: CharSequence,
-    newModStamp: Long,
-    clearLineFlags: Boolean,
-    clearModTree: Boolean,
-  ): DocumentSnapshotImpl {
+  override fun withText(patch: DocumentTextPatch): DocumentSnapshotImpl {
+    val startOffset = patch.startOffset()
+    val endOffset = patch.endOffset()
+    val newFragment = patch.newFragment()
     val oldFragmentLength = endOffset - startOffset
     val newFragmentLength = newFragment.length
     val diff = newFragmentLength - oldFragmentLength
     val oldText = text
     val oldTextLength = oldText.length
-    val newTextLength = newWholeText.length
+    val canUseNewFragment = startOffset == 0 && endOffset == oldTextLength && newFragment is ImmutableCharSequence
+    val newText = if (canUseNewFragment) newFragment else text.replace(startOffset, endOffset, newFragment)
+    val newTextLength = newText.length
     assert((oldTextLength + diff) == newTextLength) {
       "prevTextLength = " + oldTextLength +
-      "; event.getNewLength() = " + newFragmentLength +
-      "; event.getOldLength() = " + oldFragmentLength +
+      "; newFragmentLength = " + newFragmentLength +
+      "; oldFragmentLength = " + oldFragmentLength +
       "; nextTextLength = " + newTextLength
     }
     val oldLineSet = getLineSet()
@@ -272,19 +270,27 @@ internal class DocumentSnapshotImpl private constructor(
       "nextTextLength = " + newTextLength +
       "; nextLineSet.getLength() = " + newLineSet.length
     }
-    if (clearLineFlags) {
+    if (patch.clearLineFlags()) {
       newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
     }
     val newModSequence = nextModSequence()
-    val newTree = if (clearModTree) {
+    val newTree = if (patch.clearModTree()) {
       null
     } else {
       updateModTree(oldFragmentLength, newFragmentLength, startOffset, endOffset)
     }
     val newAspects = aspects.transform {
-      it.withText(this, newWholeText, startOffset, endOffset, newFragment, newModStamp)
+      it.withText(this, patch)
     }
-    return DocumentSnapshotImpl(newWholeText, newModStamp, newModSequence, newLineSet, newTree, null, newAspects)
+    return DocumentSnapshotImpl(
+      newText,
+      patch.newModStamp(),
+      newModSequence,
+      newLineSet,
+      newTree,
+      null,
+      newAspects,
+    )
   }
 
   private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
