@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -37,15 +39,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.FinalUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -134,21 +139,22 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
     List<PsiParameter> availableParameters = getAvailableParameters(method);
 
     return selectParameters(method, availableParameters, parameters -> ModCommand.psiUpdate(context, updater -> {
-      MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
-      List<PsiParameter> writable = ContainerUtil.map(parameters, updater::getWritable);
-      for (PsiParameter parameter : writable) {
-        types.putValue(parameter.getType(), parameter);
+      Map<PsiType, Integer> types = new HashMap<>();
+      Map<PsiParameter, PsiParameter> parameterMap = StreamEx.of(parameters).mapToEntry(updater::getWritable).toCustomMap(LinkedHashMap::new);
+      for (PsiParameter parameter : parameterMap.values()) {
+        types.merge(parameter.getType(), 1, Integer::sum);
       }
       CodeStyleSettings allSettings = CodeStyleSettingsManager.getInstance(context.project())
         .cloneSettings(CodeStyle.getSettings(context.file()));
       JavaCodeStyleSettings settings = allSettings.getCustomSettings(JavaCodeStyleSettings.class);
 
       boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
-      for (PsiParameter selected : writable) {
-        settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
+      
+      parameterMap.forEach((orig, selected) -> {
+        settings.PREFER_LONGER_NAMES = preferLongerNames || types.getOrDefault(selected.getType(), 0) > 1;
         CodeStyle.runWithLocalSettings(context.project(), allSettings,
-                                       () -> processParameter(context.project(), selected, usedNames));
-      }
+                                       () -> processParameter(context.project(), orig, selected, usedNames));
+      });
     }));
   }
 
@@ -175,7 +181,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
     return members.stream().sorted(Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter()))).toList();
   }
 
-  private static void processParameter(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull Set<String> usedNames) {
+  private static void processParameter(@NotNull Project project, @NotNull PsiParameter orig, @NotNull PsiParameter parameter, @NotNull Set<String> usedNames) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
     if (type == null) return;
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -217,8 +223,9 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
 
     boolean maybeFinal = !isMethodStatic && method.isConstructor();
     boolean isFinal = maybeFinal && targetClass.getConstructors().length == 1;
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findOwnNullabilityInfo(orig);
     PsiField field = FieldFromParameterUtils.createFieldAndAddAssignment(
-      project, targetClass, method, parameter, type, fieldName, isMethodStatic, isFinal);
+      project, targetClass, method, parameter, info, type, fieldName, isMethodStatic, isFinal);
     if (field != null && maybeFinal && !isFinal && FinalUtils.canBeFinal(field)) {
       Objects.requireNonNull(field.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
     }

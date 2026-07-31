@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.project.Project;
@@ -220,6 +222,7 @@ public final class FieldFromParameterUtils {
                                                      @NotNull PsiClass targetClass,
                                                      @NotNull PsiMethod method,
                                                      @NotNull PsiParameter parameter,
+                                                     @Nullable NullabilityAnnotationInfo originalNullability, 
                                                      @NotNull PsiType fieldType,
                                                      @NotNull String fieldName,
                                                      boolean isStatic,
@@ -235,9 +238,8 @@ public final class FieldFromParameterUtils {
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (manager.copyNullableAnnotation(parameter, field) == null && isFinal) {
-      manager.copyNotNullAnnotation(parameter, field);
+    if (originalNullability != null && (originalNullability.getNullability() == Nullability.NULLABLE || originalNullability.getNullability() == Nullability.NOT_NULL && isFinal)) {
+      AnnotationUtil.copyAnnotation(originalNullability.getAnnotation(), field);
     }
 
     PsiCodeBlock methodBody = method.getBody();

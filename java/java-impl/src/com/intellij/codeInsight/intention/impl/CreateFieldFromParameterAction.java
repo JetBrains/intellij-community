@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -104,8 +106,9 @@ public final class CreateFieldFromParameterAction extends PsiUpdateModCommandAct
 
     boolean maybeFinal = !isMethodStatic && method.isConstructor();
     boolean isFinal = maybeFinal && targetClass.getConstructors().length == 1;
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findOwnNullabilityInfo(parameter);
     PsiField field = FieldFromParameterUtils.createFieldAndAddAssignment(
-      project, targetClass, method, parameter, type, uniqueNameInfo.names[0], isMethodStatic, isFinal);
+      project, targetClass, method, parameter, info, type, uniqueNameInfo.names[0], isMethodStatic, isFinal);
     assert field != null;
     if (maybeFinal && !isFinal && FinalUtils.canBeFinal(field)) {
       Objects.requireNonNull(field.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
