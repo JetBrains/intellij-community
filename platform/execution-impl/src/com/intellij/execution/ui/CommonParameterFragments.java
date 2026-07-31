@@ -59,7 +59,7 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     myHasModule = () -> moduleProvider.compute() != null;
     myWorkingDirectory = createWorkingDirectory(project, moduleProvider);
     myFragments.add(myWorkingDirectory);
-    myFragments.add(createEnvParameters());
+    myFragments.add(createEnvParameters(project));
   }
 
   public @NotNull SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
@@ -161,8 +161,17 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     return workingDirectorySettings;
   }
 
+  /**
+   * @deprecated Use {@link #createEnvParameters(Project)} to pass a non-null project so the file chooser
+   * used by the environment variables editor is scoped to the correct project context.
+   */
+  @Deprecated
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
-    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
+    return createEnvParameters(null);
+  }
+
+  public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters(@Nullable Project project) {
+    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent(project);
     env.setLabelLocation(BorderLayout.WEST);
     setMonospaced(env.getComponent().getTextField());
     SettingsEditorFragment<S, JComponent> fragment =
