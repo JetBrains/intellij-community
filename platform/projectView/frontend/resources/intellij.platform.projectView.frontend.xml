@@ -21,11 +21,16 @@
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.project.view.pane.frontend" interface="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.project.view.pane.model.frontend" interface="com.intellij.platform.projectView.pane.ProjectViewPaneProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService
       serviceInterface="com.intellij.platform.projectView.window.ProjectViewToolWindowService"
       serviceImplementation="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl"
+    />
+    <projectService
+      serviceInterface="com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator"
+      serviceImplementation="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregatorImpl"
     />
     <project.view.pane.frontend
       implementation="com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPaneProvider"

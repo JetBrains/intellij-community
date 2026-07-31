@@ -21,17 +21,16 @@ import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
+import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.projectViewPaneId
-import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -116,9 +115,9 @@ internal class ProjectViewToolWindowServiceImpl(
         }
       }
       launch(CoroutineName("Pane management")) {
-        val rpc = ProjectViewRpc.getInstance()
+        val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
-          val paneDescriptors = rpc.getPaneDescriptors(project.projectId())
+          val paneDescriptors = aggregator.getPaneDescriptors()
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
           for (descriptor in paneDescriptors) {
             launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider}")) {
@@ -212,16 +211,15 @@ internal class ProjectViewToolWindowServiceImpl(
           removeContent(toolWindow, content)
         }
       }
-      LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}" }
-      val rpc = ProjectViewRpc.getInstance()
+      LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
+      val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
       launch(CoroutineName("Pane ${pane.id} state updates")) {
         currentPaneMutableFlow.collectLatest { currentPane ->
           if (currentPane == pane) {
             LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
             try {
-              rpc.getPaneStateFlow(toolWindow.project.projectId(), pane.id).collect { eventDTO ->
+              aggregator.getPaneStateFlow(pane.id).collect { event ->
                 try {
-                  val event = eventDTO.toEvent()
                   LOG.trace { "Update pane state for ${pane.id}: $event" }
                   pane.applyStateChange(event)
                 }
@@ -229,7 +227,7 @@ internal class ProjectViewToolWindowServiceImpl(
                   rethrowControlFlowException(e)
                   LOG.error(
                     "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
-                    "The problematic event was $eventDTO",
+                    "The problematic event was $event",
                     e
                   )
                 }
@@ -244,11 +242,11 @@ internal class ProjectViewToolWindowServiceImpl(
       launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
         LOG.debug { "Sending pane requests for ${pane.id}" }
         try {
-          val rpcChannel = rpc.getPaneRequestChannel(project.projectId(), pane.id)
+          val outChannel = aggregator.getPaneRequestChannel(pane.id)
           for (request in pane.requestChannel) {
             try {
               LOG.trace { "Sent request for pane ${pane.id}: $request" }
-              rpcChannel.send(request)
+              outChannel.send(request)
             }
             catch (e: Exception) {
               rethrowControlFlowException(e)

@@ -15,11 +15,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.platform.project.projectId
+import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.SelectInContextDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
-import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -113,7 +112,7 @@ private data class SelectOpenedFileTask(
 ) : SelectTask() {
   override suspend fun select() {
     val paneId = ProjectViewToolWindowService.getInstance(project).currentPaneId ?: return
-    val rpc = ProjectViewRpc.getInstance()
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
     withContext(Dispatchers.EDT) { // "thanks" to a ton of legacy API (like FileEditor.isValid), we need both EDT and read action here
       val fileEditors = fileEditors()
       for (fileEditor in fileEditors) {
@@ -128,8 +127,8 @@ private data class SelectOpenedFileTask(
           continue
         }
         val nodePath = withTimeoutOrNull(15.seconds) {
-          LOG.debug { "Looking for the node to select (on the backend) for $fileEditor" }
-          rpc.findNodeForOpenedFile(project.projectId(), paneId, editorChoice)
+          LOG.debug { "Looking for the node to select for $fileEditor" }
+          aggregator.findNodeForOpenedFile(paneId, editorChoice)
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {
@@ -172,10 +171,10 @@ private data class SelectInTask(
       LOG.error("Target is not supported: $target")
       return
     }
-    val rpc = ProjectViewRpc.getInstance()
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
     val nodePath = withTimeoutOrNull(15.seconds) {
-      LOG.debug { "Looking for the node to select (on the backend) for $context" }
-      rpc.findNodeForSelectIn(project.projectId(), SelectInRequestDTO(
+      LOG.debug { "Looking for the node to select for $context" }
+      aggregator.findNodeForSelectIn(SelectInRequestDTO(
         targetId = target.minorViewId,
         contextDTO = serialize(context),
         context = context,

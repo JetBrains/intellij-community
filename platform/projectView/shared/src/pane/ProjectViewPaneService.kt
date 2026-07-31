@@ -48,16 +48,17 @@ interface ProjectViewPaneProvider {
 open class ProjectViewPaneService(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  private val getProviders: () -> List<ProjectViewPaneProvider>
+  private val getProviders: () -> List<ProjectViewPaneProvider>,
+  private val debugName: String = "ProjectViewPaneService",
 ) {
 
-  private val managers = AtomicReference<Map<ProjectViewPaneId, BackendProjectViewPaneManager>?>(null)
+  private val managers = AtomicReference<Map<ProjectViewPaneId, ProjectViewPaneManager>?>(null)
   
-  private val managersDeferred = coroutineScope.async(CoroutineName("BackendProjectViewPaneService: pane computation")) {
-    val result = hashMapOf<ProjectViewPaneId, BackendProjectViewPaneManager>()
+  private val managersDeferred = coroutineScope.async(CoroutineName("$debugName: pane computation")) {
+    val result = hashMapOf<ProjectViewPaneId, ProjectViewPaneManager>()
     for (provider in getProviders()) {
       for (pane in provider.createPanes(project)) {
-        val manager = createBackendProjectViewPaneManager(pane)
+        val manager = createProjectViewPaneManager(pane)
         result[manager.id] = manager
       }
     }
@@ -66,11 +67,11 @@ open class ProjectViewPaneService(
   }
 
   init {
-    coroutineScope.launch(CoroutineName("BackendProjectViewPaneService: pane management")) {
+    coroutineScope.launch(CoroutineName("$debugName: pane management")) {
       val panes = managersDeferred.await()
       supervisorScope {
         for (pane in panes.values) {
-          launch(CoroutineName("BackendProjectViewPaneService: pane ${pane.id}")) {
+          launch(CoroutineName("$debugName: pane ${pane.id}")) {
             pane.manage()
           }
         }
@@ -112,12 +113,12 @@ open class ProjectViewPaneService(
   }
 }
 
-private suspend fun createBackendProjectViewPaneManager(pane: ProjectViewPaneModel): BackendProjectViewPaneManager {
+private suspend fun createProjectViewPaneManager(pane: ProjectViewPaneModel): ProjectViewPaneManager {
   val descriptor = pane.describe(ProjectViewPaneDescriptorBuilderImpl())
-  return BackendProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
+  return ProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
 }
 
-private class BackendProjectViewPaneManager(val pane: ProjectViewPaneModel, val descriptor: ProjectViewPaneDescriptorImpl) {
+private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descriptor: ProjectViewPaneDescriptorImpl) {
   val id: ProjectViewPaneId
     get() = descriptor.id
 

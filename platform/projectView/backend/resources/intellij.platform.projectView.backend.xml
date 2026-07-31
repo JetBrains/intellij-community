@@ -22,15 +22,15 @@
   </dependencies>
   <extensionPoints>
     <extensionPoint 
-      qualifiedName="com.intellij.project.view.pane.backend" 
+      qualifiedName="com.intellij.project.view.pane.model.backend" 
       interface="com.intellij.platform.projectView.pane.ProjectViewPaneProvider"
       dynamic="true"
     />
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.projectView.backend.rpc.ProjectViewRpcProvider"/>
-    <project.view.pane.backend implementation="com.intellij.platform.projectView.backend.impl.project.ProjectPaneProvider"/>
-    <project.view.pane.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
+    <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.project.ProjectPaneProvider"/>
+    <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
     <uiDataRule implementation="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneUiDataRule"/>
   </extensions>
 </idea-plugin>
