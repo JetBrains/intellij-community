@@ -70,6 +70,16 @@ public final class TypeNullability {
   }
 
   /**
+   * The inverse of {@link #inherited()}
+   * @return the same nullability with the {@code inherited from a bound} marker removed
+   */
+  public @NotNull TypeNullability uninherited() {
+    return mySource instanceof NullabilitySource.ExtendsBound
+           ? new TypeNullability(myNullability, ((NullabilitySource.ExtendsBound)mySource).boundSource())
+           : this;
+  }
+
+  /**
    * @param nullability instantiation nullability
    * @return the nullability of the instantiated type parameter,
    * assuming that this object is the declared nullability of the type parameter.

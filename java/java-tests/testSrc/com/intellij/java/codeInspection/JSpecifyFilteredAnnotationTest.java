@@ -107,14 +107,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       Set.of(
         new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30) //IDEA-380248
       )
-    ),
-    new SkipIndividuallyFilter(
-      //unspecified
-      Set.of(
-        new Pair<>("CaptureConvertedUnspecToObject.java", 77),
-        new Pair<>("CaptureConvertedUnspecToOther.java", 77)
-
-      )
     )
   );
 

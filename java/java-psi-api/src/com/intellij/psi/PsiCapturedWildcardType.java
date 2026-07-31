@@ -112,6 +112,35 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
     return myNullability;
   }
 
+  /**
+   * {@link #getNullability()} reports the nullability written on the wildcard itself, while capture conversion
+   * intersects the wildcard bound with the declared bound of the captured type parameter. The two differ exactly when
+   * the declared bound is more specific, so all three captures below read the same {@code ? extends @Nullable Lib} and
+   * yet have three different nullabilities (everything in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * interface Lib {}
+   * interface NullableBounded<T extends @Nullable Object> {}
+   * interface UnspecBounded<T extends @NullnessUnspecified Object> {}
+   * interface NotNullBounded<T extends Object> {}
+   *
+   * void nullable(NullableBounded<? extends @Nullable Lib> x) {} // capture is nullable
+   * void unspec(UnspecBounded<? extends @Nullable Lib> x) {}     // capture is unspecified
+   * void notNull(NotNullBounded<? extends @Nullable Lib> x) {}   // capture is not-null
+   * }</pre>
+   * {@link #getNullability()} answers "nullable" for all three, because it only looks at the wildcard. It also reports
+   * that nullability as {@link com.intellij.codeInsight.NullabilitySource.ExtendsBound inherited from a bound} (see
+   * {@link PsiWildcardType#getNullability()}), which downstream means "an upper estimate, not a fact about the value" and
+   * is therefore ignored by {@link TypeNullability#instantiatedWith}. A caller that needs the nullability of the capture
+   * as an actual type -- notably substitution into a type-variable usage -- must use this method instead.
+   *
+   * @return the nullability of this capture after capture conversion
+   */
+  public @NotNull TypeNullability getCaptureConvertedNullability() {
+    if (!myExistential.isExtends()) return getNullability();
+    TypeNullability fromWildcard = getNullability().uninherited();
+    return myParameter == null ? fromWildcard : fromWildcard.meet(TypeNullability.ofTypeParameter(myParameter).uninherited());
+  }
+
   @Override
   public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
     PsiCapturedWildcardType type = new PsiCapturedWildcardType(myExistential, myContext, myParameter, nullability);

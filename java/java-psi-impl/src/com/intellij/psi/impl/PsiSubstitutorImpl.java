@@ -227,12 +227,42 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         TypeNullability origNullability = classType.getNullability();
         return origNullability.equals(TypeNullability.UNKNOWN)
                    ? result
-                   : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
+                   : result.withNullability(origNullability.instantiatedWith(instantiationNullability(result)));
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
       return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),
                                        classType.getAnnotationProvider(), classType.getPsiContext())
         .withNullability(classType.getNullability());
+    }
+
+    /**
+     * A captured wildcard reports the nullability of the wildcard alone, which is not enough to instantiate a
+     * type-variable usage: the same {@code ? extends @Nullable Lib} is nullable when captured for
+     * {@code T extends @Nullable Object} but unspecified when captured for
+     * {@code T extends @NullnessUnspecified Object}. Both instantiate the same {@code @NullnessUnspecified T}, and only
+     * the second one may stay unspecified (everything in a {@code @NullMarked} scope):
+     * <pre>{@code
+     * interface Lib {}
+     * interface NullableBounded<T extends @Nullable Object> { T get(); }
+     * interface UnspecBounded<T extends @NullnessUnspecified Object> { T get(); }
+     *
+     * abstract <T extends @Nullable Object> @NullnessUnspecified T unspec(T input);
+     *
+     * Object nullableBound(NullableBounded<? extends @Nullable Lib> x) {
+     *   return unspec(x.get()); // T is a nullable capture, so the return type is nullable: a nullness mismatch
+     * }
+     *
+     * Object unspecBound(UnspecBounded<? extends @Nullable Lib> x) {
+     *   return unspec(x.get()); // T is an unspecified capture, so the return type is unspecified: no mismatch
+     * }
+     * }</pre>
+     * Without capture conversion both would look nullable, which is why the plain {@link PsiType#getNullability()} is
+     * not enough here. See the CaptureConvertedUnspecToObject/CaptureConvertedUnspecToOther JSpecify samples.
+     */
+    private @NotNull TypeNullability instantiationNullability(@NotNull PsiType substituted) {
+      return substituted instanceof PsiCapturedWildcardType
+             ? ((PsiCapturedWildcardType)substituted).getCaptureConvertedNullability()
+             : substituted.getNullability();
     }
 
     private @NotNull PsiSubstitutor processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor) {
