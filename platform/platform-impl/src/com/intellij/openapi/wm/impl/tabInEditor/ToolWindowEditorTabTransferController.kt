@@ -39,9 +39,7 @@ internal class ToolWindowEditorTabTransferController(
       content.manager?.removeContent(content, false)
     }
 
-    if (sourceDecorator != null &&
-        (sourceDecorator.contentManager.isEmpty || // when the tab is dragging from the tool window to the editor, the manager is already empty
-         (sourceDecorator.contentManager.contentCount == 1 && sourceDecorator.contentManager.getIndexOfContent(content) != -1))) {
+    if (sourceDecorator != null && sourceDecorator.contentManager.isEmpty) {
       sourceDecorator.unsplit(null)
     }
 
