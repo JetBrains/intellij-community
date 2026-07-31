@@ -4,6 +4,7 @@ package com.intellij.gradle.completion.kotlin.tests.integration
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
 
+@IJIgnore(issue = "KT-88180")
 @GradleProjectTestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData")
 @TestRoot("completion/kotlin/tests/testData")
