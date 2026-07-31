@@ -12,14 +12,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
@@ -31,6 +30,7 @@ import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginDialogComponentFactory
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginOutcome
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import org.jetbrains.plugins.gitlab.authentication.ui.YesNoCancelWithOptionsDialog
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
@@ -42,12 +42,12 @@ object GitLabLoginUtil {
   @RequiresEdt
   internal fun logInViaOAuth(
     project: Project,
-    serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
+    requiredUsername: String? = null,
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
     val dialogTitle = GitLabBundle.message("account.add.dialog.title")
-    return performOAuthLogin(project, requiredUsername, serverPath, uniqueAccountPredicate, dialogTitle, loginSource)
+    return performOAuthLogin(project, requiredUsername, uniqueAccountPredicate, dialogTitle, loginSource)
   }
 
   @RequiresEdt
@@ -58,6 +58,7 @@ object GitLabLoginUtil {
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
+    if (serverPath?.isDefault == true) return LoginResult.Failure
     val dialogTitle = GitLabBundle.message("account.add.dialog.title")
     return performOAuthLoginToCustomServer(project = project,
                                            parentComponent = parentComponent,
@@ -177,12 +178,39 @@ object GitLabLoginUtil {
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
+    if (!account.server.isDefault) return LoginResult.Failure
     val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
       if (serverPath == account.server && username == account.name) true
       else uniqueAccountPredicate(serverPath, username)
     }
     val dialogTitle = GitLabBundle.message("account.relogin.dialog.title")
-    return performOAuthLogin(project, requiredUsername, account.server, predicateWithoutCurrent, dialogTitle, loginSource, account.id)
+    return performOAuthLogin(project, requiredUsername, predicateWithoutCurrent, dialogTitle, loginSource, account.id)
+  }
+
+  @RequiresEdt
+  internal fun reLogInViaOAuthToCustomServer(
+    project: Project,
+    parentComponent: JComponent?,
+    account: GitLabAccount,
+    requiredUsername: String? = null,
+    loginSource: GitLabLoginSource,
+    uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
+  ): LoginResult {
+    if (account.server.isDefault) return LoginResult.Failure
+    val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
+      if (serverPath == account.server && username == account.name) true
+      else uniqueAccountPredicate(serverPath, username)
+    }
+    val dialogTitle = GitLabBundle.message("account.relogin.dialog.title")
+    return performOAuthLoginToCustomServer(project = project,
+                                           parentComponent = parentComponent,
+                                           requiredUsername = requiredUsername,
+                                           dialogTitle = dialogTitle,
+                                           uniqueAccountPredicate = predicateWithoutCurrent,
+                                           serverFieldDisabled = true,
+                                           loginSource = loginSource,
+                                           requiredServerPath = account.server,
+                                           accountId = account.id)
   }
 
   @RequiresEdt
@@ -195,17 +223,16 @@ object GitLabLoginUtil {
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
-    if (account.server != GitLabServerPath.DEFAULT_SERVER) {
-      return reLogInViaToken(project, parentComponent, account, requiredUsername, loginSource, uniqueAccountPredicate)
-    }
-    return when (promptLogin(project, parentComponent)) {
-      Messages.YES -> reLogInViaOAuth(project,
-                                      account,
-                                      requiredUsername,
-                                      loginSource,
-                                      uniqueAccountPredicate)
-      Messages.NO -> reLogInViaToken(project, parentComponent, account, requiredUsername, loginSource, uniqueAccountPredicate)
-      else -> LoginResult.OtherMethod
+    return when (promptLogin(project, parentComponent, account.server)) {
+      LoginMethod.OAUTH -> reLogInViaOAuth(project, account, requiredUsername, loginSource, uniqueAccountPredicate)
+      LoginMethod.OAUTH_CUSTOM_SERVER -> reLogInViaOAuthToCustomServer(project,
+                                                                       parentComponent,
+                                                                       account,
+                                                                       requiredUsername,
+                                                                       loginSource,
+                                                                       uniqueAccountPredicate)
+      LoginMethod.TOKEN -> reLogInViaToken(project, parentComponent, account, requiredUsername, loginSource, uniqueAccountPredicate)
+      null -> LoginResult.OtherMethod
     }
   }
 
@@ -219,22 +246,15 @@ object GitLabLoginUtil {
     loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult {
-    if (serverPath != GitLabServerPath.DEFAULT_SERVER) {
-      return logInViaToken(project, parentComponent, serverPath, requiredUsername, loginSource, uniqueAccountPredicate)
-    }
-    return when (promptLogin(project, parentComponent)) {
-      Messages.YES -> logInViaOAuth(project,
-                                    serverPath,
-                                    requiredUsername,
-                                    loginSource,
-                                    uniqueAccountPredicate)
-      Messages.NO -> logInViaToken(project,
-                                   parentComponent,
-                                   serverPath,
-                                   requiredUsername,
-                                   loginSource,
-                                   uniqueAccountPredicate)
-      else -> LoginResult.OtherMethod
+    return when (promptLogin(project, parentComponent, serverPath)) {
+      LoginMethod.OAUTH -> logInViaOAuth(project, requiredUsername, loginSource, uniqueAccountPredicate)
+      LoginMethod.OAUTH_CUSTOM_SERVER -> logInViaOAuthToCustomServer(project,
+                                                                     parentComponent,
+                                                                     requiredUsername,
+                                                                     loginSource,
+                                                                     uniqueAccountPredicate)
+      LoginMethod.TOKEN -> logInViaToken(project, parentComponent, serverPath, requiredUsername, loginSource, uniqueAccountPredicate)
+      null -> LoginResult.OtherMethod
     }
   }
 
@@ -298,7 +318,6 @@ object GitLabLoginUtil {
   private fun performOAuthLogin(
     project: Project,
     requiredUsername: String? = null,
-    serverPath: GitLabServerPath,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
     title: @NlsContexts.DialogTitle String,
     loginSource: GitLabLoginSource,
@@ -306,10 +325,13 @@ object GitLabLoginUtil {
   ): LoginResult {
     return try {
       runWithModalProgressBlocking(project, title) {
-        val credentials = GitLabOAuthService.instance.authorize(serverPath, null)
+        val credentials = GitLabOAuthService.instance.authorizeToGitLabDotCom()
         val username =
-          GitLabSecurityUtil.validateAndResolveUsername(requiredUsername, serverPath, credentials.accessToken, uniqueAccountPredicate)
-        createSuccessResult(LoginState.Connected(username), serverPath, loginSource, credentials, accountId)
+          GitLabSecurityUtil.validateAndResolveUsername(requiredUsername,
+                                                        GitLabServerPath.DEFAULT_SERVER,
+                                                        credentials.accessToken,
+                                                        uniqueAccountPredicate)
+        createSuccessResult(LoginState.Connected(username), GitLabServerPath.DEFAULT_SERVER, loginSource, credentials, accountId)
       }
     }
     catch (e: Exception) {
@@ -319,32 +341,48 @@ object GitLabLoginUtil {
     }
   }
 
-  private fun promptLogin(project: Project, parentComponent: JComponent?): Int {
-    val message = if (PasswordSafe.instance.isMemoryOnly) {
+  private fun promptLogin(project: Project, parentComponent: JComponent?, serverPath: GitLabServerPath?): LoginMethod? {
+    val willPasswordNotBeSaved = PasswordSafe.instance.isMemoryOnly
+    val message = if (willPasswordNotBeSaved) {
       HtmlBuilder()
         .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved")))
         .append(HtmlChunk.br())
         .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved.solution")))
+        .wrapWithHtmlBody()
         .toString()
     }
     else GitLabBundle.message("account.add.dialog.continue.text")
 
-    val builder = MessageDialogBuilder
-      .yesNoCancel(title = GitLabBundle.message("account.add.dialog.title"),
-                   message = message)
-      .yesText(GitLabBundle.message("account.add.popup.text"))
-      .noText(CollaborationToolsBundle.message("accounts.action.add.account.with.token"))
-
-    if (PasswordSafe.instance.isMemoryOnly) {
-      builder.asWarning()
+    val oauthChoices = buildList {
+      when (serverPath) {
+        null -> {
+          add(GitLabBundle.message("account.add.popup.text") to LoginMethod.OAUTH)
+          add(GitLabBundle.message("account.add.custom.server.popup.text") to LoginMethod.OAUTH_CUSTOM_SERVER)
+        }
+        GitLabServerPath.DEFAULT_SERVER -> {
+          add(GitLabBundle.message("account.add.popup.text") to LoginMethod.OAUTH)
+        }
+        else -> {
+          add(GitLabBundle.message("account.add.custom.server.popup.text") to LoginMethod.OAUTH_CUSTOM_SERVER)
+        }
+      }
     }
 
-    if (parentComponent != null) {
-      return builder.show(parentComponent)
-    }
-    else {
-      return builder.show(project)
-    }
+    val dialog = YesNoCancelWithOptionsDialog(
+      project = project,
+      parentComponent = parentComponent,
+      title = GitLabBundle.message("account.add.dialog.title"),
+      message = message,
+      yesChoices = oauthChoices,
+      noChoice = CollaborationToolsBundle.message("accounts.action.add.account.with.token") to LoginMethod.TOKEN,
+      icon = if (willPasswordNotBeSaved) UIUtil.getWarningIcon() else UIUtil.getQuestionIcon()
+    )
+    dialog.show()
+    return dialog.chosenValue
+  }
+
+  private enum class LoginMethod {
+    OAUTH, OAUTH_CUSTOM_SERVER, TOKEN
   }
 
   @RequiresEdt

@@ -96,7 +96,6 @@ object GitLabMergeRequestSelectorsComponentFactory {
     }
     LoginRequest.Type.OAUTH -> GitLabLoginUtil.logInViaOAuth(
       project,
-      repo.repository.serverPath,
       loginSource = GitLabLoginSource.MR_TW) { server, name ->
       GitLabLoginUtil.isAccountUnique(accounts, server, name)
     }

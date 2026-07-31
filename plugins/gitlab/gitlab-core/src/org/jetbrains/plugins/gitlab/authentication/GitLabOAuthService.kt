@@ -46,13 +46,10 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     get() = "http://127.0.0.1:${BuiltInServerManager.getInstance().port}/${RestService.PREFIX}/$SERVICE_NAME"
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun authorize(server: GitLabServerPath, oAuthClientId: String?): GitLabCredentials.OAuth {
-    val clientId = if (server.isDefault) {
-      GITLAB_DOT_COM_OAUTH_CLIENT_ID
-    }
-    else {
-      oAuthClientId ?: throw GitLabOAuthFlowException("OAuth client ID is required for non-default GitLab servers")
-    }
+  suspend fun authorizeToGitLabDotCom() = authorize(GitLabServerPath.DEFAULT_SERVER, GITLAB_DOT_COM_OAUTH_CLIENT_ID)
+
+  @Throws(GitLabOAuthFlowException::class)
+  suspend fun authorize(server: GitLabServerPath, clientId: String): GitLabCredentials.OAuth {
     val requestId = DigestUtil.randomToken()
     val codeVerifier = ByteArray(32).also { DigestUtil.random.nextBytes(it) }
     val codeVerifierEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifier)
@@ -91,12 +88,12 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
   }
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun refreshToken(server: GitLabServerPath, refreshToken: String, oAuthClientId: String): GitLabCredentials.OAuth {
+  suspend fun refreshToken(server: GitLabServerPath, refreshToken: String, clientId: String): GitLabCredentials.OAuth {
     val api = service<GitLabApiManager>().getUnauthenticatedClient(server)
     val uri = api.server.oauthUri.resolveRelative("token")
     val request = api.request(uri)
       .postForm {
-        "client_id" eq oAuthClientId
+        "client_id" eq clientId
         "grant_type" eq "refresh_token"
         "refresh_token" eq refreshToken
         "redirect_uri" eq redirectUri
@@ -106,7 +103,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     return withContext(Dispatchers.IO) {
       api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
     }.let {
-      GitLabCredentials.OAuth.fromDTO(it, oAuthClientId)
+      GitLabCredentials.OAuth.fromDTO(it, clientId)
     }
   }
 
@@ -149,7 +146,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
 
   private suspend fun exchangeCodeForToken(
     serverPath: GitLabServerPath,
-    oAuthClientId: String,
+    clientId: String,
     code: String,
     redirectUri: String,
     codeVerifier: String,
@@ -158,7 +155,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     val uri = api.server.oauthUri.resolveRelative("token")
     val request = api.request(uri)
       .postForm {
-        "client_id" eq oAuthClientId
+        "client_id" eq clientId
         "grant_type" eq "authorization_code"
         "code" eq code
         "code_verifier" eq codeVerifier
@@ -170,7 +167,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     return withContext(Dispatchers.IO) {
       api.rest.loadJsonValue<GitLabOAuthResponseDTO>(request).body()
     }.let {
-      GitLabCredentials.OAuth.fromDTO(it, oAuthClientId)
+      GitLabCredentials.OAuth.fromDTO(it, clientId)
     }
   }
 
@@ -211,7 +208,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
 
 private data class PendingLoginWithRequest(
   val serverPath: GitLabServerPath,
-  val oAuthClientId: String,
+  val clientId: String,
   val codeVerifier: String,
   val request: CompletableDeferred<GitLabCredentials.OAuth>,
 )
