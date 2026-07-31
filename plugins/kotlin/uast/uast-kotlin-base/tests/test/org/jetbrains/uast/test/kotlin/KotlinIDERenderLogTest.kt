@@ -31,6 +31,9 @@ abstract class KotlinIDERenderLogTest : AbstractKotlinUastLightCodeInsightFixtur
     fun testWhenIs() = doTest("WhenIs")
 
     @Test
+    fun testWhenElse() = doTest("WhenElse")
+
+    @Test
     fun testDefaultImpls() = doTest("DefaultImpls")
 
     @Test

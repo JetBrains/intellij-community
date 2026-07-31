@@ -13,10 +13,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiNamedElement;
@@ -112,7 +112,7 @@ public final class JavaIntroduceParameterObjectDelegate
     return new ParameterInfoImpl(NEW_PARAMETER, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
       @Override
       public @Nullable PsiElement getActualValue(PsiElement exp, Object substitutor) {
-        final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
+        final IntroduceParameterObjectDelegate<?, ?, ?> delegate = findDelegate(exp);
         return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters, substitutor) : null;
       }
     };
@@ -132,12 +132,11 @@ public final class JavaIntroduceParameterObjectDelegate
       final PsiExpressionList argumentList = expr.getArgumentList();
       if (argumentList == null) return null;
 
-      final PsiExpression[] args = argumentList.getExpressions();
       @NonNls StringBuilder newExpression = new StringBuilder();
       newExpression.append("new ").append(existingClass.getQualifiedName());
-      if (descriptor instanceof JavaIntroduceParameterObjectClassDescriptor) {
+      if (descriptor instanceof JavaIntroduceParameterObjectClassDescriptor classDescriptor) {
         List<String> types = new ArrayList<>();
-        for (PsiTypeParameter parameter : ((JavaIntroduceParameterObjectClassDescriptor)descriptor).getTypeParameters()) {
+        for (PsiTypeParameter parameter : classDescriptor.getTypeParameters()) {
           PsiType type = ((PsiSubstitutor)substitutor).substitute(parameter);
           if (type == null) {
             types.clear();
@@ -150,13 +149,15 @@ public final class JavaIntroduceParameterObjectDelegate
         }
       }
       newExpression.append('(');
-      newExpression.append(getMergedArgs(descriptor, oldMethodParameters, args));
+      newExpression.append(getMergedArgs(descriptor, oldMethodParameters, argumentList.getExpressions()));
       newExpression.append(')');
 
       PsiNewExpression newClassExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(callExpression.getProject())
         .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
       if (PsiDiamondTypeUtil.canChangeContextForDiamond(newClassExpression, newClassExpression.getType())) {
-        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+        PsiJavaCodeReferenceElement ref = newClassExpression.getClassOrAnonymousClassReference();
+        assert ref != null;
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(ref.getParameterList());
       }
       return newClassExpression;
     }
@@ -164,13 +165,13 @@ public final class JavaIntroduceParameterObjectDelegate
   }
 
   public static String getMergedArgs(IntroduceParameterObjectClassDescriptor descriptor,
-                                     final List<? extends ParameterInfo> oldMethodParameters,
-                                     final PsiElement[] args) {
+                                     List<? extends ParameterInfo> oldMethodParameters,
+                                     PsiElement[] args) {
     final StringBuilder newExpression = new StringBuilder();
     final ParameterInfo[] paramsToMerge = descriptor.getParamsToMerge();
     newExpression.append(StringUtil.join(paramsToMerge, parameterInfo -> getArgument(args, parameterInfo.getOldIndex(), oldMethodParameters), ", "));
     final ParameterInfo lastParam = paramsToMerge[paramsToMerge.length - 1];
-    if (lastParam instanceof JavaParameterInfo && ((JavaParameterInfo)lastParam).isVarargType()) {
+    if (lastParam instanceof JavaParameterInfo info && info.isVarargType()) {
       final int lastArg = lastParam.getOldIndex();
       for (int i = lastArg + 1; i < args.length; i++) {
         newExpression.append(',');
@@ -189,7 +190,9 @@ public final class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<? extends ParameterInfoImpl> newParameterInfos, boolean delegate) {
+  public ChangeInfo createChangeSignatureInfo(PsiMethod method,
+                                              List<? extends ParameterInfoImpl> newParameterInfos,
+                                              boolean delegate) {
     PsiType returnType = method.getReturnType();
     return new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(method.getModifierList()),
                                   method,
@@ -203,21 +206,22 @@ public final class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
-                                                                                                                     PsiMethod overridingMethod,
-                                                                                                                     IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
-                                                                                                                     P1 parameterInfo,
-                                                                                                                     String mergedParamName) {
+  public <M1 extends PsiNamedElement, P1 extends ParameterInfo>
+  ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
+                                                       PsiMethod overridingMethod,
+                                                       IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
+                                                       P1 parameterInfo,
+                                                       String mergedParamName) {
     final LocalSearchScope localSearchScope = new LocalSearchScope(overridingMethod);
     final PsiParameter[] params = overridingMethod.getParameterList().getParameters();
     final PsiParameter parameter = params[parameterInfo.getOldIndex()];
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(parameter);
     assert detector != null;
-    
+
     final List<PsiReferenceExpression> readUsages = new ArrayList<>();
     final List<PsiReferenceExpression> readWriteUsages = new ArrayList<>();
     final List<PsiReferenceExpression> writeUsages = new ArrayList<>();
-    
+
     ReferencesSearch.search(parameter, localSearchScope).forEach(reference -> {
          final PsiElement refElement = reference.getElement();
          if (refElement instanceof PsiReferenceExpression paramUsage) {
@@ -241,7 +245,7 @@ public final class JavaIntroduceParameterObjectDelegate
 
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
     final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod, access);
-    
+
     readUsages.stream()
       .map(paramUsage -> new ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter)).forEach(usages::add);
     readWriteUsages.stream()
@@ -285,8 +289,8 @@ public final class JavaIntroduceParameterObjectDelegate
 
   @Override
   public void collectAdditionalFixes(Collection<? super FixableUsageInfo> usages,
-                                     final PsiMethod method,
-                                     final JavaIntroduceParameterObjectClassDescriptor descriptor) {
+                                     PsiMethod method,
+                                     JavaIntroduceParameterObjectClassDescriptor descriptor) {
 
     if (method.getDocComment() != null) {
       usages.add(new ConstructorJavadocUsageInfo(method, descriptor));
@@ -294,7 +298,8 @@ public final class JavaIntroduceParameterObjectDelegate
 
     final String newVisibility = descriptor.getNewVisibility();
     if (newVisibility != null) {
-      usages.add(new BeanClassVisibilityUsageInfo(descriptor.getExistingClass(), usages.toArray(UsageInfo.EMPTY_ARRAY), newVisibility, descriptor));
+      usages.add(
+        new BeanClassVisibilityUsageInfo(descriptor.getExistingClass(), usages.toArray(UsageInfo.EMPTY_ARRAY), newVisibility, descriptor));
     }
 
     if (!descriptor.isUseExistingClass()) {
@@ -334,7 +339,8 @@ public final class JavaIntroduceParameterObjectDelegate
           if (file != null) {
             VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
             if (virtualFile != null) {
-              conflicts.putValue(method, JavaRefactoringBundle.message("introduce.parameter.object.error.file.already.exits", virtualFile.getPresentableUrl()));
+              conflicts.putValue(method, JavaRefactoringBundle.message("introduce.parameter.object.error.file.already.exits",
+                                                                       virtualFile.getPresentableUrl()));
             }
           }
         }
@@ -344,19 +350,21 @@ public final class JavaIntroduceParameterObjectDelegate
     if (moveDestination != null) {
       boolean constructorMiss = false;
       for (UsageInfo info : infos) {
-        if (info instanceof IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper) {
-          final UsageInfo usageInfo = ((IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper)info).getInfo();
-          if (usageInfo instanceof OverriderMethodUsageInfo) {
-            final PsiElement overridingMethod = ((OverriderMethodUsageInfo<?>)usageInfo).getOverridingMethod();
+        if (info instanceof IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper wrapper) {
+          final UsageInfo usageInfo = wrapper.getInfo();
+          if (usageInfo instanceof OverriderMethodUsageInfo<?> methodUsageInfo) {
+            final PsiElement overridingMethod = methodUsageInfo.getOverridingMethod();
 
             if (!moveDestination.isTargetAccessible(overridingMethod.getProject(), overridingMethod.getContainingFile().getVirtualFile())) {
               conflicts.putValue(overridingMethod,
                                  JavaRefactoringBundle.message("introduce.parameter.object.error.created.class.wont.be.accessible"));
             }
           }
-          if (!constructorMiss && classDescriptor.isUseExistingClass() && usageInfo instanceof MethodCallUsageInfo && classDescriptor.getExistingClassCompatibleConstructor() == null) {
-            conflicts.putValue(classDescriptor.getExistingClass(), JavaRefactoringBundle
-              .message("introduce.parameter.object.error.existing.class.misses.compatible.constructor"));
+          if (!constructorMiss && classDescriptor.isUseExistingClass()
+              && usageInfo instanceof MethodCallUsageInfo
+              && classDescriptor.getExistingClassCompatibleConstructor() == null) {
+            conflicts.putValue(classDescriptor.getExistingClass(),
+                               JavaRefactoringBundle.message("introduce.parameter.object.error.existing.class.misses.compatible.constructor"));
             constructorMiss = true;
           }
         }

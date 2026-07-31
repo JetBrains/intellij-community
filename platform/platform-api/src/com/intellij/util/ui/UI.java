@@ -49,11 +49,6 @@ public final class UI {
    * in the leftmost column and components/progress bars are in the second column expanding horizontally.
    * </p>
    *
-   * <p>{@link PanelGridBuilder} has convenient {@link PanelGridBuilder#resize()} method that allows rows to expand
-   * vertically when the grid is resized. By default all rows stick to the top of the grid and all available empty space is
-   * expanded below rows.
-   * </p>
-   *
    * <p>For concrete examples look <code>ComponentPanelTestAction</code> test action and class.</p>
    */
   public static final class PanelFactory {
@@ -86,7 +81,7 @@ public final class UI {
      *
      * @return a newly created {@link PanelGridBuilder}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static PanelGridBuilder grid() {
       return new PanelGridBuilder();
     }

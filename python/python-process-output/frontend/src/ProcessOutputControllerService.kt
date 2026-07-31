@@ -47,7 +47,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -520,6 +524,21 @@ internal class ProcessOutputControllerService(
                                 val hasOpened = tryOpenLogInToolWindow(query.processId)
                                 query.respond(QueryResponsePayload.BooleanPayload(hasOpened))
                             }
+                            is ProcessOutputQuery.OpenToolWindowByTraceUuid -> {
+                                // Sent by Python Packaging Tool Window (PPTW) UI (PyPackagesTree,
+                                // PyInstallPackageDialog, PyChangeVersionDialog) to focus the
+                                // process output produced by a previously launched packaging
+                                // operation. The trace UUID identifies the packaging run; we wait
+                                // for the matching logged process to appear, then open and
+                                // highlight it in the tool window.
+                                coroutineScope.launch {
+                                    val target =
+                                        loggedProcesses.mapNotNull { list -> list.lastOrNull { it.data.traceContextUuid?.uuid == query.traceUuid } }
+                                            .first()
+                                    val hasOpened = tryOpenLogInToolWindow(target.data.id)
+                                    query.respond(QueryResponsePayload.BooleanPayload(hasOpened))
+                                }
+                            }
                             is ProcessOutputQuery.SpecifyAdditionalMessageToUser -> {
                                 processMap[query.processId]?.also { internalProcess ->
                                     when (val status = internalProcess.status.value) {
@@ -769,4 +788,3 @@ private fun <K, V> boundedLinkedHashMap(maxSize: Int): LinkedHashMap<K, V> =
         override fun removeEldestEntry(eldest: Map.Entry<K, V>): Boolean =
             size > maxSize
     }
-

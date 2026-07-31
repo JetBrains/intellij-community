@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder.components
 
 import com.intellij.lang.documentation.DocumentationMarkup
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
@@ -53,7 +52,7 @@ class DslLabelTest {
 
     val dslLabel = DslLabel(DslLabelType.LABEL)
     for (text in testValues) {
-      assertThrows<UiDslException>(text) {
+      assertThrows<IllegalStateException>(text) {
         dslLabel.maxLineLength = MAX_LINE_LENGTH_NO_WRAP
         dslLabel.text = text
       }

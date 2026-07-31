@@ -49,8 +49,7 @@ public final class PostfixTemplateCompletionContributor extends CompletionContri
                                                                   !parameters.getOriginalFile().isWritable(),
                                                                   parameters.getEditor().getCaretModel().getOffset(),
                                                                   parameters.getEditor());
-    if (commandType == null) return false;
-    return true;
+    return commandType != null;
   }
 
   @Override

@@ -9,7 +9,7 @@
 # Limit the server memory usage as per:
 # https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
 # https://youtrack.jetbrains.com/issue/MRI-4425/Check-Bazel-9.1.0-server-memory-consumption#focus=Comments-27-13796597.0-0
-startup --host_jvm_args=-Xmx10g
+startup --host_jvm_args=-Xmx12g
 
 # Disable implicit imports, remove when migrated to Bazel 9
 # see https://blog.bazel.build/2026/01/20/bazel-9.html
@@ -66,7 +66,7 @@ common --@rules_jvm//:default-kotlinc-opts=@community//:k25
 # rules_jvm / rules_kotlin compilation backend switch (see rules_jvm backend_config.bzl). Default = JPS / rules_jvm.
 # Use --config=bta to compile with the rules_kotlin (BTA) backend instead.
 common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
-common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1 --extra_toolchains=@rules_jvm//:kotlin_toolchain
 
 # configure resources
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
@@ -145,8 +145,8 @@ common --incompatible_strict_action_env=true
 common --experimental_platform_in_output_dir
 
 # Do not depend on external environment
-common --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
-common --action_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+common --repo_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 startup --noautodetect_server_javabase
 
 # Clear PATH environment variable to enable remote cache hits on Windows
@@ -196,6 +196,12 @@ test --test_output=streamed
 # https://bazel.build/reference/test-encyclopedia
 # https://bazel.build/reference/command-line-reference#flag--test_timeout
 test --test_timeout=60,300,900,14400
+
+# https://bazel.build/reference/command-line-reference#flag--cache_test_results
+test --cache_test_results=auto
+
+# Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
+test:ci --local_test_jobs=1
 
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=

@@ -29,7 +29,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPres
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
@@ -79,7 +79,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     val textFilter = SeTextFilter.from(params.filter)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
-      val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      val scopeToApply: String? = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
         scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
           if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
         }
@@ -91,7 +91,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     }
 
     var originalModel: FindModel? = null
-    val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
+    val isAllTab: Boolean = SeEverywhereFilterImpl.isAllTab(params.filter) == true
     if (isAllTab) {
       originalModel = findModel.clone()
       findModel.fileFilter = null

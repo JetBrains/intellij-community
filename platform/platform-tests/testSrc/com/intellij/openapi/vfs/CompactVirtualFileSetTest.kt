@@ -6,11 +6,12 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.HashSet
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
 
 class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
@@ -146,6 +147,45 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test equals and hashCode do not depend on storage representation`() {
+    val files = WriteAction.computeAndWait<List<VirtualFile>, Throwable> { (0 until 5).map { createFile() } }
+    val compactSet = VfsUtilCore.createCompactVirtualFileSet(files)
+    val compactSetWithStorage = VfsUtilCore.createCompactVirtualFileSet(files)
+
+    WriteAction.runAndWait<Throwable> {//trigger compactSetWithStorage to switch to int-storage internal representation:
+      val temporaryFiles = (0 until CompactVirtualFileSet.INT_SET_LIMIT + 1).map { createFile() }
+      temporaryFiles.forEach { compactSetWithStorage.add(it) }
+      temporaryFiles.forEach { compactSetWithStorage.remove(it) }
+    }
+
+    assertEquals("Sets with different storage representations must be equal",
+                 compactSet, compactSetWithStorage)
+    assertEquals("Equality must be symmetric for different storage representations",
+                 compactSetWithStorage, compactSet)
+    assertEquals("Equal sets must have equal hash codes",
+                 compactSetWithStorage.hashCode(), compactSet.hashCode())
+  }
+
+  @Test
+  fun `test equals and hashCode match HashSet while growing`() {
+    val compactSet = VfsUtilCore.createCompactVirtualFileSet()
+    val regularSet = HashSet<VirtualFile>()
+    WriteAction.runAndWait<Throwable> {
+      repeat(300) {
+        val file = createFile()
+        compactSet.add(file)
+        regularSet.add(file)
+        assertEquals("[$it]: compactSet.hashCode() must match regular Set.hashCode()",
+                     regularSet.hashCode(), compactSet.hashCode())
+        assertEquals("[$it]: CompactVirtualFileSet must equal regular HashSet",
+                     compactSet, regularSet)
+        assertEquals("[$it]: Equality with regular HashSet must be symmetric",
+                     regularSet, compactSet)
+      }
+    }
+  }
+
+  @Test
   fun `test process on small CVSet`() {
     doTestProcess(smallSetSize)
   }
@@ -249,7 +289,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   private fun doTestProcess(size: Int) {
-    val set = WriteAction.computeAndWait<Set<VirtualFile>, Throwable> { (0 until 10).map { createFile() }.toHashSet() }
+    val set = WriteAction.computeAndWait<Set<VirtualFile>, Throwable> { (0 until size).map { createFile() }.toHashSet() }
     val source = VfsUtilCore.createCompactVirtualFileSet(set)
     assertEquals(set, source.toHashSet())
     val target = CompactVirtualFileSet()

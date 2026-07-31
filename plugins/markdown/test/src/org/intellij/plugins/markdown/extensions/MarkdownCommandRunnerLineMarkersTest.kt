@@ -56,6 +56,19 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     assertEquals(myFixture.file.virtualFile.parent.canonicalPath, capturingRunner.capturedDir)
   }
 
+  @Test
+  fun `block run marker strips trailing hash comment from command`() {
+    val testMdFile = myFixture.addFileToProject(
+      "foo/withComment.md",
+      "```bash\nnpm run dev       # start Vite dev server (HMR, localhost:5173)\n```"
+    )
+    myFixture.openFileInEditor(testMdFile.virtualFile)
+    fireBlockMarkerAction()
+    val command = capturingRunner.capturedCommand
+    assertNotNull("Runner was not invoked", command)
+    assertEquals("npm run dev", command!!.trim())
+  }
+
   private fun fireBlockMarkerAction() {
     myFixture.doHighlighting()
     val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
@@ -68,11 +81,13 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
 
   private class CapturingRunner : MarkdownRunner {
     var capturedDir: String? = "not-captured"
+    var capturedCommand: String? = null
 
     override fun isApplicable(language: Language?) = true
 
     override fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean {
       capturedDir = workingDirectory
+      capturedCommand = command
       return true
     }
 

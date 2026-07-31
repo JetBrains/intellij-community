@@ -36,7 +36,7 @@ internal data class GitDiffRevisionMetadataInProject(val project: Project, val s
     .buildAsync { key, executor -> scope.future { loadMetadata(key) } }
 
   suspend fun get(revision: String, file: FilePath): VcsCommitMetadata? {
-    if (!GitUtil.isHashString(revision)) return null
+    if (!GitUtil.isPossibleFullHash(revision)) return null
     val root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)?.filePath() ?: return null
     return cache.get(CommitInRepo(revision, root)).await().getOrNull()
   }

@@ -14,19 +14,19 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pytools.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.platform.util.progress.withProgressText
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
@@ -119,19 +119,22 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
+                               ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
+    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder
+                           ?: return PyResult.localizedError(message("sdk.create.custom.poetry.error.poetry.executable.path.is.not.valid"))
 
-    service<PoetryConfigService>().updateExistingPoetryToml(moduleBasePath)
-    return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> withProgressText(message("python.sdk.progress.poetry.creating")) {
-        createNewPoetrySdk(
-          moduleBasePath = moduleBasePath,
-          basePythonBinaryPath = basePythonBinaryPath.path,
-          installPackages = false,
-          errorSink = errorSink,
-          inProjectEnv = isInProjectEnvFlow.value,
-        )
-      }
-      else -> PyResult.localizedError(message("target.is.not.supported", basePythonBinaryPath))
+    service<PoetryConfigService>().updateExistingPoetryToml(moduleBasePath, model.fileSystem, poetryExecutable)
+    return withProgressText(message("python.sdk.progress.poetry.creating")) {
+      createNewPoetrySdk(
+        moduleBasePath = moduleBasePath,
+        basePythonBinaryPath = basePythonBinaryPath,
+        fileSystem = model.fileSystem,
+        poetryExecutable = poetryExecutable,
+        installPackages = false,
+        errorSink = errorSink,
+        inProjectEnv = isInProjectEnvFlow.value,
+        targetPanelExtension = model.state.targetPanelExtension.get(),
+      )
     }
   }
 
@@ -158,18 +161,27 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
 @Service(Service.Level.APP)
 @State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
-private class PoetryConfigService :
+internal class PoetryConfigService :
   SerializablePersistentStateComponent<PoetryConfigService.PyPoetrySettingsState>(PyPoetrySettingsState()) {
   class PyPoetrySettingsState : BaseState() {
     var isInProjectEnv = false
   }
 
-  suspend fun updateExistingPoetryToml(moduleBasePath: Path) {
+  suspend fun <P : PathHolder> updateExistingPoetryToml(
+    moduleBasePath: Path,
+    fileSystem: FileSystem<P>,
+    poetryExecutable: P?,
+  ) {
     val poetryTomlExists = withContext(Dispatchers.IO) {
       moduleBasePath.resolve("poetry.toml").exists()
     }
     if (poetryTomlExists) {
-      configurePoetryEnvironment(moduleBasePath, "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local")
+      configurePoetryEnvironment(
+        modulePath = moduleBasePath,
+        fileSystem = fileSystem,
+        poetryExecutable = poetryExecutable,
+        "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local",
+      )
     }
   }
 }

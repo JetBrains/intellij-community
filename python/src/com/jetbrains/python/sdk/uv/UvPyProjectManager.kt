@@ -6,12 +6,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectCreator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UV_TOOL
@@ -54,7 +56,9 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 
   override val ui: PyToolUIInfo = UV_UI_INFO
 
-  override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
+  override val flavorDataType: Class<UvSdkFlavor> = UvSdkFlavor::class.java
+
+  override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
@@ -88,9 +92,12 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
     }
 
     // Each member might have tool.uv.sources table.
+    // PY-91089: use safeGet, not TomlTable.getTable, which throws TomlInvalidTypeException when the key
+    // holds a non-table value (e.g. the `[[tool.uv.sources]]` array-of-tables typo). Such a member is
+    // simply treated as having no sources instead of aborting the whole workspace model sync.
     val memberToUvSourceTable = entries
       .mapNotNull { (projectName, toml) ->
-        toml.pyProjectToml.toml.getTable("tool.uv.sources")?.let { projectName to it }
+        toml.pyProjectToml.toml.safeGet<TomlTable>("tool.uv.sources", unquotedDottedKey = true).successOrNull?.let { projectName to it }
       }
       .toMap()
 
@@ -184,9 +191,11 @@ private data class SourceTableWithOwner(val table: TomlTable, val ownerRoot: Pat
 
 @RequiresBackgroundThread
 private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
-  val workspace = toml.getTable("tool.uv.workspace") ?: return null
-  val members = workspace.getArrayOrEmpty("members").asMatchers
-  val exclude = workspace.getArrayOrEmpty("exclude").asMatchers
+  // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
+  // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
+  val workspace = toml.safeGet<TomlTable>("tool.uv.workspace", unquotedDottedKey = true).successOrNull ?: return null
+  val members = workspace.safeGet<TomlArray>("members").successOrNull?.asMatchers ?: emptyList()
+  val exclude = workspace.safeGet<TomlArray>("exclude").successOrNull?.asMatchers ?: emptyList()
   if (members.isEmpty()) return null
   return WorkspaceInfo(members = members, exclude = exclude)
 }
@@ -213,24 +222,39 @@ private fun getUvDependencies(
   val workspaceDeps = mutableListOf<ProjectName>()
   val pathDeps = hashSetOf<Path>()
   for ((sourcesTable, ownerRoot) in sourcesTablesWithRoots) {
-    for ((sourceKey, depTable) in sourcesTable.toMap().entries) {
+    for ((sourceKey, sourceValue) in sourcesTable.toMap().entries) {
       val normalizedKey = PyPackageName.normalizeProjectName(sourceKey)
       val depName = depByNormalizedName[normalizedKey] ?: continue
-      val table = depTable as? TomlTable ?: continue
 
-      if (table.getBoolean("workspace") == true) {
-        workspaceDeps.add(ProjectName(depName))
-        depByNormalizedName.remove(normalizedKey)
+      // A source entry is either a single table or an array of tables (multiple sources selected by
+      // platform marker — a valid uv feature); resolve every table it contains (PY-91195).
+      val depTables = when (sourceValue) {
+        is TomlTable -> listOf(sourceValue)
+        is TomlArray -> sourceValue.toList().filterIsInstance<TomlTable>()
+        else -> continue
       }
-      else {
-        val path = table.getString("path") ?: continue
-        try {
-          pathDeps.add(ownerRoot.resolve(path).normalize())
-          depByNormalizedName.remove(normalizedKey)
+
+      var resolved = false
+      for (table in depTables) {
+        // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
+        if (table.safeGet<Boolean>("workspace").successOrNull == true) {
+          workspaceDeps.add(ProjectName(depName))
+          resolved = true
         }
-        catch (e: InvalidPathException) {
-          logger.info("Can't resolve $path against $ownerRoot", e)
+        else {
+          val path = table.safeGet<String>("path").successOrNull ?: continue
+          try {
+            pathDeps.add(ownerRoot.resolve(path).normalize())
+            resolved = true
+          }
+          catch (e: InvalidPathException) {
+            logger.info("Can't resolve $path against $ownerRoot", e)
+          }
         }
+      }
+      // Once resolved by a higher-priority table, don't let parent workspace tables override it.
+      if (resolved) {
+        depByNormalizedName.remove(normalizedKey)
       }
     }
   }

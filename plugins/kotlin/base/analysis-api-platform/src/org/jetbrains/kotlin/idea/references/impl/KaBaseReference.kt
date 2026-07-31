@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.references.impl
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaResolvableReferenceBridge
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -28,17 +29,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 internal sealed interface KaBaseReference : KtReference, KaResolvableReferenceBridge {
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol>
 
-    fun getResolvedToPsi(analysisSession: KaSession, referenceTargetSymbols: Collection<KaSymbol>): Collection<PsiElement> =
-        with(analysisSession) {
-            referenceTargetSymbols.flatMap { symbol ->
-                symbol.getPsiDeclarations()
-            }
+    context(session: KaSession)
+    fun getResolvedToPsi(referenceTargetSymbols: Collection<KaSymbol>): Collection<PsiElement> =
+        referenceTargetSymbols.flatMap { symbol ->
+            symbol.getPsiDeclarations()
         }
 
-    fun getResolvedToPsi(analysisSession: KaSession): Collection<PsiElement> =
-        with(analysisSession) {
-            getResolvedToPsi(analysisSession, resolveToSymbols())
-        }
+    context(session: KaSession)
+    fun getResolvedToPsi(): Collection<PsiElement> =
+        getResolvedToPsi(resolveToSymbols())
 
     override val resolver get() = KaBaseReferenceResolver
 

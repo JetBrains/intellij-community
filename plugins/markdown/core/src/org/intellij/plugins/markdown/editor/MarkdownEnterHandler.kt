@@ -13,11 +13,13 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -34,10 +36,6 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
    *
    * E.g. it means, that there will be no indent if you will hit enter two times
    * after list item on any indent level.
-   *
-   * Also, for non-toplevel codefences indentation is implemented via preprocessing.
-   * The actual reason for it is that injection-based formatting does not work
-   * correctly in frankenstein-like injection (for example, for codefence inside blockquote)
    */
   override fun preprocessEnter(file: PsiFile, editor: Editor, caretOffset: Ref<Int>, caretAdvance: Ref<Int>,
                                dataContext: DataContext, originalHandler: EditorActionHandler?): Result {
@@ -50,14 +48,6 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
       return Result.Stop
     }
 
-    val fence = MarkdownCodeFenceUtils.getCodeFence(element)
-    if (fence != null && !fence.isTopLevel()) {
-      val indent = MarkdownCodeFenceUtils.getIndent(fence) ?: return Result.Continue
-
-      EditorModificationUtil.insertStringAtCaret(editor, "\n${indent}")
-      return Result.Stop
-    }
-
     return Result.Continue
   }
 
@@ -65,13 +55,38 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
    * During post-processing `>` can be added if it is necessary
    */
   override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): Result {
-    val offset = editor.caretModel.offset
-    val element = MarkdownPsiUtil.findNonWhiteSpacePrevSibling(file, offset) ?: return Result.Continue
-    if (!file.isValid || !shouldHandle(editor, dataContext, element)) return Result.Continue
+    val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file)
+    if (!file.isValid && injectionHost?.isValid != true) return Result.Continue
 
-    processBlockQuote(editor, element)
+    val element = findPostProcessElement(file, editor, injectionHost) ?: return Result.Continue
+    if (injectionHost == null && !shouldHandle(editor, dataContext, element)) return Result.Continue
 
+    val indent = findFenceIndent(element, injectionHost)
+    if (indent == null) {
+      processBlockQuote(editor, element)
+      return Result.Continue
+    }
+
+    val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+    val caretOffset = topLevelEditor.caretModel.offset
+    topLevelEditor.document.insertString(
+      topLevelEditor.document.getLineStartOffset(topLevelEditor.caretModel.logicalPosition.line), indent
+    )
+    topLevelEditor.caretModel.moveToOffset(caretOffset + indent.length)
     return Result.Continue
+
+  }
+
+  private fun findPostProcessElement(file: PsiFile, editor: Editor, injectionHost: PsiElement?): PsiElement? {
+    if (!file.isValid) return injectionHost
+    return MarkdownPsiUtil.findNonWhiteSpacePrevSibling(file, editor.caretModel.offset) ?: injectionHost
+  }
+
+  private fun findFenceIndent(element: PsiElement, injectionHost: PsiElement?): String? {
+    val fence = injectionHost as? MarkdownCodeFence ?: MarkdownCodeFenceUtils.getCodeFence(element)
+    if (fence == null || fence.isTopLevel()) return null
+
+    return MarkdownCodeFenceUtils.getIndent(fence)
   }
 
 
@@ -95,7 +110,7 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
   private fun shouldAbortIndentation(file: PsiFile, editor: Editor, offset: Int): Boolean {
     //do not stop indentation after two spaces in code fences
     if (
-      file !is MarkdownFile
+      !file.supportsMarkdown()
       || file.findElementAt(offset - 1)?.let { MarkdownCodeFenceUtils.inCodeFence(it.node) } == true
     ) {
       return false
@@ -130,7 +145,8 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return false
 
     if (!editor.document.isWritable) return false
-    if (InjectedLanguageManager.getInstance(project).getTopLevelFile(element) !is MarkdownFile) return false
+    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(element)
+    if (!topLevelFile.supportsMarkdown(dataContext)) return false
 
     return !editor.isViewer
   }

@@ -146,7 +146,7 @@ object UniversalFileChooser {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
       mainPanel.preselect(explicit)
       if (this.showAndGet()) {
-        return toVirtualFiles(mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
+        return toVirtualFiles(descriptor, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
       }
       return emptyArray()
     }
@@ -156,7 +156,7 @@ object UniversalFileChooser {
       mainPanel.preselect(explicit)
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
-        mutableList.addAll(toVirtualFiles(mainPanel.getSelectedFiles()).filterNotNull())
+        mutableList.addAll(toVirtualFiles(descriptor, mainPanel.getSelectedFiles()))
         callback.consume(mutableList)
       }
     }
@@ -176,10 +176,13 @@ object UniversalFileChooser {
     }
   }
 
-  private fun toVirtualFiles(paths: List<Path>): List<VirtualFile?> {
-    return paths.map { path ->
-      VfsUtil.findFile(path, true)
-    }
+  private fun toVirtualFiles(descriptor: FileChooserDescriptor, paths: List<Path>): List<VirtualFile> {
+    // Mirror FileChooserDialogImpl.doOKAction: after resolving NIO paths to VirtualFiles, run each
+    // result through `descriptor.getFileToSelect(...)` (via FileChooserUtil.getChosenFiles) so that,
+    // e.g., an archive file is returned as its `jar://…!/` JarFileSystem VirtualFile when the
+    // descriptor has `isChooseJarContents = true` (see IJPL-250874).
+    val resolved = paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+    return FileChooserUtil.getChosenFiles(descriptor, resolved)
   }
 
   class Panel @JvmOverloads constructor(
@@ -224,15 +227,28 @@ object UniversalFileChooser {
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
+      val projectContrib = projectContributor(project)
+      val localContrib = localContributor(contributors)
+      val restrictedContributors: Set<UniversalFileChooserContributor>
       effectiveContributors = if (descriptor.isEnvironmentRestricted) {
-        val restricted = projectContributor(project) ?: localContributor(contributors)
-        restricted?.let { listOf(it) } ?: contributors
+        val restricted = projectContrib ?: localContrib
+        val primary = restricted?.let { listOf(it) } ?: contributors
+        if (descriptor.isLocalFileSystem && localContrib != null && localContrib !in primary) {
+          restrictedContributors = primary.toSet()
+          primary + localContrib
+        }
+        else {
+          restrictedContributors = primary.toSet()
+          primary
+        }
       }
       else {
+        restrictedContributors = emptySet()
         contributors
       }
       for (contributor in effectiveContributors) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled)
+        val restrictRoots = contributor in restrictedContributors
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled, restrictRoots)
         fileViews.add(fileView)
       }
       // If there is a single tab available, don't show the tab itself, only its content panel.
@@ -629,15 +645,18 @@ object UniversalFileChooser {
       private val topToolbar: ActionToolbar,
       popupActionGroup: ActionGroup,
       private val okEnabledUpdater: () -> Unit = {},
+      restrictRootsToProjectEnvironment: Boolean = descriptor.isEnvironmentRestricted,
     ) {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
-      private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
+      private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
+      private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
+      private val chooseFolders: Boolean = descriptor.isChooseFolders
 
       var fileToSelect: Path? = null
-      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles)
+      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
 
       @Volatile
       private var pathTextFieldInvalid: Boolean = false
@@ -871,7 +890,16 @@ object UniversalFileChooser {
       fun isOkEnabled(): Boolean {
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
-          file.parent != null && !(hasExtensionFilter && Files.isDirectory(file))
+          if (file.parent == null) return@all false
+          val isDir = Files.isDirectory(file)
+          if (isDir) {
+            if (!chooseFolders) return@all false
+            if (hasExtensionFilter) return@all false
+          }
+          else {
+            if (!chooseFiles) return@all false
+          }
+          true
         }
       }
 

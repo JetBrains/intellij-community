@@ -175,7 +175,7 @@ class ClassLoaderConfigurator(
         }
       }
       for (descriptor in sequence { yieldAllDependsSubDescriptors(module) }) {
-        if (!descriptor.isEnabled) {
+        if (!pluginSet.resolvedPluginSet.isResolved(descriptor)) {
           continue
         }
         contributeDependencies(pluginSet.getSortedDependencies(descriptor))

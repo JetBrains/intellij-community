@@ -22,18 +22,17 @@ from packaging.requirements import Requirement
 
 from ts_utils.metadata import PackageDependencies, get_recursive_requirements, read_metadata
 from ts_utils.mypy import MypyDistConf, mypy_configuration_from_distribution, temporary_mypy_config_file
-from ts_utils.paths import STDLIB_PATH, STUBS_PATH, TESTS_DIR, TS_BASE_PATH, distribution_path
+from ts_utils.paths import STDLIB_PATH, STUBS_PATH, TS_BASE_PATH, distribution_path
 from ts_utils.py315 import PY315_INCOMPATIBLE_RUNTIME_DEPENDENCIES
+from ts_utils.stubs import StubFile, stdlib_stubs, third_party_stubs
 from ts_utils.utils import (
     PYTHON_VERSION,
     colored,
     get_gitignore_spec,
     get_mypy_req,
-    parse_stdlib_versions_file,
     print_error,
     print_success_msg,
     spec_matches_path,
-    supported_versions_for_module,
     venv_python,
 )
 
@@ -126,37 +125,26 @@ def log(args: TestConfig, *varargs: object) -> None:
         print(colored(" ".join(map(str, varargs)), "blue"))
 
 
-def match(path: Path, args: TestConfig) -> bool:
+def match(stub: StubFile, args: TestConfig) -> bool:
     for excluded_path in args.exclude:
-        if path == excluded_path:
-            log(args, path, "explicitly excluded")
+        if stub.path == excluded_path:
+            log(args, stub, "explicitly excluded")
             return False
-        if excluded_path in path.parents:
-            log(args, path, f'is in an explicitly excluded directory "{excluded_path}"')
+        if excluded_path in stub.path.parents:
+            log(args, stub, f'is in an explicitly excluded directory "{excluded_path}"')
             return False
     for included_path in args.filter:
-        if path == included_path:
-            log(args, path, "was explicitly included")
+        if stub.path == included_path:
+            log(args, stub, "was explicitly included")
             return True
-        if included_path in path.parents:
-            log(args, path, f'is in an explicitly included directory "{included_path}"')
+        if included_path in stub.path.parents:
+            log(args, stub, f'is in an explicitly included directory "{included_path}"')
             return True
     log_msg = (
         f'is implicitly excluded: was not in any of the directories or paths specified on the command line: "{args.filter!r}"'
     )
-    log(args, path, log_msg)
+    log(args, stub, log_msg)
     return False
-
-
-def add_files(files: list[Path], module: Path, args: TestConfig) -> None:
-    """Add all files in package or module represented by 'name' located in 'root'."""
-    if module.name.startswith("."):
-        return
-    if module.is_file() and module.suffix == ".pyi":
-        if match(module, args):
-            files.append(module)
-    else:
-        files.extend(sorted(file for file in module.rglob("*.pyi") if match(file, args)))
 
 
 class MypyResult(Enum):
@@ -239,15 +227,14 @@ def run_mypy(
     return MypyResult.from_process_result(result)
 
 
-def add_third_party_files(distribution: str, files: list[Path], args: TestConfig, seen_dists: set[str]) -> None:
+def distribution_stub_files(distribution: str, args: TestConfig, seen_dists: set[str]) -> list[Path]:
     typeshed_reqs = get_recursive_requirements(distribution).typeshed_pkgs
     if distribution in seen_dists:
-        return
+        return []
     seen_dists.add(distribution)
     seen_dists.update(r.name for r in typeshed_reqs)
-    root = distribution_path(distribution)
-    for path in root.iterdir():
-        add_files(files, path, args)
+
+    return [stub.path for stub in third_party_stubs(distribution) if match(stub, args)]
 
 
 class TestResult(NamedTuple):
@@ -263,9 +250,8 @@ def test_third_party_distribution(
     Return a tuple, where the first element indicates mypy's return code
     and the second element is the number of checked files.
     """
-    files: list[Path] = []
     seen_dists: set[str] = set()
-    add_third_party_files(distribution, files, args, seen_dists)
+    files = distribution_stub_files(distribution, args, seen_dists)
     configurations = mypy_configuration_from_distribution(distribution)
 
     if not files and args.filter:
@@ -293,13 +279,7 @@ def test_third_party_distribution(
 
 
 def test_stdlib(args: TestConfig) -> TestResult:
-    files: list[Path] = []
-    for file in STDLIB_PATH.iterdir():
-        if file.name in ("VERSIONS", TESTS_DIR):
-            continue
-        add_files(files, file, args)
-
-    files = remove_modules_not_in_python_version(files, args.version)
+    files = [stub.path for stub in stdlib_stubs(args.version) if match(stub, args)]
 
     if not files:
         return TestResult(MypyResult.SUCCESS, 0)
@@ -308,29 +288,6 @@ def test_stdlib(args: TestConfig) -> TestResult:
     # We don't actually need to install anything for the stdlib testing
     result = run_mypy(args, [], files, venv_dir=None, testing_stdlib=True, non_types_dependencies=False)
     return TestResult(result, len(files))
-
-
-def remove_modules_not_in_python_version(paths: list[Path], py_version: VersionString) -> list[Path]:
-    py_version_tuple = tuple(map(int, py_version.split(".")))
-    module_versions = parse_stdlib_versions_file()
-    new_paths: list[Path] = []
-    for path in paths:
-        if path.parts[0] != "stdlib" or path.suffix != ".pyi":
-            continue
-        module_name = stdlib_module_name_from_path(path)
-        min_version, max_version = supported_versions_for_module(module_versions, module_name)
-        if min_version <= py_version_tuple <= max_version:
-            new_paths.append(path)
-    return new_paths
-
-
-def stdlib_module_name_from_path(path: Path) -> str:
-    assert path.parts[0] == "stdlib"
-    assert path.suffix == ".pyi"
-    parts = list(path.parts[1:-1])
-    if path.parts[-1] != "__init__.pyi":
-        parts.append(path.parts[-1].removesuffix(".pyi"))
-    return ".".join(parts)
 
 
 @dataclass

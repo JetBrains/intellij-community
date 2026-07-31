@@ -13,6 +13,8 @@ _ModelT = TypeVar("_ModelT", bound=Model)
 class GeoModelAdminMixin:
     gis_widget: type[OSMWidget]
     gis_widget_kwargs: dict[str, Any]
-    def formfield_for_dbfield(self, db_field: Field, request: HttpRequest, **kwargs: Any) -> FormField | None: ...
+    def formfield_for_dbfield(
+        self, db_field: Field[Any, Any], request: HttpRequest, **kwargs: Any
+    ) -> FormField | None: ...
 
 class GISModelAdmin(GeoModelAdminMixin, ModelAdmin[_ModelT]): ...

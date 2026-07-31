@@ -16,11 +16,6 @@ enum class PyTypeRendererFeature {
     USE_FQN,
 
     /**
-     * Render internal "unsafe" unions as `UnsafeUnion[...]`, otherwise render them as regular union types.
-     */
-    UNSAFE_UNION,
-
-    /**
      * Render bounds and constraints of TypeVars.
      */
     TYPE_VAR_BOUNDS,

@@ -21,6 +21,7 @@ import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.core.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedIntermediateOperation
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedTerminalOperation
+import com.intellij.debugger.streams.lib.impl.GatherOperation
 import com.intellij.debugger.streams.lib.impl.MatchingOperation
 import com.intellij.debugger.streams.lib.impl.OptionalResultOperation
 import com.intellij.debugger.streams.lib.impl.ParallelOperation
@@ -44,6 +45,15 @@ class BreakpointBasedFlatMappingOperation(name: String) : FlatMappingOperation(n
     call: IntermediateStreamCall,
     time: ObjectReference
   ): IntermediateCallHandler = PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
+}
+
+class BreakpointBasedGatherOperation(name: String) : GatherOperation(name), BreakpointBasedIntermediateOperation {
+  override fun getRuntimeTraceHandler(
+    objectStorage: ObjectStorage,
+    callOrder: Int,
+    call: IntermediateStreamCall,
+    time: ObjectReference,
+  ): IntermediateCallHandler = GatherCallHandler(objectStorage, call, time)
 }
 
 class BreakpointBasedSortedOperation(name: String) : SortedOperation(name), BreakpointBasedIntermediateOperation {

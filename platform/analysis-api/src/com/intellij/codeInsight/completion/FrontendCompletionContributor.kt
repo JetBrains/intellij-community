@@ -4,7 +4,12 @@ package com.intellij.codeInsight.completion
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * marker interface for contributors that are used on Remote-Development Frontend
+ * Frontend completion contributors ARE not supported YET.
+ * This interface is an INTERNAL platform API NOT intended for use by plugins.
+ *
+ * @deprecated Use [CompletionContributor] instead and put your completion contributors in backend modules.
  */
+@Deprecated("Use [CompletionContributor] instead and put your completion contributors in backend modules. " +
+            "Frontend completion contributors ARE not supported yet, this interface is a platform implementation detail")
 @ApiStatus.Internal
 interface FrontendCompletionContributor

@@ -2,9 +2,7 @@
 package com.intellij.ide.projectWizard.projectTypeStep
 
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal open class TemplateGroupItem(
   val group: TemplatesGroup
 ) {

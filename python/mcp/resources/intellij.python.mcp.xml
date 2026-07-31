@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <plugin id="com.intellij.mcpServer"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.mcpserver"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
@@ -8,6 +9,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.uv.backend"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

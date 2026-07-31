@@ -30,7 +30,12 @@ import java.util.Map;
  */
 public interface DataIndexer<Key, Value, Data> {
   /**
-   * Map input to its associated data.
+   * Maps input to its associated data.
+   * <br/>
+   * <b>BEWARE</b>: returned map must have canonical Map semantics:
+   * 1) .get() must be side-effects-free
+   * 2) .get(nonExistingKey) must return null
+   * Returning a Map implementation that violates these contracts leads to undefined index subsystem behavior.
    */
   @NotNull
   Map<Key,Value> map(@NotNull Data inputData);

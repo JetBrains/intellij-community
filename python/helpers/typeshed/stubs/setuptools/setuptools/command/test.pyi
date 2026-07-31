@@ -1,5 +1,5 @@
-from typing import ClassVar, NoReturn
-from typing_extensions import deprecated
+from typing import ClassVar
+from typing_extensions import Never, deprecated
 
 from .. import Command
 
@@ -12,4 +12,4 @@ class test(Command):
     user_options: ClassVar[list[tuple[str, str, str]]]
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
-    def run(self) -> NoReturn: ...
+    def run(self) -> Never: ...

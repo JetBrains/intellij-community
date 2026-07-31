@@ -1,6 +1,25 @@
-load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources")
+load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_kernel",
+    module_name = "fleet.kernel",
+    plugins = [
+        "@community//fleet/compiler-plugins/rpc:rpc-plugin",
+        "@lib//:kotlin-serialization-plugin",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/rhizomedb.transactor.rebase:wasmjs_module_lib",
+        "@community//fleet/rhizomedb.transactor:wasmjs_module_lib",
+    ],
+    deps = [
+        "@community//fleet/rhizomedb:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)
 
 ### auto-generated section `build fleet.kernel` start
 create_kotlinc_options(
@@ -14,6 +33,7 @@ create_kotlinc_options(
     x_context_parameters = True,
     x_jvm_default = "all-compatibility",
     x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
 )
 
 fleet_plugin_services_resources(

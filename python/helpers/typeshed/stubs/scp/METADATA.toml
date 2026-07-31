@@ -1,3 +1,3 @@
-version = "0.15.*"
+version = "0.16.*"
 upstream-repository = "https://github.com/jbardin/scp.py"
 dependencies = ["types-paramiko"]

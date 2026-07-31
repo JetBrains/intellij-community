@@ -9,6 +9,7 @@
     <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.debugger.streams.java" loading="optional"/>
     <module name="intellij.debugger.streams.java.rt" loading="embedded"/>
+    <module name="intellij.debugger.streams.java.rt.gatherers" loading="embedded"/>
   </content>
 
   <description><![CDATA[

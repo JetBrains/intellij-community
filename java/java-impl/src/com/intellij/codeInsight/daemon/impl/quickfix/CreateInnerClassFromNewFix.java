@@ -64,7 +64,11 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     PsiElement element = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
     if (targetClasses.isEmpty()) return IntentionPreviewInfo.EMPTY;
-    invokeImpl(targetClasses.get(0));
+    PsiClass targetClass = targetClasses.getFirst();
+    // the target class may be resolved through the qualifier of the new expression and thus belong to another,
+    // physical file; such a change cannot be rendered in the custom copy-based preview
+    if (targetClass.getContainingFile() != psiFile) return IntentionPreviewInfo.EMPTY;
+    invokeImpl(targetClass);
     return IntentionPreviewInfo.DIFF;
   }
 

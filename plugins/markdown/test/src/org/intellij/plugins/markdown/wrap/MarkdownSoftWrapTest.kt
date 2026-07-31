@@ -1,14 +1,35 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.wrap
 
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.SlowOperations
+import org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class MarkdownSoftWrapTest : BasePlatformTestCase() {
+  fun `test listener does not throw or report slow operations on EDT`() {
+    myFixture.configureByText("test.md", "")
+    val listener = MarkdownInlayUpdateOnSoftWrapListener()
+
+    SlowOperations.reportKnownIssues()
+    PlatformTestUtil.withSystemProperty<Nothing>(SlowOperations.FORBID_SLOW_OPS_PROPERTY, "true") {
+      assertDoesNotThrow {
+        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
+          listener.editorCreated(EditorFactoryEvent(EditorFactory.getInstance(), myFixture.editor))
+        }
+      }
+    }
+    assertTrue(SlowOperations.reportKnownIssues().isEmpty())
+  }
+
   /**
    * The wrap candidate falls inside the link, where wrapping is forbidden, so the strategy has to move
    * the soft wrap before the link start. The link is placed after several blank-line-separated paragraphs to check
-   * that [org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy] resolves tokens correctly when
+   * that [com.intellij.markdown.frontend.editor.MarkdownLineWrapPositionStrategy] resolves tokens correctly when
    * the lexed context does not start at the beginning of the document.
    */
   fun `test soft wrap does not break a link located after the first block`() {

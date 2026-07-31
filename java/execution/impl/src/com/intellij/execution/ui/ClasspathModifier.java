@@ -73,7 +73,8 @@ public class ClasspathModifier<T extends JavaRunConfigurationBase> extends Setti
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Project project = configuration.getProject();
-          FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, false);
+          FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, false)
+            .withEnvironmentRestricted(true);
           VirtualFile[] files = FileChooser.chooseFiles(descriptor, ClasspathComponent.this, project, project.getBaseDir());
           myModel.addRows(ContainerUtil.map(files, file -> new ModuleBasedConfigurationOptions.ClasspathModification(
             PathUtil.getLocalPath(file.getPath()), false)));

@@ -17,9 +17,10 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createDeclarationByPattern
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -236,7 +238,10 @@ private class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     private fun Map<Language?, List<PsiElement>>.replaceKotlin(klass: KtClass) {
         val kotlinReferences = this[KOTLIN_LANGUAGE] ?: return
-        val singletonCall = KtPsiFactory(klass.project).createExpression(klass.name ?: return)
+        val singletonCall = KtPsiFactory(klass.project).createExpressionByPattern(
+            "$0",
+            klass.nameAsSafeName,
+        )
 
         kotlinReferences.filter { it.node.elementType == KtNodeTypes.CALL_EXPRESSION }
             .forEach { it.replace(singletonCall) }

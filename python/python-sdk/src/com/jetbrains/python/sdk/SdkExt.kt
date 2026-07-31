@@ -12,8 +12,13 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PythonInfo
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.mapResult
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -104,6 +109,7 @@ val Sdk.isSdkSeemsValid: Boolean
     }
 
     val pythonSdkAdditionalData = pySdkAdditionalData
+    if (!pythonSdkAdditionalData.hasValidWorkingDirectory()) return false
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
 
@@ -192,3 +198,15 @@ val Sdk.skeletonsPath: Path?
 fun Sdk.createSkeletonsRootDirectory(): Path? {
   return skeletonsPath?.let { Files.createDirectories(it) }
 }
+
+/**
+ * Returns SDK validation info, but it is not cached, so you should use [PythonInterpreter.getVersion] instead.
+ */
+@Internal
+suspend fun Sdk.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExecute().mapResult { it.validatePythonAndGetInfo() }
+
+/**
+ * See [Sdk.validatePythonAndGetInfo]
+ */
+@get:Internal
+val PyResult<PythonInfo>.version: PyResult<LanguageLevel> get() = mapSuccess { it.languageLevel }

@@ -77,12 +77,15 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   }
 
   companion object {
-    internal fun moveSelectedChangesTo(project: Project, virtualFiles: Array<VirtualFile>?, targetList: LocalChangeList) {
-      with(MoveChangesHandler(project)) {
-        addChangesForFiles(virtualFiles)
-        if (!isEmpty)
-          moveTo(project, targetList, changes, unversionedFiles)
-      }
+    internal fun moveSelectedChangesTo(
+      project: Project,
+      changes: Array<Change>?,
+      unversionedFiles: List<VirtualFile>,
+      targetList: LocalChangeList,
+    ) {
+      val selectedChanges = changes.orEmpty().toList()
+      if (selectedChanges.isEmpty()) return
+      moveTo(project, targetList, selectedChanges, unversionedFiles)
     }
 
     @JvmStatic

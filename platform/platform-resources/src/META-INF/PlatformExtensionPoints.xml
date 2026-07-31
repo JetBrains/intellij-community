@@ -222,6 +222,7 @@
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
     <extensionPoint name="toolWindowLayoutProfileProvider" interface="com.intellij.toolWindow.ToolWindowLayoutProfileProvider" dynamic="true"/>
+    <extensionPoint name="toolWindowExtension" interface="com.intellij.toolWindow.ToolWindowExtension" dynamic="true"/>
     <extensionPoint name="projectFrameToolWindowLayout" beanClass="com.intellij.toolWindow.ProjectFrameToolWindowLayoutBean" dynamic="true"/>
     <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>
@@ -343,6 +344,8 @@
                     dynamic="true"/>
     <extensionPoint name="pluginSuggestionProvider" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
+    <extensionPoint name="pluginAdvertiserSuppressor" dynamic="true"
+                    interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserSuppressor"/>
 
     <extensionPoint name="pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
     <extensionPoint name="pluginsViewCustomizer" interface="com.intellij.ide.plugins.newui.PluginsViewCustomizer" dynamic="true"/>
@@ -416,10 +419,6 @@
 
     <extensionPoint name="execution.ongoingRunConfigurationProvider"
                     interface="com.intellij.execution.configurations.OngoingRunConfigurationProvider"
-                    dynamic="true"/>
-
-    <extensionPoint name="executionActionSuppressor"
-                    interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->

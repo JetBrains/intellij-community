@@ -21,9 +21,9 @@ public final class AutoModuleManifestChangeListener implements BulkFileListener 
     for (VFileEvent event : events) {
       if (!(event instanceof VFileCreateEvent) && !(event instanceof VFileDeleteEvent)) continue;
       VirtualFile file = event.getFile();
-      if (file == null || !"MANIFEST.MF".equalsIgnoreCase(file.getName())) continue;
+      if (file == null || !JavaSourceModuleNameIndex.MANIFEST_FILE_NAME.equalsIgnoreCase(file.getName())) continue;
       VirtualFile metaInf = file.getParent();
-      if (metaInf == null || !"META-INF".equalsIgnoreCase(metaInf.getName())) continue;
+      if (metaInf == null || !JavaSourceModuleNameIndex.META_INF_DIR_NAME.equalsIgnoreCase(metaInf.getName())) continue;
       VirtualFile jarRoot = metaInf.getParent();
       if (jarRoot != null && jarRoot.getParent() == null && "jar".equalsIgnoreCase(jarRoot.getExtension())) {
         FileBasedIndex.getInstance().requestReindex(jarRoot);

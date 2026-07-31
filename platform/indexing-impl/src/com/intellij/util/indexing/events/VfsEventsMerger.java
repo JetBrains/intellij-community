@@ -97,6 +97,10 @@ public final class VfsEventsMerger {
 
   @FunctionalInterface
   public interface VfsEventProcessor {
+    /** Prepares a change before it is removed from the merger: this phase MAY be cancellable */
+    default void prepare(@NotNull ChangeInfo changeInfo) { }
+
+    /** Applies a change in some way: this method MUST NOT be cancellable */
     boolean process(@NotNull ChangeInfo changeInfo);
 
     /** this is a helper method that designates the end of the events batch, can be used for optimizations */
@@ -107,8 +111,8 @@ public final class VfsEventsMerger {
    * 1. Method can be invoked in several threads.
    * 2. Method processes the snapshot of available events at the time of the invocation: it means that if events are produced
    *    concurrently with their processing, then the set of events _could_ be non-empty after the method terminates.
-   * 3. Method itself regularly checks for cancellations (thus _can_ finish with PCEs), but event processor should process the
-   *    change info atomically (without PCE)
+   * 3. Method itself regularly checks for cancellations (thus _can_ finish with PCEs), but event {@code eventProcessor.process()}
+   *    should process the change info atomically (i.e. without PCE)
    */
   @VisibleForTesting
   public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
@@ -119,8 +123,14 @@ public final class VfsEventsMerger {
         int[] fileIds = changePerFileId.keys(); // snapshot of the keys
         for (int fileId : fileIds) {
           ProgressManager.checkCanceled();
-          ChangeInfo info = changePerFileId.remove(fileId);
+
+          ChangeInfo info = changePerFileId.get(fileId);
           if (info == null) continue;
+
+          // Keep the change in .changePerFileId while the cancellable preparation is running.
+          eventProcessor.prepare(info);
+          // If a newer event is recorded concurrently -> the identity check fails and the newer change stays queued.
+          if (!changePerFileId.remove(fileId, info)) continue;
 
           try {
             IndexingEventsLogger.tryLog(() -> "Processing " + info);
@@ -141,6 +151,7 @@ public final class VfsEventsMerger {
             assert false;
           }
         }
+        //endBatch() is a logical end of _successful_ batch => shouldn't be in 'finally'
         eventProcessor.endBatch();
       }
       catch (Throwable t) {
@@ -148,10 +159,10 @@ public final class VfsEventsMerger {
         throw t;
       }
       finally {
-        final Throwable finalInterruptReason = interruptReason;
-        IndexingEventsLogger.tryLog(() -> {
-          return "Processing " + (finalInterruptReason != null ? "interrupted: " + finalInterruptReason : "finished");
-        });
+        Throwable finalInterruptReason = interruptReason;
+        IndexingEventsLogger.tryLog(
+          () -> "Processing " + (finalInterruptReason != null ? "interrupted: " + finalInterruptReason : "finished")
+        );
       }
     }
     return true;

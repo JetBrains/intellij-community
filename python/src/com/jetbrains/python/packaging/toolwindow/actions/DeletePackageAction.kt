@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
@@ -10,6 +11,10 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 
 internal class DeletePackageAction : ModifyPackagesActionBase() {
+  init {
+    templatePresentation.icon = PyPackageIcons.Uninstall
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val selectedPackages = e.selectedPackages.filterIsInstance<InstalledPackage>().toTypedArray()

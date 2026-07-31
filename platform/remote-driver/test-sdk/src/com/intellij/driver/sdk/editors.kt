@@ -45,6 +45,7 @@ interface RangeHighlighter {
   fun getEndOffset(): Int
   fun getTextAttributes(): TextAttributes?
   fun getTextAttributesKey(): TextAttributesKey?
+  fun getLayer(): Int
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
@@ -126,7 +127,10 @@ interface DeclarativeInlayRenderer {
 }
 
 @Remote("com.intellij.ui.SimpleColoredText")
-interface SimpleColoredText
+interface SimpleColoredText {
+  fun getTexts(): List<String>
+  fun getAttributes(): List<SimpleTextAttributes>
+}
 
 @Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer")
 interface InlineDebugRenderer {
@@ -178,6 +182,7 @@ interface FileEditor {
 @Remote("com.intellij.openapi.fileEditor.FileEditorManager")
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
+  fun closeFile(file: VirtualFile)
   fun getSelectedTextEditor(): Editor?
   fun setSelectedEditor(editor: FileEditor)
   fun getAllEditors(): Array<FileEditor>
@@ -233,15 +238,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
         service.navigateViaBackend(relativePath, 0)
-        waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
-                getter = {
-                  if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-                  else service<FileEditorManager>(project).getCurrentFile()
-                },
-                checker = { virtualFile ->
-                  virtualFile != null &&
-                  Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath))
-                })!!
+        findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
       }
     }
     if (waitForCodeAnalysis) {
@@ -249,3 +246,20 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     }
   }
 }
+
+fun Driver.findCurrentEditorFile(relativePath: String, project: Project, isTextEditor: Boolean = true): VirtualFile? {
+  return waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
+                 getter = {
+                   if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                   else service<FileEditorManager>(project).getCurrentFile()
+                 },
+                 checker = { virtualFile -> virtualFile != null && Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath)) })
+}
+
+fun Driver.findOpenFile(relativePath: String, project: Project = singleProject(), isTextEditor: Boolean = true): VirtualFile? =
+  if (!isRemDevMode) {
+    findFile(relativePath = relativePath, project = project)
+  }
+  else {
+    findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
+  }

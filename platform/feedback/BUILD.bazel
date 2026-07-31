@@ -20,6 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/core-api:core",
+        "//platform/execution",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//platform/editor-ui-api:editor-ui",
@@ -36,9 +37,8 @@ jvm_library(
         "//platform/statistics",
         "//platform/core-ui",
         "//platform/util:util-ui",
-        "//platform/platform-impl/internal",
         "//platform/progress/shared:ide-progress",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -55,6 +55,7 @@ jvm_library(
         # do not sort,
         ":feedback",
         "//platform/core-api:core_test_lib",
+        "//platform/execution:execution_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -71,8 +72,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.feedback` end

@@ -277,7 +277,8 @@ public final class TableResultView extends JBTableWithResizableCells
     if (tableHeader != null) tableHeader.setExpandableItemsEnabled(false);
     putClientProperty(BookmarksManager.ALLOWED, true);
 
-    new ResizableCellEditorsSupport(this);
+    ResizableCellEditorsSupport.install(this);
+
     setupFocusListener();
     setupMagnificator();
     setEnableAntialiasing(true);
@@ -288,11 +289,13 @@ public final class TableResultView extends JBTableWithResizableCells
 
     adjustDefaultActions();
     addPropertyChangeListener(TABLE_CELL_EDITOR_PROPERTY, e -> GridUtil.activeGridChanged(resultPanel));
-    new TableSelectionModel(this, myResultPanel);
-    new TableGoToRowHelper(this, myResultPanel);
-    new TableAggregatorWidgetHelper(this, myResultPanel);
-    new TablePositionWidgetHelper(this, myResultPanel);
-    new TableScrollPositionManager(this, myResultPanel);
+
+    TableSelectionModel.install(this, myResultPanel);
+    TableGoToRowHelper.install(this, myResultPanel);
+    TableAggregatorWidgetHelper.install(this, myResultPanel);
+    TablePositionWidgetHelper.install(this, myResultPanel);
+    TableScrollPositionManager.install(this, myResultPanel);
+
     myFloatingToolbar = new TableFloatingToolbar(this, myResultPanel, myResultPanel.getCoroutineScope());
 
     getColumnModel().getSelectionModel().addListSelectionListener(e -> myGrower.reset());

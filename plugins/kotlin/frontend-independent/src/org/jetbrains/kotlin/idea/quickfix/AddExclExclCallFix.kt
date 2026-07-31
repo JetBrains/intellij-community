@@ -8,6 +8,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,6 +22,7 @@ class AddExclExclCallFix(
     element: PsiElement,
     private val fixImplicitReceiver: Boolean = false,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element) {
+    private val targetElement = element
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.introduce.non.null.assertion.family")
 
@@ -29,7 +31,16 @@ class AddExclExclCallFix(
             .withPriority(PriorityAction.Priority.LOW)
 
     override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {
-        val psiFactory = KtPsiFactory(context.project)
+        doApplyFix(element)
+    }
+
+    fun prepareInPlaceFix(): () -> Unit {
+        val pointer = targetElement.createSmartPointer()
+        return { pointer.element?.let { doApplyFix(it) } }
+    }
+
+    private fun doApplyFix(element: PsiElement) {
+        val psiFactory = KtPsiFactory(element.project)
         if (fixImplicitReceiver) {
             val exclExclExpression = if (element is KtCallableReferenceExpression) {
                 psiFactory.createExpressionByPattern("this!!::$0", element.callableReference)

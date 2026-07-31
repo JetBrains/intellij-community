@@ -1,0 +1,4 @@
+public class JavaUtil {
+  public static void keep() {
+  }
+}

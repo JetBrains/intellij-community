@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts.ConfigurableName
 import com.intellij.ui.dsl.builder.AlignX
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import javax.swing.JComponent
 
-class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
+class GreclipseConfigurable(val project: Project, val settings: GreclipseSettings) : Configurable {
 
   override fun getDisplayName(): @ConfigurableName String? {
     return null
@@ -24,7 +25,7 @@ class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
   val panel: DialogPanel = panel {
     group(GroovyBundle.message("configurable.greclipse.border.title")) {
       row(GroovyBundle.message("configurable.greclipse.path.label")) {
-        textFieldWithBrowseButton(createSingleLocalFileDescriptor().withTitle(message("configurable.greclipse.path.chooser.description")).withEnvironmentRestricted(true))
+        textFieldWithBrowseButton(createSingleLocalFileDescriptor().withTitle(message("configurable.greclipse.path.chooser.description")).withEnvironmentRestricted(true), project)
           .align(AlignX.FILL)
           .bindText(settings::greclipsePath)
       }

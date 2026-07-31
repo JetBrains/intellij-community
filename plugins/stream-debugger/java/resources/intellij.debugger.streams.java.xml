@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.debugger.streams.core"/>
     <module name="intellij.debugger.streams.java.rt"/>
+    <module name="intellij.debugger.streams.java.rt.gatherers"/>
     <module name="intellij.java"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger"/>

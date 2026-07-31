@@ -774,6 +774,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
     if (item.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null) {
+      item.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION_START_OFFSET, getLookupStart());
       hideWithItemSelected(item, completionChar);
       return;
     }
@@ -1316,10 +1317,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         ActionContext finalActionContext = actionContext
           .withOffset(start)
           .withSelection(TextRange.create(start, actionContext.offset()));
+        long stamp = file.getFileDocument().getModificationStamp();
         // Cache current item result
         ReadAction.nonBlocking(
           () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
+          .withDocumentsCommitted(getProject())
           .expireWith(this)
+          .expireWhen(() -> stamp != finalActionContext.file().getFileDocument().getModificationStamp())
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }

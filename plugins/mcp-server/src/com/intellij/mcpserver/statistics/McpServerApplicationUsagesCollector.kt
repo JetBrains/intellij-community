@@ -45,7 +45,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     val metrics = mutableSetOf<MetricEvent>()
 
     metrics.add(MCP_RUNNING.metric(mcpServerService.isRunning))
-    metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.state.enableBraveMode))
+    metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.enableBraveMode))
     metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().invocationMode))
 
     McpClientDetector.detectGlobalMcpClients().forEach { client ->

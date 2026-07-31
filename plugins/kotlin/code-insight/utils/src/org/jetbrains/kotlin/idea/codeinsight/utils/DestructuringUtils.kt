@@ -6,12 +6,15 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -26,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * Returns non-null only if all destructuring entries can be matched to constructor parameters
  * (i.e., the number of entries does not exceed the number of parameters).
  */
-fun KaSession.extractPrimaryParameters(
+context(session: KaSession)
+fun extractPrimaryParameters(
     declaration: KtDestructuringDeclaration,
 ): List<KaValueParameterSymbol>? {
     val type = declaration.getDestructuredClassType() ?: return null
@@ -35,7 +39,8 @@ fun KaSession.extractPrimaryParameters(
     }
 }
 
-fun KaSession.extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>? {
+context(session: KaSession)
+fun extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>? {
     if (type.isMarkedNullable) return null
     val classSymbol = type.expandedSymbol
 
@@ -78,11 +83,12 @@ private val POSITIONAL_DESTRUCTURING_CLASSES: Set<ClassId> = setOf(
 context(session: KaSession)
 fun KtDestructuringDeclaration.isPositionalDestructuringType(): Boolean {
     val classType = this.getDestructuredClassType() ?: return false
-    return session.isPositionalDestructuringType(classType)
+    return isPositionalDestructuringType(classType)
 }
 
 @ApiStatus.Internal
-fun KaSession.isPositionalDestructuringType(classType: KaClassType): Boolean {
+context(session: KaSession)
+fun isPositionalDestructuringType(classType: KaClassType): Boolean {
     val classId = classType.expandedSymbol?.classId ?: return false
     return classId in POSITIONAL_DESTRUCTURING_CLASSES
 }

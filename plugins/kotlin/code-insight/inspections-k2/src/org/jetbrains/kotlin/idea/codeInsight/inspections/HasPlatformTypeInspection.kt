@@ -7,12 +7,17 @@ import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
@@ -47,7 +52,8 @@ internal class HasPlatformTypeInspection(
         }
     }
 
-    private fun KaSession.isFlexibleRecursive(type: KaType): Boolean {
+    context(session: KaSession)
+    private fun isFlexibleRecursive(type: KaType): Boolean {
         if (type.hasFlexibleNullability) return true
         val classType = type as? KaClassType ?: return false
         return classType.typeArguments.any { arg -> arg !is KaStarTypeProjection && arg.type?.let { isFlexibleRecursive(it) } == true }
@@ -58,7 +64,8 @@ internal class HasPlatformTypeInspection(
         KaSymbolVisibility.PROTECTED,
     )
 
-    private fun KaSession.dangerousFlexibleTypeOrNull(
+    context(_: KaSession)
+    private fun dangerousFlexibleTypeOrNull(
         declaration: KtCallableDeclaration,
         publicAPIOnly: Boolean,
         reportPlatformArguments: Boolean
@@ -81,7 +88,8 @@ internal class HasPlatformTypeInspection(
         return type
     }
 
-    private fun KaSession.checkForPlatformType(element: KtCallableDeclaration, nameIdentifier: PsiElement, holder: ProblemsHolder) {
+    context(session: KaSession)
+    private fun checkForPlatformType(element: KtCallableDeclaration, nameIdentifier: PsiElement, holder: ProblemsHolder) {
         val dangerousFlexibleType = dangerousFlexibleTypeOrNull(element, publicAPIOnly, reportPlatformArguments) ?: return
         val fixes = mutableListOf<ModCommandAction>(
             SpecifyExplicitTypeQuickFix(element, CallableReturnTypeUpdaterUtils.getTypeInfo(element, useTemplate = holder.isOnTheFly))

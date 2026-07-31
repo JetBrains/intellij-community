@@ -12,7 +12,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import java.util.regex.Pattern
 
 private val ASSERT_METHOD_NAMES = setOf(
     "assertEquals",
@@ -85,9 +86,9 @@ private val EXPECTED_LIKE_FACTORY_CALLS = setOf(
     "kotlin.shortArrayOf",
 )
 
-private val EXPECTED_LIKE_CONVERSIONS_PREFIXES = listOf(
-    "to",
-    "from",
+private val EXPECTED_LIKE_CONVERSIONS_PREFIX_PATTERNS = listOf(
+    Pattern.compile("^to[A-Z]"),
+    Pattern.compile("^from[A-Z]"),
 )
 
 internal class KotlinMisorderedAssertEqualsArgumentsInspection :
@@ -210,15 +211,19 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         val expression = unwrapParentheses()
         if (!visited.add(expression)) return false
 
-        val constant = expression.evaluate()
-        return when {
-            constant != null && constant !is KaConstantValue.ErrorValue -> true
-            expression is KtConstantExpression -> true
-            expression is KtStringTemplateExpression -> !expression.hasInterpolation()
-            expression is KtNameReferenceExpression -> expression.looksLikeExpectedReference(parameterPosition, visited)
-            expression is KtDotQualifiedExpression -> expression.looksLikeExpectedQualifiedExpression(parameterPosition, visited)
-            expression is KtCallExpression -> expression.looksLikeExpectedCall(receiverExpression = null, parameterPosition, visited)
-            else -> false
+        try {
+            val constant = expression.evaluate()
+            return when {
+                constant != null && constant !is KaConstantValue.ErrorValue -> true
+                expression is KtConstantExpression -> true
+                expression is KtStringTemplateExpression -> !expression.hasInterpolation()
+                expression is KtNameReferenceExpression -> expression.looksLikeExpectedReference(parameterPosition, visited)
+                expression is KtDotQualifiedExpression -> expression.looksLikeExpectedQualifiedExpression(parameterPosition, visited)
+                expression is KtCallExpression -> expression.looksLikeExpectedCall(receiverExpression = null, parameterPosition, visited)
+                else -> false
+            }
+        } finally {
+            visited.remove(expression)
         }
     }
 
@@ -258,7 +263,7 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
             functionSymbol.valueParameters.isEmpty() &&
             receiverLooksExpected) {
             val functionName = functionSymbol.name.asString()
-            if (EXPECTED_LIKE_CONVERSIONS_PREFIXES.any { functionName.startsWith(it) }) {
+            if (EXPECTED_LIKE_CONVERSIONS_PREFIX_PATTERNS.any { it.matcher(functionName).find() }) {
                 return true
             }
         }

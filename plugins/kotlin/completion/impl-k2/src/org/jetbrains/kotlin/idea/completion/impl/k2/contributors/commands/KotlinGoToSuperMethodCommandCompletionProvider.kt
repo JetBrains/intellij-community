@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 import com.intellij.codeInsight.completion.command.commands.AbstractGoToSuperMethodCompletionCommandProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.psi.KtNamedFunction
 

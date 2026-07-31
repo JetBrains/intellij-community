@@ -583,9 +583,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       class A:
         def __eq__(self, other: Any) -> int: ...
+      #                                 ^^^ WARNING Return type of method 'A.__eq__()' does not match return type the base method in class 'object'
       
       class B:
         def __eq__(self, other: Any) -> str: ...
+      #                                 ^^^ WARNING Return type of method 'B.__eq__()' does not match return type the base method in class 'object'
       
       a = A()
       b = B()
@@ -600,9 +602,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       class A:
         def __ne__(self, other: Any) -> int: ...
+      #                                 ^^^ WARNING Return type of method 'A.__ne__()' does not match return type the base method in class 'object'
       
       class B:
         def __ne__(self, other: Any) -> str: ...
+      #                                 ^^^ WARNING Return type of method 'B.__ne__()' does not match return type the base method in class 'object'
       
       a = A()
       b = B()

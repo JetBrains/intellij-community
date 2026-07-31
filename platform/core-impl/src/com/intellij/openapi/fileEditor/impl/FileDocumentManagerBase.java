@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -34,15 +33,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
-  private static final Logger LOG = Logger.getInstance(FileDocumentManagerBase.class);
-
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
   public static final Key<Boolean> TRACK_NON_PHYSICAL = Key.create("TRACK_NON_PHYSICAL");
 
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
-  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
+  private final Map<VirtualFile, DocumentEx> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
   private static final Map<Document, Boolean> nonPhysicalFilesDocumentsCache = CollectionFactory.createConcurrentWeakMap();
 
   @ApiStatus.Experimental
@@ -62,7 +59,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return getDocumentWithoutReadAccessAssert(file);
   }
 
-  private @Nullable Document getDocumentWithoutReadAccessAssert(@NotNull VirtualFile file) {
+  private @Nullable DocumentEx getDocumentWithoutReadAccessAssert(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
@@ -253,11 +250,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return (int)(largeFilePreviewSize / bytesPerChar);
   }
 
-  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  private void cacheDocument(@NotNull VirtualFile file, @NotNull DocumentEx document) {
     myDocumentCache.put(file, document);
   }
 
-  private Document getDocumentFromCache(@NotNull VirtualFile file) {
+  private DocumentEx getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 

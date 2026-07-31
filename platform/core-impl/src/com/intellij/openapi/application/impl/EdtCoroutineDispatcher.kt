@@ -27,6 +27,11 @@ internal sealed class EdtCoroutineDispatcher(
   protected val type: EdtDispatcherKind,
 ) : MainCoroutineDispatcher() {
 
+  companion object {
+    val LOG = logger<EdtCoroutineDispatcher>()
+  }
+
+
   override val immediate: MainCoroutineDispatcher
     get() = when (type) {
       EdtDispatcherKind.EDT -> ImmediateEdtDispatcher
@@ -67,7 +72,7 @@ internal sealed class EdtCoroutineDispatcher(
     return when (type.lockBehavior) {
       EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_REPORT -> {
         Runnable {
-          ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(lockAccessViolationMessage) {
+          ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(lockAccessViolationMessage, LOG::error) {
             runnable.run()
           }
         }
@@ -179,7 +184,7 @@ internal enum class EdtDispatcherKind(
 
   fun presentableName(): String = when (this) {
     EDT -> "Dispatchers.EDT"
-    LAX_UI -> "Dispatchers.ui(RELAX)"
+    LAX_UI -> "Dispatchers.UiWithModelAccess"
     UI -> "Dispatchers.UI"
     MAIN -> "Dispatchers.Main"
   }

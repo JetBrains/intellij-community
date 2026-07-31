@@ -1,7 +1,8 @@
 config:
   validation: true
+  warningsAsErrors: false
   # when writing own rules with new properties, exclude the property path e.g.: 'my_rule_set,.*>.*>[my_property]'
-  excludes: []
+  excludes: [ 'jewel>.*>.*' ]
 
 processors:
   active: true
@@ -23,7 +24,48 @@ console-reports:
     - 'FileBasedFindingsReport'
 
 comments:
-  active: false
+  active: true
+#  AbsentOrWrongFileLicense:
+#    active: false
+#    licenseTemplateFile: 'license.template'
+#    licenseTemplateIsRegex: false
+#  CommentOverPrivateFunction:
+#    active: false
+#  CommentOverPrivateProperty:
+#    active: false
+#  DeprecatedBlockTag:
+#    active: false
+#  EndOfSentenceFormat:
+#    active: false
+#    endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
+#  KDocReferencesNonPublicProperty:
+#    active: false
+#    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**' ]
+  OutdatedDocumentation:
+    active: true
+    matchTypeParameters: true
+    matchDeclarationsOrder: true
+    allowParamOnConstructorProperties: true
+  UndocumentedPublicClass:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    searchInNestedClass: true
+    searchInInnerClass: true
+    searchInInnerObject: true
+    searchInInnerInterface: true
+    searchInProtectedClass: false
+    ignoreDefaultCompanionObject: false
+    ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
+  UndocumentedPublicFunction:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    searchProtectedFunction: false
+    ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
+  UndocumentedPublicProperty:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    searchProtectedProperty: false
+    ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
 
 complexity:
   active: true
@@ -93,7 +135,6 @@ style:
     active: true
   ExpressionBodySyntax:
     active: true
-    autoCorrect: true
     includeLineWrapping: false
   ForbiddenComment:
     active: true
@@ -175,10 +216,15 @@ naming:
     active: false
     ignoreAnnotated:
       - Composable
+
 jewel:
   EqualityMembersRule:
+    active: true
+    autoCorrect: true
     annotated:
       - GenerateDataFunctions
+  MissingApiStatusAnnotationRule:
+    active: true
     autoCorrect: true
 
 Compose:

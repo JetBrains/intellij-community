@@ -5,12 +5,17 @@ package com.intellij.collaboration.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorKeys
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -42,14 +47,13 @@ internal abstract class CodeReviewNextPreviousCommentAction(
   private val canGotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Boolean,
   private val gotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Unit,
   private val gotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Unit,
-) : DumbAwareAction(text, description, null) {
+) : DumbAwareAction(text, description, null), ActionPromoter {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
-    val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
+    val (editor, editorModel) = getEditorModel(e)
     if (editor == null || editorModel == null || !editorModel.canNavigate) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -68,8 +72,7 @@ internal abstract class CodeReviewNextPreviousCommentAction(
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
-    val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
+    val (editor, editorModel) = getEditorModel(e)
     if (editor == null || editorModel == null || !editorModel.canNavigate) return
 
     val focused = findFocusedThreadId(project)
@@ -80,6 +83,23 @@ internal abstract class CodeReviewNextPreviousCommentAction(
       val editorLine = editor.caretModel.logicalPosition.line // zero-index
       editorModel.gotoLineComment(editorLine)
     }
+  }
+
+  override fun suppress(actions: List<AnAction>, context: DataContext): List<AnAction>? {
+    if (context.getData(CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY) != null) {
+      return actions.filterNot { it == this }
+    }
+    return null
+  }
+
+  private fun getEditorModel(e: AnActionEvent): Pair<Editor?, CodeReviewNavigableEditorViewModel?> {
+    val currentEditor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
+    currentEditor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)?.let { navigatableModel ->
+      return Pair(currentEditor, navigatableModel)
+    }
+
+    val navigatableEditor = e.getData(CodeReviewEditorKeys.NAVIGABLE_EDITOR_KEY)
+    return Pair(navigatableEditor, navigatableEditor?.getUserData(CodeReviewNavigableEditorViewModel.KEY))
   }
 }
 

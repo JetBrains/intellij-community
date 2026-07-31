@@ -1,0 +1,6 @@
+public final class Impl implements F {
+  @Override
+  public int f() {
+    return 2;
+  }
+}

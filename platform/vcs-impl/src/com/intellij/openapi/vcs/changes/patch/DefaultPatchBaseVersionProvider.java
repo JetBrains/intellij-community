@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.patch;
 
@@ -138,7 +138,13 @@ public final class DefaultPatchBaseVersionProvider {
     return historySession == null ? Collections.emptyList() : historySession.getRevisionList();
   }
 
-  private static @Nullable String parseVersionAsRevision(@NotNull String versionId, @NotNull AbstractVcs vcs) {
+  /**
+   * Extracts the raw revision string from a patch base version id (e.g. {@code "(revision <hash>)"}) using the VCS
+   * {@link AbstractVcs#getRevisionPattern() revision pattern}. Returns {@code null} when the version id is not a committed
+   * revision (e.g. a date-only id or a VCS without a revision pattern). Performs no VCS calls.
+   */
+  @ApiStatus.Internal
+  public static @Nullable String parseVersionAsRevision(@NotNull String versionId, @NotNull AbstractVcs vcs) {
     String vcsPattern = vcs.getRevisionPattern();
     if (vcsPattern != null) {
       Pattern revisionPattern = Pattern.compile(String.format(ourRevisionPatternTemplate, vcsPattern));

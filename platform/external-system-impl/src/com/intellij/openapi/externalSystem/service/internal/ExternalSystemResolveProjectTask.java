@@ -124,24 +124,11 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
         }
       });
 
-      if (projectNode != null) {
-        myExternalProject.set(projectNode);
-
-        var externalSystemManager = ExternalSystemApiUtil.getManager(projectSystemId);
-        assert externalSystemManager != null;
-
-        var externalModulePaths = new HashSet<String>();
-        var moduleNodes = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE);
-        for (DataNode<ModuleData> node : moduleNodes) {
-          externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-        }
-        var ExternalProjectPath = projectNode.getData().getLinkedExternalProjectPath();
-        var externalSystemSettings = externalSystemManager.getSettingsProvider().fun(project);
-        var externalProjectSettings = externalSystemSettings.getLinkedProjectSettings(ExternalProjectPath);
-        if (externalProjectSettings != null && !externalModulePaths.isEmpty()) {
-          externalProjectSettings.setModules(externalModulePaths);
-        }
-      }
+      myExternalProject.set(projectNode);
+    }
+    catch (ExternalSystemPartialResolutionException e) {
+      myExternalProject.set(e.getPartialProjectData());
+      throw e;
     }
     finally {
       activity.finished();
@@ -201,15 +188,42 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   @Override
   protected void setState(@NotNull ExternalSystemTaskState state) {
     super.setState(state);
-    if (state.isStopped() &&
-        // merging existing cache data with the new partial data is not supported yet
-        !(myResolverPolicy != null && myResolverPolicy.isPartialDataResolveAllowed())) {
-      InternalExternalProjectInfo projectInfo =
-        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), myExternalProject.getAndSet(null));
-      final long currentTimeMillis = System.currentTimeMillis();
-      projectInfo.setLastImportTimestamp(currentTimeMillis);
-      projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
-      ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+    if (!state.isStopped()) return;
+    // merging existing cache data with the new partial data is not supported yet
+    if (myResolverPolicy != null && myResolverPolicy.isPartialDataResolveAllowed()) return;
+
+    var projectNode = myExternalProject.getAndSet(null);
+
+    setExternalProjectInfo(state, projectNode);
+    if (projectNode != null) {
+      setExternalModulePaths(projectNode);
+    }
+  }
+
+  private void setExternalProjectInfo(@NotNull ExternalSystemTaskState state, @Nullable DataNode<ProjectData> projectNode) {
+    var projectInfo = new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), projectNode);
+    var currentTimeMillis = System.currentTimeMillis();
+    projectInfo.setLastImportTimestamp(currentTimeMillis);
+    projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
+    ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+  }
+
+  private void setExternalModulePaths(@NotNull DataNode<ProjectData> projectNode) {
+    var projectSystemId = getExternalSystemId();
+    var project = getIdeProject();
+    var externalSystemManager = ExternalSystemApiUtil.getManager(projectSystemId);
+    assert externalSystemManager != null;
+
+    var externalModulePaths = new HashSet<String>();
+    var moduleNodes = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE);
+    for (DataNode<ModuleData> node : moduleNodes) {
+      externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+    }
+    var externalProjectPath = projectNode.getData().getLinkedExternalProjectPath();
+    var externalSystemSettings = externalSystemManager.getSettingsProvider().fun(project);
+    var externalProjectSettings = externalSystemSettings.getLinkedProjectSettings(externalProjectPath);
+    if (externalProjectSettings != null && !externalModulePaths.isEmpty()) {
+      externalProjectSettings.setModules(externalModulePaths);
     }
   }
 }

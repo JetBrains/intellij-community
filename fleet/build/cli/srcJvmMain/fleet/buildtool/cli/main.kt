@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import fleet.buildtool.cli.commands.GenerateFleetPluginServicesResourcesCommand
+import fleet.buildtool.cli.commands.GenerateFleetWasmServiceAccessorsCommand
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
 
@@ -14,6 +15,7 @@ class Haven : CliktCommand(name = "haven") {
 
 fun main(args: Array<String>): Unit = Haven().subcommands(
   GenerateFleetPluginServicesResourcesCommand(),
+  GenerateFleetWasmServiceAccessorsCommand(),
 ).main(parseArgs(args))
 
 private fun parseArgs(startupArgs: Array<String>): List<String> {

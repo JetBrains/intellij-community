@@ -2,16 +2,16 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isByteType
-import org.jetbrains.kotlin.analysis.api.components.isDoubleType
-import org.jetbrains.kotlin.analysis.api.components.isFloatType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isShortType
-import org.jetbrains.kotlin.analysis.api.components.isUByteType
-import org.jetbrains.kotlin.analysis.api.components.isUIntType
-import org.jetbrains.kotlin.analysis.api.components.isULongType
-import org.jetbrains.kotlin.analysis.api.components.isUShortType
+import org.jetbrains.kotlin.analysis.api.types.isByteType
+import org.jetbrains.kotlin.analysis.api.types.isDoubleType
+import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.isLongType
+import org.jetbrains.kotlin.analysis.api.types.isShortType
+import org.jetbrains.kotlin.analysis.api.types.isUByteType
+import org.jetbrains.kotlin.analysis.api.types.isUIntType
+import org.jetbrains.kotlin.analysis.api.types.isULongType
+import org.jetbrains.kotlin.analysis.api.types.isUShortType
 import org.jetbrains.kotlin.analysis.api.symbols.findClassLike
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature

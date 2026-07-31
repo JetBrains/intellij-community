@@ -24,7 +24,9 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -61,6 +63,16 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
     get() {
       readField("listOfAbstract")
       return dataSource.listOfAbstract
+    }
+  override val stringList: List<String>
+    get() {
+      readField("stringList")
+      return dataSource.stringList
+    }
+  override val stringSet: Set<String>
+    get() {
+      readField("stringSet")
+      return dataSource.stringSet
     }
 
   override val entitySource: EntitySource
@@ -121,6 +133,12 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       if (!getEntityData().isListOfAbstractInitialized()) {
         error("Field BaseTestEntity#listOfAbstract should be initialized")
       }
+      if (!getEntityData().isStringListInitialized()) {
+        error("Field BaseTestEntity#stringList should be initialized")
+      }
+      if (!getEntityData().isStringSetInitialized()) {
+        error("Field BaseTestEntity#stringSet should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -132,6 +150,14 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       if (collection_listOfAbstract is MutableWorkspaceList<*>) {
         collection_listOfAbstract.cleanModificationUpdateAction()
       }
+      val collection_stringList = getEntityData().stringList
+      if (collection_stringList is MutableWorkspaceList<*>) {
+        collection_stringList.cleanModificationUpdateAction()
+      }
+      val collection_stringSet = getEntityData().stringSet
+      if (collection_stringSet is MutableWorkspaceSet<*>) {
+        collection_stringSet.cleanModificationUpdateAction()
+      }
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -140,6 +166,8 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.listOfAbstract != dataSource.listOfAbstract) this.listOfAbstract = dataSource.listOfAbstract.toMutableList()
+      if (this.stringList != dataSource.stringList) this.stringList = dataSource.stringList.toMutableList()
+      if (this.stringSet != dataSource.stringSet) this.stringSet = dataSource.stringSet.toMutableSet()
       updateChildToParentReferences(parents)
     }
 
@@ -260,6 +288,48 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         getEntityData(true).listOfAbstract = value
         listOfAbstractUpdater.invoke(value)
       }
+    private val stringListUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("stringList")
+    }
+    override var stringList: MutableList<String>
+      get() {
+        val collection_stringList = getEntityData().stringList
+        if (collection_stringList !is MutableWorkspaceList) return collection_stringList
+        if (diff == null || modifiable.get()) {
+          collection_stringList.setModificationUpdateAction(stringListUpdater)
+        }
+        else {
+          collection_stringList.cleanModificationUpdateAction()
+        }
+        return collection_stringList
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).stringList = value
+        stringListUpdater.invoke(value)
+      }
+    private val stringSetUpdater: (value: Set<String>) -> Unit = { value ->
+
+      changedProperty.add("stringSet")
+    }
+    override var stringSet: MutableSet<String>
+      get() {
+        val collection_stringSet = getEntityData().stringSet
+        if (collection_stringSet !is MutableWorkspaceSet) return collection_stringSet
+        if (diff == null || modifiable.get()) {
+          collection_stringSet.setModificationUpdateAction(stringSetUpdater)
+        }
+        else {
+          collection_stringSet.cleanModificationUpdateAction()
+        }
+        return collection_stringSet
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).stringSet = value
+        stringSetUpdater.invoke(value)
+      }
 
     override fun getEntityClass(): Class<BaseTestEntity> = BaseTestEntity::class.java
   }
@@ -270,9 +340,13 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
 internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
   lateinit var name: String
   lateinit var listOfAbstract: MutableList<AbstractClass>
+  lateinit var stringList: MutableList<String>
+  lateinit var stringSet: MutableSet<String>
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isListOfAbstractInitialized(): Boolean = ::listOfAbstract.isInitialized
+  internal fun isStringListInitialized(): Boolean = ::stringList.isInitialized
+  internal fun isStringSetInitialized(): Boolean = ::stringSet.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<BaseTestEntity> {
     val modifiable = BaseTestEntityImpl.Builder(null)
@@ -299,6 +373,8 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
     val clonedEntity = super.clone()
     clonedEntity as BaseTestEntityData
     clonedEntity.listOfAbstract = clonedEntity.listOfAbstract.toMutableWorkspaceList()
+    clonedEntity.stringList = clonedEntity.stringList.toMutableWorkspaceList()
+    clonedEntity.stringSet = clonedEntity.stringSet.toMutableWorkspaceSet()
     return clonedEntity
   }
 
@@ -307,7 +383,7 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return BaseTestEntity(name, listOfAbstract, entitySource)
+    return BaseTestEntity(name, listOfAbstract, stringList, stringSet, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -322,6 +398,8 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.listOfAbstract != other.listOfAbstract) return false
+    if (this.stringList != other.stringList) return false
+    if (this.stringSet != other.stringSet) return false
     return true
   }
 
@@ -331,6 +409,8 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
     other as BaseTestEntityData
     if (this.name != other.name) return false
     if (this.listOfAbstract != other.listOfAbstract) return false
+    if (this.stringList != other.stringList) return false
+    if (this.stringSet != other.stringSet) return false
     return true
   }
 
@@ -338,6 +418,8 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + listOfAbstract.hashCode()
+    result = 31 * result + stringList.hashCode()
+    result = 31 * result + stringSet.hashCode()
     return result
   }
 
@@ -345,6 +427,8 @@ internal class BaseTestEntityData : WorkspaceEntityData<BaseTestEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + listOfAbstract.hashCode()
+    result = 31 * result + stringList.hashCode()
+    result = 31 * result + stringSet.hashCode()
     return result
   }
 }

@@ -149,14 +149,30 @@ def get_mypy_req() -> str:
 # ====================================================================
 
 VersionTuple: TypeAlias = tuple[int, int]
-SupportedVersionsDict: TypeAlias = dict[str, tuple[VersionTuple, VersionTuple]]
 
 VERSIONS_PATH = STDLIB_PATH / "VERSIONS"
 VERSION_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_.]*): ([23]\.\d{1,2})-([23]\.\d{1,2})?$")
 VERSION_RE = re.compile(r"^([23])\.(\d+)$")
 
 
-def parse_stdlib_versions_file() -> SupportedVersionsDict:
+class SupportedVersions:
+    def __init__(self, module_versions: dict[str, tuple[VersionTuple, VersionTuple]]) -> None:
+        self.module_versions = module_versions
+
+    def supported_versions_for_module(self, module_name: str) -> tuple[VersionTuple, VersionTuple]:
+        while "." in module_name:
+            if module_name in self.module_versions:
+                return self.module_versions[module_name]
+            module_name = ".".join(module_name.split(".")[:-1])
+        return self.module_versions[module_name]
+
+    def is_supported(self, module_name: str, version: str) -> bool:
+        version_tuple = tuple(map(int, version.split(".")))
+        minimum, maximum = self.supported_versions_for_module(module_name)
+        return minimum <= version_tuple <= maximum
+
+
+def parse_stdlib_versions_file() -> SupportedVersions:
     result: dict[str, tuple[VersionTuple, VersionTuple]] = {}
     with VERSIONS_PATH.open(encoding="UTF-8") as f:
         for line in f:
@@ -170,15 +186,7 @@ def parse_stdlib_versions_file() -> SupportedVersionsDict:
             min_version = _parse_version(m.group(2))
             max_version = _parse_version(m.group(3)) if m.group(3) else (99, 99)
             result[mod] = min_version, max_version
-    return result
-
-
-def supported_versions_for_module(module_versions: SupportedVersionsDict, module_name: str) -> tuple[VersionTuple, VersionTuple]:
-    while "." in module_name:
-        if module_name in module_versions:
-            return module_versions[module_name]
-        module_name = ".".join(module_name.split(".")[:-1])
-    return module_versions[module_name]
+    return SupportedVersions(result)
 
 
 def _parse_version(v_str: str) -> tuple[int, int]:

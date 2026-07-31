@@ -11,12 +11,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Defines the overall visual style of a GFM table, combining its colors, metrics, and header font weight. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableStyling(
+    /** The color tokens for the table. */
     public val colors: GfmTableColors,
+    /** The layout metrics for the table. */
     public val metrics: GfmTableMetrics,
+    /** The base font weight applied to header cells. */
     public val headerBaseFontWeight: FontWeight,
 ) {
     public constructor(
@@ -63,16 +67,22 @@ public class GfmTableStyling(
             "headerBaseFontWeight=$headerBaseFontWeight" +
             ")"
 
+    /** Companion object for [GfmTableStyling]. */
     public companion object
 }
 
+/** Holds the color tokens for a GFM table: border, row background, and alternate row background. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableColors(
+    /** The color of the table borders. */
     public val borderColor: Color,
+    /** The background color for standard (odd) rows. */
     public val rowBackgroundColor: Color,
+    /** The background color for alternate (even) rows when using [RowBackgroundStyle.Striped]. */
     public val alternateRowBackgroundColor: Color,
+    /** The row background style, controlling whether rows are uniform or striped. */
     public val rowBackgroundStyle: RowBackgroundStyle,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -105,9 +115,11 @@ public class GfmTableColors(
             "rowBackgroundStyle=$rowBackgroundStyle" +
             ")"
 
+    /** Companion object for [GfmTableColors]. */
     public companion object
 }
 
+/** Controls whether GFM table rows are rendered with a uniform or alternating background color. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public enum class RowBackgroundStyle {
@@ -124,13 +136,18 @@ public enum class RowBackgroundStyle {
     Striped,
 }
 
+/** Holds the layout metrics for a GFM table: border width, cell padding, and content alignment. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableMetrics(
+    /** The width of the table borders. */
     public val borderWidth: Dp,
+    /** The padding applied inside each table cell. */
     public val cellPadding: PaddingValues,
+    /** The default horizontal content alignment for body cells. */
     public val defaultCellContentAlignment: Alignment.Horizontal,
+    /** The default horizontal content alignment for header cells. */
     public val headerDefaultCellContentAlignment: Alignment.Horizontal,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -164,5 +181,6 @@ public class GfmTableMetrics(
             ")"
     }
 
+    /** Companion object for [GfmTableMetrics]. */
     public companion object
 }

@@ -13,9 +13,13 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 @Immutable
 @GenerateDataFunctions
 public class DotBadgeShape(
+    /** The horizontal center of the dot as a fraction of the icon width. */
     public val x: Float = 16.5f / 20,
+    /** The vertical center of the dot as a fraction of the icon height. */
     public val y: Float = 3.5f / 20,
+    /** The radius of the dot as a fraction of the icon's smallest dimension. */
     public val radius: Float = 3.5f / 20,
+    /** The border (hole expansion) size as a fraction of the icon's smallest dimension. */
     public val border: Float = 1.5f / 20,
 ) : BadgeShape {
     override fun createHoleOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
@@ -75,7 +79,9 @@ public class DotBadgeShape(
 
     override fun toString(): String = "DotBadgeShape(x=$x, y=$y, radius=$radius, border=$border)"
 
+    /** Companion object for [DotBadgeShape]. */
     public companion object {
+        /** The default [DotBadgeShape] instance. */
         public val Default: DotBadgeShape = DotBadgeShape()
     }
 }

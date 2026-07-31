@@ -2,20 +2,13 @@
 package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
-import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
-import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.pagecache.impl.Throttler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -29,14 +22,12 @@ import java.util.logging.LogRecord
 @ApiStatus.Internal
 class DialogAppender : Handler() {
   private val MAX_EARLY_LOGGING_EVENTS = 20
-  private val NOTIFICATIONS_ENABLED = System.getProperty("idea.fatal.error.notification") != "disabled"
 
-  private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
+  private val context = DiagnosticDispatchers.Default + CoroutineName("DialogAppender")
 
   private var earlyEventCounter = 0
   private val earlyEvents = ArrayDeque<Pair<String?, Throwable>>()
   private var loggerBroken = AtomicBoolean(false)
-  private val pluginUpdateScheduled = AtomicBoolean(false)
 
   override fun publish(event: LogRecord) {
     if (event.level.intValue() < Level.SEVERE.intValue() || loggerBroken.get()) return
@@ -95,32 +86,17 @@ class DialogAppender : Handler() {
         }
       }
       else {
-        val plugin = findPlugin(throwable)
-        if (app.isInternal() || NOTIFICATIONS_ENABLED || showPluginError(throwable, message, plugin)) {
-          val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
-          val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
-          val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
-          MessagePool.getInstance().addErrorMessage(LogMessage(throwable, message, attachments))
-        }
+        val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
+        val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
+        val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
+        // always add to MessagePool, dialog notification will decide if it shows or not in IdeMessagePanel
+        MessagePool.getInstance().addErrorMessage(LogMessage(throwable, message, attachments))
       }
     }
     catch (e: Throwable) {
       loggerBroken.set(true)
       throw e
     }
-  }
-
-  private fun findPlugin(throwable: Throwable): IdeaPluginDescriptor? {
-    val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
-    if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-      UpdateCheckerFacade.getInstance().updateAndShowResult()
-    }
-    return plugin
-  }
-
-  private fun showPluginError(throwable: Throwable, message: String?, plugin: IdeaPluginDescriptor?): Boolean {
-    val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
-    return submitter !is ITNReporter || submitter.showErrorInRelease(IdeaLoggingEvent(message, throwable))
   }
 
   override fun flush() { }

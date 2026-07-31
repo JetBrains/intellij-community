@@ -8,10 +8,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
@@ -85,7 +85,9 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
 
         val arrayAccessExpression = codeFragment.findDescendantOfType<KtArrayAccessExpression>() ?: return null
         analyze(arrayAccessExpression) {
-            val resolvedArrayAccessExpression = arrayAccessExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            val resolvedArrayAccessExpression = with(contextOf<KaSession>()) {
+                arrayAccessExpression.resolveToCall()?.singleFunctionCallOrNull()
+            } ?: return null
             if (resolvedArrayAccessExpression.symbol.callableId?.asSingleFqName() != collectionsSetFqName) return null
 
             return Context(assignment)

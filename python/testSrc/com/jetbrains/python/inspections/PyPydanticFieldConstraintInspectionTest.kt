@@ -199,6 +199,6 @@ class PyPydanticFieldConstraintInspectionTest : PyCodeInsightTestCase() {
 
   override val defaultTestOptions: TestOptions = TestOptions(
     enableInspections = setOf(PyPydanticFieldConstraintInspection::class.java),
-    copyDirectoryToProject = listOf("stubs/pydantic" to "pydantic"),
+    copyDirectoryToProject = mapOf("stubs/pydantic" to "pydantic"),
   )
 }

@@ -16,9 +16,14 @@ import com.intellij.slicer.SliceLeafEquality
 import com.intellij.slicer.SliceTreeBuilder
 import com.intellij.slicer.SliceUsage
 import com.intellij.slicer.SliceUsageTransformer
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
@@ -47,10 +52,10 @@ private val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
 
 class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
     class KotlinGroupByNullnessAction(treeBuilder: SliceTreeBuilder) : GroupByNullnessActionBase(treeBuilder) {
-        override fun isAvailable() = true
+        override fun isAvailable(): Boolean = true
     }
 
-    val leafAnalyzer by lazy { SliceLeafAnalyzer(LEAF_ELEMENT_EQUALITY, this) }
+    val leafAnalyzer: SliceLeafAnalyzer by lazy { SliceLeafAnalyzer(LEAF_ELEMENT_EQUALITY, this) }
 
     val nullnessAnalyzer: HackedSliceNullnessAnalyzerBase by lazy {
         object : HackedSliceNullnessAnalyzerBase(LEAF_ELEMENT_EQUALITY, this) {
@@ -64,7 +69,7 @@ class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
                         else -> emptyList()
                     }
                     return when {
-                        types.isEmpty() -> return Nullability.UNKNOWN
+                        types.isEmpty() -> Nullability.UNKNOWN
                         types.all { it.isNothingType && it.isMarkedNullable } -> Nullability.NULLABLE
                         types.any {
                           it is KaErrorType || it.isNullable ||
@@ -76,7 +81,7 @@ class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
         }
     }
 
-    override fun createRootUsage(element: PsiElement, params: SliceAnalysisParams) = KotlinSliceUsage(element, params)
+    override fun createRootUsage(element: PsiElement, params: SliceAnalysisParams): KotlinSliceUsage = KotlinSliceUsage(element, params)
 
     override fun transform(usage: SliceUsage): Collection<SliceUsage>? {
         if (usage is KotlinSliceUsage) return null
@@ -116,7 +121,7 @@ class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
         return (element as? KtSimpleNameExpression)?.mainReference?.resolve() ?: element
     }
 
-    override fun getRenderer() = KotlinSliceUsageCellRenderer
+    override fun getRenderer(): KotlinSliceUsageCellRenderer = KotlinSliceUsageCellRenderer
 
     override fun startAnalyzeLeafValues(structure: AbstractTreeStructure, finalRunnable: Runnable) {
         leafAnalyzer.startAnalyzeValues(structure, finalRunnable)

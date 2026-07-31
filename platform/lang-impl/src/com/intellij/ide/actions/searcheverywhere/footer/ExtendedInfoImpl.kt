@@ -130,6 +130,8 @@ class ExtendedInfoComponent(private val project: Project?, private val advertise
   }
 }
 
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere). This functionality is obsolete.")
 internal class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
   private val list = contributors.filterIsInstance<SearchEverywhereExtendedInfoProvider>().mapNotNull { it.createExtendedInfo() }
 

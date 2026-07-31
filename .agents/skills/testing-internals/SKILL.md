@@ -1,6 +1,6 @@
 ---
 name: testing-internals
-description: Internals of tests.cmd execution flow, test discovery, and troubleshooting. Use when debugging test discovery issues or understanding the test runner.
+description: Debug IntelliJ `tests.cmd` execution, discovery, runner internals, and failures.
 ---
 
 # Test Execution Internals

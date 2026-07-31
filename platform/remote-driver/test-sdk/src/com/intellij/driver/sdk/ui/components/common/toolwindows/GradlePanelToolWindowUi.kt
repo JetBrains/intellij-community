@@ -1,15 +1,24 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
+import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
+import com.intellij.driver.sdk.ui.components.common.runToolWindow
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.actionButtonByXpath
+import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.popupMenu
 import com.intellij.driver.sdk.ui.components.elements.tree
+import com.intellij.driver.sdk.ui.pasteText
+import com.intellij.driver.sdk.ui.ui
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.seconds
 
 class GradlePanelToolWindowUi(data: ComponentData) : UiComponent(data) {
 
@@ -18,8 +27,30 @@ class GradlePanelToolWindowUi(data: ComponentData) : UiComponent(data) {
       actionButtonByXpath("//div[@myicon='refresh.svg']")
     }
 
-  val tree: JTreeUiComponent
-    get() = tree()
+  val tree: JTreeUiComponent get() = tree()
+
+  fun debugTask(vararg pathToTask: String) {
+    tree.run {
+      rightClickPath(*pathToTask, fullMatch = false)
+    }
+    driver.ui.popupMenu()
+      .waitAnyTextsContains(timeout = 10.seconds, text = "Debug '")
+      .single()
+      .click()
+  }
+
+  fun syncAllProjects() {
+    driver.invokeAction("ExternalSystem.RefreshAllProjects")
+  }
+
+  fun IdeaFrameUI.runTask(task: String) {
+    driver.invokeAction("Gradle.ExecuteTask")
+    popup().waitFound()
+    keyboard {
+      driver.ui.pasteText(task)
+      enter()
+    }
+  }
 }
 
 fun IdeaFrameUI.gradlePanel(@Language("xpath") xpath: String? = null, action: GradlePanelToolWindowUi.() -> Unit = {}) {

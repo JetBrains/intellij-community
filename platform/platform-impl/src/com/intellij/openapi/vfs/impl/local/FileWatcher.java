@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -153,7 +154,7 @@ public final class FileWatcher implements AppLifecycleListener {
   }
 
   void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
-    var prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
+    CompletableFuture<?> newTask = CompletableFuture.runAsync(() -> {
       try {
         var pathMap = myShuttingDown ? CanonicalPathMap.empty() : pathMapSupplier.get();
         if (pathMap == null) return;
@@ -170,7 +171,12 @@ public final class FileWatcher implements AppLifecycleListener {
       catch (RuntimeException | Error e) {
         LOG.error(e);
       }
-    }));
+    }, myFileWatcherExecutor);
+    var prevTask = myLastTask.getAndSet(newTask);
+    newTask.whenComplete((_, _) ->
+      // clearing the stored task on completion to avoid project leaks
+      myLastTask.compareAndSet(newTask, null)
+    );
     if (prevTask != null) {
       prevTask.cancel(false);
     }

@@ -51,6 +51,8 @@
                  description="Semicolon-separated list of relative-paths from project root to automatically exclude from indexing and searching."/>
     <registryKey key="use.wsm.for.dependent.unloaded.modules" defaultValue="true" restartRequired="true"
                  description="Use workspace model based modules graph for calculating dependent unloaded modules"/>
+    <registryKey key="ide.workspace.model.use.concurrent.virtual.file.url.manager" defaultValue="true" restartRequired="true"
+                 description="Use the lock-free VirtualFileUrlManager implementation. Disable to fall back to the synchronized one."/>
 
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>

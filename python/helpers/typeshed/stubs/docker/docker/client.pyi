@@ -1,5 +1,8 @@
-from collections.abc import Iterable
-from typing import Any, Literal, NoReturn, Protocol, overload, type_check_only
+from _typeshed import Incomplete
+from collections.abc import Iterable, Mapping
+from datetime import datetime
+from typing import Any, Literal, Protocol, overload, type_check_only
+from typing_extensions import Never
 
 from docker import APIClient
 from docker.models.configs import ConfigCollection
@@ -12,6 +15,7 @@ from docker.models.secrets import SecretCollection
 from docker.models.services import ServiceCollection
 from docker.models.swarm import Swarm
 from docker.models.volumes import VolumeCollection
+from docker.tls import TLSConfig
 from docker.types import CancellableStream
 
 @type_check_only
@@ -21,17 +25,45 @@ class _Environ(Protocol):
 
 class DockerClient:
     api: APIClient
-    def __init__(self, *args, **kwargs) -> None: ...
+    # Please keep in sync with docker.APIClient
+    def __init__(
+        self,
+        base_url: str | None = None,
+        version: str | None = None,
+        timeout: int = 60,
+        tls: bool | TLSConfig = False,
+        user_agent: str = ...,
+        num_pools: int | None = None,
+        credstore_env: Mapping[Incomplete, Incomplete] | None = None,
+        use_ssh_client: bool = False,
+        max_pool_size: int = 10,
+    ) -> None: ...
     @classmethod
     def from_env(
         cls,
         *,
         version: str | None = None,
-        timeout: int = ...,
-        max_pool_size: int = ...,
+        timeout: int = 60,
+        max_pool_size: int = 10,
         environment: _Environ | None = None,
         use_ssh_client: bool = False,
+        use_context: bool = True,
     ) -> DockerClient: ...
+    @classmethod
+    def from_context(
+        cls,
+        name=None,
+        *,
+        version: str | None = None,
+        timeout: int = 60,
+        max_pool_size: int = 10,
+        use_ssh_client: bool = False,
+        base_url: str | None = None,
+        tls: bool | TLSConfig = False,
+        user_agent: str = ...,
+        num_pools: int | None = None,
+        credstore_env: Mapping[Incomplete, Incomplete] | None = None,
+    ): ...
     @property
     def configs(self) -> ConfigCollection: ...
     @property
@@ -53,17 +85,43 @@ class DockerClient:
     @property
     def volumes(self) -> VolumeCollection: ...
 
+    # Please keep in sync with docker.api.daemon.DaemonApiMixin.events
     @overload
-    def events(self, *args, decode: Literal[False] | None = None, **kwargs) -> CancellableStream[str]: ...
+    def events(
+        self,
+        since: datetime | int | None = None,
+        until: datetime | int | None = None,
+        filters: dict[str, Any] | None = None,
+        decode: Literal[False] | None = None,
+    ) -> CancellableStream[str]: ...
     @overload
-    def events(self, *args, decode: Literal[True] = ..., **kwargs) -> CancellableStream[dict[str, Any]]: ...
+    def events(
+        self,
+        since: datetime | int | None = None,
+        until: datetime | int | None = None,
+        filters: dict[str, Any] | None = None,
+        decode: Literal[True] = ...,
+    ) -> CancellableStream[dict[str, Any]]: ...
 
     def df(self) -> dict[str, Any]: ...
-    def info(self, *args, **kwargs) -> dict[str, Any]: ...
-    def login(self, *args, **kwargs) -> dict[str, Any]: ...
-    def ping(self, *args, **kwargs) -> bool: ...
-    def version(self, *args, **kwargs) -> dict[str, Any]: ...
+    # Please keep in sync with docker.api.daemon.DaemonApiMixin.info
+    def info(self) -> dict[str, Any]: ...
+    # Please keep in sync with docker.api.daemon.DaemonApiMixin.login
+    def login(
+        self,
+        username: str,
+        password: str | None = None,
+        email: str | None = None,
+        registry: str | None = None,
+        reauth: bool = False,
+        dockercfg_path: str | None = None,
+    ) -> dict[str, Any]: ...
+    # Please keep in sync with docker.api.daemon.DaemonApiMixin.ping
+    def ping(self) -> bool: ...
+    # Please keep in sync with docker.api.daemon.DaemonApiMixin.version
+    def version(self, api_version: bool = True) -> dict[str, Any]: ...
     def close(self) -> None: ...
-    def __getattr__(self, name: str) -> NoReturn: ...
+    def __getattr__(self, name: str) -> Never: ...
 
 from_env = DockerClient.from_env
+from_context = DockerClient.from_context

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -23,13 +22,14 @@ import org.jetbrains.idea.devkit.dom.Listeners;
 import org.jetbrains.idea.devkit.dom.ModuleComponents;
 import org.jetbrains.idea.devkit.dom.ProjectComponents;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 class RegistrationIndexer {
 
   private final IdeaPlugin myPlugin;
-  private final Map<String, List<RegistrationEntry>> myValueMap = FactoryMap.create(s -> new SmartList<>());
+  private final Map<String, List<RegistrationEntry>> myValueMap = new HashMap<>();
 
   RegistrationIndexer(IdeaPlugin plugin) {
     myPlugin = plugin;
@@ -148,7 +148,7 @@ class RegistrationIndexer {
   }
 
   private void storeEntry(String key, DomElement domElement, RegistrationEntry.RegistrationType type) {
-    List<RegistrationEntry> entries = myValueMap.get(key);
+    List<RegistrationEntry> entries = myValueMap.computeIfAbsent(key, _ -> new SmartList<>());
 
     final XmlElement xmlElement = domElement.getXmlElement();
     assert xmlElement != null : domElement;

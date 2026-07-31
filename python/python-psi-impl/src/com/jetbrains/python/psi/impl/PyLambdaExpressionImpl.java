@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLambdaExpression;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -128,14 +126,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);
     }
     return context.getType(body);
-  }
-
-  @Override
-  public @Nullable PyType getCallType(@Nullable PyExpression receiver,
-                                      @Nullable PyCallSiteOwner pyCallSiteExpression,
-                                      @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                                      @NotNull TypeEvalContext context) {
-    return context.getReturnType(this);
   }
 
   @Override

@@ -48,13 +48,13 @@ class GitConfig private constructor(
       .let { (fetch, pushOnly) -> fetch.convertToSortedList() to pushOnly.convertToSortedList() }
 
     return mapConfiguredRemotes { remote ->
-      val urls = remote.urls.substitutePrefixes(substitutions)
+      val urls = remote.urls.map { substitutions.substitutePrefix(it) ?: it }
       val pushUrls = if (remote.pushUrls.isNotEmpty()) {
         // for explicitly set pushUrls only insteadOf substitutions will be used
-        remote.pushUrls.substitutePrefixes(substitutions)
+        remote.pushUrls.map { substitutions.substitutePrefix(it) ?: it }
       }
       else if (pushOnlySubstitutions.isNotEmpty()) {
-        remote.urls.substitutePrefixes(pushOnlySubstitutions)
+        remote.urls.map { pushOnlySubstitutions.substitutePrefix(it) ?: substitutions.substitutePrefix(it) ?: it }
       }
       else urls
       createGitRemote(remote, urls, pushUrls)
@@ -70,9 +70,7 @@ class GitConfig private constructor(
   private fun List<UrlSubstitution>.convertToSortedList(): List<UrlSubstitution> =
     asSequence().distinctBy { it.prefix }.sortedByDescending { it.prefix.length }.toList()
 
-  private fun List<String>.substitutePrefixes(substitutions: List<UrlSubstitution>) = map { url ->
-    substitutions.find { url.startsWith(it.prefix) }?.substitutePrefix(url) ?: url
-  }
+  private fun List<UrlSubstitution>.substitutePrefix(url: String): String? = find { url.startsWith(it.prefix) }?.substitutePrefix(url)
 
   private fun UrlSubstitution.substitutePrefix(url: String) = substitution + url.substring(prefix.length)
 

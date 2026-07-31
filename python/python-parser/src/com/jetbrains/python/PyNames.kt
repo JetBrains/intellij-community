@@ -45,7 +45,7 @@ object PyNames {
     const val ENUM_MEMBER: String = "enum.member"
     const val ENUM_NONMEMBER: String = "enum.nonmember"
     const val NONE_TYPE: String = "_typeshed.NoneType"
-    val NONES: List<String> = listOf("_typeshed.NoneType", NONE_TYPE)
+    val NONES: List<String> = listOf("types.NoneType", NONE_TYPE)
     const val FUNCTION_TYPE: String = "types.FunctionType"
     const val COROUTINE_TYPE: String = "types.CoroutineType"
     const val METHOD_TYPE: String = "types.UnboundMethodType"

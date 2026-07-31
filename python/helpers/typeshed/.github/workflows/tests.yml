@@ -82,6 +82,39 @@ jobs:
           --all \
           --verbosity=QUIET
 
+  ty:
+    name: "ty: Check stubs"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32", "darwin"]
+        # TODO: Add 3.15 once third-party runtime dependencies provide compatible wheels.
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          version-file: "requirements-tests.txt"
+      - name: Install typeshed test-suite requirements
+        run: uv pip install -r requirements-tests.txt --system
+      - name: Create an isolated venv for testing
+        run: uv venv .venv
+      - name: Install third-party stub dependencies
+        run: |
+          PACKAGES=$(python tests/get_external_stub_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+            uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
+          fi
+          # Published stub packages can shadow the checked-in stubs when ty
+          # resolves their relative imports.
+          uv pip uninstall types-PyYAML types-pytz
+      - name: Run ty on all stubs
+        run: python tests/ty_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }} --python=.venv
+
   pyright:
     name: "pyright: Run test cases"
     runs-on: ubuntu-latest

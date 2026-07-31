@@ -1,6 +1,6 @@
 ---
 name: safe-push
-description: Safe Push process for pushing changes to the IntelliJ repository. Use when pushing code changes to remote.
+description: Push IntelliJ repository changes through the required Safe Push workflow.
 ---
 
 # Safe Push Guide for AI Agents

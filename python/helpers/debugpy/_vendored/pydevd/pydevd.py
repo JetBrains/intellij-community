@@ -611,6 +611,14 @@ class PyDB(object):
         # Set to True after a keyboard interrupt is requested the first time.
         self.keyboard_interrupt_requested = False
 
+        # Callback used to interrupt an in-progress debug console evaluation on request
+        # (e.g. Ctrl+C in the debug console). It is set while a repl evaluate runs on the
+        # thread executing it and cleared afterwards. Calling it raises a KeyboardInterrupt
+        # in that thread (see pydevd_timeout.create_interrupt_this_thread_callback). This is
+        # the DAP counterpart of the old CMD_INTERRUPT_DEBUG_CONSOLE command.
+        self._console_interrupt_callback = None
+        self._console_interrupt_lock = thread.allocate_lock()
+
         # These are the breakpoints received by the PyDevdAPI. They are meant to store
         # the breakpoints in the api -- its actual contents are managed by the api.
         self.api_received_breakpoints = {}
@@ -1810,6 +1818,29 @@ class PyDB(object):
                     # As it was previously disabled, we have to notify about existing threads again
                     # (so, clear the cache related to that).
                     self._running_thread_ids = {}
+
+    def set_console_interrupt_callback(self, callback):
+        """
+        Registers (or clears, when ``callback`` is ``None``) the callback used to interrupt
+        the debug console evaluation that is currently running. Must be created on the thread
+        that runs the evaluation so it can target it (see
+        pydevd_timeout.create_interrupt_this_thread_callback).
+        """
+        with self._console_interrupt_lock:
+            self._console_interrupt_callback = callback
+
+    def interrupt_console_evaluation(self):
+        """
+        Interrupts the debug console evaluation currently running (if any) by raising a
+        KeyboardInterrupt in the thread executing it. Returns True if an evaluation was
+        interrupted, False if nothing was running.
+        """
+        with self._console_interrupt_lock:
+            callback = self._console_interrupt_callback
+        if callback is None:
+            return False
+        callback()
+        return True
 
     def process_internal_commands(self, process_thread_ids: Optional[tuple]=None):
         """

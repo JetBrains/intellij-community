@@ -7,8 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.ShelfPatchBuilder
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.stateStore
@@ -22,15 +25,19 @@ import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
+import kotlin.io.path.readBytes
+import kotlin.io.path.writeBytes
 
 @TestApplication
 @OptIn(ExperimentalPathApi::class)
@@ -182,6 +189,34 @@ class ShelveChangesManagerTest {
       val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
       assertTrue(patches.size == selectedPaths.size)
     }
+  }
+
+  @Test
+  fun `shelve added binary file`() {
+    val content = byteArrayOf(0, 1, 2, 3)
+    val file = Paths.get(project.basePath!!).resolve("image.bin")
+    file.writeBytes(content)
+
+    val change = Change(null, CurrentBinaryContentRevision(LocalFilePath(file, false)))
+    val shelvedChangeList = shelvedChangesManager.shelveChanges(listOf(change), "add binary", false)
+
+    val binaryFile = shelvedChangeList.binaryFiles.single()
+    assertNull(binaryFile.BEFORE_PATH)
+    assertEquals("image.bin", binaryFile.AFTER_PATH)
+    assertArrayEquals(content, Paths.get(binaryFile.SHELVED_PATH!!).readBytes())
+  }
+
+  @Test
+  fun `shelve deleted binary file`() {
+    val file = Paths.get(project.basePath!!).resolve("image.bin")
+    val change = Change(CurrentBinaryContentRevision(LocalFilePath(file, false)), null)
+
+    val shelvedChangeList = shelvedChangesManager.shelveChanges(listOf(change), "delete binary", false)
+
+    val binaryFile = shelvedChangeList.binaryFiles.single()
+    assertEquals("image.bin", binaryFile.BEFORE_PATH)
+    assertNull(binaryFile.AFTER_PATH)
+    assertNull(binaryFile.SHELVED_PATH)
   }
 
   @Test

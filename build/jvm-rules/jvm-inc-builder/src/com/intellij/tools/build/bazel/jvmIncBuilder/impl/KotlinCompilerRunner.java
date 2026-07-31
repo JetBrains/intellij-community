@@ -64,6 +64,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,6 +72,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinPluginsKt.configurePlugins;
+import static com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinPluginsKt.sortCompilerPluginRegistrarsByOrderConstraints;
 import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.filter;
 import static org.jetbrains.jps.util.Iterators.find;
@@ -92,7 +94,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private InlineConstTrackerImpl inlineConstTracker;
   private ImportTrackerImpl importTracker;
   private ImplicitTypeDependencyTracker inferredTypeTracker;
-  private final @NotNull Map<@NotNull String, @NotNull PluginClasspathConfig> myPluginIdToPluginClasspath = new HashMap<>();
+  private final @NotNull Map<@NotNull String, @NotNull PluginClasspathConfig> myPluginIdToPluginClasspath = new LinkedHashMap<>(); // preserve the order in which plugins were listed
   private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
 
@@ -182,7 +184,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
       // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
       List<GeneratedClass> generatedClasses = new ArrayList<>();
-      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, outputFileSystemRoot, generatedFile -> {
+      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(kotlinArgs, out, outputFileSystemRoot, generatedFile -> {
         String jvmClassName = null;
         if (generatedFile instanceof KotlinJvmGeneratedFile jvmClass) {
           jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
@@ -317,7 +319,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Map<String, Collection<String>> importMap = importTracker.getFilePathToImportedFqNamesMap();
     Collection<String> importedFqNames = importMap.get(output.getNormalizedSourcePath());
     if (importedFqNames != null) {
-      callback.registerImports(output.jvmClassName, importedFqNames, List.of());
+      callback.registerImports(output.jvmClassName, importedFqNames, collect(filter(importedFqNames, name -> name.endsWith(".*")), new ArrayList<>()));
     }
   }
 
@@ -362,13 +364,14 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return builder.build();
   }
 
-  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, VirtualFile outputRoot, Consumer<GeneratedFile> outputItemCollector) throws IOException {
-    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(outputRoot), createOutputConsumer(out, outputItemCollector));
+  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(K2JVMCompilerArguments args, OutputSink out, VirtualFile outputRoot, Consumer<GeneratedFile> outputItemCollector) throws IOException {
+    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(args, outputRoot), createOutputConsumer(out, outputItemCollector));
   }
 
-  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(VirtualFile outputRoot) throws IOException {
+  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(K2JVMCompilerArguments args, VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     inferredTypeTracker = new ImplicitTypeDependencyTracker();
+    String[] pluginOrderConstraints = args.getPluginOrderConstraints();
     return configuration -> {
       List<ContentRoot> contentRootList = new ArrayList<>();
       contentRootList.add(new VirtualJvmClasspathRoot(outputRoot, false, true));
@@ -391,6 +394,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
         CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(),
         new ImplicitTypeTrackerPluginRegistrar(inferredTypeTracker)
       );
+      
+      // -Xcompiler-plugin-order constraints apply to all registrars added to this configuration
+      sortCompilerPluginRegistrarsByOrderConstraints(configuration, pluginOrderConstraints);
 
       return Unit.INSTANCE;
     };
@@ -434,7 +440,8 @@ public class KotlinCompilerRunner implements CompilerRunner {
     };
   }
 
-  private K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
+  // made public for tests
+  public K2JVMCompilerArguments buildKotlinCompilerArguments(BuildContext context, Iterable<NodeSource> sources) {
     // todo: hash compiler configuration
     K2JVMCompilerArguments arguments = new K2JVMCompilerArguments();
     parseCommandLineArguments(context.getBuilderOptions().getKotlinOptions(), arguments, true);
@@ -479,6 +486,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
     if (!isEmpty(friends)) {
       arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
+    }
+    Iterable<String> pluginOrder = CLFlags.X_COMPILER_PLUGIN_ORDER.getValue(flags);
+    if (!isEmpty(pluginOrder)) {
+      arguments.setPluginOrderConstraints(ensureCollection(pluginOrder).toArray(String[]::new));
     }
     NodeSourcePathMapper pathMapper = context.getPathMapper();
     arguments.setFreeArgs(collect(flat(map(sources, ns -> pathMapper.toPath(ns).toString()), myJavaSources), new ArrayList<>()));

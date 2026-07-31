@@ -179,18 +179,12 @@ public class Maven3XProjectResolver {
     ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
     try {
       MavenSession mavenSession = myEmbedder.getComponent(LegacySupport.class).getSession();
-      RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
-      if (repositorySession instanceof DefaultRepositorySystemSession) {
-        DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-        MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
-        myImporterSpy.setIndicator(indicator);
-        session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
-
-        setupWorkspaceReader(session);
-
-        session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-        session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
-      }
+      RepositorySystemSession rawSession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
+      // Maven resolver 2.x (e.g. Maven 3.10+) no longer exposes a DefaultRepositorySystemSession as the raw session.
+      boolean resolverV2 = !(rawSession instanceof DefaultRepositorySystemSession);
+      RepositorySystemSession repositorySession = resolverV2
+                                                  ? createRepositorySessionForMavenResolverV2_x(request, rawSession)
+                                                  : createRepositorySessionForMavenResolverV1((DefaultRepositorySystemSession)rawSession);
 
       List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
         getProjectBuildingResults(request, files));
@@ -251,7 +245,7 @@ public class Maven3XProjectResolver {
               if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
               MavenServerExecutionResult result = myTelemetry.callWithSpan(
                 "resolveBuildingResult " + br.projectId, () ->
-                  resolveBuildingResult(repositorySession, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions,
+                  resolveBuildingResult(repositorySession, resolverV2, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions,
                                         br.dependencyHash));
               myLongRunningTask.incrementFinishedRequests();
               return result;
@@ -264,6 +258,23 @@ public class Maven3XProjectResolver {
       executionResults.add(createExecutionResult(e));
     }
     return executionResults;
+  }
+
+  private @NotNull RepositorySystemSession createRepositorySessionForMavenResolverV2_x(MavenExecutionRequest request, RepositorySystemSession rawSession) {
+    RepositorySystemSession repositorySession;
+    DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(rawSession);
+    customizeRepositorySession(session);
+    request.getProjectBuildingRequest().setRepositorySession(session);
+    repositorySession = session;
+    return repositorySession;
+  }
+
+  private @NotNull RepositorySystemSession createRepositorySessionForMavenResolverV1(DefaultRepositorySystemSession rawSession) {
+    RepositorySystemSession repositorySession;
+    DefaultRepositorySystemSession session = rawSession;
+    customizeRepositorySession(session);
+    repositorySession = session;
+    return repositorySession;
   }
 
   private boolean transitiveDependenciesChanged(@NotNull File pomFile,
@@ -300,6 +311,17 @@ public class Maven3XProjectResolver {
     return fileToNewDependencyHash;
   }
 
+  private void customizeRepositorySession(@NotNull DefaultRepositorySystemSession session) {
+    MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
+    myImporterSpy.setIndicator(indicator);
+    session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
+
+    setupWorkspaceReader(session);
+
+    session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+    session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
+  }
+
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
@@ -309,6 +331,7 @@ public class Maven3XProjectResolver {
   }
 
   private @NotNull MavenServerExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
+                                                                    boolean resolverV2,
                                                                     boolean addUnresolved,
                                                                     MavenProject project,
                                                                     @NotNull List<ModelProblem> modelProblems,
@@ -316,7 +339,11 @@ public class Maven3XProjectResolver {
                                                                     String dependencyHash) {
     try {
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
+      // Maven resolver 2.x populates DependencyResolutionResult.getDependencies() differently, so the flat-list + BFS
+      // approach yields a wrong artifact order. Walk the dependency graph directly instead, same as the Maven 4 resolver.
+      Set<Artifact> artifacts = resolverV2
+                                ? resolveArtifactsFromDependencyGraph(dependencyResolutionResult)
+                                : resolveArtifacts(dependencyResolutionResult, addUnresolved);
       project.setArtifacts(artifacts);
 
       return createExecutionResult(exceptions, modelProblems, project, dependencyResolutionResult, dependencyHash);
@@ -615,6 +642,39 @@ public class Maven3XProjectResolver {
     }
 
     return artifacts;
+  }
+
+  /**
+   * Collects artifacts by a depth-first pre-order walk of the resolved dependency graph, skipping conflict losers.
+   * Mirrors {@code Maven40ProjectResolver.addArtifacts}; used for Maven resolver 2.x where the flat
+   * {@link DependencyResolutionResult#getDependencies()} list no longer yields the correct order.
+   */
+  private @NotNull Set<Artifact> resolveArtifactsFromDependencyGraph(DependencyResolutionResult dependencyResolutionResult) {
+    Set<Artifact> artifacts = new LinkedHashSet<>();
+    DependencyNode graph = dependencyResolutionResult.getDependencyGraph();
+    if (graph == null || graph.getChildren() == null || graph.getChildren().isEmpty()) return artifacts;
+    addArtifactsFromGraph(artifacts, graph.getChildren());
+    return artifacts;
+  }
+
+  private void addArtifactsFromGraph(Set<Artifact> artifacts, List<DependencyNode> nodes) {
+    for (DependencyNode node : nodes) {
+      if (node.getData().get(ConflictResolver.NODE_DATA_WINNER) != null) {
+        continue;
+      }
+      Dependency dependency = node.getDependency();
+      if (dependency == null) {
+        continue;
+      }
+      Artifact artifact = Maven3AetherModelConverter.toArtifact(dependency);
+      if (artifact == null) {
+        continue;
+      }
+      if (artifacts.add(artifact)) {
+        resolveAsModule(artifact);
+      }
+      addArtifactsFromGraph(artifacts, node.getChildren());
+    }
   }
 
   private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,

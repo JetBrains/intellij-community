@@ -1,5 +1,20 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_radixTrie",
+    module_name = "fleet.radixTrie",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    test_deps = ["@community//fleet/test-runtime:wasmjs_module_lib"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/util/serialization:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+    ],
+)
 
 ### auto-generated section `build fleet.radixTrie` start
 create_kotlinc_options(
@@ -8,6 +23,7 @@ create_kotlinc_options(
     x_consistent_data_class_copy_visibility = True,
     x_context_parameters = True,
     x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
 )
 
 jvm_library(

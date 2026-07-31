@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -8,8 +8,11 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -35,8 +38,17 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
   @Override
   public String getLineText(int line, Editor editor) {
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
-    if (!canBeAnnotated(currentLine)) return "";
+    if (!canBeAnnotated(currentLine)) return getNonAnnotatedLineText(line);
     return myDelegate.getLineText(currentLine, editor);
+  }
+
+  private @Nullable String getNonAnnotatedLineText(int line) {
+    if (myGetUpToDateLineNumber instanceof NonAnnotatedLineTextProvider textProvider &&
+        myDelegate instanceof AnnotationFieldGutter fieldGutter &&
+        LineAnnotationAspect.AUTHOR.equals(fieldGutter.getID())) {
+      return textProvider.getNonAnnotatedLineText(line);
+    }
+    return null;
   }
 
   @Override
@@ -103,6 +115,16 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
 
   private static boolean canBeAnnotated(int currentLine) {
     return currentLine >= 0;
+  }
+
+  /**
+   * Opt-in for {@link UpToDateLineNumberProvider}s that want a placeholder rendered on lines which are not part of the
+   * annotated revision (i.e. {@link #canBeAnnotated} is {@code false}), instead of leaving them blank.
+   */
+  @ApiStatus.Internal
+  public interface NonAnnotatedLineTextProvider {
+    @Nls
+    @Nullable String getNonAnnotatedLineText(int line);
   }
 
   static class Filler extends AnnotationGutterLineConvertorProxy implements TextAnnotationGutterProvider.Filler {

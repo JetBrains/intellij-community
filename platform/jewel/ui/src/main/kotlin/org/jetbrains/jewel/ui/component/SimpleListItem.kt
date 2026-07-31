@@ -100,6 +100,7 @@ public fun SimpleListItem(
  *   Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param onTextLayout Callback for when text layout is computed.
  * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
@@ -199,15 +200,16 @@ public fun SimpleListItem(
  *
  * @param text The text displayed in the list item.
  * @param selected Indicates whether the list item is selected.
- * @param active Indicates whether the list item is active or disabled; default is active.
  * @param modifier Optional [Modifier] to apply to the entire list item.
  * @param textModifier Optional [Modifier] to apply to specifically to the text.
  * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
+ * @param active Indicates whether the list item is active or disabled; default is active.
  * @param icon Optional [IconKey] representing the icon displayed on the start side of the list item.
  * @param iconContentDescription Optional content description [String] for the icon for accessibility purposes.
  * @param style The [SimpleListItemStyle] defining the appearance of the list item; default is based on the Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param onTextLayout Callback for when text layout is computed.
  * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
@@ -350,8 +352,14 @@ public fun SimpleListItem(
     }
 }
 
+/** Holds the selection and activity state for a simple list item. */
 @GenerateDataFunctions
-public class ListItemState(public val isSelected: Boolean, public val isActive: Boolean = true) {
+public class ListItemState(
+    /** Whether the list item is currently selected. */
+    public val isSelected: Boolean,
+    /** Whether the list item is active (enabled and interactive). */
+    public val isActive: Boolean = true,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

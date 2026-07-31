@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -103,6 +103,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -227,11 +228,13 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
 
     Stream<VirtualFileUrl> librarySourceRoots = index.findContainingLibraries(file).stream()
+      .sorted(Comparator.comparing(library -> library.getSymbolicId().getPresentableName()))
       .flatMap(library -> library.getRoots().stream())
       .filter(root -> root.getType().equals(LibraryRootTypeId.Companion.getSOURCES()))
       .map(LibraryRoot::getUrl);
 
     Stream<VirtualFileUrl> sdkSourceRoots = index.findContainingSdks(file).stream()
+      .sorted(Comparator.comparing(sdk -> sdk.getSymbolicId().getPresentableName()))
       .flatMap(sdk -> sdk.getRoots().stream())
       .filter(root -> root.getType().equals(SdkRootTypeId.SOURCES))
       .map(SdkRoot::getUrl);
@@ -442,7 +445,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       throw ce;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+      throw new IncorrectOperationException("Incorrect file template", e);
     }
   }
 

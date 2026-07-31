@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.impl.createIdeVirtualFileUrlManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,7 +65,7 @@ class JpsGlobalModelSynchronizerJobTest {
       executionOrder.add("delayed_loading_started")
     }
 
-    synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
+    synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
 
     val environmentName = InternalEnvironmentName.of("test")
 
@@ -144,7 +144,7 @@ class JpsGlobalModelSynchronizerJobTest {
       executionOrder.add("delayed_loading_started")
     }
 
-    synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
+    synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
 
     val environmentName = InternalEnvironmentName.of("test")
 
@@ -197,7 +197,7 @@ class JpsGlobalModelSynchronizerJobTest {
     val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val synchronizer = TestableJpsGlobalModelSynchronizer(coroutineScope)
 
-    synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
+    synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
 
     val environmentName = InternalEnvironmentName.of("test")
 
@@ -245,7 +245,7 @@ class JpsGlobalModelSynchronizerJobTest {
       executionOrder.add("delayed_loading_started")
     }
 
-    synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
+    synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
 
     val environmentName = InternalEnvironmentName.of("test")
 
@@ -321,7 +321,7 @@ class JpsGlobalModelSynchronizerJobTest {
     val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val synchronizer = JpsGlobalModelSynchronizerImpl(coroutineScope)
 
-    synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
+    synchronizer.setVirtualFileUrlManager(createIdeVirtualFileUrlManager())
 
     val environmentName = InternalEnvironmentName.of("test")
 

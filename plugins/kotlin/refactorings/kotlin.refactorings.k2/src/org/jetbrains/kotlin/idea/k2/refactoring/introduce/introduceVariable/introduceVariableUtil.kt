@@ -5,10 +5,16 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
 import org.jetbrains.kotlin.config.LanguageFeature.NameBasedDestructuring
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -179,7 +185,8 @@ private fun suggestNamesForDataClassParameters(
     }
 }
 
-private fun KaSession.suggestNamesForComponentOperators(
+context(session: KaSession)
+private fun suggestNamesForComponentOperators(
     components: List<KaNamedFunctionSymbol>,
     usedNames: MutableSet<String>,
     validator: (String) -> Boolean,
@@ -202,7 +209,8 @@ private fun KaSession.suggestNamesForComponentOperators(
     }
 }
 
-private fun KaSession.extractApplicableComponents(
+context(session: KaSession)
+private fun extractApplicableComponents(
     expression: KtExpression,
     expressionType: KaType,
     parameterNames: List<String>,
@@ -219,7 +227,8 @@ private fun KaSession.extractApplicableComponents(
     return result
 }
 
-private fun KaSession.extractComponents(
+context(session: KaSession)
+private fun extractComponents(
     expression: KtExpression,
     type: KaType,
 ): Set<KaNamedFunctionSymbol> {

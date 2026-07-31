@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.idea.quickfix.MESSAGE_ARGUMENT
 import org.jetbrains.kotlin.idea.quickfix.REPLACE_WITH_ARGUMENT
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal object OverrideDeprecationFixFactories {
@@ -52,7 +54,8 @@ internal object OverrideDeprecationFixFactories {
     }
 }
 
-private fun KaSession.renderName(symbol: KaSymbol): String? {
+context(session: KaSession)
+private fun renderName(symbol: KaSymbol): String? {
     val containerPrefix = symbol.containingDeclaration?.name?.let { "${it.render()}." } ?: ""
     val name = symbol.name?.render() ?: return null
     return containerPrefix + name

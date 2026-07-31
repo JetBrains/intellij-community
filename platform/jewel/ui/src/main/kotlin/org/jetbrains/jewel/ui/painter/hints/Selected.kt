@@ -26,4 +26,5 @@ private object SelectedImpl : PainterSuffixHint() {
 @Suppress("FunctionName")
 public fun Selected(selected: Boolean = true): PainterHint = if (selected) SelectedImpl else PainterHint.None
 
+/** Selects the "selected" variant of an image based on [state]'s [SelectableComponentState.isSelected] flag. */
 @Suppress("FunctionName") public fun Selected(state: SelectableComponentState): PainterHint = Selected(state.isSelected)

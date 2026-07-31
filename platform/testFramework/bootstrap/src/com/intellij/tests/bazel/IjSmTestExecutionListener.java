@@ -122,17 +122,16 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
 
   @Override
   public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+    // IDEA needs a matching executionStarted event first for skipped tests to show up in the UI
+    executionStarted(testIdentifier);
     if (testIdentifier.isTest()) {
       Map<String, String> attrs = baseAttrs(testIdentifier);
-      if (reason != null && !reason.isEmpty()) attrs.put("message", reason);
+      attrs.put("message", reason != null ? reason : "");
       serviceMessage("testIgnored", attrs);
     } else if (testIdentifier.isContainer()) {
-      // Emit started/ignored/finished trio for skipped containers to show up in UI
-      executionStarted(testIdentifier);
       Map<String, String> attrs = baseAttrs(testIdentifier);
-      if (reason != null && !reason.isEmpty()) attrs.put("message", reason);
+      attrs.put("message", reason != null ? reason : "");
       serviceMessage("testIgnored", attrs);
-      executionFinished(testIdentifier, TestExecutionResult.successful());
     }
   }
 
@@ -162,7 +161,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
         fail.put("nodeId", syntheticId);
         fail.put("parentNodeId", parentId);
         String msg = t.getMessage();
-        if (msg != null && !msg.isEmpty()) fail.put("message", msg);
+        fail.put("message", msg != null ? msg : "");
         fail.put("details", stackTraceToString(t));
         serviceMessage("testFailed", fail);
 
@@ -192,7 +191,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
           for (Throwable sub : ((MultipleFailuresError) t).getFailures()) {
             Map<String, String> fail = baseAttrs(testIdentifier);
             String message = sub.getMessage();
-            if (message != null && !message.isEmpty()) fail.put("message", message);
+            fail.put("message", message != null ? message : "");
             if (sub instanceof AssertionFailedError) {
               AssertionFailedError afe = (AssertionFailedError) sub;
               if (afe.isExpectedDefined() || afe.isActualDefined()) {

@@ -9,13 +9,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.types.isCharType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
@@ -289,10 +289,12 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
             val fragmentExpression = fragment.getContentElement() as? KtBinaryExpression ?: return null
             analyze(fragment) {
                 val resolvedSymbol =
-                    fragmentExpression.operationReference.resolveToCall()?.singleFunctionCallOrNull()?.symbol
+                    with(contextOf<KaSession>()) {
+                        fragmentExpression.operationReference.resolveToCall()?.singleFunctionCallOrNull()?.symbol
+                    }
                         ?: return null
 
-                if (resolvedSymbol == containingFunction.symbol) {
+                if (resolvedSymbol == with(contextOf<KaSession>()) { containingFunction.symbol }) {
                     return null
                 }
             }

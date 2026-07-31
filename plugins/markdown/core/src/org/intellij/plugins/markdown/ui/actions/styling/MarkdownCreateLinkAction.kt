@@ -51,7 +51,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownEditor(event)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    val isMarkdownSupported = file?.language?.supportsMarkdown(event.dataContext) == true
+    val isMarkdownSupported = file?.supportsMarkdown(event.dataContext) == true
     if (editor == null || file == null || !isMarkdownSupported) {
       event.presentation.isEnabledAndVisible = false
       return false

@@ -60,6 +60,61 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import USING_FRAME_EVAL
 from _pydevd_bundle.pydevd_comm import internal_get_step_in_targets_json
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_thread_lifecycle import pydevd_find_thread_by_id
+from _pydevd_bundle._debug_adapter.pydevd_base_schema import BaseSchema, register, register_request, register_response
+
+
+# The 'pydevdInterruptConsole' request is a JetBrains extension (not part of the DAP spec and not
+# in the generated pydevd_schema), so it must be registered here for pydevd_base_schema.from_json
+# to accept the incoming request instead of rejecting it with "Unable to create message from dict".
+@register_request("pydevdInterruptConsole")
+@register
+class PydevdInterruptConsoleRequest(BaseSchema):
+    """Interrupts the debug console evaluation currently running, keeping the session alive."""
+
+    def __init__(self, seq=-1, arguments=None, update_ids_from_dap=False, **kwargs):
+        self.type = "request"
+        self.command = "pydevdInterruptConsole"
+        self.seq = seq
+        self.arguments = arguments
+        self.kwargs = kwargs
+
+    def to_dict(self, update_ids_to_dap=False):
+        dct = {"type": self.type, "command": self.command, "seq": self.seq}
+        if self.arguments is not None:
+            dct["arguments"] = self.arguments
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response("pydevdInterruptConsole")
+@register
+class PydevdInterruptConsoleResponse(BaseSchema):
+    """Response to the 'pydevdInterruptConsole' request."""
+
+    def __init__(self, request_seq=-1, success=True, command="pydevdInterruptConsole", message=None, body=None, seq=-1, update_ids_from_dap=False, **kwargs):
+        self.type = "response"
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        self.message = message
+        self.body = body
+        self.seq = seq
+        self.kwargs = kwargs
+
+    def to_dict(self, update_ids_to_dap=False):
+        dct = {
+            "type": self.type,
+            "request_seq": self.request_seq,
+            "success": self.success,
+            "command": self.command,
+            "seq": self.seq,
+        }
+        if self.message is not None:
+            dct["message"] = self.message
+        if self.body is not None:
+            dct["body"] = self.body
+        dct.update(self.kwargs)
+        return dct
 
 
 def _convert_rules_to_exclude_filters(rules, on_error):
@@ -1379,6 +1434,12 @@ class PyDevJsonCommandProcessor(object):
         # EnableStepFiltering: true of false
 
         response = pydevd_base_schema.build_response(request, kwargs={"body": {}})
+        return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
+    def on_pydevdinterruptconsole_request(self, py_db, request):
+        interrupted = self.api.request_interrupt_console(py_db)
+
+        response = pydevd_base_schema.build_response(request, kwargs={"body": {"interrupted": interrupted}})
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     def on_pydevdsysteminfo_request(self, py_db, request):

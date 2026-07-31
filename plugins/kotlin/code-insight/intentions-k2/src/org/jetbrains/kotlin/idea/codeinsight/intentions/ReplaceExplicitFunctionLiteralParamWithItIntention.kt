@@ -7,11 +7,14 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -53,7 +56,7 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
             return computeWithProgressIconIfNeeded(element.findExistingEditor()!!, caretOffset) {
                 analyze(contentElement) {
                     val resolveToCall = contentElement.getPossiblyQualifiedCallExpression()?.resolveToCall()
-                    resolveToCall?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol != null
+                    resolveToCall?.singleFunctionCallOrNull()?.symbol != null
                 }
             }
         }

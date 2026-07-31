@@ -9,10 +9,10 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider
 import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.injectionParent
-import com.jetbrains.python.requirements.RequirementsFile
-import com.jetbrains.python.requirements.RequirementsLanguage
+import com.intellij.python.requirements.RequirementsFile
+import com.intellij.python.requirements.RequirementsLanguage
+import com.intellij.python.requirements.requirementPairs
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
 
@@ -45,7 +45,7 @@ private fun PsiElement.isInUninspectedTomlSection(): Boolean {
  */
 internal class RequirementsDependenciesPsiProvider : DependenciesPsiProvider<RequirementsFile>(
   RequirementsFile::class.java,
-  RequirementsLanguage.INSTANCE,
+  RequirementsLanguage,
 ) {
   override fun provideDependencies(file: RequirementsFile): DependencyMap? {
     val injectionParent = file.injectionParent()
@@ -54,12 +54,10 @@ internal class RequirementsDependenciesPsiProvider : DependenciesPsiProvider<Req
       return null
     }
 
-    val requirements = file.requirements()
     val dependenciesMap = mutableMapOf<PyRequirement, PsiElement>()
 
-    for (req in requirements) {
-      val pyRequirement = PyRequirementParser.fromLine(req.text) ?: continue
-      dependenciesMap += pyRequirement to req
+    for ((psiElement, pyRequirement) in file.requirementPairs()) {
+      dependenciesMap += pyRequirement to psiElement
     }
 
     return dependenciesMap

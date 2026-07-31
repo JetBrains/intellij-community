@@ -22,6 +22,7 @@ import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.ui.painter.writeToString
 import org.w3c.dom.Element
 
+/** An [ImageResourceProvider] that loads SVG and bitmap images using Compose painter and bitmap APIs. */
 @InternalJewelApi
 @ApiStatus.Internal
 public class ComposeImageResourceProvider : ImageResourceProvider {

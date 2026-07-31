@@ -7,7 +7,6 @@ import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.ERROR
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.SUCCESS
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType.INFORMATION
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,15 +22,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<V>() {
 
-  private val runAnythingGroup = NotificationGroupManager.getInstance().getNotificationGroup("Run Anything")
-
   private val notificationConfigurators = LinkedHashMap<ExecutionStatus, NotificationBuilder.() -> Unit>()
 
   /**
    * Runs an activity silently.
    *
    * @param dataContext 'Run Anything' data context
-   * @return true if succeed, false is failed
+   * @return true if succeeded, false is failed
    */
   protected abstract fun run(dataContext: DataContext, value: V): Boolean
 
@@ -74,11 +71,13 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     }
 
     fun build(): Notification {
-      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(AllIcons.Actions.RunAnything).setTitle(title, subtitle)
-      for (actionData in actions) {
-        val action = object : AnAction(actionData.name) {
+      val notification = Notification("Run Anything", content, INFORMATION)
+        .setIcon(AllIcons.Actions.RunAnything)
+        .setTitle(title, subtitle)
+      for ((name, perform) in actions) {
+        val action = object : AnAction(name) {
           override fun actionPerformed(e: AnActionEvent) {
-            actionData.perform()
+            perform()
             notification.expire()
           }
         }

@@ -87,26 +87,28 @@ public class InspectionProfileWrapper {
     return myProfile;
   }
 
-  public static void runWithCustomInspectionWrapper(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> customizer, @NotNull Runnable runnable) {
-    file.putUserData(CUSTOMIZATION_KEY, customizer);
+  public static void runWithCustomInspectionWrapper(@NotNull PsiFile psiFile,
+                                                    @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> customizer,
+                                                    @NotNull Runnable runnable) {
+    psiFile.putUserData(CUSTOMIZATION_KEY, customizer);
     try {
       runnable.run();
     }
     finally {
-      file.putUserData(CUSTOMIZATION_KEY, null);
+      psiFile.putUserData(CUSTOMIZATION_KEY, null);
     }
   }
 
-  public static Function<? super InspectionProfile, ? extends InspectionProfileWrapper> getCustomInspectionProfileWrapper(@NotNull PsiFile file) {
-    return file.getUserData(CUSTOMIZATION_KEY);
+  public static Function<? super InspectionProfile, ? extends InspectionProfileWrapper> getCustomInspectionProfileWrapper(@NotNull PsiFile psiFile) {
+    return psiFile.getUserData(CUSTOMIZATION_KEY);
   }
 
   /**
    * @deprecated use more structured {@link #runWithCustomInspectionWrapper(PsiFile, Function, Runnable)} instead
    */
   @Deprecated
-  public static void setCustomInspectionProfileWrapperTemporarily(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> function) {
-    file.putUserData(CUSTOMIZATION_KEY, function);
+  public static void setCustomInspectionProfileWrapperTemporarily(@NotNull PsiFile psiFile, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> function) {
+    psiFile.putUserData(CUSTOMIZATION_KEY, function);
   }
 
   @TestOnly

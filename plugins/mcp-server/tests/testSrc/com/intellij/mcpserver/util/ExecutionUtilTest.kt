@@ -1,6 +1,9 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.toolsets.util.OutputCollector
+import com.intellij.mcpserver.toolsets.util.buildSessionId
+import com.intellij.mcpserver.toolsets.util.truncateRunConfigurationPreviewLine
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

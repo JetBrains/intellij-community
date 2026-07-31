@@ -221,6 +221,10 @@
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <action id="Github.PullRequest.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>
+      <action id="Github.PullRequest.CheckoutBranch"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutBranchAction"/>
+      <action id="Github.PullRequest.OpenInWorktree"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenInWorktreeAction"/>
       <reference ref="Github.PullRequest.Open.Link"/>
       <reference ref="Github.PullRequest.Copy.Link"/>
       <separator/>

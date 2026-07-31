@@ -233,6 +233,9 @@ public fun VerticallyScrollableContainer(
  * @param userScrollEnabled Whether scrolling is enabled or not
  * @param scrollbarEnabled Whether the scrollbar is enabled or not; usually matches [userScrollEnabled]
  * @param scrollbarInteractionSource The interaction source used for the scrollbar
+ * @param adapter The [ScrollbarAdapter] used by the scrollbar to compute the thumb position and size. When null, a
+ *   default adapter is derived from [scrollState]. See [VerticalScrollbar] for the full contract, including the
+ *   supported [scrollState] types and remembering requirements.
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */

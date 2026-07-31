@@ -12,9 +12,7 @@ import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.values.getInformationColumns
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFrameAccessor): XValueChildrenList {
   val list = XValueChildrenList(vars.size)
   for (debugValue in vars) {
@@ -27,7 +25,6 @@ internal fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAcces
   return list
 }
 
-@ApiStatus.Internal
 internal fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor): PyDebugValue {
   return if (value.type == "DataFrame") {
     val columns = try {
@@ -46,7 +43,6 @@ internal fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccesso
                     value.isErrorOnEval, value.typeRendererId, frameAccessor)
 }
 
-@ApiStatus.Internal
 internal fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor): ArrayChunk {
   val result = ArrayChunkBuilder()
 

@@ -225,6 +225,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  @RequiresReadLock
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findDirectory(file);

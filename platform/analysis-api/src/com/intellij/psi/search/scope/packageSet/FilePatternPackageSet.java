@@ -195,15 +195,14 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
       }
       return virtualFile.getPath();
     }
-    else if (index.isInContent(virtualFile)) {
-      final VirtualFile contentFileSetRoot = index.getWorkspaceContentFileSetRoot(virtualFile);
-      if (contentFileSetRoot == null) return null;
+    final VirtualFile contentFileSetRoot = index.getWorkspaceContentFileSetRoot(virtualFile);
+    if (contentFileSetRoot != null) {
       return VfsUtilCore.getRelativePath(virtualFile, contentFileSetRoot, '/');
     }
     else if (index.isInLibrary(virtualFile)) {
       return getLibRelativePath(virtualFile, index);
     }
-    return null;
+    return "";
   }
 
   public static String getLibRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index) {

@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.propertyAccessorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -110,7 +111,10 @@ internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspecti
             bodyExpression.removeRedundantWhiteSpace()
 
             val psiFactory = KtPsiFactory(project)
-            val assignment = psiFactory.createExpression("field = ${parameter.name}")
+            val assignment = psiFactory.createExpressionByPattern(
+                "field = $0",
+                parameter.nameAsSafeName,
+            )
             val lastStatement = bodyExpression.statements.lastOrNull()
             if (lastStatement != null) {
                 bodyExpression.addAfter(assignment, lastStatement)

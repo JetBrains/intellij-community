@@ -8,6 +8,8 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -17,6 +19,7 @@ import git4idea.remote.hosting.GitHostingUrlUtil.getUriFromRemoteUrl
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.net.URI
 
@@ -75,6 +79,17 @@ class GHPRBranchesViewModel internal constructor(
     }
   }
 
+  override val canCheckoutInNewWorktree: Boolean
+    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository)
+
+  override fun checkoutInNewWorktree() {
+    val details = detailsState.value
+    cs.launch {
+      fetchAndCheckoutBranchInNewWorktree(mapping.remote, details)
+      GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
+    }
+  }
+
   override val canShowInLog: Boolean = true
   override fun fetchAndShowInLog() {
     cs.launch {
@@ -102,6 +117,9 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   companion object {
+
+    private const val WORKTREE_FROM_REVIEW_PLACE = "review.details.branch.popup"
+    private const val REVIEW_WORKTREES_DIR_NAME = "reviewWorktrees"
 
     // Used as a default value for HostedGitRepositoryRemote serverUri when it's not possible to find an existing remote.
     // Path is removed, to match to every URL with the same host.
@@ -138,6 +156,27 @@ class GHPRBranchesViewModel internal constructor(
                                                          remoteDescriptor,
                                                          details.headRefName,
                                                          localPrefix)
+    }
+
+    internal suspend fun fetchAndCheckoutBranchInNewWorktree(remoteUrlCoordinates: GitRemoteUrlCoordinates, details: GHPullRequest) {
+      val headRepository = details.headRepository ?: run {
+        LOG.warn("Can't checkout remote branch in a new worktree for PR ${details.number} because head repository is missing")
+        return
+      }
+      val remoteDescriptor = headRepository.getRemoteDescriptor(remoteUrlCoordinates)
+      val prId = details.prId
+      val worktreeName = "${remoteUrlCoordinates.repository.root.name}_PR_${details.number}"
+      val parentDir = PathManager.getTempDir().resolve(REVIEW_WORKTREES_DIR_NAME)
+      GitRemoteBranchesUtil.fetchAndCheckoutInNewWorktree(remoteUrlCoordinates.repository,
+                                                          remoteDescriptor,
+                                                          details.headRefName,
+                                                          parentDir,
+                                                          worktreeName,
+                                                          WORKTREE_FROM_REVIEW_PLACE) { worktreeProject ->
+        worktreeProject.service<GHPRProjectViewModel>().activateAndAwaitProject {
+          openPullRequestInfoAndDiff(prId)
+        }
+      }
     }
   }
 }

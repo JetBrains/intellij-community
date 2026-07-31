@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "skill": "jewel-markdown",
+  "attribution": "Skill authored by Sebastiano Poggi for the Android Studio team (Google); its canonical home is the Android Studio agent-skills marketplace, and this JetBrains/intellij-community copy is a downstream mirror. Jewel Markdown API evidence is derived from intellij-community itself (https://github.com/JetBrains/intellij-community), Apache-2.0 (sources under platform/jewel/markdown/).",
+  "sources": [
+    {
+      "type": "upstream-skill",
+      "role": "upstream-source",
+      "label": "Android Studio agent-skills marketplace jewel-markdown (canonical origin)",
+      "url": "https://android.googlesource.com/platform/tools/vendor/google/",
+      "version": "2026-06-22",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-22",
+      "license": "unknown",
+      "check": {
+        "type": "manual",
+        "reason": "Canonical source is the Google-internal Android Studio marketplace (tools/vendor/google/agent-skills-marketplace); not publicly checkable."
+      }
+    },
+    {
+      "type": "upstream-reference",
+      "role": "supporting-reference",
+      "label": "JetBrains intellij-community (Jewel Markdown sources)",
+      "url": "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel/markdown",
+      "version": "master",
+      "versionSource": "fetchDate",
+      "fetchedAt": "2026-06-22",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "JetBrains/intellij-community",
+        "path": "platform/jewel/markdown",
+        "trackingRef": "master"
+      }
+    }
+  ]
+}

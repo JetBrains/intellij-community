@@ -178,12 +178,6 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
     if (revision == null || revision.isEmpty()) return null;
-    if (revision.length() > 40) {    // date & revision-id encoded string
-      String dateString = revision.substring(0, revision.indexOf("["));
-      String rev = revision.substring(revision.indexOf("[") + 1, 40);
-      Date d = new Date(Date.parse(dateString));
-      return new GitRevisionNumber(rev, d);
-    }
     if (path != null) {
       try {
         VirtualFile root = GitUtil.getRootForFile(myProject, path);

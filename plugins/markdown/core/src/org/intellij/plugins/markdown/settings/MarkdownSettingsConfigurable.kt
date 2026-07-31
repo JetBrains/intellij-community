@@ -255,7 +255,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   private fun Row.customCssTextFieldWithBrowserButton(): Cell<TextFieldWithBrowseButton> {
     val field = textFieldWithBrowseButton(
       project = project,
-      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
+      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css").withEnvironmentRestricted(true)
     )
     field.applyToComponent {
       disposable?.let { Disposer.register(it, this@applyToComponent) }

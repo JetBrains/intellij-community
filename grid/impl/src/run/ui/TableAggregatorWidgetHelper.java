@@ -9,15 +9,14 @@ import com.intellij.database.datagrid.GridWidget;
 import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.extractors.DataAggregatorFactory;
-import com.intellij.database.extractors.DataExtractor;
 import com.intellij.database.extractors.DataExtractorFactories;
-import com.intellij.database.extractors.ExtractorConfig;
 import com.intellij.database.extractors.ExtractorsHelper;
 import com.intellij.database.settings.DataGridSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlin.Unit;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,27 +33,44 @@ public class TableAggregatorWidgetHelper implements GridWidget.GridWidgetHelper 
 
   private final DataGrid myGrid;
   private Aggregator myAggregator;
+  private volatile Job myLoadWidgetAggregatorJob;
 
-  public TableAggregatorWidgetHelper(@NotNull ResultView table, @NotNull DataGrid grid) {
+  public TableAggregatorWidgetHelper(@NotNull DataGrid grid) {
     myGrid = grid;
+    myLoadWidgetAggregatorJob = null;
+  }
+
+  public static void install(@NotNull ResultView table, @NotNull DataGrid grid) {
+    TableAggregatorWidgetHelper tableAggregatorWidgetHelper = new TableAggregatorWidgetHelper(grid);
+    table.getComponent().putClientProperty(AGGREGATOR_WIDGET_HELPER_KEY, tableAggregatorWidgetHelper);
+    tableAggregatorWidgetHelper.loadScripts();
+  }
+
+  public void loadScripts(){
     List<DataAggregatorFactory> scripts = DataExtractorFactories.getAggregatorScripts(ExtractorsHelper.getInstance(myGrid), GridUtil::suggestPlugin);
-    DataGridSettings settings = GridUtil.getSettings(grid);
+    DataGridSettings settings = GridUtil.getSettings(myGrid);
     String chosenAggregatorName = Objects.requireNonNullElse(settings == null ? null : settings.getWidgetAggregator(), "SUM.groovy");
-    table.getComponent().putClientProperty(AGGREGATOR_WIDGET_HELPER_KEY, this);
     for (DataAggregatorFactory script : scripts) {
       if (StringUtil.equals(script.getName(), chosenAggregatorName)) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          ExtractorConfig config = ExtractorsHelper.getInstance(grid).createExtractorConfig(grid, grid.getObjectFormatter());
-          DataExtractor extractor = script.createAggregator(config);
-          if (extractor == null) return;
-          myAggregator = new Aggregator(grid, extractor, script.getSimpleName(), script.getName());
+        if (myLoadWidgetAggregatorJob != null) {
+          myLoadWidgetAggregatorJob.cancel(null);
+        }
+        Job job = AggregatorWidgetLoader.loadWidgetAggregatorAsync(myGrid, script, this);
+        myLoadWidgetAggregatorJob = job;
+        job.invokeOnCompletion((Throwable _) -> {
+          if (myLoadWidgetAggregatorJob == job) {
+            myLoadWidgetAggregatorJob = null;
+          }
+          return Unit.INSTANCE;
         });
       }
     }
   }
 
-
   public void setAggregator(@Nullable Aggregator aggregator) {
+    if (myLoadWidgetAggregatorJob != null) {
+      myLoadWidgetAggregatorJob.cancel(null);
+    }
     myAggregator = aggregator;
   }
 

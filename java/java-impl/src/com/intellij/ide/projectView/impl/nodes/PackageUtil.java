@@ -11,13 +11,12 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public final class PackageUtil {
   static @NotNull GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
-        return new ProjectLibrariesSearchScope(project);
+        return ProjectScope.getLibraryClassesScope(project);
       }
       return GlobalSearchScope.projectScope(project);
     }
@@ -131,30 +130,6 @@ public final class PackageUtil {
     public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
       return Comparing.compare(fileIndex.getOrderEntryForFile(file2), fileIndex.getOrderEntryForFile(file1));
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return false;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-  }
-
-  private static class ProjectLibrariesSearchScope extends GlobalSearchScope {
-    private final ProjectFileIndex myFileIndex;
-
-    ProjectLibrariesSearchScope(@NotNull Project project) {
-      super(project);
-      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndex.isInLibraryClasses(file);
     }
 
     @Override

@@ -23,7 +23,7 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     val after = """
     [full reference link][link]
 
-    <caret>[link]: http://some.com
+    [<caret>link]: http://some.com
     """.trimIndent()
     doTest(content, after)
   }

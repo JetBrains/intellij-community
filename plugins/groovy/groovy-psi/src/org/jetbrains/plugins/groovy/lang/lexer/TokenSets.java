@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -68,6 +68,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRANSIENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRY;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVOID;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVOLATILE;
@@ -175,6 +176,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAM
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PERMITS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_YIELD;
 
@@ -227,10 +229,11 @@ public interface TokenSets {
   );
 
   TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(
-    KW_VAR,
-    KW_YIELD,
+    KW_PERMITS,
     KW_RECORD,
-    KW_PERMITS
+    KW_VAL,
+    KW_VAR,
+    KW_YIELD
   );
 
   TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS, TokenSet.create(
@@ -243,7 +246,7 @@ public interface TokenSets {
     kABSTRACT, kAS, kASSERT,
     kBOOLEAN, kBREAK, kBYTE,
     kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE,
-    kDEF, kVAR, kDEFAULT, kDO, kDOUBLE,
+    kDEF, kDEFAULT, kDO, kDOUBLE,
     kELSE, kEXTENDS, kENUM,
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
@@ -254,7 +257,7 @@ public interface TokenSets {
     kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
     kSYNCHRONIZED,
     kTHIS, kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRUE, kTRY,
-    kVOID, kVOLATILE,
+    kVAL, kVAR, kVOID, kVOLATILE,
     kWHILE,
     kYIELD
   );
@@ -279,6 +282,7 @@ public interface TokenSets {
     kSEALED,
     kNON_SEALED,
     kDEF,
+    kVAL,
     kVAR
   );
 
@@ -313,21 +317,23 @@ public interface TokenSets {
 
   TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
-  TokenSet BINARY_EXPRESSIONS = TokenSet.create(ADDITIVE_EXPRESSION,
-                                                MULTIPLICATIVE_EXPRESSION,
-                                                POWER_EXPRESSION,
-                                                POWER_EXPRESSION_SIMPLE,
-                                                LOGICAL_OR_EXPRESSION,
-                                                LOGICAL_AND_EXPRESSION,
-                                                INCLUSIVE_OR_EXPRESSION,
-                                                EXCLUSIVE_OR_EXPRESSION,
-                                                AND_EXPRESSION,
-                                                REGEX_FIND_EXPRESSION,
-                                                REGEX_MATCH_EXPRESSION,
-                                                EQUALITY_EXPRESSION,
-                                                RELATIONAL_EXPRESSION,
-                                                SHIFT_EXPRESSION,
-                                                RANGE_EXPRESSION);
+  TokenSet BINARY_EXPRESSIONS = TokenSet.create(
+    ADDITIVE_EXPRESSION,
+    MULTIPLICATIVE_EXPRESSION,
+    POWER_EXPRESSION,
+    POWER_EXPRESSION_SIMPLE,
+    LOGICAL_OR_EXPRESSION,
+    LOGICAL_AND_EXPRESSION,
+    INCLUSIVE_OR_EXPRESSION,
+    EXCLUSIVE_OR_EXPRESSION,
+    AND_EXPRESSION,
+    REGEX_FIND_EXPRESSION,
+    REGEX_MATCH_EXPRESSION,
+    EQUALITY_EXPRESSION,
+    RELATIONAL_EXPRESSION,
+    SHIFT_EXPRESSION,
+    RANGE_EXPRESSION
+  );
 
   TokenSet DOTS = GroovyTokenSets.DOTS;
 
@@ -345,12 +351,23 @@ public interface TokenSets {
     Map.entry(mBAND_ASSIGN, mBAND),
     Map.entry(mBOR_ASSIGN, mBOR),
     Map.entry(mBXOR_ASSIGN, mBXOR),
-    Map.entry(mSTAR_STAR_ASSIGN, mSTAR_STAR));
+    Map.entry(mSTAR_STAR_ASSIGN, mSTAR_STAR)
+  );
 
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD, kRECORD);
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAL, kVAR, kYIELD, kRECORD);
 
-  TokenSet BLOCK_SET =
-    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, OPEN_BLOCK_SWITCH_AWARE, CLOSABLE_BLOCK_SWITCH_AWARE, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY, BLOCK_LAMBDA_BODY_SWITCH_AWARE);
+  TokenSet BLOCK_SET = TokenSet.create(
+    CLOSABLE_BLOCK,
+    BLOCK_STATEMENT,
+    CONSTRUCTOR_BODY,
+    OPEN_BLOCK,
+    OPEN_BLOCK_SWITCH_AWARE,
+    CLOSABLE_BLOCK_SWITCH_AWARE,
+    ENUM_BODY,
+    CLASS_BODY,
+    BLOCK_LAMBDA_BODY,
+    BLOCK_LAMBDA_BODY_SWITCH_AWARE
+  );
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD, CONSTRUCTOR, ANNOTATION_METHOD);
 

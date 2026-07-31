@@ -1,6 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.kotlinx.datetime"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -8,8 +9,10 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
@@ -69,6 +72,16 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.editor.ux.EditorUxFeedbackSurvey"/>
     <registryKey key="editor.ux.survey.enabled" defaultValue="false" description="Enables Editor UX survey for 10% users"/>
 
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyProjectActivity"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyStore"/>
+    <registryKey key="wsl.survey.first.use.date" defaultValue=""
+                 description="ISO Formatted date of first WSL usage such as 2026-07-15 (for testing the WSL satisfaction survey)"/>
+    <registryKey key="wsl.survey.days.with.wsl" defaultValue="-1"
+                 description="Overrides the number of days a WSL project was open (for testing the WSL satisfaction survey); -1 disables the override"/>
+    <registryKey key="wsl.survey.ignore.audience.conditions" defaultValue="false"
+                 description="Ignores the target IDE version and 'existing users only' checks for the WSL satisfaction survey, so it can be triggered on any build and profile for testing (the WSL-project and usage-duration conditions still apply)"/>
+
     <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
     <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
     <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
@@ -78,6 +91,7 @@
     <applicationSettings service="com.intellij.platform.feedback.localization.LocalizationFeedbackService"/>
     <applicationSettings service="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
     <applicationSettings service="com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService"/>
+    <applicationSettings service="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyStore"/>
   </extensions>
 
   <actions>
@@ -95,6 +109,9 @@
               internal="true"/>
       <action id="Editor.ShowEditorUxFeedbackNotification"
               class="com.intellij.platform.feedback.editor.ux.ShowEditorUxFeedbackNotificationAction"
+              internal="true"/>
+      <action id="ShowWslSatisfactionDialog"
+              class="com.intellij.platform.feedback.wsl.ShowWslSatisfactionDialogAction"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>

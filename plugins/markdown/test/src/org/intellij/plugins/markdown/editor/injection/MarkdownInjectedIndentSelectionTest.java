@@ -11,6 +11,82 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 
 public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
+  public void testEnterInsideNestedFenceKeepsMarkdownIndent() {
+    CodeStyle.doWithTemporarySettings(getProject(), CodeStyle.getSettings(getProject()), settings -> {
+      var indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+      indentOptions.USE_TAB_CHARACTER = true;
+      indentOptions.TAB_SIZE = 2;
+      indentOptions.INDENT_SIZE = 2;
+      indentOptions.CONTINUATION_INDENT_SIZE = 2;
+
+      myFixture.configureByText(MarkdownFileType.INSTANCE, """
+        - Example:
+
+          ```json
+          {
+            "array": [
+              "value",<caret>
+            ]
+          }
+          ```""");
+
+      new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON");
+      myFixture.type("\n");
+      myFixture.checkResult("""
+        - Example:
+
+          ```json
+          {
+            "array": [
+              "value",
+          \t\t<caret>
+            ]
+          }
+          ```""");
+    });
+  }
+
+  public void testEnterUsesInjectedLanguageIndentOptions() {
+    CodeStyle.doWithTemporarySettings(getProject(), CodeStyle.getSettings(getProject()), settings -> {
+      var indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
+      indentOptions.USE_TAB_CHARACTER = true;
+      indentOptions.TAB_SIZE = 2;
+      indentOptions.INDENT_SIZE = 2;
+      indentOptions.CONTINUATION_INDENT_SIZE = 2;
+
+      myFixture.configureByText(MarkdownFileType.INSTANCE, """
+        # Test section
+        
+        Here is some normal text:
+        
+        ```json
+        {
+           "test": "value",
+           "arrayExample": [
+             "arrayValue",<caret>
+           ]
+        }
+        ```""");
+
+      new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON");
+      myFixture.type("\n");
+      myFixture.checkResult("""
+        # Test section
+        
+        Here is some normal text:
+        
+        ```json
+        {
+           "test": "value",
+           "arrayExample": [
+             "arrayValue",
+        \t\t <caret>
+           ]
+        }
+        ```""");
+    });
+  }
+
   public void testIndentAndUnindentSelectionInsideInjectedFence() {
     myFixture.configureByText(MarkdownFileType.INSTANCE, """
       ```json

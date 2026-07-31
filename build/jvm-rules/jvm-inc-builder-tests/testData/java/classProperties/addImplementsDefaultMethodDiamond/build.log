@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  C.class
+End of files
+Compiling files:
+  java/classProperties/addImplementsDefaultMethodDiamond/a/C.java
+End of files
+Cleaning output files:
+  Client.class
+  D.class
+End of files
+Compiling files:
+  java/classProperties/addImplementsDefaultMethodDiamond/a/Client.java
+  java/classProperties/addImplementsDefaultMethodDiamond/a/D.java
+End of files
+------------------------------------------
+Exit code: OK

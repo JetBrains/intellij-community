@@ -272,7 +272,7 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
       existingXmlPluginDependencies = emptySet(),
       preserveExistingPluginDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressedModules = emptySet(),
       suppressedPlugins = emptySet(),
       suppressionUsages = emptyList(),
@@ -290,34 +290,14 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
   val existingXmlPluginsAsPluginId = existingXmlPlugins.mapTo(HashSet(), ::PluginId)
 
-  if (isPreservedTestsDescriptorModule(contentModuleName)) {
-    return ContentModuleDependencyPlan(
-      contentModuleName = contentModuleName,
-      descriptorPath = prodInfo.descriptorPath,
-      descriptorContent = prodInfo.content,
-      moduleDependencies = prodInfo.existingModuleDependencies.map(::ContentModuleName),
-      pluginDependencies = prodInfo.existingPluginDependencies.map(::PluginId),
-      testDependencies = prodInfo.existingModuleDependencies.map(::ContentModuleName),
-      existingXmlModuleDependencies = existingXmlModulesAsContentModuleName,
-      existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
-      preserveExistingPluginDependencies = emptySet(),
-      writtenPluginDependencies = prodInfo.existingPluginDependencies.map(::PluginId),
-      allJpsPluginDependencies = emptySet(),
-      suppressedModules = emptySet(),
-      suppressedPlugins = emptySet(),
-      suppressionUsages = emptyList(),
-    )
-  }
-
   val prodModuleDeps: List<String>
   val testModuleDeps = ArrayList<String>()
   val pluginDeps = ArrayList<String>()
-  val allJpsPluginDeps = ArrayList<PluginId>()
   val suppressionUsages = ArrayList<SuppressionUsage>()
 
   // Compute dependencies written to XML using graph EDGE_TARGET_DEPENDS_ON.
-  // Include TEST scope deps only for test descriptors. Production descriptors may be owned by plugins
-  // marked as test plugins, but their generated XML must still follow production JPS runtime scope.
+  // Whether TEST scope deps are included is decided by shouldIncludeTestScopeForWrittenDeps. Production descriptors may be
+  // owned by plugins marked as test plugins, but their generated XML must still follow production JPS runtime scope.
   val includeTestScopeForWrittenDeps = shouldIncludeTestScopeForWrittenDeps(
     graph = graph,
     outputProvider = outputProvider,
@@ -360,10 +340,30 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     suppressedDeps = suppressedModules,
     xmlOnlySuppressionCandidateDeps = xmlOnlySuppressionCandidateModuleDeps,
   )
+
+  // A `<plugin id>` entry hard-gates module loading: if the plugin is absent from the layout, the content module and
+  // everything depending on it is silently excluded (that is how IJPL-248736 broke the Rider TestNG entry point).
+  // A descriptor generated with test scope pulls in TEST/PROVIDED scope JPS deps, which routinely point at plugins that
+  // are not part of the layout the tests run in, so such a descriptor must never *introduce* a plugin gate.
+  // Plugin deps already declared in the XML are kept - same grandfathering as isTestOnlyContentModule in
+  // TestPluginDependencyPlanner (IJPL-241684).
+  val requiredPluginDeps = if (includeTestScopeForWrittenDeps) {
+    prodGraphPluginDeps.filterTo(LinkedHashSet()) { it in existingXmlPluginsAsPluginId }
+  }
+  else {
+    prodGraphPluginDeps
+  }
+  if (requiredPluginDeps.size != prodGraphPluginDeps.size) {
+    debug("filterDeps") {
+      "omit new plugin deps for test-scope descriptor ${contentModuleName.value}: " +
+      (prodGraphPluginDeps - requiredPluginDeps).map { it.value }.sorted().joinToString()
+    }
+  }
+
   val pluginHandling = computeExistingDependencyHandling(
     updateSuppressions = updateSuppressions,
     existingXmlDeps = existingXmlPluginsAsPluginId,
-    jpsDeps = prodGraphPluginDeps,
+    jpsDeps = requiredPluginDeps,
     suppressedDeps = suppressedPlugins,
     semanticallyPreservedExistingDeps = computeAliasPreservedPluginDeps(graph, existingXmlPluginsAsPluginId),
   )
@@ -377,8 +377,7 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     suppressionUsages = suppressionUsages,
   )
 
-  for (pluginId in prodGraphPluginDeps) {
-    allJpsPluginDeps.add(pluginId)
+  for (pluginId in requiredPluginDeps) {
     if (effectiveSuppressedPlugins.contains(pluginId)) {
       suppressionUsages.add(SuppressionUsage(contentModuleName, pluginId.value, SuppressionType.PLUGIN_DEP))
     }
@@ -412,7 +411,7 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
 
   // Track plugin suppressions that prevent removal: existing XML plugin deps not in JPS
   for (existingPlugin in existingXmlPluginsAsPluginId) {
-    val notInJps = existingPlugin !in prodGraphPluginDeps
+    val notInJps = existingPlugin !in requiredPluginDeps
     if (notInJps && effectiveSuppressedPlugins.contains(existingPlugin)) {
       // Suppression keeps this XML plugin dep - report it
       suppressionUsages.add(SuppressionUsage(contentModuleName, existingPlugin.value, SuppressionType.PLUGIN_DEP))
@@ -433,13 +432,23 @@ private suspend fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
     preserveExistingPluginDependencies = pluginHandling.preserveExistingDeps,
     writtenPluginDependencies = allWrittenPluginDeps.map(::PluginId),
-    allJpsPluginDependencies = allJpsPluginDeps.distinct().toSet(),
+    requiredPluginDependencies = requiredPluginDeps,
     suppressedModules = effectiveSuppressedModules,
     suppressedPlugins = effectiveSuppressedPlugins,
     suppressionUsages = suppressionUsages,
   )
 }
 
+/**
+ * Decides whether TEST-scope JPS deps belong in the descriptor's generated `<dependencies>`.
+ *
+ * True in exactly three cases:
+ * 1. the descriptor is a test descriptor (`foo._test.xml`);
+ * 2. the module is test support (`*.testFramework`, IDE starter, …) and has no production content source;
+ * 3. the descriptor file itself lies under a JPS test source root (e.g. `testResources/foo.tests.xml`).
+ *
+ * Case 3 is what makes test-only modules work; it is deliberately based on descriptor location, not on the module name.
+ */
 private fun shouldIncludeTestScopeForWrittenDeps(
   graph: PluginGraph,
   outputProvider: ModuleOutputProvider?,
@@ -466,19 +475,18 @@ private fun hasProductionContentSource(graph: PluginGraph, contentModuleName: Co
 
 private fun isTestSupportContentModule(moduleName: ContentModuleName, descriptorPath: Path): Boolean {
   val name = moduleName.value
-  return !isPreservedTestsDescriptorModule(moduleName) &&
-         (name.endsWith(".testFramework") ||
-          name.contains(".testFramework.") ||
-          name.endsWith("TestFramework") ||
-          name.endsWith(".testGuiFramework") ||
-          name.contains(".test.framework") ||
-          name.startsWith("intellij.rider.test.framework") ||
-          name == "intellij.tools.testsBootstrap" ||
-          name == "intellij.idea.tools.launch" ||
-          name.startsWith("intellij.ide.starter.") ||
-          name.startsWith("intellij.tools.ide.starter.") ||
-          name.startsWith("intellij.tools.ide.metrics.") ||
-          descriptorPath.toString().contains("/testFramework/"))
+  return name.endsWith(".testFramework") ||
+         name.contains(".testFramework.") ||
+         name.endsWith("TestFramework") ||
+         name.endsWith(".testGuiFramework") ||
+         name.contains(".test.framework") ||
+         name.startsWith("intellij.rider.test.framework") ||
+         name == "intellij.tools.testsBootstrap" ||
+         name == "intellij.idea.tools.launch" ||
+         name.startsWith("intellij.ide.starter.") ||
+         name.startsWith("intellij.tools.ide.starter.") ||
+         name.startsWith("intellij.tools.ide.metrics.") ||
+         descriptorPath.toString().contains("/testFramework/")
 }
 
 /**

@@ -71,7 +71,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
                                                      boolean createInnerClass,
                                                      String newVisibility,
                                                      ParameterInfoImpl[] paramsToMerge,
-                                                     PsiMethod method, boolean generateAccessors) {
+                                                     PsiMethod method,
+                                                     boolean generateAccessors) {
     super(className, calcPackageName(packageName, createInnerClass, method), useExistingClass, createInnerClass,
           newVisibility, generateAccessors, paramsToMerge);
     myMoveDestination = moveDestination;
@@ -111,7 +112,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
     return text;
   }
-
 
   @Override
   public PsiClass getExistingClass() {
@@ -166,7 +166,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final String qualifiedName = StringUtil.getQualifiedName(getPackageName(), getClassName());
     final PsiClass existingClass = psiFacade.findClass(qualifiedName, method.getResolveScope());
     setExistingClass(existingClass);
-    return findCompatibleConstructor(existingClass);
+    return existingClass == null ? null : findCompatibleConstructor(existingClass);
   }
 
   public @Nullable PsiField getField(ParameterInfoImpl parameter) {
@@ -194,9 +194,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         }
       }
     }
-    final PsiMethod[] constructors = aClass.getConstructors();
     PsiMethod compatibleConstructor = null;
-    for (PsiMethod constructor : constructors) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
       if (isConstructorCompatible(constructor, paramsToMerge, aClass)) {
         compatibleConstructor = constructor;
         break;
@@ -269,45 +268,41 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
 
     final PsiClass containingClass = method.getContainingClass();
-    final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
+    final ParameterObjectBuilder builder = new ParameterObjectBuilder(method);
     if (containingClass != null && containingClass.isInterface() && isCreateInnerClass()) {
       // nested class in interface is public by default and is not allowed to be anything else
-      beanClassBuilder.setVisibility("");
+      builder.setVisibility("");
     }
     else if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
-      beanClassBuilder.setVisibility(PsiModifier.PUBLIC);
+      builder.setVisibility(PsiModifier.PUBLIC);
     }
     else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
-      beanClassBuilder.setVisibility(PsiModifier.PROTECTED);
+      builder.setVisibility(PsiModifier.PROTECTED);
     }
     else if (method.hasModifierProperty(PsiModifier.PRIVATE) && isCreateInnerClass()) {
       // top-level class cannot be private
-      beanClassBuilder.setVisibility(PsiModifier.PRIVATE);
+      builder.setVisibility(PsiModifier.PRIVATE);
     }
     else {
-      beanClassBuilder.setVisibility("");
+      builder.setVisibility("");
     }
-    beanClassBuilder.setProject(method.getProject());
-    beanClassBuilder.setFile(method.getContainingFile());
-    beanClassBuilder.setTypeArguments(getTypeParameters());
-    beanClassBuilder.setClassName(getClassName());
-    beanClassBuilder.setPackageName(getPackageName());
+    builder.setTypeArguments(getTypeParameters());
+    builder.setClassName(getClassName());
+    builder.setPackageName(getPackageName());
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final ParameterInfoImpl[] parameterInfos = getParamsToMerge();
     for (int i = 0; i < parameterInfos.length; i++) {
       PsiParameter parameter = parameters[parameterInfos[i].getOldIndex()];
       final boolean setterRequired = accessors[i] == ReadWriteAccessDetector.Access.Write;
       final String newName = parameterInfos[i].getName();
-      beanClassBuilder
-        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
+      builder.addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
     }
 
-    final String classString = beanClassBuilder.buildBeanClass();
+    final String classString = builder.buildText();
 
     try {
       final PsiFileFactory factory = PsiFileFactory.getInstance(method.getProject());
-      final PsiJavaFile newFile =
-        (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
+      final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(getClassName() + ".java", JavaFileType.INSTANCE, classString);
       if (isCreateInnerClass()) {
         assert containingClass != null;
         final PsiClass[] classes = newFile.getClasses();
@@ -328,12 +323,11 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         }
         else {
           final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
-          directory =
-            PackageUtil.findOrCreateDirectoryForPackage(module, getPackageName(), containingDirectory, true, true);
+          assert module != null;
+          directory = PackageUtil.findOrCreateDirectoryForPackage(module, getPackageName(), containingDirectory, true, true);
         }
 
         if (directory != null) {
-
           PsiFile file = directory.findFile(newFile.getName());
           if (file == null) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(method.getManager().getProject());
@@ -351,7 +345,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
     return null;
   }
-
 
   private static class ParamAssignmentFinder extends JavaRecursiveElementWalkingVisitor {
     private PsiParameter myParameter;

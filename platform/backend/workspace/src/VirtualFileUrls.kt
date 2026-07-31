@@ -17,7 +17,13 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
  * [VirtualFileManager.findFileByUrl].
  */
 public val VirtualFileUrl.virtualFile: VirtualFile?
-  get() = if (this is VirtualFilePointer) file else VirtualFileManager.getInstance().findFileByUrl(url)
+  get() {
+    val file = if (this is VirtualFilePointer) file else VirtualFileManager.getInstance().findFileByUrl(url)
+    if (file != null && this is VirtualFileUrlWithVirtualFile) {
+      cacheVirtualFile(file)
+    }
+    return file
+  }
 
 /**
  * Returns instance of [VirtualFileUrl] describing this [VirtualFile]. Note that if URL of this file wasn't registered in [virtualFileManager],

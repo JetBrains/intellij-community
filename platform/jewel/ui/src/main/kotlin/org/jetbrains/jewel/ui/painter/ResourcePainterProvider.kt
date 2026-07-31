@@ -268,6 +268,13 @@ internal fun Document.writeToString(): String {
     }
 }
 
+/**
+ * Creates and remembers a [ResourcePainterProvider] for the given [iconKey], resolving the resource path for the
+ * current UI mode (New UI vs. Classic UI).
+ *
+ * @param iconKey The [IconKey] identifying the icon resource.
+ * @param iconClass The class whose [ClassLoader] is used to locate the resource. Defaults to [IconKey.iconClass].
+ */
 @Composable
 public fun rememberResourcePainterProvider(iconKey: IconKey, iconClass: Class<*> = iconKey.iconClass): PainterProvider {
     val isNewUi = LocalNewUiChecker.current.isNewUi()
@@ -276,6 +283,12 @@ public fun rememberResourcePainterProvider(iconKey: IconKey, iconClass: Class<*>
     }
 }
 
+/**
+ * Creates and remembers a [ResourcePainterProvider] for the given resource [path].
+ *
+ * @param path The classpath-relative path of the icon resource.
+ * @param iconClass The class whose [ClassLoader] is used to locate the resource.
+ */
 @Composable
 public fun rememberResourcePainterProvider(path: String, iconClass: Class<*>): PainterProvider =
     remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }

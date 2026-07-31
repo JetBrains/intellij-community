@@ -655,6 +655,10 @@ public open class DefaultMarkdownBlockRenderer(
         return map
     }
 
+    /**
+     * Wraps [content] in a [HorizontallyScrollableContainer] when [isScrollable] is `true`, or renders it directly
+     * otherwise. Uses [movableContentOf] to preserve the content's state across toggling.
+     */
     @Composable
     protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
@@ -1007,6 +1011,7 @@ public open class DefaultMarkdownBlockRenderer(
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
 
+    /** Companion object for [DefaultMarkdownBlockRenderer]. */
     public companion object {
         @Suppress("VariableNaming")
         private val LocalTextAlignment: ProvidableCompositionLocal<TextAlign> = staticCompositionLocalOf {

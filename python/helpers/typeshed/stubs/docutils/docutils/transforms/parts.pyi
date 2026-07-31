@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Iterable, Sequence
-from typing import ClassVar, Final, NoReturn
+from typing import ClassVar, Final
+from typing_extensions import Never
 
 from docutils import nodes
 from docutils.transforms import Transform
@@ -28,7 +29,7 @@ class Contents(Transform):
 
 class ContentsFilter(nodes.TreeCopyVisitor):
     def get_entry_text(self) -> Sequence[nodes.Node]: ...
-    def ignore_node_but_process_children(self, node: Unused) -> NoReturn: ...
+    def ignore_node_but_process_children(self, node: Unused) -> Never: ...
     visit_problematic = ignore_node_but_process_children
     visit_reference = ignore_node_but_process_children
     visit_target = ignore_node_but_process_children

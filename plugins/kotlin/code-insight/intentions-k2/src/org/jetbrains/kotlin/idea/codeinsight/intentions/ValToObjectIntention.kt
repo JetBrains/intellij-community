@@ -45,7 +45,7 @@ class ValToObjectIntention: KotlinApplicableModCommandAction<KtProperty, Unit>(K
         elementContext: Unit,
         updater: ModPsiUpdater
     ) {
-        val name = element.name ?: return
+        val name = element.nameIdentifier?.text ?: return
         val objectLiteral = element.initializer as? KtObjectLiteralExpression ?: return
         val declaration = objectLiteral.objectDeclaration
         val superTypeList = declaration.getSuperTypeList()

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,11 +36,14 @@ fun Document.bindToBackend(
   service<BackendBasedDocumentCoroutineScopeProvider>().cs.launch(Dispatchers.EDT) {
     val builder = BackendDocumentBindBuilder().apply(builder)
     val backendDocumentIdProvider = builder.backendDocumentIdProvider
-    if (backendDocumentIdProvider != null) {
+    val documentBound = if (backendDocumentIdProvider != null) {
       bindToBackend(backendDocumentIdProvider, builder.onBindingDispose)
     }
+    else {
+      true
+    }
 
-    if (builder.bindEditors) {
+    if (documentBound && builder.bindEditors) {
       // mark the document, so future editors will be bind
       bindEditorsToBackend()
       // bind current editors (since they might be created during backends' documents initialization)
@@ -87,7 +91,7 @@ private fun Document.bindCurrentEditors() {
 private suspend fun Document.bindToBackend(
   backendDocumentIdProvider: suspend (FrontendDocumentId) -> BackendDocumentId?,
   onBindingDispose: (() -> Unit)?,
-) {
+): Boolean {
   val frontendDocument = this
   val frontendDocumentId = FrontendDocumentId(UID.random())
   val registry = FrontendDocumentIdRegistry.EP_NAME.extensionList.firstOrNull()
@@ -96,12 +100,16 @@ private suspend fun Document.bindToBackend(
   try {
     backendDocumentId = backendDocumentIdProvider(frontendDocumentId)
   }
+  catch (_: RpcClientDisconnectedException) {
+    // Binding can race with backend/frontend disconnect; the frontend id is unregistered below.
+  }
   finally {
     if (backendDocumentId == null) {
       // if backendDocumentId != null, frontend's document host should unregister the document itself
       registry?.unregisterFrontendDocumentId(frontendDocumentId)
     }
   }
+  return backendDocumentId != null
 }
 
 @ApiStatus.Internal

@@ -1006,7 +1006,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       expr = x.method()
       #│       ^^^^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
-      #└ TYPE C
+      #└ TYPE C | Unknown
       """,
     )
 
@@ -1802,6 +1802,79 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       a.attr += 1
       a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       a.attr += C() # WARNING Expected type 'int' (from '__set__'), got 'str' instead
+      """)
+  }
+
+  @Nested
+  inner class DescriptorInUnionType {
+    @Test
+    @TestFor(issues = ["PY-86411"])
+    fun `get applied per member when declared type is union of descriptor and other types`() = test("""
+      from typing import Any
+
+      class MyDescriptor:
+          def __get__(self, instance: Any, owner: Any) -> str: ...
+
+      class Test:
+          desc: MyDescriptor | int | Any
+          def foo(self):
+              expr = self.desc
+      #       └ TYPE str | int | Any
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-86411"])
+    fun `get applied to descriptor member leaving plain member untouched`() = test("""
+      from typing import Any
+
+      class MyDescriptor:
+          def __get__(self, instance: Any, owner: Any) -> str: ...
+
+      class Test:
+          desc: MyDescriptor | int
+          def foo(self):
+              expr = self.desc
+      #       └ TYPE str | int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-86411"])
+    fun `generic descriptor member in union binds its type parameter`() = test("""
+      from typing import Any
+
+      class MyDescriptor[T]:
+          def __get__(self, instance: Any, owner: Any) -> T: ...
+
+      class Test:
+          desc: MyDescriptor[bytes] | int
+          def foo(self):
+              expr = self.desc
+      #       └ TYPE bytes | int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-86411"])
+    fun `union without descriptor member is unchanged`() = test("""
+      class Test:
+          desc: str | int
+          def foo(self):
+              expr = self.desc
+      #       └ TYPE str | int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-86411"])
+    fun `set expected value type is union of descriptor set value and plain member`() = test("""
+      class MyDescriptor:
+          def __set__(self, obj: object, value: str): ...
+
+      class Test:
+          member: MyDescriptor | int
+
+      t = Test()
+      t.member = "foo"
+      t.member = 42
+      t.member = 1.5 # WARNING Expected type 'str | int' (from '__set__'), got 'float' instead
       """)
   }
 

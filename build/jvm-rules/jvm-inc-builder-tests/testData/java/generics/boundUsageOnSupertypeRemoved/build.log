@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+End of files
+Compiling files:
+  java/generics/boundUsageOnSupertypeRemoved/a/B.java
+End of files
+Cleaning output files:
+  Bound.class
+End of files
+Compiling files:
+  java/generics/boundUsageOnSupertypeRemoved/a/Bound.java
+End of files
+------------------------------------------
+Exit code: OK

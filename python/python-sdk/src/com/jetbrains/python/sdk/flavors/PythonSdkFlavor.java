@@ -25,7 +25,9 @@ import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonInterpreter;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,13 +58,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @ApiStatus.Internal
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
   /**
-   * <code>
-   * Python 3.11
-   * </code>
-   */
-  @ApiStatus.Internal
-  public static final String PYTHON_VERSION_STRING_PREFIX = "Python ";
-  /**
    * To prevent log pollution and slowness, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
    * and only log it once
    */
@@ -87,6 +82,35 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    */
   public @NotNull Class<D> getFlavorDataClass() {
     return getEmptyFlavorForBackwardCompatibility();
+  }
+
+  @ApiStatus.Internal
+  public static final class AdditionalDataMigration<D extends PyFlavorData> {
+    private final @NotNull D myFlavorData;
+    private final @Nullable Path myWorkingDirectory;
+
+    public AdditionalDataMigration(@NotNull D flavorData, @Nullable Path workingDirectory) {
+      myFlavorData = flavorData;
+      myWorkingDirectory = workingDirectory;
+    }
+
+    public @NotNull D getFlavorData() {
+      return myFlavorData;
+    }
+
+    public @Nullable Path getWorkingDirectory() {
+      return myWorkingDirectory;
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull AdditionalDataMigration<D> migrateAdditionalData(@NotNull PythonSdkAdditionalData additionalData, @NotNull D data) {
+    return new AdditionalDataMigration<>(data, null);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull D withWorkingDirectory(@NotNull D data, @NotNull Path workingDirectory) {
+    return data;
   }
 
   /**
@@ -305,17 +329,11 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @param sdkHome
-   * @return
-   * @deprecated use {@link #getVersionStringStatic(String)}
+   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
-  //because of process output
   @Deprecated(forRemoval = true)
-  @RequiresBackgroundThread(generateAssertion = false)
-  public @Nullable String getVersionString(@Nullable String sdkHome) {
-    return getVersionStringStatic(sdkHome);
-  }
-
   //because of process output
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable String getVersionStringStatic(@Nullable String sdkHome) {
@@ -327,6 +345,12 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput);
   }
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @Nullable String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
     if (processOutput.getExitCode() != 0) {
@@ -344,6 +368,12 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput.getStdout());
   }
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @Nullable String getVersionStringFromOutput(@NotNull String output) {
     return VersionParserKt.getVersionStringFromOutput(output);
@@ -369,24 +399,24 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getClass().getSimpleName();
   }
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
     return getLanguageLevelFromVersionStringStatic(sdk.getVersionString());
   }
 
-  //because of process output
-  @RequiresBackgroundThread(generateAssertion = false)
-  public @NotNull LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
-    return getLanguageLevelFromVersionStringStatic(getVersionString(sdkHome));
-  }
-
 
   /**
-   * Returns wrong language level when argument is null which isn't probably what you except.
-   * Be sure to check argument for null.
-   * If string can't be parsed -- returns default.
-   * <p>
-   * Consider using {@link #getLanguageLevelFromVersionStringStaticSafe(String...)}
+   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
+   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public static @NotNull LanguageLevel getLanguageLevelFromVersionStringStatic(@Nullable String version) {
     if (version == null) {
       return LanguageLevel.getDefault();

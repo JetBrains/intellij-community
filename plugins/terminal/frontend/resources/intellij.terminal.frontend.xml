@@ -13,6 +13,8 @@
                     interface="com.intellij.terminal.frontend.settings.TerminalSettingsProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.portForwardingManager" dynamic="true"
                     interface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.activityTracker" dynamic="true"
+                    interface="com.intellij.terminal.frontend.session.TerminalActivityTracker"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -48,14 +50,6 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
-    <applicationService
-      serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
-      serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
-      open="true"/>
-    <projectService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingPersistenceService"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingNoOpPersistenceService"
-      open="true"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>

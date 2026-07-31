@@ -45,12 +45,11 @@ private val useNewFileSystem = System.getProperty("wsl.use.new.filesystem") != n
 
 private val WSLDistribution.roots: Set<String>
   get() {
-    val localRoots = mutableSetOf(getWindowsPath("/"))
-    localRoots.single().let {
-      localRoots += it.replace("wsl.localhost", "wsl$")
-      localRoots += it.replace("wsl$", "wsl.localhost")
+    val localRoot = getWindowsPath("/")
+    // The same distribution is reachable under every known WSL host name, so report a root for each of them.
+    return WSL_PREFIXES.mapTo(mutableSetOf(localRoot)) { to ->
+      WSL_PREFIXES.fold(localRoot) { root, from -> root.replace(from, to) }
     }
-    return localRoots
   }
 
 @ApiStatus.Internal
@@ -142,16 +141,10 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   }
 
   override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
-    // TODO Describe why it's fine to return local paths here.
-    // TODO Speed up.
-
-    // This code deliberately returns only `\\wsl.localhost\` paths despite the existence of `\\wsl$`.
-    // This function is often used in UI like file choosers, and it looks awkward
-    // if the same root appears in the file tree twice.
-    // The disadvantage is that `Path.of("""\\wsl$\Ubuntu\home").root` is not in `getRootDirectories()`,
-    // but the default Windows file system behaves exactly the same:
-    // its `getRootDirectories()` never returns WSL roots at all.
-    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf()).map { wsl ->
+    // Only `\\wsl.localhost\` so the file chooser doesn't show each distro twice.
+    // IJPL-172763: read the cache only; `installedDistributionsFuture` would spawn `wsl.exe --list`.
+    val distributions = WslDistributionManager.getInstance().lastInstalledDistributions ?: return emptyList()
+    return distributions.map { wsl ->
       wsl.roots.first { root ->
         root.contains("wsl.localhost")
       }
@@ -159,9 +152,11 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {
-    return WslDistributionManager.getInstance().installedDistributionsFuture.getNow(listOf())
+    // IJPL-172763: see getCustomRoots.
+    val distributions = WslDistributionManager.getInstance().lastInstalledDistributions ?: return emptyList()
+    return distributions
       .flatMap { it.roots }
-      .flatMap { compute(localFS, it)!!.fileStores }
+      .flatMap { compute(localFS, it)?.fileStores ?: emptyList() }
   }
 
   companion object {
@@ -201,19 +196,17 @@ class WslEelAlternativeRootProvider : EelAlternativeRootProvider {
     (descriptor as? WslEelDescriptor)?.distribution?.roots
 }
 
-@ApiStatus.Internal
-object WslPathParser {
+private val WSL_UNC_SERVER_NAMES: List<String> = WSL_PREFIXES.map { "//$it/" }
+
+internal object WslPathParser {
   // wsl root -> distribution id
   internal fun parsePath(sanitizedPath: String): Pair<String, String>? {
     @MultiRoutingFileSystemPath
     val wslRoot: String
     val distributionId: String
 
-    val serverNameEndIdx = when {
-      sanitizedPath.startsWith("//wsl.localhost/", ignoreCase = true) -> 16
-      sanitizedPath.startsWith("//wsl$/", ignoreCase = true) -> 7
-      else -> return null
-    }
+    val serverNameEndIdx = WSL_UNC_SERVER_NAMES.firstOrNull { sanitizedPath.startsWith(it, ignoreCase = true) }?.length
+                           ?: return null
 
     val shareNameEndIdx = sanitizedPath.indexOf('/', startIndex = serverNameEndIdx)
 
@@ -230,7 +223,8 @@ object WslPathParser {
   }
 }
 
-class WslEelDescriptor internal constructor(val distribution: WSLDistribution, fsRoot: String) : EelPathBoundDescriptor, EelDescriptorWithoutNativeFileChooserSupport {
+class WslEelDescriptor internal constructor(val distribution: WSLDistribution, fsRoot: String) : EelPathBoundDescriptor,
+                                                                                                 EelDescriptorWithoutNativeFileChooserSupport {
   internal val fsRoot = fsRoot.replace('/', '\\')
 
   constructor(distribution: WSLDistribution) : this(distribution, distribution.getUNCRootPath().pathString)

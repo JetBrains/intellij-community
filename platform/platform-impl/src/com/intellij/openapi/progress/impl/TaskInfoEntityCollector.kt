@@ -64,7 +64,7 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project?, task: TaskI
     tryWithEntities(task) {
       LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project" }
 
-      val progressModel = if (isRhizomeProgressModelEnabled) {
+      val progressModel = if (isRhizomeProgressModelEnabled()) {
         ProgressTaskInfoEntityModel(task, cs)
       }
       else {

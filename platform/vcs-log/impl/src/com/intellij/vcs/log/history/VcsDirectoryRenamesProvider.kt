@@ -59,7 +59,7 @@ internal data class Hashes(@Attribute("parentHash") val parentHash: String,
   internal constructor(edgeData: EdgeData<CommitId>) : this(edgeData.parent.hash.asString(), edgeData.child.hash.asString())
 
   fun getCommitIds(rootFile: VirtualFile): EdgeData<CommitId>? {
-    if (!VcsLogUtil.HASH_REGEX.matcher(parentHash).matches() || !VcsLogUtil.HASH_REGEX.matcher(childHash).matches()) return null
+    if (!VcsLogUtil.GIT_HASH_REGEX.matcher(parentHash).matches() || !VcsLogUtil.GIT_HASH_REGEX.matcher(childHash).matches()) return null
     return EdgeData(CommitId(HashImpl.build(parentHash), rootFile), CommitId(HashImpl.build(childHash), rootFile))
   }
 }

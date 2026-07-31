@@ -153,7 +153,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         editor.renderInlays(
           model.inlays,
           HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) { inlayModel ->
-          createRenderer(inlayModel, fileVm.avatarIconsProvider, fileVm.imageLoader, activeRangesTracker).also { inlayRenderer ->
+          createRenderer(editor, inlayModel, fileVm.avatarIconsProvider, fileVm.imageLoader, activeRangesTracker).also { inlayRenderer ->
             launch {
               CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
             }
@@ -174,6 +174,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   }
 
   private fun CoroutineScope.createRenderer(
+    editor: Editor,
     inlayModel: GitLabMergeRequestEditorMappedComponentModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     imageLoader: GitLabImageLoader,
@@ -181,15 +182,15 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   ) =
     when (inlayModel) {
       is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-        GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel, avatarIconsProvider,
+        GitLabMergeRequestDiscussionInlayRenderer(this, project, editor, inlayModel, avatarIconsProvider,
                                                   imageLoader, activeRangesTracker,
                                                   GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-        GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel, avatarIconsProvider,
+        GitLabMergeRequestDraftNoteInlayRenderer(this, project, editor, inlayModel, avatarIconsProvider,
                                                  imageLoader, activeRangesTracker,
                                                  GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
-        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel, avatarIconsProvider, activeRangesTracker,
+        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, editor, inlayModel, avatarIconsProvider, activeRangesTracker,
                                                      GitLabStatistics.MergeRequestNoteActionPlace.EDITOR, inlayModel::cancel)
 
     }

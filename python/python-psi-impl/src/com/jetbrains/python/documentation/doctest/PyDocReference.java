@@ -91,12 +91,12 @@ public class PyDocReference extends PyReferenceImpl {
   public @NotNull Object @NotNull [] getVariants() {
     final Object[] results = super.getVariants();
 
-    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
-    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myElement);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(getElement().getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElement());
     if (host == null) return results;
 
-    final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(getElement());
+    final PyQualifiedExpression element = originalElement != null ? originalElement : getElement();
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element, null, filterForPresentedNames(results));
 
     final List<Pair<PsiElement, TextRange>> files = languageManager.getInjectedPsiFiles(host);

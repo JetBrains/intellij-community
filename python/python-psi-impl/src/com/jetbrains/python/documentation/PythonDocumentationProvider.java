@@ -70,6 +70,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitor;
+import com.jetbrains.python.psi.types.PyVariance;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -193,13 +194,13 @@ public class PythonDocumentationProvider implements DocumentationProvider {
           PyTypedElement refExpr = findReferenceOrTypeParameter(originalElement);
           if (refExpr != null) {
             if (isEffectivelyInvariant(refExpr, context)) {
-              if (valueType.getVariance() != PyTypeVarType.Variance.INVARIANT) {
-                String varianceStr = PyTypeVarType.Variance.INVARIANT.name().toLowerCase(Locale.ROOT); //NON-NLS
+              if (valueType.getVariance() != PyVariance.INVARIANT) {
+                String varianceStr = PyVariance.INVARIANT.name().toLowerCase(Locale.ROOT); //NON-NLS
                 result.append(styledSpan(" # treated as " + varianceStr, PyHighlighter.PY_LINE_COMMENT)); //NON-NLS
               }
             }
-            else if (valueType.getVariance() == PyTypeVarType.Variance.INFER_VARIANCE) {
-              PyTypeVarType.Variance inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
+            else if (valueType.getVariance() == PyVariance.INFER_VARIANCE) {
+              PyVariance inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
               if (inferredVariance != null) {
                 String varianceStr = inferredVariance.name().toLowerCase(Locale.ROOT); //NON-NLS
                 result.append(styledSpan(" # inferred as " + varianceStr, PyHighlighter.PY_LINE_COMMENT)); //NON-NLS

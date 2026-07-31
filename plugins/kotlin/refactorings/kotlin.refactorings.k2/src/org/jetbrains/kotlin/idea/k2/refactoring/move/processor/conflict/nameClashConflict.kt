@@ -5,25 +5,30 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.isAnyType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -98,10 +103,7 @@ private fun KaSymbol.getContainingSymbolFqn(): FqName? {
 }
 
 context(_: KaSession)
-private fun KaType.isAnyOrTypeParameter(): Boolean {
-    if (isAnyType) return true
-    return this is KaTypeParameterType
-}
+private fun KaType.isAnyOrTypeParameter(): Boolean = isAnyType || this is KaTypeParameterType
 
 context(_: KaSession)
 private fun KaSymbol.toSignatureData(): SymbolData {
@@ -129,7 +131,8 @@ internal fun checkNameClashConflicts(
 ): MultiMap<PsiElement, String> {
 
     // Note: This does not detect 100% of conflicts currently
-    fun KaSession.equivalent(a: KaType, b: TypeData): Boolean {
+    context(session: KaSession)
+    fun equivalent(a: KaType, b: TypeData): Boolean {
         return when {
             // Possible type erasure conflict
             a.isAnyOrTypeParameter() && b is AnyOrTypeParameter ->         // a = T(?) | Any(?), b = T(?) | Any(?)
@@ -141,11 +144,12 @@ internal fun checkNameClashConflicts(
                     equivalent(type, it.second)
                 }
             }
-            else -> return false
+            else -> false
         }
     }
 
-    fun KaSession.equivalent(a: KaSymbol, b: SymbolData): Boolean = when (a) {
+    context(session: KaSession)
+    fun equivalent(a: KaSymbol, b: SymbolData): Boolean = when (a) {
         is KaDeclarationSymbol -> when (a) {
             is KaFunctionSymbol -> b is FunctionSymbolData && a.name == b.name &&
                     a.valueParameters.size == b.valueParameters.size &&
@@ -157,7 +161,8 @@ internal fun checkNameClashConflicts(
         else -> false
     }
 
-    fun KaSession.walkDeclarations(
+    context(session: KaSession)
+    fun walkDeclarations(
         currentScope: KaSymbol,
         signatureToCheck: SymbolData,
         report: (KaDeclarationSymbol, KaSymbol) -> Unit

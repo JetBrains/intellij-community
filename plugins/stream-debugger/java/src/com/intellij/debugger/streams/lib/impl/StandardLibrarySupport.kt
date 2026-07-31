@@ -13,6 +13,7 @@ import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedGatherOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMatchingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOptionalResultOperation
@@ -49,6 +50,11 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                      BreakpointBasedFlatMappingOperation("flatMapToInt"),
                                      BreakpointBasedFlatMappingOperation("flatMapToLong"),
                                      BreakpointBasedFlatMappingOperation("flatMapToDouble"),
+                                     BreakpointBasedFlatMappingOperation("mapMulti"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToInt"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToLong"),
+                                     BreakpointBasedFlatMappingOperation("mapMultiToDouble"),
+                                     BreakpointBasedGatherOperation("gather"),
                                      BreakpointBasedDistinctOperation("distinct"),
                                      BreakpointBasedSortedOperation("sorted"),
                                      BreakpointBasedParallelOperation("parallel"))

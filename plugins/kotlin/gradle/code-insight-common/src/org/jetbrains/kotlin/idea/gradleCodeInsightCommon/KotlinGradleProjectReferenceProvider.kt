@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -42,15 +44,7 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
             ?.takeIf { it.startsWith(GRADLE_SEPARATOR) } ?: return null
         val callableId = analyzeSurroundingCallExpression(element.parent) ?: return null
 
-        if (callableId.callableName != GRADLE_DSL_PROJECT) return null
-
-        // either from pure gradle dsl
-        if (!(callableId.packageName == GRADLE_DSL_PACKAGE ||
-                    // or from kotlin gradle plugin
-                    (callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS))
-        ) {
-            return null
-        }
+        if (!isProjectCallable(callableId)) return null
 
         val length = element.textRange.length
         return if (text == GRADLE_SEPARATOR) {
@@ -59,6 +53,16 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
         } else {
             GradleProjectReference(element, TextRange(1, length), text.substring(1).split(GRADLE_SEPARATOR))
         }
+    }
+
+    private fun isProjectCallable(callableId: CallableId): Boolean {
+        if (callableId.callableName != GRADLE_DSL_PROJECT) return false
+
+        // either from pure gradle dsl
+        if (callableId.packageName == GRADLE_DSL_PACKAGE || callableId.packageName == GRADLE_DSL_SUPPORT_DELEGATES_PACKAGE) return true
+
+        // or from kotlin gradle plugin
+        return callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)

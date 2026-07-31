@@ -26,6 +26,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME
 import com.intellij.openapi.application.impl.islands.IslandsFeedback
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -39,7 +40,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.whenDisposed
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -51,6 +51,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.toolWindow.ResizeStripeManager
+import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
@@ -573,13 +574,20 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 }
               }
               if (ExperimentalUI.isNewUI()) {
+                val extension = ToolWindowExtension.getInstance()
                 row {
                   checkBox(cdShowToolWindowNames).onApply {
                     ResizeStripeManager.applyShowNames()
                   }.onChanged { cb ->
                     findDiagramPanel(cb)?.showToolWindowNames = cb.isSelected
-                  }
+                  }.visible(extension == null)
                 }
+                row {
+                  checkBox(message("checkbox.show.tool.window.names"))
+                    .selected(extension?.isToolWindowNameVisible() == true)
+                    .comment(message("checkbox.show.tool.window.names.managed.by.plugin"))
+                    .enabled(false)
+                }.visible(extension != null)
               }
               row {
                 checkBox(cdLeftToolWindowLayout).onChanged { cb ->

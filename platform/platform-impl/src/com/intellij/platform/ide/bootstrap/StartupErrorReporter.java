@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -37,6 +38,7 @@ import org.jspecify.annotations.NullMarked;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -267,7 +269,7 @@ public final class StartupErrorReporter {
 
     try {
       var reportId = worker.get();
-      var message = message("bootstrap.error.message.submitted", reportId);
+      var message = prepareMessage(message("bootstrap.error.message.submitted", reportId));
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.submitted"), JOptionPane.INFORMATION_MESSAGE);
     }
     catch (Throwable t) {
@@ -308,11 +310,11 @@ public final class StartupErrorReporter {
     try {
       var backupPath = ConfigBackup.Companion.getNextBackupPath(PathManager.getConfigDir());
       CustomConfigMigrationOption.StartWithCleanConfig.INSTANCE.writeConfigMarkerFile();
-      var message = message("bootstrap.error.message.reset", backupPath);
+      var message = prepareMessage(message("bootstrap.error.message.reset", backupPath));
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
     }
     catch (Throwable t) {
-      var message = message("bootstrap.error.message.reset.failed", t);
+      var message = prepareMessage(message("bootstrap.error.message.reset.failed", t));
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
     }
   }
@@ -323,12 +325,15 @@ public final class StartupErrorReporter {
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
-  private static JScrollPane prepareMessage(String message) {
+  private static JComponent prepareMessage(String message) {
     var textPane = new SafeActionTextPane();
     textPane.setEditable(false);
     textPane.setText(message.replace("\t", "    "));
     textPane.setBackground(UIManager.getColor("Panel.background"));
     textPane.setCaretPosition(0);
+    if (Strings.countChars(message, '\n') <= 5) {
+      return textPane;
+    }
 
     var scrollPane = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());

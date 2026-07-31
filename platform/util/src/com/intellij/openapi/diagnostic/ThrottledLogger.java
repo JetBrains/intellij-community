@@ -91,6 +91,11 @@ public final class ThrottledLogger {
     logger.error(message, t);
   }
 
+  public void error(@NotNull Throwable t) {
+    if (shouldThrottle()) return;
+    logger.error(t);
+  }
+
   public void error(@NotNull Supplier<String> messageSupplier) {
     if (shouldThrottle()) return;
     logger.error(messageSupplier.get());

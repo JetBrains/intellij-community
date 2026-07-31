@@ -5,7 +5,10 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -103,7 +106,8 @@ internal object NoContextParameterFixFactory {
             SurroundCallWithContextFix.Wrapper.WITH
         }
 
-    private fun KaSession.findSurroundingContextCall(element: KtElement): KtCallExpression? {
+    context(session: KaSession)
+    private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
         val calleeName = (parentCall.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
         if (calleeName != CONTEXT_FQ_NAME.shortName().asString()) return null
@@ -111,7 +115,8 @@ internal object NoContextParameterFixFactory {
         return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
 
-    private fun KaSession.findValueCandidates(
+    context(session: KaSession)
+    private fun findValueCandidates(
         useSite: KtElement,
         surroundingContextCall: KtCallExpression?,
         requiredType: KaType,
@@ -143,8 +148,8 @@ internal object NoContextParameterFixFactory {
         }
     }
 
-
-    private fun KaSession.innerContextScopeAlreadyContainsType(
+    context(session: KaSession)
+    private fun innerContextScopeAlreadyContainsType(
         useSite: KtElement,
         surroundingContextCall: KtCallExpression,
         requiredType: KaType,

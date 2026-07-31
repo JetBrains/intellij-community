@@ -20,7 +20,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsInElementForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
@@ -88,7 +88,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
             ReadAction.nonBlocking(Callable{
                 analyze(affectedElement) { collectPossibleReferenceShorteningsInElementForIde(affectedElement) }
             }).finishOnUiThread(ModalityState.nonModal()) {
-                WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening() })
+                WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening(results = null) })
             }.submit(AppExecutorUtil.getAppExecutorService())
         }
     }

@@ -382,7 +382,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressionUsages = emptyList(),
     )
   }
@@ -405,7 +405,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
     testDependencies = plan.testDependencies,
     existingXmlModuleDependencies = plan.existingXmlModuleDependencies,
     writtenPluginDependencies = plan.writtenPluginDependencies,
-    allJpsPluginDependencies = plan.allJpsPluginDependencies,
+    requiredPluginDependencies = plan.requiredPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
   )
 }

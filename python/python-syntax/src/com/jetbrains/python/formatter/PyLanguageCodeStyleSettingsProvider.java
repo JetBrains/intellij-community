@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
@@ -17,6 +18,8 @@ import com.jetbrains.python.PySyntaxBundle;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -110,6 +113,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
 
       consumer.renameStandardOption("METHOD_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.declaration.parameters"));
       consumer.renameStandardOption("CALL_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.call.arguments"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_CONSECUTIVE_ASSIGNMENTS",
+                                PySyntaxBundle.message("formatter.align.consecutive.assignments"),
+                                ApplicationBundle.message("wrapping.assignment.statement"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
@@ -222,8 +229,35 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
   }
 
   @Override
+  public @NotNull CommonCodeStyleSettings getDefaultCommonSettings() {
+    // Return the Python-specific subclass so it carries the active code style profile baseline for
+    // common fields (PY-85946). Seed indent options and run customizeDefaults() for the indent /
+    // keep-blank-lines baseline.
+    PyCommonCodeStyleSettings defaultSettings = new PyCommonCodeStyleSettings();
+    defaultSettings.initIndentOptions();
+    //noinspection ConstantConditions
+    customizeDefaults(defaultSettings, defaultSettings.getIndentOptions());
+    // customizeDefaults() overrides a few wrap/align fields back to their historical values, so
+    // re-apply the modern profile afterwards when the opt-in flag is on. Otherwise those fields
+    // (METHOD/CALL_PARAMETERS_WRAP, ALIGN_MULTILINE_PARAMETERS_IN_CALLS) would diverge from the active
+    // "default" scheme and be reported as "modified".
+    if (PyCodeStyleDefaultsKt.isPyNewFormatterDefaultsActive()) {
+      PyDefaultStyleGuide.applyToCommonSettings(defaultSettings);
+    }
+    return defaultSettings;
+  }
+
+  @Override
   public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
+  }
+
+  @Override
+  public @NotNull List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof PyCodeStyleSettings pyCodeStyleSettings) {
+      return List.of(new PyCodeStylePropertyAccessor(pyCodeStyleSettings));
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
   }
 
   @Override
@@ -266,6 +300,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
             print(platform.processor())""";
   private static final String WRAP_SETTINGS_PREVIEW = """
     from module import foo, bar, baz, quux
+
+    short = 1
+    long_name = 2
+    counter += 1
 
     long_expression = component_one + component_two + component_three + component_four + component_five + component_six
 

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
     return AllIcons.Nodes.Module;
   }
 
-  static @Nullable RefEntity moduleFromName(RefManager manager, String name) {
+  static @Nullable RefEntity moduleFromName(@NotNull RefManager manager, @NotNull @NonNls String name) {
     return manager.getRefModule(ModuleManager.getInstance(manager.getProject()).findModuleByName(name));
   }
 }

@@ -3,7 +3,7 @@ package git4idea.stash
 
 import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.Executor.touch
-import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.GitUtil
 import git4idea.history.GitLogUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.add
@@ -64,7 +64,7 @@ class GitStashTest : GitSingleRepoTest() {
                stashMessagePattern(expectedMessage).matcher(stash.message).matches())
   }
 
-  private fun stashMessagePattern(commitMessage: String) = Pattern.compile("${VcsLogUtil.HASH_REGEX.pattern()} ${commitMessage}")
+  private fun stashMessagePattern(commitMessage: String) = Pattern.compile("${GitUtil.HASH_REGEX.pattern()} ${commitMessage}")
 
   private fun stash() = git(project, "stash")
 

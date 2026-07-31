@@ -17,7 +17,6 @@ import com.intellij.execution.actions.RunCurrentFileExecutorAction
 import com.intellij.execution.actions.RunSpecifiedConfigExecutorAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.fullRunAccess
 import com.intellij.execution.getStoppableDescriptors
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
@@ -77,10 +76,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.openapi.vfs.projectFilesWrite
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.platform.ide.core.permissions.Permission
-import com.intellij.platform.ide.core.permissions.RequiresPermissions
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.GroupedElementsRenderer
@@ -730,7 +726,7 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   }
 
 internal class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
-  : DumbAwareAction(), RequiresPermissions {
+  : DumbAwareAction() {
   init {
     templatePresentation.text = getText(isPinned)
   }
@@ -751,14 +747,10 @@ internal class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, 
     val project = e.project ?: return
     RunConfigurationStartHistory.getInstance(project).togglePin(conf)
   }
-
-  override fun getRequiredPermissions(): Collection<Permission> {
-    return listOf(projectFilesWrite)
-  }
 }
 
 internal class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
-  : DumbAwareAction(), RequiresPermissions {
+  : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -790,10 +782,6 @@ internal class StopConfigurationInlineAction(val executor: Executor, val setting
     }
 
     return null
-  }
-
-  override fun getRequiredPermissions(): Collection<Permission> {
-    return listOf(fullRunAccess)
   }
 }
 

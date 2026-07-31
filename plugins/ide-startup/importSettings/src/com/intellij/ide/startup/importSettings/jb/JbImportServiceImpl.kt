@@ -84,6 +84,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
+import javax.swing.SwingUtilities
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
@@ -254,7 +255,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       importer.importRaw()
       logger.info("Performing raw import from '$folderPath'")
       withContext(Dispatchers.EDT) {
-        ApplicationManagerEx.getApplicationEx().restart(true)
+        scheduleRestart()
       }
     }
   }
@@ -454,7 +455,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
     val startTime = System.currentTimeMillis()
     importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
-      suspend fun performImport(): Boolean {
+      suspend fun performImport(): ImportResult {
         if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && data.featuredPluginIds.isEmpty()) {
           logger.info("Started importing all...")
           progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
@@ -462,7 +463,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           ImportSettingsEventsCollector.jbRawSelected(productInfo.codeName)
           importer.importRaw()
-          return true
+          return ImportResult.RestartWithExistingConfigMarker
         }
         else {
           try {
@@ -489,7 +490,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               importer.migrateLocalization()
               if (progressIndicator.isCanceled()) {
                 logger.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
-                return restartRequired
+                return ImportResult.fromRestartRequired(restartRequired)
               }
               progressIndicator.text = ImportSettingsBundle.message("progress.text.migrating.options")
               val optionsStartTime = System.currentTimeMillis()
@@ -512,7 +513,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             }
             catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
               logger.info("Import cancelled")
-              return restartRequired
+              return ImportResult.fromRestartRequired(restartRequired)
             }
             progressIndicator.fraction = 0.99
             storeImportConfig(productInfo.configDir, filteredCategories, plugins2import?.keys?.map { it.idString })
@@ -520,41 +521,43 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               logger.info("Imported finished in $it ms.")
               ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)
             }
-            return restartRequired
+            return ImportResult.fromRestartRequired(restartRequired)
           }
           catch (th: Throwable) {
             logger.warn("An exception occurred during settings import", th)
-            return true
+            return ImportResult.RestartWithSessionProperties
           }
         }
       }
 
-      val shouldRestart = try {
+      val importResult = try {
         performImport()
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
         logger.info("Import cancellation detected. Proceeding normally without restart.")
-        false
+        ImportResult.ProceedWithoutRestart
       }
       catch (e: Throwable) {
         logger.error("Import error. Proceeding normally without restart.", e)
-        false
+        ImportResult.ProceedWithoutRestart
       }
 
-      if (shouldRestart) {
+      if (importResult.shouldRestart) {
         withContext(Dispatchers.EDT) {
           logger.info("Calling restart...")
-          runCatching {
-            val properties = listOf(
-              InitialConfigImportState.FIRST_SESSION_KEY to true.toString(),
-              InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY to true.toString(),
-              InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH to productInfo.configDir.toString(),
-            )
-            CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile()
-          }.onFailure {
-            logger.warn("Could not write config migration options", it)
+          if (importResult.writeSessionProperties) {
+            runCatching {
+              val properties = listOf(
+                InitialConfigImportState.FIRST_SESSION_KEY to true.toString(),
+                InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY to true.toString(),
+                InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH to productInfo.configDir.toString(),
+              )
+              CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile()
+            }.onFailure {
+              logger.warn("Could not write config migration options", it)
+            }
           }
-          ApplicationManagerEx.getApplicationEx().restart(true)
+          scheduleRestart()
         }
       }
       else {
@@ -570,6 +573,17 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
   companion object {
     internal val IDE_NAME_PATTERN = Pattern.compile("""([a-zA-Z]+)(20\d\d\.\d)""")
+    private enum class ImportResult(val shouldRestart: Boolean, val writeSessionProperties: Boolean) {
+      ProceedWithoutRestart(false, false),
+      RestartWithExistingConfigMarker(true, false),
+      RestartWithSessionProperties(true, true);
+
+      companion object {
+        fun fromRestartRequired(restartRequired: Boolean): ImportResult =
+          if (restartRequired) RestartWithSessionProperties else ProceedWithoutRestart
+      }
+    }
+
     private val DEFAULT_SETTINGS_FILES = setOf(
       GeneralSettings.IDE_GENERAL_XML,
       StoragePathMacros.NON_ROAMABLE_FILE
@@ -590,6 +604,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       SettingsCategory.TOOLS.name to SettingsCategory.TOOLS,
       SettingsCategory.SYSTEM.name to SettingsCategory.SYSTEM
     )
+  }
+}
+
+private fun scheduleRestart() {
+  SwingUtilities.invokeLater {
+    ApplicationManagerEx.getApplicationEx().restart(true)
   }
 }
 

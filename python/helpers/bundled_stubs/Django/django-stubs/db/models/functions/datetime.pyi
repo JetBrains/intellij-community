@@ -49,7 +49,7 @@ class TruncBase(TimezoneMixin, Transform):
     def __init__(
         self,
         expression: Combinable | str,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
         tzinfo: tzinfo | None = None,
         **extra: Any,
     ) -> None: ...
@@ -61,7 +61,7 @@ class Trunc(TruncBase):
         self,
         expression: Combinable | str,
         kind: str,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
         tzinfo: tzinfo | None = None,
         **extra: Any,
     ) -> None: ...

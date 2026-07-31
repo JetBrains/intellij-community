@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.FacetManager;
@@ -17,7 +17,7 @@ import javax.swing.JComponent;
 import java.awt.BorderLayout;
 
 
-class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigurable {
+final class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigurable {
   private final JComponent myMainPanel;
   private final PythonSdkComboBox mySdkComboBox;
 

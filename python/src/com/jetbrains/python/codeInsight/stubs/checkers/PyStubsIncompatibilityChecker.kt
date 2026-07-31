@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.codeInsight.stubs.PyStubsSuggestions
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.getInstalledPackage
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirementVersionSpec
 
 @Service(Service.Level.PROJECT)
 internal class PyStubsIncompatibilityChecker(project: Project) : PyStubsChecker(project) {

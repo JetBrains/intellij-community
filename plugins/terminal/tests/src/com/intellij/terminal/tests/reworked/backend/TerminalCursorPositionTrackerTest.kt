@@ -54,42 +54,17 @@ internal class TerminalCursorPositionTrackerTest {
   }
 
   @Test
-  fun `cursor position doesn't reported when cursor is not visible`() {
+  fun `cursor position correctly reported when cursor is invisible`() {
     val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
     val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
     val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
 
-    terminalDisplay.setCursorVisible(false)
-
     textBuffer.write("hello", 1, 0)
+    terminalDisplay.setCursorVisible(false)
     terminalDisplay.setCursor(5, 1)
 
     val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate()
-    assertThat(cursorUpdate).isNull()
-  }
-
-  @Test
-  fun `cursor visible - reported, invisible - not reported, visible again - reported`() {
-    val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
-    val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-    val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
-    val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
-
-    // Cursor visible: position should be reported
-    textBuffer.write("hello", 1, 0)
-    terminalDisplay.setCursor(5, 1)
-    assertThat(cursorPositionTracker.getCursorPositionUpdate())
-      .isEqualTo(TerminalCursorPosition(0, 5))
-
-    // Cursor invisible: position change should not be reported
-    terminalDisplay.setCursorVisible(false)
-    terminalDisplay.setCursor(3, 1)
-    assertThat(cursorPositionTracker.getCursorPositionUpdate()).isNull()
-
-    // Cursor visible again: current position should be reported
-    terminalDisplay.setCursorVisible(true)
-    assertThat(cursorPositionTracker.getCursorPositionUpdate())
-      .isEqualTo(TerminalCursorPosition(0, 3))
+    assertThat(cursorUpdate).isEqualTo(TerminalCursorPosition(0, 5))
   }
 }

@@ -5,16 +5,19 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.psi.KtExpression
@@ -83,7 +86,7 @@ fun convertToTypePredicate(
                     expression.expressionType?.let { predicate.invoke(expression, it, session) } ?: false
                 }
             } catch (e: Exception) {
-                if (e is ControlFlowException) throw e
+                rethrowControlFlowException(e)
 
                 throw e
             }
@@ -126,7 +129,7 @@ private class KtExpressionPostfixTemplateSelector(
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    predicate?.invoke(element, this)
+                    predicate?.invoke(element, useSiteSession)
                 }
             }
         }

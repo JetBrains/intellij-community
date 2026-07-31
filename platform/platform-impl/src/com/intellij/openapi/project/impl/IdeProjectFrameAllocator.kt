@@ -55,6 +55,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
@@ -84,6 +85,7 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CancellationException
@@ -202,7 +204,11 @@ internal class IdeProjectFrameAllocator(
           val project = projectInitObservable.awaitProjectInit()
           span("restoreEditors") {
             val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
-            restoreEditors(project = project, fileEditorManager = fileEditorManager)
+            restoreEditors(
+              project = project,
+              fileEditorManager = fileEditorManager,
+              opensFileAfterProjectOpen = options.opensFileAfterProjectOpen,
+            )
           }
 
           val start = projectInitObservable.projectInitTimestamp
@@ -269,6 +275,8 @@ internal class IdeProjectFrameAllocator(
           }.invokeOnCompletion { throwable ->
             if (throwable != null) {
               onNoEditorsLeft()
+              // `postOpenEditors` never ran, or never reached its own release
+              releaseStartupEmptyStatePresentationHold(project)
             }
           }
         }
@@ -518,7 +526,11 @@ private fun applyProjectFrameUiPolicy(
   disconnectIfDone()
 }
 
-private suspend fun restoreEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
+private suspend fun restoreEditors(
+  project: Project,
+  fileEditorManager: FileEditorManagerImpl,
+  opensFileAfterProjectOpen: Boolean,
+) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     // DaemonCodeAnalyzer wants DaemonCodeAnalyzerSettings
@@ -536,6 +548,22 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
     }
 
     val (editorComponent, editorState) = fileEditorManager.init()
+    // the empty state may be built as soon as restoring is over, in parallel with the rest of the project open, but it must not be
+    // shown until project open is done opening editors of its own — the welcome tab and the README below are two of those.
+    // `ModalityState.any()`, like the release in `postOpenEditors`, so a modal dialog during startup cannot reorder the two, and
+    // `Dispatchers.EDT` because settling the empty state may mount or dispose components, which needs the write-intent lock.
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      editorComponent.beginStartupEmptyStatePresentationHold()
+      if (opensFileAfterProjectOpen) {
+        // a file named on the command line is opened after project open has returned, so project open's own release does not cover it;
+        // `openFileFromCommandLine` releases this second hold
+        editorComponent.beginStartupEmptyStatePresentationHold()
+      }
+      if (editorState == null) {
+        // there is nothing to restore, so preparation may start at once
+        editorComponent.finishStartupEditorRestore()
+      }
+    }
     if (editorState == null) {
       WelcomeScreenTabService.getInstance(fileEditorManager.project).openTab()
       serviceAsync<StartUpPerformanceService>().editorRestoringTillHighlighted()
@@ -584,19 +612,68 @@ private suspend fun postOpenEditors(
     // check after `initDockableContentFactory` - editor in a docked window
     if (!fileEditorManager.hasOpenFiles()) {
       stopOpenFilesActivity(project)
+      // An editor area whose empty state claims focus is where the caret belongs on a project that restored no editors, the same way it
+      // would belong in a restored editor. The request is made here, where "project open restored nothing" is known, and honoured when
+      // the empty state is presented — the hold released below. An editor opened after this point (the README) drops it again.
+      // Not on a remote dev host, which does not focus anything of its own on project open either — see `openProjectViewIfNeeded`.
+      val emptyStateClaimKept = AtomicBoolean(true)
+      val emptyStateTakesFocus = !AppMode.isRemoteDevHost() &&
+                                 withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                                   val splitters = fileEditorManager.mainSplitters
+                                   splitters.emptyStateClaimsFocus().also { takesFocus ->
+                                     if (takesFocus) {
+                                       // The Project view below is opened without focus for this claim, which is a promise made before
+                                       // there is a component to keep it with. Where it cannot be kept — a provider that builds nothing,
+                                       // an empty state that is never presented — the Project view is focused after all, either here or
+                                       // at the point it is opened, whichever comes second.
+                                       splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = {
+                                         emptyStateClaimKept.set(false)
+                                         focusProjectViewIfOpened(project)
+                                       })
+                                     }
+                                   }
+                                 }
       if (!isNotificationSilentMode(project)) {
-        openProjectViewIfNeeded(project, toolWindowInitJob)
+        openProjectViewIfNeeded(project, toolWindowInitJob, focusProjectView = { !emptyStateTakesFocus || !emptyStateClaimKept.get() })
         findAndOpenReadmeIfNeeded(project)
       }
       FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
     }
   }
   finally {
-    withContext(NonCancellable + Dispatchers.EDT) {
+    // `Dispatchers.EDT` rather than the strict UI dispatcher: releasing may mount or dispose the empty state right here, and both take
+    // the write-intent lock, which `Dispatchers.UI` forbids taking at all
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (!project.isDisposed) {
-        fileEditorManager.mainSplitters.enableRichEmptyStateComponents()
+        // project open is done opening editors: whatever the editor area shows now is what it keeps
+        fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
       }
     }
+  }
+}
+
+/**
+ * Ends the startup presentation hold when [postOpenEditors] never got to release the hold [restoreEditors] took.
+ *
+ * This is the abandoning release rather than a paired one: restoring takes its hold uninterruptibly, so it may still be taken after
+ * project open has been cancelled, and a paired release that arrives first would be spent on a hold that does not exist yet.
+ */
+private fun releaseStartupEmptyStatePresentationHold(project: Project) {
+  val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return
+  // `mainSplitters` is a lateinit assigned inside `initJob`, so it exists only once that job has completed successfully — and where it
+  // never did, restoring never returned from `init()` either, so no hold was ever taken
+  fileEditorManager.initJob.invokeOnCompletion { throwable ->
+    if (throwable != null) {
+      return@invokeOnCompletion
+    }
+    ApplicationManager.getApplication().invokeLater(
+      {
+        if (!project.isDisposed) {
+          fileEditorManager.mainSplitters.abandonStartupEmptyStatePresentationHold()
+        }
+      },
+      ModalityState.any(),
+    )
   }
 }
 
@@ -735,7 +812,12 @@ private fun installMaximizeListener(frame: IdeFrameImpl) {
   })
 }
 
-private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job) {
+/**
+ * @param focusProjectView `false` when something else on this project's editor area takes focus instead — an empty state that claims
+ * it — so the Project view is opened without focus rather than focused and then focused away from. Asked at the moment the Project view
+ * is activated rather than in advance, because a claim on the editor area's focus can be given up before that moment.
+ */
+private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job, focusProjectView: () -> Boolean) {
   if (!serviceAsync<RegistryManager>().`is`("ide.open.project.view.on.startup")) {
     return
   }
@@ -746,14 +828,33 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
   withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
     if (toolWindowManager.activeToolWindowId == null) {
-      val toolWindow = toolWindowManager.getToolWindow("Project")
+      val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
       if (toolWindow != null) {
         // maybe readAction
         withContext(Dispatchers.EDT) {
-          toolWindow.activate(null, !AppMode.isRemoteDevHost())
+          toolWindow.activate(null, focusProjectView() && !AppMode.isRemoteDevHost())
         }
       }
     }
+  }
+}
+
+/**
+ * Focuses the Project view that [openProjectViewIfNeeded] opened without focus, because the editor area's empty state claimed that focus
+ * and then found nothing to take it with.
+ *
+ * Does nothing when the Project view is not showing: it was never opened — notification silent mode, the registry key off — and there is
+ * nothing here to focus. Where that is only because it has not been opened *yet*, the claim is already known to be given up by the time
+ * it is, and it is opened focused instead.
+ */
+@RequiresEdt
+private fun focusProjectViewIfOpened(project: Project) {
+  if (project.isDisposed) {
+    return
+  }
+  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW) ?: return
+  if (toolWindow.isVisible) {
+    toolWindow.activate(null, true)
   }
 }
 

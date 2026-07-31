@@ -1,9 +1,0 @@
-val x = buildList<Boolean> {
-    add(true)
-    addAll(
-        buildList buildList1@{
-            addAll(this@buildList)
-            this@buildList.mapTo(this) { !it }
-        }
-    )
-}

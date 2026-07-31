@@ -11,6 +11,8 @@
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
       <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
+      <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>
+
       <localInspection language="Markdown"
                        shortName="MarkdownIncorrectTableFormatting"
                        bundle="messages.MarkdownBundle"
@@ -71,7 +73,7 @@
                        enabledByDefault="true"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection"/>
 
-      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.lang.references.CommonLinkDestinationReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
@@ -79,5 +81,24 @@
 
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
+
+      <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
+
+      <renameHandler implementation="com.intellij.markdown.backend.rename.MarkdownFileRenameHandler"/>
+      <automaticRenamerFactory implementation="com.intellij.markdown.backend.rename.MarkdownRenamerFactory"/>
+
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MermaidLineMarkerAdvertisementProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+
+      <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
+
+      <runLineMarkerContributor language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownRunLineMarkersProvider"/>
+
+      <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
     </extensions>
 </idea-plugin>

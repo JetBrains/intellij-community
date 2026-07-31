@@ -31,6 +31,9 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
       }
     }
 
+    // for the case of the FE restart with a session running
+    updateExecutionPosition(session)
+
     session.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
         updateExecutionPosition(session)

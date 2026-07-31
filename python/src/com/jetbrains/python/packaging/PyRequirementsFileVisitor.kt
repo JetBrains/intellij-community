@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus

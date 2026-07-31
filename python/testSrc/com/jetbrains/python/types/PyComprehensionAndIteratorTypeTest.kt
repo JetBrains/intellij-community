@@ -198,23 +198,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           pass
       """)
 
-    @Test
-    fun `union iteration`() = test("""
-      def f(c):
-          if c < 0:
-              return [1, 2, 3]
-          elif c == 0:
-              return 0.0
-          else:
-              return 'foo'
-
-      def g(c):
-          for expr in f(c):
-      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
-      #       └ TYPE int | LiteralString | Unknown
-              pass
-      """)
-
     @TestFor(issues = ["PY-20794"])
     @Test
     fun `iterate over pure list`() = test("""
@@ -315,7 +298,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `iteration over regular str emits str not literal string`() = test("""
+    fun `iteration over string literal emits literal string not str`() = test("""
       s = "foo"
       for expr in s:
       #   └ TYPE LiteralString
@@ -339,6 +322,45 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       for expr in Super():
       #   └ TYPE Super
           pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90549"])
+    fun `async iteration over async iterator`() = test("""
+      from typing import AsyncIterator
+
+      async def run(it: AsyncIterator[int]) -> None:
+          async for expr in it:
+      #             └ TYPE int
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90549"])
+    fun `iteration over generic Iterable subclass`() = test("""
+      from typing import Iterable
+
+      class A[T](Iterable[T]): ...
+      #     └ WEAK-WARNING Class A must implement all abstract methods
+
+      def f(a: A[int]):
+          for x in a:
+              expr = x
+      #       └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91094"])
+    fun `iteration over generic Iterable subclass parameterized with a literal string`() = test("""
+      from typing import Iterable, LiteralString
+
+      class A[T](Iterable[T]): ...
+      #     └ WEAK-WARNING Class A must implement all abstract methods
+
+      def f(a: A[LiteralString]):
+          for x in a:
+              expr = x
+      #       └ TYPE LiteralString
       """)
 
     @Test
@@ -575,6 +597,71 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       import pathlib
       expr = pathlib.Path("").iterdir()
       # └ TYPE Generator[Path, None, None]
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `star unpack of generic subclass with concrete base element`() = test("""
+      class A[T](list[str]): ...
+      expr = [*A[int]()]
+      # └ TYPE list[str]
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `iteration over generic subclass with concrete base element`() = test("""
+      class A[T](list[str]): ...
+      for expr in A[int]():
+      #   └ TYPE str
+          pass
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `iteration over generic subclass forwarding base element`() = test("""
+      class A[T](list[T]): ...
+      for expr in A[int]():
+      #   └ TYPE int
+          pass
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `iteration over dict subclass reordering type parameters`() = test("""
+      class M[K, V](dict[V, K]): ...
+      for expr in M[int, str]():
+      #   └ TYPE str
+          pass
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `iteration over concrete list subclass`() = test("""
+      class M(list[int]): ...
+      for expr in M():
+      #   └ TYPE int
+          pass
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `iteration over non-generic class inheriting parameterized Iterable`() = test("""
+      from typing import Iterable, Iterator
+      class A(Iterable[int]):
+          def __iter__(self) -> Iterator[int]: ...
+      for expr in A():
+      #   └ TYPE int
+          pass
+      """)
+
+    @TestFor(issues = ["PY-90549"])
+    @Test
+    fun `star unpack over non-generic class inheriting parameterized Iterable`() = test("""
+      from typing import Iterable, Iterator
+      class A(Iterable[int]):
+          def __iter__(self) -> Iterator[int]: ...
+      expr = [*A()]
+      # └ TYPE list[int]
       """)
   }
 

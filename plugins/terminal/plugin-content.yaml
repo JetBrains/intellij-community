@@ -3,6 +3,9 @@
   module: intellij.terminal
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0/completion-ranking-sh-0.jar
+- name: lib/modules/intellij.terminal.agentsProvider.jar
+  contentModules:
+  - name: intellij.terminal.agentsProvider
 - name: lib/modules/intellij.terminal.backend.jar
   contentModules:
   - name: intellij.terminal.backend

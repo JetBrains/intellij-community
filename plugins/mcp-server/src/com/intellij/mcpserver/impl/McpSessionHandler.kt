@@ -16,6 +16,7 @@ import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.statistics.McpToolCallOutcome
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.toolwindow.TransportType
@@ -64,6 +65,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.TimeSource
 
 private val logger = logger<McpSessionHandler>()
 
@@ -104,7 +106,7 @@ internal class McpSessionHandler(
    * - In VIA_ROUTER mode: provides tools with McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
    *   (the router tool itself and exception tools that should be exposed directly)
    */
-  private val toolsProvider = McpFilteredToolsListProvider(
+  val toolsProvider = McpFilteredToolsListProvider(
     sessionScope,
     sessionOptions,
     mcpServerService,
@@ -382,6 +384,9 @@ internal class McpSessionHandler(
             )
             .startSpan()
 
+          val callMark = TimeSource.Monotonic.markNow()
+          var outcome = McpToolCallOutcome.FAILURE
+
           try {
             span.makeCurrent().use {
               @Suppress("IncorrectCancellationExceptionHandling")
@@ -402,6 +407,9 @@ internal class McpSessionHandler(
                 val sideEffectResult = processSideEffects(additionalData.callId) {
                   mcpTool.call(request.arguments ?: EmptyJsonObject)
                 }
+
+                // A tool may report a failure by returning an error result instead of throwing.
+                outcome = if (sideEffectResult.result.isError) McpToolCallOutcome.RESULT_ERROR else McpToolCallOutcome.SUCCESS
 
                 logger.trace {
                   "Tool call successful '${mcpTool.descriptor.name}'. Result: ${
@@ -429,6 +437,7 @@ internal class McpSessionHandler(
                 sideEffectResult.result
               }
               catch (ce: CancellationException) {
+                outcome = McpToolCallOutcome.CANCELLED
                 val message = "MCP tool call has been cancelled likely by a user interaction: ${ce.message}"
                 logger.traceThrowable { CancellationException(message, ce) }
                 span.setStatus(StatusCode.ERROR, message)
@@ -437,6 +446,7 @@ internal class McpSessionHandler(
                 McpToolCallResult.error(message)
               }
               catch (mcpException: McpExpectedError) {
+                outcome = McpToolCallOutcome.EXPECTED_ERROR
                 logger.traceThrowable { mcpException }
                 span.setStatus(StatusCode.ERROR, "MCP expected error: ${mcpException.mcpErrorText}")
                 application.messageBus.syncPublisher(ToolCallListener.TOPIC)
@@ -444,6 +454,7 @@ internal class McpSessionHandler(
                 McpToolCallResult.error(mcpException.mcpErrorText, mcpException.mcpErrorStructureContent)
               }
               catch (t: Throwable) {
+                outcome = McpToolCallOutcome.FAILURE
                 val errorMessage = "MCP tool call has been failed: ${t.message}"
                 logger.error(t)
                 span.setStatus(StatusCode.ERROR, errorMessage)
@@ -452,7 +463,11 @@ internal class McpSessionHandler(
                 McpToolCallResult.error(errorMessage)
               }
               finally {
-                McpServerCounterUsagesCollector.logMcpToolCall(mcpTool.descriptor)
+                McpServerCounterUsagesCollector.logMcpToolCall(
+                  descriptor = mcpTool.descriptor,
+                  outcome = outcome,
+                  durationMs = callMark.elapsedNow().inWholeMilliseconds,
+                )
               }
             }
           }

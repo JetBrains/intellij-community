@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.getBeanAccessors
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,15 +55,17 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       channel.close()
-    } else {
+    }
+    else {
       val printer = FeatureUsageSettingsEventPrinter(recordDefault = false)
-      coroutineScope.launch {
+      coroutineScope.launch(Dispatchers.IO) {
         delay(1.minutes)
 
-        if (!FeatureUsageLogger.getInstance().isEnabled()) {
+        if (!FeatureUsageLogger.getInstanceAsync().isEnabled()) {
           channel.close()
           return@launch
         }
+
         for (request in channel) {
           synchronized(printer) {
             logRequest(request, printer)

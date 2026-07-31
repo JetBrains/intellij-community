@@ -3,7 +3,6 @@ package com.intellij.coverage.listeners.java;
 
 public abstract class CoverageListener {
   private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
-  private Object myProjectData;
 
   protected static String sanitize(String className, String methodName) {
     return className + "," + sanitize(methodName, className.length());
@@ -36,9 +35,7 @@ public abstract class CoverageListener {
 
   protected Object getData() {
     try {
-
      return Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", EMPTY_CLASS_ARRAY).invoke(null);
-
     }
     catch (Exception e) {
       return null; //should not happen

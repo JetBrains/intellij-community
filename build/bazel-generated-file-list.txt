@@ -322,7 +322,9 @@ java/java-impl-inspections
 java/java-impl-refactorings
 java/java-indexing-api
 java/java-indexing-impl
+java/java-indexing-serializers
 java/java-promo
+java/java-property-tests
 java/java-psi-api
 java/java-psi-impl
 java/java-runtime
@@ -412,6 +414,7 @@ libraries/dokka
 libraries/download-pgp-verifier
 libraries/ec4j/core
 libraries/fastutil
+libraries/ffmpeg
 libraries/groovy
 libraries/groovy/ant
 libraries/groovy/json
@@ -464,6 +467,7 @@ libraries/jettison
 libraries/jgoodies/common
 libraries/jgoodies/forms
 libraries/jline
+libraries/jna
 libraries/joni
 libraries/jsch-agent-proxy
 libraries/jsonpath
@@ -484,9 +488,12 @@ libraries/junit6-launcher
 libraries/junit6-params
 libraries/jvm-native-trusted-roots
 libraries/jzlib
+libraries/kotlin/gradle-plugin-idea
+libraries/kotlin/gradle-plugin-idea-proto
 libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
+libraries/kotlin/tooling-core
 libraries/kotlinx/collections-immutable
 libraries/kotlinx/coroutines/core
 libraries/kotlinx/coroutines/debug
@@ -525,6 +532,7 @@ libraries/mvstore
 libraries/netty/buffer
 libraries/netty/codec-compression
 libraries/netty/codec-http
+libraries/netty/codec-protobuf
 libraries/netty/handler-proxy
 libraries/netty/tcnative-boringssl
 libraries/objenesis
@@ -568,6 +576,7 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+libraries/zstd-jni
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 mps/build
 mps/build/intellij.mps.resources
@@ -1028,6 +1037,8 @@ plugins/coverage
 plugins/coverage-common
 plugins/coverage-common/intellij.platform.coverage.agent
 plugins/coverage/coverage_rt
+plugins/coverage/junit
+plugins/coverage/testng
 plugins/cucumber-jvm-formatter
 plugins/cucumber-jvm-formatter3
 plugins/cucumber-jvm-formatter4
@@ -1050,6 +1061,7 @@ plugins/devkit/devkit-kotlin-tests
 plugins/devkit/devkit-tests
 plugins/devkit/intellij.devkit.compose
 plugins/devkit/intellij.devkit.debugger
+plugins/devkit/intellij.devkit.experiments
 plugins/devkit/intellij.devkit.gradle
 plugins/devkit/intellij.devkit.gradle.tooling
 plugins/devkit/intellij.devkit.i18n
@@ -1088,7 +1100,10 @@ plugins/evaluation-plugin/languages
 plugins/evaluation-plugin/languages/java
 plugins/evaluation-plugin/languages/kotlin
 plugins/evaluation-plugin/languages/python
+plugins/extended-toolwindows-ui
 plugins/filePrediction
+plugins/filePrediction/java
+plugins/filePrediction/vcs
 plugins/findUsagesMl
 plugins/git-features-trainer
 plugins/git-modal-commit
@@ -1162,9 +1177,11 @@ plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests
 plugins/groovy/intellij.groovy.copyright
 plugins/groovy/jps-plugin
+plugins/groovy/langInjection
 plugins/groovy/rt
 plugins/groovy/rt-constants
 plugins/groovy/rt/classLoader
+plugins/groovy/spock
 plugins/groovy/spock-rt
 plugins/groovy/structuralsearch-groovy
 plugins/hg4idea
@@ -1194,6 +1211,7 @@ plugins/junit/groovy-tests
 plugins/junit/java-tests
 plugins/junit/kotlin-tests-k2
 plugins/junit/kotlin-tests-shared
+plugins/junit/properties
 plugins/junit/testFramework
 plugins/junit5_rt
 plugins/junit5_rt_tests
@@ -1264,6 +1282,7 @@ plugins/kotlin/code-insight/postfix-templates
 plugins/kotlin/code-insight/structural-search-k2
 plugins/kotlin/code-insight/structural-search-k2/tests
 plugins/kotlin/code-insight/utils
+plugins/kotlin/code-insight/vcs
 plugins/kotlin/compiler-plugins/allopen/maven
 plugins/kotlin/compiler-plugins/android-extensions-stubs
 plugins/kotlin/compiler-plugins/assignment/common
@@ -1282,7 +1301,6 @@ plugins/kotlin/compiler-plugins/lombok/gradle
 plugins/kotlin/compiler-plugins/lombok/maven
 plugins/kotlin/compiler-plugins/noarg/gradle
 plugins/kotlin/compiler-plugins/noarg/maven
-plugins/kotlin/compiler-plugins/parcelize/common
 plugins/kotlin/compiler-plugins/parcelize/k2
 plugins/kotlin/compiler-plugins/parcelize/tests/k2
 plugins/kotlin/compiler-plugins/power-assert/gradle
@@ -1292,7 +1310,6 @@ plugins/kotlin/compiler-reference-index
 plugins/kotlin/compiler-reference-index/tests.k2
 plugins/kotlin/completion/api
 plugins/kotlin/completion/impl-k2
-plugins/kotlin/completion/impl-shared
 plugins/kotlin/completion/tests-shared
 plugins/kotlin/copyright
 plugins/kotlin/copyright/fir-tests
@@ -1333,12 +1350,10 @@ plugins/kotlin/injection/base
 plugins/kotlin/injection/base/tests
 plugins/kotlin/injection/k2
 plugins/kotlin/injection/k2/tests
-plugins/kotlin/inspections
 plugins/kotlin/intellij.kotlin.base.test
 plugins/kotlin/internal
 plugins/kotlin/j2k/k2
 plugins/kotlin/j2k/k2/tests
-plugins/kotlin/j2k/shared
 plugins/kotlin/j2k/shared/tests
 plugins/kotlin/jps/graphImplementationTests
 plugins/kotlin/jsr223
@@ -1471,12 +1486,15 @@ plugins/maven/proofreading
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
+plugins/mcp-server/mcpserver.frontend
+plugins/mcp-server/mcpserver.plugin
 plugins/mcp-server/mcpserver.stdio
 plugins/mcp-server/mcpserver.terminal
 plugins/mcp-server/mcpserver.terminal.frontend
 plugins/mcp-server/mcpserver.terminal.frontend/tests
 plugins/mcp-server/mcpserver.terminal/tests
 plugins/mcp-server/mcpserver.testFramework
+plugins/mcp-server/mcpserver.toolsets
 plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
@@ -1484,6 +1502,8 @@ plugins/mermaid
 plugins/mermaid/json
 plugins/mermaid/markdown
 plugins/mermaid/spellchecker
+plugins/minimap/core
+plugins/minimap/plugin
 plugins/ml-local-models
 plugins/ml-local-models/java
 plugins/performanceTesting/backend
@@ -1539,6 +1559,7 @@ plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
 plugins/stream-debugger/rt
+plugins/stream-debugger/rt/gatherers
 plugins/stream-debugger/shared
 plugins/stream-debugger/testFramework
 plugins/svn4idea
@@ -1636,6 +1657,7 @@ python/python-hatch
 python/python-lsp-core
 python/python-lsp-impl
 python/python-markdown
+python/python-minimap
 python/python-packaging
 python/python-parser
 python/python-poetry/backend
@@ -1651,7 +1673,9 @@ python/python-pyright
 python/python-pytools
 python/python-pytools-ui
 python/python-pytools/tests
-python/python-requirements
+python/python-requirements/backend
+python/python-requirements/common
+python/python-requirements/tests
 python/python-restructuredtext
 python/python-ruff
 python/python-sdk

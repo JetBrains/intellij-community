@@ -1,0 +1,51 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKind"
+            interface="org.jetbrains.kotlin.platform.IdePlatformKind"/>
+  </extensionPoints>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <jps.plugin/>
+    <projectFacetListener facet-type="kotlin-language" implementation="org.jetbrains.kotlin.idea.jps.KotlinFacetListener"/>
+
+    <notificationGroup
+            id="Kotlin JPS plugin"
+            displayType="STICKY_BALLOON"
+            key="kotlin.jps.plugin.group.name"
+    />
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jps.KotlinJpsBuildProcessParametersProvider"/>
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask"/>
+    <!-- Workspace Model -->
+    <registryKey key="kotlin.jps.instrument.bytecode"
+                 description="Enable bytecode instrumentation for Kotlin classes"
+                 defaultValue="false"
+                 restartRequired="false"/>
+  </extensions>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind"/>
+  </extensions>
+
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+</idea-plugin>

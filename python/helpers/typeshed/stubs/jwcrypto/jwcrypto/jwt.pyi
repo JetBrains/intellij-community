@@ -41,6 +41,7 @@ class JWT:
         default_claims=None,
         check_claims=None,
         expected_type=None,
+        strict_serialization: bool = False,
     ) -> None: ...
 
     @property

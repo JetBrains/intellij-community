@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -263,7 +262,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   public static final int POST_UPDATE_ALL = 5;
   private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
 
-  @TestOnly
+  @ApiStatus.Internal
   public static boolean isRestartPending() {
     return RESTART_REQUESTS.get() > 0;
   }

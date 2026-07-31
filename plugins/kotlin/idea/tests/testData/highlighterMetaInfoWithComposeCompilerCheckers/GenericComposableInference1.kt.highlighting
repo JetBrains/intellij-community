@@ -7,4 +7,4 @@ fun <T> identity(value: T): T = value
 
 // We should infer `ComposableFunction0<Unit>` for `T`
 val cl = identity(@Composable {})
-val l: () -> Unit <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH]'")!>=<!> cl
+val l: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH]'")!>cl<!>

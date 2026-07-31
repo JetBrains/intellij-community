@@ -50,6 +50,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffR
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
+import kotlin.collections.map
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 
@@ -64,6 +65,7 @@ private typealias NewDiscussionsFlow = StateFlow<Collection<GitLabMergeRequestDi
 interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
   val discussions: DiscussionsFlow
   val draftDiscussions: DraftDiscussionsFlow
+  val newDiscussions: NewDiscussionsFlow
 
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
 
@@ -148,12 +150,20 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
       }
     }.stateInNow(cs, ComputedResult.loading())
 
+  override val newDiscussions: NewDiscussionsFlow =
+    discussionsContainer.newDiscussions.map { newDiscussions ->
+      newDiscussions.map { vm ->
+        val diffDataFlow = createDiffDataFlow(vm.position.mapState { it.position }, selectedChanges)
+        GitLabMergeRequestDiffNewDiscussionViewModel(vm, diffDataFlow, discussionsViewOption)
+      }
+    }.stateInNow(cs, emptyList())
+
   private val noteByTrackingId: StateFlow<Map<String, DiffDataMappedGitLabMergeRequestDiffInlayViewModel>> =
-    combine(discussions, draftDiscussions) { discussionsResult, draftNotesResult ->
+    combine(discussions, draftDiscussions, newDiscussions) { discussionsResult, draftNotesResult, newDiscussions ->
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes).associateBy { it.trackingId }
+      (discussions + draftNotes + newDiscussions).associateBy { it.trackingId }
     }.stateInNow(cs, emptyMap())
 
   override fun showChange(change: GitLabMergeRequestDiffChangeViewModel, scrollRequest: DiffViewerScrollRequest?) =

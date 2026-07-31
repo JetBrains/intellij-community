@@ -1059,6 +1059,7 @@ f:com.intellij.openapi.editor.colors.ColorKey
 - getFallbackColorKey():com.intellij.openapi.editor.colors.ColorKey
 f:com.intellij.openapi.editor.colors.TextAttributesKey
 - java.lang.Comparable
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
 - <init>(org.jdom.Element):V
 - s:createTextAttributesKey(java.lang.String):com.intellij.openapi.editor.colors.TextAttributesKey
 - equals(java.lang.Object):Z
@@ -3091,6 +3092,7 @@ f:com.intellij.psi.search.ProjectScope
 - s:getContentScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getEverythingScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getLibrariesScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getLibraryClassesScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getProjectFilesScopeName():java.lang.String
 - s:getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 com.intellij.psi.search.PsiElementProcessor
@@ -3302,6 +3304,7 @@ com.intellij.psi.tree.ICompositeElementType
 com.intellij.psi.tree.ICustomParsingType
 - a:parse(java.lang.CharSequence,com.intellij.util.CharTable):com.intellij.lang.ASTNode
 c:com.intellij.psi.tree.IElementType
+- sf:NULL_ELEMENT_TYPE:com.intellij.psi.tree.IElementType
 - s:enumerate(com.intellij.psi.tree.IElementType$Predicate):com.intellij.psi.tree.IElementType[]
 - s:find(S):com.intellij.psi.tree.IElementType
 - f:getIndex():S

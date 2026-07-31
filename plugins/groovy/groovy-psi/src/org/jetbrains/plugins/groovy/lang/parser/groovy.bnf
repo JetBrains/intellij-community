@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
   generate = [
     psi = 'no'
@@ -116,6 +116,7 @@
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
     KW_VAR = 'var'
+    KW_VAL = 'val'
     KW_DEFAULT = 'default'
     KW_DO = 'do'
     KW_ELSE = 'else'
@@ -260,10 +261,10 @@ private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 /*
  * 'var' could be modifier or identifier
  */
-private var_modifier ::= 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)  { consumeTokenMethod = 'consumeTokenFast' }
+private var_modifier ::= ('var' | 'val') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword_identifiers ::= 'var' | 'yield' | 'permits' | 'record' { consumeTokenMethod = 'consumeTokenFast' }
+private weak_keyword_identifiers ::= 'var' | 'val' | 'yield' | 'permits' | 'record' { consumeTokenMethod = 'consumeTokenFast' }
 
 private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
@@ -457,7 +458,7 @@ enum_constants ::= enum_constant ((mb_nl ',') mb_nl enum_constant)* [mb_nl ',']
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantListElementType'
 }
-enum_constant ::= annotation_modifier_list mb_nl IDENTIFIER call_argument_list? enum_constant_initializer?
+enum_constant ::= annotation_modifier_list mb_nl (IDENTIFIER | weak_keyword_identifiers) call_argument_list? enum_constant_initializer?
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantElementType'
@@ -834,7 +835,7 @@ synchronized_statement ::= 'synchronized' '(' <<insideParentheses expression>> m
   pin = 2
 }
 
-labeled_statement ::= IDENTIFIER after_label
+labeled_statement ::= (IDENTIFIER | weak_keyword_identifiers) after_label
 private after_label ::= ':' mb_nl statement
 {
   pin = 1
@@ -843,8 +844,8 @@ private after_label ::= ':' mb_nl statement
 
 return_statement ::= 'return' expression?
 
-break_statement ::= 'break' IDENTIFIER?
-continue_statement ::= 'continue' IDENTIFIER?
+break_statement ::= 'break' [IDENTIFIER | weak_keyword_identifiers]
+continue_statement ::= 'continue' [IDENTIFIER | weak_keyword_identifiers]
 yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
 
 throw_statement ::= 'throw' expression
@@ -1293,7 +1294,7 @@ left map_argument_label ::= &':'
  elementType = argument_label
  consumeTokenMethod = 'consumeTokenFast'
 }
-left map_argument ::= ':' expression
+left map_argument ::= ':' mb_nl expression
 {
  pin = 1
  consumeTokenMethod = 'consumeTokenFast'
@@ -1301,7 +1302,7 @@ left map_argument ::= ':' expression
 }
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-private named_argument_tail ::= ':' (mb_nl expression)
+private named_argument_tail ::= ':' mb_nl expression
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'

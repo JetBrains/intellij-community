@@ -399,7 +399,6 @@ com.intellij.openapi.editor.ex.DocumentEx
 - moveText(I,I,I):V
 - a:processRangeMarkers(com.intellij.util.Processor):Z
 - a:processRangeMarkersOverlappingWith(I,I,com.intellij.util.Processor):Z
-- a:registerRangeMarker(com.intellij.openapi.editor.ex.RangeMarkerEx,I,I,Z,Z,I):V
 - removeEditReadOnlyListener(com.intellij.openapi.editor.ex.EditReadOnlyListener):V
 - a:removeRangeMarker(com.intellij.openapi.editor.ex.RangeMarkerEx):Z
 - a:replaceText(java.lang.CharSequence,J):V

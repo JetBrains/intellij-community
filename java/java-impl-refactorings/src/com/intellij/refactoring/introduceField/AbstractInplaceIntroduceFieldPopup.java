@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -41,8 +41,8 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
                                             TypeSelectorManagerImpl typeSelectorManager,
                                             @NlsContexts.Command String title,
                                             PsiClass parentClass,
-                                            final PsiElement anchorElement,
-                                            final PsiElement anchorElementIfAll) {
+                                            PsiElement anchorElement,
+                                            PsiElement anchorElementIfAll) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, title);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myParentClass = smartPointerManager.createSmartPsiElementPointer(parentClass);
@@ -74,8 +74,8 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return super.startsOnTheSameElement(handler, element) ||
            getParentClass() != null &&
-           element instanceof PsiLocalVariable &&
-           getParentClass().findFieldByName(((PsiLocalVariable)element).getName(), false) != null;
+           element instanceof PsiLocalVariable var &&
+           getParentClass().findFieldByName(var.getName(), false) != null;
   }
 
   protected PsiElement getAnchorElement() {

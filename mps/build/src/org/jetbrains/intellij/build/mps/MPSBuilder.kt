@@ -39,8 +39,12 @@ class MPSBuilder {
             options.incrementalCompilation = true
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
-            options.buildStepsToSkip += listOf(BuildOptions.MAC_SIGN_STEP, BuildOptions.MAC_NOTARIZE_STEP,
-                BuildOptions.WIN_SIGN_STEP)
+            options.buildStepsToSkip += listOf(
+                BuildOptions.MAC_SIGN_STEP,
+                BuildOptions.MAC_NOTARIZE_STEP,
+                BuildOptions.WIN_SIGN_STEP,
+                BuildOptions.WINDOWS_ZIP_STEP,
+                BuildOptions.WINDOWS_EXE_INSTALLER_STEP)
             // needed to package JPS tests
             options.useTestCompilationOutput = true
 

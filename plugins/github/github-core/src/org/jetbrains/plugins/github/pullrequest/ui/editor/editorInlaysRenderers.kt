@@ -4,7 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorKeys
 import com.intellij.collaboration.ui.util.bindContent
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.editor.Editor
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -15,22 +18,31 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class GHPRReviewThreadEditorInlayRenderer internal constructor(
   cs: CoroutineScope,
+  editor: Editor,
   model: GHPREditorMappedComponentModel.Thread<*>,
   activeRangesTracker: CodeReviewActiveRangesTracker,
 ) : CodeReviewComponentInlayRenderer(
   GHPRReviewEditorComponentsFactory.createThreadIn(cs, model.vm).let { threadComponent ->
-    CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(threadComponent, model, activeRangesTracker)
+    val wrapWithDimming = CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(threadComponent, model, activeRangesTracker)
+
+    UiDataProvider.wrapComponent(wrapWithDimming) { sink ->
+      sink[CodeReviewEditorKeys.NAVIGABLE_EDITOR_KEY] = editor
+    }
   }
 )
 
 @ApiStatus.Internal
 class GHPRNewCommentEditorInlayRenderer internal constructor(
   cs: CoroutineScope,
+  editor: Editor,
   model: GHPREditorMappedComponentModel.NewComment<*>,
   activeRangesTracker: CodeReviewActiveRangesTracker,
 ) : CodeReviewComponentInlayRenderer(
   GHPRReviewEditorComponentsFactory.createNewCommentIn(cs, model.vm).let { newCommentComponent ->
-    CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+    val wrapWithDimming = CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+    UiDataProvider.wrapComponent(wrapWithDimming) { sink ->
+      sink[CodeReviewEditorKeys.NAVIGABLE_EDITOR_KEY] = editor
+    }
   }
 )
 

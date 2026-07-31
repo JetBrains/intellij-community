@@ -247,7 +247,6 @@ f:com.intellij.ide.macro.ModuleNameMacro
 - getName():java.lang.String
 f:com.intellij.ide.macro.ModulePathMacro
 - com.intellij.ide.macro.Macro
-- com.intellij.ide.macro.PathMacro
 - <init>():V
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getDescription():java.lang.String
@@ -283,7 +282,6 @@ f:com.intellij.ide.macro.ProjectNameMacro
 - getName():java.lang.String
 f:com.intellij.ide.macro.ProjectPathMacro
 - com.intellij.ide.macro.Macro
-- com.intellij.ide.macro.PathMacro
 - <init>():V
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getDescription():java.lang.String
@@ -333,7 +331,6 @@ f:com.intellij.ide.macro.SourcepathEntryMacro
 - getName():java.lang.String
 f:com.intellij.ide.macro.SourcepathMacro
 - com.intellij.ide.macro.Macro
-- com.intellij.ide.macro.PathMacro
 - <init>():V
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getDescription():java.lang.String

@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -352,7 +353,7 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] prepend(T element, T @NotNull [] array) {
+  public static <T> @UnknownNullability T @NotNull [] prepend(@UnknownNullability T element, T @NotNull [] array) {
     return prepend(element, array, getComponentType(array));
   }
 

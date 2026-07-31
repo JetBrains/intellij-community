@@ -21,9 +21,9 @@ internal open class MarkdownCreateFileAction : CreateFileFromTemplateAction(), D
     builder
       .setTitle(MarkdownBundle.message("dialog.title.new.markdown.file"))
       .addKind(MarkdownBundle.message("dialog.kind.markdown.file"), icon, MARKDOWN_TEMPLATE_NAME)
-      .addKind(README_FILE_NAME, icon, README_FILE_NAME)
-      .addKind(AGENTS_FILE_NAME, icon, AGENTS_FILE_NAME)
-      .addKind(SKILL_FILE_NAME, icon, SKILL_FILE_NAME)
+      .addKind(README_FILE_NAME, icon, README_FILE_NAME, README_FILE_NAME)
+      .addKind(AGENTS_FILE_NAME, icon, AGENTS_FILE_NAME, AGENTS_FILE_NAME)
+      .addKind(SKILL_FILE_NAME, icon, SKILL_FILE_NAME, SKILL_FILE_NAME)
   }
 
   override fun createFile(name: String, templateName: String, dir: PsiDirectory): PsiFile? = super.createFile(name, templateName, dir)

@@ -56,6 +56,7 @@ public sealed interface MarkdownHtmlNode {
         override val htmlContent: String,
     ) : MarkdownHtmlNode
 
+    /** Factory functions for parsing raw HTML into [MarkdownHtmlNode] trees. */
     public companion object {
         private val contextElement = JsoupElement("p")
 

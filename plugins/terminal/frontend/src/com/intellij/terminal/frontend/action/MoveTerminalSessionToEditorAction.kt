@@ -14,7 +14,7 @@ import com.intellij.terminal.JBTerminalWidgetListener
 import com.intellij.terminal.frontend.editor.TerminalViewVirtualFile
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
@@ -30,7 +30,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
       return
     }
 
-    val reworkedTerminalTab = findReworkedTerminalTab(project, content)
+    val reworkedTerminalTab = content.getTerminalTab()
     val classicTerminal = findClassicTerminal(e, content)
     if (reworkedTerminalTab != null) {
       performForReworkedTerminalTab(project, reworkedTerminalTab)
@@ -44,7 +44,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
     val manager = TerminalToolWindowTabsManager.getInstance(project)
     manager.detachTab(terminalTab)
 
-    val file = TerminalViewVirtualFile(terminalTab.view, terminalTab.closeOnProcessTermination)
+    val file = TerminalViewVirtualFile(terminalTab)
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     try {
       FileEditorManager.getInstance(project).openFile(file, true)
@@ -85,13 +85,9 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
       return
     }
 
-    val reworkedTerminalTab = findReworkedTerminalTab(project, content)
+    val reworkedTerminalTab = content.getTerminalTab()
     val classicTerminal = findClassicTerminal(e, content)
     e.presentation.isEnabledAndVisible = reworkedTerminalTab != null || classicTerminal != null
-  }
-
-  private fun findReworkedTerminalTab(project: Project, content: Content): TerminalToolWindowTab? {
-    return TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)
   }
 
   private fun findClassicTerminal(e: AnActionEvent, content: Content): TerminalWidget? {

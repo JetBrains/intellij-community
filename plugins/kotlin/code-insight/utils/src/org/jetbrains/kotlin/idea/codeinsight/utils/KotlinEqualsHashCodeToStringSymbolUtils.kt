@@ -3,18 +3,9 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -23,7 +14,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -35,15 +34,17 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-@OptIn(KaContextParameterApi::class)
 object KotlinEqualsHashCodeToStringSymbolUtils {
-    fun KaSession.findEqualsMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findEqualsMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.EQUALS, searchInSuper) { matchesEqualsMethodSignature(it) }
 
-    fun KaSession.findHashCodeMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findHashCodeMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.HASH_CODE, searchInSuper) { matchesHashCodeMethodSignature(it) }
 
-    fun KaSession.findToStringMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
+    context(session: KaSession)
+    fun findToStringMethodForClass(classSymbol: KaClassSymbol, searchInSuper: Boolean = true): KaCallableSymbol? =
         findMethodForClass(classSymbol, OperatorNameConventions.TO_STRING, searchInSuper) { matchesToStringMethodSignature(it) }
 
     context(_: KaSession)

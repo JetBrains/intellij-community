@@ -491,6 +491,7 @@ internal fun ComboBoxLabelText(text: String, style: TextStyle, comboBoxStyle: Co
  *
  * @param style The visual styling configuration for the combo box
  * @param enabled Whether the combo box is enabled, affects the icon color
+ * @param modifier The [Modifier] to apply to the chevron.
  */
 @Composable
 private fun Chevron(style: ComboBoxStyle, enabled: Boolean, modifier: Modifier = Modifier) {

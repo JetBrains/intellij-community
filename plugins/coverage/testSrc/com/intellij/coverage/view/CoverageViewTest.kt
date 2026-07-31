@@ -3,7 +3,10 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.coverage.analysis.JavaCoverageAnnotator
+import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import kotlinx.coroutines.runBlocking
@@ -70,6 +73,20 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     assertToolWindowDoesNotExist()
     manager.openedSuite
     assertToolWindowDoesNotExist()
+  }
+
+  @Test
+  fun `test classes without source do not create empty packages`() {
+    val annotator = JavaCoverageAnnotator(myProject)
+    val coverageInfo = ClassCoverageInfo().apply { totalClassCount = 1 }
+    JavaCoverageAnnotator.JavaCoverageInfoCollector(annotator).addClass("missing.package.MissingClass", coverageInfo, null)
+    val structure = CoverageClassStructure(myProject, annotator, loadIJSuite())
+    try {
+      Assert.assertTrue(structure.getChildrenInfo(CoverageClassStructure.ROOT_ID).isEmpty())
+    }
+    finally {
+      Disposer.dispose(structure)
+    }
   }
 
   private fun findCoverageView(bundle: CoverageSuitesBundle): CoverageView? = CoverageViewManager.getInstance(myProject).getView(bundle)

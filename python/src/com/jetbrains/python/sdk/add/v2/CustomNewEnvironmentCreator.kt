@@ -48,13 +48,20 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
         onPathSelected = model::addManuallyAddedSystemPython,
       )
 
+      val missingExecutableText = if (model.fileSystem.toolPathCanBePersisted) {
+        message("sdk.create.custom.venv.missing.text", pyTool.presentableName)
+      }
+      else {
+        message("sdk.create.custom.tool.not.detected", pyTool.presentableName)
+      }
       executablePath = validatablePathField(
         fileSystem = model.fileSystem,
         pathValidator = toolValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", pyTool.presentableName),
-        missingExecutableText = message("sdk.create.custom.venv.missing.text", pyTool.presentableName),
+        missingExecutableText = missingExecutableText,
         installAction = createInstallFix(errorSink),
+        canBeEdited = model.fileSystem.toolPathCanBePersisted,
       )
 
       row("") {

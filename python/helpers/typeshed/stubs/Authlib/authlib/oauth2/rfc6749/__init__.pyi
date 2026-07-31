@@ -1,5 +1,6 @@
 from .authenticate_client import ClientAuthentication as ClientAuthentication
 from .authorization_server import AuthorizationServer as AuthorizationServer
+from .endpoint import Endpoint, EndpointRequest
 from .errors import (
     AccessDeniedError as AccessDeniedError,
     InsecureTransportError as InsecureTransportError,
@@ -69,6 +70,8 @@ __all__ = [
     "AuthorizationServer",
     "ResourceProtector",
     "TokenValidator",
+    "Endpoint",
+    "EndpointRequest",
     "TokenEndpoint",
     "BaseGrant",
     "AuthorizationEndpointMixin",

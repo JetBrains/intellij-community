@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  I.class
+End of files
+Compiling files:
+  java/methodModifiers/interfaceMethodStaticToDefaultDiamond/a/I.java
+End of files
+Cleaning output files:
+  Impl.class
+End of files
+Compiling files:
+  java/methodModifiers/interfaceMethodStaticToDefaultDiamond/a/Impl.java
+End of files
+------------------------------------------
+Exit code: ERROR

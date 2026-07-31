@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.impl.IntIdGenerator
 import com.intellij.platform.workspace.storage.impl.VirtualFileNameStore
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.io.URLUtil
 import it.unimi.dsi.fastutil.Hash.Strategy
@@ -15,7 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManager {
+public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManagerEx {
   private val idGenerator = IntIdGenerator()
   private var emptyUrl: VirtualFileUrl? = null
   private val fileNameStore = VirtualFileNameStore(isRootDirCaseSensitive)
@@ -30,12 +29,6 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
 
   override fun findByUrl(uri: String): VirtualFileUrl? {
     return findBySegments(splitNames(uri))?.getCachedVirtualFileUrl()
-  }
-
-  @Synchronized
-  internal fun fromUrlSegments(uriSegments: List<String>): VirtualFileUrl {
-    if (uriSegments.isEmpty()) return getEmptyUrl()
-    return addSegments(null, uriSegments)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
@@ -68,7 +61,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
    * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
    * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
    */
-  public fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+  override fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
     val node = findBySegments(splitNames(url))
     if (node == null) return true
 
@@ -114,7 +107,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
   /**
    * Returns class of instances produced by [createVirtualFileUrl], it's used during serialization. 
    */
-  public open val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+  override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = VirtualFileUrlImpl::class.java
 
   protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
@@ -122,7 +115,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
   }
 
   @Synchronized
-  public fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
+  override fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)

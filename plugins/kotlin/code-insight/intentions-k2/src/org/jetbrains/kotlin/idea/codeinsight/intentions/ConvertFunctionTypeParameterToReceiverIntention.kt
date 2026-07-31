@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -195,9 +196,9 @@ private class Converter(
     }
 
     context(_: KaSession) private fun getArgumentExpressionToProcess(callElement: KtCallElement): KtExpression? {
-        val argumentMapping = callElement.resolveToCall()?.successfulFunctionCallOrNull()?.argumentMapping ?: return null
+        val valueArgumentMapping = callElement.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping ?: return null
         val parameter = data.changeInfo.method.getValueParameters()[data.functionParameterIndex]
-        val entry = argumentMapping.entries.find { (_, value) -> value.name.asString() == parameter.name } ?: return null
+        val entry = valueArgumentMapping.entries.find { (_, value) -> value.name.asString() == parameter.name } ?: return null
         return KtPsiUtil.deparenthesize(entry.key)
     }
 

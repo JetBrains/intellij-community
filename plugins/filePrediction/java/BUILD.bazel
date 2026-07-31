@@ -1,0 +1,57 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.filePrediction.java` start
+jvm_library(
+    name = "java",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.filePrediction.java",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/util",
+        "//uast/uast-common:uast",
+        "//plugins/filePrediction",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+jvm_library(
+    name = "java_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.filePrediction.java",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//plugins/filePrediction:filePrediction_test_lib",
+    ],
+)
+### auto-generated section `build intellij.filePrediction.java` end
+
+### auto-generated section `iml intellij.filePrediction.java` start
+exports_files(
+    [
+        "intellij.filePrediction.java.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.filePrediction.java` end

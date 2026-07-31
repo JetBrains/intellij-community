@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.allowedDowngrade
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.allowedUpgrade
-import com.intellij.openapi.updateSettings.impl.UpdateChecker.checkAndPrepareToInstall
+import com.intellij.openapi.updateSettings.impl.UpdateChecker.checkDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -26,7 +26,18 @@ internal class PreparedPluginUpdates(
   val toUpdate: Map<PluginId, PluginDownloader>,
   val toUpdateDisabled: Map<PluginId, PluginDownloader>,
   val models: Map<PluginId, PluginUiModel>,
-)
+) {
+  fun getAllPluginIds(): Set<PluginId> {
+    return toUpdate.keys + toUpdateDisabled.keys + models.keys
+  }
+
+  fun filterByPluginIds(pluginIds: Collection<PluginId>): PreparedPluginUpdates {
+    return PreparedPluginUpdates(toUpdate.filterKeys { it in pluginIds },
+                                 toUpdateDisabled.filterKeys { it in pluginIds },
+                                 models.filterKeys { it in pluginIds }
+    )
+  }
+}
 
 internal abstract class RemotePluginRepository(val id: String) {
   abstract fun findUpdates(
@@ -69,7 +80,7 @@ internal open class MarketplaceLikePluginRepository : RemotePluginRepository("de
             it.externalPluginIdForScreenShots = lastUpdate.externalPluginId
             models[id] = it
           }
-          .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
+          .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, null) }
       }
     }
 
@@ -95,7 +106,15 @@ internal class MarketplaceUpdateCheckPluginRepository : MarketplaceLikePluginRep
   }
 }
 
-internal class CustomPluginRepository(private val host: String) : RemotePluginRepository(host) {
+internal fun getMatchingPluginUpdateSource(backend: RemotePluginRepository): PluginUpdateSourceId {
+  return when (backend) {
+    is MarketplaceLikePluginRepository -> PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
+    is CustomPluginRepository -> PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(backend.host)
+    else -> throw IllegalStateException("Unexpected plugin repository type: $backend")
+  }
+}
+
+internal class CustomPluginRepository(internal val host: String) : RemotePluginRepository(host) {
   override fun findUpdates(
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
@@ -109,7 +128,7 @@ internal class CustomPluginRepository(private val host: String) : RemotePluginRe
     RepositoryHelper.loadPluginModels(host, buildNumber, indicator).forEach { model ->
       val id = model.pluginId
       if (plugins.contains(id)) {
-        prepareDownloader(state, model, buildNumber, toUpdate, toUpdateDisabled, indicator, host)
+        prepareDownloader(state, model, buildNumber, toUpdate, toUpdateDisabled, host)
       }
       // collect latest plugin models from custom repos
       val storedDescriptor = models[id]
@@ -133,14 +152,13 @@ private fun prepareDownloader(
   buildNumber: BuildNumber?,
   toUpdate: MutableMap<PluginId, PluginDownloader>,
   toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
-  indicator: ProgressIndicator?,
   host: String?,
 ) {
   val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
   state.onDescriptorDownload(descriptor)
-  checkAndPrepareToInstall(downloader, state,
-                           if (UpdateCheckerPluginsFacade.getInstance().isDisabled(downloader.id)) toUpdateDisabled else toUpdate,
-                           buildNumber, indicator)
+  checkDownloader(downloader, state,
+                  if (UpdateCheckerPluginsFacade.getInstance().isDisabled(downloader.id)) toUpdateDisabled else toUpdate,
+                  buildNumber)
 }
 
 private fun isNetworkError(it: Throwable): Boolean {

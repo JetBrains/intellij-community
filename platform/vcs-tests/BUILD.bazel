@@ -108,6 +108,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/vcs-tests:vcs-testFramework",
         "//platform/vcs-impl",
+        "//platform/vcs/plugin",
         "//platform/lang-impl",
         "//platform/vcs-impl/lang",
         "//platform/vcs-impl/lang/todo",
@@ -148,6 +149,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":vcs-tests",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],

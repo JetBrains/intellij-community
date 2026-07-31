@@ -166,6 +166,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .withTitle(message("title.select.project.file.directory", context.presentationName))
           .withPathToTextConvertor(::getPresentablePath)
           .withTextToPathConvertor(::getCanonicalPath)
+          .withEnvironmentRestricted(true)
         textFieldWithBrowseButton(fileChooserDescriptor, context.project)
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)

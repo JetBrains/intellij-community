@@ -433,6 +433,11 @@ public class FirLegacyUastResolveEverythingTestGenerated extends AbstractFirLega
         runTest("../../uast-kotlin/tests/testData/WhenAndDestructing.kt");
     }
 
+    @TestMetadata("WhenElse.kt")
+    public void testWhenElse() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/WhenElse.kt");
+    }
+
     @TestMetadata("WhenIs.kt")
     public void testWhenIs() throws Exception {
         runTest("../../uast-kotlin/tests/testData/WhenIs.kt");

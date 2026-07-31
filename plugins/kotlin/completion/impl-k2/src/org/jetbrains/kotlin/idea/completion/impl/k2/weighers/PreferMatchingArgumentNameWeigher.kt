@@ -81,7 +81,7 @@ internal object PreferMatchingArgumentNameWeigher {
             val candidates = scopeContext.callCandidates
             if (candidates.isEmpty()) return emptyList()
 
-            val availableNames = candidates.mapNotNull { it.argumentMapping[nameExpression]?.name }
+            val availableNames = candidates.mapNotNull { it.valueArgumentMapping[nameExpression]?.name }
             availableNames
         }
     }

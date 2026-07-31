@@ -118,14 +118,15 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 addVersions("7.6", V_1_8_22)
             }
 
+            val kgpVersion = KotlinGradlePluginVersions.latestPinned
             addVersions(
-                "7.6.3", KotlinGradlePluginVersions.latest,
-                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
+                "7.6.3", kgpVersion,
+                "${kgpVersion.major}.${kgpVersion.minor}"
             )
 
             addVersions(
-                "8.14.4", KotlinGradlePluginVersions.latest,
-                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
+                "8.14.4", kgpVersion,
+                "${kgpVersion.major}.${kgpVersion.minor}"
             )
 
             return parameters

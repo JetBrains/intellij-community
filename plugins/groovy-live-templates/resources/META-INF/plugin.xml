@@ -7,14 +7,11 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
-    <plugin id="org.intellij.groovy"/>
+    <plugin id="com.intellij.groovy.scripting"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.groovy"/>
     <!-- endregion -->
   </dependencies>
-
-  <content namespace="jetbrains">
-  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <liveTemplateMacro implementation="com.intellij.groovy.live.templates.GroovyScriptMacro"/>

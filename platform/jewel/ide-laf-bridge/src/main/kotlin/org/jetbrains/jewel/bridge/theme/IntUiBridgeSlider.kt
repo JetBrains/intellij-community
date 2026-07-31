@@ -19,6 +19,7 @@ internal fun readSliderStyle(dark: Boolean): SliderStyle {
     return SliderStyle(colors, SliderMetrics.defaults(), CircleShape)
 }
 
+/** Creates Int UI light [SliderColors] by reading values from the IntelliJ color palette, with hardcoded fallbacks. */
 public fun SliderColors.Companion.light(
     track: Color = retrieveColorOrUnspecified("ColorPalette.Gray10").takeOrElse { Color(0xFFD3D5DB) },
     trackFilled: Color = retrieveColorOrUnspecified("ColorPalette.Blue6").takeOrElse { Color(0xFF588CF3) },
@@ -54,6 +55,7 @@ public fun SliderColors.Companion.light(
         thumbBorderHovered,
     )
 
+/** Creates Int UI dark [SliderColors] by reading values from the IntelliJ color palette, with hardcoded fallbacks. */
 public fun SliderColors.Companion.dark(
     track: Color = retrieveColorOrUnspecified("ColorPalette.Gray4").takeOrElse { Color(0xFF43454A) },
     trackFilled: Color = retrieveColorOrUnspecified("ColorPalette.Blue7").takeOrElse { Color(0xFF467FF2) },
@@ -89,6 +91,7 @@ public fun SliderColors.Companion.dark(
         thumbBorderHovered,
     )
 
+/** Creates default [SliderMetrics] with standard Int UI sizing values. */
 public fun SliderMetrics.Companion.defaults(
     trackHeight: Dp = 4.dp,
     thumbSize: DpSize = DpSize(14.dp, 14.dp),

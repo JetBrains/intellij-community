@@ -1,0 +1,13 @@
+// FIX: Convert to collection builder
+
+fun MutableList<Int>.bbb() {
+    fun List<String>.aaa() {
+        buildList {
+            addAll(this@aaa)
+            this@bbb.mapTo(this) { it.toString() }
+            add("a")
+            add(this@aaa.size.toString())
+            add(this@aaa[0])
+        }
+    }
+}

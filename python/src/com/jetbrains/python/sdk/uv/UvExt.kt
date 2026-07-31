@@ -25,6 +25,7 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
@@ -75,7 +76,7 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
 
 private suspend fun createEelUvExecutionContext(
   workingDir: Path,
-  venvPathString: String?,
+  pythonBinaryPath: String,
   uvPathString: String?,
 ): UvExecutionContext.Eel {
   val eelApi = workingDir.getEelDescriptor().toEelApi()
@@ -83,7 +84,7 @@ private suspend fun createEelUvExecutionContext(
   val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Eel(
     workingDir = workingDir,
-    venvPath = venvPathString?.let { PathHolder.Eel(Path.of(it)) },
+    venvPath = fileSystem.resolvePythonHome(PathHolder.Eel(Path.of(pythonBinaryPath))),
     fileSystem = fileSystem,
     uvPath = uvPath
   )
@@ -91,7 +92,7 @@ private suspend fun createEelUvExecutionContext(
 
 private suspend fun createTargetUvExecutionContext(
   workingDir: Path,
-  venvPathString: FullPathOnTarget?,
+  pythonBinaryPath: FullPathOnTarget,
   uvPathString: FullPathOnTarget?,
   targetConfig: TargetEnvironmentConfiguration,
 ): UvExecutionContext.Target {
@@ -99,7 +100,7 @@ private suspend fun createTargetUvExecutionContext(
   val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Target(
     workingDir = workingDir,
-    venvPath = venvPathString?.let { PathHolder.Target(it) },
+    venvPath = fileSystem.resolvePythonHome(PathHolder.Target(pythonBinaryPath)),
     fileSystem = fileSystem,
     uvPath = uvPath
   )
@@ -107,23 +108,23 @@ private suspend fun createTargetUvExecutionContext(
 
 internal fun Sdk.getUvExecutionContextAsync(scope: CoroutineScope, project: Project? = null): Deferred<UvExecutionContext<*>>? {
   val data = sdkAdditionalData
-  val uvWorkingDirectory = uvFlavorData?.uvWorkingDirectory
-  val venvPathString = uvFlavorData?.venvPath
+  val uvWorkingDirectory = pySdkAdditionalData.workingDirectory.takeIf { pySdkAdditionalData.hasValidWorkingDirectory() }
   val uvPathString = uvFlavorData?.uvPath
+  val pythonBinaryPath = homePath ?: return null
 
   return when (data) {
     is UvSdkAdditionalData -> {
       val defaultWorkingDir = project?.basePath?.let { Path.of(it) }
       val cwd = uvWorkingDirectory ?: defaultWorkingDir ?: return null
       scope.async(start = CoroutineStart.LAZY) {
-        createEelUvExecutionContext(cwd, venvPathString, uvPathString)
+        createEelUvExecutionContext(cwd, pythonBinaryPath, uvPathString)
       }
     }
     is PyTargetAwareAdditionalData -> {
       val targetConfig = data.targetEnvironmentConfiguration ?: return null
       val cwd = uvWorkingDirectory ?: return null
       scope.async(start = CoroutineStart.LAZY) {
-        createTargetUvExecutionContext(cwd, venvPathString, uvPathString, targetConfig)
+        createTargetUvExecutionContext(cwd, pythonBinaryPath, uvPathString, targetConfig)
       }
     }
     else -> null
@@ -208,7 +209,8 @@ internal suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   fileSystem: FileSystem<P>,
   usePip: Boolean,
 ): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
-  val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, fileSystem.resolvePythonHome(pythonBinary).toString(), uvPath.toString())
+  val venvPath = fileSystem.resolvePythonHome(pythonBinary).toString()
+  val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, venvPath, uvPath.toString())
   val sdk = fileSystem.setupSdk(null, pythonBinary, sdkAdditionalData, null, null)
   sdk
 }

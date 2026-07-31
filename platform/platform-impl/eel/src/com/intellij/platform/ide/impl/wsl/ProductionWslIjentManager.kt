@@ -42,13 +42,19 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   private fun unregister(label: String): Boolean {
     val deferred = ijents.remove(label)
     if (deferred != null) {
-      deferred.invokeOnCompletion { if (it == null) deferred.getCompleted().close() }
+      deferred.invokeOnCompletion {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        if (it == null) deferred.getCompleted().close()
+      }
       val message = "Explicitly unregistered and closed during initialization: $label"
       deferred.cancel(message, IjentUnavailableException.ClosedByApplication(message, null))
     }
     return deferred != null
   }
 
+  @Deprecated("Use WslIjentAvailabilityService.runWslCommandsViaIjent",
+              replaceWith = ReplaceWith("WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()",
+                                        "com.intellij.execution.wsl.WslIjentAvailabilityService"))
   override val isIjentAvailable: Boolean
     get() = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
 
@@ -123,8 +129,14 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     return session
   }
 
-  override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
-    val descriptor = (descriptor ?: (project?.getEelDescriptor() as? WslEelDescriptor) ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
+  override suspend fun getIjentApi(
+    descriptor: EelDescriptor?,
+    wslDistribution: WSLDistribution,
+    project: Project?,
+    rootUser: Boolean,
+  ): IjentPosixApi {
+    val descriptor =
+      (descriptor ?: (project?.getEelDescriptor() as? WslEelDescriptor) ?: WslEelDescriptor(wslDistribution)) as WslEelDescriptor
     return getIjentSession(wslDistribution, project, rootUser, ParentOfIjentScopes(scope)).getIjentInstance(descriptor)
   }
 

@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -16,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 final class CodeFoldingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    int[] ghp = {Pass.UPDATE_ALL};
-    boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    registrar.registerTextEditorHighlightingPass(this, serializeCodeInsightPasses ? ghp : null, null, false, Pass.UPDATE_FOLDING);
+    registrar.registerTextEditorHighlightingPass(this, null, null, false, Pass.UPDATE_FOLDING);
   }
 
   @Override

@@ -1,8 +1,0 @@
-fun main() {
-    val list = listOf(1)
-    val a = buildList {
-        addAll(listOf(1, 2))
-        addAll(listOf(1,2))
-        addAll(listOf(1) - 1)
-    }
-}

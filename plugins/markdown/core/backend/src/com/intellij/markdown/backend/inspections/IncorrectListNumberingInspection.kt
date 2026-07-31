@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.obtainMarkerNumber
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
@@ -16,13 +17,14 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.ListNumberingType
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Items in ordered lists are expected to have straight numeration starting from 1.
+ * In sequential numbering mode, items in ordered lists are expected to have straight numeration starting from 0 or 1.
  */
 @ApiStatus.Internal
 class IncorrectListNumberingInspection: LocalInspectionTool() {
@@ -37,8 +39,15 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
         if (!list.hasType(MarkdownElementTypes.ORDERED_LIST)) {
           return
         }
+        if (list.isInlineNestedList()) {
+          return
+        }
         val listNumberingIsSequential = settings.state.listNumberingType == ListNumberingType.SEQUENTIAL
-        val startNumber = list.continuationStartNumber()?.takeIf { listNumberingIsSequential } ?: 1
+        val startNumber = when {
+          !listNumberingIsSequential -> 1
+          list.items.firstOrNull()?.obtainMarkerNumber() == 0 -> 0
+          else -> list.continuationStartNumber() ?: 1
+        }
         val quickFix by lazy { ListNumberingFix(list, listNumberingIsSequential) }
         for ((index, item) in list.items.withIndex()) {
           val actualNumber = item.obtainMarkerNumber() ?: continue
@@ -64,6 +73,12 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
       .firstOrNull { it.hasType(MarkdownElementTypes.ORDERED_LIST) }
       ?.items?.lastOrNull()?.obtainMarkerNumber()
     return first.takeIf { precedingLast == first - 1 }
+  }
+
+  private fun MarkdownList.isInlineNestedList(): Boolean {
+    val parentItem = parent as? MarkdownListItem ?: return false
+    val document = containingFile.viewProvider.document ?: return false
+    return document.getLineNumber(startOffset) == document.getLineNumber(parentItem.startOffset)
   }
 
   private class ListNumberingFix(list: MarkdownList, private val sequentially: Boolean): LocalQuickFixOnPsiElement(list) {

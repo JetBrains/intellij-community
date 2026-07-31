@@ -8,19 +8,34 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
 
+/**
+ * Defines all visual properties of a Jewel theme: its name, dark/light mode, global colors and metrics, text styles,
+ * content color, color palette, icon data, and disabled appearance values.
+ */
 @Immutable
 @GenerateDataFunctions
 public class ThemeDefinition(
+    /** The unique name identifying this theme. */
     public val name: String,
+    /** Whether this theme is a dark theme. */
     public val isDark: Boolean,
+    /** The global colors shared across all components in this theme. */
     public val globalColors: GlobalColors,
+    /** The global metrics (sizes, spacings) shared across all components in this theme. */
     public val globalMetrics: GlobalMetrics,
+    /** The default text style used for body content. */
     public val defaultTextStyle: TextStyle,
+    /** The text style used for editor content. */
     public val editorTextStyle: TextStyle,
+    /** The text style used for console/terminal content. */
     public val consoleTextStyle: TextStyle,
+    /** The default foreground color for content rendered with this theme. */
     public val contentColor: Color,
+    /** The color palette providing semantic and raw color mappings for this theme. */
     public val colorPalette: ThemeColorPalette,
+    /** The icon data providing icon overrides and mappings for this theme. */
     public val iconData: ThemeIconData,
+    /** The values controlling the appearance of disabled components. */
     public val disabledAppearanceValues: DisabledAppearanceValues,
 ) {
     override fun equals(other: Any?): Boolean {

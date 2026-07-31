@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.venv.icons.PythonVenvIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.BASE_DIR
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.baseDir
@@ -19,6 +20,7 @@ import java.nio.file.Path
 import javax.swing.Icon
 
 @Internal
+@PyInternalExecApi
 class VirtualEnvSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
 
   override fun isPlatformIndependent(): Boolean = true

@@ -403,9 +403,13 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UselessIsCheckFactories.uselessIsCheckFactory)
         registerFactory(UselessIsCheckFactories.impossibleIsCheckWarningFactory)
         registerFactory(UselessIsCheckFactories.impossibleIsCheckErrorFactory)
+        registerFactory(UselessIsCheckFactories.impossibleIsCheckDeprecationWarningFactory)
+        registerFactory(UselessIsCheckFactories.impossibleIsCheckDeprecationErrorFactory)
         registerFactory(UselessIsCheckFactories.uselessWhenCheckFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckWarningFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckErrorFactory)
+        registerFactory(UselessIsCheckFactories.impossibleWhenCheckDeprecationWarningFactory)
+        registerFactory(UselessIsCheckFactories.impossibleWhenCheckDeprecationErrorFactory)
         registerFactory(ReplaceCallFixFactories.redundantCallsOfConversionMethods)
         registerFactory(ReplaceCallFixFactories.unsafeCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeInfixCallFactory)
@@ -538,6 +542,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(LetImplementInterfaceFixFactories.assignmentTypeMismatchFixFactory)
         registerFactory(LetImplementInterfaceFixFactories.initializerTypeMismatchFixFactory)
         registerFactory(LetImplementInterfaceFixFactories.returnTypeMismatchFixFactory)
+
+        registerFactory(KotlinTimeToJavaInstantFixFactories.argumentTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.returnTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.initializerTypeMismatchFixFactory)
+        registerFactory(KotlinTimeToJavaInstantFixFactories.assignmentTypeMismatchFixFactory)
     }
 
     private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {

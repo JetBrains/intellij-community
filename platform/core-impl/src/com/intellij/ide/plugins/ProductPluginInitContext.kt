@@ -45,7 +45,7 @@ class ProductPluginInitContext(
     buildSet {
       add(CORE_ID)
       addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
-      if (AppMode.isRemoteDevHost()) {
+      if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
         add(REMOTE_DEVELOPMENT_PLUGIN_ID)
       }
     }
@@ -122,7 +122,7 @@ class ProductPluginInitContext(
   data class ThirdPartyPluginsWithoutConsentCheckResult(
     /** null if wasn't asked */
     val privacyNoteAccepted: Boolean?,
-    val pluginsToExcludeFromLoading: List<PluginMainDescriptor>
+    val pluginsToExcludeFromLoading: List<PluginMainDescriptor>,
   )
 
   private var thirdPartyPluginsWithoutConsentCheckResult: ThirdPartyPluginsWithoutConsentCheckResult? = null
@@ -212,11 +212,13 @@ class ProductPluginInitContext(
       val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
       setModuleAvailability(backend, productMode.hasBackend)
 
+      val backendSplit = PluginModuleId("intellij.platform.backend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+      setModuleAvailability(backendSplit, productMode == ProductModes.BACKEND || productMode == ProductModes.MONOLITH)
 
+      val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.base", PluginModuleId.JETBRAINS_NAMESPACE)
       val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
       when {
         productMode.isLight -> {
-          val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.base", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
           val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
@@ -231,6 +233,7 @@ class ProductPluginInitContext(
           setModuleAvailability(platformSplitConnection, productMode == ProductModes.LIGHT_WITH_RD_CONNECTION)
         }
         else -> {
+          setModuleAvailability(frontendSplitBase, productMode == ProductModes.FRONTEND)
           setModuleAvailability(frontendSplit, productMode == ProductModes.FRONTEND)
         }
       }

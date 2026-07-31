@@ -480,7 +480,7 @@ object PluginInstaller {
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
         //  so load first, then enable
-        targetDescriptor.isMarkedForLoading = true
+        // TODO the problem from the FIXME should be gone already with the new dynamic plugins support
         val result = DynamicPlugins.loadPlugin(targetDescriptor)
         PluginEnabler.HEADLESS.enable(setOf(targetDescriptor))
         return result

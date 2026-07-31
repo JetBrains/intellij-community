@@ -1,7 +1,6 @@
 - name: lib/Groovy.jar
   modules:
   - name: intellij.groovy.psi
-  - name: intellij.groovy.structuralSearch
   - name: intellij.groovy
   contentModules:
   - name: intellij.groovy.duplicates
@@ -43,3 +42,12 @@
 - name: lib/modules/intellij.groovy.copyright.jar
   contentModules:
   - name: intellij.groovy.copyright
+- name: lib/modules/intellij.groovy.langInjection.jar
+  contentModules:
+  - name: intellij.groovy.langInjection
+- name: lib/modules/intellij.groovy.spock.jar
+  contentModules:
+  - name: intellij.groovy.spock
+- name: lib/modules/intellij.groovy.structuralSearch.jar
+  contentModules:
+  - name: intellij.groovy.structuralSearch

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Something that can be called, passed parameters to, and return something back.
@@ -45,16 +44,6 @@ public interface PyCallable extends PyAstCallable, PyTypedElement, PyQualifiedNa
    */
   @Nullable
   PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key);
-
-  /**
-   * Returns the type of the call to the callable where the call site is specified by the optional receiver and the arguments to parameters
-   * mapping.
-   */
-  @Nullable
-  PyType getCallType(@Nullable PyExpression receiver,
-                     @Nullable PyCallSiteOwner pyCallSiteExpression,
-                     @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                     @NotNull TypeEvalContext context);
 
   /**
    * @return a methods returns itself, non-method callables return null.

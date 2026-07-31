@@ -84,7 +84,7 @@ public class PagedFileStorageWithRWLockedPageContentTest {
 
   @Before
   public void setUp() throws Exception {
-    storageContext = new StorageLockContext(filePageCache, true, true, false);
+    storageContext = new StorageLockContext(true, true, false);
   }
 
   // ====================== tests:     ==============================================================
@@ -122,7 +122,7 @@ public class PagedFileStorageWithRWLockedPageContentTest {
     for (int tryNo = 0; tryNo < ENOUGH_TRIES; tryNo++) {
       final PagedFileStorageWithRWLockedPageContent
         storage =
-        new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, PAGE_SIZE, true,
+        new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, filePageCache, PAGE_SIZE, true,
                                                     PageContentLockingStrategy.LOCK_PER_PAGE);
       storage.close();
     }
@@ -250,7 +250,7 @@ public class PagedFileStorageWithRWLockedPageContentTest {
   @Test//checking page reclaiming and reallocation
   public void moreThanCacheCapacity_CouldBeWrittenIntoSingleStorage() throws Exception {
     final File file = tmpDirectory.newFile();
-    final long lengthInBytes = storageContext.pageCache().getCacheCapacityBytes() * 2;
+    final long lengthInBytes = filePageCache.getCacheCapacityBytes() * 2;
 
     final byte valueToWrite = (byte)1;
     try (final PagedFileStorageWithRWLockedPageContent pagedStorage = openFile(file)) {
@@ -317,7 +317,7 @@ public class PagedFileStorageWithRWLockedPageContentTest {
   @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   @Test
   public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws IOException, InterruptedException {
-    final int pagesInCache = (int)(storageContext.pageCache().getCacheCapacityBytes() / PAGE_SIZE);
+    final int pagesInCache = (int)(filePageCache.getCacheCapacityBytes() / PAGE_SIZE);
     final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
     final int blockSize = 64;
     final File file = tmpDirectory.newFile();
@@ -471,6 +471,7 @@ public class PagedFileStorageWithRWLockedPageContentTest {
     return new PagedFileStorageWithRWLockedPageContent(
       file.toPath(),
       storageContext,
+      filePageCache,
       PAGE_SIZE,
       true,
       PageContentLockingStrategy.LOCK_PER_PAGE

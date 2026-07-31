@@ -7,8 +7,10 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringProvider {
   companion object {
     fun getInstance(project: Project): SuggestedRefactoringProviderImpl {

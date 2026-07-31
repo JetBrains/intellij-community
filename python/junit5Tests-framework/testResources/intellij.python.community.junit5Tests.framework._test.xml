@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.community.wintools"/>
     <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.jupiter"/>

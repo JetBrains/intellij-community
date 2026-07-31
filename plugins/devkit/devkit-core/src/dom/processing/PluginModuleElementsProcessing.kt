@@ -7,9 +7,44 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.GenericAttributeValue
+import com.intellij.util.xml.GenericDomValue
+import org.jetbrains.idea.devkit.dom.Action
+import org.jetbrains.idea.devkit.dom.Component
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.dom.Listeners
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
+
+/**
+ * Checks whether the given DOM element value is a *registered* class.
+ */
+internal fun isClassRegistration(element: GenericDomValue<*>): Boolean {
+  return when (val parent = element.parent) {
+    is ExtensionPoint -> element === parent.getInterface() || element === parent.beanClass
+    is Extension -> isRegistrationInExtension(element, parent)
+    is Action -> element === parent.clazz
+    is Listeners.Listener -> element === parent.listenerClassName
+    is Component -> element === parent.implementationClass
+    else -> false
+  }
+}
+
+private fun isRegistrationInExtension(element: GenericDomValue<*>, extension: Extension): Boolean {
+  if (element !is GenericAttributeValue<*>) {
+    return true // fixed child sub-tag
+  }
+  for (attributeDescription in extension.genericInfo.attributeChildrenDescriptions) {
+    val attributeValue = attributeDescription.getDomAttributeValue(extension) ?: continue
+    if (attributeValue !== element) continue
+    val attributeName = attributeDescription.name
+    return attributeValue.converter is PluginPsiClassConverter
+      && attributeName != "forClass"
+      && attributeName != "serviceInterface"
+  }
+  return false
+}
 
 /**
  * Returns the classes *registered* in the plugin or module descriptor: extensions, extension points, actions, listeners.

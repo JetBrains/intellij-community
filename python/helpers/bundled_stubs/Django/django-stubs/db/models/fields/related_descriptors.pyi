@@ -13,7 +13,7 @@ from django.utils.functional import cached_property
 from typing_extensions import Never, Self, TypeVar, override
 
 _M = TypeVar("_M", bound=Model)
-_F = TypeVar("_F", bound=Field)
+_F = TypeVar("_F", bound=Field[Any, Any])
 _From = TypeVar("_From", bound=Model)
 _Through = TypeVar("_Through", bound=Model, default=Model)
 _To = TypeVar("_To", bound=Model)

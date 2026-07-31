@@ -19,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//platform/kernel/shared:kernel",
@@ -47,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":buildView",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/execution:execution_test_lib",

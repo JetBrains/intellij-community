@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSampleEntity
@@ -70,7 +70,7 @@ class ApplyChangesFromTest {
 
   @BeforeEach
   internal fun setUp(info: RepetitionInfo) {
-    virtualFileUrlManager = VirtualFileUrlManagerImpl()
+    virtualFileUrlManager = ConcurrentVirtualFileUrlManager()
     target = createEmptyBuilder()
     // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
     shaker = Random(info.currentRepetition.toLong()).nextLong()

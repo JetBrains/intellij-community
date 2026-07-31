@@ -116,10 +116,8 @@ internal class PyRemoveKeywordArgumentNamesIntention : PsiUpdateModCommandAction
     // Get ordered parameter list, skipping implicit parameters (self, cls)
     val callableType = mapping.callableType ?: return null
     val allParameters = callableType.getParameters(typeContext) ?: return null
-    val implicitCount = mapping.implicitParameters.size
-    val effectiveParams = allParameters.drop(implicitCount)
 
-    val caretParamIndex = effectiveParams.indexOf(caretParam)
+    val caretParamIndex = allParameters.indexOf(caretParam)
     if (caretParamIndex < 0) return null
 
     val arguments = argumentList.arguments
@@ -136,7 +134,7 @@ internal class PyRemoveKeywordArgumentNamesIntention : PsiUpdateModCommandAction
     // Check all params from 0 to caretParamIndex have explicit arguments;
     // collect keyword args that need converting
     val result = mutableSetOf<PyKeywordArgument>()
-    for (param in effectiveParams.take(caretParamIndex + 1)) {
+    for (param in allParameters.take(caretParamIndex + 1)) {
 
       // Skip positional-only separator (/)
       if (param.isPositionOnlySeparator) continue

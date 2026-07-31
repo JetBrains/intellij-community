@@ -1,0 +1,3 @@
+package ppp;
+import java.util.List;
+public class A { public static <T extends CharSequence> void take(List<T> l) { } }  // bound Number -> CharSequence; descriptor (Ljava/util/List;)V unchanged

@@ -3,7 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 abstract class SplitSearchAdapter : SplitSearchListener {
   override fun elementsAdded(uuidToElement: Map<String, Any>) {
   }

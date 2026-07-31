@@ -27,6 +27,7 @@
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jgoodies.common"/>
     <module name="intellij.libraries.jgoodies.forms"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.jvm.native.trusted.roots"/>
     <module name="intellij.libraries.kotlin.reflect"/>
@@ -67,18 +68,21 @@
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.locking.impl"/>
     <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
     <module name="intellij.platform.runtime.product"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
@@ -101,6 +105,9 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="javax.imageio.spi.IIOServiceProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.rdct.remoteSettingProvider"
+                    interface="com.intellij.ide.settings.RemoteSettingInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
@@ -153,7 +160,6 @@
       description="Additional tag for error reports"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
     <editorEmptyStateComponentProvider implementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextComponentProvider" order="last"/>
     <editorEmptyTextProvider implementation="com.intellij.openapi.fileEditor.impl.DefaultEditorEmptyTextProvider" order="last"/>
     <pluginUpdatesProvider implementation="com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider"/>

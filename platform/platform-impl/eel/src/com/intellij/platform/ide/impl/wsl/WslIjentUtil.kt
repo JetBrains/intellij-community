@@ -21,8 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-suspend fun WSLDistribution.createIjentSession(
+internal suspend fun WSLDistribution.createIjentSession(
   parentScope: ParentOfIjentScopes,
   project: Project?,
   ijentLabel: String,

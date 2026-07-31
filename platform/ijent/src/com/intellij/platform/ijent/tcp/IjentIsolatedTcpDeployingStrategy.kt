@@ -4,8 +4,12 @@ package com.intellij.platform.ijent.tcp
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.spi.IjentConnectionContext
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.Companion.deployEvents
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent.CONNECT_FINISHED
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent.CONNECT_STARTED
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent.DEPLOY_FINISHED
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent.DEPLOY_STARTED
 import com.intellij.platform.ijent.spi.IjentSessionProvider
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Strategy for deploying IJent over TCP when standard process spawning is not available
@@ -13,31 +17,24 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Implementations handle binary deployment, process lifecycle, and port forwarding.
  *
- * Subclasses may override [phaseStarted] / [phaseFinished] to observe deploy / connect
- * boundaries — used by `eel-tcp` to publish FUS events without pulling
+ * Deploy and connect events are published to [IjentDeployingStrategy.deployEvents] — used to publish FUS events without pulling
  * `intellij.platform.statistics` into ijent.
  */
 abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
-  @ApiStatus.Internal
-  enum class Phase { DEPLOY, CONNECT }
-
   /**
    * Deploys and launches IJent in the target environment.
    * @return [IjentConnectionContext] with the mediator and deployment metadata
    */
   protected abstract suspend fun deploy(): IjentConnectionContext
 
-  protected open suspend fun phaseStarted(phase: Phase) {}
-  protected open suspend fun phaseFinished(phase: Phase) {}
-
   final override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession {
-    phaseStarted(Phase.DEPLOY)
+    deployEvents.emit(DEPLOY_STARTED)
     val ctx = deploy()
-    phaseFinished(Phase.DEPLOY)
+    deployEvents.emit(DEPLOY_FINISHED)
 
-    phaseStarted(Phase.CONNECT)
+    deployEvents.emit(CONNECT_STARTED)
     return provider.connect(ctx).also {
-      phaseFinished(Phase.CONNECT)
+      deployEvents.emit(CONNECT_FINISHED)
     }
   }
 }

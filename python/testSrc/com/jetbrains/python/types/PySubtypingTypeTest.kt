@@ -260,6 +260,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
   inner class ParameterDefaults {
 
     @Test
+    @TestFor(issues = ["PY-80837"])
     fun `parameter default value type`() = test("""
       from typing import Literal
 
@@ -272,10 +273,65 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-87730"])
     fun `ellipsis default argument in method`() = test("""
       class A:
           def f(self, a: str = ...): # WARNING Expected type 'str', got 'EllipsisType' instead
               pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter default value type`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class Good(A):
+          def f(self, x = 1): ...
+
+      class Bad(A):
+          def f(self, x = "bad"): ... # WARNING Expected type 'int', got 'Literal["bad"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter - own annotation takes precedence`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class B(A):
+          def f(self, x: str = "ok"): ...
+      #        ^^^^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'B.f()' does not match signature of the base method in class 'A'
+          
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter without inherited annotation`() = test("""
+      class A:
+          def f(self, x): ...
+
+      class B(A):
+          def f(self, x = "ok"): ...
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter - ellipsis default value`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      class B(A):
+          def f(self, x = ...): ... # WARNING Expected type 'int', got 'EllipsisType' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-88661"])
+    fun `unannotated overriding parameter outside of class`() = test("""
+      class A:
+          def f(self, x: int): ...
+
+      def f(x = "str"): ...
       """)
 
     @Test
@@ -499,6 +555,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[int] = A[int]()
@@ -519,6 +576,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       class B[S](A[S]): # S is invariant
           def set(self, s: S): ...
+      #          ^^^^^^^^^^^^ WARNING Signature of method 'B.set()' does not match signature of the base method in class 'A'
           def get(self) -> S: ...
 
       a : A[object] = A[object]()

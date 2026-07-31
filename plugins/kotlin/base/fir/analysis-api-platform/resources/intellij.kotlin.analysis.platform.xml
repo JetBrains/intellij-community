@@ -64,13 +64,19 @@
               topic="com.intellij.openapi.project.DumbModeListenerBackgroundable"/>
   </projectListeners>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.searching"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
 </idea-plugin>

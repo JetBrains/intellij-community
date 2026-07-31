@@ -90,7 +90,7 @@ public class PyCallableTypeImpl implements PyCallableType {
     List<PyExpression> arguments = callSite.getArguments(myCallable);
     PyCallableParameterListType parametersType = new PyCallableParameterListTypeImpl(ContainerUtil.notNullize(getParameters(context)));
     ArgumentMappingResults mappingResults = PyCallExpressionHelper.analyzeArguments(arguments, parametersType, context);
-    final var substitutions = PyTypeChecker.unifyGenericCall(null, mappingResults.getMappedParameters(), context);
+    final var substitutions = PyTypeChecker.unifyGenericCall(mappingResults.getMappedParameters(), context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(this, myReturnType, substitutions, context);
     PyType typeAfterSubstitution = PyTypeChecker.substitute(myReturnType, substitutionsWithUnresolvedReturnGenerics, context);

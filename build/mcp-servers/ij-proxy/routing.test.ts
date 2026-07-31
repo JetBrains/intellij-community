@@ -50,20 +50,12 @@ describe('ij MCP proxy routing', () => {
       strictEqual(extractPathArg({pathInProject: 'dotnet/Foo.cs'}), 'dotnet/Foo.cs')
     })
 
-    it('finds file_path', () => {
-      strictEqual(extractPathArg({file_path: 'src/Main.java'}), 'src/Main.java')
-    })
-
-    it('finds dir_path', () => {
-      strictEqual(extractPathArg({dir_path: 'dotnet/src'}), 'dotnet/src')
-    })
-
     it('returns undefined for no path args', () => {
       strictEqual(extractPathArg({q: 'hello'}), undefined)
     })
 
     it('skips empty strings', () => {
-      strictEqual(extractPathArg({pathInProject: '', file_path: 'real.txt'}), 'real.txt')
+      strictEqual(extractPathArg({pathInProject: '', filePath: 'real.txt'}), 'real.txt')
     })
   })
 
@@ -94,11 +86,11 @@ describe('ij MCP proxy routing', () => {
       strictEqual(resolveRoute('reformat_file', {}, PROJECT_ROOT), 'split-merge')
     })
 
-    it('returns target-rider for dotnet file ops', () => {
+    it('returns target-rider for dotnet path-scoped tools', () => {
       strictEqual(resolveRoute('get_file_problems', {pathInProject: 'dotnet/Foo.cs'}, PROJECT_ROOT), 'target-rider')
     })
 
-    it('returns primary for non-dotnet file ops', () => {
+    it('returns primary for non-dotnet path-scoped tools', () => {
       strictEqual(resolveRoute('get_file_problems', {pathInProject: 'src/Main.java'}, PROJECT_ROOT), 'primary')
     })
 
@@ -116,7 +108,7 @@ describe('ij MCP proxy routing', () => {
     })
 
     it('rejects non-search tools', () => {
-      strictEqual(isMergeTool('read_file'), false)
+      strictEqual(isMergeTool('rename'), false)
       strictEqual(isMergeTool('get_file_problems'), false)
     })
   })
@@ -130,12 +122,12 @@ describe('ij MCP proxy routing', () => {
     it('strips dotnet/ from all path keys', () => {
       const result = rewriteArgsForTarget('target-rider', {
         pathInProject: 'dotnet/Foo.cs',
-        file_path: 'dotnet/Bar.cs',
-        dir_path: 'dotnet/src'
+        filePath: 'dotnet/Bar.cs',
+        directoryPath: 'dotnet/src'
       })
       strictEqual(result.pathInProject, 'Foo.cs')
-      strictEqual(result.file_path, 'Bar.cs')
-      strictEqual(result.dir_path, 'src')
+      strictEqual(result.filePath, 'Bar.cs')
+      strictEqual(result.directoryPath, 'src')
     })
 
     it('does not strip for non-rider routes', () => {

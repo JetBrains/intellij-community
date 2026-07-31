@@ -9,6 +9,7 @@ import com.intellij.python.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -16,7 +17,6 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
@@ -37,12 +37,8 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
     val selectedInterpreterPath =
       sdkHomePath ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))
 
-    val associatedModule = extractModule(moduleOrProject)
-
-    val basePathString = associatedModule?.baseDir?.path
-                         ?: moduleOrProject.project.basePath
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
-    val workingDir = Path.of(basePathString)
+    val workingDir = moduleOrProject.workingDirectory
+                     ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
 
     return setupExistingEnvAndSdk(
       pythonBinary = selectedInterpreterPath,
@@ -61,10 +57,4 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
       }
     }
   }
-
-  private fun extractModule(moduleOrProject: ModuleOrProject): Module? =
-    when (moduleOrProject) {
-      is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
-      else -> null
-    }
 }

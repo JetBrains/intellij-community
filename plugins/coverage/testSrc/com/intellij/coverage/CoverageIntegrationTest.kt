@@ -2,13 +2,17 @@
 package com.intellij.coverage
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.CoverageInfoCollector
+import com.intellij.coverage.analysis.CoverageSourceResolver
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
-import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
-import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
+import com.intellij.coverage.analysis.JavaCoverageSummaryBuilder
+import com.intellij.coverage.analysis.PackageEntry
+import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
+import com.intellij.coverage.analysis.collectOutputRoots
 import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.application.readAction
@@ -20,10 +24,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
+import com.intellij.rt.coverage.data.LineData
+import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -56,46 +61,117 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     XMLReportAnnotator.getInstance(myProject).annotate(bundle, manager, consumer)
     assertEquals(FULL_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
+    assertEquals(3, consumer.myClassSourceFiles.size)
   }
 
   @Test
   fun testSingleClassFilter() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
-    assertSingleClassFilter(loadIJSuite(arrayOf("foo.bar.BarClass")))
+    assertSingleClassFilter(loadIJSuite(arrayOf("foo.bar.BarClass")), 1)
   }
 
   @Test
   fun testJaCoCoSingleClassFilter() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
-    assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")))
+    assertSingleClassFilter(loadJaCoCoSuite(arrayOf("foo.bar.BarClass")), 3)
   }
 
-  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle) {
+  @Test
+  fun `test output roots group class filters by package`() = runBlocking {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val bundle = loadIJSuite(arrayOf("foo.FooClass", "foo.bar.BarClass", "foo.bar.UncoveredClass"))
+
+    val requests = collectOutputRoots(bundle, myProject)
+
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.module == module })
+    val expectedPackages = listOf(
+      PackageEntry("foo", listOf("FooClass")),
+      PackageEntry("foo.bar", listOf("BarClass", "UncoveredClass")),
+    )
+    assertTrue(requests.all { it.packages == expectedPackages })
+  }
+
+  @Test
+  fun `test output roots remove packages covered by parent package`() = runBlocking {
+    val parentSuite = loadIJSuite(arrayOf("foo.*")).suites[0]
+    val childSuite = loadIJSuite(arrayOf("foo.bar.*")).suites[0]
+
+    val requests = collectOutputRoots(CoverageSuitesBundle(arrayOf(parentSuite, childSuite)), myProject)
+
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.packages == listOf(PackageEntry("foo", null)) })
+  }
+
+  @Test
+  fun `test output roots include class filters outside package filters`() = runBlocking {
+    val packageSuite = loadIJSuite(arrayOf("foo.bar.*")).suites[0]
+    val classSuite = loadIJSuite(arrayOf("foo.FooClass")).suites[0]
+
+    val requests = collectOutputRoots(CoverageSuitesBundle(arrayOf(packageSuite, classSuite)), myProject)
+
+    val expectedPackages = listOf(
+      PackageEntry("foo.bar", null),
+      PackageEntry("foo", listOf("FooClass")),
+    )
+    assertTrue(requests.isNotEmpty())
+    assertTrue(requests.all { it.packages == expectedPackages })
+  }
+
+  private fun assertSingleClassFilter(bundle: CoverageSuitesBundle, expectedDirectoryCount: Int) = runBlocking {
     val projectData = bundle.coverageData!!
     projectData.getClassData("foo.bar.BarClass")!!
 
     val consumer = PackageAnnotationConsumer()
-    JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
     assertEquals("""
       Classes: 
-      foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       Packages: 
-      : TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-      foo: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-      foo.bar: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      : TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+      foo: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+      foo.bar: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       Flatten packages: 
-      foo.bar: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
+      foo.bar: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
       
     """.trimIndent(), consumer.collectInfo())
-    assertEquals(1, consumer.myDirectoryCoverage.size)
+    assertEquals(expectedDirectoryCount, consumer.myDirectoryCoverage.size)
+    assertEquals("BarClass.java", consumer.myClassSourceFiles["foo.bar.BarClass"]?.name)
   }
 
   @Test
   fun testJaCoCoProjectData() {
     val bundle = loadJaCoCoSuite()
     val classData = bundle.coverageData!!.getClassData("foo.FooClass")
+    assertEquals("FooClass.java", classData.source)
     // getStatus() never returns full coverage; it can only distinguish between none and partial
     assertEquals(LineCoverage.PARTIAL.toInt(), classData.getStatus("method1()I"))
+  }
+
+  @Test
+  fun `test jacoco loads the requested report file`() {
+    val reportFile = Path.of(SIMPLE_JACOCO_REPORT_PATH)
+    val missingStoredReport = Path.of("$SIMPLE_JACOCO_REPORT_PATH.missing")
+    assertFalse(Files.exists(missingStoredReport))
+
+    val runner = JaCoCoCoverageRunner()
+    val engine = CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine::class.java)
+    val suite = JavaCoverageSuite(
+      "suite with a missing stored report",
+      DefaultCoverageFileProvider(missingStoredReport),
+      DEFAULT_FILTER,
+      null,
+      -1,
+      false,
+      true,
+      true,
+      runner,
+      engine,
+      myProject,
+    )
+
+    val result = runner.loadCoverageData(reportFile, suite, DummyCoverageLoadErrorReporter())
+
+    assertTrue(result is SuccessCoverageLoadingResult)
+    assertNotNull(result.projectData?.getClassData("foo.FooClass"))
   }
 
   @Test
@@ -108,18 +184,53 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun `test jacoco reads classes from jar output roots`() = assertHitsWithJarOutputRoots { loadJaCoCoSuite() }
 
   @Test
-  fun testJaCoCoWithoutUnloaded() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
+  fun testJaCoCoWithoutUnloaded() = runBlocking {
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
-    JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer)
-    assertEquals(IGNORE_CONSTRUCTOR_REPORT, consumer.collectInfo())
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
+    assertEquals(FULL_REPORT, consumer.collectInfo())
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
   @Test
+  fun `test source lookup uses file name before class lookup`() = runBlocking {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val bundle = loadIJSuite()
+    val searchScope = GlobalSearchScope.moduleScope(module).intersectWith(bundle.getSearchScope(myProject))
+    val sourceFile = CoverageSourceResolver.findFile(myProject, searchScope, "foo.MissingClass", "FooClass.java")
+    assertEquals("FooClass.java", sourceFile?.name)
+  }
+
+  @Test
+  fun `test project data source lookup uses class data file name`() = runBlocking {
+    val bundle = loadJaCoCoSuite()
+    val classData = bundle.coverageData!!.getOrCreateClassData("foo.MissingClass")
+    val lineData = LineData(1, "missing()V")
+    lineData.setStatus(LineCoverage.FULL)
+    lineData.setHits(1)
+    lineData.fillArrays()
+    classData.setSource("FooClass.java")
+    classData.registerMethodSignature(lineData)
+    classData.setLines(arrayOf(lineData))
+
+    val consumer = PackageAnnotationConsumer()
+    JavaCoverageSummaryBuilder.build(bundle, myProject, consumer)
+
+    assertEquals("FooClass.java", consumer.myClassSourceFiles["foo.MissingClass"]?.name)
+  }
+
+  @Test
+  fun `test source file name is read from class file`() {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val outputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
+    val classFile = Path.of(VfsUtilCore.urlToPath(outputUrl)).resolve("foo/FooClass.class")
+    val annotator = PackageAnnotator(loadIJSuite(), myProject, ProjectData())
+    val sourceFileName = annotator.getSourceFileName("foo.FooClass") { AnalysisUtils.loadClassBytes(classFile) }
+    assertEquals("FooClass.java", sourceFileName)
+  }
+
+  @Test
   fun testMergeIjWithJaCoCo() {
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     val ijSuite = loadIJSuite().suites[0]
     val jacocoSuite = loadJaCoCoSuite().suites[0]
 
@@ -127,7 +238,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     // When reading Jacoco report, we cannot distinguish jump and switches, so all branches are stored as switches.
     // While in IJ coverage we store jumps and switches separately.
     // Because of this, we cannot implement stable merge of IJ and jacoco reports
-    assertHits(bundle, true, ignoreBranches = true)
+    assertHits(bundle, ignoreBranches = true)
   }
 
   @Test
@@ -140,7 +251,20 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertHTMLReportGenerated(loadJaCoCoSuite(), JaCoCoCoverageRunner())
   }
 
-  private fun assertHTMLReportGenerated(bundle: CoverageSuitesBundle, runner: JavaCoverageRunner) {
+  @Test
+  fun `test combined JaCoCo HTML report`() {
+    val fooSuite = loadJaCoCoSuite(arrayOf("foo.FooClass")).suites.single()
+    val barSuite = loadJaCoCoSuite(arrayOf("foo.bar.BarClass")).suites.single()
+    val bundle = CoverageSuitesBundle(arrayOf(fooSuite, barSuite))
+
+    assertHTMLReportGenerated(bundle, JaCoCoCoverageRunner(), listOf("FooClass", "BarClass"))
+  }
+
+  private fun assertHTMLReportGenerated(
+    bundle: CoverageSuitesBundle,
+    runner: JavaCoverageRunner,
+    expectedClassNames: List<String> = listOf("FooClass"),
+  ) {
     val settings = ExportToHTMLSettings.getInstance(myProject)
     val originalOutputDirectory = settings.OUTPUT_DIRECTORY
     val htmlDir = Files.createTempDirectory("html").toFile()
@@ -149,7 +273,12 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       runner.generateReport(bundle, myProject)
       assertTrue(htmlDir.exists())
       assertTrue(File(htmlDir, "index.html").exists())
-      assertTrue(htmlDir.walkTopDown().filter { it.isFile }.any { it.readText().contains("FooClass") })
+      for (className in expectedClassNames) {
+        assertTrue(
+          "Class $className is missing from the report",
+          htmlDir.walkTopDown().filter { it.isFile }.any { it.readText().contains(className) },
+        )
+      }
     }
     finally {
       settings.OUTPUT_DIRECTORY = originalOutputDirectory
@@ -160,7 +289,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   @Test
   fun `test sub coverage`(): Unit = runBlocking {
     ThreadingAssertions.assertBackgroundThread()
-    Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
 
     val suite = loadIJSuite()
     openSuiteAndWait(suite)
@@ -170,19 +298,19 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals("""
         Classes: 
-        foo.FooClass: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
-        foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-        foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.FooClass: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=2 CB=0 
+        foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 TB=0 CB=0 
+        foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 TB=0 CB=0 
         Packages: 
-        : TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo: TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+        : TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo: TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 TB=0 CB=0 
         Flatten packages: 
-        foo: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
-        foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+        foo: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=2 CB=0 
+        foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 TB=0 CB=0 
 
       """.trimIndent(), consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
@@ -190,16 +318,16 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
     val fooTestSummary = """
         Classes: 
-        foo.FooClass: TC=1 CC=1 TM=2 CM=1 TL=2 CL=1 TB=2 CB=0 
-        foo.bar.BarClass: TC=1 CC=0 TM=3 CM=0 TL=3 CL=0 TB=0 CB=0 
-        foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.FooClass: TC=1 CC=1 TM=3 CM=2 TL=3 CL=2 TB=2 CB=0 
+        foo.bar.BarClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+        foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 TB=0 CB=0 
         Packages: 
-        : TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo: TC=3 CC=1 TM=9 CM=1 TL=9 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=0 TM=7 CM=0 TL=7 CL=0 TB=0 CB=0 
+        : TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo: TC=3 CC=1 TM=12 CM=2 TL=12 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=0 TM=9 CM=0 TL=9 CL=0 TB=0 CB=0 
         Flatten packages: 
-        foo: TC=1 CC=1 TM=2 CM=1 TL=2 CL=1 TB=2 CB=0 
-        foo.bar: TC=2 CC=0 TM=7 CM=0 TL=7 CL=0 TB=0 CB=0 
+        foo: TC=1 CC=1 TM=3 CM=2 TL=3 CL=2 TB=2 CB=0 
+        foo.bar: TC=2 CC=0 TM=9 CM=0 TL=9 CL=0 TB=0 CB=0 
 
       """.trimIndent()
     waitSuiteProcessing {
@@ -207,7 +335,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals(fooTestSummary, consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
     }
@@ -217,7 +345,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
     run {
       val consumer = PackageAnnotationConsumer()
-      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      JavaCoverageSummaryBuilder.build(suite, myProject, consumer)
       assertEquals(fooTestSummary, consumer.collectInfo())
       assertEquals(2, consumer.myDirectoryCoverage.size)
     }
@@ -281,19 +409,16 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
         val psiDir = psiClass!!.containingFile!!.containingDirectory
         val info = annotator.getDirCoverageInformationString(psiDir, bundle, manager)
         assertEquals(loaded, info != null)
+        assertEquals(loaded, (annotator as JavaCoverageAnnotator).getClassSourceFile(clazz) != null)
       }
     }
   }
 
-  private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {
-    val original = JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors
-    try {
-      assertHits(suite, true, ignoreBranches)
-      assertHits(suite, false, ignoreBranches)
-    }
-    finally {
-      JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = original
-    }
+  private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) = runBlocking {
+    val annotator = TestJavaCoverageAnnotator(myProject)
+    annotator.collectSummaryInfo(suite)
+    val expected = if (ignoreBranches) FULL_REPORT_WITHOUT_BRANCHES else FULL_REPORT
+    assertEquals(expected, annotator.collectInfo(ignoreBranches))
   }
 
   private fun assertHitsWithJarOutputRoots(loadSuite: () -> CoverageSuitesBundle) {
@@ -327,17 +452,13 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
   }
 
-  private fun assertHits(suite: CoverageSuitesBundle, ignoreConstructor: Boolean, ignoreBranches: Boolean) {
-    JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = ignoreConstructor
-    val annotator = TestJavaCoverageAnnotator(myProject)
-    annotator.collectSummaryInfo(suite)
-    val expected = if (ignoreConstructor) if (ignoreBranches) IGNORE_BRANCHES_REPORT else IGNORE_CONSTRUCTOR_REPORT else FULL_REPORT
-    assertEquals(expected, annotator.collectInfo(ignoreBranches))
-  }
 }
 
 private class TestJavaCoverageAnnotator(project: Project) : JavaCoverageAnnotator(project) {
-  fun collectSummaryInfo(suite: CoverageSuitesBundle) = collectSummaryInfo(suite, project)
+  suspend fun collectSummaryInfo(suite: CoverageSuitesBundle) {
+    val collector = JavaCoverageInfoCollector(this)
+    JavaCoverageSummaryBuilder.build(suite, project, collector)
+  }
 
   fun collectInfo(ignoreBranches: Boolean = false) = buildString {
     fun Map<String, SummaryCoverageInfo>.collectInfo() = toSortedMap().forEach { (fqn, summary) ->
@@ -365,6 +486,7 @@ private class PackageAnnotationConsumer : CoverageInfoCollector {
   val myPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myFlatPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myClassCoverageInfo: MutableMap<String, ClassCoverageInfo> = ConcurrentHashMap()
+  val myClassSourceFiles: MutableMap<String, VirtualFile> = ConcurrentHashMap()
 
   override fun addSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
     myDirectoryCoverage[virtualFile] = packageCoverageInfo
@@ -374,8 +496,11 @@ private class PackageAnnotationConsumer : CoverageInfoCollector {
     (if (flatten) myFlatPackageCoverage else myPackageCoverage)[packageQualifiedName] = packageCoverageInfo
   }
 
-  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
+  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo, sourceFile: VirtualFile?) {
     myClassCoverageInfo[classQualifiedName] = classCoverageInfo
+    if (sourceFile != null) {
+      myClassSourceFiles[classQualifiedName] = sourceFile
+    }
   }
 
   fun collectInfo(ignoreBranches: Boolean = false) = buildString {
@@ -405,33 +530,18 @@ private fun SummaryCoverageInfo.collectToString(ignoreBranches: Boolean) = build
   }
 }
 
-private val IGNORE_CONSTRUCTOR_REPORT = """
+private val FULL_REPORT_WITHOUT_BRANCHES = """
   Classes: 
-  foo.FooClass: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 TB=2 CB=1 
-  foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
-  foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 TB=0 CB=0 
+  foo.FooClass: TC=1 CC=1 TM=3 CM=3 TL=3 CL=3 
+  foo.bar.BarClass: TC=1 CC=1 TM=4 CM=2 TL=4 CL=2 
+  foo.bar.UncoveredClass: TC=1 CC=0 TM=5 CM=0 TL=5 CL=0 
   Packages: 
-  : TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 TB=2 CB=1 
-  foo: TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 TB=2 CB=1 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
+  : TC=3 CC=2 TM=12 CM=5 TL=12 CL=5 
+  foo: TC=3 CC=2 TM=12 CM=5 TL=12 CL=5 
+  foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 
   Flatten packages: 
-  foo: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 TB=2 CB=1 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
-
-""".trimIndent()
-
-private val IGNORE_BRANCHES_REPORT = """
-  Classes: 
-  foo.FooClass: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 
-  foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 
-  foo.bar.UncoveredClass: TC=1 CC=0 TM=4 CM=0 TL=4 CL=0 
-  Packages: 
-  : TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 
-  foo: TC=3 CC=2 TM=9 CM=3 TL=9 CL=3 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 
-  Flatten packages: 
-  foo: TC=1 CC=1 TM=2 CM=2 TL=2 CL=2 
-  foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 
+  foo: TC=1 CC=1 TM=3 CM=3 TL=3 CL=3 
+  foo.bar: TC=2 CC=1 TM=9 CM=2 TL=9 CL=2 
 
 """.trimIndent()
 

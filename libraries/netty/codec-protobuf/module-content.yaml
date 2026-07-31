@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.netty.codec.protobuf.jar
+  modules:
+  - name: intellij.libraries.netty.codec.protobuf
+    libraries:
+      netty-codec-protobuf:
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar

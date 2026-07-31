@@ -3,6 +3,10 @@ package com.intellij.ide.actions.searcheverywhere.remote;
 
 import javax.swing.ListCellRenderer;
 
+/**
+ * @deprecated The old Search Everywhere API is being sunset. This functionality is obsolete.
+ */
+@Deprecated
 public interface RemoteSearchEverywherePresentation {
 
   ListCellRenderer<? extends RemoteSearchEverywherePresentation> getPresentationRenderer();

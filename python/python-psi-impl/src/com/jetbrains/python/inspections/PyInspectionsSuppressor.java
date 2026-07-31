@@ -1,7 +1,11 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.InspectionSuppressor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.RedundantSuppressionDetector;
 import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
@@ -11,14 +15,18 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public final class PyInspectionsSuppressor implements InspectionSuppressor {
+public final class PyInspectionsSuppressor implements InspectionSuppressor, RedundantSuppressionDetector {
+  private static final Pattern SUPPRESS_PATTERN = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
   private static final String PY_INCORRECT_DOCSTRING_INSPECTION_ID = new PyIncorrectDocstringInspection().getID();
   private static final String PY_MISSING_OR_EMPTY_DOCSTRING_INSPECTION_ID = new PyMissingOrEmptyDocstringInspection().getID();
 
@@ -94,5 +102,62 @@ public final class PyInspectionsSuppressor implements InspectionSuppressor {
   private static @NotNull String suppressId(@NotNull String toolId) {
     final String code = PySuppressionUtil.INSTANCE.toSuppressionCode(toolId);
     return code != null ? code : toolId;
+  }
+
+  @Override
+  public @Nullable String getSuppressionIds(@NotNull PsiElement element) {
+    if (element instanceof PsiComment comment) {
+      Matcher matcher = SUPPRESS_PATTERN.matcher(comment.getText().substring(1).trim());
+      if (matcher.matches()) {
+        return matcher.group(1).trim();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean isSuppressionFor(@NotNull PsiElement elementWithSuppression, @NotNull PsiElement place, @NotNull String toolId) {
+    return isSuppressionForParent(elementWithSuppression, place, PyStatement.class, toolId) ||
+           isSuppressionForParent(elementWithSuppression, place, PyFunction.class, toolId) ||
+           isSuppressionForParent(elementWithSuppression, place, PyClass.class, toolId);
+  }
+
+  @Override
+  public @NotNull LocalQuickFix createRemoveRedundantSuppressionFix(@NotNull String toolId) {
+    return new PyRemoveRedundantSuppressionFix(toolId);
+  }
+
+  private static boolean isSuppressionForParent(@NotNull PsiElement elementWithSuppression,
+                                                @NotNull PsiElement place,
+                                                @NotNull Class<? extends PyStatement> parentClass,
+                                                @NotNull String suppressId) {
+    PyStatement parent = PsiTreeUtil.getParentOfType(place, parentClass, false);
+    if (parent == null) {
+      return false;
+    }
+    return findSuppressionComment(parent, suppressId) == elementWithSuppression;
+  }
+
+  private static @Nullable PsiComment findSuppressionComment(@NotNull PyStatement stmt, @NotNull String suppressId) {
+    // The suppression comment lives above the statement, or above its enclosing block when the statement is
+    // the first child of that block (e.g. the first statement in a function body).
+    PsiElement anchor = stmt.getPrevSibling() != null ? stmt : stmt.getParent();
+    if (anchor == null) {
+      return null;
+    }
+    List<PsiComment> precedingComments = PyPsiUtils.getPrecedingComments(anchor, false);
+    // Walk from the comment nearest the statement outwards, matching the closest suppression first.
+    for (int i = precedingComments.size() - 1; i >= 0; i--) {
+      PsiComment comment = precedingComments.get(i);
+      if (isSuppressedInComment(comment.getText().substring(1).trim(), suppressId)) {
+        return comment;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isSuppressedInComment(@NotNull String commentText, @NotNull String suppressId) {
+    Matcher m = SUPPRESS_PATTERN.matcher(commentText);
+    return m.matches() && SuppressionUtil.isInspectionToolIdMentioned(m.group(1), suppressId);
   }
 }

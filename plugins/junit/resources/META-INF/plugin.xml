@@ -14,8 +14,10 @@
       ]]>
    </description>
   <category>Test Tools</category>
-  <depends optional="true" config-file="junit-properties.xml">com.intellij.properties</depends>
   <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.junit.properties"/>
+  </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
     <module name="intellij.libraries.junit4" loading="embedded"/>
@@ -28,7 +30,6 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
-    <module name="intellij.json.backend"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.java"/>

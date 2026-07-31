@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
@@ -493,21 +494,19 @@ object PyTypeUtil {
   @ApiStatus.Internal
   fun mapCallableType(functionType: PyType?, mapper: (PyCallableType) -> PyCallableType?): PyType? {
     return when (functionType) {
-      is PyClassLikeType -> functionType
       is PyCallableType -> mapper(functionType)
-      is PyOverloadType -> functionType.map { if (it == null) null else mapper(it) }
+      is PyOverloadType -> functionType.map { mapper(it) }
       else -> functionType
     }
   }
 
   @ApiStatus.Internal
   @JvmStatic
-  fun getCallableItems(functionType: PyType?): Sequence<PyCallableType> {
+  fun getCallableItems(functionType: PyType?): List<PyCallableType> {
     return when (functionType) {
-      is PyClassLikeType -> emptySequence()
-      is PyCallableType -> sequenceOf(functionType)
-      is PyOverloadType -> functionType.items.filterNotNull().asSequence()
-      else -> emptySequence()
+      is PyCallableType -> listOf(functionType)
+      is PyOverloadType -> functionType.items
+      else -> listOf()
     }
   }
 
@@ -528,33 +527,35 @@ object PyTypeUtil {
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>? = null,
+    selfType: PyInstantiableType<*> = classType,
   ): PyType? {
     val memberType = getTypeOfMember(memberResolveResults, context)
-    val specializedMemberType = specializeMemberType(classType, classType, memberType, context)
+    val specializedMemberType = specializeMemberType(classType, selfType, memberType, context)
     val memberOwner = getContainingClass(memberResolveResults)
-    return bindFunction(classType, specializedMemberType, memberOwner, context, errors)
+    return bindFunction(selfType, specializedMemberType, memberOwner, context, errors)
   }
 
   @ApiStatus.Internal
   @JvmStatic
+  @JvmOverloads
   fun getTypeOfMember(
     memberResolveResults: List<@JvmWildcard RatedResolveResult>,
     context: TypeEvalContext,
+    anchor: PsiElement? = null,
   ): PyType? {
     val resolvedElements = memberResolveResults.mapNotNull { it.element as? PyTypedElement }
     if (resolvedElements.isEmpty()) return PyAnyType.unknown
 
     // Element with a declared type takes precedence.
-    val elementsWithDeclaredType = resolvedElements
-      .filter {
-        it is PyClass ||
-        it is PyFunction ||
-        it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
-      }
+    val elementsWithDeclaredType = resolvedElements.filter {
+      it is PyClass ||
+      it is PyFunction ||
+      it is PyTargetExpression && (it.annotationValue != null || it.typeCommentAnnotation != null)
+    }
     val elements = elementsWithDeclaredType.ifEmpty { resolvedElements }
 
     val last = elements.last()
-    val lastType = context.getType(last)
+    val lastType = getResolvedElementType(last, context, anchor)
     if (lastType !is PyFunctionType) {
       val memberType = if (last is PyTargetExpression && last.isQualified && !PyTypingTypeProvider.isFinal(last, context)) {
         PyLiteralType.upcastLiteralToClass(lastType)
@@ -563,28 +564,61 @@ object PyTypeUtil {
         lastType
       }
       if (elementsWithDeclaredType.isEmpty() && memberType.isNoneType) {
+        /* we support a special case where we convert an unannotated attribute of `None` to `UnsafeUnion[None, Unknown]`
+          this is because there are frequently cases in real code where inferring `None` would lead to undesirable false positives:
+          ```py
+          class C:
+              def __init__(self):
+                  self.a = None  # user intends `int | None` / `late int`
+              def set_a(self):
+                  self.a = 1
+          def f(c: C):
+              c.a + 1  # FP here
+          ```
+
+          we use `UnsafeUnion` to avoid cases where the `None` doesn't typically surface to usages,
+          if the user is interested in typing they should always annotate an attribute that is initialised with `None`
+
+          there is also a consideration for the case where a base class sets an attribute with `None`, expecting it to be
+          overridden with a value
+        */
         return PyUnsafeUnionType.unsafeUnion(memberType, PyAnyType.unknown)
       }
       return memberType
     }
 
-    val overloads = mutableListOf<PyCallableType?>()
+    val overloads = mutableListOf<PyCallableType>()
     var impl: Ref<PyType?>? = null
     if (PyiUtil.isOverload(last, context)) {
-      overloads.add(lastType as? PyCallableType)
+      overloads.add(lastType)
     }
     else {
       impl = Ref.create(lastType)
     }
     for (i in elements.lastIndex - 1 downTo 0) {
       val el = elements[i]
-      if (!PyiUtil.isOverload(el, context)) break
-      overloads.add(context.getType(el) as? PyCallableType)
+      if (PyiUtil.isOverload(el, context)) {
+        val type = getResolvedElementType(el, context, anchor)
+        if (type is PyCallableType) {
+          overloads.add(type)
+          continue
+        }
+      }
+      break
     }
     if (overloads.isEmpty()) return lastType
 
     overloads.reverse()
     return PyOverloadType(overloads, impl)
+  }
+
+  private fun getResolvedElementType(element: PyTypedElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
+    // `PyTargetExpression.getType()` will call `PyTypeProvider.getReferenceType()` itself
+    if (element !is PyTargetExpression) {
+      val type = PyTypeProvider.EP_NAME.computeSafeIfAny { it.getReferenceType(element, context, anchor) }
+      if (type != null) return type.get()
+    }
+    return context.getType(element)
   }
 
   @ApiStatus.Internal
@@ -597,7 +631,7 @@ object PyTypeUtil {
   ): PyType? {
     return if (memberType.hasGenerics(context)) {
       val substitutions = collectTypeSubstitutions(classType, context)
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       PyTypeChecker.substitute(memberType, substitutions, context)
     }
     else memberType
@@ -617,7 +651,9 @@ object PyTypeUtil {
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>?
   ): PyType? {
-    val signatures = getCallableItems(memberType).toList()
+    if (memberType is PyClassLikeType) return memberType
+
+    val signatures = getCallableItems(memberType)
     if (signatures.isEmpty()) return memberType
 
     val isStaticMethod = signatures.all { it.modifier == PyAstFunction.Modifier.STATICMETHOD }
@@ -685,7 +721,7 @@ object PyTypeUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun bindFunction(callableType: PyCallableType, selfType: PyType, context: TypeEvalContext): FunctionBindingResult? {
+  fun bindFunction(callableType: PyCallableType, selfType: PyInstantiableType<*>, context: TypeEvalContext): FunctionBindingResult? {
     if (callableType.getParametersType(context) == null) {
       // `typing.Callable[..., R]` - treat as `(*args, **kwargs)`.
       return FunctionBindingResult(callableType, PyAnyType.any)
@@ -694,7 +730,7 @@ object PyTypeUtil {
     if (firstParam != null && !firstParam.isPositionOnlySeparator && !firstParam.isKeywordOnlySeparator) {
       val firstParamType = firstParam.getArgumentType(context)
       val substitutions = GenericSubstitutions()
-      substitutions.qualifierType = selfType
+      substitutions.selfType = selfType
       if (firstParamType !is PySelfType) {
         if (!match(firstParamType, selfType, context, substitutions)) {
           return null

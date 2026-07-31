@@ -32,7 +32,11 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     myTable = table;
     myGrid = grid;
     myTracker = new GridSelectionTrackerImpl(myGrid, myTable);
-    myTable.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, this);
+  }
+
+  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+    TableSelectionModel tableSelectionModel = new TableSelectionModel(table, grid);
+    table.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, tableSelectionModel);
   }
 
   @Override

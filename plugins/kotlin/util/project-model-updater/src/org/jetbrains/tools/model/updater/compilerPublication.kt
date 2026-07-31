@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import java.nio.file.Path
@@ -15,16 +15,19 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
     println("Artifacts path: $kotlinSnapshotPath")
     println("Publishing Kotlin compiler...")
 
-    val exitCode = ProcessBuilder(
-        *gradleWrapperExecutable,
-        "publishIdeArtifacts",
-        ":prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish",
-        "publishGradlePluginArtifacts",
-        "-Ppublish.ide.plugin.dependencies=true",
-        "-PdeployVersion=$BOOTSTRAP_VERSION",
-        "-Pbuild.number=$BOOTSTRAP_VERSION",
-        "-Pkotlin.build.deploy-path=$kotlinSnapshotPath",
-    )
+    val exitCode = ProcessBuilder(buildList {
+        addAll(gradleWrapperExecutable)
+        add("publishIdeArtifacts")
+        add(":prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish")
+        if (preferences.publishGradlePlugin == true) {
+            add("publishGradlePluginArtifacts")
+        }
+
+        add("-Ppublish.ide.plugin.dependencies=true")
+        add("-PdeployVersion=$BOOTSTRAP_VERSION")
+        add("-Pbuild.number=$BOOTSTRAP_VERSION")
+        add("-Pkotlin.build.deploy-path=$kotlinSnapshotPath")
+    })
         .directory(kotlinRepoRoot.toFile())
         .inheritIO()
         .start()
@@ -59,8 +62,8 @@ internal val GeneratorPreferences.kotlinCompilerRepositoryRoot: Path
             .normalize()
     }
 
-private val gradleWrapperExecutable: Array<String>
+private val gradleWrapperExecutable: List<String>
     get() {
         val isWindows = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
-        return if (isWindows) arrayOf("cmd", "/c", "gradlew.bat") else arrayOf("./gradlew")
+        return if (isWindows) listOf("cmd", "/c", "gradlew.bat") else listOf("./gradlew")
     }

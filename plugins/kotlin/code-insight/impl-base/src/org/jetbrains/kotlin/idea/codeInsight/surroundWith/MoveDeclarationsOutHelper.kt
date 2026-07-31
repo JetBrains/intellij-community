@@ -8,13 +8,16 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.defaultInitializer
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -89,7 +92,7 @@ private fun prepareLastPropertyToBeInitializedWithExpression(
     propertiesDeclarations: ArrayList<KtProperty>,
     property: KtProperty
 ) {
-    val name = property.name ?: return
+    val name = property.nameIdentifier?.text ?: return
     var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
     declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
     container.addAfter(psiFactory.createEQ(), declaration)
@@ -117,7 +120,7 @@ private fun declareOut(
 }
 
 private fun createVariableAssignment(psiFactory: KtPsiFactory, property: KtProperty): KtBinaryExpression {
-    val propertyName = property.name ?: error("Property should have a name " + property.text)
+    val propertyName = property.nameIdentifier?.text ?: error("Property should have a name " + property.text)
     val assignment = psiFactory.createExpression("$propertyName = x") as KtBinaryExpression
     val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
     val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
@@ -148,7 +151,7 @@ private fun createVariableDeclaration(psiFactory: KtPsiFactory, property: KtProp
                     else -> null
                 }
 
-                return psiFactory.createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
+                return psiFactory.createProperty(property.nameIdentifier!!.text, typeString, property.isVar, defaultInitializer)
             }
         }
     }

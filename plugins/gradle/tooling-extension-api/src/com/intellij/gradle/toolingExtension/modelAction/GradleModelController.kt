@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.modelAction
 import org.gradle.api.Action
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 import org.gradle.tooling.model.Model as GradleModel
@@ -80,6 +81,18 @@ interface GradleModelController {
       parameterClass: Class<Parameter>,
       parameterInitializer: Action<in Parameter>,
     ): GradleModelFetchRequest<Model>
+
+    /**
+     * Suppresses failures for this model fetch request.
+     *
+     * When suppressed:
+     * - With the resilient Gradle API: failures returned by [org.gradle.tooling.BuildController.fetch] are not forwarded.
+     * - Without the resilient Gradle API: exceptions thrown by [org.gradle.tooling.BuildController.getModel] are caught and discarded.
+     *
+     * Use this when the model may not be available in all Gradle configurations.
+     */
+    @Experimental
+    fun suppressFailures(): GradleModelFetchRequest<Model>
 
     fun execute(modelConsumer: GradleModelConsumer)
 

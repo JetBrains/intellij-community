@@ -10,9 +10,23 @@
     <registryKey key="markdown.open.link.fallback"
                  defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>
+
+    <lang.lineWrapStrategy language="Markdown" implementationClass="com.intellij.markdown.frontend.editor.MarkdownLineWrapPositionStrategy"/>
+    <codeFoldingOptionsProvider instance="com.intellij.markdown.frontend.settings.provider.MarkdownCodeFoldingOptionsProvider" id="Markdown" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after ObjectiveC"/>
   </extensions>
 
   <actions resource-bundle="messages.MarkdownBundle">
+    <action id="Markdown.Preview.AdjustFontSize"
+            class="com.intellij.markdown.frontend.actions.AdjustFontSizeAction">
+      <add-to-group group-id="Markdown.PreviewGroup"/>
+    </action>
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
     <action id="Markdown.InsertEmptyTable"
             class="com.intellij.markdown.frontend.actions.InsertEmptyTableAction"
             icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table">

@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.RenameProcessor
 import com.siyeh.ig.psiutils.PsiElementOrderComparator
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -88,7 +88,8 @@ internal class DestructingShortFormNameMismatchInspection : AbstractKotlinInspec
     }
 }
 
-private fun KaSession.analyzeDestructuringDeclaration(declaration: KtDestructuringDeclaration): DestructuringAnalysisResult? {
+context(session: KaSession)
+private fun analyzeDestructuringDeclaration(declaration: KtDestructuringDeclaration): DestructuringAnalysisResult? {
     val constructorParameters = extractPrimaryParameters(declaration) ?: return null
 
     // Check if the destructured type is intended for positional destructuring (Pair, Triple, IndexedValue)

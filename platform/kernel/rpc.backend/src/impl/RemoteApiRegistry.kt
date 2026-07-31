@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.backend.RemoteApiProvider.Companion.EP_NAME
+import com.intellij.platform.rpc.backend.RemoteApiRegistration
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
@@ -22,17 +23,39 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
   private val remoteApis = ConcurrentHashMap<String, ServiceImplementation>()
   private val visitedEPs = ContainerUtil.createConcurrentWeakKeyWeakValueMap<RemoteApiProvider, Unit>()
 
+  private fun registerRemoteApi(apiDescriptor: RemoteApiDescriptor<*>, apiImplementation: RemoteApi<*>) {
+    val apiFqn = apiDescriptor.getApiFqn()
+    LOG.debug("Registering remote api $apiFqn - $apiDescriptor")
+
+    val serviceImplementation = ServiceImplementation(apiDescriptor, apiImplementation, serviceScope = null)
+
+    val previous = remoteApis.putIfAbsent(apiFqn, serviceImplementation)
+    if (previous != null) {
+      LOG.warn(
+        "Remote API '$apiFqn' is already registered. Each remote api should be registered exactly once: " +
+        "either via the 'com.intellij.platform.rpc.backend.remoteApi' extension point or a " +
+        "'${RemoteApiProvider::class.java.simpleName}', not both and not more than once."
+      )
+    }
+  }
+
+  private fun unregisterRemoteApi(descriptor: RemoteApiDescriptor<*>) {
+    LOG.debug("Unregistering remote api ${descriptor.getApiFqn()} - $descriptor")
+    remoteApis.remove(descriptor.getApiFqn())
+  }
+
   private val registeringSink = object : RemoteApiProvider.Sink {
     override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
-      LOG.debug("Registering remote api ${descriptor.getApiFqn()} - $descriptor")
-      remoteApis[descriptor.getApiFqn()] = ServiceImplementation(descriptor, implementation(), null)
+      registerRemoteApi(
+        apiDescriptor = descriptor,
+        apiImplementation = implementation()
+      )
     }
   }
 
   private val unregisteringSink = object : RemoteApiProvider.Sink {
     override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
-      LOG.debug("Unregistering remote api ${descriptor.getApiFqn()} - $descriptor")
-      remoteApis.remove(descriptor.getApiFqn())
+      unregisterRemoteApi(descriptor)
     }
   }
 
@@ -65,6 +88,30 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
         }
       }
     }
+
+    RemoteApiRegistration.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<RemoteApiRegistration> {
+      override fun extensionAdded(extension: RemoteApiRegistration, pluginDescriptor: PluginDescriptor) {
+        register(extension)
+      }
+
+      override fun extensionRemoved(extension: RemoteApiRegistration, pluginDescriptor: PluginDescriptor) {
+        unregister(extension)
+      }
+    })
+    for (extension in RemoteApiRegistration.EP_NAME.extensionList) {
+      register(extension)
+    }
+  }
+
+  private fun register(registration: RemoteApiRegistration) {
+    registerRemoteApi(
+      apiDescriptor = remoteApiDescriptorOf(registration.loadApiInterface()),
+      apiImplementation = registration.createImplementation()
+    )
+  }
+
+  private fun unregister(registration: RemoteApiRegistration) {
+    unregisterRemoteApi(descriptor = remoteApiDescriptorOf(registration.loadApiInterface()))
   }
 
   override suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {

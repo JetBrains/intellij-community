@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -91,18 +92,18 @@ class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTes
                 runUndoTransparentWriteAction {
                     if (isolatedAnalyzeInsideWrite) {
                         analyze(ktFile) {
-                            insideWriteActionBefore(ktFile)
+                            useSiteSession.insideWriteActionBefore(ktFile)
                         }
 
                         modify()
                         analyze(ktFile) {
-                            insideWriteActionAfter(ktFile)
+                            useSiteSession.insideWriteActionAfter(ktFile)
                         }
                     } else {
                         analyze(ktFile) {
-                            insideWriteActionBefore(ktFile)
+                            useSiteSession.insideWriteActionBefore(ktFile)
                             modify()
-                            insideWriteActionAfter(ktFile)
+                            useSiteSession.insideWriteActionAfter(ktFile)
                         }
                     }
                 }

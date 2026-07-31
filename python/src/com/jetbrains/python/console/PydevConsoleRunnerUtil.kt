@@ -45,7 +45,6 @@ import java.util.function.Function
  * @param consoleSettings Python Console settings
  * @param targetEnvironment the target environment to add upload volumes to the result path mapper
  */
-@ApiStatus.Internal
 internal fun createTargetEnvironmentPathMapper(project: Project,
                                       sdk: Sdk,
                                       consoleSettings: PyConsoleSettings,
@@ -115,7 +114,6 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
   return pathMapper
 }
 
-@ApiStatus.Internal
 internal fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
   var sdk: Sdk? = null
   var module: Module? = null
@@ -195,7 +193,6 @@ private class ReplaceSubstringFunction(private val s: String,
   override fun toString(): String = "ReplaceSubstringFunction(s='$s', oldValue='$oldValue', newValue=$newValue)"
 }
 
-@ApiStatus.Internal
 internal class ReplaceSubstringsFunction(private val s: String,
                                 private val replaces: List<kotlin.Pair<String, TargetEnvironmentFunction<String>>>)
   : TraceableTargetEnvironmentFunction<String>() {
@@ -220,7 +217,6 @@ fun addDefaultEnvironments(sdk: Sdk,
  *
  * @param envs    map of envs to add variable
  */
-@ApiStatus.Internal
 internal fun setCorrectStdOutEncoding(envs: Map<String, String>) {
   val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   val encoding = defaultCharset.name()
@@ -233,14 +229,12 @@ internal fun setCorrectStdOutEncoding(envs: Map<String, String>) {
  *
  * @param commandLine command line
  */
-@ApiStatus.Internal
 internal fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
   val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   commandLine.charset = defaultCharset
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }
 
-@ApiStatus.Internal
 internal fun isInPydevConsole(element: PsiElement): Boolean {
   return element is PydevConsoleElement || getConsoleCommunication(element) != null || hasConsoleKey(element)
 }

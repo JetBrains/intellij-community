@@ -15,9 +15,9 @@ class TextMateScope(
 
   val level: Int = parent?.level?.inc() ?: 0
   val dotsCount: Int = (scopeName?.count { it == '.' } ?: 0) + (parent?.dotsCount ?: 0)
-  val isEmpty: Boolean = (parent == null || parent.isEmpty) && (scopeName == null || scopeName.isEmpty())
+  val isEmpty: Boolean = (parent == null || parent.isEmpty) && scopeName.isNullOrEmpty()
 
-  private val hashCode: Int = arrayOf(scopeName, parent).contentHashCode()
+  private val hashCode: Int = 31 * scopeName.hashCode() + parent.hashCode()
 
   fun add(scopeName: CharSequence?): TextMateScope {
     return TextMateScope(scopeName, this)
@@ -39,9 +39,14 @@ class TextMateScope(
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other == null) return false
-    other as TextMateScope
-    return level == other.level && hashCode == other.hashCode && scopeName == other.scopeName
+    if (other !is TextMateScope) return false
+    if (level != other.level || hashCode != other.hashCode || scopeName != other.scopeName) {
+      return false
+    }
+    // equal hashes don't guarantee that the parent chains are equal, compare them for real
+    val parent = parent
+    val otherParent = other.parent
+    return parent === otherParent || (parent != null && parent == otherParent)
   }
 
   override fun hashCode(): Int {

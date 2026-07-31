@@ -43,7 +43,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : KotlinApplicableModCommandAct
     val callExpression = element.selectorExpression as? KtCallExpression ?: return null
 
     val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-    val callableSymbol = call.partiallyAppliedSymbol.symbol as? KaCallableSymbol ?: return null
+    val callableSymbol = call.symbol as? KaCallableSymbol ?: return null
     val fqName = callableSymbol.importableFqName?.asString()
     if (fqName != "kotlin.js.unsafeCast") return null
 

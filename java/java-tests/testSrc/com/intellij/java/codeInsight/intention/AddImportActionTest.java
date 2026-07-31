@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -1459,5 +1461,42 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("List1"));
 
     assertEquals(1, myFixture.filterAvailableIntentions("Import class").size());
+  }
+
+  public void testDoNotImportClassForAmbiguousStaticReference() {
+    myFixture.addClass("package amb; public enum Bar { CONST }");
+    myFixture.addClass("package amb; public enum Foo { CONST }");
+    myFixture.addClass("package amb; public class CONST {}");
+    myFixture.configureByText("Usage.java", """
+      import static amb.Bar.*;
+      import static amb.Foo.*;
+
+      class Usage {
+        void m() {
+          CO<caret>NST;
+        }
+      }
+      """);
+    myFixture.doHighlighting();
+    assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
+  }
+
+  public void testPreviewForFileTheReferenceDoesNotBelongTo() {
+    myFixture.configureByText("a.java", """
+      public class Foo {
+          Ma<caret>p l;
+      }
+      """);
+    IntentionAction intention = myFixture.findSingleIntention("Import class");
+    ImportClassFix fix = (ImportClassFix)IntentionActionDelegate.unwrap(intention);
+    String previewText = myFixture.getIntentionPreviewText(intention);
+    assertNotNull(previewText);
+    assertTrue(previewText, previewText.contains("import java.util.Map;"));
+
+    for (PsiFile foreignFile : List.of(myFixture.addFileToProject("other.txt", "some text"),
+                                       myFixture.addFileToProject("Bar.java", "public class Bar {}"))) {
+      PsiFile foreignCopy = IntentionPreviewUtils.obtainCopyForPreview(foreignFile);
+      assertSame(foreignFile.getName(), IntentionPreviewInfo.EMPTY, fix.generatePreview(getProject(), getEditor(), foreignCopy));
+    }
   }
 }

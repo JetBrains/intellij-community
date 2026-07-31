@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.psi.util
 
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -8,6 +9,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -40,10 +43,20 @@ internal fun PsiElement.childrenOfType(type: TokenSet): Sequence<PsiElement> {
   return children().filter { it.elementType in type }
 }
 
-internal fun PsiElement.parentOfType(type: IElementType, withSelf: Boolean = false): PsiElement? {
+@ApiStatus.Internal
+fun PsiElement.parentOfType(type: IElementType, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
 }
 
 internal fun PsiElement.parentOfType(type: TokenSet, withSelf: Boolean = false): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
+}
+
+@ApiStatus.Internal
+fun alertTitleColorKey(type: MarkdownAlertTitle.AlertType): TextAttributesKey = when (type) {
+  MarkdownAlertTitle.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
+  MarkdownAlertTitle.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
+  MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
+  MarkdownAlertTitle.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
+  MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
 }

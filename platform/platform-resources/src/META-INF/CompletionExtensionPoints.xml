@@ -9,8 +9,6 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider" dynamic="true"/>
-
     <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
     </extensionPoint>
@@ -74,6 +72,10 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandCompletionFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.suffixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandCompletionSuffixProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.provider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

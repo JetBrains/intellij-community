@@ -1,0 +1,25 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package foo;
+
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Slf4j
+class RedundantSlf4jDefinitionInPackage {
+
+    org.slf4j.Logger LOG2 = org.slf4j.LoggerFactory.getLogger(RedundantSlf4jDefinitionInPackage.class);
+
+  Logger LOG3 = LoggerFactory.getLogger(RedundantSlf4jDefinitionInPackage.class);
+
+  Logger LOG4 = getLogger(RedundantSlf4jDefinitionInPackage.class);
+
+  void foo() {
+    log.info("foo() called");
+  }
+
+  public static void main(String[] args) {
+    log.info("Using LOG1 Logger");
+  }
+}

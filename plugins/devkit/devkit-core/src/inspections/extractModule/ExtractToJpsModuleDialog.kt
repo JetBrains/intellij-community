@@ -6,7 +6,9 @@ import com.intellij.ide.projectView.impl.ModuleNameValidator
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.idea.devkit.DevKitBundle
 import javax.swing.JComponent
@@ -39,6 +41,7 @@ internal class ExtractToJpsModuleDialog(private val originalData: ExtractToJpsMo
           project
         )
           .bindText(::moduleDirectoryPath)
+          .columns(COLUMNS_LARGE)
           .align(AlignX.FILL)
           .component
       }

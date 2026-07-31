@@ -305,13 +305,15 @@ class LspClientImpl internal constructor(
       }
     }
 
-    shutdownAndExit()
+    // A graceful `shutdown`/`exit` handshake only makes sense for an explicit stop of a still-responsive server.
+    // On an unexpected stop the server-to-IDE channel is already dead, so skip the handshake and just disconnect.
+    shutdownAndExit(graceful = explicitStop)
   }
 
-  private fun shutdownAndExit() {
+  private fun shutdownAndExit(graceful: Boolean) {
     val shutdownAndExit = Runnable {
       synchronized(connectorLock) {
-        if (::lsp4jServerConnector.isInitialized) lsp4jServerConnector.shutdownExitDisconnect()
+        if (::lsp4jServerConnector.isInitialized) lsp4jServerConnector.shutdownExitDisconnect(graceful)
       }
     }
 

@@ -35,6 +35,7 @@ import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -274,9 +275,9 @@ fun SdkEntityBuilder.applyChangesFrom(fromSdk: SdkEntityBuilder) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version
-  homePath = fromSdk.homePath
-  val sdkRoots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url, it.type) }
-  roots = sdkRoots
+  val virtualFileUrlManager = getVirtualFileUrlManager()
+  homePath = fromSdk.homePath?.copyAtManager(virtualFileUrlManager)
+  roots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url.copyAtManager(virtualFileUrlManager), it.type) }
   additionalData = fromSdk.additionalData
   entitySource = fromSdk.entitySource
 }
@@ -286,12 +287,19 @@ fun SdkEntityBuilder.applyChangesFrom(fromSdk: SdkEntity) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version
-  homePath = fromSdk.homePath
-  val sdkRoots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url, it.type) }
-  roots = sdkRoots
+  val virtualFileUrlManager = getVirtualFileUrlManager()
+  homePath = fromSdk.homePath?.copyAtManager(virtualFileUrlManager)
+  roots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url.copyAtManager(virtualFileUrlManager), it.type) }
   additionalData = fromSdk.additionalData
   entitySource = fromSdk.entitySource
 }
+
+/**
+ * The bridge always makes new URLs in the manager from [getVirtualFileUrlManager].
+ * Therefore, if a builder comes from a different storage, you must make its URLs again in that manager.
+ * If you do not do this, `roots` keeps instances from two managers.
+ */
+private fun VirtualFileUrl.copyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUrl(url)
 
 private fun getVirtualFileUrlManager(): VirtualFileUrlManager {
   // here we can use LocalEelMachine, as we simply need to get the virtual file url manager

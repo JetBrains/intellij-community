@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PythonSdkTableListener implements ProjectJdkTable.Listener {
+final class PythonSdkTableListener implements ProjectJdkTable.Listener {
 
   @Override
   public void jdkAdded(final @NotNull Sdk sdk) {

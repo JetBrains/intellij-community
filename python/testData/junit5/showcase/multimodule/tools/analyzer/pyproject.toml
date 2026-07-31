@@ -1,0 +1,17 @@
+[project]
+name = "analyzer"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = ["mathlib", "formatlib"]
+
+[project.scripts]
+analyzer = "analyzer.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+mathlib = { workspace = true }
+formatlib = { workspace = true }

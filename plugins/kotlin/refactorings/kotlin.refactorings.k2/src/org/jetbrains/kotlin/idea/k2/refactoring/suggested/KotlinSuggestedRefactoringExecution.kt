@@ -5,6 +5,7 @@ import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -62,7 +63,7 @@ class KotlinSuggestedRefactoringExecution(
                     }
                 }
 
-            PrepareChangeSignatureResult(returnTypeInfo, parameterTypeInfos, contextParameters?.size ?: 0)
+            PrepareChangeSignatureResult(returnTypeInfo, parameterTypeInfos, contextParameters.size)
         }
     }
 

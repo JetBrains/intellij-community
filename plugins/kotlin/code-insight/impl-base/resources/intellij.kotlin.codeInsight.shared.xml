@@ -7,7 +7,77 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.structureView"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
   </dependencies>
   <!-- endregion -->
+<extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler" order="first"/>
+    <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
+    <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
+    <generatedSourcesFilter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGeneratedSourcesFilter"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
+    <applicationSettings service="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <autoImportOptionsProvider instance="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettingsProvider"/>
+    <packageDependencies.visitor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.packageDependencies.KotlinDependencyVisitorFactory"/>
+    <lang.surroundDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinExpressionSurroundDescriptor"/>
+    <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
+    <psi.referenceContributor
+            id="kotlinFilePathReferenceContributor"
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
+                                    handlerId="kotlin.fqn.class"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinIssueReferenceContributor"/>
+    <deadCode implementation="org.jetbrains.kotlin.idea.inspections.KotlinJUnitStaticEntryPoint"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
+    <lang.surroundDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinStatementSurroundDescriptor"/>
+    <codeInsight.surroundWithRangeAdjuster
+            implementation="org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinSurroundWithRangeAdjuster"/>
+    <testFinder implementation="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestFinder"/>
+    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
+    <lang.unwrapDescriptor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.unwrap.KotlinUnwrapDescriptor"/>
+    <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtClassBodyFixer"/>
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
+  </extensions>
 </idea-plugin>

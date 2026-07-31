@@ -227,14 +227,28 @@ internal class GHPRDiffViewModelImpl(
     threadsVm.lookupPreviousComment(cursorLocation, this::threadIsVisible)
 
   override fun showDiffAtComment(commentId: String) {
-    val mapping = threadMappings.value[commentId] ?: return
-    if (mapping.change == null) return
-    showChange(mapping.change, mapping.location?.lineLocation?.let(DiffViewerScrollRequest::toLine))
-    mappedThreads.value.find { it.id == commentId }?.requestFocus()
+    val mapping = threadMappings.value[commentId]
+    if (mapping != null && mapping.change != null) {
+      showChange(mapping.change, mapping.location?.lineLocation?.let(DiffViewerScrollRequest::toLine))
+      mappedThreads.value.find { it.id == commentId }?.let {
+        it.requestFocus()
+        return
+      }
+    }
+    val newComment = threadsVm.newComments.value.find { it.trackingId == commentId } ?: return
+    val newCommentChange = newComment.position.value.change
+    changeVmsMap[newCommentChange]?.value?.newComments?.value?.find { it.trackingId == commentId }?.let {
+      showChange(newCommentChange, it.location.value.lineLocation.let(DiffViewerScrollRequest::toLine))
+      it.requestFocus()
+    }
   }
 
-  private fun threadIsVisible(threadId: String): Boolean =
-    threadMappings.value[threadId]?.let { it.isVisible && it.location != null && it.change != null } == true
+  private fun threadIsVisible(threadId: String): Boolean {
+    threadMappings.value[threadId]?.let {
+      return it.isVisible && it.location != null && it.change != null
+    }
+    return threadsVm.newComments.value.any { it.trackingId == threadId }
+  }
 }
 
 private fun mapThreadsToChanges(

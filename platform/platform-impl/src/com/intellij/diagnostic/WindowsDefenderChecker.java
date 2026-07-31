@@ -336,21 +336,21 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      var psh = PathEnvironmentVariableUtil.findInPath("powershell.exe");
-      if (psh == null) psh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
+      var psh = PathEnvironmentVariableUtil.findFirst("powershell.exe");
+      if (psh == null) psh = PathEnvironmentVariableUtil.findFirst("pwsh.exe");
       if (psh == null) {
         LOG.info("no 'powershell.exe' or 'pwsh.exe' on " + PathEnvironmentVariableUtil.getPathVariableValue());
         return false;
       }
-      var pshPath = psh.toPath();
-      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && pshPath.startsWith(val));
+      var _psh = psh;
+      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && _psh.startsWith(val));
       if (!sane) {
         LOG.info("suspicious 'powershell.exe' location: " + psh);
         return false;
       }
 
       var scriptlet = "(Get-AuthenticodeSignature '" + script.toString().replace("'", "''") + "').Status";
-      var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
+      var command = new ProcessBuilder(psh.toString(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
       var start = System.nanoTime();
       var output = run(command, Charset.defaultCharset());
       if (output.getExitCode() != 0) {
@@ -368,7 +368,7 @@ public class WindowsDefenderChecker {
 
       var launcher = PathManager.findBinFileWithException("launcher.exe");
       command = new ProcessBuilder(Stream.concat(
-        Stream.of(launcher.toString(), psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
+        Stream.of(launcher.toString(), psh.toString(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
         paths.stream().map(Path::toString)
       ).toList());
       start = System.nanoTime();

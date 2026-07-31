@@ -1,6 +1,19 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_test",
+    module_name = "fleet.util.codepoints.test",
+    test_deps = [
+        "@community//fleet/test-runtime:wasmjs_module_lib",
+        "@community//fleet/util/codepoints:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+    visibility = ["//visibility:public"],
+)
 
 ### auto-generated section `build fleet.util.codepoints.test` start
 create_kotlinc_options(
@@ -8,6 +21,7 @@ create_kotlinc_options(
     opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
     x_consistent_data_class_copy_visibility = True,
     x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
 )
 
 jvm_library(

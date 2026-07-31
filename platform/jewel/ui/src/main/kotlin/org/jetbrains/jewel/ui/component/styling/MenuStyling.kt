@@ -18,12 +18,17 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.MenuItemState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Combines colors, metrics, and icons that define the appearance of a menu component. */
 @Stable
 @GenerateDataFunctions
 public class MenuStyle(
+    /** Whether the menu is rendered in dark mode. */
     public val isDark: Boolean,
+    /** The color tokens for the menu. */
     public val colors: MenuColors,
+    /** The size and spacing metrics for the menu. */
     public val metrics: MenuMetrics,
+    /** The icon keys for the menu. */
     public val icons: MenuIcons,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -50,15 +55,21 @@ public class MenuStyle(
 
     override fun toString(): String = "MenuStyle(isDark=$isDark, colors=$colors, metrics=$metrics, icons=$icons)"
 
+    /** Companion object for [MenuStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the menu component, including background, border, shadow, and per-item colors. */
 @Immutable
 @GenerateDataFunctions
 public class MenuColors(
+    /** The background color of the menu. */
     public val background: Color,
+    /** The border color of the menu. */
     public val border: Color,
+    /** The shadow color of the menu. */
     public val shadow: Color,
+    /** The color tokens for menu items. */
     public val itemColors: MenuItemColors,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -92,34 +103,58 @@ public class MenuColors(
             ")"
     }
 
+    /** Companion object for [MenuColors]. */
     public companion object
 }
 
+/** Holds color tokens for a menu item in its various states (normal, disabled, focused, pressed, hovered). */
 @Immutable
 @GenerateDataFunctions
 public class MenuItemColors(
+    /** The background color of a menu item in its normal state. */
     public val background: Color,
+    /** The background color of a menu item in its disabled state. */
     public val backgroundDisabled: Color,
+    /** The background color of a menu item in its focused state. */
     public val backgroundFocused: Color,
+    /** The background color of a menu item in its pressed state. */
     public val backgroundPressed: Color,
+    /** The background color of a menu item in its hovered state. */
     public val backgroundHovered: Color,
+    /** The content (text) color of a menu item in its normal state. */
     public val content: Color,
+    /** The content (text) color of a menu item in its disabled state. */
     public val contentDisabled: Color,
+    /** The content (text) color of a menu item in its focused state. */
     public val contentFocused: Color,
+    /** The content (text) color of a menu item in its pressed state. */
     public val contentPressed: Color,
+    /** The content (text) color of a menu item in its hovered state. */
     public val contentHovered: Color,
+    /** The icon tint color of a menu item in its normal state. */
     public val iconTint: Color,
+    /** The icon tint color of a menu item in its disabled state. */
     public val iconTintDisabled: Color,
+    /** The icon tint color of a menu item in its focused state. */
     public val iconTintFocused: Color,
+    /** The icon tint color of a menu item in its pressed state. */
     public val iconTintPressed: Color,
+    /** The icon tint color of a menu item in its hovered state. */
     public val iconTintHovered: Color,
+    /** The keybinding hint tint color of a menu item in its normal state. */
     public val keybindingTint: Color,
+    /** The keybinding hint tint color of a menu item in its disabled state. */
     public val keybindingTintDisabled: Color,
+    /** The keybinding hint tint color of a menu item in its focused state. */
     public val keybindingTintFocused: Color,
+    /** The keybinding hint tint color of a menu item in its pressed state. */
     public val keybindingTintPressed: Color,
+    /** The keybinding hint tint color of a menu item in its hovered state. */
     public val keybindingTintHovered: Color,
+    /** The color of the separator line between menu items. */
     public val separator: Color,
 ) {
+    /** Returns a [State] holding the background color appropriate for the given [state]. */
     @Composable
     internal fun backgroundFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
@@ -133,6 +168,7 @@ public class MenuItemColors(
             )
         )
 
+    /** Returns a [State] holding the content (text) color appropriate for the given [state]. */
     @Composable
     internal fun contentFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
@@ -146,6 +182,7 @@ public class MenuItemColors(
             )
         )
 
+    /** Returns a [State] holding the icon tint color appropriate for the given [state]. */
     @Composable
     internal fun iconTintFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
@@ -159,6 +196,7 @@ public class MenuItemColors(
             )
         )
 
+    /** Returns a [State] holding the keybinding tint color appropriate for the given [state]. */
     @Composable
     internal fun keybindingTintFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
@@ -254,19 +292,32 @@ public class MenuItemColors(
             ")"
     }
 
+    /** Companion object for [MenuItemColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the menu component, including corner size, padding, offset, shadow, and per-item
+ * metrics.
+ */
 @Stable
 @GenerateDataFunctions
 public class MenuMetrics(
+    /** The corner radius of the menu popup. */
     public val cornerSize: CornerSize,
+    /** The outer margin around the menu popup. */
     public val menuMargin: PaddingValues,
+    /** The inner content padding of the menu popup. */
     public val contentPadding: PaddingValues,
+    /** The display offset of the menu popup relative to its anchor. */
     public val offset: DpOffset,
+    /** The size of the drop shadow behind the menu popup. */
     public val shadowSize: Dp,
+    /** The width of the menu popup border. */
     public val borderWidth: Dp,
+    /** The size and spacing metrics for menu items. */
     public val itemMetrics: MenuItemMetrics,
+    /** The size and spacing metrics for submenus. */
     public val submenuMetrics: SubmenuMetrics,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -312,20 +363,34 @@ public class MenuMetrics(
             ")"
     }
 
+    /** Companion object for [MenuMetrics]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for a menu item, including padding, separator dimensions, icon size, and minimum
+ * height.
+ */
 @Stable
 @GenerateDataFunctions
 public class MenuItemMetrics(
+    /** The corner radius of the selection highlight for a menu item. */
     public val selectionCornerSize: CornerSize,
+    /** The outer padding around the menu item row. */
     public val outerPadding: PaddingValues,
+    /** The inner content padding within the menu item row. */
     public val contentPadding: PaddingValues,
+    /** The padding around the separator line. */
     public val separatorPadding: PaddingValues,
+    /** The padding around the keybinding hint text. */
     public val keybindingsPadding: PaddingValues,
+    /** The thickness of the separator line. */
     public val separatorThickness: Dp,
+    /** The total height of the separator row. */
     public val separatorHeight: Dp,
+    /** The size of the leading icon in a menu item. */
     public val iconSize: Dp,
+    /** The minimum height of a menu item row. */
     public val minHeight: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -374,12 +439,17 @@ public class MenuItemMetrics(
             ")"
     }
 
+    /** Companion object for [MenuItemMetrics]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for a submenu, specifically the display offset relative to its parent item. */
 @Stable
 @GenerateDataFunctions
-public class SubmenuMetrics(public val offset: DpOffset) {
+public class SubmenuMetrics(
+    /** The display offset of a submenu popup relative to its parent item. */
+    public val offset: DpOffset
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -393,12 +463,17 @@ public class SubmenuMetrics(public val offset: DpOffset) {
 
     override fun toString(): String = "SubmenuMetrics(offset=$offset)"
 
+    /** Companion object for [SubmenuMetrics]. */
     public companion object
 }
 
+/** Holds icon keys for the menu component, including the submenu chevron indicator. */
 @Immutable
 @GenerateDataFunctions
-public class MenuIcons(public val submenuChevron: IconKey) {
+public class MenuIcons(
+    /** The icon key for the submenu chevron indicator. */
+    public val submenuChevron: IconKey
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -412,9 +487,11 @@ public class MenuIcons(public val submenuChevron: IconKey) {
 
     override fun toString(): String = "MenuIcons(submenuChevron=$submenuChevron)"
 
+    /** Companion object for [MenuIcons]. */
     public companion object
 }
 
+/** CompositionLocal used to provide the [MenuStyle] to menu components in the hierarchy. */
 public val LocalMenuStyle: ProvidableCompositionLocal<MenuStyle> = staticCompositionLocalOf {
     error("No MenuStyle provided. Have you forgotten the theme?")
 }

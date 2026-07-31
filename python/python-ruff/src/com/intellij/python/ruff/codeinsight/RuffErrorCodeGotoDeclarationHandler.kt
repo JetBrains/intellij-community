@@ -115,7 +115,7 @@ internal object RuffErrorCodeReferenceProvider : PsiReferenceProvider() {
   }
 }
 
-private class RuffErrorCodeReferenceContributor : PsiReferenceContributor() {
+internal class RuffErrorCodeReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(), RuffErrorCodeReferenceProvider)
   }

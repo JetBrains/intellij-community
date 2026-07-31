@@ -317,7 +317,7 @@ interface InlineCompletionEvent {
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
-  if (!Elf.getElf().isPsiInteractionAllowed()) {
+  if (Elf.getElf().isUnsupportedOperationGuardActive()) {
     // getEditorDataContext -> FileManagerImpl.findFile requires read lock
     return null
   }

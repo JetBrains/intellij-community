@@ -157,6 +157,7 @@ object StandardKotlinNames {
 
     @JvmField val context: FqName = BUILT_INS_PACKAGE_FQ_NAME + "context"
     @JvmField val WITH_CALLABLE_ID: CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("with"))
+    @JvmField val contextCallableId : CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("context"))
 
     private val collectionTransformationFunctionNames = listOf(
         "chunked",

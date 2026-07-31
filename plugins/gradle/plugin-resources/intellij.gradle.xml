@@ -197,6 +197,8 @@
     <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
       implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
+    <externalSystem.runConfigurationModuleNameResolver
+      implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationModuleNameResolver"/>
 
     <externalSystemDependencyAnalyzer implementation="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerExtension"/>
 

@@ -20,6 +20,10 @@ public abstract class KotlinCyclicClassDependencyInspectionTest extends JavaInsp
     doTest(getGlobalTestDir(), myGlobalTool);
   }
 
+  public void testNonCompanionObject() {
+    doTest(getGlobalTestDir(), myGlobalTool);
+  }
+
   public void testOutsiderCompanionObject() {
     doTest(getGlobalTestDir(), myGlobalTool);
   }

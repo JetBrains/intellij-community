@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
-@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class, KaExperimentalApi::class)
 class ReturnSaver(val function: KtNamedFunction) {
     companion object {
         private val RETURN_KEY = Key<Unit>("RETURN_KEY")
@@ -38,7 +40,7 @@ class ReturnSaver(val function: KtNamedFunction) {
             allowAnalysisFromWriteAction {
                 body.forEachDescendantOfType<KtReturnExpression> {
                     analyze(it) {
-                        if (it.targetSymbol?.psi == function) {
+                        if (it.resolveSymbol()?.psi == function) {
                             hasReturn = true
                             it.putCopyableUserData(RETURN_KEY, Unit)
                         }

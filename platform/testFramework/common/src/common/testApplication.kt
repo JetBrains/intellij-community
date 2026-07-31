@@ -284,7 +284,6 @@ fun Application.cleanApplicationState() {
   }.onFailure(::addError)
 
   cleanApplicationStateCatching()?.let(::addError)
-  runCatching(::checkEditorsReleased).onFailure(::addError)
   runCatching(Application::cleanupApplicationCaches).onFailure(::addError)
   error?.let { throw it }
 }

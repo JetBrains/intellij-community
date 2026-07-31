@@ -25,6 +25,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ */
+@Deprecated
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {

@@ -89,7 +89,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @Override
   public boolean isFullHash(@NotNull VirtualFile root, @NotNull String hash) {
-    return myFullHashLength != null ? hash.length() == myFullHashLength && VcsLogUtil.HASH_REGEX.matcher(hash).matches()
+    return myFullHashLength != null ? hash.length() == myFullHashLength && VcsLogUtil.GIT_HASH_REGEX.matcher(hash).matches()
                                     : VcsLogProvider.super.isFullHash(root, hash);
   }
 

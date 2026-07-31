@@ -75,8 +75,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
         if (symbol.importableFqName != StandardKotlinNames.Collections.mapIndexed) return null
-        val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-        val receiver = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver ?: return null
+        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
 
         if (!receiver.type.isSubtypeOf(StandardClassIds.Collection)) return null
         val valueArgument = element.valueArguments.singleOrNull() ?: element.lambdaArguments.singleOrNull() ?: return null

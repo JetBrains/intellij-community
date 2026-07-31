@@ -32,11 +32,11 @@ public interface SearchEverywhereManager {
   boolean isShown();
 
   @Nullable
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   SearchEverywherePopupInstance getCurrentlyShownPopupInstance();
 
   /**
-   * @deprecated Use {@link #getCurrentlyShownPopupInstance()} instead
+   * @deprecated This functionality is obsolete.
    */
   @Deprecated(forRemoval = true)
   @NotNull
@@ -51,7 +51,11 @@ public interface SearchEverywhereManager {
 
   void toggleEverywhereFilter();
 
-  // todo remove
+  /**
+   * @deprecated The old Search Everywhere is being sunset.
+   *             Use {@link com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter#isEverywhere()} instead.
+   */
+  @Deprecated
   boolean isEverywhere();
 
   @ApiStatus.Internal

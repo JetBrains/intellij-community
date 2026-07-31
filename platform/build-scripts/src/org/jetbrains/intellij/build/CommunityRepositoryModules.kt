@@ -206,7 +206,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") { spec ->
-      spec.withModule("intellij.java.coverage.rt")
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },
@@ -386,12 +385,56 @@ object CommunityRepositoryModules {
       .toList().toTypedArray()
   }
 
-  val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
+  private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
     SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
     SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
   )
+
+  /**
+   * Packs the ffmpeg and javacpp libraries of the `intellij.libraries.ffmpeg` wrapper module, keeping only the natives
+   * that match this layout's [os] and [arch]. Pass `null` for both to get every platform, as the cross-platform
+   * distribution does.
+   *
+   * The libraries live in that wrapper module, registered as private plugin content in
+   * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedLibraries`
+   * are keyed by `(moduleName, libraryName)`, so naming the wrapper here - and keeping every `relativeOutputPath` -
+   * leaves the distribution byte-identical to when the libraries still sat on `intellij.android.streaming`.
+   *
+   * The `relativeOutputPath` arguments are load-bearing: without them the wrapper would merge all ten jars into one
+   * archive, which loses the per-platform filtering below and changes the javacpp native-extraction cache path (it is
+   * keyed on the containing jar's name). One wrapper holds all ten because per-platform content modules are impossible
+   * - content registration is static XML - so the exclusion below is what does the filtering.
+   *
+   * Shared with Rider's Android plugin layout (`createRiderAndroidPluginLayout`): both distributions must agree, and
+   * keeping this in one place is what stops them drifting apart.
+   */
+  fun PluginLayout.PluginLayoutSpec.withFfmpegWrapper(os: OsFamily?, arch: JvmArchitecture?) {
+    val ffmpegVersion = "6.0-1.5.9"
+    val javacppVersion = "1.5.9"
+    val wrapperModuleName = "intellij.libraries.ffmpeg"
+
+    withModuleLibrary("ffmpeg", wrapperModuleName, "ffmpeg-$ffmpegVersion.jar")
+    withModuleLibrary("ffmpeg-javacpp", wrapperModuleName, "javacpp-$javacppVersion.jar")
+
+    // include only the platform-dependent binaries matching this layout's (os, arch);
+    // exclude the rest so the wrapper module's other platform libraries don't leak in.
+    for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
+      val osName = supportedOs.osName.lowercase(Locale.ROOT)
+      val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
+      val javacppLibraryName = "javacpp-$osName-$supportedArch"
+
+      if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
+        withModuleLibrary(ffmpegLibraryName, wrapperModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
+        withModuleLibrary(javacppLibraryName, wrapperModuleName, "${javacppLibraryName}-$javacppVersion.jar")
+      }
+      else {
+        excludeModuleLibrary(ffmpegLibraryName, wrapperModuleName)
+        excludeModuleLibrary(javacppLibraryName, wrapperModuleName)
+      }
+    }
+  }
 
   private fun createAndroidPluginLayout(
     mainModuleName: String,
@@ -619,30 +662,7 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
 
-      val ffmpegVersion = "6.0-1.5.9"
-      val javacppVersion = "1.5.9"
-      val streamingModuleName = "intellij.android.streaming"
-
-      // Add ffmpeg and javacpp
-      spec.withModuleLibrary("ffmpeg", streamingModuleName, "ffmpeg-$ffmpegVersion.jar")
-      spec.withModuleLibrary("ffmpeg-javacpp", streamingModuleName, "javacpp-$javacppVersion.jar")
-
-      // include only the platform-dependent binaries matching this layout's (os, arch);
-      // exclude the rest so the streaming module's RUNTIME deps on other platform libraries don't leak in.
-      for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
-        val osName = supportedOs.osName.lowercase(Locale.ROOT)
-        val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
-        val javacppLibraryName = "javacpp-$osName-$supportedArch"
-
-        if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
-          spec.withModuleLibrary(ffmpegLibraryName, streamingModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
-          spec.withModuleLibrary(javacppLibraryName, streamingModuleName, "${javacppLibraryName}-$javacppVersion.jar")
-        }
-        else {
-          spec.excludeModuleLibrary(ffmpegLibraryName, streamingModuleName)
-          spec.excludeModuleLibrary(javacppLibraryName, streamingModuleName)
-        }
-      }
+      spec.withFfmpegWrapper(os = os, arch = arch)
 
       spec.withModule("intellij.android.streaming")
 

@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import static com.intellij.diagnostic.ErrorMessageClusteringKt.toProblematicPluginInfo;
+
 /** @deprecated obsolete; use {@link IdeaLoggingEvent} */
 @Deprecated(forRemoval = true)
 @ApiStatus.Internal
@@ -23,7 +25,7 @@ public final class IdeaReportingEvent extends IdeaLoggingEvent {
     @NotNull String stacktrace,
     @Nullable IdeaPluginDescriptor plugin
   ) {
-    super(message, new TextBasedThrowable(stacktrace), messageObject.getIncludedAttachments(), plugin, messageObject);
+    super(message, new TextBasedThrowable(stacktrace), messageObject.getIncludedAttachments(), toProblematicPluginInfo(plugin), messageObject);
     myPlugin = plugin;
   }
 

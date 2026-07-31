@@ -45,7 +45,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.isInvokeSuspend
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.threadAndContextSupportsEvaluation
 
 
-private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
+internal class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override suspend fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
@@ -196,9 +196,8 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     private fun getContinuationFilterFromHelper(currentContinuation: ObjectReference, context: DefaultExecutionContext): CoroutineFilter? {
         val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
         (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
-        thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
         val rootContinuation = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
-        if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract continuation instance")
+        if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract coroutine id or root continuation using CoroutinesDebugHelper")
         return rootContinuation?.let { ContinuationObjectFilter(it as ObjectReference) }
     }
 

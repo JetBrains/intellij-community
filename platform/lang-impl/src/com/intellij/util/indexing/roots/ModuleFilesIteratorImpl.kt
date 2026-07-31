@@ -10,11 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import com.intellij.util.indexing.unwrapCacheAvoiding
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.getInstance
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -64,7 +62,9 @@ internal class ModuleFilesIteratorImpl(
     val myWorkspaceFileIndex = getInstance(project) as WorkspaceFileIndexEx
 
     return if (recursive) {
-      iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)
+      val processor = processorEx.unwrapCacheAvoiding()
+      val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+      myWorkspaceFileIndex.processIndexableContentUnderDirectory(root, processor, fileFilter, fileSetFilter)
     }
     else {
       val processorEx = processorEx.unwrapCacheAvoiding()
@@ -73,18 +73,6 @@ internal class ModuleFilesIteratorImpl(
       // 2. It causes performance degradation in Rider
       fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
     }
-  }
-
-  fun iterateContentUnderDirectory(
-    dir: VirtualFile,
-    processor: ContentIteratorEx,
-    customFilter: VirtualFileFilter,
-    myWorkspaceFileIndex: WorkspaceFileIndexEx,
-  ): Boolean {
-    val processor = processor.unwrapCacheAvoiding()
-    val customFilter = customFilter.andIndexable(myWorkspaceFileIndex)
-    val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
-    return myWorkspaceFileIndex.processContentUnderDirectory(dir, processor, customFilter, fileSetFilter)
   }
 
   private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {

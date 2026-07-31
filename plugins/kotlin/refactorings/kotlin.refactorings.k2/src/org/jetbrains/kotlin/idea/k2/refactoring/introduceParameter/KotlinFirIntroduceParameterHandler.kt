@@ -25,15 +25,15 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -41,10 +41,16 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -189,11 +195,11 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
     }
 
     open operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val expressionTypeEvaluator: KaSession.() -> KaType? = {
+        val expressionTypeEvaluator: context(KaSession) () -> KaType? = {
             val physicalExpression = expression.substringContextOrThis
             getExpressionType(physicalExpression, expression)
         }
-        val nameSuggester: KaSession.(KaType) -> List<String> = { expressionType ->
+        val nameSuggester: context(KaSession) (KaType) -> List<String> = { expressionType ->
             val suggestedNames = SmartList<String>()
             val physicalExpression = expression.substringContextOrThis
             val body = when (targetParent) {
@@ -229,8 +235,8 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         expression: KtExpression,
         argumentValue: KtExpression?,
         targetParent: KtNamedDeclaration,
-        expressionTypeEvaluator: KaSession.() -> KaType?,
-        nameSuggester: KaSession.(KaType) -> List<String>,
+        expressionTypeEvaluator: context(KaSession) () -> KaType?,
+        nameSuggester: context(KaSession) (KaType) -> List<String>,
         silently: Boolean = false,
     ) {
         val physicalExpression = expression.substringContextOrThis
@@ -242,7 +248,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         var message: @Nls String? = null
         var suggestedNames: List<String> = listOf()
         val descriptorToType = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val expressionType = expressionTypeEvaluator.invoke(this)
+            val expressionType = expressionTypeEvaluator.invoke(useSiteSession)
             message = if (expressionType == null) {
                 KotlinBundle.message("error.text.expression.has.no.type")
             } else if (expressionType.isUnitType || expressionType.isNothingType) {
@@ -256,7 +262,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                 return@analyzeInModalWindow null
             }
             require(expressionType != null)
-            suggestedNames = nameSuggester.invoke(this, expressionType)
+            suggestedNames = nameSuggester.invoke(useSiteSession, expressionType)
 
             val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent)
 

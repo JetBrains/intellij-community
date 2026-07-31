@@ -6,18 +6,23 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -94,16 +99,72 @@ public final class FileManagerImpl implements FileManagerEx {
 
     LowMemoryWatcher.register(() -> processQueue(), manager);
 
+    myConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        LOG.warn("Signalling possible invalidation in `beforePluginLoaded`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `beforePluginUnload`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `pluginUnloaded`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+    });
+
     myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
+        analyzeInvalidations(true);
         processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
+        analyzeInvalidations(false);
         processFileTypesChanged(false);
       }
+    });
+  }
+
+  private void analyzeInvalidations(boolean entered) {
+    boolean toBeInvalidated = PossibleInvalidationKt.pollInvalidationAfterPropertyPush();
+    if (toBeInvalidated) {
+      return;
+    }
+    myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
+      FileViewProvider viewProvider = entry.getProvider();
+      if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
+        return;
+      }
+      AbstractFileViewProvider abstractProvider = (AbstractFileViewProvider)viewProvider;
+      boolean isStillValid;
+      if (abstractProvider.getVirtualFile() instanceof LightVirtualFile) {
+        isStillValid = myLightViewProviderCache.canViewProviderBeResurrected(abstractProvider);
+      } else {
+        isStillValid = myVFileToViewProviderMap.canViewProviderBeResurrected(abstractProvider);
+      }
+      if (isStillValid) {
+        return;
+      }
+
+      Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
+      Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
+      String viewProviderRepresentation;
+      try {
+        viewProviderRepresentation = viewProvider.toString(); // toString calls getContent, which might behave poorly for binary files and decompilers
+      } catch (Throwable e) {
+        viewProviderRepresentation = "[class: " + viewProvider.getClass().getName() + "languages: " + viewProvider.getLanguages() + "]";
+      }
+      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProviderRepresentation + " got invalid as part of dumb mode!\n" +
+                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode"), attachment));
     });
   }
 

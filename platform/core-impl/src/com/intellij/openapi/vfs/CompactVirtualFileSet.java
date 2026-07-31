@@ -76,7 +76,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
    * {@code max - min > PARTITION_BIT_SET_LIMIT && 100*size/(max-min) < PARTITION_BIT_SET_THRESHOLD}
    * => a {@link PartitionedBitSetStorage} is used
    */
-  //TODO RC: current implementation only able to adapt to set growing -- but set could also shrink (=remove() method _is_ implemented),
+  //TODO RC: current implementation only able to adapt to set _growing_ -- but set could also shrink (=remove() method _is_ implemented),
   //         so we also need 'downward' adaptation
   private @Nullable SetStorage storage;
   private boolean frozen;
@@ -99,6 +99,95 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     if (storage.size() > BIT_SET_LIMIT) {
       convertToBitSet();
     }
+  }
+
+  // Both equals() and hashCode() impls rely on [VirtualFileWithId.hashCode() == id] and on the same id used in equals()
+
+  @Override
+  public int hashCode() {
+    //As long, as [VirtualFileWithId.hashCode() == id], this hashCode is consistent with Set.hashCode()
+    //hashCode() impl is much simpler than equals() because Set.hashCode is additive -- so order in which elements
+    // .hashCode() are accumulated is not important:
+    int result = weirdFiles.hashCode();
+    if (storage != null) {
+      result += storage.hashCode();
+    }
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (!(obj instanceof CompactVirtualFileSet)) {
+      return super.equals(obj);
+    }
+
+    //If both set are CompactVirtualFileSet -- we could compare VirtualFiles by fileId, skipping findFileById(),
+    // which is quite an optimization.
+    CompactVirtualFileSet other = (CompactVirtualFileSet)obj;
+    //The main complexity here arises from the weirdFiles: because VirtualFileWithId _could_ be in weirdFiles sometimes,
+    // and other times couldn't -- we need to potentially include weirdFiles in both comparisons:
+    return filesWithIdsAreEqual(other) && filesWithoutIdsAreEqual(other);
+  }
+
+  private boolean filesWithIdsAreEqual(@NotNull CompactVirtualFileSet other) {
+    if (storage != null && other.storage != null) {
+      //Invariant: if [.storage is initialized] => [all VirtualFileWithId must be in .storage, not in .weirdFiles]
+      return storage.equals(other.storage);
+    }
+
+    int thisIdCount = storage == null ? countFilesWithId(weirdFiles) : storage.size();
+    int otherIdCount = other.storage == null ? countFilesWithId(other.weirdFiles) : other.storage.size();
+    if (thisIdCount != otherIdCount) return false;
+
+    return containsAllFilesWithId(other);
+  }
+
+  /** @return true if other contains all the VirtualFileWithId from this, regardless of where they stored in this: storage or weirdFiles */
+  private boolean containsAllFilesWithId(@NotNull CompactVirtualFileSet other) {
+    if (storage != null) {
+      IntIterator iterator = storage.intIterator();
+      while (iterator.hasNext()) {
+        if (!other.containsId(iterator.nextInt())) return false;
+      }
+    }
+    else {
+      for (VirtualFile file : weirdFiles) {
+        if (file instanceof VirtualFileWithId
+            && !other.containsId(((VirtualFileWithId)file).getId())) return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean filesWithoutIdsAreEqual(@NotNull CompactVirtualFileSet other) {
+    //VirtualFiles without id could be in weirdFiles only -- but VirtualFileWithId could be either in weirdFiles too,
+    // if set is small enough, or moved to .storage, if set _was_ big at some point (it could be not big now). So we
+    // can't just use weirdFiles.equals(other.weirdFiles), and need this:
+    int thisCount = countFilesWithoutId(weirdFiles);
+    int otherCount = countFilesWithoutId(other.weirdFiles);
+    if (thisCount != otherCount) return false;
+
+    for (VirtualFile file : weirdFiles) {
+      if (!(file instanceof VirtualFileWithId) && !other.weirdFiles.contains(file)) return false;
+    }
+    return true;
+  }
+
+  private static int countFilesWithId(@NotNull Set<VirtualFile> files) {
+    int count = 0;
+    for (VirtualFile file : files) {
+      if (file instanceof VirtualFileWithId) count++;
+    }
+    return count;
+  }
+
+  private static int countFilesWithoutId(@NotNull Set<VirtualFile> files) {
+    int count = 0;
+    for (VirtualFile file : files) {
+      if (!(file instanceof VirtualFileWithId)) count++;
+    }
+    return count;
   }
 
   @Override
@@ -435,7 +524,33 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     boolean shouldUpgradeBeforeAdd(int id);
   }
 
-  private static class IntSetStorage implements SetStorage {
+  private abstract static class AbstractSetStorage implements SetStorage {
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof SetStorage)) return false;
+
+      SetStorage other = (SetStorage)obj;
+      if (size() != other.size()) return false;
+      IntIterator iterator = intIterator();
+      while (iterator.hasNext()) {
+        if (!other.containsId(iterator.nextInt())) return false;
+      }
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = 0;
+      IntIterator iterator = intIterator();
+      while (iterator.hasNext()) {
+        result += iterator.nextInt();
+      }
+      return result;
+    }
+  }
+
+  private static class IntSetStorage extends AbstractSetStorage {
     private final IntSet set;
 
     IntSetStorage() {
@@ -482,7 +597,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
   }
 
-  private static class IdBitSetStorage implements SetStorage {
+  private static class IdBitSetStorage extends AbstractSetStorage {
     private final IdBitSet set = new IdBitSet(INT_SET_LIMIT);
 
     @Override
@@ -529,7 +644,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
   }
 
-  private static class PartitionedBitSetStorage implements SetStorage {
+  private static class PartitionedBitSetStorage extends AbstractSetStorage {
     private final Int2ObjectMap<BitSet> map = new Int2ObjectOpenHashMap<>();
 
     @Override

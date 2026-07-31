@@ -2,28 +2,19 @@
 
 package org.jetbrains.kotlin.idea.core.script.v1
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
 
 val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
-
-@set:TestOnly
-var Application.isScriptChangesNotifierDisabled: Boolean by NotNullableUserDataProperty(
-    Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
-)
 
 fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     when (severity) {

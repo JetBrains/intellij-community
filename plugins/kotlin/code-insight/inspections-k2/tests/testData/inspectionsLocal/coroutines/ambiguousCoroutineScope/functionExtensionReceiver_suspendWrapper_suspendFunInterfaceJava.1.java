@@ -1,13 +1,13 @@
-package test
+package test;
 
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineScope;
 
-interface CustomSuspendLambda {
+interface CustomAction {
     void customInvoke();
 }
 
 class Main {
-    static void suspendWrapper(CustomSuspendLambda action) {
+    static void javaStaticWrapper(CustomAction action) {
         action.customInvoke();
     }
 }

@@ -7,8 +7,10 @@ import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.parser.icons.PythonParserIcons
@@ -47,7 +49,14 @@ internal class PythonLanguageRuntimeType : LanguageRuntimeType<PythonLanguageRun
                                   config: PythonLanguageRuntimeConfiguration,
                                   targetEnvironmentType: TargetEnvironmentType<*>,
                                   targetSupplier: Supplier<TargetEnvironmentConfiguration>): Configurable =
-    PythonLanguageRuntimeUI(project, config, targetSupplier)
+    PythonLanguageRuntimeUI(project.modules.first(), config, targetSupplier)
+
+  override fun createConfigurable(
+    module: Module,
+    config: PythonLanguageRuntimeConfiguration,
+    targetEnvironmentType: TargetEnvironmentType<*>,
+    targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+  ): Configurable = PythonLanguageRuntimeUI(module, config, targetSupplier)
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): PythonLanguageRuntimeConfiguration? =
     target.runtimes.findByType()

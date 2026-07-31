@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support implementationClass="org.jetbrains.kotlin.idea.spellchecker.KotlinSpellcheckingStrategy" language="kotlin"/>
+  </extensions>
+</idea-plugin>

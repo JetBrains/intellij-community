@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -10,6 +10,16 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testRemoveUnnecessaryModifier() {
+    myFixture.configureByText("gr.groovy", """
+      var <caret>var integers = [1, 2, 3]
+      """);
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary 'var'"));
+    myFixture.checkResult("""
+                            var integers = [1, 2, 3]
+                            """);
+  }
+
   public void testSuppressForIfStatement() {
     myFixture.enableInspections(new GroovyConstantIfStatementInspection());
     myFixture.configureByText("a.groovy", """

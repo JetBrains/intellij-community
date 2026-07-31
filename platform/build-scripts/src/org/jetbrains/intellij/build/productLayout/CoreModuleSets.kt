@@ -100,6 +100,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
+    embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     embeddedModule("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
@@ -113,6 +114,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.netty.buffer")
     embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
+    embeddedModule("intellij.libraries.netty.codec.protobuf")
     embeddedModule("intellij.libraries.netty.handler.proxy")
 
     embeddedModule("intellij.libraries.oro.matcher")
@@ -371,11 +373,14 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.testIntegration.ui")
     embeddedModule("intellij.platform.lang")
     embeddedModule("intellij.platform.lang.impl")
+    embeddedModule("intellij.platform.syntax.psi")
 
     embeddedModule("intellij.platform.statistics")
     embeddedModule("intellij.platform.statistics.config")
     embeddedModule("intellij.platform.statistics.uploader")
     embeddedModule("intellij.platform.experiment")
+    embeddedModule("intellij.platform.project")
+    embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.ide.impl")
 
     embeddedModule("intellij.platform.rd.community")

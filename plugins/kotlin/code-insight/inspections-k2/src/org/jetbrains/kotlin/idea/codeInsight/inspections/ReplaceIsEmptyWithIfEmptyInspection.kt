@@ -13,16 +13,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceIsEmptyWithIfEmptyInspection.Replacement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceIsEmptyWithIfEmptyInspection.Replacement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -137,7 +136,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         if (conditionCalleeExpression.text !in conditionFunctionShortNames) return null
 
         val functionSymbol =
-            conditionCallExpression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()?.partiallyAppliedSymbol ?: return null
+            conditionCallExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val receiverParameter = functionSymbol.dispatchReceiver ?: functionSymbol.extensionReceiver
         val receiverType = receiverParameter?.type ?: return null
         if (receiverType.isArrayOrPrimitiveArray) return null

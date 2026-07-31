@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
-internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
+class OutdatedTableOfContentsInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object: MarkdownElementVisitor() {
       override fun visitMarkdownFile(file: MarkdownFile) {
@@ -34,7 +34,7 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
     val expectedToc = GenerateTableOfContentsAction.Manager.obtainToc(file)
     for (range in existingRanges.asReversed()) {
       val text = document.getText(range)
-      if (text != expectedToc) {
+      if (!text.sameAs(expectedToc)) {
         holder.registerProblem(
           file,
           MarkdownBundle.message("markdown.outdated.table.of.contents.inspection.description"),
@@ -66,5 +66,13 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
       val range = descriptor.textRangeInElement
       document.replaceString(range.startOffset, range.endOffset, expectedToc)
     }
+  }
+
+  private fun String.sameAs(expectedToc: String): Boolean {
+    return nonBlankLines() == expectedToc.nonBlankLines()
+  }
+
+  private fun String.nonBlankLines(): List<String> {
+    return lineSequence().filter { it.isNotBlank() }.toList()
   }
 }

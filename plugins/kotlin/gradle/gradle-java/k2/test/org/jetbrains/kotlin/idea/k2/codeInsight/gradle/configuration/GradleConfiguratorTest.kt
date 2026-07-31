@@ -282,6 +282,204 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAssignment() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDefaultModeAbsent() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDefaultModeMavenCentral() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDevVersionPreferSettings() {
+        doSettingsRepositoriesTest("1.2.60-dev-286")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyFullyQualifiedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyImportedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovySet() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("8.2+")
+    fun testSettingsRepositoriesKtsAssignment() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDefaultModeMavenCentral() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDevVersionPreferSettings() {
+        doSettingsRepositoriesTest("1.2.60-dev-286")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDefaultModeAbsent() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsFullyQualifiedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsImportedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsSet() {
+        doSettingsRepositoriesTest()
+    }
+
+    private fun doSettingsRepositoriesTest(kotlinVersion: String = "2.3.0") {
+        doTest(kotlinVersion, listOf("project")) { files ->
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
     fun testConfigureSubModuleInJvmProjectGroovy() {
         doTest("2.2.0", listOf("project.app")) { files ->
             val subModules = listOf("app")

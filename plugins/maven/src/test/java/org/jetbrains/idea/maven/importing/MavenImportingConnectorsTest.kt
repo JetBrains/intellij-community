@@ -46,6 +46,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.utils.MavenEelUtil.restartMavenConnectorsIfJdkIncorrect
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.file.Files.createDirectories
 import java.nio.file.Path.of
 
@@ -340,5 +348,58 @@ class MavenImportingConnectorsTest(mavenVersion: String, modelVersion: String) {
     assertEquals(path.resolve("conf/settings.xml").toString(), settingsRef.get().settings.globalSettingsPath)
   }
 
+  @Test
+  fun testShouldNotRestartRunningConnectorWhenImporterJdkUnchanged() = runBlocking {
+    importSingleModuleProject()
+    val connectorBefore = projectConnectors().single()
 
+    // The importer JDK is unchanged, so the already-running connector must survive: restarting it would
+    // race with the maven server startup and kill the process mid-handshake.
+    restartConnectorsAndWait()
+
+    val connectorsAfter = projectConnectors()
+    assertEquals(1, connectorsAfter.size)
+    assertSame(connectorBefore, connectorsAfter.single(),
+               "A connector already bound to the correct JDK must not be restarted")
+  }
+
+  @Test
+  fun testShouldRestartConnectorWhenImporterJdkChanged() = runBlocking {
+    importSingleModuleProject()
+    val connectorBefore = projectConnectors().single()
+
+    // Point the importer at a different JDK (the internal one) without touching the project SDK, so the
+    // running connector's JDK no longer matches the configured importer JDK.
+    val settings = MavenWorkspaceSettingsComponent.getInstance(maven.project).settings
+    val originalJdkForImporter = settings.importingSettings.jdkForImporter
+    try {
+      settings.importingSettings.jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA
+
+      restartConnectorsAndWait()
+
+      assertTrue(projectConnectors().none { it === connectorBefore },
+                 "A connector whose JDK no longer matches the importer JDK must be restarted")
+    }
+    finally {
+      settings.importingSettings.jdkForImporter = originalJdkForImporter
+    }
+  }
+
+  private suspend fun importSingleModuleProject() {
+    maven.createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>""".trimIndent())
+    maven.importProjectAsync()
+    maven.assertModules("project1")
+  }
+
+  private fun projectConnectors(): List<MavenServerConnector> =
+    MavenServerManager.getInstance().getAllConnectors().filter { it.project == maven.project }
+
+  private suspend fun restartConnectorsAndWait() {
+    restartMavenConnectorsIfJdkIncorrect(maven.project)
+    // restartMavenConnectorsIfJdkIncorrect schedules its work via invokeLater; flush the EDT queue so it runs.
+    withContext(Dispatchers.EDT) { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+  }
 }

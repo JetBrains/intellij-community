@@ -24,6 +24,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-base-analysis-utils",
     module_name = "intellij.kotlin.base.analysis.utils",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

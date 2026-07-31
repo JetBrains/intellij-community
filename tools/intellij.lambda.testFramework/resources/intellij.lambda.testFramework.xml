@@ -1,6 +1,6 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.driver.client"/>
     <module name="intellij.libraries.assertj.core"/>
@@ -24,6 +24,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
@@ -37,6 +38,6 @@
     <module name="intellij.tools.ide.starter"/>
     <module name="intellij.tools.ide.starter.driver"/>
     <module name="intellij.tools.ide.util.common"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

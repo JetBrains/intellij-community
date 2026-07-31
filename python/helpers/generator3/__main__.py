@@ -4,28 +4,35 @@ import logging
 import os
 import sys
 
-from generator3.constants import (
+_containing_dir = os.path.dirname(os.path.abspath(__file__))
+_helpers_dir = os.path.dirname(_containing_dir)
+
+
+def _bootstrap_sys_path():
+    if _helpers_dir not in sys.path:
+        sys.path.insert(0, _helpers_dir)
+
+
+# The `generator3` package below is only importable once the helpers root is on `sys.path`.
+# It must be added here, before those top-level imports run: a wrapper interpreter (e.g. an
+# OSGeo4W/QGIS `.bat`) can reset the PYTHONPATH the IDE relies on to make it importable. PY-90847
+_bootstrap_sys_path()
+
+from generator3.constants import (  # noqa: E402
     LOGGING_CATEGORIES,
     LOGGING_LEVEL_TRACE,
 )
-from generator3.util_methods import (
+from generator3.util_methods import (  # noqa: E402
     delete,
     timed,
     _enable_segfault_tracebacks,
     _configure_logging,
 )
 
-_containing_dir = os.path.dirname(os.path.abspath(__file__))
-_helpers_dir = os.path.dirname(_containing_dir)
-
 
 def _cleanup_sys_path():
     return [root for root in sys.path
             if os.path.normpath(root) not in (_containing_dir, _helpers_dir)]
-
-
-def _bootstrap_sys_path():
-    sys.path.insert(0, _helpers_dir)
 
 
 def _configure_multiprocessing():
@@ -168,7 +175,6 @@ def main():
 
 
 if __name__ == "__main__":
-    _bootstrap_sys_path()
     _enable_segfault_tracebacks()
     _configure_multiprocessing()
     main()

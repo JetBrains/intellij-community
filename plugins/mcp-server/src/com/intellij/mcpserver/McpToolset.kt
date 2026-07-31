@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 
 /**
+ * For a comprehensive authoring guide, see the [MCP Server README](../../../../README.md).
+ *
  * Marker interface for MCP toolset
  *
  * You may inherit it and define your tools as ordinary Kotlin methods.
@@ -59,8 +61,14 @@ interface McpToolset {
   }
 
   fun isEnabled(): Boolean = true
-  
+
   fun isExperimental(): Boolean = true
+
+  /**
+   * Whether tools from this toolset can be configured by users in MCP tool settings.
+   * Launch-managed toolsets should return `false`.
+   */
+  fun isUserConfigurable(): Boolean = true
 
   /**
    * Human-readable display name for this toolset group, shown in

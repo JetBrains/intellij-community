@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
@@ -851,7 +851,7 @@ class WorkspaceBuilderChangeLogTest {
   fun updateParentOfOneToOneChild() {
     val child = builder addEntity ChildSampleEntity("data", MySource)
     val newBuilder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
-    newBuilder addEntity SampleEntity(true, "", listOf(), emptyMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), MySource) {
+    newBuilder addEntity SampleEntity(true, "", listOf(), emptyMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), MySource) {
       this.children = listOf(child.builderFrom(newBuilder))
     }
 

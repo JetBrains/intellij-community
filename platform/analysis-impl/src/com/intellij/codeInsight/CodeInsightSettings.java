@@ -205,6 +205,9 @@ public final class CodeInsightSettings implements PersistentStateComponent<Eleme
   }
 
   private void setDefaults() {
+    SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
+    EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
+
     try {
       ReflectionUtil.copyFields(CodeInsightSettings.class.getDeclaredFields(), new CodeInsightSettings(), this,
                                 new DifferenceFilter<>(null, null) {
@@ -217,8 +220,6 @@ public final class CodeInsightSettings implements PersistentStateComponent<Eleme
     catch (Throwable e) {
       LOG.info(e);
     }
-
-    EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override

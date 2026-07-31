@@ -15,10 +15,12 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.mappingNotNull
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.KotlinUastOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
@@ -199,7 +201,7 @@ private fun KtCallableDeclaration.processAllOverridings(
                 val isFinal = runReadActionBlocking {
                     analyze(currentMethod) {
                         val symbol = currentMethod.symbol
-                        ((symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty
+                        ((symbol as? KaValueParameterSymbol)?.primaryConstructorProperty
                             ?: symbol).modality == KaSymbolModality.FINAL
                     }
                 }

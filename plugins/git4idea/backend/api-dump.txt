@@ -16,6 +16,7 @@ f:git4idea.GitUserRegistry
 - getOrReadUser(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsUser
 - getUser(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsUser
 f:git4idea.GitUtil
+- sf:HASH_REGEX:java.util.regex.Pattern
 - s:cleanupErrorPrefixes(java.lang.String):java.lang.String
 - s:findGitDir(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - s:findGitRootFor(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
@@ -30,6 +31,8 @@ f:git4idea.GitUtil
 - s:hasGitRepositories(com.intellij.openapi.project.Project):Z
 - s:isGitRoot(java.io.File):Z
 - s:isGitRoot(java.nio.file.Path):Z
+- s:isPossibleFullHash(java.lang.String):Z
+- s:isPossibleHash(java.lang.String):Z
 - s:isUnderGit(com.intellij.openapi.vcs.FilePath):Z
 - s:isUnderGit(com.intellij.openapi.vfs.VirtualFile):Z
 - s:justOneGitRepository(com.intellij.openapi.project.Project):Z
@@ -76,6 +79,8 @@ f:git4idea.branch.GitBranchesCollection
 - findLocalBranch(java.lang.String):git4idea.GitLocalBranch
 - findRemoteBranch(java.lang.String):git4idea.GitRemoteBranch
 - getHash(git4idea.GitBranch):com.intellij.vcs.log.Hash
+f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
+- f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 f:git4idea.changes.GitBranchComparisonResultImplKt
 - sf:getFilePath(com.intellij.openapi.diff.impl.patch.FilePatch):java.lang.String
 f:git4idea.changes.GitBranchComparisonResultKt
@@ -217,6 +222,9 @@ f:git4idea.remote.hosting.GitAsyncExtensionsKt
 f:git4idea.remote.hosting.GitHostingUrlUtil
 - sf:getUriFromRemoteUrl(java.lang.String):java.net.URI
 - sf:removeProtocolPrefix(java.lang.String):java.lang.String
+f:git4idea.remote.hosting.GitRemoteBranchesUtil
+- f:fetchAndCheckoutInNewWorktree(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:fetchAndCheckoutInNewWorktree$default(git4idea.remote.hosting.GitRemoteBranchesUtil,git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:git4idea.remote.hosting.HostedGitRepositoriesManagerKt
 - sf:getKnownRepositories(git4idea.remote.hosting.HostedGitRepositoriesManager):java.util.Set
 f:git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
@@ -267,6 +275,9 @@ e:git4idea.reset.GitResetOperation$SmartResetPolicy
 - sf:PROPOSE:git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:valueOf(java.lang.String):git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:values():git4idea.reset.GitResetOperation$SmartResetPolicy[]
+f:git4idea.stash.GitStashUtils
+- sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,java.lang.String):git4idea.commands.GitLineHandler
+- bs:createStashHandler$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,java.lang.String,I,java.lang.Object):git4idea.commands.GitLineHandler
 git4idea.status.GitStagingAreaHolder$StagingAreaListener
 - a:stagingAreaChanged(git4idea.repo.GitRepository):V
 f:git4idea.ui.ComboBoxWithAutoCompletion

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout.impl
 
-import com.intellij.ui.dsl.UiDslException
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
@@ -76,20 +75,14 @@ class ColumnsSizeCalculator {
         val sizesWithoutFirstColumn = mutableMapOf<ColumnInfo, Int>()
         removeFirstColumn(remainedSizes, sizesFirstColumn, sizesWithoutFirstColumn, 0)
 
-        if (sizesFirstColumn.isNotEmpty()) {
-          throw UiDslException()
-        }
+        check(sizesFirstColumn.isEmpty())
         remainedSizes = sizesWithoutFirstColumn
         result[i] = 0
       }
     }
 
-    if (remainedSizes.isNotEmpty()) {
-      throw UiDslException()
-    }
-    if (remainedResizableColumns.isNotEmpty()) {
-      throw UiDslException()
-    }
+    check(remainedSizes.isEmpty())
+    check(remainedResizableColumns.isEmpty())
 
     return result
   }

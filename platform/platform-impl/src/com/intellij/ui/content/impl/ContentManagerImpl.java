@@ -58,6 +58,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> contents = new ArrayList<>();
   private final List<ContentManagerImpl> myNestedManagers = new SmartList<>();
   private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
+  private final EventDispatcher<ContentManagerListener> myRecursiveDispatcher = EventDispatcher.create(ContentManagerListener.class);
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
 
@@ -121,6 +122,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public void addNestedManager(@NotNull ContentManagerImpl manager) {
     myNestedManagers.add(manager);
+    manager.addRecursiveContentManagerListener(myRecursiveDispatcher.getMulticaster());
     Disposer.register(manager, new Disposable() {
       @Override
       public void dispose() {
@@ -131,6 +133,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public void removeNestedManager(@NotNull ContentManagerImpl manager) {
     myNestedManagers.remove(manager);
+    manager.removeRecursiveContentManagerListener(myRecursiveDispatcher.getMulticaster());
   }
 
   @Override
@@ -237,8 +240,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         requestFocus(content, true);
       }
     }
-
-    Disposer.register(this, content);
   }
 
   @Override
@@ -658,6 +659,18 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myDispatcher.removeListener(l);
   }
 
+  @Override
+  public void addRecursiveContentManagerListener(@NotNull ContentManagerListener listener) {
+    addContentManagerListener(listener);
+    myRecursiveDispatcher.addListener(listener);
+  }
+
+  @Override
+  public void removeRecursiveContentManagerListener(@NotNull ContentManagerListener listener) {
+    removeContentManagerListener(listener);
+    myRecursiveDispatcher.removeListener(listener);
+  }
+
   private void fireContentAdded(@NotNull Content content, int newIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, newIndex, ContentManagerEvent.ContentOperation.add);
     myDispatcher.getMulticaster().contentAdded(e);
@@ -742,12 +755,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (myDisposed) return;
     myDisposed = true;
 
+    // Create the snapshot of the contents list to protect from possible ConcurrentModificationException
+    // when iterating and disposing Contents (their `dispose` may potentially call `content.manager.removeContent(content)`)
+    List<Content> snapshot = new ArrayList<>(contents);
+    for (Content content : snapshot) {
+      Disposer.dispose(content);
+    }
     contents.clear();
+
     myNestedManagers.clear();
     mySelection.clear();
     myContentWithChangedComponent.clear();
     myUI = null;
     myDispatcher.getListeners().clear();
+    myRecursiveDispatcher.getListeners().clear();
     myDataProviders.clear();
     myComponent = null;
   }

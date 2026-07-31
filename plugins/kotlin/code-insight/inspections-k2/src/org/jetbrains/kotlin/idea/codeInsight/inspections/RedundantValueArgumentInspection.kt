@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
@@ -30,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.valueArgumentVisitor
-import kotlin.collections.iterator
 
 internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     @OptIn(KaExperimentalApi::class)
@@ -59,7 +60,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), Cl
                 for ((followingArgumentIndex, followingArgument) in followingArguments) {
                     if (!followingArgument.isNamed()) {
                         val followingArgumentExpression = followingArgument.getArgumentExpression() ?: return
-                        val followingParameterSymbol = call.argumentMapping[followingArgumentExpression]?.symbol ?: return
+                        val followingParameterSymbol = call.valueArgumentMapping[followingArgumentExpression]?.symbol ?: return
                         if (followingParameterSymbol.isVararg) {
                             return
                         }
@@ -82,9 +83,9 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), Cl
 
     context(_: KaSession)
     private fun findTargetParameter(argumentExpression: KtExpression, call: KaFunctionCall<*>): KaValueParameterSymbol? {
-        val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
+        val targetParameterSymbol = call.valueArgumentMapping[argumentExpression]?.symbol ?: return null
 
-        val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol
+        val targetFunctionSymbol = call.symbol
         if (targetFunctionSymbol is KaNamedFunctionSymbol && targetFunctionSymbol.isOverride) {
             for (baseFunctionSymbol in targetFunctionSymbol.allOverriddenSymbols) {
                 if (baseFunctionSymbol is KaNamedFunctionSymbol && !baseFunctionSymbol.isOverride) {

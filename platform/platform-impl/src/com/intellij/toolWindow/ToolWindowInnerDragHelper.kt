@@ -9,7 +9,6 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.ui.popup.PopupCornerType
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.content.BaseLabel
@@ -264,9 +263,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow) {
     val support = getEditorSupport(sourceDecorator) ?: return
     // The support should extract the toolWindow-specific component from the content object and open it in the editor.
+    // The lifecycle of the passed content is also under the control of the support after this call.
     support.openInEditor(content, editorWindow)
-    // Now, the tab is not showing in the Tool Window, so let's dispose the content.
-    Disposer.dispose(content)
   }
 
   override fun cancelDragging(): Boolean {

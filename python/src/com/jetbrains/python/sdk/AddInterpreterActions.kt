@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AddInterpreterActions")
 
 package com.jetbrains.python.sdk
@@ -9,9 +9,9 @@ import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.TargetEnvironmentWizard
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -30,10 +30,12 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
-import com.intellij.python.pyproject.model.api.ModuleCreateInfo
-import com.intellij.python.pyproject.model.api.getModuleInfo
+import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
+import com.intellij.python.pyproject.model.api.ModuleSdkState
+import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
@@ -43,7 +45,6 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.target.PythonLanguageRuntimeType
-import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -93,12 +94,12 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
     if (targetModuleSitsOn == null) {
       add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
     }
-    addAll(collectNewInterpreterOnTargetActions(moduleOrProject.project, targetModuleSitsOn, onSdkCreated::accept))
+    addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onSdkCreated::accept))
   }
 }
 
 private fun collectNewInterpreterOnTargetActions(
-  project: Project,
+  moduleOrProject: ModuleOrProject,
   targetTypeModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
   onSdkCreated: (Sdk) -> Unit,
 ): List<DialogAction> =
@@ -106,8 +107,8 @@ private fun collectNewInterpreterOnTargetActions(
     .filter { it.getTargetType().isSystemCompatible() }
     .filter { targetTypeModuleSitsOn == null || targetTypeModuleSitsOn.allowCreationTargetOfThisType(it.getTargetType()) }
     // filter create new interpreter actions on targets that need to be associated with module like PyDockerComposeTargetEnvironmentFactory
-    .filterNot { project.isDefault && it.needAssociateWithModule() }
-    .map { AddInterpreterOnTargetAction(project, it.getTargetType(), onSdkCreated) }
+    .filterNot { moduleOrProject.project.isDefault && it.needAssociateWithModule() }
+    .map { AddInterpreterOnTargetAction(moduleOrProject, it.getTargetType(), onSdkCreated) }
 
 internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
@@ -131,17 +132,21 @@ internal class AddLocalInterpreterAction(
 }
 
 internal class AddInterpreterOnTargetAction(
-  private val project: Project,
+  private val moduleOrProject: ModuleOrProject,
   private val targetType: TargetEnvironmentType<*>,
   private val onSdkCreated: (Sdk) -> Unit,
 ) : DialogAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
   target = targetType.displayName,
-  project = project,
+  project = moduleOrProject.project,
 ), DumbAware {
   override fun createDialog(): TargetEnvironmentWizard? {
-    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())
+    val runtimeType = PythonLanguageRuntimeType.Helper.getInstance()
+    val wizard = when (moduleOrProject) {
+      is ModuleAndProject -> TargetEnvironmentWizard.createWizard(moduleOrProject.module, targetType, runtimeType)
+      is ProjectOnly -> TargetEnvironmentWizard.createWizard(moduleOrProject.project, targetType, runtimeType)
+    }
 
     wizard?.let {
       Disposer.register(it.disposable, Disposable {
@@ -182,10 +187,13 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
   )
 
   private suspend fun detectBestToolForModule(module: Module): CreateSdkInfoWithTool? =
-    when (val i = module.getModuleInfo()) {
-      is ModuleCreateInfo.CreateSdkInfoWrapper -> CreateSdkInfoWithTool(i.createSdkInfo, i.toolId)
-      is ModuleCreateInfo.SameAs -> detectBestToolForModule(i.parentModule)
-      null -> null
+    when (val i = module.getModuleSdkState()) {
+      is ModuleSdkState.HasSdk -> null
+      is ModuleSdkState.NoSdk -> when (val r = i.sdkConfigInstruction) {
+        is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> r.createSdkInfoWithTool
+        is SdkForModuleConfigInstruction.SameAs -> detectBestToolForModule(r.parentModule)
+        null -> null
+      }
     }
 
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {

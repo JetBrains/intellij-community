@@ -3,7 +3,6 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -35,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION;
 
 @ApiStatus.Internal
@@ -104,7 +104,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
           return result.isEmpty() ? null : result;
         }
         catch (Exception e) {
-          if (e instanceof ControlFlowException) throw e;
+          rethrowControlFlowException(e);
           throw new MapReduceIndexMappingException(e, indexer.getClass());
         }
       }

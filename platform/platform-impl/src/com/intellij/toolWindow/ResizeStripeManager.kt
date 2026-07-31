@@ -14,13 +14,13 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.MouseEvent
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Alexander Lobas
@@ -85,8 +85,8 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
 
   fun updateState(toolbar: ToolWindowToolbar?) {
     if (toolbar == null) {
-      val enabled = isShowNames()
-      if (enabled) {
+      val stripeResizable = isStripeResizable()
+      if (stripeResizable) {
         myCustomWidth = getSideCustomWidth(myComponent.anchor)
         myCurrentScale = UISettings.getInstance().currentIdeScale
         myComponent.add(mySplitter)
@@ -95,7 +95,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
         myCustomWidth = 0
         myComponent.remove(mySplitter)
       }
-      mySplitter.setResizeEnabled(enabled)
+      mySplitter.setResizeEnabled(stripeResizable)
     }
     else if (toolbar === myComponent || toolbar.anchor != myComponent.anchor) {
       return
@@ -203,6 +203,11 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   companion object {
 
     fun isShowNames(): Boolean = UISettings.getInstance().showToolWindowsNames
+
+    private fun isStripeResizable(): Boolean {
+      val extension = ToolWindowExtension.getInstance() ?: return isShowNames()
+      return extension.isStripeResizable()
+    }
 
     fun applyShowNames() {
       val uiSettings = UISettings.getInstance()

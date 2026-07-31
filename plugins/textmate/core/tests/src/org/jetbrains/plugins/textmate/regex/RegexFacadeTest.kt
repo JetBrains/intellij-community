@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.regex
 
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -85,8 +84,6 @@ abstract class RegexFacadeTest {
     }
   }
 
-  // Joni doesn't support disabling \\A
-  @Ignore
   @Test
   fun matchBeginString() {
     withRegex("\\Afoo") { regex ->

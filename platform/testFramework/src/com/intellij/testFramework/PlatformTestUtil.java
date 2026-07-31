@@ -172,12 +172,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UIUtilDispatchAllInvocationEventsInTests"})
+@TestOnly
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
 
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
+  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(10);
+  private static final long DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS =
+    SystemProperties.getLongProperty("idea.test.dispatch.all.invocation.events.timeout.ms", MAX_WAIT_TIME);
 
   public static @NotNull String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
     name = StringUtil.trimStart(name, "test");
@@ -282,8 +285,8 @@ public final class PlatformTestUtil {
     int level,
     boolean withSelection,
     @Nullable Queryable.PrintInfo printInfo,
-    @Nullable Predicate<Pair<Object, String>> nodePrintCondition,
-    @Nullable Function<@NotNull PrintNodeInfo, @NotNull PrintChildrenResult> beforeChildren
+    @Nullable Predicate<? super Pair<Object, String>> nodePrintCondition,
+    @Nullable Function<? super @NotNull PrintNodeInfo, @NotNull PrintChildrenResult> beforeChildren
   ) {
     var pathComponent = path.getLastPathComponent();
     var userObject = TreeUtil.getUserObject(pathComponent);
@@ -425,10 +428,12 @@ public final class PlatformTestUtil {
     return false;
   }
 
+  @RequiresEdt
   public static void waitWhileBusy(@NotNull JTree tree) {
     waitWhileBusy(() -> isBusy(tree, tree.getModel()));
   }
 
+  @RequiresEdt
   public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
     var startTimeMillis = System.currentTimeMillis();
@@ -519,6 +524,7 @@ public final class PlatformTestUtil {
   }
 
   @SuppressWarnings("UsagesOfObsoleteApi")
+  @RequiresEdt
   public static void waitForAlarm(int delay) {
     var app = ApplicationManager.getApplication();
     assertDispatchThreadWithoutWriteAccess();
@@ -585,6 +591,7 @@ public final class PlatformTestUtil {
    * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
+  @RequiresEdt
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     var eventQueue = IdeEventQueue.getInstance();
@@ -595,9 +602,34 @@ public final class PlatformTestUtil {
         // so we also want to wait for WI runnables here
         var canary = new AtomicBoolean(false);
         ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
+        // The drain finishes once the queue is empty AND the `ModalityState.any()` canary has run. Under the
+        // non-blocking write-intent lock model that `canary` is a write-intent runnable that `NonBlockingFlushQueue` can starve
+        // indefinitely while it stays in UI_ONLY mode and keeps re-posting FLUSH_NOW invocation events. To fail fast and
+        // diagnosably, we never block unboundedly: we pull an event only when `peekEvent()` reports one, otherwise we
+        // wait in short bounded steps, and we abort with a thread/coroutine dump once the deadline elapses.
+        var start = System.currentTimeMillis();
         while (true) {
           var event = eventQueue.peekEvent();
           if (event == null && canary.get()) break;
+          var elapsed = getMillisSince(start);
+          if (elapsed > DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS) {
+            throw new AssertionError(
+              "dispatchAllInvocationEventsInIdeEventQueue() did not finish draining the IDE event queue within " +
+              DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS + " ms (canary fired=" + canary.get() + "). Suspected " +
+              "`NonBlockingFlushQueue` write-intent livelock: the queued `ModalityState.any()` runnable is starved " +
+              "while FLUSH_NOW invocation events keep being re-posted. Failing fast so that a single hung. Override the " +
+              "bound with -Didea.test.dispatch.all.invocation.events.timeout.ms if a slow environment needs longer.\n" +
+              "Thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n" +
+              "LaterInvocatorEdtQueue dump:\n" + LaterInvocator.getLaterInvocatorEdtQueue() + "\n" +
+              "Coroutine dump:\n" + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
+            );
+          }
+          if (event == null) {
+            // the queue is momentarily empty, and the canary has not run yet; wait briefly for the flush machinery to
+            // post the next event instead of blocking indefinitely in getNextEvent()
+            TimeoutUtil.sleep(1);
+            continue;
+          }
           event = eventQueue.getNextEvent();
           if (event instanceof InvocationEvent) {
             eventQueue.dispatchEvent(event);
@@ -631,6 +663,7 @@ public final class PlatformTestUtil {
   /**
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
+  @RequiresEdt
   public static void dispatchAllEventsInIdeEventQueue() {
     EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
   }
@@ -638,6 +671,7 @@ public final class PlatformTestUtil {
   /**
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
+  @RequiresEdt
   public static AWTEvent dispatchNextEventIfAny() {
     return EdtTestUtilKt.dispatchNextEventIfAny();
   }
@@ -744,6 +778,10 @@ public final class PlatformTestUtil {
     ActionUtil.performAction(action, event);
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
     if (COVERAGE_ENABLED_BUILD) return;
 
@@ -782,7 +820,7 @@ public final class PlatformTestUtil {
    * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
    * @see BenchmarkTestInfo#start()
    */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true) // to warn about not calling .start() in the end
   public static @NotNull BenchmarkTestInfo newBenchmark(@NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
     return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
@@ -855,11 +893,19 @@ public final class PlatformTestUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expectedMillis, 4, actionToMeasure);
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark(String, ThrowableRunnable)} with {@link BenchmarkTestInfo#start()} instead.
+   */
   @SuppressWarnings("CallToSystemGC")
+  @Deprecated(forRemoval = true)
   public static void assertTiming(@NotNull String message, long expectedMillis, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
@@ -881,11 +927,9 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(
-    VirtualFile[] files,
-    @Nullable VirtualFileFilter filter,
-    @Nullable Function<VirtualFile, String> fileNameMapper
-  ) {
+  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files,
+                                                                      @Nullable VirtualFileFilter filter,
+                                                                      @Nullable Function<? super VirtualFile, String> fileNameMapper) {
     var map = new HashMap<String, VirtualFile>();
     for (var file : files) {
       if (filter != null && !filter.accept(file)) continue;

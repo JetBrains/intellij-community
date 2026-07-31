@@ -28,11 +28,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
-public class PyUnionType implements PyCompositeType {
+public class PyUnionType extends PyCompositeTypeBase {
 
   @ApiStatus.Internal
   public static boolean isStrictSemanticsEnabled() {
@@ -44,6 +43,11 @@ public class PyUnionType implements PyCompositeType {
   PyUnionType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     members.forEach(PyAnyType::validate);
     myMembers = new LinkedHashSet<>(members);
+  }
+
+  @Override
+  protected @NotNull Set<@Nullable PyType> getMemberSet() {
+    return Collections.unmodifiableSet(myMembers);
   }
 
   @Override
@@ -66,7 +70,9 @@ public class PyUnionType implements PyCompositeType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  public Object @NotNull [] getCompletionVariants(String completionPrefix,
+                                                  @NotNull PsiElement location,
+                                                  @NotNull ProcessingContext context) {
     Set<Object> variants = new HashSet<>();
     for (PyType member : myMembers) {
       if (member != null) {
@@ -246,19 +252,6 @@ public class PyUnionType implements PyCompositeType {
       return !isWeak() ? this : union(ContainerUtil.filter(getMembers(), it -> !isUnknown(it)));
     }
     return union(ContainerUtil.filter(getMembers(), it -> !isUnknown(it)));
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (other instanceof PyUnionType otherType) {
-      return myMembers.equals(otherType.myMembers);
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return myMembers.hashCode();
   }
 
   @Override

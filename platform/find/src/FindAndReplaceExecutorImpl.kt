@@ -40,14 +40,15 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
 private val LOG = logger<FindAndReplaceExecutorImpl>()
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
-  @Volatile private var validationJob: Job? = null
-  @Volatile private var selectScopeJob: Job? = null
+  private val validationJob = AtomicReference<Job?>()
+  private val selectScopeJob = AtomicReference<Job?>()
 
   // A single command channel + single consumer coroutine
   private val requests = Channel<FindCommand>(capacity = Channel.UNLIMITED)
@@ -126,8 +127,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     return coroutineScope.launch {
       var firstLogged = false
       try {
-        LOG.debug { "FiF: pass start; selectScope join begin (selectScopeJob=$selectScopeJob)" }
-        selectScopeJob?.join()
+        LOG.debug { "FiF: pass start; selectScope join begin (selectScopeJob=${selectScopeJob.get()})" }
+        selectScopeJob.get()?.join()
         LOG.debug { "FiF: selectScope join done" }
 
         val filesToScanInitially = command.previousUsages
@@ -239,9 +240,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   }
 
   override fun validateModel(findModel: FindModel, onFinish: (isDirectoryExists: Boolean) -> Any?) {
-    if (validationJob?.isActive == true) {
-      validationJob?.cancel("new validation request is started")
-    }
+    validationJob.get()?.let { if (it.isActive) it.cancel("new validation request is started") }
     val job = coroutineScope.launch {
       try {
         FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
@@ -250,10 +249,10 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
         onFinish(false)
       }
     }
-    validationJob = job
-    // Release the reference once the job finishes so a completed job (and whatever it captured) isn't pinned; the
-    // identity guard prevents a stale completion from clearing a newer job. IJPL-247145.
-    job.invokeOnCompletion { if (validationJob === job) validationJob = null }
+    validationJob.set(job)
+    // Release the reference once the job finishes so a completed job (and whatever it captured) isn't pinned;
+    // compareAndSet clears it only if a newer job hasn't already replaced it. IJPL-247145.
+    job.invokeOnCompletion { validationJob.compareAndSet(job, null) }
   }
 
   override fun performScopeSelection(scopeId: String, project: Project) {
@@ -268,14 +267,14 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       deferred?.cancelOnDispose(project)
       deferred?.await()
     }
-    selectScopeJob = job
-    job.invokeOnCompletion { if (selectScopeJob === job) selectScopeJob = null }
+    selectScopeJob.set(job)
+    job.invokeOnCompletion { selectScopeJob.compareAndSet(job, null) }
   }
 
   override fun cancelActivities() {
     val message = "cancel all activities for find and replace executor"
-    validationJob?.cancel(message)
-    selectScopeJob?.cancel(message)
+    validationJob.get()?.cancel(message)
+    selectScopeJob.get()?.cancel(message)
     // Route the search cancellation through the same channel so it is applied serially against the session state.
     requests.trySend(CancelSearch)
   }

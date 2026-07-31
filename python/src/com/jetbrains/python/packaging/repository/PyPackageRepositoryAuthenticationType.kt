@@ -11,5 +11,12 @@ enum class PyPackageRepositoryAuthenticationType(private val textKey: String) {
 
   val text: String
     get() = PyBundle.message(textKey)
+
+  /** `true` iff the repository form should show login + password fields for this auth kind. */
+  val requiresCredentials: Boolean
+    get() = when (this) {
+      NONE -> false
+      HTTP -> true
+    }
 }
 

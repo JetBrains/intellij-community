@@ -51,11 +51,11 @@ class SimpleListFilter(FacetsMixin, ListFilter):
 
 class FieldListFilter(FacetsMixin, ListFilter):
     list_separator: ClassVar[str]
-    field: Field
+    field: Field[Any, Any]
     field_path: str
     def __init__(
         self,
-        field: Field,
+        field: Field[Any, Any],
         request: HttpRequest,
         params: dict[str, list[str]],
         model: type[Model],
@@ -64,12 +64,12 @@ class FieldListFilter(FacetsMixin, ListFilter):
     ) -> None: ...
     @classmethod
     def register(
-        cls, test: Callable[[Field], Any], list_filter_class: type[FieldListFilter], take_priority: bool = ...
+        cls, test: Callable[[Field[Any, Any]], Any], list_filter_class: type[FieldListFilter], take_priority: bool = ...
     ) -> None: ...
     @classmethod
     def create(
         cls,
-        field: Field,
+        field: Field[Any, Any],
         request: HttpRequest,
         params: dict[str, list[str]],
         model: type[Model],

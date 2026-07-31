@@ -29,7 +29,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/gradle:gradle-common",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -159,7 +159,8 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//platform/backend/workspace",
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/workspace/storage",

@@ -288,6 +288,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
   "com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler",
   "com.intellij.platform.daemon.client.DaemonApplicationActivity",
+  "com.intellij.platform.ijent.community.impl.IjentMessageBusAdapter",
 )
 
 private fun executeAsyncAppInitListeners(scope: CoroutineScope) {

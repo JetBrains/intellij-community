@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.util.TruncateMode
+import org.jetbrains.annotations.ApiStatus
 
 object Constants {
   const val RELATIVE_PATH_IN_PROJECT_DESCRIPTION: String = "Path relative to the project root"
@@ -16,8 +17,11 @@ object Constants {
   const val MAX_LINES_COUNT_DESCRIPTION: String = "Maximum number of lines to return"
   const val MAX_LINES_COUNT_VALUE: Int = 1000
   const val TRUNCATE_MODE_DESCRIPTION: String = "How to truncate the text: from the start, in the middle, at the end, or don't truncate at all"
-  internal const val RUN_CONFIGURATION_PREVIEW_MAX_LENGTH: Int = 10 * 1000
-  internal const val RUN_CONFIGURATION_PREVIEW_MAX_LINE_LENGTH: Int = 1000
-  internal const val RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER: String = "<truncated>"
-  val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
+  @ApiStatus.Internal
+  const val RUN_CONFIGURATION_PREVIEW_MAX_LENGTH: Int = 10 * 1000
+  @ApiStatus.Internal
+  const val RUN_CONFIGURATION_PREVIEW_MAX_LINE_LENGTH: Int = 1000
+  @ApiStatus.Internal
+  const val RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER: String = "<truncated>"
+  val TRUNCATE_MODE_VALUE: TruncateMode = TruncateMode.START
 }

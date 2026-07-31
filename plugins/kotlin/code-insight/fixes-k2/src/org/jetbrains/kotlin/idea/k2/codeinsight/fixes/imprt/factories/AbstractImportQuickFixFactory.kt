@@ -22,20 +22,24 @@ abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBa
     /**
      * Returns the detected [ImportPositionTypeAndReceiver] for the given diagnostic.
      */
-    internal abstract fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
+    context(session: KaSession)
+    internal abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
 
     internal abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
 
-    internal abstract fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    internal abstract fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
 
-    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
+    context(session: KaSession)
+    override fun createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         createQuickFixes(setOf(diagnostic))
 
-    fun KaSession.createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<IntentionAction> {
+    context(session: KaSession)
+    fun createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<IntentionAction> {
         return diagnostics
             .mapNotNull { diagnostic ->
                 val positionContext = detectPositionContext(diagnostic) ?: return@mapNotNull null

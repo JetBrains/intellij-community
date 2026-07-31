@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class PyJavaClassType implements PyClassLikeType {
+final class PyJavaClassType implements PyClassLikeType {
   private final PsiClass myClass;
   private final boolean myDefinition;
 

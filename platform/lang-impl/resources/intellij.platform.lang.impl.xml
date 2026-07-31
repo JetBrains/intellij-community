@@ -13,6 +13,7 @@
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -53,6 +54,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
@@ -60,11 +62,14 @@
     <module name="intellij.platform.locking.impl"/>
     <module name="intellij.platform.lvcs"/>
     <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
+    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.testIntegration"/>
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.usageView"/>
@@ -151,6 +156,8 @@
     <projectSettings service="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
     <applicationSettings service="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings"/>
     <registryKey key="hyperlink.ide.decompiler.open.file" defaultValue="true" description="Load binary files in hyperlink on background thread"/>
+    <registryKey key="ide.project.view.skip.loading.children.for.remote.directories" defaultValue="true"
+                 description="Prevents Project View from loading directory children eagerly for directories in remote file systems."/>
     <registryKey key="project.structure.source.roots.editable.limit" defaultValue="20"
                  description="Maximum number of source roots under a content root to be editable"/>
   </extensions>

@@ -5,12 +5,30 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.compilerConfiguration.ui"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.formatter"/>
     <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.ide"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
 
@@ -49,20 +67,13 @@
 
     <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.jvm.shared.configuration.KotlinSourceRootDetector"/>
 
-    <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
-
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider"/>
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>
 
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
-
-    <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
-                       bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
+      <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                         bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
     <registryKey key="kotlin.ultra.light.classes.empty.text.range"
                  description="Return 'null' text range as in old light class implementation"
@@ -88,13 +99,7 @@
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
-              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+      <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
+                topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
   </projectListeners>
 </idea-plugin>

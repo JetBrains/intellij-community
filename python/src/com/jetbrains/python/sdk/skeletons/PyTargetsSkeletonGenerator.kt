@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -99,8 +98,20 @@ class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, currentFolder: 
         }
       }
       // TODO: Unify code
-      if (!isLocalTarget()) {
-        val existingStateFile = skeletonsPath / STATE_MARKER_FILE
+      val existingStateFile = skeletonsPath / STATE_MARKER_FILE
+      if (isLocalTarget()) {
+        // The local target maps the `-d` output to this persistent dir, so the state file is passed by
+        // its real path (no upload/download volume). Persisting bin mtime lets skeleton_status detect a
+        // rebuilt binary (e.g. after `maturin develop`) as OUTDATED for local SDKs too, not only remote.
+        if (existingStateFile.exists()) {
+          generatorScriptExecution.addParameter("--state-file")
+          generatorScriptExecution.addParameter(existingStateFile.toString())
+        }
+        else {
+          generatorScriptExecution.addParameter("--init-state-file")
+        }
+      }
+      else {
         if (existingStateFile.exists()) {
           val localRootPath = Files.createTempDirectory("generator3")
           if (Files.getFileStore(localRootPath).supportsFileAttributeView("posix")) {

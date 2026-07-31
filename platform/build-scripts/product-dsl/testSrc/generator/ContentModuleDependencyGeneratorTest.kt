@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.productLayout.dependency.generateDependencie
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.pluginTestSetup
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
@@ -379,25 +380,32 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
-    fun `tests descriptor preserves existing deps without adding TEST scope JPS deps`(@TempDir tempDir: Path) {
+    fun `tests descriptor in test resources root gets TEST scope JPS deps`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
-        val testsModule = ContentModuleName("intellij.platform.testFramework.junit5.tests")
-        val existingDep = ContentModuleName("intellij.platform.testFramework.junit5")
+        // a name that does not match any test-support pattern, so only the descriptor location can enable test scope
+        val testsModule = ContentModuleName("intellij.clion.profiling.tests")
+        val existingDep = ContentModuleName("intellij.platform.core")
         val testOnlyDep = ContentModuleName("intellij.libraries.assertj.core")
+        val staleDep = ContentModuleName("intellij.platform.ide.progress")
         val setup = pluginTestSetup(tempDir) {
           contentModule(existingDep.value) {
-            descriptor = """<idea-plugin package="test.framework.junit5"/>"""
+            descriptor = """<idea-plugin package="platform.core"/>"""
           }
           contentModule(testOnlyDep.value) {
             descriptor = """<idea-plugin package="assertj"/>"""
           }
+          contentModule(staleDep.value) {
+            descriptor = """<idea-plugin package="platform.ide.progress"/>"""
+          }
 
           contentModule(testsModule.value) {
+            descriptorInTestResources = true
             descriptor = """
               <idea-plugin>
                 <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
                 <dependencies>
                   <module name="${existingDep.value}"/>
+                  <module name="${staleDep.value}"/>
                 </dependencies>
                 <!-- endregion -->
               </idea-plugin>
@@ -410,6 +418,7 @@ class ContentModuleDependencyGeneratorTest {
         val graph = pluginGraph {
           moduleWithScopedDeps(existingDep.value)
           moduleWithScopedDeps(testOnlyDep.value)
+          moduleWithScopedDeps(staleDep.value)
           moduleWithScopedDeps(testsModule.value, existingDep.value to "COMPILE", testOnlyDep.value to "TEST")
         }
 
@@ -427,10 +436,249 @@ class ContentModuleDependencyGeneratorTest {
         assertThat(plan).isNotNull()
 
         assertThat(plan!!.moduleDependencies)
-          .describedAs("*.tests descriptors preserve existing XML deps instead of expanding TEST-scope JPS deps")
-          .containsExactly(existingDep)
+          .describedAs("descriptor under a test resource root is regenerated from JPS including TEST scope (IJPL-248736)")
+          .containsExactlyInAnyOrder(existingDep, testOnlyDep)
         assertThat(plan.testDependencies)
-          .containsExactly(existingDep)
+          .containsExactlyInAnyOrder(existingDep, testOnlyDep)
+        assertThat(plan.moduleDependencies)
+          .describedAs("an XML dep that is no longer a JPS dep is removed instead of being preserved")
+          .doesNotContain(staleDep)
+        assertThat(plan.suppressedModules).isEmpty()
+      }
+    }
+
+    @Test
+    fun `tests descriptor does not add new plugin dependency on plugin main module`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val scopes = listOf(
+          JpsJavaDependencyScope.TEST to "TEST",
+          JpsJavaDependencyScope.PROVIDED to "PROVIDED",
+          JpsJavaDependencyScope.COMPILE to "COMPILE",
+          JpsJavaDependencyScope.RUNTIME to "RUNTIME",
+        )
+        for ((jpsScope, graphScope) in scopes) {
+          val plan = planTestsDescriptorWithPluginDep(
+            tempDir = tempDir,
+            jpsScope = jpsScope,
+            graphScope = graphScope,
+          )
+
+          assertThat(plan.moduleDependencies)
+            .describedAs("TEST scope module deps are still written for $graphScope plugin dependencies")
+            .contains(ContentModuleName("intellij.libraries.assertj.core"))
+          assertThat(plan.pluginDependencies)
+            .describedAs("a test-scope descriptor must not introduce a $graphScope plugin gate")
+            .isEmpty()
+          assertThat(plan.writtenPluginDependencies).isEmpty()
+          assertThat(plan.requiredPluginDependencies).isEmpty()
+          assertThat(plan.suppressedPlugins).isEmpty()
+        }
+      }
+    }
+
+    @Test
+    fun `tests descriptor keeps plugin dependency already present in XML`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val plan = planTestsDescriptorWithPluginDep(
+          tempDir = tempDir,
+          jpsScope = JpsJavaDependencyScope.TEST,
+          graphScope = "TEST",
+          existingPluginDepInXml = true,
+        )
+
+        assertThat(plan.pluginDependencies)
+          .describedAs("an already declared plugin dep is kept - only adding a new one is forbidden")
+          .containsExactly(PluginId("dep.plugin"))
+        assertThat(plan.writtenPluginDependencies).containsExactly(PluginId("dep.plugin"))
+        assertThat(plan.requiredPluginDependencies).containsExactly(PluginId("dep.plugin"))
+      }
+    }
+
+    @Test
+    fun `tests descriptor omitted plugin dependency is not captured in updateSuppressions`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val plan = planTestsDescriptorWithPluginDep(
+          tempDir = tempDir,
+          jpsScope = JpsJavaDependencyScope.TEST,
+          graphScope = "TEST",
+          updateSuppressions = true,
+        )
+
+        assertThat(plan.requiredPluginDependencies).isEmpty()
+        assertThat(plan.suppressedPlugins)
+          .describedAs("nothing has to be suppressed - the dep is omitted by policy, not by configuration")
+          .isEmpty()
+        assertThat(plan.suppressionUsages)
+          .noneMatch { it.type == SuppressionType.PLUGIN_DEP && it.suppressedDep == "dep.plugin" }
+      }
+    }
+
+    @Test
+    fun `production descriptor still writes plugin dependency for COMPILE scope dep`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("dep.plugin") {
+            descriptor = """<idea-plugin package="dep.plugin"/>"""
+          }
+          contentModule("owner.content") {
+            descriptor = """<idea-plugin package="owner.content"/>"""
+            jpsDependency("dep.plugin", JpsJavaDependencyScope.COMPILE)
+          }
+          plugin("owner.plugin") {
+            content("owner.content")
+          }
+          plugin("dep.plugin")
+        }
+
+        val graph = pluginGraph {
+          moduleWithScopedDeps("owner.content", "dep.plugin" to "COMPILE")
+          plugin("owner.plugin") {
+            pluginId("owner.plugin")
+            content("owner.content")
+          }
+          plugin("dep.plugin") {
+            pluginId("dep.plugin")
+          }
+          linkPluginMainTarget("dep.plugin")
+        }
+
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = ContentModuleName("owner.content"),
+          descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+          outputProvider = setup.jps.outputProvider,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(),
+          updateSuppressions = false,
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.pluginDependencies)
+          .describedAs("production descriptors keep writing plugin deps inferred from JPS")
+          .containsExactly(PluginId("dep.plugin"))
+        assertThat(plan.requiredPluginDependencies).containsExactly(PluginId("dep.plugin"))
+      }
+    }
+
+    /**
+     * Plans deps for a descriptor located in a test resource root (so test scope is included) that has a JPS dependency
+     * on the main module of another plugin (`dep.plugin`) with [jpsScope] / [graphScope].
+     */
+    private suspend fun planTestsDescriptorWithPluginDep(
+      tempDir: Path,
+      jpsScope: JpsJavaDependencyScope,
+      graphScope: String,
+      existingPluginDepInXml: Boolean = false,
+      updateSuppressions: Boolean = false,
+    ): ContentModuleDependencyPlan {
+      val testsModule = ContentModuleName("intellij.clion.profiling.tests")
+      val prodDep = ContentModuleName("intellij.platform.core")
+      val testOnlyDep = ContentModuleName("intellij.libraries.assertj.core")
+      val setup = pluginTestSetup(tempDir) {
+        contentModule(prodDep.value) {
+          descriptor = """<idea-plugin package="platform.core"/>"""
+        }
+        contentModule(testOnlyDep.value) {
+          descriptor = """<idea-plugin package="assertj"/>"""
+        }
+        contentModule("dep.plugin") {
+          descriptor = """<idea-plugin package="dep.plugin"/>"""
+        }
+
+        contentModule(testsModule.value) {
+          descriptorInTestResources = true
+          descriptor = """
+            <idea-plugin>
+              <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+              <dependencies>
+                <module name="${prodDep.value}"/>${if (existingPluginDepInXml) "\n    <plugin id=\"dep.plugin\"/>" else ""}
+              </dependencies>
+              <!-- endregion -->
+            </idea-plugin>
+          """.trimIndent()
+          jpsDependency(prodDep.value, JpsJavaDependencyScope.COMPILE)
+          jpsDependency(testOnlyDep.value, JpsJavaDependencyScope.TEST)
+          jpsDependency("dep.plugin", jpsScope)
+        }
+        plugin("dep.plugin")
+      }
+
+      val graph = pluginGraph {
+        moduleWithScopedDeps(prodDep.value)
+        moduleWithScopedDeps(testOnlyDep.value)
+        moduleWithScopedDeps(
+          testsModule.value,
+          prodDep.value to "COMPILE",
+          testOnlyDep.value to "TEST",
+          "dep.plugin" to graphScope,
+        )
+        plugin("dep.plugin") {
+          pluginId("dep.plugin")
+        }
+        linkPluginMainTarget("dep.plugin")
+      }
+
+      val generation = planContentModuleDependenciesWithBothSets(
+        contentModuleName = testsModule,
+        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+        outputProvider = setup.jps.outputProvider,
+        pluginGraph = graph,
+        isTestDescriptor = false,
+        suppressionConfig = SuppressionConfig(),
+        updateSuppressions = updateSuppressions,
+      )
+      val plan = generation.plan
+      assertThat(plan).isNotNull()
+      return plan!!
+    }
+
+    @Test
+    fun `tests named module with production descriptor keeps TEST scope deps out`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val testsModule = ContentModuleName("intellij.clion.profiling.tests")
+        val prodDep = ContentModuleName("intellij.platform.core")
+        val testOnlyDep = ContentModuleName("intellij.libraries.assertj.core")
+        val setup = pluginTestSetup(tempDir) {
+          contentModule(prodDep.value) {
+            descriptor = """<idea-plugin package="platform.core"/>"""
+          }
+          contentModule(testOnlyDep.value) {
+            descriptor = """<idea-plugin package="assertj"/>"""
+          }
+
+          // same `.tests` name, but the descriptor lives in a production resource root
+          contentModule(testsModule.value) {
+            descriptor = """<idea-plugin package="clion.profiling.tests"/>"""
+            jpsDependency(prodDep.value, JpsJavaDependencyScope.COMPILE)
+            jpsDependency(testOnlyDep.value, JpsJavaDependencyScope.TEST)
+          }
+        }
+
+        val graph = pluginGraph {
+          moduleWithScopedDeps(prodDep.value)
+          moduleWithScopedDeps(testOnlyDep.value)
+          moduleWithScopedDeps(testsModule.value, prodDep.value to "COMPILE", testOnlyDep.value to "TEST")
+        }
+
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = testsModule,
+          descriptorCache = descriptorCache,
+          outputProvider = setup.jps.outputProvider,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(),
+          updateSuppressions = false,
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.moduleDependencies)
+          .describedAs("test scope inclusion follows descriptor location, not the `.tests` name suffix")
+          .containsExactly(prodDep)
+        assertThat(plan.testDependencies)
+          .containsExactlyInAnyOrder(prodDep, testOnlyDep)
       }
     }
 
@@ -1665,7 +1913,7 @@ class ContentModuleDependencyGeneratorTest {
         val plan = generation.plan
         assertThat(plan).isNotNull()
 
-        assertThat(plan!!.allJpsPluginDependencies)
+        assertThat(plan!!.requiredPluginDependencies)
           .containsExactly(PluginId("dep.plugin"))
         assertThat(plan.suppressedPlugins)
           .describedAs("updateSuppressions should auto-capture missing plugin deps into suppressions")

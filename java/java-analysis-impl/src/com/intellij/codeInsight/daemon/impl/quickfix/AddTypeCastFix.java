@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.guess.GuessManager;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ActionContext;
@@ -11,7 +11,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
@@ -40,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   private final PsiType myType;
@@ -132,10 +132,9 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     return typeCast;
   }
 
-  public static void registerFix(QuickFixActionRegistrar registrar,
+  public static void registerFix(Consumer<? super CommonIntentionAction> registrar,
                                  PsiExpression qualifier,
-                                 PsiJavaCodeReferenceElement ref,
-                                 TextRange fixRange) {
+                                 PsiJavaCodeReferenceElement ref) {
     String referenceName = ref.getReferenceName();
     if (referenceName == null) return;
     if (qualifier instanceof PsiReferenceExpression referenceExpression) {
@@ -164,7 +163,7 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
       else if (psiClass.findFieldByName(referenceName, true) == null) {
         continue;
       }
-      registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, QuickFixBundle.message("fix.expression.role.qualifier")).asIntention(), null);
+      registrar.accept(new AddTypeCastFix(conjunct, qualifier, QuickFixBundle.message("fix.expression.role.qualifier")).asIntention());
     }
   }
 }

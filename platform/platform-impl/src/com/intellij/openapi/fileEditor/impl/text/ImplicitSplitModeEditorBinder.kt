@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.ApiStatus
  * Unsupported split frontend cases currently fall back to the backend-bound text editor: sync-only replacement providers, frontend providers
  * with non-replacing policies, and custom nested editor creation that bypasses [TextEditorProvider].
  *
- * The extension point is optional and declared only by `platform.frontend.split`. In monolith or non-split builds it is absent, and tolerant
- * extension-point lookup keeps regular editor creation unchanged.
+ * The service implementation is registered only by `platform.frontend.split`. In monolith or non-split builds it is absent, and nullable
+ * service lookup keeps regular editor creation unchanged.
  *
  * Example: the Markdown editor with preview combines a JCEF-based editor and a plain text editor.
  * In that case a regular text editor must be bound to the backend editor instance already created for the same file
@@ -47,10 +47,10 @@ interface ImplicitSplitModeEditorBinder {
   ): TextEditor? = null
 
   companion object {
-    val EP_NAME: ExtensionPointName<ImplicitSplitModeEditorBinder> = ExtensionPointName.create("com.intellij.textEditorCreationInterceptor")
-
     fun tryBindSuppliedEditorToBackend(provider: TextEditorProvider, project: Project, file: VirtualFile): TextEditor? {
-      return EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { it.tryBindSuppliedEditorToBackend(provider, project, file) }
+      return ApplicationManager.getApplication()
+        .getService(ImplicitSplitModeEditorBinder::class.java)
+        ?.tryBindSuppliedEditorToBackend(provider, project, file)
     }
 
     suspend fun tryBindSuppliedEditorToBackendAsync(
@@ -60,13 +60,9 @@ interface ImplicitSplitModeEditorBinder {
       document: Document?,
       editorCoroutineScope: CoroutineScope,
     ): TextEditor? {
-      for (interceptor in EP_NAME.extensionsIfPointIsRegistered) {
-        val editor = interceptor.tryBindSuppliedEditorToBackendAsync(provider, project, file, document, editorCoroutineScope)
-        if (editor != null) {
-          return editor
-        }
-      }
-      return null
+      return ApplicationManager.getApplication()
+        .getService(ImplicitSplitModeEditorBinder::class.java)
+        ?.tryBindSuppliedEditorToBackendAsync(provider, project, file, document, editorCoroutineScope)
     }
   }
 }

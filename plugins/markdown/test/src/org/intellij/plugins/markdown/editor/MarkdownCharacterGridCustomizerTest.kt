@@ -4,12 +4,12 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class MarkdownCharacterGridCustomizerTest {
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
 
   @Test
-  fun `grid mode activates for file with CJK and table`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `grid mode activates for file with CJK and table`(): Unit = runBlocking(context = Dispatchers.UiWithModelAccess) {
     val editor = openMarkdownFile(
       """
       | one | 二 |
@@ -34,7 +34,7 @@ class MarkdownCharacterGridCustomizerTest {
   }
 
   @Test
-  fun `grid mode stays off for file with table but no CJK`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `grid mode stays off for file with table but no CJK`(): Unit = runBlocking(context = Dispatchers.UiWithModelAccess) {
     val editor = openMarkdownFile(
       """
       | one | two |
@@ -48,7 +48,7 @@ class MarkdownCharacterGridCustomizerTest {
   }
 
   @Test
-  fun `grid mode stays off for CJK prose without table`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `grid mode stays off for CJK prose without table`(): Unit = runBlocking(context = Dispatchers.UiWithModelAccess) {
     val editor = openMarkdownFile("Some plain text with 中文 sprinkled in.\n")
     delay(500)
     assertThat(editor.settings.characterGridWidthMultiplier).isNull()
@@ -56,7 +56,7 @@ class MarkdownCharacterGridCustomizerTest {
   }
 
   @Test
-  fun `grid mode activates for file with supplementary-plane emoji and table`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `grid mode activates for file with supplementary-plane emoji and table`(): Unit = runBlocking(context = Dispatchers.UiWithModelAccess) {
     val editor = openMarkdownFile(
       """
       | h | 🚀 |

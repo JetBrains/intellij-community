@@ -1,14 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -20,7 +16,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +43,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiKeyword;
@@ -439,64 +433,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
       assertTrue("File already has to be annotated", annotated.get());
       injectedAnnotated.set(true);
       iDidIt();
-    }
-  }
-
-  public void test_SerializeCodeInsightPasses_SecretSettingDoesWork() {
-    TextEditorHighlightingPassRegistrarImpl registrar =
-      (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-    assertFalse("Somebody (rogue plugin?) has left the dangerous setting on", registrar.isSerializeCodeInsightPasses());
-
-    enableInspectionTool(new LocalInspectionTool() {
-      @Override
-      public @NotNull String getID() {
-        return getTestName(false)+"MySlowInspectionTool";
-      }
-
-      @Override
-      public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                     boolean isOnTheFly,
-                                                     @NotNull LocalInspectionToolSession session) {
-        return new PsiElementVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            assertTrue("File has to be already annotated", annotated.get());
-            inspected.set(true);
-          }
-        };
-      }
-    });
-    annotated.set(false);
-    injectedAnnotated.set(false);
-    inspected.set(false);
-    try {
-      myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
-
-      Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage = new HashMap<>();
-      annotatorsByLanguage.put(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{new MySlowAnnotator()});
-      annotatorsByLanguage.put(XMLLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyInjectedSlowAnnotator()});
-
-      useAnnotatorsIn(annotatorsByLanguage, () -> {
-        @Language("JAVA")
-        String text = """
-          class X{
-          // language=XML
-          String ql = "<value>1</value>";
-          }""";
-        configureByText(JavaFileType.INSTANCE,
-                        text);
-
-        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.INFORMATION);
-        assertTrue("File already has to be java annotated", annotated.get());
-        assertTrue("File already has to annotate xml injection", injectedAnnotated.get());
-        assertTrue("File already has to run inspections", inspected.get());
-      });
-    }
-    finally {
-      myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
-      annotated.set(false);
-      injectedAnnotated.set(false);
-      inspected.set(false);
     }
   }
 

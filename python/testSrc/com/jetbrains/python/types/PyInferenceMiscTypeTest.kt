@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -605,6 +604,8 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       class Base2(Base1):
           def test(self, param: int) -> int: pass
+      #           │                     ^^^ WARNING Return type of method 'Base2.test()' does not match return type the base method in class 'Base1'
+      #           ^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'Base2.test()' does not match signature of the base method in class 'Base1'
 
       class Base3(Base1):
           pass
@@ -832,6 +833,23 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               expr = self.x
       #       └ TYPE C1
       """)
+
+    @Test
+    fun `calling union of dataclasses`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass
+      class DC1:
+          x: int = 0
+
+      @dataclass
+      class DC2:
+          y: str = ""
+
+      def f(cls: type[DC1] | type[DC2]):
+          expr = cls()
+      #   └ TYPE DC1 | DC2
+      """)
   }
 
   @Nested
@@ -1004,6 +1022,26 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       expr = my_list.count
       #└ TYPE (value: Unknown, /) -> int
       """)
+
+    @Test
+    @TestFor(issues = ["PY-91216"])
+    fun `decorated function assigned to a module attribute`() = test(
+      """
+      import m
+
+      expr = m.f
+      # └ TYPE int
+      """,
+      "m.py" to """
+        def _dec(fun) -> int:
+            return 12
+
+        @_dec
+        def _func():
+            raise NotImplementedError
+
+        f = _func
+        """)
   }
 
   @Nested
@@ -1924,6 +1962,19 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-91009"])
+    fun `generic context manager over union binds enter to each member`() = test("""
+      class CM[T]:
+          def __enter__(self) -> T: ...
+          def __exit__(self, *args): ...
+
+      def foo(cm: CM[int] | CM[str]):
+          with cm as x:
+              expr = x
+      #       └ TYPE int | str
+      """)
+
+    @Test
     @TestFor(issues = ["PY-59548"])
     fun `generic base class specified through alias`() = test("""
       from typing import Generic, TypeVar
@@ -2113,7 +2164,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #                   ^^^ WARNING Expected type 'int | Box[str]', got 'EllipsisType' instead
       expr = r.get()
       #│       ^^^ WEAK-WARNING Member 'int' of 'int | Box[str]' does not have attribute 'get'
-      #└ TYPE str FIXME str | Any
+      #└ TYPE str | Unknown
       """)
 
     @Test
@@ -2132,7 +2183,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
       #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
-      #└ TYPE str
+      #└ TYPE str | Unknown
       """)
   }
 

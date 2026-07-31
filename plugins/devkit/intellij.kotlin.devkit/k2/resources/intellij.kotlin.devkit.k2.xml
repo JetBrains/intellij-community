@@ -1,13 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight.intentions"/>
     <module name="intellij.kotlin.devkit"/>
     <module name="intellij.kotlin.refactorings"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.refactorings.base"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService

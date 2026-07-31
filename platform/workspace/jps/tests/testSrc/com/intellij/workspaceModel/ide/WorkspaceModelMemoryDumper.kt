@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntities
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
@@ -35,7 +35,7 @@ fun main() {
 
 private suspend fun loadProject(): Pair<JpsProjectSerializers, EntityStorage> {
   val builder = MutableEntityStorage.create()
-  val virtualFileManager = VirtualFileUrlManagerImpl()
+  val virtualFileManager = ConcurrentVirtualFileUrlManager()
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
   val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(projectDir))
   val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, builder, Paths.get("/tmp"), TestErrorReporter,

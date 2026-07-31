@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.project.backend">
+<idea-plugin visibility="internal" package="com.intellij.platform.project.backend">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
@@ -8,6 +8,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->

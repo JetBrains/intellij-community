@@ -30,6 +30,7 @@ import org.jetbrains.jewel.ui.component.styling.BadgeColors
 import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.theme.badgeStyle
 
+/** Showcases the Badge component. */
 @Composable
 public fun Badges(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {

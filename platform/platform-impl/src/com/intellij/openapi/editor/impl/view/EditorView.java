@@ -114,7 +114,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myPainter = new EditorPainter(this);
     myMapper = new EditorCoordinateMapper(this);
     mySizeManager = new EditorSizeManager(this);
-    myTextLayoutCache = new TextLayoutCache(this);
+    myTextLayoutCache = new TextLayoutCache(this, new ComponentVisibilityTracker(myEditor.getContentComponent()));
     myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);

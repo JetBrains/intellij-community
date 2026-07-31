@@ -1,7 +1,8 @@
 import collections
 import types
 from collections.abc import Callable, Collection, Iterable, Mapping
-from typing import Any, NoReturn, TypeAlias
+from typing import Any, TypeAlias
+from typing_extensions import Never
 
 from yt_dlp.extractor.common import InfoExtractor
 from yt_dlp.utils._utils import function_with_repr
@@ -25,7 +26,7 @@ class JS_Throw(ExtractorError):
 
 class LocalNameSpace(collections.ChainMap[str, Any]):
     def __setitem__(self, key: str, value: Any) -> None: ...
-    def __delitem__(self, key: str) -> NoReturn: ...
+    def __delitem__(self, key: str) -> Never: ...
     def set_local(self, key: str, value: Any) -> None: ...
     def get_local(self, key: str) -> Any: ...
 

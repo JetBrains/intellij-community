@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalRange
-import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
@@ -67,6 +66,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage as CommitMessageInputField
 
 private class CommitChunkPanel(
   private val tracker: ChangelistsLocalLineStatusTracker,
+  private val rangeProvider: () -> LocalRange,
   private val amendCommitHandler: NonModalAmendCommitHandler,
 ) : NonModalCommitPanel(tracker.project) {
   override val commitProgressUi = object : CommitProgressPanel(tracker.project, this) {
@@ -206,10 +206,7 @@ private class CommitChunkPanel(
 
 
   override fun getIncludedChanges(): List<Change> {
-    val rangeStates = tracker.collectRangeStates()
-    val rangeToCommit = rangeStates.first { it.excludedFromCommit == RangeExclusionState.Included }
-    val changelistId = rangeToCommit.changelistId
-    val changeList = ChangeListManager.getInstance(project).getChangeList(changelistId)!!
+    val changeList = ChangeListManager.getInstance(project).getChangeList(rangeProvider().changelistId) ?: return emptyList()
 
     val changes = changeList.changes.filter { it.virtualFile == tracker.virtualFile }
     return changes
@@ -287,7 +284,7 @@ private class CommitChunkWorkFlowHandler(
 ) : NonModalCommitWorkflowHandler<CommitChunkWorkflow, CommitChunkPanel>() {
   override val workflow: CommitChunkWorkflow = CommitChunkWorkflow(tracker.project)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
-  override val ui: CommitChunkPanel = CommitChunkPanel(tracker, amendCommitHandler)
+  override val ui: CommitChunkPanel = CommitChunkPanel(tracker, rangeProvider, amendCommitHandler)
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
 
   private val commitMessagePolicy = ChunkCommitMessagePolicy(project, ui.commitMessageUi)
@@ -312,16 +309,14 @@ private class CommitChunkWorkFlowHandler(
   }
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
-    workflow.state = getCommitState()
+    workflow.state = getCommitState() ?: return false
     workflow.range = rangeProvider()
     return true
   }
 
-  private fun getCommitState(): ChangeListCommitState {
+  private fun getCommitState(): ChangeListCommitState? {
     val changes = getIncludedChanges()
-    val rangeStates = tracker.collectRangeStates()
-    val first = rangeStates.first { it.excludedFromCommit == RangeExclusionState.Included }
-    val changeList = ChangeListManager.getInstance(project).getChangeList(first.changelistId)!!
+    val changeList = ChangeListManager.getInstance(project).getChangeList(rangeProvider().changelistId) ?: return null
     return ChangeListCommitState(changeList, changes, ui.commitMessage.text)
   }
 
@@ -450,4 +445,3 @@ internal class CommitChunkService() {
     fun getInstance(project: Project) = project.service<CommitChunkService>()
   }
 }
-

@@ -48,6 +48,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,6 +87,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -307,7 +309,14 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           });
           XDebugSessionProxy session = getSessionProxy();
           if (session != null) {
-            InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
+            CoroutineScope scope = session.getCoroutineScope();
+            Disposable disposable = CoroutineScopeKt.asDisposable(scope);
+            InlineCompletion.INSTANCE.install(editor, scope);
+            Disposer.register(disposable, () -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                InlineCompletion.INSTANCE.remove(editor);
+              });
+            });
           }
         }
       };

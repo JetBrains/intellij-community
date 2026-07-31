@@ -155,6 +155,9 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting());
 
+    //wait for WA to be actually executed (on EDT):
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
     myFixture.getTempDirFixture().createFile(className + ".items", report);
   }
 

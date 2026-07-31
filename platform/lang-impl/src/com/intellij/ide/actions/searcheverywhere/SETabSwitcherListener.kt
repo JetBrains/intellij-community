@@ -5,6 +5,8 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere).")
 interface SETabSwitcherListener {
   fun tabSwitched(event: SETabSwitchedEvent)
 

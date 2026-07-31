@@ -10,8 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -24,12 +26,24 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
       final StringBuilder result = new StringBuilder();
 
       result.append(element.getName()).append('(');
-      StringUtil.join(parameters, parameter -> parameter.getPresentableText(true, context), ", ", result);
+      StringUtil.join(parameters, parameter -> buildParameterText(parameter, context), ", ", result);
       result.append(')');
 
       return result.toString();
     }
     return element.getName();
+  }
+
+  private static @NlsSafe String buildParameterText(@NotNull PyCallableParameter parameter, @NotNull TypeEvalContext context) {
+    // The type of the receiver (self/cls) is implicit; render it only when it was annotated explicitly.
+    if (parameter.isSelf() && !isExplicitlyAnnotated(parameter)) {
+      return parameter.getPresentableText(true, context, ignored -> true);
+    }
+    return parameter.getPresentableText(true, context);
+  }
+
+  private static boolean isExplicitlyAnnotated(@NotNull PyCallableParameter parameter) {
+    return parameter.getParameter() instanceof PyNamedParameter namedParameter && namedParameter.getAnnotationValue() != null;
   }
 
   public PyMethodMember(final PyElement element) {

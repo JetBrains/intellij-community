@@ -1,0 +1,30 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="JUnit"/>
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor"/>
+    <elementFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockElementFilter"/>
+    <inlayHintFilter implementation="com.intellij.groovy.spock.SpockTableInlayHintFilter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testFramework implementation="com.intellij.groovy.spock.SpockTestFramework" order="first"/>
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.ext.spock.SpockPomDeclarationSearcher"/>
+    <cantBeStatic implementation="org.jetbrains.plugins.groovy.ext.spock.SpockCantBeStaticExtension"/>
+    <runConfigurationExtension implementation="com.intellij.groovy.spock.SpockRunConfigurationExtension"/>
+  </extensions>
+</idea-plugin>

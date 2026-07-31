@@ -4,7 +4,7 @@ package com.intellij.ui
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface HwFacadeProvider {
   fun isAvailable(): Boolean
 

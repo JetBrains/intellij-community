@@ -744,6 +744,37 @@ class KotlinHotSwapSourceChangeCompatibilityCheckerTest : KotlinLightCodeInsight
   }
 
   @Test
+  fun `inline lambda captured variable type changed`() {
+    assertCompatible(
+      "inline lambda captured variable type changed",
+      """
+        inline fun invoke(block: () -> Int): Int = block()
+        class A { fun f(first: Int, second: String): Int = invoke { first } }
+      """.trimIndent(),
+      """
+        inline fun invoke(block: () -> Int): Int = block()
+        class A { fun f(first: Int, second: String): Int = invoke { second.length } }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `crossinline lambda captured variable added`() {
+    assertIncompatible(
+      "crossinline lambda captured variable added",
+      """
+        inline fun invoke(crossinline block: () -> Int): () -> Int = { block() }
+        class A { fun f(first: Int): () -> Int = invoke { 1 } }
+      """.trimIndent(),
+      """
+        inline fun invoke(crossinline block: () -> Int): () -> Int = { block() }
+        class A { fun f(first: Int): () -> Int = invoke { first } }
+      """.trimIndent(),
+      "Method signature was changed for method: <br/><code>A.lambda0</code>",
+    )
+  }
+
+  @Test
   fun `enum entry added`() {
     assertIncompatible(
       "enum entry added",

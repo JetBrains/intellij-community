@@ -23,7 +23,7 @@ public final class SmartRefElementPointerImpl implements SmartRefElementPointer 
   private final String myFQName;
   private final String myType;
 
-  public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
+  public SmartRefElementPointerImpl(@NotNull RefEntity ref, boolean isPersistent) {
     myIsPersistent = isPersistent;
     myRefElement = ref;
     myFQName = ref.getExternalName();
@@ -39,7 +39,7 @@ public final class SmartRefElementPointerImpl implements SmartRefElementPointer 
   }
 
 
-  public SmartRefElementPointerImpl(Element jDomElement) {
+  public SmartRefElementPointerImpl(@NotNull Element jDomElement) {
     myIsPersistent = true;
     myRefElement = null;
     myFQName = jDomElement.getAttributeValue(FQNAME_ATTR);
@@ -68,7 +68,7 @@ public final class SmartRefElementPointerImpl implements SmartRefElementPointer 
   }
 
   @Override
-  public void writeExternal(Element parentNode) {
+  public void writeExternal(@NotNull Element parentNode) {
     Element element = new Element(ENTRY_POINT);
     element.setAttribute(TYPE_ATTR, myType);
     element.setAttribute(FQNAME_ATTR, getFQName());

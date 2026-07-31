@@ -10,6 +10,7 @@ import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.EnumSet
 import kotlin.math.absoluteValue
@@ -36,7 +37,7 @@ enum class ABExperimentOption {
     require(this != UNASSIGNED) {
       "UNASSIGNED experiment option is not supposed to be used in the isEnabled() method"
     }
-    val decision = thisUserDecision
+    val decision = getCurrentUserDecision()
     if (decision.option != UNASSIGNED) {
       ABExperimentCountCollector.logABExperimentOptionUsed(decision)
     }
@@ -48,7 +49,8 @@ enum class ABExperimentOption {
  * Total number of "containers" where users are distributed. Each user belongs exactly to one bucket.
  * Each bucket has at most one experimental option enabled, which are controlled by [experimentsPartition].
  */
-internal const val NUMBER_OF_BUCKETS: Int = 1024
+@ApiStatus.Internal
+const val NUMBER_OF_BUCKETS: Int = 1024
 
 /**
  * Mapping of buckets to experiments.
@@ -56,7 +58,8 @@ internal const val NUMBER_OF_BUCKETS: Int = 1024
  * The buckets that are not assigned to any experiment are considered to be in the UNASSIGNED experiment (i.e., no experiments are enabled for them).
  */
 @VisibleForTesting
-internal val experimentsPartition: List<ExperimentAssignment> = listOf(
+@ApiStatus.Internal
+val experimentsPartition: List<ExperimentAssignment> = listOf(
   //ExperimentAssignment(
   //  experiment = KUBERNETES_SEPARATE_SERVICE_VIEW,
   //  experimentBuckets = (0 until 128).toSet(),
@@ -92,25 +95,38 @@ fun isAllowed(option: ABExperimentOption): Boolean = when (option) {
 
 // ================= IMPLEMENTATION ====================
 
-internal data class ABExperimentDecision(val option: ABExperimentOption, val isControlGroup: Boolean, val bucketNumber: Int)
+@ApiStatus.Internal
+data class ABExperimentDecision(val option: ABExperimentOption, val isControlGroup: Boolean, val bucketNumber: Int)
+
+@ApiStatus.Internal
+data class ABExperimentUserData(
+  val product: IntelliJPlatformProduct,
+  val fullVersion: String,
+  val bucketNumber: Int,
+)
 
 internal fun ABExperimentOption.reportableName(): String {
   return toString().lowercase().replace('_', '.')
 }
 
-private val thisUserDecision: ABExperimentDecision by lazy {
-  val currentBucket = getUserBucketNumber()
-  val currentVersion = ApplicationInfo.getInstance().fullVersion
-  val currentProduct = IntelliJPlatformProduct.get()
+@ApiStatus.Internal
+fun getCurrentUserDecision(): ABExperimentDecision = getExperimentDecision(getABExperimentUserData())
+
+@ApiStatus.Internal
+fun getExperimentDecision(userData: ABExperimentUserData): ABExperimentDecision {
+  val currentBucket = userData.bucketNumber
+  val currentVersion = userData.fullVersion
+  val currentProduct = userData.product
   val option = experimentsPartition.find {
     (it.majorVersion == null || currentVersion.startsWith(it.majorVersion)) &&
     (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket)) &&
     it.products.contains(currentProduct)
-  } ?: return@lazy ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
-  ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
+  } ?: return ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
+  return ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
 }
 
-internal data class ExperimentAssignment(
+@ApiStatus.Internal
+data class ExperimentAssignment(
   val experiment: ABExperimentOption,
   val experimentBuckets: Set<Int>,
   val controlBuckets: Set<Int>,
@@ -118,7 +134,30 @@ internal data class ExperimentAssignment(
   val products: Set<IntelliJPlatformProduct> = EnumSet.allOf(IntelliJPlatformProduct::class.java)
 )
 
-internal fun getUserBucketNumber(): Int {
+@Volatile
+private var userDataOverride: ABExperimentUserData? = null
+
+@ApiStatus.Internal
+fun getABExperimentUserData(): ABExperimentUserData = userDataOverride ?: getActualUserData()
+
+@ApiStatus.Internal
+fun getActualABExperimentUserData(): ABExperimentUserData = getActualUserData()
+
+@ApiStatus.Internal
+fun setABExperimentUserDataOverride(userData: ABExperimentUserData?) {
+  require(userData == null || userData.bucketNumber in 0 until NUMBER_OF_BUCKETS) {
+    "Bucket number must be in [0, $NUMBER_OF_BUCKETS)"
+  }
+  userDataOverride = userData
+}
+
+private fun getActualUserData(): ABExperimentUserData = ABExperimentUserData(
+  product = IntelliJPlatformProduct.get(),
+  fullVersion = ApplicationInfo.getInstance().fullVersion,
+  bucketNumber = getActualUserBucketNumber(),
+)
+
+private fun getActualUserBucketNumber(): Int {
   val overridingBucket = Integer.getInteger("ide.ab.test.overriding.bucket")
   if (overridingBucket != null) {
     LOG.info("Overriding bucket number: $overridingBucket")
@@ -142,7 +181,8 @@ private val LOG = logger<ABExperimentOption>()
 /**
  * There is no need to list all available products. Add if a product-specific experiment is needed.
  */
-internal enum class IntelliJPlatformProduct {
+@ApiStatus.Internal
+enum class IntelliJPlatformProduct {
   WEBSTORM,
   IDEA,
   PYCHARM,
@@ -158,6 +198,7 @@ internal enum class IntelliJPlatformProduct {
         PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() -> IDEA
         PlatformUtils.isPyCharm() -> PYCHARM
         PlatformUtils.isRider() -> RIDER
+        PlatformUtils.isCLion() -> CLION
         else -> OTHER
       }
   }

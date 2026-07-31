@@ -6,15 +6,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isImplicitInvokeCall
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -88,7 +87,6 @@ internal class OperatorToFunctionIntention :
         else parentIsUsedAsExpression(parent)
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun parentIsUsedAsExpression(element: PsiElement): Boolean =
         when (val parent = element.parent) {
@@ -118,12 +116,8 @@ internal class OperatorToFunctionIntention :
     }
 
     context(_: KaSession)
-    private fun isApplicableCall(element: KtCallExpression): Boolean {
-        if (element.isImplicitInvokeCall() == true) {
-            return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
-        }
-        return false
-    }
+    private fun isApplicableCall(element: KtCallExpression): Boolean =
+        element.isImplicitInvokeCall() && (element.valueArgumentList != null || element.lambdaArguments.isNotEmpty())
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
 

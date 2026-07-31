@@ -55,7 +55,7 @@ internal class CoroutineContextWithJobInspection : KotlinApplicableInspectionBas
 
         val matchedBuilderInfo = SUPPORTED_BUILDERS.find { it.callableId == functionCall.symbol.callableId } ?: return null
 
-        val (coroutineContextArgument, _) = functionCall.argumentMapping.entries
+        val (coroutineContextArgument, _) = functionCall.valueArgumentMapping.entries
             .find { (_, paramSymbol) -> paramSymbol.returnType.isSubtypeOf(CoroutinesIds.Stdlib.CoroutineContext.ID) }
             ?: return null
 

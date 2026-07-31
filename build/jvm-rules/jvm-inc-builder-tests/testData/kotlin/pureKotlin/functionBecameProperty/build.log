@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  C.class
+  META-INF/kotlin_pureKotlin_functionBecameProperty-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionBecameProperty/a/c.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_functionBecameProperty-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionBecameProperty/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.util.FileName
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -21,8 +21,7 @@ import java.nio.file.Path
 val Module.baseDir: VirtualFile?
   get() {
     val entity = findModuleEntity() ?: return null
-    val vfsMan = VirtualFileManager.getInstance()
-    val roots = entity.contentRoots.asSequence().mapNotNull { vfsMan.findFileByUrl(it.url.url) }
+    val roots = entity.contentRoots.asSequence().mapNotNull { it.url.virtualFile }
     val moduleFile = moduleFile ?: return roots.firstOrNull()
     return roots.firstOrNull { VfsUtil.isAncestor(it, moduleFile, true) } ?: roots.firstOrNull()
   }

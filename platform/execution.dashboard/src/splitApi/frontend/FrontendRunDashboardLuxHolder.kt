@@ -10,6 +10,7 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardLuxedConte
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,13 +32,15 @@ internal class FrontendRunDashboardLuxHolder(val project: Project, val coroutine
   }
 
   internal suspend fun subscribeToRunToolwindowUpdates() {
-    RunDashboardServiceRpc.getInstance().getLuxedContentEvents(project.projectId()).collect { luxedContent ->
-      withContext(Dispatchers.EDT) {
-        if (luxedContent.isAdded) {
-          registerLuxContent(luxedContent)
-        }
-        else {
-          unregisterLuxContent(luxedContent)
+    durable {
+      RunDashboardServiceRpc.getInstance().getLuxedContentEvents(project.projectId()).collect { luxedContent ->
+        withContext(Dispatchers.EDT) {
+          if (luxedContent.isAdded) {
+            registerLuxContent(luxedContent)
+          }
+          else {
+            unregisterLuxContent(luxedContent)
+          }
         }
       }
     }

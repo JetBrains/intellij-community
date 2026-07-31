@@ -1,12 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.PatchBaseAnnotationInfo;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.ThreesideMergeRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
@@ -160,6 +165,23 @@ public final class ApplyPatchUtil {
         else {
           request = PatchDiffRequestFactory
             .createMergeRequest(project, document, file, baseContent, localContent, patchedContent, callback);
+        }
+
+        // Enable VCS annotations (Git Blame) on the two non-result sides:
+        // - the local/current side corresponds to the working-tree file;
+        // - the patched side is the base revision with the patch applied, so it is annotated against the base revision.
+        if (request instanceof ThreesideMergeRequest threesideMergeRequest) {
+          List<? extends DiffContent> mergeContents = threesideMergeRequest.getContents();
+          ThreeSide localSide = reverse ? ThreeSide.RIGHT : ThreeSide.LEFT;
+          ThreeSide patchedSide = reverse ? ThreeSide.LEFT : ThreeSide.RIGHT;
+
+          localSide.select(mergeContents).putUserData(DiffVcsDataKeys.LOCAL_FILE, file);
+
+          String baseVersionId = patch.getPatch().getBeforeVersionId();
+          if (baseVersionId != null) {
+            PatchBaseAnnotationInfo baseInfo = new PatchBaseAnnotationInfo(VcsUtil.getFilePath(file), baseVersionId, baseContent);
+            patchedSide.select(mergeContents).putUserData(DiffVcsDataKeys.PATCH_BASE_INFO, baseInfo);
+          }
         }
       }
       else {

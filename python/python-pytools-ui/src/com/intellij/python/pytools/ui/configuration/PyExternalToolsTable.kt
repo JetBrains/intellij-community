@@ -317,8 +317,10 @@ internal class PyExternalToolsTable(
         val overEditIcon = pathEffective >= 0 && isOverPathEditIcon(e, pathEffective)
         // The whole on/off toggle cell is clickable — clicking anywhere in [COL_ENABLED]
         // starts the cell editor which flips the switch. Show the hand cursor over the whole
-        // cell so the affordance matches the click behaviour.
-        val overToggle = viewCol == COL_ENABLED && viewRow >= 0
+        // cell so the affordance matches the click behaviour. A type-engine-locked row has no
+        // toggle (it renders a dash), so keep the default cursor there.
+        val overToggle = viewCol == COL_ENABLED && viewRow >= 0 &&
+                         !rows[viewRow].tool.isSelectedAsTypeEngine(project)
         val desired = if (overGear || overActionableIcon || overEditIcon || overToggle) {
           Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         }
@@ -611,12 +613,15 @@ internal class PyExternalToolsTable(
 
   // ---------- Column definitions (inner classes so they reach the outer renderers + probe) ----------
 
-  private class EnabledColumn : ColumnInfo<ToolRow, Boolean>(" ") {
-    private val cellRenderer = OnOffCellRenderer()
+  private inner class EnabledColumn : ColumnInfo<ToolRow, Boolean>(" ") {
+    private val cellRenderer = OnOffCellRenderer(project)
     private val cellEditor = OnOffCellEditor()
 
     override fun valueOf(item: ToolRow): Boolean = item.staged.enabled
-    override fun isCellEditable(item: ToolRow?): Boolean = true
+
+    // A tool that is the selected type engine is governed by the Type Engine settings, not here:
+    // its toggle is locked (rendered as a dash) and can't be flipped as a standalone tool.
+    override fun isCellEditable(item: ToolRow?): Boolean = item != null && !item.tool.isSelectedAsTypeEngine(project)
     override fun setValue(item: ToolRow, value: Boolean) {
       item.staged = item.staged.copy(enabled = value)
     }

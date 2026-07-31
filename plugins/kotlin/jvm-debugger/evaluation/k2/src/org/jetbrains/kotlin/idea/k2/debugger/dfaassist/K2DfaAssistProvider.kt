@@ -30,28 +30,35 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
-import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
-import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
-import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtBaseDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtLambdaThisVariableDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtThisDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtVariableDescriptor
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
+import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
+import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
@@ -72,7 +79,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.IdentityHashMap
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
-private class K2DfaAssistProvider : DfaAssistProvider {
+internal class K2DfaAssistProvider : DfaAssistProvider {
     override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
         val jdiClassName = location.method().declaringType().name()
         return readAction {
@@ -284,7 +291,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                 if (call != null) {
                     val inline = analyze(call) {
                         val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
-                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
+                        (functionCall?.symbol as? KaNamedFunctionSymbol)?.isInline == true
                     }
                     if (inline) {
                         current = call

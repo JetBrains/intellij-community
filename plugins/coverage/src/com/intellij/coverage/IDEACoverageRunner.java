@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.util.CoverageReport;
@@ -30,6 +32,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
@@ -37,10 +40,35 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
   public static final String INNER_CLASS_REGEX = "(\\$.*)*";
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
+
+  @Override
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
+    final ProjectData projectData = new ProjectData();
+    try {
+      PackageAnnotator annotator = new PackageAnnotator(suite, suite.getProject(), projectData);
+      ClassData classData = annotator.collectNonCoveredClassInfo(classFile, projectData);
+      if (classData == null || classData.getLines() == null) return List.of();
+
+      List<Integer> uncoveredLines = new ArrayList<>();
+      for (Object line : classData.getLines()) {
+        if (line instanceof LineData lineData) {
+          uncoveredLines.add(lineData.getLineNumber() - 1);
+        }
+      }
+      return uncoveredLines;
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      LOG.error("Fail to process class from: " + classFile, e);
+      return List.of();
+    }
+  }
 
   @Override
   public @NotNull CoverageLoadingResult loadCoverageData(

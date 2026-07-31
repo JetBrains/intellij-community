@@ -307,9 +307,8 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!(data instanceof PythonSdkAdditionalData)) {
       return "";
     }
-    Path requiredTxtPath = ((PythonSdkAdditionalData)data).getRequiredTxtPath();
-    final String path = requiredTxtPath != null ? requiredTxtPath.toString() : "";
-    return path;
+    Path requirementsPath = ((PythonSdkAdditionalData)data).getRequirementsPath();
+    return requirementsPath != null ? requirementsPath.toString() : "";
   }
 
   private void setRequirementsPath(String requirementsPath) throws ConfigurationException {
@@ -322,7 +321,8 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return;
     }
     try {
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, Path.of(requirementsPath));
+      Path path = requirementsPath.isBlank() ? null : Path.of(requirementsPath);
+      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, path);
     }
     catch (InvalidPathException e) {
       throw new ConfigurationException(PyBundle.message("form.integrated.tools.package.requirements.file.invalid.path", e.getMessage()));

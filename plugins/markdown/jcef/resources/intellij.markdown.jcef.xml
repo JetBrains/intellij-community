@@ -4,6 +4,8 @@
     <plugin id="com.intellij.modules.jcef"/>
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.markdown"/>
+    <module name="intellij.markdown.frontend"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ui.jcef"/>
   </dependencies>
   <!-- endregion -->
@@ -11,6 +13,7 @@
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider"/>
     <browserPreviewExtensionProvider implementation="com.intellij.markdown.jcef.extensions.ProcessLinksExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="com.intellij.markdown.jcef.extensions.ScrollbarsStyleExtension$Provider"/>
 
     <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownPdfExportProvider"/>
     <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportProvider"/>

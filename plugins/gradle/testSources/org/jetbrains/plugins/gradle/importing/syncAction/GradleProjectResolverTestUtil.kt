@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
-import java.util.concurrent.CopyOnWriteArrayList
 
 fun whenSyncPhaseCompleted(
   parentDisposable: Disposable,
@@ -128,21 +128,38 @@ abstract class AbstractTestProjectResolverExtension : AbstractProjectResolverExt
   override fun getModelProviders(): List<ProjectImportModelProvider> {
     return getService().getModelProviders()
   }
+
+  override fun getToolingExtensionsClasses(): Set<Class<*>> {
+    return getService().getToolingExtensionsClasses()
+  }
 }
 
 abstract class AbstractTestProjectResolverService {
 
-  private val modelProviders = CopyOnWriteArrayList<ProjectImportModelProvider>()
+  private val modelProviders = ArrayList<ProjectImportModelProvider>()
+  private val toolingExtensionClasses = LinkedHashSet<Class<*>>()
 
   fun getModelProviders(): List<ProjectImportModelProvider> {
     return modelProviders
   }
 
+  fun getToolingExtensionsClasses(): Set<Class<*>> {
+    return toolingExtensionClasses
+  }
+
+  fun addProjectModelClass(modelClass: Class<*>) {
+    modelProviders.add(GradleClassProjectModelProvider(modelClass))
+  }
+
   fun addModelProviders(vararg modelProviders: ProjectImportModelProvider) {
-    addModelProviders(modelProviders.toList())
+    this.modelProviders.addAll(modelProviders)
   }
 
   fun addModelProviders(modelProviders: Collection<ProjectImportModelProvider>) {
     this.modelProviders.addAll(modelProviders)
+  }
+
+  fun addToolingExtensionClass(toolingExtensionClass: Class<*>) {
+    toolingExtensionClasses.add(toolingExtensionClass)
   }
 }

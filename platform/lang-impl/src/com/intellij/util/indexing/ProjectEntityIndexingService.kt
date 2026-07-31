@@ -21,9 +21,9 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-import com.intellij.util.indexing.roots.processLibrary
 import com.intellij.util.indexing.roots.processModuleRoot
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.util.indexing.roots.processLibrary
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind

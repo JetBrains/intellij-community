@@ -18,6 +18,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
     val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
+    val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
 
     var typeMetadata: StorageTypeMetadata
 
@@ -123,6 +124,22 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                             "com.intellij.devkit.workspaceModel.jsonDump.AbstractClass"))),
                                                                                                                       supertypes = listOf()))),
                                                                                                                           primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "stringList",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            primitiveTypeStringNotNullable),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "stringSet",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            primitiveTypeStringNotNullable),
+                                                                                                                          primitive = primitiveTypeSetNotNullable),
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = true,
                                                                           isKey = false,
@@ -267,7 +284,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.devkit.workspaceModel.jsonDump.BaseTestEntity", metadataHash = 1978440464)
+    addMetadataHash(typeFqn = "com.intellij.devkit.workspaceModel.jsonDump.BaseTestEntity", metadataHash = 1539583166)
     addMetadataHash(typeFqn = "com.intellij.devkit.workspaceModel.jsonDump.ChildEntity", metadataHash = 1942527778)
     addMetadataHash(typeFqn = "com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity", metadataHash = -1045264058)
     addMetadataHash(typeFqn = "com.intellij.devkit.workspaceModel.jsonDump.SingleChild", metadataHash = 1237266012)

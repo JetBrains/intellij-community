@@ -1,11 +1,19 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.LombokKotlinBundle</resource-bundle>
 
@@ -20,6 +28,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectPostConfigurator
             id="LombokCompilerPluginPostConfigurator"
+            order="after SpringCompilerPluginPostConfigurator"
             implementation="org.jetbrains.kotlin.idea.lombok.configuration.LombokCompilerPluginProjectPostConfigurator"/>
   </extensions>
 </idea-plugin>

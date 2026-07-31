@@ -11,6 +11,10 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
 
+/**
+ * A [Modifier.Node] that collects data from all [DataProviderNode] descendants with focus and exposes it to the
+ * IntelliJ Platform via [UiDataProvider.uiDataSnapshot].
+ */
 @VisibleForTesting
 @ApiStatus.Internal
 @InternalJewelApi

@@ -52,7 +52,7 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//libraries/jbr",
-        "@lib//:jna",
+        "//libraries/jna",
     ],
 )
 
@@ -76,6 +76,7 @@ jvm_library(
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//libraries/jbr:jbr_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.ListVFUEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity
@@ -31,7 +32,7 @@ class VirtualFileIndexTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = ConcurrentVirtualFileUrlManager()
   }
 
   @Test
@@ -196,6 +197,7 @@ class VirtualFileIndexTest {
   fun `check case sensitivity`() {
     assumeFalse(SystemInfo.isFileSystemCaseSensitive)
     Registry.get("ide.new.project.model.index.case.sensitivity").setValue(true)
+    // Case-insensitive URL deduplication is only implemented by VirtualFileUrlManagerImpl (see IJPL-245353).
     virtualFileManager = VirtualFileUrlManagerImpl()
 
     val fileUrlA = "/user/opt/app/a.txt"

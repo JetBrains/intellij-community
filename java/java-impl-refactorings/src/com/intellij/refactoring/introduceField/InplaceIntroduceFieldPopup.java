@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.application.WriteAction;
@@ -37,9 +37,7 @@ import java.awt.event.ItemListener;
 public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final boolean myStatic;
-
   private final IntroduceFieldPopupPanel myIntroduceFieldPanel;
-
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -48,9 +46,10 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     PsiExpression initializerExpression,
                                     TypeSelectorManagerImpl typeSelectorManager,
                                     Editor editor,
-                                    final boolean allowInitInMethod,
-                                    boolean allowInitInMethodIfAll, final PsiElement anchorElement,
-                                    final PsiElement anchorElementIfAll,
+                                    boolean allowInitInMethod,
+                                    boolean allowInitInMethodIfAll,
+                                    PsiElement anchorElement,
+                                    PsiElement anchorElementIfAll,
                                     Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
           IntroduceFieldHelper.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
@@ -63,10 +62,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              JBInsets.emptyInsets(), 0, 0);
     myWholePanel.add(getPreviewComponent(), constraints);
-
-    final JComponent centerPanel = myIntroduceFieldPanel.createCenterPanel();
-
-    myWholePanel.add(centerPanel, constraints);
+    myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), constraints);
 
     myIntroduceFieldPanel.initializeControls(initializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);
   }
@@ -80,8 +76,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   }
 
   @Override
-  protected PsiField createFieldToStartTemplateOn(final String[] names,
-                                                  final PsiType defaultType) {
+  protected PsiField createFieldToStartTemplateOn(String[] names, PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     final PsiField field = WriteAction.compute(() -> DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
       PsiField field1 = elementFactory.createField(chooseName(names, getParentClass().getLanguage()), defaultType);
@@ -123,7 +118,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   protected void updateTitle(@Nullable PsiVariable variable, String value) {
     if (variable == null || !variable.hasInitializer()) {
       super.updateTitle(variable, value);
-    } else {
+    }
+    else {
 
       final PsiExpression initializer = variable.getInitializer();
       assert initializer != null;
@@ -136,7 +132,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected void updateTitle(@Nullable PsiVariable variable) {
-    if (variable != null){
+    if (variable != null) {
       updateTitle(variable, variable.getName());
     }
   }
@@ -146,18 +142,17 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return "refactoring.extractField";
   }
 
+  @Override
+  public boolean isReplaceAllOccurrences() {
+    return myIntroduceFieldPanel.isReplaceAllOccurrences();
+  }
 
   @Override
-    public boolean isReplaceAllOccurrences() {
-      return myIntroduceFieldPanel.isReplaceAllOccurrences();
-    }
-
-    @Override
-    protected void saveSettings(@NotNull PsiVariable psiVariable) {
-      super.saveSettings(psiVariable);
-      JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = myIntroduceFieldPanel.getFieldVisibility();
-      myIntroduceFieldPanel.saveFinalState();
-    }
+  protected void saveSettings(@NotNull PsiVariable psiVariable) {
+    super.saveSettings(psiVariable);
+    JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = myIntroduceFieldPanel.getFieldVisibility();
+    myIntroduceFieldPanel.saveFinalState();
+  }
 
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
@@ -165,18 +160,18 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   }
 
   @Override
-    protected JComponent getComponent() {
-      myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          WriteIntentReadAction.run(() -> {
-            restartInplaceIntroduceTemplate();
-          });
-        }
-      });
+  protected JComponent getComponent() {
+    myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        WriteIntentReadAction.run(() -> {
+          restartInplaceIntroduceTemplate();
+        });
+      }
+    });
 
-      return myWholePanel;
-    }
+    return myWholePanel;
+  }
 
   private void updateInitializer(PsiElementFactory elementFactory, PsiField variable) {
     if (variable != null) {
@@ -194,25 +189,25 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   }
 
   public JavaIntroduceFieldService.InitializationPlace getInitializerPlace() {
-      return myIntroduceFieldPanel.getInitializerPlace();
-    }
+    return myIntroduceFieldPanel.getInitializerPlace();
+  }
 
-    @Override
-    protected void performIntroduce() {
-      IntroduceFieldDialog.ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
-      final PsiType forcedType = getType();
-      LOG.assertTrue(forcedType == null || forcedType.isValid(), forcedType);
-      final BaseExpressionToFieldHandler.Settings settings =
-        new BaseExpressionToFieldHandler.Settings(getInputName(),
-                                                  getExpr(),
-                                                  getOccurrences(),
-                                                  myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
-                                                  myIntroduceFieldPanel.isDeclareFinal(),
-                                                  myIntroduceFieldPanel.getInitializerPlace(),
-                                                  myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),
-                                                  forcedType,
-                                                  myIntroduceFieldPanel.isDeleteVariable(),
-                                                  getParentClass(), false, false);
-      performIntroduce(settings);
-    }
+  @Override
+  protected void performIntroduce() {
+    IntroduceFieldDialog.ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
+    final PsiType forcedType = getType();
+    LOG.assertTrue(forcedType == null || forcedType.isValid(), forcedType);
+    final BaseExpressionToFieldHandler.Settings settings =
+      new BaseExpressionToFieldHandler.Settings(getInputName(),
+                                                getExpr(),
+                                                getOccurrences(),
+                                                myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
+                                                myIntroduceFieldPanel.isDeclareFinal(),
+                                                myIntroduceFieldPanel.getInitializerPlace(),
+                                                myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),
+                                                forcedType,
+                                                myIntroduceFieldPanel.isDeleteVariable(),
+                                                getParentClass(), false, false);
+    performIntroduce(settings);
+  }
 }

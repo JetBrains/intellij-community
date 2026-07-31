@@ -133,7 +133,7 @@ private fun validateContentModulePluginDependencies(
       val moduleName = plan.contentModuleName
 
       val writtenPluginDeps = plan.writtenPluginDependencies.toHashSet()
-      val allJpsPluginDeps = plan.allJpsPluginDependencies
+      val requiredPluginDeps = plan.requiredPluginDependencies
 
       val isDslDeclaredModule = moduleName in dslDeclaredModules
       val allowedForModule = if (isDslDeclaredModule) {
@@ -147,7 +147,9 @@ private fun validateContentModulePluginDependencies(
       // (including --update-suppressions auto-capture) and must not fail validation.
       val plannerSuppressedForModule = plan.suppressedPlugins
 
-      val candidateMissing = allJpsPluginDeps - writtenPluginDeps - allowedForModule - plannerSuppressedForModule
+      val candidateMissing = requiredPluginDeps.filterNotTo(LinkedHashSet()) {
+        it in writtenPluginDeps || it in allowedForModule || it in plannerSuppressedForModule
+      }
       if (candidateMissing.isEmpty()) {
         continue
       }

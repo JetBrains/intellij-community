@@ -1,0 +1,11 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.frontend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <actions resource-bundle="messages.DevkitExperimentBundle">
+    <action id="ABExperiment.Demo" class="com.intellij.devkit.experiments.ABExperimentDemoAction" internal="true"/>
+  </actions>
+</idea-plugin>

@@ -7,9 +7,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines [GroupHeaderColors] and [GroupHeaderMetrics] to style the GroupHeader component. */
 @Immutable
 @GenerateDataFunctions
-public class GroupHeaderStyle(public val colors: GroupHeaderColors, public val metrics: GroupHeaderMetrics) {
+public class GroupHeaderStyle(
+    /** The color tokens for the GroupHeader component. */
+    public val colors: GroupHeaderColors,
+    /** The size and spacing metrics for the GroupHeader component. */
+    public val metrics: GroupHeaderMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -30,12 +36,17 @@ public class GroupHeaderStyle(public val colors: GroupHeaderColors, public val m
 
     override fun toString(): String = "GroupHeaderStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [GroupHeaderStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the GroupHeader component, including the divider color. */
 @Immutable
 @GenerateDataFunctions
-public class GroupHeaderColors(public val divider: Color) {
+public class GroupHeaderColors(
+    /** The color of the divider line. */
+    public val divider: Color
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -49,12 +60,19 @@ public class GroupHeaderColors(public val divider: Color) {
 
     override fun toString(): String = "GroupHeaderColors(divider=$divider)"
 
+    /** Companion object for [GroupHeaderColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the GroupHeader component, such as divider thickness and indent. */
 @Immutable
 @GenerateDataFunctions
-public class GroupHeaderMetrics(public val dividerThickness: Dp, public val indent: Dp) {
+public class GroupHeaderMetrics(
+    /** The thickness of the divider line. */
+    public val dividerThickness: Dp,
+    /** The horizontal indent of the header content. */
+    public val indent: Dp,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -75,9 +93,11 @@ public class GroupHeaderMetrics(public val dividerThickness: Dp, public val inde
 
     override fun toString(): String = "GroupHeaderMetrics(dividerThickness=$dividerThickness, indent=$indent)"
 
+    /** Companion object for [GroupHeaderMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [GroupHeaderStyle]. */
 public val LocalGroupHeaderStyle: ProvidableCompositionLocal<GroupHeaderStyle> = staticCompositionLocalOf {
     error("No GroupHeaderStyle provided. Have you forgotten the theme?")
 }

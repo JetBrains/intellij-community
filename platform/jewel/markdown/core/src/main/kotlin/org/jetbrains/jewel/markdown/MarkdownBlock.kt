@@ -5,9 +5,11 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.code.MimeType
 
+/** Represents a block-level element in a parsed Markdown document. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface MarkdownBlock {
+    /** A block quote containing one or more nested [MarkdownBlock] children. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -28,11 +30,14 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "BlockQuote(children=$children)"
     }
 
+    /** A block-level code element containing raw source [content]. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public sealed interface CodeBlock : MarkdownBlock {
+        /** The raw source content of the code block. */
         public val content: String
 
+        /** A code block delimited by four spaces or a tab of indentation, holding the raw [content]. */
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
@@ -51,6 +56,10 @@ public sealed interface MarkdownBlock {
             override fun toString(): String = "IndentedCodeBlock(content='$content')"
         }
 
+        /**
+         * A code block delimited by backtick or tilde fences, holding the raw [content] and an optional [language]
+         * identifier.
+         */
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
@@ -91,8 +100,10 @@ public sealed interface MarkdownBlock {
         }
     }
 
+    /** A custom extension block that is not part of the standard Markdown specification. */
     @ApiStatus.Experimental @ExperimentalJewelApi public interface CustomBlock : MarkdownBlock
 
+    /** A heading at the given [level] (1–6) with inline [inlineContent]. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -121,6 +132,7 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "Heading(inlineContent=$inlineContent, level=$level)"
     }
 
+    /** A raw HTML block, with [content] holding the literal HTML source as written in the Markdown. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -139,12 +151,16 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "HtmlBlock(content='$content')"
     }
 
+    /** A list block containing [ListItem] children, either ordered or unordered. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public sealed interface ListBlock : MarkdownBlock, WithChildBlocks {
+        /** The list items contained in this list. */
         override val children: List<ListItem>
+        /** Whether the list is tight (no blank lines between items). */
         public val isTight: Boolean
 
+        /** An ordered (numbered) list, starting from [startFrom] and using [delimiter] after each number. */
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
@@ -193,6 +209,7 @@ public sealed interface MarkdownBlock {
             }
         }
 
+        /** An unordered (bulleted) list whose items are preceded by [marker]. */
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
@@ -231,6 +248,7 @@ public sealed interface MarkdownBlock {
         }
     }
 
+    /** A single item within a [ListBlock], containing nested [children] blocks at the given nesting [level]. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -261,8 +279,10 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "ListItem(children=$children, level=$level)"
     }
 
+    /** A thematic break (horizontal rule) used to separate sections of content. */
     @ApiStatus.Experimental @ExperimentalJewelApi public data object ThematicBreak : MarkdownBlock
 
+    /** A paragraph of inline content. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -283,13 +303,16 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "Paragraph(inlineContent=$inlineContent)"
     }
 
+    /** A [MarkdownBlock] decorated with additional HTML [attributes] parsed from an attribute block. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class HtmlBlockWithAttributes(
+        /** The wrapped [MarkdownBlock] content that the HTML [attributes] apply to. */
         public val mdBlock: MarkdownBlock,
         public val attributes: Map<String, String>,
     ) : MarkdownBlock, WithChildBlocks {
+        /** The wrapped [mdBlock] as a single-element list. */
         override val children: List<MarkdownBlock>
             get() = listOf(mdBlock)
 

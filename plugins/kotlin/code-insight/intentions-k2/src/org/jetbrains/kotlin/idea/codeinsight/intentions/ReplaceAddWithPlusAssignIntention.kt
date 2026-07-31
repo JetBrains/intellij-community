@@ -31,15 +31,14 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
         return Presentation.of(KotlinBundle.message("replace.0.with", calleeName))
     }
 
-    override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
-        if (element.callExpression?.valueArguments?.size != 1) return false
-        return element.calleeName in setOf("add", "addAll")
-    }
+    override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
+        element.callExpression?.valueArguments?.size == 1 && element.calleeName in setOf("add", "addAll")
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+        if (element.isUsedAsExpression) return null
+
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-        val receiver = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver ?: return null
+        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
         val receiverType = receiver.type as? KaClassType ?: return null
 
         if (!receiverType.isSubtypeOf(StandardClassIds.MutableCollection)) return null

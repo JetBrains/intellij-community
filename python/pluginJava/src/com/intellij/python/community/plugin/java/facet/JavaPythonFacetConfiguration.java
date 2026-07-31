@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.facet;
 
 import com.intellij.facet.FacetConfiguration;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 
 @ApiStatus.Internal
-public class JavaPythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
+final class JavaPythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
   private static final String SDK_NAME = "sdkName";
 
   @Override

@@ -41,6 +41,9 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.internal"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
@@ -50,6 +53,7 @@
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>
     <module name="intellij.terminal.sh"/>
+    <module name="intellij.terminal.agentsProvider"/>
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>

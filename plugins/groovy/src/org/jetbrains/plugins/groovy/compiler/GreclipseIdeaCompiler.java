@@ -32,7 +32,7 @@ public final class GreclipseIdeaCompiler implements BackendCompiler {
 
   @Override
   public @NotNull Configurable createConfigurable() {
-    return new GreclipseConfigurable(GreclipseIdeaCompilerSettings.getSettings(myProject));
+    return new GreclipseConfigurable(myProject, GreclipseIdeaCompilerSettings.getSettings(myProject));
   }
 
   @Override

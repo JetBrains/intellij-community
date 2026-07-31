@@ -3,7 +3,7 @@ source.shell;meta.function.shell: [8, 9], { }
 source.shell;meta.function.shell;entity.name.function.shell: [9, 19], {show_usage}
 source.shell;meta.function.shell: [19, 20], { }
 source.shell;meta.function.shell;meta.function.body.shell;punctuation.definition.group.shell;punctuation.section.function.definition.shell: [20, 21], {{}
-source.shell;meta.function.shell;meta.function.body.shell: [21, 22], {
+source.shell;meta.function.shell;meta.function.body.shell;meta.statement.shell: [21, 22], {
 }
 source.shell;meta.function.shell;meta.function.body.shell;meta.statement.shell;meta.statement.command.shell;meta.statement.command.name.shell;meta.statement.command.name.quoted.shell;string.quoted.double.shell;punctuation.definition.string.begin.shell;entity.name.function.call.shell;entity.name.command.shell: [22, 23], {"}
 source.shell;meta.function.shell;meta.function.body.shell;meta.statement.shell;meta.statement.command.shell;meta.statement.command.name.shell;meta.statement.command.name.continuation;string.quoted.double;entity.name.function.call;entity.name.command: [23, 27], {test}

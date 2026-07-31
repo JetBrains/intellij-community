@@ -15,7 +15,7 @@ import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeScopeById
 import com.intellij.platform.searchEverywhere.providers.SeScopeByIdFiles
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
@@ -81,7 +81,7 @@ class SeFuzzyFileSearchProvider(
     val query = params.inputQuery.trim()
     if (query.isBlank()) return@coroutineScope
 
-    val (scopeDescriptor, hiddenTypes) = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+    val (scopeDescriptor, hiddenTypes) = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
       scopeById.getValue()[isEverywhere] to null
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)

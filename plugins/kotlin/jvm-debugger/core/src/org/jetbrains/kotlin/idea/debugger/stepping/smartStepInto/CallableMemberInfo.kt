@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
@@ -26,7 +27,8 @@ data class CallableMemberInfo(
     val isEqualsNullCall: Boolean,
 )
 
-internal fun KaSession.CallableMemberInfo(
+context(session: KaSession)
+internal fun CallableMemberInfo(
     symbol: KaFunctionSymbol,
     ordinal: Int = 0,
     isEqualsNullCall: Boolean = false,
@@ -54,11 +56,13 @@ internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymb
 internal fun KaFunctionSymbol.isInvoke(): Boolean = this is KaNamedFunctionSymbol && this.isBuiltinFunctionInvoke
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.containsInlineClassInParameters(symbol: KaFunctionSymbol): Boolean =
+context(session: KaSession)
+internal fun containsInlineClassInParameters(symbol: KaFunctionSymbol): Boolean =
     symbol.valueParameters.any { isInlineClass(it.returnType.expandedSymbol) }
             || isInlineClass(symbol.receiverParameter?.returnType?.expandedSymbol)
             || symbol.contextReceivers.any { isInlineClass(it.type.expandedSymbol) }
 
-internal fun KaSession.isInsideInlineClass(symbol: KaFunctionSymbol): Boolean =
+context(session: KaSession)
+internal fun isInsideInlineClass(symbol: KaFunctionSymbol): Boolean =
     isInlineClass(getContainingClassOrObjectSymbol(symbol))
 

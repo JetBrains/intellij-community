@@ -12,20 +12,28 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.fullyExpandedType
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.sealedClassInheritors
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.JvmStandardClassIds.SYNCHRONIZED_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeEntry
@@ -33,7 +41,6 @@ import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class ConvertSealedClassToSealedInterfaceInspection : AbstractKotlinInspection() {
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : KtVisitorVoid() {
             override fun visitClass(klass: KtClass) {
@@ -52,28 +59,15 @@ internal class ConvertSealedClassToSealedInterfaceInspection : AbstractKotlinIns
     private fun isApplicable(klass: KtClass): Boolean {
         if (!klass.isSealed()) return false
         if (klass.isInterface()) return false
-        klass.primaryConstructor?.let {
-            if (it.valueParameters.isNotEmpty()) return false
-            if (it.annotationEntries.isNotEmpty()) return false
-        }
-        if (klass.secondaryConstructors.isNotEmpty()) return false
+        if (klass.hasConstructorIllegalInInterface()) return false
         val body = klass.body
         body?.let {
-            if (it.properties.any { prop ->
-                    prop.hasModifier(KtTokens.FINAL_KEYWORD) || prop.hasModifier(KtTokens.LATEINIT_KEYWORD) ||
-                    prop.initializer != null || (!prop.isAbstract() && prop.getter == null) }) return false
+            if (it.hasPropertyIllegalInInterface()) return false
             if (it.anonymousInitializers.isNotEmpty()) return false
-            if (it.declarations.filterIsInstance<KtNamedFunction>()
-                    .any { function -> function.hasModifier(KtTokens.FINAL_KEYWORD) }
-            ) return false
+            if (it.hasFinalFunction()) return false
+            if (it.hasFunctionWithSynchronized()) return false
         }
-        for (entry in klass.superTypeListEntries) {
-            if (entry is KtSuperTypeCallEntry) return false
-            if (entry is KtDelegatedSuperTypeEntry) return false
-        }
-        if (klass.superTypeListEntries.any {
-                it is KtSuperTypeCallEntry || it is KtDelegatedSuperTypeEntry
-            }) return false
+        if (klass.hasIllegalSuperType()) return false
         if (klass.findSealedInheritors().any { it.element == null }) return false
         return true
     }
@@ -97,6 +91,38 @@ internal class ConvertSealedClassToSealedInterfaceInspection : AbstractKotlinIns
         }
     }
 }
+
+private fun KtClassBody.hasFinalFunction(): Boolean =
+    declarations.filterIsInstance<KtNamedFunction>()
+        .any { function -> function.hasModifier(KtTokens.FINAL_KEYWORD) }
+
+private fun KtClassBody.hasPropertyIllegalInInterface(): Boolean =
+    properties.any { prop ->
+        prop.hasModifier(KtTokens.FINAL_KEYWORD) || prop.hasModifier(KtTokens.LATEINIT_KEYWORD) ||
+                prop.initializer != null || (!prop.isAbstract() && prop.getter == null)
+    }
+
+private fun KtClassBody.hasFunctionWithSynchronized(): Boolean =
+    analyze(this) {
+        declarations.filterIsInstance<KtNamedFunction>().any { function ->
+            function.annotationEntries.any { entry ->
+                entry.typeReference?.type?.fullyExpandedType?.classId == SYNCHRONIZED_ANNOTATION_CLASS_ID
+            }
+        }
+    }
+
+private fun KtClass.hasConstructorIllegalInInterface(): Boolean {
+    primaryConstructor?.let {
+        if (it.valueParameters.isNotEmpty()) return true
+        if (it.annotationEntries.isNotEmpty()) return true
+    }
+    return secondaryConstructors.isNotEmpty()
+}
+
+private fun KtClass.hasIllegalSuperType(): Boolean =
+    superTypeListEntries.any {
+        it is KtSuperTypeCallEntry || it is KtDelegatedSuperTypeEntry
+    }
 
 internal class ConvertSealedInterfaceToSealedClassInspection : AbstractKotlinInspection() {
 
@@ -158,7 +184,7 @@ private fun KtClass.findSealedInheritors(): List<SmartPsiElementPointer<KtClassO
     return analyze(this) {
         val symbol = this@findSealedInheritors.symbol as? KaNamedClassSymbol ?: return emptyList()
         symbol.sealedClassInheritors.mapNotNull {
-            (it.psi as? KtClassOrObject)?.let (smartPointerManager::createSmartPsiElementPointer)
+            (it.psi as? KtClassOrObject)?.let(smartPointerManager::createSmartPsiElementPointer)
         }
     }
 }
@@ -217,16 +243,12 @@ private fun KtSuperTypeListEntry.resolveToClassSymbol(): KaNamedClassSymbol? {
     return (type as? KaClassType)?.symbol as? KaNamedClassSymbol
 }
 
+
 private fun KtClass.updateMemberModifiersForInterface() {
-    body?.declarations?.filterIsInstance<KtNamedFunction>()?.forEach { declaration ->
-        declaration.removeModifier(KtTokens.OPEN_KEYWORD)
-        declaration.removeModifier(KtTokens.ABSTRACT_KEYWORD)
-        declaration.removeModifier(KtTokens.PROTECTED_KEYWORD)
-    }
-    body?.properties?.forEach { property ->
-        property.removeModifier(KtTokens.OPEN_KEYWORD)
-        property.removeModifier(KtTokens.ABSTRACT_KEYWORD)
-        property.removeModifier(KtTokens.PROTECTED_KEYWORD)
+    body?.declarations?.filter { it is KtNamedFunction || it is KtProperty }?.forEach { declaration ->
+        declaration.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
+        declaration.removeModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
+        declaration.removeModifierKeyword(KtTokens.PROTECTED_KEYWORD)
     }
 }
 
@@ -238,10 +260,10 @@ private fun KtClass.updateMemberModifiersForClass() {
 
         if (declaration.hasBody()) {
             if (!isPrivate && !isOverride && !isInline) {
-                declaration.addModifier(KtTokens.OPEN_KEYWORD)
+                declaration.addModifierKeyword(KtTokens.OPEN_KEYWORD)
             }
         } else {
-            declaration.addModifier(KtTokens.ABSTRACT_KEYWORD)
+            declaration.addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
         }
     }
     body?.properties?.forEach { property ->
@@ -253,10 +275,10 @@ private fun KtClass.updateMemberModifiersForClass() {
 
         if (hasImplementation) {
             if (!isPrivate && !isOverride) {
-                property.addModifier(KtTokens.OPEN_KEYWORD)
+                property.addModifierKeyword(KtTokens.OPEN_KEYWORD)
             }
         } else {
-            property.addModifier(KtTokens.ABSTRACT_KEYWORD)
+            property.addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
         }
     }
 }

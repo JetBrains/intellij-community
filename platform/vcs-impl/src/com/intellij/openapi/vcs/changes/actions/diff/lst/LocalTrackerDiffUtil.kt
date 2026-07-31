@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff.lst
 
 import com.intellij.codeWithMe.ClientId
@@ -837,7 +837,7 @@ object LocalTrackerDiffUtil {
       val y = if (gap > JBUI.scale(8)) gap - JBUI.scale(2) else gap / 2
       val xOffset = DiffUtil.getContentTitleBorderInsets().left // offset to the left to account for the title panel gap
       val x = gutter.iconAreaOffset + 2 - xOffset // "+2" from EditorGutterComponentImpl.processIconsRow
-      checkbox.setBounds(min(width - AllIcons.Diff.GutterCheckBox.iconWidth, x), max(0, y), size.width, size.height)
+      checkbox.setBounds(min(width - AllIcons.Diff.GutterCheckBox.iconWidth, x).coerceAtLeast(0), max(0, y), size.width, size.height)
     }
 
     override fun getPreferredSize(): Dimension {

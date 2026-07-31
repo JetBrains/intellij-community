@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -80,8 +81,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-        val symbol = partiallyAppliedSymbol.symbol
+        val symbol = resolvedCall.symbol
 
         return when (element) {
             is KtBinaryExpression -> {
@@ -99,7 +99,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
             }
 
             is KtCallExpression -> {
-                val dispatchReceiver = partiallyAppliedSymbol.dispatchReceiver
+                val dispatchReceiver = resolvedCall.dispatchReceiver
 
                 val addAllOperation = if (dispatchReceiver != null) {
                     if (!dispatchReceiver.type.isSubtypeOf(StandardClassIds.MutableCollection)) return null
@@ -127,14 +127,14 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
 
     private fun KaSession.isApplicablePlusAssign(symbol: KaFunctionSymbol): Boolean {
         if (symbol.callableId != plusAssignCallableId) return false
-        if (symbol.receiverType?.isClassType(StandardClassIds.MutableCollection) != true) return false
-        if (symbol.valueParameters.singleOrNull()?.returnType?.isClassType(StandardClassIds.Iterable) != true) return false
+        if (symbol.receiverType?.classId != StandardClassIds.MutableCollection) return false
+        if (symbol.valueParameters.singleOrNull()?.returnType?.classId != StandardClassIds.Iterable) return false
         return true
     }
 
     private fun KaSession.replacementOperation(argument: KtExpression?): Name? {
         val argumentCall = argument?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        return when (argumentCall.partiallyAppliedSymbol.symbol.callableId) {
+        return when (argumentCall.symbol.callableId) {
             mapCallableId -> mapToName
             filterCallableId -> filterToName
             else -> null

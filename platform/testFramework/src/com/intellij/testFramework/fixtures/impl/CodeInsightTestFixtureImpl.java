@@ -2457,9 +2457,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       try {
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            boolean executed = ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.getText());
+            //PsiFile may be invalidated by any WA executed in between -> needs to be re-resolved
+            // (Resolve through the editor to preserve the language-specific PSI at the caret in template files)
+            PsiFile currentFile = requireNonNull(PsiUtilBase.getPsiFileInEditor(editor, project));
+            boolean executed = ShowIntentionActionsHandler.chooseActionAndInvoke(currentFile, editor, action, action.getText());
             if (!executed) {
-              boolean available = action.isAvailable(project, editor, file);
+              boolean available = action.isAvailable(project, editor, currentFile);
               fail("Quick fix '" + action.getText() + "' (" + action.getClass() + ")" +
                    " hasn't executed. isAvailable()=" + available);
             }
@@ -2528,6 +2531,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Disposer.register(getTestRootDisposable(), usageView);
     Ref<String> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       usageView.expandAll();
       ref.set(TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation());
     });

@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/R.class
+End of files
+Compiling files:
+  java/records/recordToEnum/a/ppp/R.java
+End of files
+Cleaning output files:
+  qqq/Use.class
+End of files
+Compiling files:
+  java/records/recordToEnum/a/qqq/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

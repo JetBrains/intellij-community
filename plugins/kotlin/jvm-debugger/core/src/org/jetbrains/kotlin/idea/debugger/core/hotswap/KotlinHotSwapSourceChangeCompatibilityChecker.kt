@@ -18,8 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -105,7 +106,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
             innerClasses.mapTo(hashSetOf()) { "$className.${it.name}" },
             sourceFields().associatePropertyShapes(),
             sourceMethods().associateFunctionShapes() +
-                    sourceLambdas().mapIndexed { index, lambda -> lambda.snapshot(index) },
+                    sourceLambdasAffectingShape().mapIndexed { index, lambda -> lambda.snapshot(index) },
         )
         return listOf(shape) + innerClasses.flatMap { it.classOrObject.snapshot("$className.", it.name, it.isAnonymous) }
     }
@@ -130,7 +131,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
                 capturedFields(anonymous)
         val methods = sourceMethods().associateFunctionShapes() +
                 sourceConstructors().associateConstructorShapes() +
-                sourceLambdas().mapIndexed { index, lambda -> lambda.snapshot(index) }
+                sourceLambdasAffectingShape().mapIndexed { index, lambda -> lambda.snapshot(index) }
         val shape = HotSwapClassShape(
             className,
             kind(anonymous),
@@ -186,10 +187,19 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
     private fun KtObjectLiteralExpression.toAnonymousSourceClass(index: Int): SourceInnerClass =
         SourceInnerClass(objectDeclaration, "anonymous$index", true)
 
-    private fun PsiElement.sourceLambdas(): List<KtLambdaExpression> {
+    context(_: Context)
+    private fun PsiElement.sourceLambdasAffectingShape(): List<KtLambdaExpression> {
         val enclosingClass = this as? KtClassOrObject
         return PsiTreeUtil.collectElementsOfType(this, KtLambdaExpression::class.java)
             .filter { it.enclosingSourceClass() == enclosingClass }
+            .filterNot { it.isInlineArgument() }
+    }
+
+    context(_: Context)
+    private fun KtLambdaExpression.isInlineArgument(): Boolean {
+        return cached(this, "inlineArgument", dependency = enclosingTopLevelMember()) {
+            analyzeInContext { isInlinedArgument(functionLiteral, allowCrossinline = false) }
+        }
     }
 
     private fun PsiElement.enclosingSourceClass(): KtClassOrObject? = PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, true)

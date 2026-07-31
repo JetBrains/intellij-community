@@ -1,0 +1,13 @@
+================ Step #1 =================
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addClassStarImportCapture/a/ppp/Helper.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_addClassStarImportCapture-a.kotlin_module
+  rrr/UseKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addClassStarImportCapture/a/rrr/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

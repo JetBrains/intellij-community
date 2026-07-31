@@ -5211,6 +5211,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/methodCallArgument.java");
         }
 
+        @TestMetadata("notNullGenericArray.java")
+        public void testNotNullGenericArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullGenericArray.java");
+        }
+
         @TestMetadata("notNullIterationParameterArray.java")
         public void testNotNullIterationParameterArray() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullIterationParameterArray.java");
@@ -5229,6 +5234,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("notNullParameterAsArgument.java")
         public void testNotNullParameterAsArgument() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullParameterAsArgument.java");
+        }
+
+        @TestMetadata("notNullTypeArgument.java")
+        public void testNotNullTypeArgument() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/notNullTypeArgument.java");
         }
 
         @TestMetadata("notNullTypeArgumentFromKotlinTypeParameterInCall.java")
@@ -5286,9 +5296,14 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/simple.java");
         }
 
-        @TestMetadata("typeArgumentTodo.java")
-        public void testTypeArgumentTodo() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentTodo.java");
+        @TestMetadata("typeArgumentTodoK2_3.java")
+        public void testTypeArgumentTodoK2_3() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentTodoK2_3.java");
+        }
+
+        @TestMetadata("typeArgumentTodoK2_4.java")
+        public void testTypeArgumentTodoK2_4() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentTodoK2_4.java");
         }
 
         @TestMetadata("typeParameterNotNullUpperBound.java")

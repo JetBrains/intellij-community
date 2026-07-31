@@ -578,7 +578,17 @@ private class HotResource<T>(
       }
       select {
         failure.onAwait { it }
-        job.onJoin { error("outlived shared resource. using it out of scope?") }
+        job.onJoin {
+          // [failure] is always published before the coroutine completes, but `select` does not honour clause order
+          // when a clause completes while the remaining ones are still being registered: such a clause is only
+          // scheduled for re-registration, while a later clause that is already completed wins immediately.
+          // So the failure might have lost the race to this very clause, and has to be re-checked here.
+          // see https://pl.kotl.in/yRe7RVvF2
+          if (failure.isCompleted) {
+            failure.getCompletionExceptionOrNull()?.let { throw it }
+          }
+          error("outlived shared resource. using it out of scope?")
+        }
         body.onAwait { it }
       }
     }

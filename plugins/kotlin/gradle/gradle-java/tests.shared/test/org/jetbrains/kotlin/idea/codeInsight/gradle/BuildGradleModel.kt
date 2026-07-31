@@ -14,10 +14,8 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
-import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.service.execution.createTargetPathMapperInitScript
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
@@ -67,46 +65,15 @@ fun <T : Any> buildGradleModel(
 
     connector.connect().use { gradleConnection ->
         val buildAction = GradleModelFetchAction(gradleVersion)
-            .addProjectImportModelProviders(
-                GradleClassProjectModelProvider.createAll(
-                    clazz.java,
-                    /* Representative of the `kotlin.project-module` module */
-                    KotlinCompilation::class.java,
-
-                    /* Representative of the `kotlin-tooling-core` library */
-                    Extras::class.java,
-
-                    /* Representative of the `kotlin-gradle-plugin-idea` library */
-                    IdeaKotlinDependency::class.java,
-
-                    /* Representative of the kotlin stdlib */
-                    Unit::class.java
-                )
-            )
-            .addProjectImportModelProviders(
-                GradleClassBuildModelProvider.createAll(
-                    IdeaProject::class.java
-                )
-            )
+            .addProjectImportModelProviders(GradleClassProjectModelProvider.createAll(clazz.java))
+            .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject::class.java))
 
         val executionSettings = GradleExecutionSettings()
         val targetPathMapperInitScript = createTargetPathMapperInitScript()
         executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
-        val kotlinToolingExtensionClasses = mutableSetOf(
-            /* Representative of the `gradle-tooling` module */
-            KotlinMPPGradleModelBuilder::class.java,
-
-            /* Representative of the `kotlin.project-module` module */
-            KotlinCompilation::class.java,
-
-            /* Representative of the `kotlin-tooling-core` library */
-            Extras::class.java,
-
-            /* Representative of the `kotlin-gradle-plugin-idea` library */
-            IdeaKotlinDependency::class.java,
-        )
-        if (builderClass != null) {
-            kotlinToolingExtensionClasses.add(builderClass)
+        val kotlinToolingExtensionClasses = buildSet {
+            addAll(IdeaMppProjectProvider.MODEL_CLASSPATH)
+            addIfNotNull(builderClass)
         }
         val initScript = createMainInitScript(false, kotlinToolingExtensionClasses)
         executionSettings.addInitScript(gradleVersion, initScript)

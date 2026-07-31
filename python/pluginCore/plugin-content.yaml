@@ -128,6 +128,9 @@
 - name: lib/modules/intellij.python.mcp.jar
   contentModules:
   - name: intellij.python.mcp
+- name: lib/modules/intellij.python.minimap.jar
+  contentModules:
+  - name: intellij.python.minimap
 - name: lib/modules/intellij.python.ml.features.jar
   projectLibraries:
   - name: jetbrains.mlapi.catboost
@@ -182,9 +185,12 @@
 - name: lib/modules/intellij.python.pytools.ui.jar
   contentModules:
   - name: intellij.python.pytools.ui
-- name: lib/modules/intellij.python.requirements.jar
+- name: lib/modules/intellij.python.requirements.backend.jar
   contentModules:
-  - name: intellij.python.requirements
+  - name: intellij.python.requirements.backend
+- name: lib/modules/intellij.python.requirements.common.jar
+  contentModules:
+  - name: intellij.python.requirements.common
 - name: lib/modules/intellij.python.ruff.jar
   contentModules:
   - name: intellij.python.ruff

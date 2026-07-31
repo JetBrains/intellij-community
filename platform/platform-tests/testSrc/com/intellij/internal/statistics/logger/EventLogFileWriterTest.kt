@@ -4,9 +4,13 @@ package com.intellij.internal.statistics.logger
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.eventLog.EventLogFile
 import com.intellij.internal.statistic.eventLog.EventLogFileWriter
+import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.DEFAULT_MAX_FILE_SIZE_BYTES
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -229,6 +233,64 @@ class EventLogFileWriterTest {
     }
   }
 
+  @Test
+  fun `test deleted file metrics are reported`() {
+    val dir = tempDir.createDir()
+    val file = oldContentFile(dir, "events-eap.log", eventLine(1000L) + "\n" + eventLine(5000L) + "\n")
+
+    TestEventLogFileWriter(dir, listOf(file)).use { fileWriter ->
+      fileWriter.cleanUpOldFiles()
+
+      val report = fileWriter.deletedReports.single()
+      assertEquals(file.length(), report.sizeBytes)
+      assertEquals(EventLogBuildType.EAP, report.buildType)
+      assertTrue { report.ageMs > 0 }
+      assertTrue { report.queuedMs > 0 }
+    }
+  }
+
+  @Test
+  fun `test deleted file skips blank lines when reading first event`() {
+    val dir = tempDir.createDir()
+    val file = oldContentFile(dir, "events-release.log", "\n" + eventLine(2000L) + "\n\n" + eventLine(9000L) + "\n\n")
+
+    TestEventLogFileWriter(dir, listOf(file)).use { fileWriter ->
+      fileWriter.cleanUpOldFiles()
+
+      val report = fileWriter.deletedReports.single()
+      assertEquals(EventLogBuildType.RELEASE, report.buildType)
+      assertTrue("blank lines are skipped, so the oldest event is found and age is positive") { report.ageMs > 0 }
+    }
+  }
+
+  @Test
+  fun `test deleted file with unreadable content reports unknown first event`() {
+    val dir = tempDir.createDir()
+    val file = oldContentFile(dir, "events-eap.log", "not a serialized event\n")
+
+    TestEventLogFileWriter(dir, listOf(file)).use { fileWriter ->
+      fileWriter.cleanUpOldFiles()
+
+      val report = fileWriter.deletedReports.single()
+      assertEquals(-1L, report.ageMs)
+    }
+  }
+
+  private fun oldContentFile(dir: Path, name: String, content: String): ContentTestFile {
+    val realFile = dir.resolve(name).toFile()
+    realFile.writeText(content)
+    return ContentTestFile(realFile, System.currentTimeMillis() - MAX_AGE - 10_000L)
+  }
+
+  private fun eventLine(time: Long): String {
+    val event = LogEvent(
+      "session", "233.1", "1", time,
+      LogEventGroup("my.group", "1"), "1",
+      LogEventAction("my.event", false, HashMap<String, Any>())
+    )
+    return LogEventSerializer.toString(event)
+  }
+
   private fun format(message1: String) = message1 + "\n"
 }
 
@@ -239,6 +301,7 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
                        { directory -> EventLogFile.create(directory, EventLogBuildType.EAP, "221").file },
                        Supplier { files }) {
   var quickCleanCheck: Boolean = false
+  val deletedReports: MutableList<DeletedFileReport> = mutableListOf()
 
   fun assertOldest(expected: Long) {
     assertTrue { oldestExistingFile == expected }
@@ -254,8 +317,36 @@ class TestEventLogFileWriter(dir: Path, files: List<File>)
     super.cleanUpOldFiles(oldestAcceptable)
   }
 
+  public override fun logDeletedFile(
+    ageMs: Long,
+    queuedMs: Long,
+    sizeBytes: Long,
+    buildType: EventLogBuildType,
+  ) {
+    deletedReports.add(DeletedFileReport(ageMs, queuedMs, sizeBytes, buildType))
+  }
+
   override fun getActiveLogName(): String {
     return "active.log"
+  }
+}
+
+data class DeletedFileReport(
+  val ageMs: Long,
+  val queuedMs: Long,
+  val sizeBytes: Long,
+  val buildType: EventLogBuildType,
+)
+
+/** A [File] backed by a real file on disk (so its contents can be read), but with a controlled last-modified time. */
+private class ContentTestFile(realFile: File, private val modified: Long) : File(realFile.path) {
+  var deleted: Boolean = false
+
+  override fun lastModified(): Long = modified
+
+  override fun delete(): Boolean {
+    deleted = true
+    return true
   }
 }
 

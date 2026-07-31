@@ -280,7 +280,8 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
     // Create content modules first
     for (spec in contentModules) {
       val moduleDir = tempDir.resolve(spec.name.replace('.', '/'))
-      val resourcesDir = moduleDir.resolve("resources")
+      val inTestResources = spec.descriptorInTestResources
+      val resourcesDir = moduleDir.resolve(if (inTestResources) "testResources" else "resources")
       Files.createDirectories(resourcesDir)
 
       val jpsModule = project.addModule(spec.name, JpsJavaModuleType.INSTANCE)
@@ -288,7 +289,10 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
         JpsModuleSerializationDataExtensionImpl.ROLE,
         JpsModuleSerializationDataExtensionImpl(moduleDir),
       )
-      jpsModule.addSourceRoot(JpsPathUtil.pathToUrl(resourcesDir.toString()), JavaResourceRootType.RESOURCE)
+      jpsModule.addSourceRoot(
+        JpsPathUtil.pathToUrl(resourcesDir.toString()),
+        if (inTestResources) JavaResourceRootType.TEST_RESOURCE else JavaResourceRootType.RESOURCE,
+      )
 
       // Write descriptor XML
       Files.writeString(resourcesDir.resolve("${spec.name}.xml"), spec.descriptor)
@@ -444,13 +448,20 @@ class TestPluginBuilder(private val name: String) {
 @JpsTestDsl
 class TestContentModuleBuilder(private val name: String) {
   var descriptor: String = """<idea-plugin package="com.test"/>"""
+
+  /**
+   * Put the descriptor into a `testResources` root of type [JavaResourceRootType.TEST_RESOURCE] instead of the production
+   * `resources` root, as real test-only modules do (e.g. `CIDR/clion-profiling/tests`).
+   */
+  var descriptorInTestResources: Boolean = false
+
   private val jpsDependencies = mutableListOf<TestJpsDependency>()
 
   fun jpsDependency(moduleName: String, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE) {
     jpsDependencies.add(TestJpsDependency(moduleName, scope))
   }
 
-  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList())
+  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList(), descriptorInTestResources)
 }
 
 internal data class TestJpsDependency(
@@ -506,6 +517,7 @@ internal data class TestContentModuleSpec(
   @JvmField val name: String,
   @JvmField val descriptor: String,
   @JvmField val jpsDependencies: List<TestJpsDependency>,
+  @JvmField val descriptorInTestResources: Boolean = false,
 )
 internal data class TestProductSpec(
   @JvmField val name: String,

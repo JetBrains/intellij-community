@@ -20,14 +20,14 @@ class ModelOperation(Operation):
     def can_reduce_through(self, operation: Operation, app_label: str) -> bool: ...
 
 class CreateModel(ModelOperation):
-    fields: list[tuple[str, Field]]
+    fields: list[tuple[str, Field[Any, Any]]]
     options: dict[str, Any]
     bases: Sequence[type[Model] | str] | None
     managers: Sequence[tuple[str, Manager]] | None
     def __init__(
         self,
         name: str,
-        fields: list[tuple[str, Field]],
+        fields: list[tuple[str, Field[Any, Any]]],
         options: dict[str, Any] | None = None,
         bases: Sequence[type[Any] | str] | None = None,
         managers: Sequence[tuple[str, Manager]] | None = None,

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.run.terminal;
+package com.intellij.sh.run.terminal
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
@@ -113,6 +113,11 @@ open class ShTerminalRunner : ShRunner {
 
     val ttyConnector = widget.ttyConnector
     if (ttyConnector == null || TerminalUtil.hasRunningCommands(ttyConnector)) {
+      return null
+    }
+
+    val jediTermWidget = JBTerminalWidget.asJediTermWidget(widget)
+    if (jediTermWidget is ShellTerminalWidget && jediTermWidget.typedShellCommand.isNotEmpty()) {
       return null
     }
 

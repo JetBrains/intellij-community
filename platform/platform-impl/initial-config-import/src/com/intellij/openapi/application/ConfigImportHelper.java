@@ -228,7 +228,7 @@ public final class ConfigImportHelper {
           }
         }
         catch (IOException e) {
-          log.error("Couldn't back up current config or delete current config directory", e);
+          log.error("Couldn't back up the current config or delete the current config directory", e);
         }
       }
       else if (inheritedDirectory != null) {
@@ -275,7 +275,7 @@ public final class ConfigImportHelper {
             log.info("Disabled plugins file updated with " + newDisabledPlugins.size() + " plugins");
           }
           catch (IOException e) {
-            log.warn("Couldn't write disabled plugins file", e);
+            log.warn("Couldn't write the disabled plugins file", e);
           }
         }
       }
@@ -325,7 +325,7 @@ public final class ConfigImportHelper {
             InitialConfigImportState.writeOptionsForRestart(newConfigDir);
           }
           catch (IOException e) {
-            log.error("cannot write config migration marker file to " + newConfigDir, e);
+            log.error("cannot write the config migration marker file to " + newConfigDir, e);
           }
           restart(args);
         }
@@ -470,7 +470,7 @@ public final class ConfigImportHelper {
   }
 
   private static void deleteCurrentConfigDir(Path currentConfig, Logger log) throws IOException {
-    log.debug("Removing current config directory");
+    log.debug("Removing the current config directory");
 
     var removedViaCustomizer = false;
     try {
@@ -482,11 +482,11 @@ public final class ConfigImportHelper {
       }
     }
     catch (Exception e) {
-      log.warn("Couldn't remove current config dir using the customizer", e);
+      log.warn("Couldn't remove the current config dir using the customizer", e);
     }
 
     if (!removedViaCustomizer) {
-      log.debug("RestoreDefaultConfigCustomizer not found, removing config directory manually...");
+      log.debug("RestoreDefaultConfigCustomizer not found, removing the config directory manually...");
       NioFiles.deleteRecursively(currentConfig);
     }
   }
@@ -837,7 +837,7 @@ public final class ConfigImportHelper {
     var log = options.log;
 
     if (oldConfigDir.equals(newConfigDir)) {
-      log.info("New config directory is the same as the old one, no import needed.");
+      log.info("The new config directory is the same as the old one, no import needed.");
       return;
     }
 
@@ -955,7 +955,7 @@ public final class ConfigImportHelper {
     com.intellij.openapi.application.migrations.Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
-  private static @Nullable Path findStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
+  private static @Nullable Path findStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) {
     if (Files.isDirectory(oldPluginsDir)) {
       var oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
       if (!Files.isDirectory(oldSystemDir)) {
@@ -990,7 +990,7 @@ public final class ConfigImportHelper {
 
     var brokenPluginVersions = fetchBrokenPluginsFromMarketplace(options, newConfigDir);
     if (!collectPluginsToMigrate(oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload)) {
-      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
+      log.info("Error loading list of plugins from the old dir, migrating the entire plugin directory");
       NioFiles.copyRecursively(oldPluginsDir, newPluginsDir);
       return;
     }
@@ -1283,7 +1283,7 @@ public final class ConfigImportHelper {
         break;
       }
       catch (IOException e) {
-        log.info("Failed to download and install compatible version of '" + pluginId + "': " + e.getMessage());
+        log.info("Failed to download and install a compatible version of '" + pluginId + "': " + e.getMessage());
       }
     }
   }
@@ -1425,7 +1425,7 @@ public final class ConfigImportHelper {
               </application>""");
           }
           catch (IOException e) {
-            log.error("Cannot set keymap", e);
+            log.error("Cannot set a keymap", e);
           }
         }
       }
@@ -1523,7 +1523,7 @@ public final class ConfigImportHelper {
         }
       }
       catch (IOException e) {
-        log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
+        log.warn("Failed to update the custom VM options file " + vmOptionsFile, e);
       }
     }
   }
@@ -1565,7 +1565,7 @@ public final class ConfigImportHelper {
     }
     catch (IOException e) {
       // exceptions should not prevent a user's VM options file from being processed
-      log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
+      log.warn("Cannot read the platform VM options file " + platformVmOptionsFile, e);
       return List.of();
     }
   }

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <resource-bundle>messages.LombokBundle</resource-bundle>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

@@ -1,3 +1,5 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -241,6 +243,7 @@ public interface GroovyElementTypes {
   IElementType KW_TRANSIENT = new GroovyElementType("transient");
   IElementType KW_TRUE = new GroovyElementType("true");
   IElementType KW_TRY = new GroovyElementType("try");
+  IElementType KW_VAL = new GroovyElementType("val");
   IElementType KW_VAR = new GroovyElementType("var");
   IElementType KW_VOID = new GroovyElementType("void");
   IElementType KW_VOLATILE = new GroovyElementType("volatile");

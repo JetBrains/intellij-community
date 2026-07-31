@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassInitializer
@@ -173,6 +174,10 @@ internal fun convertParentImpl(
     }
 
     if (parent is KtPropertyDelegate) {
+        parent = parent.parent
+    }
+
+    if (parent is KtBlockExpression && parent.parent is KtWhenEntry) {
         parent = parent.parent
     }
 

@@ -1,0 +1,3 @@
+public sealed interface F permits Impl {
+  int f();
+}

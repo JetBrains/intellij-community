@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -37,6 +36,14 @@ import kotlin.io.path.isExecutable
 fun PyTool.getState(project: Project): PyToolsState.ToolEntry = PyToolsState.getInstance(project).getEntry(this)
 
 fun PyTool.isEnabledOn(project: Project): Boolean = getState(project).enabled
+
+/**
+ * A tool is "active" when the user enabled it as an LSP tool, or it is the project's selected type
+ * engine. Server start/stop and LSP feature gating key off this (rather than the raw enabled flag)
+ * so that a tool acting as the type engine keeps its shared LSP server running and its features on,
+ * even though its External Tools enable toggle is locked. See [PyTool.isSelectedAsTypeEngine].
+ */
+fun PyTool.isActiveOn(project: Project): Boolean = isEnabledOn(project) || isSelectedAsTypeEngine(project)
 
 suspend fun PyTool.getExecutableWithBaseArgs(
   moduleOrProject: ModuleOrProject,
@@ -136,18 +143,7 @@ private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executabl
 
 fun PyTool.findExecutableInPath(
   executableName: String = packageName.name,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = resolveExecutableOnPath(executableName, osFamily)
-
-/**
- * Looks up [executableName] on the system PATH by its OS-specific binary name. This is how the
- * External Tools settings page resolves tool executables (via [findExecutableInPath]); shared so
- * other callers can resolve an installed executable the same way.
- */
-fun resolveExecutableOnPath(
-  executableName: String,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = PathEnvironmentVariableUtil.findInPath(osFamily.getOsSpecificBinaryName(executableName))?.toPath()
+): Path? = PathEnvironmentVariableUtil.findFirst(executableName)
 
 /**
  * Installs this tool's executable into the environment described by [eel], using the first available

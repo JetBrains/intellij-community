@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.TextRange
 import java.util.ArrayDeque
 
-class NewIdentifierWatcher(private val maxIdentifiers: Int) {
+internal class NewIdentifierWatcher(private val maxIdentifiers: Int) {
   init {
     require(maxIdentifiers > 0)
   }

@@ -63,7 +63,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = ContainerUtil.createConcurrentList();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
   private final Project myProject;
-  private boolean serializeCodeInsightPasses;
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
@@ -127,31 +126,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       myFrozenPassConfigs = configs;
     }
     return configs;
-  }
-
-  /**
-   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behavior.
-   *
-   * @param flag if {@code true}: enables code insight passes serialization:
-   *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
-   *             completion of Syntax analysis {@link GeneralHighlightingPass}.
-   *             if {@code false} (default behavior) code insight passes are running in parallel
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public void serializeCodeInsightPasses(boolean flag) {
-    serializeCodeInsightPasses = flag;
-    reRegisterFactories();
-  }
-
-  /**
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public boolean isSerializeCodeInsightPasses() {
-    return serializeCodeInsightPasses;
   }
 
   private record PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,

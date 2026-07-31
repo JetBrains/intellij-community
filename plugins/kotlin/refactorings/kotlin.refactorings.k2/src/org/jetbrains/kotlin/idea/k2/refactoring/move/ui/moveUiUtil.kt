@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.project.Project
@@ -7,7 +7,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.util.module
@@ -90,8 +90,7 @@ internal fun KtNamedDeclaration.isExpectOrActual(): Boolean =
  * ```
  */
 internal fun findSourceSetNameStem(kmpSourceRoot: PsiDirectory): String? {
-    val project = kmpSourceRoot.project
-    val kaModule = KaModuleProvider.getModule(project, kmpSourceRoot, useSiteModule = null)
+    val kaModule = kmpSourceRoot.kaModule(useSiteModule = null)
     val workspaceModule = kmpSourceRoot.module ?: return null
 
     val dependsOnDependencies = kaModule.directDependsOnDependencies

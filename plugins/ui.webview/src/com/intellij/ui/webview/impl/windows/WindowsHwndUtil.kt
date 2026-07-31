@@ -1,15 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.windows
 
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.webview.impl.WebViewLogger
-import kotlinx.coroutines.CancellationException
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Window
 import javax.swing.SwingUtilities
 
-@ApiStatus.Internal
 internal object WindowsHwndUtil {
   fun resolveWindowHwnd(component: Component): Long? {
     if (!SystemInfoRt.isWindows) return null
@@ -30,7 +28,7 @@ internal object WindowsHwndUtil {
       getHWnd.invoke(peer) as? Long
     }
     catch (e: Exception) {
-      if (e is CancellationException) throw e
+      rethrowControlFlowException(e)
       WebViewLogger.LOG.warn("Failed to resolve Windows HWND for WebView host", e)
       null
     }

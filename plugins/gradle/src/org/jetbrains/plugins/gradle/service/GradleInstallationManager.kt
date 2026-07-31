@@ -300,14 +300,12 @@ open class GradleInstallationManager : Disposable.Default {
     return result
   }
 
-  @ApiStatus.Internal
   internal class DynamicPluginLayoutParametersCacheCleanupListener : DynamicPluginListener {
     override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
       getInstance().myBuildLayoutParametersCache.clear()
     }
   }
 
-  @ApiStatus.Internal
   internal class TaskNotificationLayoutParametersCacheCleanupListener : ExternalSystemTaskNotificationListener {
     override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       getInstance().myBuildLayoutParametersCache.remove(projectPath)

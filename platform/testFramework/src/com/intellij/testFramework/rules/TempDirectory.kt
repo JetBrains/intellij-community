@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
@@ -77,6 +78,7 @@ open class TempDirectory : ExternalResource() {
     myName = null
 
     RunAll(
+      { ManagingFS.getInstanceOrNull()?.flushPendingUpdates() },
       { JarFileSystemImpl.cleanupForNextTest() },
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) NioFiles.deleteRecursively(path) }

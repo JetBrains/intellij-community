@@ -35,6 +35,11 @@ object TestGenerator {
     }
 
     private fun write(suite: TSuite, group: TGroup, isUpToDateCheck: Boolean, platform: KMPTestPlatform = KMPTestPlatform.Unspecified) {
+        if (suite.junit5 != null) {
+            writeKotlin(suite, group, isUpToDateCheck, platform)
+            return
+        }
+
         val packageName = suite.generatedClassPackage
         val rootModelName = suite.generatedClassShortName(platform)
 
@@ -67,6 +72,33 @@ object TestGenerator {
         }
 
         val filePath = suite.generatedClassFqName(platform).replace('.', '/') + ".java"
+        val file = File(group.testSourcesRoot, filePath)
+        write(file, postProcessContent(content), isUpToDateCheck)
+    }
+
+    private fun writeKotlin(suite: TSuite, group: TGroup, isUpToDateCheck: Boolean, platform: KMPTestPlatform) {
+        val packageName = suite.generatedClassPackage
+        val className = suite.generatedClassShortName(platform)
+
+        val model = suite.models.singleOrNull()
+            ?: error("JUnit 5 test generation supports a single model per suite, but ${suite.defaultGeneratedClassFqName} has ${suite.models.size}")
+
+        val content = buildCode {
+            appendCopyrightComment()
+            newLine()
+
+            appendLine("package $packageName")
+            newLine()
+
+            appendImportsKotlin(getKotlinImports(suite))
+            appendGeneratedComment()
+
+            val element = SuiteElement.create(group, suite, model, className, platform, isNested = false)
+            with(element) { renderKotlin() }
+            newLine()
+        }
+
+        val filePath = suite.generatedClassFqName(platform).replace('.', '/') + ".kt"
         val file = File(group.testSourcesRoot, filePath)
         write(file, postProcessContent(content), isUpToDateCheck)
     }
@@ -114,6 +146,27 @@ internal fun getImports(suite: TSuite, platform: KMPTestPlatform): Collection<St
     return imports
 }
 
+internal fun getKotlinImports(suite: TSuite): Collection<String> {
+    val junit5 = suite.junit5 ?: return emptyList()
+
+    val imports = sortedSetOf(
+        "com.intellij.testFramework.TestDataPath",
+        "com.intellij.testFramework.junit5.TestApplication",
+        "org.jetbrains.kotlin.idea.base.test.TestRoot",
+        "org.jetbrains.kotlin.test.TestMetadata",
+        "org.junit.jupiter.api.Test",
+    )
+    imports += junit5.imports
+    imports += suite.imports
+
+    val superPackageName = suite.abstractTestClass.`package`.name
+    if (superPackageName != suite.generatedClassPackage) {
+        imports += suite.abstractTestClass.canonicalName
+    }
+
+    return imports
+}
+
 internal fun postProcessContent(text: String): String {
     return text.lineSequence()
         .map { it.trimEnd() }
@@ -123,6 +176,13 @@ internal fun postProcessContent(text: String): String {
 internal fun Code.appendImports(imports: Collection<String>) {
     if (imports.isNotEmpty()) {
         imports.forEach { appendLine("import $it;") }
+        newLine()
+    }
+}
+
+internal fun Code.appendImportsKotlin(imports: Collection<String>) {
+    if (imports.isNotEmpty()) {
+        imports.forEach { appendLine("import $it") }
         newLine()
     }
 }

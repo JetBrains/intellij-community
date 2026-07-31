@@ -10,7 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.gradle.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
+    exports = ["//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core"],
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -36,7 +36,6 @@ jvm_library(
         "//platform/statistics",
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/migration",
-        "//plugins/kotlin/inspections",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
@@ -48,7 +47,7 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//plugins/kotlin/native",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -69,7 +68,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-tooling-core"],
+    exports = [
+        # do not sort,
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":tests",
@@ -120,8 +123,6 @@ jvm_library(
         "//plugins/kotlin/jvm/shared:shared_test_lib",
         "//plugins/kotlin/migration",
         "//plugins/kotlin/migration:migration_test_lib",
-        "//plugins/kotlin/inspections",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
         "//plugins/kotlin/gradle/gradle",
@@ -148,7 +149,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//plugins/kotlin/run-configurations/jvm",
         "//plugins/kotlin/run-configurations/jvm:jvm_test_lib",
         "//plugins/groovy",

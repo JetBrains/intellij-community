@@ -26,7 +26,7 @@ public class XmlCharFilter extends CharFilter {
     PsiElement psiElement = lookup.getPsiElement();
     PsiFile file = lookup.getPsiFile();
     if (!(file instanceof XmlFile) && psiElement != null) {
-      if (!Elf.getElf().isPsiInteractionAllowed()) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
         // element.getContainingFile: throws from LeafPsiElement.invalid
         return false;
       }

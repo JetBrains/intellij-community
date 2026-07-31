@@ -153,8 +153,6 @@ c:com.intellij.execution.actions.RunContextAction
 - p:isEnabledFor(com.intellij.execution.configurations.RunConfiguration):Z
 c:com.intellij.execution.actions.StopAction
 - com.intellij.openapi.project.DumbAwareAction
-- com.intellij.platform.ide.core.permissions.RequiresPermissions
-- getRequiredPermissions():java.util.Collection
 c:com.intellij.execution.actions.StopProcessAction
 - com.intellij.openapi.project.DumbAwareAction
 - setProcessHandler(com.intellij.execution.process.ProcessHandler):V

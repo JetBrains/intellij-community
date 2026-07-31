@@ -10,9 +10,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -20,6 +20,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.enteredTextSatisfies
+import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
@@ -34,7 +35,7 @@ class UpdateFromSourcesDialog(private val project: Project,
                               private val showApplyButton: Boolean) : DialogWrapper(project, true) {
   private lateinit var panel: DialogPanel
   private lateinit var pathField: TextFieldWithHistoryWithBrowseButton
-  private lateinit var additionalVmOptionsField: JBTextField
+  private lateinit var additionalVmOptionsField: TextFieldWithHistory
   private val state = UpdateFromSourcesSettingsState().apply {
     copyFrom(UpdateFromSourcesSettings.getState())
   }
@@ -43,6 +44,7 @@ class UpdateFromSourcesDialog(private val project: Project,
     title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.title")
     setOKButtonText(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.ok.button"))
     init()
+    panel.reset()
   }
 
   override fun createCenterPanel(): DialogPanel {
@@ -98,13 +100,17 @@ class UpdateFromSourcesDialog(private val project: Project,
 }
 
 @ApiStatus.Internal
-fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): Pair<TextFieldWithHistoryWithBrowseButton, JBTextField> {
+fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): Pair<TextFieldWithHistoryWithBrowseButton, TextFieldWithHistory> {
   val pathField = textFieldWithHistoryWithBrowseButton(
     project,
     FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title")),
     historyProvider = { state.workIdePathsHistory }
   )
-  val additionalJvmOptionsField = JBTextField()
+  val additionalJvmOptionsField = TextFieldWithHistory().apply {
+    setHistorySize(-1)
+    setMinimumAndPreferredWidth(0)
+    addHistoryOnExpansion(this) { state.additionalVmOptionsHistory }
+  }
   row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
     cell(pathField)
       .align(AlignX.FILL)
@@ -114,8 +120,15 @@ fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState):
     cell(additionalJvmOptionsField)
       .label(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.additional.vm.options.for.build.scripts"))
       .align(AlignX.FILL)
-      .bindText({ state.additionalVmOptionsForBuildScripts ?: "" }, { state.additionalVmOptionsForBuildScripts = it.trim().takeIf { it.isNotEmpty() } })
-      .component
+      .onReset { additionalJvmOptionsField.text = state.additionalVmOptionsForBuildScripts ?: "" }
+      .onApply {
+        val value = additionalJvmOptionsField.text.trim()
+        state.additionalVmOptionsForBuildScripts = value.takeIf { it.isNotEmpty() }
+        if (value.isNotEmpty()) {
+          state.additionalVmOptionsHistory.remove(value)
+          state.additionalVmOptionsHistory.add(0, value)
+        }
+      }
   }
   row {
     checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))

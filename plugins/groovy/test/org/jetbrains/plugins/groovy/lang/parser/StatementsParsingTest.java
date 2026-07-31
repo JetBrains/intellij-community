@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 public class StatementsParsingTest extends GroovyParsingTestCase {
@@ -161,6 +161,10 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testDeclaration$var9() { doTest(); }
 
   public void testDeclaration$var10() { doTest(); }
+
+  public void testDeclaration$val1() { doTest(); }
+
+  public void testDeclaration$val2() { doTest(); }
 
   public void testDeclaration$multilineTuple() { doTest(); }
 

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -17,7 +18,8 @@ object ChangeToMutableCollectionFixFactories {
         createQuickFixes(diagnostic = it)
     }
 
-    private fun KaSession.createQuickFixes(diagnostic: KaFirDiagnostic.NoSetMethod): List<ModCommandAction> {
+    context(session: KaSession)
+    private fun createQuickFixes(diagnostic: KaFirDiagnostic.NoSetMethod): List<ModCommandAction> {
         val element = diagnostic.psi
         val arrayExpr = element.arrayExpression ?: return emptyList()
         val type = arrayExpr.expressionType as? KaClassType ?: return emptyList()

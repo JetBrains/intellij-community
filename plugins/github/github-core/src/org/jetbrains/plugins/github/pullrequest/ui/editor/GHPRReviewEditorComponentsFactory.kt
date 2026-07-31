@@ -44,6 +44,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCo
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal object GHPRReviewEditorComponentsFactory {
   private const val VERTICAL_INLAY_MARGIN = 8
@@ -175,13 +176,27 @@ internal object GHPRReviewEditorComponentsFactory {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 
-    return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
+    val component = if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
       Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
         border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
+        setFocusable(vm)
       }
     }
     else {
-      CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
+      CodeReviewCommentUIUtil.createEditorInlayPanel(editor).apply {
+        setFocusable(vm)
+      }
+    }
+
+    return UiDataProvider.wrapComponent(component) { sink ->
+      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
+    }
+  }
+
+  private fun JPanel.setFocusable(vm: GHPRReviewNewCommentEditorViewModel) {
+    isFocusable = true
+    launchOnShow("focusRequests") {
+      vm.focusRequests.collect { requestFocus(false) }
     }
   }
 

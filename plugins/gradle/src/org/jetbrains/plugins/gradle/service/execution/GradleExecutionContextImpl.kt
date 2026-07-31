@@ -8,10 +8,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
-@ApiStatus.Internal
+@Internal
 open class GradleExecutionContextImpl(
   override val projectPath: String,
   override val taskId: ExternalSystemTaskId,
@@ -37,7 +37,7 @@ open class GradleExecutionContextImpl(
     get() = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
 
   private var _reporter: GradleExecutionReporterImpl = GradleExecutionReporterImpl(projectPath, taskId, listener)
-  override val reporter: GradleExecutionReporter by ::_reporter
+  override val reporter: GradleExecutionReporterImpl by ::_reporter
 
   constructor(context: GradleExecutionContextImpl) :
     this(context, context.projectPath, GradleExecutionSettings(context.settings))

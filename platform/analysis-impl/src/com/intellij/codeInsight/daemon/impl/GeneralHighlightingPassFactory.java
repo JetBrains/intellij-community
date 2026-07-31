@@ -19,12 +19,9 @@ import org.jetbrains.annotations.NotNull;
 final class GeneralHighlightingPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] uf = {Pass.UPDATE_FOLDING};
     registrar.registerTextEditorHighlightingPass(new GeneralHighlightingPassFactory(),
                                                  null,
-                                                 serializeCodeInsightPasses ? null : uf, false, Pass.UPDATE_ALL);
+                                                 new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
   }
 
   @Override

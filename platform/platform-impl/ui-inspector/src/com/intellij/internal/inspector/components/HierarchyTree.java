@@ -3,7 +3,7 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -24,6 +24,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -144,6 +145,51 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
   public void resetModel(Component c, boolean accessibleModel) {
     setModel(buildModel(c, accessibleModel));
+  }
+
+  /**
+   * Serializes the whole component hierarchy as YAML: every node becomes a {@code - node: "<label>"} entry
+   * with a nested {@code children:} sequence. Labels are the text the tree shows, emitted as double-quoted scalars.
+   */
+  public @NotNull String exportTreeAsYaml() {
+    StringBuilder sb = new StringBuilder();
+    Object root = getModel().getRoot();
+    if (root instanceof TreeNode) {
+      appendNodeYaml(sb, (TreeNode)root, 0);
+    }
+    return sb.toString();
+  }
+
+  private void appendNodeYaml(@NotNull StringBuilder sb, @NotNull TreeNode node, int indent) {
+    String pad = " ".repeat(indent);
+    sb.append(pad).append("- node: ").append(toYamlScalar(getNodeText(node))).append('\n');
+    int childCount = node.getChildCount();
+    if (childCount > 0) {
+      sb.append(pad).append("  children:\n");
+      for (int i = 0; i < childCount; i++) {
+        appendNodeYaml(sb, node.getChildAt(i), indent + 2);
+      }
+    }
+  }
+
+  private static @NotNull String toYamlScalar(@NotNull String text) {
+    return '"' + StringUtil.escapeStringCharacters(text) + '"';
+  }
+
+  private @NotNull String getNodeText(@NotNull TreeNode node) {
+    // rendering a node is expensive (reflection over the component's owner fields), so reuse the text cached while painting
+    if (node instanceof ComponentNode componentNode && componentNode.myText != null) {
+      return componentNode.myText;
+    }
+    Component rendererComponent =
+      getCellRenderer().getTreeCellRendererComponent(this, node, false, true, node.isLeaf(), 0, false);
+    if (rendererComponent instanceof SimpleColoredComponent) {
+      String text = rendererComponent.toString();
+      if (!StringUtil.isEmpty(text)) {
+        return text;
+      }
+    }
+    return String.valueOf(node);
   }
 
   public void selectPath(@NotNull Component component) {
@@ -556,8 +602,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
             }
           }
           myToolTipText =
-            InternalActionsBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
-                                                        count.getWarnings(), count.getRecommendations());
+            IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
+                                         count.getWarnings(), count.getRecommendations());
         }
       }
 

@@ -6,6 +6,15 @@ import kotlin.coroutines.CoroutineContext
 interface McpTool {
 
   /**
+   * Whether this tool can be configured by users in MCP tool settings.
+   *
+   * Launch-managed tools should return `false`: their availability is determined by
+   * connection-scoped runtime policy rather than persisted user settings.
+   */
+  val isUserConfigurable: Boolean
+    get() = true
+
+  /**
    * Descriptor of the tool: name, description, and input parameters.
    */
   val descriptor: McpToolDescriptor
@@ -24,14 +33,22 @@ sealed interface McpToolCallResultContent {
   }
 }
 
-class McpToolCallResult(val content: Array<McpToolCallResultContent>, val structuredContent: JsonObject? = null, val isError: Boolean = false) {
+class McpToolCallResult(
+  val content: Array<McpToolCallResultContent>,
+  val structuredContent: JsonObject? = null,
+  val isError: Boolean = false,
+) {
   companion object {
-    fun error(errorMessage: String, structuredContent: JsonObject? = null): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(errorMessage)),
-                                                                           structuredContent = structuredContent,
-                                                                           isError = true)
-    fun text(text: String, structuredContent: JsonObject? = null): McpToolCallResult = McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(text)),
-                                                                                                         structuredContent = structuredContent)
+    fun error(errorMessage: String, structuredContent: JsonObject? = null): McpToolCallResult =
+      McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(errorMessage)),
+                        structuredContent = structuredContent,
+                        isError = true)
+
+    fun text(text: String, structuredContent: JsonObject? = null): McpToolCallResult =
+      McpToolCallResult(content = arrayOf(McpToolCallResultContent.Text(text)),
+                        structuredContent = structuredContent)
   }
+
   override fun toString(): String {
     val result = content.joinToString("\n")
     if (isError) return "[error]: $result"
@@ -46,4 +63,5 @@ open class McpExpectedError(val mcpErrorText: String, val mcpErrorStructureConte
  *
  * The exception is caught by MCP server and returned to client as a well-rendered error
  */
-fun mcpFail(message: String, mcpErrorStructureContent: JsonObject? = null): Nothing = throw McpExpectedError(message, mcpErrorStructureContent)
+fun mcpFail(message: String, mcpErrorStructureContent: JsonObject? = null): Nothing =
+  throw McpExpectedError(message, mcpErrorStructureContent)

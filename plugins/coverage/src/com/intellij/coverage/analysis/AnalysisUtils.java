@@ -6,7 +6,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 @ApiStatus.Internal
 public final class AnalysisUtils {
@@ -46,6 +51,35 @@ public final class AnalysisUtils {
 
   public static @Nullable ArchiveEntryPath splitArchiveEntryPath(@NotNull Path classFile) {
     return splitArchiveEntryPath(classFile.toString());
+  }
+
+  public static byte @Nullable [] loadClassBytes(@NotNull Path classFile) {
+    ArchiveEntryPath archiveEntryPath = splitArchiveEntryPath(classFile);
+    if (archiveEntryPath != null) {
+      try (ZipFile zip = new ZipFile(archiveEntryPath.archivePath())) {
+        return loadClassBytes(zip, archiveEntryPath.entryPath());
+      }
+      catch (IOException ignored) {
+        return null;
+      }
+    }
+    try (InputStream stream = Files.newInputStream(classFile)) {
+      return stream.readAllBytes();
+    }
+    catch (IOException ignored) {
+      return null;
+    }
+  }
+
+  static byte @Nullable [] loadClassBytes(@NotNull ZipFile zip, @NotNull String entryPath) {
+    ZipEntry entry = zip.getEntry(entryPath);
+    if (entry == null || entry.isDirectory()) return null;
+    try (InputStream stream = zip.getInputStream(entry)) {
+      return stream.readAllBytes();
+    }
+    catch (IOException ignored) {
+      return null;
+    }
   }
 
   private static @Nullable ArchiveEntryPath splitArchiveEntryPath(@NotNull String classFilePath) {

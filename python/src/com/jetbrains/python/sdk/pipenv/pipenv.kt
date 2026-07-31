@@ -5,19 +5,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PathUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Tells if the SDK was added as a pipenv.
  */
 internal val Sdk.isPipEnv: Boolean
-  get() {
-    if (!PythonSdkUtil.isPythonSdk(this)) {
-      return false
-    }
-
-    return sdkAdditionalData is PyPipEnvSdkAdditionalData
-  }
+  get() = PythonSdkUtil.isPythonSdk(this) && pySdkAdditionalData.flavor == PyPipEnvSdkFlavor
 
 @Internal
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"

@@ -35,8 +35,7 @@ class ParsedSentence private constructor(
   /** The underlying text  */
   @JvmField val extractedText: TextContent,
 
-  /** The dependency tree for the sentence  */
-  @JvmField val tree: Tree,
+  @JvmField val tree: Tree?,
 
   /**
    * The range of the sentence in [extractedText] as reported by the sentence tokenizer,
@@ -71,7 +70,7 @@ class ParsedSentence private constructor(
       if (file == null) return null
       val text = TextExtractor.findTextAt(file, fileOffset, TextContent.TextDomain.ALL) ?: return null
       val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0), minimal = false) }
-      return sentences.lastOrNull { it.fileOffsetToText(fileOffset) != null }
+      return sentences.lastOrNull { it.tree != null && it.fileOffsetToText(fileOffset) != null }
     }
 
     /**
@@ -81,7 +80,7 @@ class ParsedSentence private constructor(
     @JvmStatic
     fun findSentenceASAP(text: TextContent, fileOffset: Int): ParsedSentence? {
       val sentences = runBlockingCancellable { getSentences(text, TextRange.from(fileOffset, 0), minimal = true) }
-      return sentences.lastOrNull { it.fileOffsetToText(fileOffset) != null }
+      return sentences.lastOrNull { it.tree != null && it.fileOffsetToText(fileOffset) != null }
     }
 
     @JvmStatic
@@ -139,13 +138,17 @@ class ParsedSentence private constructor(
       if (intersectingSentences.isNotEmpty()) {
         val trees = parser.parseAsync(intersectingSentences.flatMap { listOfNotNull(it.swe(), it.stubbedSwe()) })
         for (sentence in intersectingSentences) {
+          val untrimmedRange = TextRange(sentence.start, sentence.end())
           var tree = trees[sentence.swe()]
           if (tree != null) {
             val start = sentence.start
             tree = tree.withStartOffset(start)
             val stubbed = trees[sentence.stubbedSwe()]
             if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))
-            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, TextRange(sentence.start, sentence.end())))
+            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, untrimmedRange))
+          }
+          else {
+            out.add(ParsedSentence(sentence.start, sentence.text, content, null, untrimmedRange))
           }
         }
       }

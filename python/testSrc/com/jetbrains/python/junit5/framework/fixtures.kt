@@ -4,11 +4,11 @@ package com.jetbrains.python.junit5.framework
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -16,8 +16,11 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.junit5.framework.impl.PyTestDataExtension
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
@@ -49,20 +52,17 @@ fun TestFixture<Project>.pyMockSdkFixture(module: TestFixture<Module>, sdkProvid
 @TestOnly
 fun pyCodeInsightFixture(
   projectFixture: TestFixture<Project>,
+  moduleFixture: TestFixture<Module>,
   tempDirFixture: TestFixture<Path>,
 ): TestFixture<CodeInsightTestFixture> = testFixture {
   val project = projectFixture.init()
+  val module = moduleFixture.init()
   val tempDir = tempDirFixture.init()
 
   val ideaProjectTestFixture = object : IdeaProjectTestFixture {
     override fun getProject(): Project = project
 
-    override fun getModule(): Module {
-      check(project.modules.isNotEmpty()) {
-        "At least one module is required for the project. Use TestFixture<Project>.moduleFixture() to register one in your test class."
-      }
-      return project.modules[0]
-    }
+    override fun getModule(): Module = module
 
     override fun setUp() {
       TestApplicationManager.getInstance().setDataProvider(TestDataProvider(project))
@@ -88,5 +88,24 @@ fun pyCodeInsightFixture(
   codeInsightFixture.setUp()
   initialized(codeInsightFixture) {
     codeInsightFixture.tearDown()
+  }
+}
+
+/** Creates and reloads a blueprint-backed Python external-system project (uv, Poetry, and similar). */
+@ApiStatus.Experimental
+@TestOnly
+fun pyExternalSystemProjectFixture(
+  blueprintResourcePath: Path,
+  pathFixture: TestFixture<Path> = tempPathFixture(),
+): TestFixture<Project> {
+  val projectWithBlueprint = projectFixture(
+    pathFixture = pathFixture,
+    openAfterCreation = true,
+    blueprintResourcePath = blueprintResourcePath,
+  )
+  return testFixture {
+    val project = projectWithBlueprint.init()
+    PyExternalSystemProjectAware.create(project).reloadProjectImpl()
+    initialized(project) {}
   }
 }

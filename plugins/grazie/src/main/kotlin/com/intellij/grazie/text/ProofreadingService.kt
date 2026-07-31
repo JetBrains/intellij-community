@@ -46,7 +46,6 @@ class ProofreadingService {
     fun covers(file: PsiFile, ranges: List<TextRange>): Boolean = file.getRangesCache().covers(ranges)
 
     @JvmStatic
-    @ApiStatus.Internal
     internal fun PsiFile.registerProblems(problems: List<TextProblem>) {
       val problemsWithSuggestions = problems.filter { it.hasSuggestions() }
       if (problemsWithSuggestions.isEmpty()) return

@@ -1,10 +1,12 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
-    <extensionPoint
-      qualifiedName="org.jetbrains.kotlin.idea.base.externalSystem.kotlinBuildSystemFacade"
-      interface="org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade"
-      dynamic="true"
-      />
 
   </extensionPoints>
 </idea-plugin>

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 internal class AddLabeledReturnInLambdaIntention : KotlinApplicableModCommandAction<KtBlockExpression, Unit>(KtBlockExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
@@ -31,7 +32,7 @@ internal class AddLabeledReturnInLambdaIntention : KotlinApplicableModCommandAct
     ): Presentation? {
         val labelName = element.getParentLambdaLabelName()?.takeIf {
             it != KtTokens.SUSPEND_KEYWORD.value
-        } ?: return null
+        }?.quoteIfNeeded() ?: return null
         val actionName = KotlinBundle.message("add.return.at.0", labelName)
         return Presentation.of(actionName).withPriority(PriorityAction.Priority.LOW)
     }
@@ -57,7 +58,7 @@ internal class AddLabeledReturnInLambdaIntention : KotlinApplicableModCommandAct
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        val labelName = element.getParentLambdaLabelName() ?: return
+        val labelName = element.getParentLambdaLabelName()?.quoteIfNeeded() ?: return
         val lastStatement = element.statements.lastOrNull() ?: return
         val newExpression = KtPsiFactory(element.project).createExpressionByPattern("return@$labelName $0", lastStatement)
         lastStatement.replace(newExpression)

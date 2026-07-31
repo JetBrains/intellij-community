@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  K.class
+  META-INF/kotlin_withJava_kotlinUsedInJava_jvmFieldRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmFieldRemoved/a/k.kt
+End of files
+Cleaning output files:
+  JavaUser.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmFieldRemoved/a/JavaUser.java
+End of files
+------------------------------------------
+Exit code: ERROR

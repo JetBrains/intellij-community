@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
+import com.intellij.diff.statistics.MergeStatisticsCollector
+import com.intellij.diff.statistics.RevertUsedOn
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -31,6 +33,19 @@ internal class RevertConflictResolutionAction(private val viewer: MergeThreeside
       .ask(viewer.component)
     if (!confirmed) return
 
+    logStatistics()
     viewer.resetChanges()
+  }
+
+  private fun logStatistics() {
+    val allChanges = viewer.allChanges
+    val hasResolved = allChanges.any { it.isResolved }
+    val hasUnresolved = allChanges.any { !it.isResolved }
+    val usedOn = when {
+      hasResolved && hasUnresolved -> RevertUsedOn.BOTH
+      hasResolved -> RevertUsedOn.RESOLVED
+      else -> RevertUsedOn.UNRESOLVED
+    }
+    MergeStatisticsCollector.logRevertUsedInViewer(viewer.project, usedOn, viewer.mergeFlow)
   }
 }

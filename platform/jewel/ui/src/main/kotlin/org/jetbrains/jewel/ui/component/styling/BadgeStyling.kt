@@ -74,6 +74,7 @@ public class BadgeStyles(
             "graySecondary=$graySecondary" +
             ")"
 
+    /** Companion object for [BadgeStyles]. */
     public companion object
 }
 
@@ -106,6 +107,7 @@ public class BadgeStyle(public val colors: BadgeColors, public val metrics: Badg
 
     override fun toString(): String = "BadgeStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [BadgeStyle]. */
     public companion object
 }
 
@@ -236,6 +238,7 @@ public class BadgeColors(
             "contentHovered=$contentHovered" +
             ")"
 
+    /** Companion object for [BadgeColors]. */
     public companion object
 }
 
@@ -275,9 +278,11 @@ public class BadgeMetrics(
 
     override fun toString(): String = "BadgeMetrics(cornerSize=$cornerSize, padding=$padding, minHeight=$minHeight)"
 
+    /** Companion object for [BadgeMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [BadgeStyles] for badge components. */
 public val LocalBadgeStyle: ProvidableCompositionLocal<BadgeStyles> = staticCompositionLocalOf {
     error("No BadgeStyle provided. Have you forgotten the theme?")
 }

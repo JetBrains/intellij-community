@@ -15,7 +15,6 @@ export const regexScopeRoot = path.join(__dirname, 'test-data', 'regex-scope')
 export const dirAAbs = path.join(regexScopeRoot, 'dir-a')
 export const dirBAbs = path.join(regexScopeRoot, 'dir-b')
 export const dirARel = path.relative(projectRoot, dirAAbs)
-export const dirBRel = path.relative(projectRoot, dirBAbs)
 export const REGEX_SCOPE_PATTERN = 'ij-proxy-regex-scope-test'
 
 export function toAbsolute(filePath: string): string {

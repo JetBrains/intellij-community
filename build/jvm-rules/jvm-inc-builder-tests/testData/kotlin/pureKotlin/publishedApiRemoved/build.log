@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  ImplKt.class
+  META-INF/kotlin_pureKotlin_publishedApiRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/publishedApiRemoved/a/impl.kt
+End of files
+Cleaning output files:
+  ApiKt.class
+  META-INF/kotlin_pureKotlin_publishedApiRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/publishedApiRemoved/a/api.kt
+End of files
+------------------------------------------
+Exit code: ERROR

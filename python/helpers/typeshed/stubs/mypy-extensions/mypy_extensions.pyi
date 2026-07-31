@@ -75,8 +75,7 @@ def KwArg(type: _T) -> _T: ...
 def KwArg() -> Any: ...
 
 # Return type that indicates a function does not return.
-# Deprecated: Use typing.NoReturn instead.
-@deprecated("Use typing.NoReturn or typing.Never instead")
+@deprecated("Use typing.Never instead")
 class NoReturn: ...
 
 # This is consistent with implementation. Usage intends for this as

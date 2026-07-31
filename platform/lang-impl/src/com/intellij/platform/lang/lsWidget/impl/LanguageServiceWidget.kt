@@ -18,9 +18,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.platform.lang.lsWidget.LanguageServiceItemRunningState
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
+import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.util.IconUtil
@@ -66,8 +68,9 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
     val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
 
-    val widgetIcon = fileSpecificItems.takeIf { it.isNotEmpty() }?.let { createStatusBarIcon(it) }
-                     ?: AllIcons.Json.Object
+    val widgetIcon = (fileSpecificItems.takeIf { it.isNotEmpty() }?.let { createStatusBarIcon(it) }
+                      ?: AllIcons.Json.Object)
+      .let { addLivenessBadge(it, allItems) }
 
     val widgetText = when {
       fileSpecificItems.size > maxIconsInStatusBar -> "+${fileSpecificItems.size - maxIconsInStatusBar + 1}"
@@ -84,6 +87,14 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     return WidgetState(tooltip, widgetText, true).apply {
       icon = widgetIcon
     }
+  }
+
+  private fun addLivenessBadge(icon: Icon, allItems: List<LanguageServiceWidgetItem>): Icon = when {
+    allItems.any { it.runningState == LanguageServiceItemRunningState.Running } ->
+      IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS)
+    allItems.any { it.runningState == LanguageServiceItemRunningState.Initializing } ->
+      IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.INFORMATION)
+    else -> icon
   }
 
   private fun createStatusBarIcon(widgetItems: List<LanguageServiceWidgetItem>): Icon {

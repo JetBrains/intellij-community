@@ -60,6 +60,15 @@ interface PyTool {
   fun onEnabledChanged(project: Project, enabled: Boolean) {}
 
   /**
+   * Whether this tool is currently the project's selected type engine. Tools that can double as an
+   * external type engine (Pyrefly, ty) override this; ordinary LSP tools keep the default. When it
+   * is `true` the External Tools UI locks this tool's enable toggle (it is governed by the Type
+   * Engine settings instead), and [isActiveOn] reports the tool as active so the shared LSP server
+   * and its features stay on while the tool acts as the engine.
+   */
+  fun isSelectedAsTypeEngine(project: Project): Boolean = false
+
+  /**
    * Snapshot every configuration field this tool owns, for FUS logging. The default returns
    * just `enabled` + `executableDiscoveryMode` (read from [PyToolsState]); tools with extra
    * settings (e.g. LSP feature flags) override and `copy(...)` the result to add them.

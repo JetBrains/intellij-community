@@ -22,7 +22,7 @@ internal class ForwardPortAndOpenInBrowserAction :
     e.coroutineScope.launch {
       val localPort = manager.forwardPort(model.eelDescriptor, item.remotePort)
                       ?: return@launch
-      TerminalPortForwardingPersistenceService.getInstance(project).persistPort(item.remotePort)
+      TerminalPortForwardingPersistenceService.getInstanceOrNull(project)?.persistPort(item.remotePort)
       BrowserUtil.browse("http://127.0.0.1:$localPort")
     }
   }

@@ -18,7 +18,7 @@ internal const val RDCT_TEST_FRAMEWORK_MODULE = "intellij.rdct.testFramework"
 internal const val IDE_STARTER_RUN_MODES_ENABLED_KEY = "devkit.ide.starter.run.modes.enabled"
 
 internal fun isIdeStarterRunModesEnabled(): Boolean {
-  return Registry.`is`(IDE_STARTER_RUN_MODES_ENABLED_KEY, true)
+  return Registry.`is`(IDE_STARTER_RUN_MODES_ENABLED_KEY, false)
 }
 
 internal fun isIdeStarterModule(module: Module): Boolean {

@@ -13,18 +13,21 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.PathIconKey
 
+/** Creates an Int UI light [RadioButtonStyle] with the provided parameters. */
 public fun RadioButtonStyle.Companion.light(
     colors: RadioButtonColors = RadioButtonColors.light(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.light(),
 ): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
+/** Creates an Int UI dark [RadioButtonStyle] with the provided parameters. */
 public fun RadioButtonStyle.Companion.dark(
     colors: RadioButtonColors = RadioButtonColors.dark(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.dark(),
 ): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
+/** Creates an Int UI light [RadioButtonColors] with the provided parameters. */
 public fun RadioButtonColors.Companion.light(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
@@ -42,6 +45,7 @@ public fun RadioButtonColors.Companion.light(
         contentSelectedDisabled = contentSelectedDisabled,
     )
 
+/** Creates an Int UI dark [RadioButtonColors] with the provided parameters. */
 public fun RadioButtonColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
@@ -59,6 +63,7 @@ public fun RadioButtonColors.Companion.dark(
         contentSelectedDisabled = contentSelectedDisabled,
     )
 
+/** Creates an Int UI default [RadioButtonMetrics] with the provided parameters. */
 public fun RadioButtonMetrics.Companion.defaults(
     radioButtonSize: DpSize = DpSize(24.dp, 24.dp),
     outlineSize: DpSize = DpSize(17.dp, 17.dp),
@@ -76,11 +81,13 @@ public fun RadioButtonMetrics.Companion.defaults(
         iconContentGap = iconContentGap,
     )
 
+/** Creates an Int UI light [RadioButtonIcons] with the provided parameters. */
 public fun RadioButtonIcons.Companion.light(
     radioButton: IconKey =
         PathIconKey(path = "com/intellij/ide/ui/laf/icons/intellij/radio.svg", iconClass = RadioButtonIcons::class.java)
 ): RadioButtonIcons = RadioButtonIcons(radioButton)
 
+/** Creates an Int UI dark [RadioButtonIcons] with the provided parameters. */
 public fun RadioButtonIcons.Companion.dark(
     radioButton: IconKey =
         PathIconKey(path = "com/intellij/ide/ui/laf/icons/darcula/radio.svg", iconClass = RadioButtonIcons::class.java)

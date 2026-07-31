@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.CommandLineUtil
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,7 @@ import java.net.URI
 import java.nio.file.Path
 
 @ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
     private val LOG = logger<BrowserLauncherAppless>()
@@ -52,44 +54,35 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       browse(url, browser = null, project = null)
     }
     else {
-      val file = java.io.File(url)
-      if (isDesktopActionSupported(Desktop.Action.OPEN)) {
-        if (!file.exists()) {
-          showError(IdeBundle.message("error.file.does.not.exist", file.path), project = null)
-          return
-        }
-        openWithDesktopApi(url, file)
-      }
-      else {
-        browse(file)
-      }
+      browse(Path.of(url))
     }
-  }
-
-  private fun openWithDesktopApi(url: String, file: java.io.File) {
-    getScope(null).launch {
-      try {
-        LOG.debug { "trying Desktop#open on [${url}]" }
-        Desktop.getDesktop().open(file)
-      }
-      catch (e: IOException) {
-        LOG.warn("[$url]", e)
-        browse(file)
-      }
-    }
-  }
-
-  @Suppress("UsagesOfObsoleteApi")
-  override fun browse(file: java.io.File) {
-    val path = file.absolutePath
-    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
-    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
   }
 
   override fun browse(file: Path) {
-    val path = file.toAbsolutePath().toString()
-    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
-    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
+    if (isDesktopActionSupported(Desktop.Action.OPEN)) {
+      openWithDesktopApi(file)
+    }
+    else {
+      open(file)
+    }
+  }
+
+  private fun openWithDesktopApi(file: Path) {
+    getScope(null).launch {
+      try {
+        LOG.debug { "trying Desktop#open on [${file}]" }
+        @Suppress("IO_FILE_USAGE")
+        Desktop.getDesktop().open(file.toFile())
+      }
+      catch (e: IOException) {
+        LOG.warn("[$file]", e)
+        open(file)
+      }
+    }
+  }
+
+  private fun open(file: Path) {
+    browse(file.toAbsolutePath().toUri().toString(), browser = null, project = null)
   }
 
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {

@@ -1,37 +1,37 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v31"
+_RESOLUTION_FACTS_VERSION = "resolution.v33"
 
-_RESOLVER_VERSION = "0.0.23"
+_RESOLVER_VERSION = "0.0.24"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "040972e90da08eaca0d92a803d738ef8ca860e8063295734de8b5f5264237dc6",
+        sha256 = "78cc54525374b3c8dcb2060b7d12252c7f089f5be63c2a4e7a5129472090d7f9",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "a2dd40104acb6e2613a104934de68845a2cf85987232074d80f4ffe7e819a5da",
+        sha256 = "d031ea9d684c4e7050707410e24339b7f436c6ff91bfb0d9a381f0f031d68040",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "4947c215d0d35d13bdd5b019450ea7e24527f5cd8320ead97d375aee89ac1cc3",
+        sha256 = "5fa5ed9881f1720fe063735ac604f10ad0a250e765ec9f13a9de4b1e2ab13f40",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "5f0fd01a55c45325ecc8e50e4d7f1f04bc6441a11fac82e8edf81f079e24f691",
+        sha256 = "630b7470ca8b9febc72da3379b5687a93e30582252ab524163800a7bd9e4c6c8",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "20ded9afca231ba33860f1cd563359bc47fc8aa2b26204ce97e32d1f9a30daa0",
+        sha256 = "6750cfcb5e7af311e932263d772b47009379b61e02ea0a4cc9972cbe7fe19d34",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "20ded9afca231ba33860f1cd563359bc47fc8aa2b26204ce97e32d1f9a30daa0",
+        sha256 = "6750cfcb5e7af311e932263d772b47009379b61e02ea0a4cc9972cbe7fe19d34",
     ),
 }
 
@@ -452,9 +452,6 @@ def _resolve_fresh(module_ctx, config):
         module_ctx.path(resolver_binary.filename),
         "--output-manifest-file",
         module_ctx.path(resolution_path),
-        "--allowed-concurrent-connections=15",
-        "--request-timeout-ms=30000",
-        "--connect-timeout-ms=30000",
     ]
     for dep in config.deps:
         args.extend(["--coordinate", dep])

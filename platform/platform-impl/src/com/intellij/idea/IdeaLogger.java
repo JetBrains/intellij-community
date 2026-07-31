@@ -9,7 +9,7 @@ import com.intellij.diagnostic.logs.LoggerConfigFromSystemProperties;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
-import com.intellij.ide.plugins.PluginUtilImpl;
+import com.intellij.ide.plugins.PluginUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -231,9 +231,14 @@ public final class IdeaLogger extends JulLogger {
 
     // do not use getInstance here - container maybe already disposed
     if (t != null && PluginManagerCore.arePluginsInitialized()) {
-      var plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
-      if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
-        logSevere("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+      var pluginSet = PluginManagerCore.getPluginSetOrNull();
+      var idAndPlugin = pluginSet == null ? null : PluginUtils.findPlugin(t, pluginSet);
+      var id = idAndPlugin == null ? null : idAndPlugin.getFirst();
+      var plugin = idAndPlugin == null ? null : idAndPlugin.getSecond();
+      if (id != null && (plugin == null || !plugin.isBundled() || plugin.allowBundledUpdate())) {
+        logSevere(plugin == null
+                  ? "Plugin to blame: " + id.getIdString()
+                  : "Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
       }
     }
 

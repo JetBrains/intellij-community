@@ -1,7 +1,7 @@
 from _typeshed import Unused
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
-from typing import Any, Final, Literal, NoReturn, overload, type_check_only
-from typing_extensions import Self
+from typing import Any, Final, Literal, overload, type_check_only
+from typing_extensions import Never, Self
 
 import numpy
 from _cffi_backend import _CDataBase
@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 # This is not a real subclassing. Just ensuring type-checkers sees this type as compatible with _CDataBase
 # pyright has no error code for subclassing final
 @type_check_only
-class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
+class _JackPositionT(_CDataBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]  # ty:ignore[subclass-of-final-class]
     audio_frames_per_video_frame: float
     bar: int
     bar_start_tick: float
@@ -239,8 +239,8 @@ class OwnMidiPort(MidiPort, OwnPort):
     def __init__(self, port_ptr: _CDataBase, client: Client) -> None: ...
     # The implementation raises NotImplementedError, but this is not an abstract class.
     # `get_buffer()` and `get_array()` are disabled for OwnMidiPort
-    def get_buffer(self) -> NoReturn: ...
-    def get_array(self) -> NoReturn: ...
+    def get_buffer(self) -> Never: ...
+    def get_array(self) -> Never: ...
     @property
     def max_event_size(self) -> int: ...
     @property

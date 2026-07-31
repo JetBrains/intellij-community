@@ -6,7 +6,6 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Test
 
 /**
@@ -100,17 +99,6 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
       expr = UserId
       #└ TYPE (int) -> UserId
       """)
-
-  @Test
-  fun `NewType factory type before 310`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
-    """
-      from typing import NewType
-      UserId = NewType('UserId', int)
-      expr = UserId
-      #└ TYPE (int) -> UserId
-      """,
-  )
 
   @Test
   @TestFor(issues = ["PY-21302"])

@@ -21,6 +21,7 @@ from django.db.models.fields.reverse_related import ManyToOneRel as ManyToOneRel
 from django.db.models.fields.reverse_related import OneToOneRel as OneToOneRel
 from django.db.models.query_utils import FilteredRelation, PathInfo, Q
 from django.db.models.sql.where import WhereNode
+from django.forms.widgets import Widget
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise, cached_property
 from typing_extensions import Self, TypeVar, override
@@ -89,8 +90,6 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
     def set_attributes_from_rel(self) -> None: ...
     def do_related_class(self, other: type[Model], cls: type[Model]) -> None: ...
     def get_limit_choices_to(self) -> _LimitChoicesTo: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
     def related_query_name(self) -> str: ...
     @property
     def target_field(self) -> Field: ...
@@ -225,7 +224,26 @@ class ForeignKey(ForeignObject[_ST, _GT]):
     @override
     def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
     @override
-    def formfield(self, *, using: str | None = None, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
+    def formfield(
+        self,
+        *,
+        form_class: type[forms.Field] | None = ...,
+        choices_form_class: type[forms.ChoiceField] | None = ...,
+        required: bool = ...,
+        widget: Widget | type[Widget] | None = ...,
+        label: _StrOrPromise | None = ...,
+        initial: Any | None = ...,
+        help_text: _StrOrPromise = ...,
+        error_messages: _ErrorMessagesMapping | None = ...,
+        show_hidden_initial: bool = ...,
+        validators: Iterable[_ValidatorCallable] = ...,
+        localize: bool = ...,
+        disabled: bool = ...,
+        label_suffix: str | None = ...,
+        # ForeignKey adds `using`
+        using: str | None = ...,
+        **kwargs: Any,
+    ) -> forms.Field | None: ...
     @override
     def cast_db_type(self, connection: BaseDatabaseWrapper) -> str | None: ...
     def convert_empty_strings(self, value: Any, expression: Expression, connection: BaseDatabaseWrapper) -> Any: ...
@@ -286,8 +304,6 @@ class OneToOneField(ForeignKey[_ST, _GT]):
     @overload
     @override
     def __get__(self, instance: Any, owner: Any) -> Self: ...
-    @override
-    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
     forward_related_accessor_class: type[ForwardOneToOneDescriptor]
     related_accessor_class: type[ReverseOneToOneDescriptor]  # type: ignore[assignment]
 
@@ -368,7 +384,26 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
     def m2m_target_field_name(self) -> str: ...
     def m2m_reverse_target_field_name(self) -> str: ...
     @override
-    def formfield(self, *, using: str | None = None, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
+    def formfield(
+        self,
+        *,
+        form_class: type[forms.Field] | None = ...,
+        choices_form_class: type[forms.ChoiceField] | None = ...,
+        required: bool = ...,
+        widget: Widget | type[Widget] | None = ...,
+        label: _StrOrPromise | None = ...,
+        initial: Any | None = ...,
+        help_text: _StrOrPromise = ...,
+        error_messages: _ErrorMessagesMapping | None = ...,
+        show_hidden_initial: bool = ...,
+        validators: Iterable[_ValidatorCallable] = ...,
+        localize: bool = ...,
+        disabled: bool = ...,
+        label_suffix: str | None = ...,
+        # ManyToManyField adds `using`
+        using: str | None = ...,
+        **kwargs: Any,
+    ) -> forms.Field | None: ...
     @cached_property
     def path_infos(self) -> list[PathInfo]: ...
     @cached_property

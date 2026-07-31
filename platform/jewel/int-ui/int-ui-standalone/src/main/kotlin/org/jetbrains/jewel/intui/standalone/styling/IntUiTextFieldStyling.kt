@@ -14,6 +14,7 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 
+/** Creates an Int UI light [TextFieldStyle] with the provided parameters. */
 public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
@@ -32,6 +33,7 @@ public fun TextFieldStyle.Companion.light(
         ),
 ): TextFieldStyle = TextFieldStyle(colors, metrics, iconButtonStyle)
 
+/** Creates an Int UI dark [TextFieldStyle] with the provided parameters. */
 public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
@@ -49,6 +51,7 @@ public fun TextFieldStyle.Companion.dark(
         ),
 ): TextFieldStyle = TextFieldStyle(colors, metrics, iconButtonStyle)
 
+/** Creates an Int UI light [TextFieldColors] with the provided parameters. */
 public fun TextFieldColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     backgroundDisabled: Color = Color.Unspecified,
@@ -96,6 +99,7 @@ public fun TextFieldColors.Companion.light(
         placeholder = placeholder,
     )
 
+/** Creates an Int UI dark [TextFieldColors] with the provided parameters. */
 public fun TextFieldColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     backgroundDisabled: Color = Color.Unspecified,
@@ -143,6 +147,7 @@ public fun TextFieldColors.Companion.dark(
         placeholder = placeholder,
     )
 
+/** Creates an Int UI default [TextFieldMetrics] with the provided parameters. */
 public fun TextFieldMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp), // 8 + 1 (border)

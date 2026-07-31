@@ -1,0 +1,2 @@
+package ppp;
+class A { public static int f() { return 1; } }  // A narrowed to package-private

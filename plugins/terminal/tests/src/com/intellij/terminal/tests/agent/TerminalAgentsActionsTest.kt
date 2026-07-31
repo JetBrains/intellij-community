@@ -8,13 +8,15 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
-import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import com.intellij.terminal.frontend.action.createTerminalAgentActions
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.agent.TERMINAL_AI_AGENTS_REGISTRY_KEY
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.TerminalAgentProvider
+import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 import org.junit.Test
@@ -26,6 +28,18 @@ internal class TerminalAgentsActionsTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     Registry.get(TERMINAL_AI_AGENTS_REGISTRY_KEY).setValue(true, testRootDisposable)
+    // The Junie/Codex agent keys used below are stable IDs referenced by hardcoded actions
+    // (e.g. LaunchJunieCliAction); the fake provider only needs to make those keys resolvable.
+    ExtensionTestUtil.maskExtensions(
+      TerminalAgentProvider.EP_NAME,
+      listOf(
+        FakeTerminalAgentProvider(
+          TestTerminalAgent(agentKey = TerminalAgent.AgentKey("junie"), showsNewBadge = true),
+          TestTerminalAgent(agentKey = TerminalAgent.AgentKey("codex")),
+        ),
+      ),
+      testRootDisposable,
+    )
     TerminalAgentsStateService.getInstance().isSelectorVisible = true
     TerminalAgentsStateService.getInstance().lastLaunchedAgentKey = null
   }

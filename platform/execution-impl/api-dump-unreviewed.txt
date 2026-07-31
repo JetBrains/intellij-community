@@ -1123,6 +1123,7 @@ f:com.intellij.execution.target.TargetCustomToolWizardStepBase$Companion
 - f:getID():java.lang.Object
 f:com.intellij.execution.target.TargetEnvironmentLanguagesPanel
 - <init>(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier,com.intellij.execution.target.ContributedConfigurationsList,kotlin.jvm.functions.Function0):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier,com.intellij.execution.target.ContributedConfigurationsList,kotlin.jvm.functions.Function0):V
 - f:applyAll():V
 - f:disposeUIResources():V
 - f:getComponent():javax.swing.JComponent
@@ -1134,12 +1135,14 @@ f:com.intellij.execution.target.TargetEnvironmentWizard
 - com.intellij.ide.wizard.AbstractWizardEx
 - sf:Companion:com.intellij.execution.target.TargetEnvironmentWizard$Companion
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.execution.target.TargetEnvironmentConfiguration,java.util.List):V
+- sf:createWizard(com.intellij.openapi.module.Module,com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.LanguageRuntimeType):com.intellij.execution.target.TargetEnvironmentWizard
 - sf:createWizard(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.LanguageRuntimeType):com.intellij.execution.target.TargetEnvironmentWizard
 - doCancelAction():V
 - f:getProject():com.intellij.openapi.project.Project
 - f:getSubject():com.intellij.execution.target.TargetEnvironmentConfiguration
 - show():V
 f:com.intellij.execution.target.TargetEnvironmentWizard$Companion
+- f:createWizard(com.intellij.openapi.module.Module,com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.LanguageRuntimeType):com.intellij.execution.target.TargetEnvironmentWizard
 - f:createWizard(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentType,com.intellij.execution.target.LanguageRuntimeType):com.intellij.execution.target.TargetEnvironmentWizard
 - f:defaultDialogInsets():com.intellij.util.ui.JBInsets
 a:com.intellij.execution.target.TargetEnvironmentWizardStepKt
@@ -1174,6 +1177,7 @@ a:com.intellij.execution.target.TargetWizardModel
 - f:commit():V
 - p:doCommit():V
 - a:getLanguageConfigForIntrospection():com.intellij.execution.target.LanguageRuntimeConfiguration
+- a:getModule():com.intellij.openapi.module.Module
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSubject():com.intellij.execution.target.TargetEnvironmentConfiguration
 - prepareTarget():V
@@ -1604,6 +1608,7 @@ f:com.intellij.execution.wsl.target.WslTargetType
 - createDefaultConfig():com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 - createEnvironmentRequest(com.intellij.openapi.project.Project,com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration):com.intellij.execution.target.TargetEnvironmentRequest
 - createSerializer(com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration):com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
+- createStepsForNewWizard(com.intellij.openapi.module.Module,com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration,com.intellij.execution.target.LanguageRuntimeType):java.util.List
 - createStepsForNewWizard(com.intellij.openapi.project.Project,com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration,com.intellij.execution.target.LanguageRuntimeType):java.util.List
 - duplicateConfig(com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration):com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 - getDisplayName():java.lang.String

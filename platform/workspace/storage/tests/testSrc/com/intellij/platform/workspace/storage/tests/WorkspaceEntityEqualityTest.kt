@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
@@ -31,9 +31,9 @@ class WorkspaceEntityEqualityTest {
   @Test
   fun `equality from different stores`() {
     val entityOne = builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                      ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     val entityTwo = builderTwo addEntity SampleEntity(false, "Data", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                      ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
 
     assertNotEquals(entityOne, entityTwo)
   }
@@ -41,7 +41,7 @@ class WorkspaceEntityEqualityTest {
   @Test
   fun `equality modified entity in builder`() {
     val entityOne = builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                      ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     val entityTwo = builderOne.modifySampleEntity(entityOne) {
       stringProperty = "AnotherData"
     }
@@ -52,7 +52,7 @@ class WorkspaceEntityEqualityTest {
 
   @Test
   fun `equality modified entity`() {
-    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
     val storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single()
@@ -67,9 +67,9 @@ class WorkspaceEntityEqualityTest {
 
   @Test
   fun `equality modified another entity`() {
-    builderOne addEntity SampleEntity(false, "Data1", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data1", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
-    builderOne addEntity SampleEntity(false, "Data2", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data2", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
     val storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
@@ -86,9 +86,9 @@ class WorkspaceEntityEqualityTest {
 
   @Test
   fun `equality in set`() {
-    builderOne addEntity SampleEntity(false, "Data1", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data1", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
-    builderOne addEntity SampleEntity(false, "Data2", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data2", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
 
     val checkSet = HashSet<SampleEntity>()
@@ -120,7 +120,7 @@ class WorkspaceEntityEqualityTest {
   @Disabled
   @Test
   fun `equality for entity from event and from updated snapshot after dummy modification`() {
-    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
     builderTwo.applyChangesFrom(builderOne)
     val entityInEvent = builderTwo.collectChanges()[SampleEntity::class.java]!!.single().newEntity!!
@@ -142,7 +142,7 @@ class WorkspaceEntityEqualityTest {
 
   @Test
   fun `cache for requests works`() {
-    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+    builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), ConcurrentVirtualFileUrlManager().getOrCreateFromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
     val snapshot = builderOne.toSnapshot()
 

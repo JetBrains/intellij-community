@@ -43,7 +43,7 @@ internal object SpecificationFUSCollector: CounterUsagesCollector() {
   ) {
     val textLength = specifications.sumOf { it.currentText.length }
     val issues = analysis.data.values.sumOf { it.size }
-    val costs = (COEFFICIENT * analysis.spentCredits).roundToLong()
+    val costs = (COEFFICIENT * analysis.spentCredits()).roundToLong()
     analysisEvent.log(
       ANALYZER_FIELD.with(analyzer),
       TEXT_LENGTH_FIELD.with(textLength),

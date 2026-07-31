@@ -80,7 +80,7 @@ class InsertEmptyTableAction: DumbAwareAction() {
     val project = event.project
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.language?.supportsMarkdown(event.dataContext) == true
+    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.supportsMarkdown(event.dataContext) == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

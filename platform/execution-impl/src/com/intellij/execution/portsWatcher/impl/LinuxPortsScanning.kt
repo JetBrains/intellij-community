@@ -8,17 +8,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isLinux
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CancellationException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 
 private val LOG = logger<ProcessPortsWatcher>()
@@ -111,20 +111,21 @@ private fun readLinuxSocketInodesForPid(eelDescriptor: EelDescriptor, pid: Long)
 
   val result = mutableListOf<Long>()
   for (fdEntry in entries) {
-    val target = try {
-      Files.readSymbolicLink(fdEntry).toString()
+    val link: Path = try {
+      Files.readSymbolicLink(fdEntry)
     }
     catch (_: NoSuchFileException) {
       continue  // Process can be already terminated
     }
-    // The Linux kernel renders required symlink targets as "socket:[<inode>]".
-    // On a Windows host, however, the WSL 9P layer and IntelliJ's EEL nio provider transliterate ':'
+    // We expect that `link` here is either "socket:[<inode>]" or some unrelated path.
+    // But on a Windows host, the WSL 9P layer and IntelliJ's EEL nio provider transliterate ':'
     // — illegal in Windows paths — to the private-use char U+F03A (see IJPL-213371),
-    // so the target arrives as "socket[<inode>]".
-    // Use the `localToIjent` utility to get the correct socket representation (with ':').
-    @OptIn(EelDelicateApi::class)
-    val translatedTarget = localToIjent(target)
-    val match = socketInodeRegex.matchEntire(translatedTarget) ?: continue
+    // so the link arrives as "socket[<inode>]".
+    // The native path with ':' can be only obtained from the corresponding EelPath.
+    // To get EelPath, we first resolve the link against the parent dir to get the absolute path (asEelPath works only with absolute paths).
+    // Then `fileName` is expected to be our "socket:[<inode>]" with correct ':' on any host.
+    val socketEelPath = fdDir.resolve(link).asEelPath()
+    val match = socketInodeRegex.matchEntire(socketEelPath.fileName) ?: continue
     val inode = match.groupValues[1].toLongOrNull() ?: continue
     result.add(inode)
   }

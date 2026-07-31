@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -28,7 +27,6 @@ import javax.swing.event.HyperlinkListener
 abstract class ToolWindowManager {
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): ToolWindowManager = project.service<ToolWindowManager>()
   }
 

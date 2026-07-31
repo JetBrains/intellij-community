@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.IconUtil.copy
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBCachingScalableIcon
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Component
@@ -131,9 +132,19 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
 
     private fun findUnderlyingLayeredIcon(icon: Icon?): LayeredIcon? {
+      // Don't recurse into lazy/deferred icons because of performance/read-access issues
       return when (icon) {
         is LayeredIcon -> icon
-        is RetrievableIcon -> findUnderlyingLayeredIcon(icon.retrieveIcon())
+        is DeferredIcon -> {
+          if (EDT.isCurrentThreadEdt() && icon.isDone && icon is RetrievableIcon)
+            findUnderlyingLayeredIcon(icon.retrieveIcon())
+          else null
+        }
+        is RetrievableIcon -> {
+          if (icon.isComplex)
+            null // LazyIcon, for example
+          else findUnderlyingLayeredIcon(icon.retrieveIcon())
+        }
         else -> null
       }
     }

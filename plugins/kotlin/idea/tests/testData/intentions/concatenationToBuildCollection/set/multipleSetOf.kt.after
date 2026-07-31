@@ -1,9 +1,0 @@
-fun main() {
-    val a = buildSet {
-        addAll(setOf(1, 2))
-        addAll(setOf(3, 4))
-        add(5)
-        addAll(setOf(6, 7))
-        add(8)
-    }
-}

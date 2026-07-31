@@ -50,7 +50,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?>
 
   @ApiStatus.Internal
-  abstract fun getVarianceCache(): MutableMap<PyTypeParameterType, PyTypeParameterType.Variance>
+  abstract fun getVarianceCache(): MutableMap<PyTypeParameterType, PyVariance>
   abstract fun getKnownType(element: PyTypedElement): PyType?
   abstract fun getKnownReturnType(callable: PyCallable): PyType?
 

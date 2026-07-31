@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.completion.test
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.name.ClassId
 
@@ -38,7 +40,7 @@ class KtSymbolFromIndexProviderTest : JavaCodeInsightFixtureTestCase() {
         }
 
         val fqname = ReadAction.compute<String, Exception> {
-            val kaModule = KaModuleProvider.getModule(project, myFixture.file, useSiteModule = null)
+            val kaModule = myFixture.file.kaModule(useSiteModule = null)
             analyze(kaModule) {
                 val user = findClass(ClassId.fromString("com/example/app/User"))!!
                 val index = KtSymbolFromIndexProvider(null)

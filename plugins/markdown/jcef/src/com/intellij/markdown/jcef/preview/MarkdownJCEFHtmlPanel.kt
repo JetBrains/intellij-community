@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.jcef.preview
 
+import com.intellij.markdown.frontend.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import com.intellij.markdown.jcef.preview.impl.FileSchemeResourcesProcessor
 import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
 import com.intellij.markdown.jcef.preview.impl.JcefBrowserPipeImpl
@@ -57,7 +58,6 @@ import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles.fontSizeOptions
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
-import org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus

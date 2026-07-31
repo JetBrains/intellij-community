@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
 import com.intellij.execution.ExecutionException
@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.management.PythonPackageManager
 
-open class RunningPackagingTasksListener(private val myModule: Module) : PyPackageManagerUI.Listener {
+internal class RunningPackagingTasksListener(private val myModule: Module) : PyPackageManagerUI.Listener {
   override fun started() {
     setRunningPackagingTasks(myModule, true)
   }

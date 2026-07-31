@@ -8,6 +8,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE
 import org.jetbrains.plugins.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -1536,6 +1537,7 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
+  @TargetVersions(GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE)
   fun `test assertion result of Junit 4 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-4") {
       withSettingsFile(gradleVersion) {
@@ -1822,7 +1824,7 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  @TargetVersions(JUNIT_5_SUPPORTED_VERSIONS)
+  @TargetVersions(JUNIT_5_SUPPORTED_VERSIONS, GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE)
   fun `test assertion result of Junit 5 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
       withSettingsFile(gradleVersion) {
@@ -2147,6 +2149,7 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
+  @TargetVersions(GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE)
   fun `test controlled spread of Gradle daemon's pollution`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """

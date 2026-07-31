@@ -55,7 +55,7 @@ interface TransientEditor : MutableEditor {
 interface TransientDocument : MutableDocument {
   val accumulatedChanges: Operation
 
-  fun applyOthersChangesAndReset(operation: NewOffsetProvider, afterText: Text)
+  fun applyOthersChangesAndReset(newOffsetProvider: NewOffsetProvider, afterText: Text)
 }
 
 internal interface EditListener {
@@ -208,8 +208,10 @@ private class PerCaretOrchestrator {
   }
 }
 
-private class TransientEditorImpl(private val original: MutableEditor,
-                                  private val syncEditor: suspend (TransientEditor) -> Unit) : TransientEditor, MutableEditor by original {
+private class TransientEditorImpl(
+  private val original: MutableEditor,
+  private val syncEditor: suspend (TransientEditor) -> Unit,
+) : TransientEditor, MutableEditor by original {
   override val originalEditor: MutableEditor
     get() = original
 
@@ -225,9 +227,15 @@ private class TransientEditorImpl(private val original: MutableEditor,
     })
   }
 
-  override val multiCaret: SimpleMutableMultiCaret = SimpleMutableMultiCaret(document,
-    SimpleMultiCaretState(
-      MultiCaretData().addCarets(original.carets), original.primaryCaret.caretId, original.multiCaret.meta))
+  override val multiCaret: SimpleMutableMultiCaret =
+    SimpleMutableMultiCaret(
+      document = document,
+      state = SimpleMultiCaretState(
+        multiCaretData = MultiCaretData().addCarets(original.carets),
+        primaryCaretId = original.primaryCaret.caretId,
+        meta = original.multiCaret.meta,
+      ),
+    )
 
   override suspend fun commitEdits() {
     if (document.accumulatedChanges.isIdentity()) return
@@ -277,7 +285,8 @@ private class TransientDocumentImpl(val original: MutableDocument) : TransientDo
     get() = documentIntermediateAnchorStorage.intervals.asIterable().filter { it.id in anchorIds }.map { AnchorId(it.id) to it.from }
 
   val rangeMarkersForDocument: List<Pair<RangeMarkerId, TextRange>>
-    get() = documentIntermediateAnchorStorage.intervals.asIterable().filter { it.id in rangeMarkerIds }.map { RangeMarkerId(it.id) to TextRange(it.from, it.to) }
+    get() = documentIntermediateAnchorStorage.intervals.asIterable().filter { it.id in rangeMarkerIds }
+      .map { RangeMarkerId(it.id) to TextRange(it.from, it.to) }
 
   fun addEditListener(listener: EditListener) {
     editListeners.add(listener)
@@ -324,8 +333,22 @@ private class TransientDocumentImpl(val original: MutableDocument) : TransientDo
   override fun createRangeMarker(rangeStart: Long, rangeEnd: Long, lifetime: AnchorLifetime): RangeMarkerId {
     return RangeMarkerId(UID.random()).also {
       when (lifetime) {
-        AnchorLifetime.MUTATION -> intermediateAnchorStorage = intermediateAnchorStorage.addRangeMarker(it, rangeStart, rangeEnd, false, false)
-        AnchorLifetime.DOCUMENT -> documentIntermediateAnchorStorage = documentIntermediateAnchorStorage.addRangeMarker(it, rangeStart, rangeEnd, false, false)
+        AnchorLifetime.MUTATION -> intermediateAnchorStorage =
+          intermediateAnchorStorage.addRangeMarker(
+            markerId = it,
+            from = rangeStart,
+            to = rangeEnd,
+            closedLeft = false,
+            closedRight = false,
+          )
+        AnchorLifetime.DOCUMENT -> documentIntermediateAnchorStorage =
+          documentIntermediateAnchorStorage.addRangeMarker(
+            markerId = it,
+            from = rangeStart,
+            to = rangeEnd,
+            closedLeft = false,
+            closedRight = false,
+          )
       }
       rangeMarkerIds.add(it.id)
     }
@@ -348,8 +371,10 @@ private class TransientDocumentImpl(val original: MutableDocument) : TransientDo
            ?: original.resolveRangeMarker(markerId)
   }
 
-  override fun batchUpdateAnchors(anchorIds: List<AnchorId>, anchorOffsets: LongArray,
-                                  rangeIds: List<RangeMarkerId>, ranges: List<TextRange>) {
+  override fun batchUpdateAnchors(
+    anchorIds: List<AnchorId>, anchorOffsets: LongArray,
+    rangeIds: List<RangeMarkerId>, ranges: List<TextRange>
+  ) {
     error("transient document $original shouldn't be original of another transient document $this")
   }
 
@@ -365,7 +390,7 @@ fun MutableEditor.caretsSubsetView(initialCaretIds: Collection<CaretId>): Mutabl
   val originalCaret = multiCaret
 
   return object : MutableEditor by this {
-    val simpleCaret = SimpleMutableMultiCaret(document,SimpleMultiCaretState(
+    val simpleCaret = SimpleMutableMultiCaret(document, SimpleMultiCaretState(
       MultiCaretData().addCarets(initialCaretIds.map { originalCaret.multiCaretData.caretsById[it]!! }),
       originalCaret.primaryCaret.takeIf { initialCaretIds.contains(it.caretId) }?.caretId ?: initialCaretIds.first(),
       originalCaret.meta

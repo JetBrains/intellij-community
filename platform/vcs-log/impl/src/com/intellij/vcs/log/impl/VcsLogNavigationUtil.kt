@@ -166,7 +166,7 @@ object VcsLogNavigationUtil {
   fun VcsLogUiEx.jumpToHash(commitHash: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     val trimmedHash = StringUtil.trim(commitHash) { ch -> !StringUtil.containsChar("()'\"`", ch) }
 
-    if (!VcsLogUtil.HASH_PREFIX_REGEX.matcher(trimmedHash).matches()) {
+    if (!VcsLogUtil.GIT_HASH_PREFIX_REGEX.matcher(trimmedHash).matches()) {
       if (!silently) {
         VcsNotifier.getInstance(logData.project).notifyWarning(VcsLogNotificationIdsHolder.NAVIGATION_ERROR, "",
                                                                VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash))

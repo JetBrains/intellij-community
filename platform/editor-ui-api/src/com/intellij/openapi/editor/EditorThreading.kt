@@ -2,11 +2,9 @@
 package com.intellij.openapi.editor
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.elf.ElfFeatureFlag
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -77,44 +75,6 @@ interface EditorThreading {
       }
       else {
         WriteIntentReadAction.run(action)
-      }
-    }
-
-    @Internal
-    @JvmStatic
-    fun assertWriteAllowed() {
-      if (ElfFeatureFlag.isEnabled() && EDT.isCurrentThreadEdt()) {
-        return
-      }
-      ThreadingAssertions.assertWriteAccess()
-    }
-
-    @Internal
-    @JvmStatic
-    fun write(action: Runnable) {
-      if (ElfFeatureFlag.isEnabled() && EDT.isCurrentThreadEdt() && ModalityState.current() == ModalityState.nonModal()) {
-        action.run()
-      }
-      else {
-        /**
-         * Modal dialogs hold WIL on EDT, preventing BGT WA from be started.
-         * See usages of com.intellij.openapi.ui.impl.AbstractDialog.show.
-         * It means if an editor is inside a modal dialog (e.g., Create Branch from <branch>),
-         * then the corresponding ui document can't be synced with the real one until the editor is closed,
-         * which makes no sense.
-         */
-        ApplicationManager.getApplication().runWriteAction(action)
-      }
-    }
-
-    @Internal
-    @JvmStatic
-    fun read(action: Runnable) {
-      if (ElfFeatureFlag.isEnabled() && EDT.isCurrentThreadEdt()) {
-        action.run()
-      }
-      else {
-        ApplicationManager.getApplication().runReadAction(action)
       }
     }
   }

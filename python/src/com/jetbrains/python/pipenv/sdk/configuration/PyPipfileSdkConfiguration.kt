@@ -48,6 +48,8 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PIPENV_TOOL_ID
 
+  override val potentialDependencyFiles: Set<String> = setOf(PIP_FILE)
+
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module) }
@@ -109,7 +111,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val sdk = createSdk(
         PathHolder.Eel(file.toNioPath()),
-        PyPipEnvSdkAdditionalData(),
+        PyPipEnvSdkAdditionalData(Path.of(basePath)),
         suggestedSdkName(basePath)
       ).getOr { return@withBackgroundProgress it }
 

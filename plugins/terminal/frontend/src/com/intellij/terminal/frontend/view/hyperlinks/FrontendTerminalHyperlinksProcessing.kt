@@ -6,12 +6,12 @@ import com.intellij.execution.impl.buildHighlighting
 import com.intellij.execution.impl.buildHyperlink
 import com.intellij.execution.impl.buildInlay
 import com.intellij.execution.impl.createEditorTextDecorationApplier
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -24,10 +24,11 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.durable
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
@@ -35,7 +36,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -55,15 +55,11 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkClicke
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSession
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.session.toDto
 import org.jetbrains.plugins.terminal.hyperlinks.session.toFilterResultInfo
 import org.jetbrains.plugins.terminal.hyperlinks.toPlatformId
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -84,32 +80,28 @@ fun installHyperlinksProcessing(
   // The modification stamp of the most recent highlighting task whose
   // `TerminalHyperlinksOutputEvent.TaskFinished` event has been observed.
   val lastFinishedTaskStamp = MutableStateFlow(0L)
-  val sessionIdDeferred = CompletableDeferred<TerminalHyperlinksSessionId>(coroutineScope.coroutineContext.job)
   val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
-  coroutineScope.launch {
-    processHyperlinks(project, outputModel, sessionModel, eelDescriptor, sessionIdDeferred, applier, lastFinishedTaskStamp)
+  val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
+    createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))
   }
 
-  return FrontendTerminalHyperlinkFacade(sessionIdDeferred, applier, lastFinishedTaskStamp)
+  coroutineScope.launch(CoroutineName("processHyperlinks")) {
+    processHyperlinks(outputModel, sessionModel, sessionDeferred, applier, lastFinishedTaskStamp)
+  }
+
+  return FrontendTerminalHyperlinkFacade(sessionDeferred, applier, lastFinishedTaskStamp)
 }
 
 private suspend fun processHyperlinks(
-  project: Project,
   outputModel: TerminalOutputModel,
   sessionModel: TerminalSessionModel,
-  eelDescriptor: EelDescriptor,
-  sessionIdDeferred: CompletableDeferred<TerminalHyperlinksSessionId>,
+  sessionDeferred: Deferred<TerminalHyperlinksSession>,
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
 ) = coroutineScope {
   val scope = this
-  val session = createHyperlinksSession(
-    project = project,
-    eelDescriptor = eelDescriptor,
-    coroutineScope = scope.childScope("FrontendTerminalHyperlinksSession")
-  )
-  sessionIdDeferred.complete(session.id)
+  val session = sessionDeferred.await()
 
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
@@ -146,17 +138,20 @@ private suspend fun createHyperlinksSession(
     TerminalHyperlinksRemoteApi.getInstance().createNewSession(request)
   }
   coroutineScope.awaitCancellationAndInvoke(Dispatchers.Default) {
-    TerminalHyperlinksRemoteApi.getInstance().closeSession(sessionId)
+    durable {
+      TerminalHyperlinksRemoteApi.getInstance().closeSession(project.projectId(), sessionId)
+    }
   }
 
   val sessionApi = TerminalHyperlinksSessionRemoteApi.getInstance()
   val inputEventsSink = durable {
-    sessionApi.getInputEventsSink(sessionId)
+    sessionApi.getInputEventsSink(project.projectId(), sessionId)
   }
   val hyperlinkUpdatesChannel = durable {
-    sessionApi.getHyperlinkUpdatesChannel(sessionId)
+    sessionApi.getHyperlinkUpdatesChannel(project.projectId(), sessionId)
   }
   return FrontendTerminalHyperlinksSession(
+    project = project,
     id = sessionId,
     inputEventsSink = inputEventsSink,
     hyperlinkUpdatesChannel = hyperlinkUpdatesChannel
@@ -219,6 +214,11 @@ private fun getContentUpdate(
 ): TerminalOutputContentUpdate? {
   val firstChangedLine = tracker.getFirstChangedLineAndReset() ?: return null
   val startOffset = outputModel.getStartOfLine(firstChangedLine)
+  LOG.trace {
+    "SEND contentUpdate: firstChangedLine=$firstChangedLine startOffset=$startOffset endLine=${outputModel.lastLineIndex} " +
+    "modStamp=${outputModel.modificationStamp} trimStartOffset=${outputModel.startOffset} " +
+    "textLen=${(outputModel.endOffset - startOffset)}"
+  }
   return TerminalOutputContentUpdate(
     charsSequence = outputModel.getText(startOffset, outputModel.endOffset),
     startLine = firstChangedLine,
@@ -240,10 +240,7 @@ private suspend fun processHyperlinkResults(
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
-  val hyperlinksModel = TerminalHyperlinksModel(
-    debugName = debugName,
-    trimOffset = { outputModel.startOffset },
-  )
+  val hyperlinksModel = TerminalHyperlinksModel(debugName = debugName)
 
   for (event in hyperlinkUpdatesChannel) {
     try {
@@ -279,6 +276,10 @@ private suspend fun processHyperlinksOutputEvent(
 ) {
   when (event) {
     is TerminalHyperlinksOutputEvent.HyperlinksUpdated -> {
+      LOG.trace {
+        "HyperlinksUpdated: stamp=${event.documentModificationStamp} covered=[${event.coveredStartOffset},${event.coveredEndOffset}) " +
+        "hyperlinksInEvent=${event.hyperlinks.size}"
+      }
       processHyperlinksUpdatedEvent(
         outputModel = outputModel,
         hyperlinksModel = hyperlinksModel,
@@ -289,9 +290,11 @@ private suspend fun processHyperlinksOutputEvent(
       )
     }
     is TerminalHyperlinksOutputEvent.TaskFinished -> {
+      LOG.trace { "TaskFinished: stamp=${event.documentModificationStamp}" }
       lastFinishedTaskStamp.value = event.documentModificationStamp
     }
     is TerminalHyperlinksOutputEvent.FiltersUpdated -> {
+      LOG.trace { "FiltersUpdated: re-sending whole content" }
       // Send the all-existing content to re-process it.
       val contentUpdate = TerminalOutputContentUpdate(
         charsSequence = outputModel.getText(outputModel.startOffset, outputModel.endOffset),
@@ -316,25 +319,55 @@ private fun processHyperlinksUpdatedEvent(
   event: TerminalHyperlinksOutputEvent.HyperlinksUpdated,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
 ) {
-  val removeFromOffset = event.removeFromOffset
-  if (removeFromOffset != null) {
-    val removed = hyperlinksModel.removeHyperlinks(removeFromOffset)
-    applier.removeDecorations(removed.map { it.toPlatformId() })
+  val modelStartOffset = outputModel.startOffset.toAbsolute()
+  val modelEndOffset = outputModel.endOffset.toAbsolute()
+  val coveredStart = event.coveredStartOffset
+  val coveredEnd = event.coveredEndOffset
+
+  val firstChangedTerminalOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp)
+  if (firstChangedTerminalOffset == null) {
+    // The change history no longer covers this stamp (too many changes happened while the result was being computed),
+    // so we can't tell which part of the result is still valid. Drop the batch rather than risk showing stale links.
+    LOG.trace {
+      "processHyperlinksUpdatedEvent skip stale: stamp=${event.documentModificationStamp} predates the tracked change history"
+    }
+    return
   }
 
-  val modelStartOffset = outputModel.startOffset.toAbsolute()
-  val firstChangedOffset = outputModelChangesTracker.getFirstChangedOffsetSinceStamp(event.documentModificationStamp).toAbsolute()
-  val allHyperlinks = event.hyperlinks
+  val firstChangedOffset = firstChangedTerminalOffset.toAbsolute()
+  val applyUpToOffset = minOf(coveredEnd, firstChangedOffset)
+  LOG.trace {
+    "processHyperlinksUpdatedEvent: modelStart=$modelStartOffset modelEnd=$modelEndOffset covered=[$coveredStart,$coveredEnd) " +
+    "firstChangedOffset=$firstChangedOffset applyUpTo=$applyUpToOffset eventLinks=${event.hyperlinks.size}"
+  }
+  if (applyUpToOffset <= coveredStart) {
+    LOG.trace { "processHyperlinksUpdatedEvent skip stale: the whole covered range changed since the snapshot" }
+    return
+  }
+
+  // Extend the removal past the current output end only when this event fully covers up to the end and none
+  // of the covered range changed since the snapshot, so stale entries left beyond the end are purged out of the model.
+  val coveredRangeUnchanged = firstChangedOffset >= coveredEnd
+  val reachesOutputEnd = coveredEnd >= modelEndOffset
+  val removeUpToOffset = if (coveredRangeUnchanged && reachesOutputEnd) Long.MAX_VALUE else applyUpToOffset
+  val removed = hyperlinksModel.removeHyperlinks(
+    fromAbsoluteOffset = coveredStart,
+    toAbsoluteOffset = removeUpToOffset,
+    trimUntilOffset = modelStartOffset,
+  )
+  applier.removeDecorations(removed.map { it.toPlatformId() })
+
+  val newLinks = event.hyperlinks
     .asSequence()
     .map { it.toFilterResultInfo() }
     .filter { it.absoluteStartOffset >= modelStartOffset }  // Filter out trimmed hyperlinks
-    .filter { it.absoluteEndOffset <= firstChangedOffset }   // Filter out hyperlinks in the range that was changed during links' calculation
+    .filter { it.absoluteEndOffset <= applyUpToOffset }   // Filter out hyperlinks in the range that was changed during links' calculation
     .toList()
 
   // Add only hyperlinks that can be transformed into decorations
-  val hyperlinks = ArrayList<TerminalFilterResultInfo>(allHyperlinks.size)
-  val decorations = ArrayList<EditorTextDecoration>(allHyperlinks.size)
-  for (link in allHyperlinks) {
+  val hyperlinks = ArrayList<TerminalFilterResultInfo>(newLinks.size)
+  val decorations = ArrayList<EditorTextDecoration>(newLinks.size)
+  for (link in newLinks) {
     val decoration = link.toEditorDecoration(outputModel, onLinkClicked) ?: continue
     decorations.add(decoration)
     hyperlinks.add(link)
@@ -369,7 +402,7 @@ private fun TerminalFilterResultInfo.toEditorDecoration(
         endOffset = TerminalOffset.of(absoluteEndOffset).toRelative(outputModel),
         attributes = style,
       ) {
-        layer = layer
+        layer = this@toEditorDecoration.layer
       }
     }
     is TerminalInlayInfo -> inlayProvider?.let { inlayProvider ->
@@ -382,91 +415,7 @@ private fun TerminalFilterResultInfo.toEditorDecoration(
   }
 }
 
-private class TerminalOutputModelChangesTracker(
-  private val outputModel: TerminalOutputModel,
-  parentDisposable: Disposable,
-) {
-  // Variables should be accessed only from EDT
-  private var contentChanged: Boolean = true
-  private var firstChangedLine: TerminalLineIndex = outputModel.firstLineIndex
-
-  /** Ordered by [ChangeInfo.modificationStamp] */
-  private val changesHistory = ArrayDeque<ChangeInfo>(initialCapacity = MAX_CHANGES_HISTORY_LENGTH)
-
-  init {
-    outputModel.addListener(parentDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        if (!event.isTrimming) {
-          val line = event.model.getLineByOffset(event.offset)
-          firstChangedLine = minOf(firstChangedLine, line)
-        }
-        contentChanged = true
-      }
-    })
-  }
-
-  /**
-   * Returns the first changed line index since the last call.
-   */
-  @RequiresEdt
-  fun getFirstChangedLineAndReset(): TerminalLineIndex? {
-    if (!contentChanged) return null
-
-    // The stored line may be below `outputModel.firstLineIndex` if trim happened after it was recorded.
-    // Clamp it, so callers never see a line that no longer exists in the model.
-    val line = maxOf(firstChangedLine, outputModel.firstLineIndex)
-    recordChange(line)
-
-    contentChanged = false
-    firstChangedLine = outputModel.lastLineIndex
-    return line
-  }
-
-  /**
-   * Analyzes the output model changes history to find the range of content that was changed since the [modificationStamp].
-   * Returns the start of this range - the first changed character offset.
-   */
-  @RequiresEdt
-  fun getFirstChangedOffsetSinceStamp(modificationStamp: Long): TerminalOffset {
-    val searchResult = changesHistory.binarySearch { changeInfo ->
-      if (changeInfo.modificationStamp <= modificationStamp) -1 else 1
-    }
-    val nextChangeIndex = -searchResult - 1
-    if (nextChangeIndex == changesHistory.size) {
-      // No changes after the specified stamp, return the end of the model
-      return outputModel.endOffset
-    }
-
-    val offset = changesHistory.subList(nextChangeIndex, changesHistory.size).minOf { it.startOffset }
-    // Clamp to the current end offset. The recorded change offsets can become stale when the
-    // document shrinks (for example, `clear`) after a change was recorded but before the next flush updates the history.
-    return minOf(offset, outputModel.endOffset)
-  }
-
-  private fun recordChange(startLine: TerminalLineIndex) {
-    val offset = outputModel.getStartOfLine(startLine)
-    val changeInfo = ChangeInfo(offset, outputModel.modificationStamp)
-    changesHistory.addLast(changeInfo)
-    while (changesHistory.size > MAX_CHANGES_HISTORY_LENGTH) {
-      changesHistory.removeFirst()
-    }
-  }
-
-  private data class ChangeInfo(
-    // The offset of the first changed character
-    val startOffset: TerminalOffset,
-    // The modification stamp of the document at the moment of registering the change
-    val modificationStamp: Long,
-  )
-}
-
 @ApiStatus.Internal
 val HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY: Duration = 20.milliseconds
-
-/**
- * Covers the changes in the output model history
- * for [MAX_CHANGES_HISTORY_LENGTH] * [HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY] = 2 seconds at least
- */
-private const val MAX_CHANGES_HISTORY_LENGTH = 100
 
 private val LOG = fileLogger()

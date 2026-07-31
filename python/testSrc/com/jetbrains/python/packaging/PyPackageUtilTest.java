@@ -22,6 +22,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.requirements.PyRequirementsKt;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -70,15 +72,6 @@ public class PyPackageUtilTest extends PyTestCase {
 
   public void testSetupPyExtrasReading() {
     doTestSetupPyReading(true, true, true, true);
-  }
-
-  // PY-18966
-  public void testSetupPyDependencyLinksReading() {
-    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(myFixture.getModule());
-    final List<PyRequirement> expected = PyRequirementParser.fromText(
-      "sqlalchemy >=1.0.12, <1.1\ngit+https://github.com/mysql/mysql-connector-python.git@2.1.3#egg=mysql-connector-python-2.1.3");
-
-    assertEquals(expected, actual);
   }
 
   public void testAbsentRequirementsTxtReading() {

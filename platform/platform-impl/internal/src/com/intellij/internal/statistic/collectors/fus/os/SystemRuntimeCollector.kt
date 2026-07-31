@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.MacHardwareInfo
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.sun.management.OperatingSystemMXBean
@@ -32,13 +33,13 @@ import kotlin.math.roundToInt
 @ApiStatus.Internal
 @OptIn(LowLevelLocalMachineAccess::class)
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.runtime", 23)
+  private val GROUP = EventLogGroup("system.runtime", 25)
 
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
   private val VM_OPTIONS = listOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")
-  private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
+  private val SYSTEM_PROPERTIES = listOf("splash", "nosplash", "ide.native.launcher")
   private val RENDERING_PIPELINES = listOf("Metal", "Vulkan", "Other")
   @Suppress("SpellCheckingInspection")
   private val OS_VMS = listOf("none", "xen", "kvm", "vmware", "hyperv", "other", "unknown")
@@ -63,6 +64,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val AGENTS_COUNT = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
   private val RENDERING = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
   private val OS_VM = GROUP.registerEvent("os.vm", String("name", OS_VMS))
+  private val MACBOOK_NEO = GROUP.registerEvent("hardware.macbook.neo", Boolean("value"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -91,12 +93,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       CpuArch.CURRENT.name.lowercase(Locale.ENGLISH),
       getJavaVendor())
 
-    for (option in collectJvmOptions()) {
-      result += JVM_OPTION.metric(option.key, option.value)
+    for ((key, value) in collectJvmOptions()) {
+      result += JVM_OPTION.metric(key, value)
     }
 
-    for (property in collectSystemProperties()) {
-      result += SYSTEM_PROPERTY.metric(property.key, property.value.toBoolean())
+    for ((key, value) in collectSystemProperties()) {
+      result += SYSTEM_PROPERTY.metric(key, value.toBoolean())
     }
 
     result += DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled())
@@ -107,6 +109,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     result += RENDERING.metric(getRenderingPipelineName())
 
     result += OS_VM.metric(getOsVirtualization())
+
+    MacHardwareInfo.isMacbookNeo?.let {
+      result += MACBOOK_NEO.metric(it)
+    }
 
     return result
   }

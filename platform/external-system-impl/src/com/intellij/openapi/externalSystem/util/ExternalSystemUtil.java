@@ -53,11 +53,14 @@ import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionCons
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemPartialResolutionException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -497,20 +500,7 @@ public final class ExternalSystemUtil {
     try {
       var error = task.getError();
       if (error == null) {
-        var projectDataManager = ProjectDataManager.getInstance();
-        var externalProjectData = projectDataManager.getExternalProjectData(project, externalSystemId, externalProjectPath);
-        var externalProject = ObjectUtils.doIfNotNull(externalProjectData, it -> it.getExternalProjectStructure());
-        if (externalProject != null) {
-          if (importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
-            externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
-          }
-          if (importSpec.shouldImportProjectData()) {
-            if (importSpec.shouldSelectProjectDataToImport()) {
-              selectProjectDataToImport(project, externalProjectData);
-            }
-            projectDataManager.importData(externalProject, project);
-          }
-        }
+        var externalProject = importProjectData(project, importSpec, externalSystemId, externalProjectPath);
         if (callback != null) {
           callback.onSuccess(taskId, externalProject);
         }
@@ -519,6 +509,10 @@ public final class ExternalSystemUtil {
           externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
         }
         return;
+      }
+      if (error instanceof ExternalSystemPartialResolutionException) {
+        // The resolve failed but produced partial project data.
+        importProjectData(project, importSpec, externalSystemId, externalProjectPath);
       }
       if (error instanceof ImportCanceledException) {
         // stop refresh task
@@ -558,6 +552,29 @@ public final class ExternalSystemUtil {
         eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
       }
     }
+  }
+
+  private static @Nullable DataNode<ProjectData> importProjectData(
+    @NotNull Project project,
+    @NotNull ImportSpec importSpec,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull String externalProjectPath
+  ) {
+    var projectDataManager = ProjectDataManager.getInstance();
+    var externalProjectData = projectDataManager.getExternalProjectData(project, externalSystemId, externalProjectPath);
+    if (externalProjectData == null) return null;
+    var externalProject = externalProjectData.getExternalProjectStructure();
+    if (externalProject == null) return null;
+    if (importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+      externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+    }
+    if (importSpec.shouldImportProjectData()) {
+      if (importSpec.shouldSelectProjectDataToImport()) {
+        selectProjectDataToImport(project, externalProjectData);
+      }
+      projectDataManager.importData(externalProject, project);
+    }
+    return externalProject;
   }
 
   private static void selectProjectDataToImport(

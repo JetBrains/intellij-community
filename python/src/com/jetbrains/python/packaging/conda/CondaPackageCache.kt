@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -18,9 +19,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -53,7 +53,7 @@ private const val MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE = 2
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
+        if (!AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration")) {
             return null
         }
 
@@ -170,7 +170,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         val libraryRoots = libraryEntity?.roots ?: return false
         if (libraryRoots.isEmpty()) return false
         val jarsWithClasses = libraryRoots.filter { it.type == LibraryRootTypeId.COMPILED }
-        return jarsWithClasses.all { jar -> VirtualFileManager.getInstance().findFileByUrl(jar.url.url)?.exists() == true }
+        return jarsWithClasses.all { jar -> jar.url.virtualFile?.exists() == true }
     }
 
     companion object {

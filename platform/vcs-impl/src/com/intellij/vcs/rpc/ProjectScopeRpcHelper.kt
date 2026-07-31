@@ -45,8 +45,15 @@ object ProjectScopeRpcHelper {
     callbackFlow {
       var messageBusConnection: SimpleMessageBusConnection? = null
       try {
-        messageBusConnection = project.messageBus.simpleConnect()
-        producerBuilder(project, messageBusConnection)
+        // the producer is started in the application scope, so the project may already be gone by now;
+        // do not touch it in that case - creating a project service during disposal leaks the project
+        if (project.isDisposed) {
+          LOG.debug { "Project $project was disposed before the callback flow was started, waiting for client to cancel" }
+        }
+        else {
+          messageBusConnection = project.messageBus.simpleConnect()
+          producerBuilder(project, messageBusConnection)
+        }
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
         LOG.debug("Project $project was disposed while building callback flow, waiting for client to cancel")

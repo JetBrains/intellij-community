@@ -6,6 +6,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.platform.ide.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -108,7 +109,7 @@
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
 
-    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
+    <codeInsight.completion.command.suffixProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport" />
 
     <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.FrontendFriendlyOverridableSpaceInsertHandler"/>
 

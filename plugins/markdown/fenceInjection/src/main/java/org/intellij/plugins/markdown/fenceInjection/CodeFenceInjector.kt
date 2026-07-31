@@ -5,9 +5,9 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import com.intellij.util.text.TextRangeUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -42,7 +42,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
       return
     }
     registrar.startInjecting(language, extension)
-    injectAsOnePlace(host, registrar, language)
+    injectInMultiplePlaces(host, registrar, language)
     registrar.makeInspectionsLenient(true)
     registrar.doneInjecting()
   }
@@ -63,15 +63,20 @@ internal open class CodeFenceInjector : MultiHostInjector {
    *
    * But the problem is that not all formatters are ready to work in the injected context, so we should do it with great care.
    */
-  private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
-    val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = true) ?: return
-
-    val first = elements.first()
-    val last = elements.last()
+  private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
+    val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = false) ?: return
+    val ranges = TextRangeUtil.mergeRanges(elements.map { it.textRangeInParent }).sortedBy { it.startOffset }
 
     val surroundings = FenceSurroundingsProvider.EP_NAME.extensionList.find { it.language == language }?.getCodeFenceSurroundings()
+    if (ranges.size == 1) {
+      registrar.addPlace(surroundings?.prefix, surroundings?.suffix, host, ranges.first())
+      return
+    }
 
-    val range = TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
-    registrar.addPlace(surroundings?.prefix, surroundings?.suffix, host, range)
+    registrar.addPlace(surroundings?.prefix, null, host, ranges.first())
+    for (range in ranges.drop(1).dropLast(1)) {
+      registrar.addPlace(null, null, host, range)
+    }
+    registrar.addPlace(null, surroundings?.suffix, host, ranges.last())
   }
 }

@@ -100,7 +100,7 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
     private fun KaSession.annotatedPropertyHasField(annotationEntry: KtAnnotationEntry): Boolean {
         val parameter = annotationEntry.getStrictParentOfType<KtParameter>() ?: return false
         val parameterSymbol = parameter.symbol as? KaValueParameterSymbol ?: return false
-        val parameterBasedProperty = parameterSymbol.generatedPrimaryConstructorProperty ?: return false
+        val parameterBasedProperty = parameterSymbol.primaryConstructorProperty ?: return false
         if (!parameterBasedProperty.hasBackingField) return false
         // properties in annotation classes don't have backing fields, it is not reflected in AA/FIR
         val containingConstructor = parameterSymbol.containingDeclaration as? KaConstructorSymbol ?: return false

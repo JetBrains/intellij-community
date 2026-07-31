@@ -127,6 +127,8 @@ import com.intellij.util.TripleFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
@@ -673,12 +675,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   private static final VirtualFile TOMBSTONE = new LightVirtualFile("TOMBSTONE");
 
+  protected void onScheduledFilesCounted(int scheduledFilesCount) {
+  }
+
   private @NotNull Future<?> startIterateScopeInBackground(@NotNull AnalysisScope scope,
                                                            @NotNull ProgressIndicator progressIndicator,
                                                            boolean headlessEnvironment,
                                                            @Nullable Collection<? super VirtualFile> localScopeFiles,
                                                            @NotNull BlockingQueue<? super VirtualFile> outFilesToInspect) {
     Task.Backgroundable task = new Task.Backgroundable(getProject(), InspectionsBundle.message("scanning.files.to.inspect.progress.text")) {
+      private int totalScheduledFiles;
+
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -707,6 +714,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                   throw new IllegalStateException("Must not have read action");
                 }
                 outFilesToInspect.put(file);
+                totalScheduledFiles++;
               }
               catch (InterruptedException e) {
                 LOG.error(e);
@@ -720,6 +728,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           // ignore, but put tombstone
         }
         finally {
+          onScheduledFilesCounted(totalScheduledFiles);
           try {
             outFilesToInspect.put(TOMBSTONE);
           }
@@ -1078,10 +1087,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   public @NotNull CleanupProblems findProblems(@NotNull AnalysisScope scope,
                                                @NotNull InspectionProfile profile,
                                                @NotNull ProgressIndicator progressIndicator,
                                                @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertNoReadAccess();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Code cleanup: searching for problems in code");
     }
@@ -1146,7 +1159,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           if (!lTools.isEmpty()) {
             InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile,
                 p -> new InspectionProfileWrapper(profile, ((InspectionProfileImpl)p).getProfileManager()),
-                                                                    () -> findProblemsInFile(psiFile, lTools, range, searchScope, descriptors, files, shouldApplyFix));
+                               () -> findProblemsInFile(psiFile, lTools, range, searchScope, descriptors, files, shouldApplyFix));
           }
         }
       }));
@@ -1154,6 +1167,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return new CleanupProblems(files, descriptors, searchScope instanceof GlobalSearchScope);
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   private void findProblemsInFile(@NotNull PsiFile psiFile,
                                   @NotNull List<? extends LocalInspectionToolWrapper> localTools,
                                   @Nullable TextRange range,
@@ -1161,19 +1176,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                   @NotNull List<? super ProblemDescriptor> descriptorResults,
                                   @NotNull Set<? super PsiFile> visitedFiles,
                                   @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
     try {
       TextRange restrictRange = range == null ? psiFile.getTextRange() : range;
-      ReadAction.runBlocking(() -> {
-                               Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-                                 runInspectionEngine(localTools, psiFile, restrictRange, restrictRange, true, myProgressIndicator, (_, _) -> true);
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+        runInspectionEngine(localTools, psiFile, restrictRange, restrictRange, true, myProgressIndicator, (_, _) -> true);
 
-                               for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-                                 LocalInspectionToolWrapper toolWrapper = entry.getKey();
-                                 List<ProblemDescriptor> descriptors = entry.getValue();
-                                 InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-                                 BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
-                               }
-                             });
+      for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+        LocalInspectionToolWrapper toolWrapper = entry.getKey();
+        List<ProblemDescriptor> descriptors = entry.getValue();
+        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+        BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+      }
+
       Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
       for (LocalInspectionToolWrapper tool : localTools) {
         InspectionToolResultExporter toolPresentation = getPresentation(tool);

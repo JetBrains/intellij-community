@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  DeclKt.class
+  META-INF/kotlin_pureKotlin_returnTypeArgumentNullabilityChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/returnTypeArgumentNullabilityChanged/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_returnTypeArgumentNullabilityChanged-a.kotlin_module
+  UseFunKt.class
+  UsePropKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/returnTypeArgumentNullabilityChanged/a/useFun.kt
+  kotlin/pureKotlin/returnTypeArgumentNullabilityChanged/a/useProp.kt
+End of files
+------------------------------------------
+Exit code: ERROR

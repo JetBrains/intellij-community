@@ -8,12 +8,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -67,7 +68,9 @@ internal class RemoveExplicitSuperQualifierInspection :
         val newCallableId =
             analyze(newQualifiedExpression) {
                 val callableMemberCall =
-                    newQualifiedExpression.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
+                    with(contextOf<KaSession>()) {
+                        newQualifiedExpression.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
+                    }
                 callableMemberCall?.partiallyAppliedSymbol?.signature?.callableId
             }
 
@@ -97,7 +100,7 @@ internal class RemoveExplicitSuperQualifierInspection :
         val psiFactory = KtPsiFactory(superExpression.project)
         val labelName = superExpression.getLabelNameAsName()
         return (if (labelName != null)
-            psiFactory.createExpressionByPattern("super@$0", labelName.asString())
+            psiFactory.createExpressionByPattern("super@$0", labelName.render())
         else
             psiFactory.createExpression("super")) as KtSuperExpression
     }

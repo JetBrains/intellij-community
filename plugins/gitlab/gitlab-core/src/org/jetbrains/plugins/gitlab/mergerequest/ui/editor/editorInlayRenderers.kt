@@ -4,7 +4,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorKeys
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -12,11 +16,13 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 class GitLabMergeRequestDiscussionInlayRenderer internal constructor(
   cs: CoroutineScope,
   project: Project,
+  editor: Editor,
   model: GitLabMergeRequestEditorMappedComponentModel.Discussion<*>,
   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   imageLoader: GitLabImageLoader,
@@ -25,7 +31,7 @@ class GitLabMergeRequestDiscussionInlayRenderer internal constructor(
 ) : CodeReviewComponentInlayRenderer(
   GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, imageLoader, model.vm, place)
     .let { newCommentComponent ->
-      CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+      wrapWithDimmingNavigatable(editor, newCommentComponent, model, activeRangesTracker)
     }
 )
 
@@ -33,6 +39,7 @@ class GitLabMergeRequestDiscussionInlayRenderer internal constructor(
 class GitLabMergeRequestDraftNoteInlayRenderer internal constructor(
   cs: CoroutineScope,
   project: Project,
+  editor: Editor,
   model: GitLabMergeRequestEditorMappedComponentModel.DraftNote<*>,
   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   imageLoader: GitLabImageLoader,
@@ -41,7 +48,7 @@ class GitLabMergeRequestDraftNoteInlayRenderer internal constructor(
 ) : CodeReviewComponentInlayRenderer(
   GitLabMergeRequestDiffInlayComponentsFactory.createDraftNote(project, cs, avatarIconsProvider, imageLoader, model.vm, place)
     .let { newCommentComponent ->
-      CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+      wrapWithDimmingNavigatable(editor, newCommentComponent, model, activeRangesTracker)
     }
 )
 
@@ -49,6 +56,7 @@ class GitLabMergeRequestDraftNoteInlayRenderer internal constructor(
 class GitLabMergeRequestNewDiscussionInlayRenderer internal constructor(
   cs: CoroutineScope,
   project: Project,
+  editor: Editor,
   model: GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*>,
   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   activeRangesTracker: CodeReviewActiveRangesTracker,
@@ -57,6 +65,21 @@ class GitLabMergeRequestNewDiscussionInlayRenderer internal constructor(
 ) : CodeReviewComponentInlayRenderer(
   GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(project, cs, avatarIconsProvider, model.vm, onCancel, place)
     .let { newCommentComponent ->
-      CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+      wrapWithDimmingNavigatable(editor, newCommentComponent, model, activeRangesTracker)
     }
 )
+
+private fun wrapWithDimmingNavigatable(
+  editor: Editor,
+  newCommentComponent: JComponent,
+  model: CodeReviewInlayModel.Ranged,
+  activeRangesTracker: CodeReviewActiveRangesTracker,
+): JComponent {
+  val dimming = CodeReviewEditorInlayRangeOutlineUtils.wrapWithDimming(newCommentComponent, model, activeRangesTracker)
+  return wrapWithNavigableEditorData(dimming, editor)
+}
+
+private fun wrapWithNavigableEditorData(newCommentComponent: JComponent, editor: Editor): JComponent =
+  UiDataProvider.wrapComponent(newCommentComponent) { sink ->
+    sink[CodeReviewEditorKeys.NAVIGABLE_EDITOR_KEY] = editor
+  }

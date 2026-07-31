@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class UiPluginManager {
   }
 
   fun closeSession(uuid: String) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().closeSession(uuid)
     }
   }
@@ -72,13 +73,13 @@ class UiPluginManager {
   }
 
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }
 
   fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().setPluginsAutoUpdateEnabled(enabled)
     }
   }
@@ -225,7 +226,7 @@ class UiPluginManager {
   }
 
   fun updateDescriptorsForInstalledPlugins() {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().updateDescriptorsForInstalledPlugins()
     }
   }
@@ -249,6 +250,17 @@ class UiPluginManager {
   fun subscribeToPluginUpdatesFiltered(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdateSubscription {
     val session = PluginManagerSessionService.getInstance().createSession(sessionId)
     return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
+  }
+
+  private fun launchRpcTask(block: suspend () -> Unit) {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      try {
+        block()
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Fire-and-forget UI requests can race with remote frontend/backend disconnect.
+      }
+    }
   }
 
   companion object {

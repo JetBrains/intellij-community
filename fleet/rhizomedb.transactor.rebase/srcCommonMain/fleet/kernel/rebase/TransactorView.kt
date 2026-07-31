@@ -38,10 +38,12 @@ import fleet.fastutil.ints.IntList
 import fleet.fastutil.ints.contains
 import fleet.fastutil.ints.retainAll
 import fleet.kernel.DbSource
+import fleet.kernel.shouldFailFast
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.openmap.MutableOpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -265,7 +267,7 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
     res
   }
 
-private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): fleet.kernel.TransactorMiddleware =
+private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2, failFast: Boolean = false): fleet.kernel.TransactorMiddleware =
   object : fleet.kernel.TransactorMiddleware {
     override fun ChangeScope.performChange(next: ChangeScope.() -> Unit) {
       DbContext.threadBound.ensureMutable {
@@ -279,7 +281,7 @@ private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): fleet
           if (sharedNovelty.isNotEmpty()) {
             TransactorViewEntity2.forDefaultPart(fleet.kernel.FrontendPart)?.let { frontendKernelViewEnitty ->
               withTransactorView(frontendKernelViewEnitty) {
-                runOfferContributors(sharedNovelty)
+                runOfferContributors(sharedNovelty, failFast = failFast)
               }
             }
           }
@@ -299,6 +301,7 @@ suspend fun <T> withTransactorView(
   body: suspend CoroutineScope.(fleet.kernel.Transactor) -> T,
 ): T =
   spannedScope("withKernelView $defaultPart") {
+    val failFast = currentCoroutineContext().shouldFailFast
     val kernelViewEntity = fleet.kernel.change {
       register(TransactorViewEntity2)
       TransactorViewEntity2.new {

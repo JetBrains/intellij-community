@@ -220,8 +220,8 @@ public final class DaemonListeners implements Disposable {
               intentionsUI.invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
-          boolean psiGuard = Elf.getElf().isPsiInteractionAllowed(); // hasEventSystemEnabledUncommittedDocuments is not supported yet for lock-free typing
-          if (!psiGuard || !psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+          boolean elfGuard = Elf.getElf().isUnsupportedOperationGuardActive(); // hasEventSystemEnabledUncommittedDocuments is not supported yet for lock-free typing
+          if (elfGuard || !psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
             // daemon might want to auto-import a reference if the caret is close enough
             // but do not restart a daemon too early before PSI is committed,
             // because the typing would cause canceling daemon twice otherwise: on caret movement during typing and later on PSI commit after the doc modification

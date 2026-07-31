@@ -24,6 +24,8 @@ import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 
 @ApiStatus.Internal
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere " +
+            "(com.intellij.platform.searchEverywhere). This functionality is obsolete.")
 class PSIPresentation(val targetPresentation: TargetPresentation) : RemoteSearchEverywherePresentation {
   override fun getPresentationRenderer(): ListCellRenderer<out RemoteSearchEverywherePresentation> = PSIPresentationRenderer()
 }

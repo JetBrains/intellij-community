@@ -39,12 +39,23 @@ internal fun resolveCellTooltip(
   val toolRow = rows.getOrNull(viewRow) ?: return default()
   val cellRect = table.getCellRect(viewRow, viewCol, false)
   return when (viewCol) {
+    COL_ENABLED -> enabledColumnTooltip(toolRow, host)
     COL_TOOL -> toolColumnTooltip(toolRow, host, event.x, cellRect)
     COL_MODE -> modeColumnTooltip(toolRow)
     COL_PATH -> pathColumnTooltip(toolRow, host, event.x, cellRect)
     else -> default()
   }
 }
+
+/**
+ * Tooltip for the enable toggle: when the tool is the project's selected type engine the toggle is
+ * locked (rendered as a dash), so explain that its state is governed by the Type Engine settings.
+ * Ordinary rows fall back to no tooltip.
+ */
+private fun enabledColumnTooltip(toolRow: ToolRow, host: TooltipHost): String? =
+  if (toolRow.tool.isSelectedAsTypeEngine(host.project))
+    PyToolsUiBundle.message("settings.external.tools.locked.by.type.engine", toolRow.tool.presentableName)
+  else null
 
 /**
  * Tooltip for the Lookup-column cell: a short description of the fallback strategy implied by

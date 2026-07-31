@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
@@ -215,15 +216,16 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
         if (result == null) return;
 
-        for (final ReadWriteVariableInstruction instruction : result) {
-          int descriptor = instruction.getDescriptor();
-
-          if (!(flow.getVarIndices()[descriptor] instanceof ResolvedVariableDescriptor)) continue;
+        for (ReadWriteVariableInstruction instruction : result) {
+          VariableDescriptor descriptor = flow.getVarIndices()[instruction.getDescriptor()];
+          if (!(descriptor instanceof ResolvedVariableDescriptor d)) continue;
+          GrVariable variable = d.getVariable();
           PsiElement element = instruction.getElement();
-          if (variables.contains(((ResolvedVariableDescriptor)flow.getVarIndices()[descriptor]).getVariable()) && element != null) {
-            registerError(element,
-                          GroovyBundle.message("cannot.assign.a.value.to.final.field.0", descriptor),
-                          LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          if (variables.contains(variable) && element != null) {
+            String message = GroovyBundle.message(variable instanceof GrField
+                                                  ? "cannot.assign.a.value.to.final.field.0"
+                                                  : "cannot.assign.a.value.to.final.variable.0", variable.getName());
+            registerError(element, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
       }
@@ -441,6 +443,11 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
           }
         }
       }
+
+      @Override
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
+        // skip to avoid duplicated warnings
+      }
     });
     return scopes;
   }
@@ -453,9 +460,11 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
 
   private static @Nullable PsiElement findScope(@NotNull GrVariable variable) {
-    GroovyPsiElement result = PsiTreeUtil.getParentOfType(variable, GrControlStatement.class, GrControlFlowOwner.class);
-    if (result instanceof GrForStatement) {
-      final GrStatement body = ((GrForStatement)result).getBody();
+    PsiElement result = variable instanceof GrParameter parameter
+                        ? parameter.getDeclarationScope()
+                        : PsiTreeUtil.getParentOfType(variable, GrControlStatement.class, GrControlFlowOwner.class);
+    if (result instanceof GrForStatement statement) {
+      final GrStatement body = statement.getBody();
       if (body != null) {
         result = body;
       }

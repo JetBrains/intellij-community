@@ -114,6 +114,36 @@ class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
     myFixture.addClass(
       """
+      package com.intellij.openapi.roots;
+
+      public interface FileIndex {}
+    """.trimIndent()
+    )
+
+    myFixture.addClass(
+      """
+      package com.intellij.openapi.roots;
+
+      import com.intellij.openapi.project.Project;
+
+      public interface ProjectFileIndex extends FileIndex {
+        static ProjectFileIndex getInstance(Project project) {
+          return null;
+        }
+      }
+    """.trimIndent()
+    )
+
+    myFixture.addClass(
+      """
+      package com.intellij.openapi.roots;
+
+      public interface ModuleFileIndex extends FileIndex {}
+    """.trimIndent()
+    )
+
+    myFixture.addClass(
+      """
       package com.intellij.openapi.options;
 
       public interface Configurable {}
@@ -351,6 +381,59 @@ Computed module kind reasoning:
 Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'light_idea_test_case'">VirtualFileManager</warning>.getInstance()
         }
       }
+    """.trimIndent()
+    )
+
+    myFixture.checkHighlighting()
+  }
+
+  fun testFileIndexApiInFrontendModule() {
+    configurePluginXml(
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+    )
+
+    myFixture.configureByText(
+      "FrontendFileIndexService.kt", """
+      package com.example.frontend
+
+      import com.intellij.openapi.project.Project
+      import com.intellij.openapi.roots.FileIndex
+      import com.intellij.openapi.roots.ModuleFileIndex
+      import com.intellij.openapi.roots.ProjectFileIndex
+
+      class FrontendFileIndexService(private val project: Project) {
+        fun doStuff() {
+          <warning descr="'com.intellij.openapi.roots.ProjectFileIndex' should be used in 'backend' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'light_idea_test_case'">ProjectFileIndex</warning>.getInstance(project)
+        }
+      }
+
+      class FrontendFileIndex : <warning descr="'com.intellij.openapi.roots.FileIndex' should be used in 'backend' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'light_idea_test_case'">FileIndex</warning>
+
+      class FrontendProjectFileIndex : <warning descr="'com.intellij.openapi.roots.ProjectFileIndex' should be used in 'backend' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'light_idea_test_case'">ProjectFileIndex</warning>
+
+      class FrontendModuleFileIndex : <warning descr="'com.intellij.openapi.roots.ModuleFileIndex' should be used in 'backend' module type. Actual module type is 'frontend'.
+
+Computed module kind reasoning:
+
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'light_idea_test_case'">ModuleFileIndex</warning>
     """.trimIndent()
     )
 

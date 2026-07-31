@@ -93,6 +93,14 @@ public class CodeCompletionHandlerBase {
    */
   public static final Key<Boolean> DIRECT_INSERTION = Key.create("CodeCompletionHandlerBase.directInsertion");
 
+  /**
+   * Usual items rely on the fact that completion start offset can be computed by subtracting
+   * the item's lookup string (as it is already inserted) length from the current caret offset.
+   * See {@link com.intellij.codeInsight.completion.CompletionUtil#createInsertionContext(List, LookupElement, char, Editor, PsiFile, int, int, OffsetMap)}
+   * This does not work for {@link DIRECT_INSERTION} items, since they perform insertion themselves.
+   */
+  public static final Key<Integer> DIRECT_INSERTION_START_OFFSET = Key.create("CodeCompletionHandlerBase.directInsertionStartOffset");
+
   @ApiStatus.Internal
   public static final Key<FinishCompletionInfo> ITEM_PATTERN_AND_PREFIX_LENGTH = Key.create("CodeCompletionHandlerBase.prefix-length");
 
@@ -381,7 +389,8 @@ public class CodeCompletionHandlerBase {
                                         long startingTime,
                                         @NotNull CompletionProgressIndicator indicator,
                                         @NotNull OffsetsInFile hostCopyOffsets) {
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
+    CompletionPhase.Synchronous syncPhase = new CompletionPhase.Synchronous(indicator);
+    CompletionServiceImpl.setCompletionPhase(syncPhase);
 
     var future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
     if (future == null) {
@@ -408,6 +417,15 @@ public class CodeCompletionHandlerBase {
         indicator.closeAndFinish(true);
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       }
+      return;
+    }
+
+    // A reentrant scheduleRestart() (e.g. the remote-dev stale->actual swap) can run inside the
+    // blockingWaitForFinish() event pump above: it cancels this indicator and replaces our Synchronous
+    // phase with a CommittingDocuments restart phase. Moving to BgCalculation now would dispose that
+    // restart phase (CommittingDocuments.dispose -> closeAndFinish -> hideLookup), tear down the lookup
+    // the restart reuses, and showLookup() below would then hit a disposed lookup. Leave the restart alone.
+    if (CompletionServiceImpl.getCompletionPhase() != syncPhase) {
       return;
     }
 
@@ -766,8 +784,17 @@ public class CodeCompletionHandlerBase {
     int idEndOffset = CompletionUtil.calcIdEndOffset(indicator.getOffsetMap(), editor, indicator.getCaret().getOffset());
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject());
 
-    WatchingInsertionContext context = CompletionUtil.createInsertionContext(items, item, completionChar, editor, psiFile,
-                                                                             caretOffset, idEndOffset, indicator.getOffsetMap());
+    WatchingInsertionContext context;
+
+    Integer startOffset = item.getUserData(DIRECT_INSERTION_START_OFFSET);
+    if (startOffset != null) {
+      context = CompletionUtil.createInsertionContext(
+        items, completionChar, editor, psiFile, startOffset, caretOffset, idEndOffset, indicator.getOffsetMap());
+    } else {
+      context = CompletionUtil.createInsertionContext(
+        items, item, completionChar, editor, psiFile, caretOffset, idEndOffset, indicator.getOffsetMap());
+    }
+
     try {
       item.handleInsert(context);
     }

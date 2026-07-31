@@ -31,7 +31,8 @@ internal class DaemonInitialActivityReporter(private val project: Project, val c
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-    if (!initialEntireFileHighlightingReported) {
+    val activity = initialEntireFileHighlightingActivity
+    if (!initialEntireFileHighlightingReported && activity != null) {
       coroutineScope.launch {
         val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull() ?: return@launch
         val editor = fileEditor.editor
@@ -41,7 +42,7 @@ internal class DaemonInitialActivityReporter(private val project: Project, val c
 
         if (highlightingCompleted) {
           initialEntireFileHighlightingReported = true
-          initialEntireFileHighlightingActivity!!.end()
+          activity.end()
           initialEntireFileHighlightingActivity = null
           StartUpMeasurer.addInstantEvent("editor highlighting completed")
           StartUpPerformanceService.getInstance().editorRestoringTillHighlighted()

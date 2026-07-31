@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -20,6 +19,7 @@ import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContribut
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.IndexingTestEntity2
 import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.workspaceModel.core.fileIndex.impl.SkipAddingToWatchedRootsData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -280,14 +280,14 @@ class WorkspaceFileIndexListenerTest {
     }
   }
 
-  // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
-  private class ParentWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ParentTestEntity>, SkipAddingToWatchedRoots {
+
+  private class ParentWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ParentTestEntity> {
 
     override val entityClass: Class<ParentTestEntity>
       get() = ParentTestEntity::class.java
 
     override fun registerFileSets(entity: ParentTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CONTENT, entity, null)
+      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CONTENT, entity, object : SkipAddingToWatchedRootsData {})
     }
   }
 }

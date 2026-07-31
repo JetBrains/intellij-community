@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
  * Application-wide path macros are visible in the "Path Variables" UI. Since we don't want to confuse users with application-wide
  * KOTLIN_BUNDLED stale value in the UI, we clean the application-wide value in this class
  */
-private class ApplicationWideKotlinBundledPathMacroCleaner : ApplicationActivity {
+internal class ApplicationWideKotlinBundledPathMacroCleaner : ApplicationActivity {
     init {
         if (ApplicationManager.getApplication().isHeadlessEnvironment) {
             throw ExtensionNotApplicableException.create()

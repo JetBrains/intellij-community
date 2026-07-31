@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EelSendApi::class)
 
 package com.intellij.execution.eel
@@ -6,7 +6,10 @@ package com.intellij.execution.eel
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
@@ -230,6 +233,9 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      @Throws(EelReceiveChannelException::class)
+      @ThrowsChecked(EelReceiveChannelException::class)
+      @EelDelicateApi
       override fun available(): Int {
         TODO("Not yet implemented")
       }
@@ -289,7 +295,9 @@ class EelChannelToolsTest {
         byteCounter -= 1
         return NOT_EOF
       }
-
+      @Throws(EelReceiveChannelException::class)
+      @ThrowsChecked(EelReceiveChannelException::class)
+      @EelDelicateApi
       override fun available(): Int {
         TODO("Not yet implemented")
       }
@@ -356,6 +364,7 @@ class EelChannelToolsTest {
     awaitForCondition {
       Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     }
+    @OptIn(EelDelicateApi::class)
     pipe.closePipe(null)
     awaitForCondition {
       Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
@@ -549,7 +558,7 @@ class EelChannelToolsTest {
       val pipe = EelOutputChannel(false)
       pipe.exposedSource.closeForReceive()
       try {
-        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        pipe.sendWholeBuffer(wrap("D".toByteArray()))
         fail("Writing into closed channel must be an error")
       }
       catch (e: EelChannelClosedException) {
@@ -566,7 +575,7 @@ class EelChannelToolsTest {
 
       pipe.ensureClosed(error)
       try {
-        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        pipe.sendWholeBuffer(wrap("D".toByteArray()))
         fail("Writing into broken pipe must be an error")
       }
       catch (e: EelChannelClosedException) {
@@ -589,7 +598,7 @@ class EelChannelToolsTest {
     val pipe = EelPipe(prefersDirectBuffers = false)
     pipe.source.closeForReceive()
     try {
-      pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
+      pipe.sink.send(wrap("D".toByteArray()))
       fail("Writing into closed channel must be an error")
     }
     catch (e: IOException) {
@@ -604,9 +613,10 @@ class EelChannelToolsTest {
     val error = Exception("some error")
     val expectedMessageError = "Pipe was broken with message: ${error.message}"
 
+    @OptIn(EelDelicateApi::class)
     pipe.closePipe(error)
     try {
-      pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
+      pipe.sink.send(wrap("D".toByteArray()))
       fail("Writing into broken pipe must be an error")
     }
     catch (e: IOException) {
@@ -699,7 +709,7 @@ class EelChannelToolsTest {
     eelChannel.lines().collect { line ->
       result.add(line.trim())
     }
-    Assertions.assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
+    assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
   }
 
   @Nested

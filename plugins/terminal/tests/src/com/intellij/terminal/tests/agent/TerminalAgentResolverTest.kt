@@ -13,8 +13,6 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.agent.DefaultTerminalAgentProvider
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.findTerminalAgentBinaryPath
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,61 +25,49 @@ import org.mockito.kotlin.whenever
 @RunWith(JUnit4::class)
 internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   @Test
-  fun `claude found in PATH on posix`() {
+  fun `binary found via PATH on posix`() {
     runBlocking {
-      val claude = bundledAgentByKey("claude_code")
-      val eelApi = mockEelApi(EelOsFamily.Posix, "claude", listOf("/opt/bin/claude"))
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Posix, "agent", listOf("/opt/bin/agent"))
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).isEqualTo("/opt/bin/claude")
-    }
-  }
-
-  @Test
-  fun `codex found in PATH on posix`() {
-    runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Posix, "codex", listOf("/usr/local/bin/codex"))
-
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
-
-      assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
+      assertThat(binaryPath).isEqualTo("/opt/bin/agent")
     }
   }
 
   @Test
   fun `first candidate is returned when multiple found`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Posix, "codex", listOf("/usr/local/bin/codex", "/opt/bin/codex"))
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Posix, "agent", listOf("/usr/local/bin/agent", "/opt/bin/agent"))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
+      assertThat(binaryPath).isEqualTo("/usr/local/bin/agent")
     }
   }
 
   @Test
-  fun `codex is unavailable when not found in PATH (Unix)`() {
+  fun `agent is unavailable when not found in PATH (Unix)`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Posix, "codex", emptyList())
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Posix, "agent", emptyList())
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isNull()
-      assertThat(codex.getInstallCommand(EelOsFamily.Posix)).isNull()
+      assertThat(agent.getInstallCommand(EelOsFamily.Posix)).isNull()
     }
   }
 
   @Test
-  fun `codex is unavailable when not found in PATH (Windows)`() {
+  fun `agent is unavailable when not found in PATH (Windows)`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Windows, "codex", emptyList())
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Windows, "agent", emptyList())
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isNull()
     }
@@ -90,280 +76,280 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   @Test
   fun `windows prefers exe over cmd and ps1`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Windows, "codex", listOf(
-        "C:\\bin\\codex.ps1",
-        "C:\\bin\\codex.cmd",
-        "C:\\bin\\codex.exe",
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Windows, "agent", listOf(
+        "C:\\bin\\agent.ps1",
+        "C:\\bin\\agent.cmd",
+        "C:\\bin\\agent.exe",
       ))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).endsWith("codex.exe")
+      assertThat(binaryPath).endsWith("agent.exe")
     }
   }
 
   @Test
   fun `windows picks recognized extension over no extension`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(EelOsFamily.Windows, "codex", listOf(
-        "C:\\bin\\codex",
-        "C:\\bin\\codex.cmd",
+      val agent = TestTerminalAgent(binaryName = "agent")
+      val eelApi = mockEelApi(EelOsFamily.Windows, "agent", listOf(
+        "C:\\bin\\agent",
+        "C:\\bin\\agent.cmd",
       ))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).endsWith("codex.cmd")
+      assertThat(binaryPath).endsWith("agent.cmd")
     }
   }
 
   @Test
-  fun `windows finds codex in roaming npm known location`() {
+  fun `windows finds binary in home-relative known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\codex.exe"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\agent.exe"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
   }
 
   @Test
-  fun `windows ignores codex in local bin known location`() {
+  fun `windows ignores binary found only outside the known-location candidates`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val localBinPath = "$homePath\\.local\\bin\\codex.cmd"
+      val localBinPath = "$homePath\\.local\\bin\\agent.cmd"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(localBinPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isNull()
     }
   }
 
   @Test
-  fun `windows checks claude known locations in order`() {
+  fun `windows checks known locations in order`() {
     runBlocking {
-      val claude = bundledAgentByKey("claude_code")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf(
+          $$"$HOME\\AppData\\Roaming\\npm",
+          $$"$HOME\\.local\\bin",
+        ),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val firstKnownLocation = "$homePath\\AppData\\Roaming\\npm\\claude.cmd"
-      val secondKnownLocation = "$homePath\\.local\\bin\\claude.exe"
+      val firstKnownLocation = "$homePath\\AppData\\Roaming\\npm\\agent.cmd"
+      val secondKnownLocation = "$homePath\\.local\\bin\\agent.exe"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "claude",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(firstKnownLocation, secondKnownLocation),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(firstKnownLocation)
     }
   }
 
   @Test
-  fun `windows prefers codex found in PATH over known locations`() {
+  fun `windows prefers binary found in PATH over known locations`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
-        pathResults = listOf("C:\\bin\\codex.ps1"),
+        binaryName = "agent",
+        pathResults = listOf("C:\\bin\\agent.ps1"),
         homePath = homePath,
-        existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\codex.exe"),
+        existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\agent.exe"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).isEqualTo("C:\\bin\\codex.ps1")
+      assertThat(binaryPath).isEqualTo("C:\\bin\\agent.ps1")
     }
   }
 
   @Test
-  fun `windows finds claude in local bin known location`() {
+  fun `posix finds binary in home-relative known location`() {
     runBlocking {
-      val claude = bundledAgentByKey("claude_code")
-      val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\.local\\bin\\claude.cmd"
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
+      )
+      val homePath = "/home/Someone.Else"
+      val expectedPath = "$homePath/.local/bin/agent"
       val eelApi = mockEelApi(
-        osFamily = EelOsFamily.Windows,
-        binaryName = "claude",
+        osFamily = EelOsFamily.Posix,
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
   }
 
   @Test
-  fun `posix finds codex in home local bin known location`() {
+  fun `posix finds binary in absolute known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        posixKnownLocationCandidates = listOf("/usr/local/bin"),
+      )
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Posix,
+        binaryName = "agent",
+        pathResults = emptyList(),
+        existingFiles = setOf("/usr/local/bin/agent"),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
+
+      assertThat(binaryPath).isEqualTo("/usr/local/bin/agent")
+    }
+  }
+
+  @Test
+  fun `posix prefers first known location when multiple match`() {
+    runBlocking {
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        posixKnownLocationCandidates = listOf($$"$HOME/.local/bin", "/usr/local/bin"),
+      )
       val homePath = "/home/Someone.Else"
-      val expectedPath = "$homePath/.local/bin/codex"
+      val firstKnownLocation = "$homePath/.local/bin/agent"
+      val secondKnownLocation = "/usr/local/bin/agent"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Posix,
-        binaryName = "codex",
-        pathResults = emptyList(),
-        homePath = homePath,
-        existingFiles = setOf(expectedPath),
-      )
-
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
-
-      assertThat(binaryPath).isEqualTo(expectedPath)
-    }
-  }
-
-  @Test
-  fun `posix finds codex in usr local bin known location`() {
-    runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val eelApi = mockEelApi(
-        osFamily = EelOsFamily.Posix,
-        binaryName = "codex",
-        pathResults = emptyList(),
-        existingFiles = setOf("/usr/local/bin/codex"),
-      )
-
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
-
-      assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
-    }
-  }
-
-  @Test
-  fun `posix finds claude in usr local bin known location`() {
-    runBlocking {
-      val claude = bundledAgentByKey("claude_code")
-      val eelApi = mockEelApi(
-        osFamily = EelOsFamily.Posix,
-        binaryName = "claude",
-        pathResults = emptyList(),
-        existingFiles = setOf("/usr/local/bin/claude"),
-      )
-
-      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
-
-      assertThat(binaryPath).isEqualTo("/usr/local/bin/claude")
-    }
-  }
-
-  @Test
-  fun `posix prefers home local bin over usr local bin for codex`() {
-    runBlocking {
-      val codex = bundledAgentByKey("codex")
-      val homePath = "/home/Someone.Else"
-      val firstKnownLocation = "$homePath/.local/bin/codex"
-      val secondKnownLocation = "/usr/local/bin/codex"
-      val eelApi = mockEelApi(
-        osFamily = EelOsFamily.Posix,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(firstKnownLocation, secondKnownLocation),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(firstKnownLocation)
     }
   }
 
   @Test
-  fun `junie stays unavailable when only usr local bin contains it on posix`() {
+  fun `posix ignores binary found only outside the known-location candidates`() {
     runBlocking {
-      val junie = bundledAgentByKey("junie")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
+      )
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Posix,
-        binaryName = "junie",
+        binaryName = "agent",
         pathResults = emptyList(),
-        existingFiles = setOf("/usr/local/bin/junie"),
+        existingFiles = setOf("/usr/local/bin/agent"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(junie, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isNull()
     }
   }
 
   @Test
-  fun `junie finds bat entry on windows`() {
+  fun `windows finds binary using a custom executable extension list`() {
     runBlocking {
-      val junie = bundledAgentByKey("junie")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\.local\\bin"),
+        windowsExecutableExtensions = listOf("bat"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\.local\\bin\\junie.bat"
+      val expectedPath = "$homePath\\.local\\bin\\agent.bat"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "junie",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(junie, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
   }
 
   @Test
-  fun `posix prefers codex found in PATH over known locations`() {
+  fun `posix prefers binary found in PATH over known locations`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        posixKnownLocationCandidates = listOf($$"$HOME/.local/bin", "/usr/local/bin"),
+      )
       val homePath = "/home/Someone.Else"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Posix,
-        binaryName = "codex",
-        pathResults = listOf("/opt/codex/codex"),
+        binaryName = "agent",
+        pathResults = listOf("/opt/agent/agent"),
         homePath = homePath,
-        existingFiles = setOf("$homePath/.local/bin/codex", "/usr/local/bin/codex"),
+        existingFiles = setOf("$homePath/.local/bin/agent", "/usr/local/bin/agent"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
-      assertThat(binaryPath).isEqualTo("/opt/codex/codex")
+      assertThat(binaryPath).isEqualTo("/opt/agent/agent")
     }
   }
 
   @Test
   fun `windows matches binary name case-insensitively in known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\Codex.exe"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\Agent.exe"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -372,18 +358,21 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   @Test
   fun `windows matches extension case-insensitively in known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\codex.EXE"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\agent.EXE"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -392,22 +381,25 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   @Test
   fun `windows ignores unrelated files in known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
-      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\codex.cmd"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\agent.cmd"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
         existingFiles = setOf(
           "$homePath\\AppData\\Roaming\\npm\\unrelated.exe",
-          "$homePath\\AppData\\Roaming\\npm\\codexlike.exe",
+          "$homePath\\AppData\\Roaming\\npm\\agentlike.exe",
           expectedPath,
         ),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -416,26 +408,24 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   @Test
   fun `windows ignores binary without extension in known location`() {
     runBlocking {
-      val codex = bundledAgentByKey("codex")
+      val agent = TestTerminalAgent(
+        binaryName = "agent",
+        windowsKnownLocationCandidates = listOf($$"$HOME\\AppData\\Roaming\\npm"),
+      )
       val homePath = "C:\\Users\\Someone.Else"
       val eelApi = mockEelApi(
         osFamily = EelOsFamily.Windows,
-        binaryName = "codex",
+        binaryName = "agent",
         pathResults = emptyList(),
         homePath = homePath,
-        existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\codex"),
+        existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\agent"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+      val binaryPath = findTerminalAgentBinaryPath(agent, eelApi)
 
       assertThat(binaryPath).isNull()
     }
   }
-
-  private fun bundledAgentByKey(agentKey: String) = bundledAgentByKey(TerminalAgent.AgentKey(agentKey))
-
-  private fun bundledAgentByKey(agentKey: TerminalAgent.AgentKey) =
-    DefaultTerminalAgentProvider().getTerminalAgents().first { it.agentKey == agentKey }
 
   private suspend fun mockEelApi(
     osFamily: EelOsFamily,

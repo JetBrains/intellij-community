@@ -11,9 +11,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines [PopupAdColors] and [PopupAdMetrics] to define the full styling for a popup ad component. */
 @Stable
 @GenerateDataFunctions
-public class PopupAdStyle(public val colors: PopupAdColors, public val metrics: PopupAdMetrics) {
+public class PopupAdStyle(
+    /** The color tokens for the popup ad component. */
+    public val colors: PopupAdColors,
+    /** The size and spacing metrics for the popup ad component. */
+    public val metrics: PopupAdMetrics,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -34,12 +40,17 @@ public class PopupAdStyle(public val colors: PopupAdColors, public val metrics: 
 
     override fun toString(): String = "PopupAdStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [PopupAdStyle]. */
     public companion object
 }
 
+/** Holds the color tokens for the popup ad component, namely its background color. */
 @Immutable
 @GenerateDataFunctions
-public class PopupAdColors(public val background: Color) {
+public class PopupAdColors(
+    /** The background color of the popup ad. */
+    public val background: Color
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -55,12 +66,19 @@ public class PopupAdColors(public val background: Color) {
 
     override fun toString(): String = "PopupAdColors(background=$background)"
 
+    /** Companion object for [PopupAdColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the popup ad component, including padding and minimum height. */
 @Stable
 @GenerateDataFunctions
-public class PopupAdMetrics(public val padding: PaddingValues, public val minHeight: Dp) {
+public class PopupAdMetrics(
+    /** The padding applied around the popup ad content. */
+    public val padding: PaddingValues,
+    /** The minimum height of the popup ad. */
+    public val minHeight: Dp,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -81,9 +99,11 @@ public class PopupAdMetrics(public val padding: PaddingValues, public val minHei
 
     override fun toString(): String = "PopupAdMetrics(padding=$padding, minHeight=$minHeight)"
 
+    /** Companion object for [PopupAdMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the current [PopupAdStyle]. */
 public val LocalPopupAdStyle: ProvidableCompositionLocal<PopupAdStyle> = staticCompositionLocalOf {
     error("No PopupAdStyle provided. Have you forgotten the theme?")
 }

@@ -29,7 +29,7 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/guava",
         "@lib//:jetbrains-annotations",
         "//libraries/commons/lang3",
@@ -162,6 +162,7 @@ jvm_library(
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/statistics:statistics_test_lib",

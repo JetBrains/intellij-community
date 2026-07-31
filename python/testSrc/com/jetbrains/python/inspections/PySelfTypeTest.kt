@@ -9,7 +9,7 @@ import com.jetbrains.python.fixtures.PyInspectionTestCase
 
 @Subsystems.Inspections
 @Layers.Functional
-internal class PySelfTypeTest : PyInspectionTestCase() {
+class PySelfTypeTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<out PyInspection> = PyAssertTypeInspection::class.java
 
   override fun getAdditionalInspectionClasses(): List<Class<out LocalInspectionTool>> = listOf(

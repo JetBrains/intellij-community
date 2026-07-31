@@ -34,7 +34,7 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyRequirementParser;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;

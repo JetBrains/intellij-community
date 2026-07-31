@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher
 import org.jetbrains.kotlin.psi.KtClassOrObject

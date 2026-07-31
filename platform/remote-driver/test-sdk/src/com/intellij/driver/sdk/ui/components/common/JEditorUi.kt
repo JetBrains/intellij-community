@@ -226,7 +226,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun getLineText(line: Int): String = text.lines().getOrElse(line - 1) { "" }
-
+  
   fun <T> interact(block: Editor.() -> T): T {
     return driver.withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       block.invoke(editor)
@@ -259,10 +259,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   /**
-  * Retrieves inline completion text at the specified offset or current caret position.
-  * @param offset The offset at which to retrieve inline completion. Defaults to the current caret position.
-  * @return The inline completion text at the specified offset.
-  */
+   * Retrieves inline completion text at the specified offset or current caret position.
+   * @param offset The offset at which to retrieve inline completion. Defaults to the current caret position.
+   * @return The inline completion text at the specified offset.
+   */
   fun getInlineCompletion(offset: Int = interact { editor.getCaretModel().getOffset() }): String {
     val endOffset: Int = with(editor.getDocument()) {
       val lastLine = getLineCount() - 1
@@ -365,10 +365,10 @@ interface EditorTextField : Component {
   fun getText(): String
 }
 
-fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']"): GutterUiComponent = x(xpath, GutterUiComponent::class.java)
+fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']"): GutterUiComponent =
+  x(xpath, GutterUiComponent::class.java)
 
-fun IdeaFrameUI.editorsSplitters(@Language("xpath") xpath: String? = null): EditorsSplittersUI =
-  x(xpath ?: "//div[@class='EditorsSplitters']", EditorsSplittersUI::class.java)
+fun IdeaFrameUI.editorsSplitters(@Language("xpath") xpath: String? = null): EditorsSplittersUI = x(xpath ?: "//div[@class='EditorsSplitters']", EditorsSplittersUI::class.java)
 
 class EditorsSplittersUI(data: ComponentData) : UiComponent(data) {
   fun editor(@Language("xpath") xpath: String? = null): JEditorUiComponent =

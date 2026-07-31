@@ -12,9 +12,9 @@ import java.util.Objects;
 
 public final class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmField.Diff> {
   private static final JVMFlags INLINABLE_FIELD_FLAGS = new JVMFlags(Opcodes.ACC_FINAL);
-  
-  public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<ElementAnnotation> annotations, Object value) {
-    super(flags, signature, name, TypeRepr.getType(GraphElementInterner.intern(descriptor)), annotations, value);
+
+  public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<ElementAnnotation> typeAnnotations, Object value) {
+    super(flags, signature, name, TypeRepr.getType(GraphElementInterner.intern(descriptor)), annotations, typeAnnotations, value);
   }
 
   public JvmField(GraphDataInput in) throws IOException {

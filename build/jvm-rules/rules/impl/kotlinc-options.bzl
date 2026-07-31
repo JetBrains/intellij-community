@@ -13,7 +13,9 @@ KotlincExtraOptionsInfo = provider(
         "plugin_options": "Additional -P compiler options.",
         "x_allow_result_return_type": "Enable kotlin.Result as a return type.",
         "x_strict_java_nullability_assertions": "Enable strict Java nullability assertions.",
+        "x_warning_level": "Per-diagnostic warning levels passed as repeated -Xwarning-level flags.",
         "x_wasm_attach_js_exception": "Enable attaching JS exceptions for Wasm.",
+        "x_wasm_generate_closed_world_multimodule": "Generate closed-world multimodule Wasm.",
         "x_wasm_kclass_fqn": "Enable KClass::qualifiedName support for Wasm.",
     },
 )
@@ -22,7 +24,9 @@ _EXTRA_OPTION_FIELDS = [
     "plugin_options",
     "x_allow_result_return_type",
     "x_strict_java_nullability_assertions",
+    "x_warning_level",
     "x_wasm_attach_js_exception",
+    "x_wasm_generate_closed_world_multimodule",
     "x_wasm_kclass_fqn",
 ]
 
@@ -39,9 +43,17 @@ _EXTRA_OPTION_ATTRS = {
         default = False,
         doc = "Enable strict Java nullability assertions.",
     ),
+    "x_warning_level": attr.string_list(
+        default = [],
+        doc = "Per-diagnostic warning levels, e.g. DEPRECATION:warning.",
+    ),
     "x_wasm_attach_js_exception": attr.bool(
         default = False,
         doc = "Enable attaching JavaScript exceptions for Wasm.",
+    ),
+    "x_wasm_generate_closed_world_multimodule": attr.bool(
+        default = False,
+        doc = "Generate closed-world multimodule Wasm.",
     ),
     "x_wasm_kclass_fqn": attr.bool(
         default = False,
@@ -139,8 +151,12 @@ def _extra_options_to_flags(kotlinc_extra_options):
         flags.append("-Xallow-result-return-type")
     if getattr(kotlinc_extra_options, "x_strict_java_nullability_assertions", False):
         flags.append("-Xstrict-java-nullability-assertions")
+    for level in getattr(kotlinc_extra_options, "x_warning_level", None) or []:
+        flags.append("-Xwarning-level=" + level)
     if getattr(kotlinc_extra_options, "x_wasm_attach_js_exception", False):
         flags.append("-Xwasm-attach-js-exception")
+    if getattr(kotlinc_extra_options, "x_wasm_generate_closed_world_multimodule", False):
+        flags.append("-Xwasm-generate-closed-world-multimodule")
     if getattr(kotlinc_extra_options, "x_wasm_kclass_fqn", False):
         flags.append("-Xwasm-kclass-fqn")
 
@@ -170,6 +186,7 @@ _WORKER_OPTION_NAMES = [
     "x_allow_kotlin_package",
     "x_allow_result_return_type",
     "x_allow_unstable_dependencies",
+    "x_compiler_plugin_order",
     "x_consistent_data_class_copy_visibility",
     "x_context_parameters",
     "x_context_receivers",
@@ -185,7 +202,9 @@ _WORKER_OPTION_NAMES = [
     "x_sam_conversions",
     "x_skip_prerelease_check",
     "x_strict_java_nullability_assertions",
+    "x_warning_level",
     "x_wasm_attach_js_exception",
+    "x_wasm_generate_closed_world_multimodule",
     "x_wasm_kclass_fqn",
     "x_when_guards",
     "x_xlanguage",

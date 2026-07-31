@@ -7,6 +7,8 @@ import java.util.EventListener
 
 @ApiStatus.Internal
 interface LspClientManagerListener : EventListener {
+  fun clientAdded(lspClient: LspClient) {}
+  fun clientRemoved(lspClient: LspClient) {}
   fun serverStateChanged(lspClient: LspClient) {}
   fun fileOpened(lspClient: LspClient, file: VirtualFile) {}
   fun fileEdited(lspClient: LspClient, file: VirtualFile) {}

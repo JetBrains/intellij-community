@@ -13,11 +13,12 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -98,7 +99,7 @@ abstract class AbstractK2RuntimeTypeEvaluatorTest : KotlinDescriptorTestCaseWith
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+    @OptIn(KaExperimentalApi::class)
     private fun computeRuntimeType(
         expressionText: String,
         contextElement: PsiElement,
@@ -127,7 +128,7 @@ abstract class AbstractK2RuntimeTypeEvaluatorTest : KotlinDescriptorTestCaseWith
         val pointer = typeEvaluator.computeType() ?: return null
         return ReadAction.nonBlocking<String?> {
             analyze(expression) {
-                pointer.restore(this)?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)
+                pointer.restore()?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)
             }
         }.executeSynchronously()
     }

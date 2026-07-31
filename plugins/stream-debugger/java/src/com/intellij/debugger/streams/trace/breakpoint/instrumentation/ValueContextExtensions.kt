@@ -18,7 +18,7 @@ internal fun ValueContext.formatMap(map: ObjectReference?, type: GenericType?): 
   if (map == null || type == null) return emptyResult()
 
   val streamTypeInfo = StreamTypeInfo.forType(type.genericTypeName)
-  val utilsClass = clazz(StreamDebuggerUtils::class.java)
+  val utilsClass = helperClass(StreamDebuggerUtils::class.java)
   val formatMethod = utilsClass.method(streamTypeInfo.formatterMethod, "(Ljava/util/Map;)[Ljava/lang/Object;")
   return formatMethod.invoke(utilsClass, listOf(map)) as ArrayReference
 }

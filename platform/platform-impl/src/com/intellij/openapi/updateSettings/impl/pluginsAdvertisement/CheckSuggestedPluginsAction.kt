@@ -2,23 +2,24 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 
 internal class CheckSuggestedPluginsAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-
-    runWithModalProgressBlocking(project, IdeBundle.message("plugins.advertiser.check.progress")) {
-      PluginsAdvertiserStartupActivity().checkSuggestedPlugins(project = project, includeIgnored = true)
-    }
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
+    e.presentation.isEnabledAndVisible = e.project?.let { TrustedProjects.isProjectTrusted(it) } ?: false
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project?.takeIf { TrustedProjects.isProjectTrusted(it) } ?: return
+
+    runWithModalProgressBlocking(project, IdeBundle.message("plugins.advertiser.check.progress")) {
+      checkSuggestedPlugins(project = project, includeIgnored = true)
+    }
+  }
 }

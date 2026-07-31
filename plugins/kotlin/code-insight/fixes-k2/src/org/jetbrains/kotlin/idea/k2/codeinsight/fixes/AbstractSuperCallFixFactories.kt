@@ -11,13 +11,18 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
@@ -52,34 +57,36 @@ internal object AbstractSuperCallFixFactories {
         listOfNotNull(createQuickFix(diagnostic.psi))
     }
 
-    private fun KaSession.createQuickFix(element: PsiElement): ModCommandAction? {
+    context(session: KaSession)
+    private fun createQuickFix(element: PsiElement): ModCommandAction? {
         val expression = element as? KtNameReferenceExpression ?: return null
         val containingClass = expression.getNonStrictParentOfType<KtClassOrObject>() ?: return null
         val containingFunction = expression.parentOfType<KtNamedFunction>() ?: return null
-        val functionSymbol = expression.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>()?.symbol ?: return null
+        val functionSymbol = expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return null
 
-        fun KaSession.computeInfoIfNotInObject(containingClass: KtClassOrObject): Info? {
+        context(session: KaSession)
+        fun computeInfoIfNotInObject(containingClass: KtClassOrObject): Info? {
             if (containingClass !is KtClass) return null
             val variablesForEquals = getPropertiesToUseInGeneratedMember(containingClass)
             return Info(containingClass, variablesForEquals, variablesForEquals, equalsInClass = null, hashCodeInClass = null)
         }
 
         return when {
-            functionSymbol.isAnyEquals(this.useSiteSession) -> {
+            functionSymbol.isAnyEquals(useSiteSession) -> {
                 val info = computeInfoIfNotInObject(containingClass) ?: return null
                 val generatedEquals = GenerateEqualsAndHashCodeUtils.generateEquals(info, tryToFindEqualsMethodForClass = false)
                                       ?: return null
                 val elementContext = UpdateToCorrectMethodFix.ElementContext(generatedEquals)
                 UpdateToCorrectMethodFix(containingFunction, elementContext, UpdateToCorrectMethodFix.Method.EQUALS)
             }
-            functionSymbol.isAnyHashCode(this.useSiteSession) -> {
+            functionSymbol.isAnyHashCode(useSiteSession) -> {
                 val info = computeInfoIfNotInObject(containingClass) ?: return null
                 val generatedHashCode = GenerateEqualsAndHashCodeUtils.generateHashCode(info, tryToFindHashCodeMethodForClass = false)
                                         ?: return null
                 val elementContext = UpdateToCorrectMethodFix.ElementContext(generatedHashCode)
                 UpdateToCorrectMethodFix(containingFunction, elementContext, UpdateToCorrectMethodFix.Method.HASH_CODE)
             }
-            functionSymbol.isAnyToString(this.useSiteSession) -> {
+            functionSymbol.isAnyToString(useSiteSession) -> {
                 val template = TemplateResource(
                     KotlinBundle.message("action.generate.tostring.template.single"),
                     KotlinToStringTemplatesManager.readFile(DEFAULT_SINGLE),
@@ -174,12 +181,14 @@ private class SpecifySuperTypeExplicitlyFix(
     }
 }
 
-private fun KaSession.getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
+context(session: KaSession)
+private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
     fun tryViaCalledFunction(): KaCallableSymbol? = expression.resolveToCall()
-        ?.successfulCallOrNull<KaSimpleFunctionCall>()
+        ?.successfulFunctionCallOrNull()
         ?.symbol
         ?.allOverriddenSymbols?.find { (it as? KaFunctionSymbol)?.modality != KaSymbolModality.ABSTRACT }
 
+    context(session: KaSession)
     fun tryViaContainingFunction(): KaCallableSymbol? = expression.containingFunction()
         ?.symbol
         ?.allOverriddenSymbols

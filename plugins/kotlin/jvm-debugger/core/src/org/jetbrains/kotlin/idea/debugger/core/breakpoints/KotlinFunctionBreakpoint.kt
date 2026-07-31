@@ -14,12 +14,13 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartReadActionIfUnderProgressElseDumb
@@ -116,7 +117,8 @@ private fun createMethodDescriptor(declaration: KtDeclaration, sourcePosition: S
     return analyze(declaration) { createMethodDescriptor(document, declaration) }
 }
 
-private fun KaSession.createMethodDescriptor(document: Document, declaration: KtDeclaration): MethodDescriptor? {
+context(session: KaSession)
+private fun createMethodDescriptor(document: Document, declaration: KtDeclaration): MethodDescriptor? {
     var symbol = declaration.symbol
     val lineNumber = document.getLineNumber(declaration.textOffset)
     if (symbol is KaNamedClassSymbol) {

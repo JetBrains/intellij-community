@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
@@ -10,6 +11,11 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JPanel
+
+private fun getShowToolWindowNames(): Boolean {
+  val extension = ToolWindowExtension.getInstance() ?: return UISettings.getInstance().showToolWindowsNames
+  return extension.isToolWindowNameVisible()
+}
 
 /**
  * A small mockup of the IDE main window illustrating how tool window layout
@@ -29,7 +35,7 @@ internal class ToolWindowLayoutDiagramPanel : JPanel() {
   var showToolWindowBars: Boolean = !UISettings.getInstance().hideToolStripes
     set(value) { if (field != value) { field = value; repaint() } }
 
-  var showToolWindowNames: Boolean = UISettings.getInstance().showToolWindowsNames
+  var showToolWindowNames: Boolean = getShowToolWindowNames()
     set(value) { if (field != value) { field = value; repaint() } }
 
   private val frameBorderColor = JBColor(Color(0xB6B6B6), Color(0x1B1B1B))

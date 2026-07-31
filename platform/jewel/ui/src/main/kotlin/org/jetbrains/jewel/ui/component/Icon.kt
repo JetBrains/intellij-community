@@ -79,8 +79,8 @@ public fun Icon(
  * @param contentDescription text used by accessibility services to describe what this icon represents. This should
  *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
  *   that a user can take.
- * @param scale Scale multiplier for the icon.
  * @param modifier optional [Modifier] for this Icon.
+ * @param scale Scale multiplier for the icon.
  * @param iconDesigner lambda that builds an [Icon] instance using [IconDesigner].
  */
 @Composable
@@ -100,8 +100,8 @@ public fun Icon(
  * @param contentDescription text used by accessibility services to describe what this icon represents. This should
  *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
  *   that a user can take.
- * @param scale Scale multiplier for the icon.
  * @param modifier optional [Modifier] for this Icon.
+ * @param scale Scale multiplier for the icon.
  */
 @Composable
 public fun Icon(icon: Icon, contentDescription: String?, modifier: Modifier = Modifier, scale: IconScale? = null) {
@@ -138,6 +138,18 @@ public fun Icon(icon: Icon, contentDescription: String?, modifier: Modifier = Mo
     )
 }
 
+/**
+ * Icon component that draws an icon from an [IconKey] using a single [hint].
+ *
+ * @param key The [IconKey] to resolve the icon from.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
+ * @param modifier optional [Modifier] for this Icon.
+ * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
+ * @param tint tint to be applied to the icon. If [Color.Unspecified] is provided, then no tint is applied.
+ * @param hint [PainterHint] to be passed to the painter.
+ */
 @Suppress("ComposableParamOrder")
 @Composable
 public fun Icon(

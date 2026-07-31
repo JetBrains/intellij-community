@@ -4,7 +4,6 @@ package com.intellij.usages.impl.rules;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -19,12 +18,10 @@ import java.util.Collections;
 import java.util.List;
 
 class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
-  protected final Project myProject;
   private final DirectoryGroupingRule myDirectoryGroupingRule;
   private final boolean compactMiddleDirectories;
 
   DirectoryStructureGroupingRule(@NotNull Project project, boolean compactMiddleDirectories) {
-    myProject = project;
     this.compactMiddleDirectories = compactMiddleDirectories;
     myDirectoryGroupingRule = new DirectoryGroupingRule(project, false, compactMiddleDirectories);
   }
@@ -49,7 +46,7 @@ class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
       result.add(group);
     }
     else {
-      VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+      VirtualFile baseDir = myDirectoryGroupingRule.baseDirectoryFor(dir);
       while (dir != null && !dir.equals(baseDir)) {
         UsageGroup group = myDirectoryGroupingRule.getGroupForFile(dir);
         result.add(group);

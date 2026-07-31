@@ -3,13 +3,14 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.ide.actions.WhatsNewUtil
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class JcefWhatsNewProjectActivity : ProjectActivity {
@@ -21,19 +22,17 @@ internal class JcefWhatsNewProjectActivity : ProjectActivity {
     val app = ApplicationManager.getApplication()
     if (app.isCommandLine || app.isHeadlessEnvironment || app.isUnitTestMode) return
 
-    showWhatsNew(project, ApplicationInfo.getInstance().build)
-  }
-
-  private fun showWhatsNew(project: Project, current: BuildNumber) {
     val url = ExternalProductResourceUrls.getInstance().whatIsNewPageUrl
-    if (url != null &&
-        WhatsNewUtil.isWhatsNewAvailable() &&
-        UpdateCheckerService.shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP)) {
+    val appInfo = ApplicationInfoEx.getInstanceEx()
+    if (
+      url != null &&
+      WhatsNewUtil.isWhatsNewAvailable() &&
+      UpdateCheckerService.shouldShowWhatsNew(appInfo.build, appInfo.isMajorEAP)
+    ) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor) {
-        ApplicationManager.getApplication().invokeLater(
-          { WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true) },
-          project.disposed,
-        )
+        withContext(Dispatchers.EDT) {
+          WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true)
+        }
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true)
       }
       else {

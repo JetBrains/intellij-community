@@ -32,8 +32,14 @@ import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 private const val KAPT_PLUGIN_ID = "kapt"
+private const val KSP_PLUGIN_ID = "ksp"
+private const val KSP_MAVEN_GROUP_ID = "com.google.devtools.ksp"
 private const val LOMBOK_FQN = "lombok.Lombok"
 private val MAVEN_COMPILER_PLUGIN_ID = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)
+private val KSP_MAVEN_PLUGIN_IDS = setOf(
+    MavenId(KSP_MAVEN_GROUP_ID, "symbol-processing-maven-plugin", null),
+    MavenId(KSP_MAVEN_GROUP_ID, "ksp-maven-plugin", null),
+)
 
 class KaptMavenKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
     override val kotlinCompilerPluginId: String = KAPT_PLUGIN_ID
@@ -46,7 +52,7 @@ class KaptMavenKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginPro
         val pom = PomFile.forFileOrNull(xmlFile) ?: return
         configurationResultBuilder.changedFile(xmlFile)
         val project = module.project
-        val mavenProject = MavenProjectsManager.getInstance(project).findProject(module)
+        val mavenProject = MavenProjectsManager.getInstance(project).findProject(module) ?: return
         val processors = pom.findMavenProcessorPaths(mavenProject).ifEmpty { return }
         project.executeWriteCommand(KotlinMavenBundle.message("command.name.configure.0", xmlFile.name), null) {
             val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: pom.addPlugin(kotlinPluginId)
@@ -58,7 +64,7 @@ class KaptMavenKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginPro
 
     override fun configureModuleModCommand(module: Module): ModCommand {
         val xmlFile = module.findModulePomFileWithLocalOrInheritedKotlinPlugin() ?: return ModCommand.nop()
-        val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module)
+        val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return ModCommand.nop()
         val actionContext = ActionContext.from(null, xmlFile)
         return ModCommand.psiUpdate(actionContext) { updater ->
             val writablePomFile = updater.getWritable(xmlFile)
@@ -77,6 +83,7 @@ class KaptMavenProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfig
         module.buildSystemType == BuildSystemType.Maven &&
                 compilerPluginProjectConfigurators(module).isNotEmpty() &&
                 !module.hasMavenKaptConfigured() &&
+                !module.hasMavenKspConfigured() &&
                 module.hasNonLombokMavenAnnotationProcessor()
 }
 
@@ -87,8 +94,16 @@ private fun Module.hasMavenKaptConfigured(): Boolean {
     return kotlinPlugin.findKaptExecution() != null
 }
 
+private fun Module.hasMavenKspConfigured(): Boolean =
+    findModuleAndParentPomFiles().any { xmlFile ->
+        val pom = PomFile.forFileOrNull(xmlFile) ?: return@any false
+        pom.findPlugin(kotlinPluginId)?.hasKspExecution() == true ||
+                pom.hasKspMavenPlugin() ||
+                pom.hasKspDependency()
+    }
+
 private fun Module.hasNonLombokMavenAnnotationProcessor(): Boolean {
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(this)
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(this) ?: return false
     val xmlFile = findModulePomFileWithLocalOrInheritedKotlinPlugin() ?: return false
     val pom = PomFile.forFileOrNull(xmlFile) ?: return false
     return pom.findMavenProcessorPaths(mavenProject).isNotEmpty() ||
@@ -111,23 +126,38 @@ private fun Module.findModulePomFileWithLocalOrInheritedKotlinPlugin(): XmlFile?
     return null
 }
 
-private fun PomFile.findMavenProcessorPaths(mavenProject: MavenProject?): List<MavenProcessorPath> {
-    val declaredAnnotationProcessors = findDeclaredAnnotationProcessorPaths(mavenProject)
-    val externalProcessors = mavenProject?.externalAnnotationProcessors
-        ?.mapNotNull { it.toProcessorPath() }
-        ?: emptyList()
+private fun Module.findModuleAndParentPomFiles(): List<XmlFile> {
+    val pomFile = findModulePomFile(this) ?: return emptyList()
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    val parentPomFiles = buildList {
+        var parentId = mavenProjectsManager.findProject(this@findModuleAndParentPomFiles)?.parentId
+        while (parentId != null) {
+            val parentProject = mavenProjectsManager.findProject(parentId) ?: break
+            val parentPomFile = findPomXmlByFile(parentProject.file) ?: break
+            add(parentPomFile)
+            parentId = parentProject.parentId
+        }
+    }
+    return listOf(pomFile) + parentPomFiles
+}
+
+private fun PomFile.findMavenProcessorPaths(mavenProject: MavenProject): List<MavenProcessorPath> {
+    val declaredAnnotationProcessors = findDeclaredAnnotationProcessorPaths().mapNotNull { it.toProcessorPath(mavenProject) }
+    val externalProcessors = mavenProject.externalAnnotationProcessors
+        .mapNotNull { it.toProcessorPath() }
     val dependencyProcessors = domModel.dependencies.dependencies.mapNotNull { it.toKnownProcessorPath(mavenProject) }
     return (declaredAnnotationProcessors + externalProcessors + dependencyProcessors).distinctBy { it.groupId to it.artifactId }
 }
 
-private fun PomFile.findDeclaredAnnotationProcessorPaths(mavenProject: MavenProject?): List<MavenProcessorPath> {
+private fun PomFile.findDeclaredAnnotationProcessorPaths(): List<XmlTag> {
     val javacPlugin = findPlugin(MAVEN_COMPILER_PLUGIN_ID) ?: return emptyList()
     val configurationTag = javacPlugin.configuration.xmlTag ?: return emptyList()
     val annotationProcessorPaths = configurationTag.findFirstSubTag("annotationProcessorPaths") ?: return emptyList()
-    return (annotationProcessorPaths.findSubTags("path") +
-            annotationProcessorPaths.findSubTags("dependency") +
-            annotationProcessorPaths.findSubTags("annotationProcessorPath"))
-        .mapNotNull { it.toProcessorPath(mavenProject) }
+    return buildList {
+        addAll(annotationProcessorPaths.findSubTags("path"))
+        addAll(annotationProcessorPaths.findSubTags("dependency"))
+        addAll(annotationProcessorPaths.findSubTags("annotationProcessorPath"))
+    }
 }
 
 private fun PomFile.configureKapt(
@@ -152,6 +182,19 @@ private fun PomFile.configureKapt(
     }
     addJavacExecutions(module, kotlinPlugin)
 
+    val annotationProcessorPaths = findDeclaredAnnotationProcessorPaths()
+    val annotationProcessorPathsByCoordinates = annotationProcessorPaths.associate {
+        val pair = it.findFirstSubTag("groupId")?.value?.text to
+                it.findFirstSubTag("artifactId")?.value?.text
+        pair to it
+    }
+
+    for ((groupId, artifactId, _) in processors) {
+        val coordinate = groupId to artifactId
+        val tag = annotationProcessorPathsByCoordinates[coordinate]
+        tag?.delete()
+    }
+
     return oldText != xmlFile.text
 }
 
@@ -165,6 +208,21 @@ private fun MavenDomPlugin.findKaptExecution(): MavenDomPluginExecution? =
     executions.executions.firstOrNull { execution ->
         execution.goals.goals.any { it.stringValue == KAPT_PLUGIN_ID }
     }
+
+private fun MavenDomPlugin.hasKspExecution(): Boolean =
+    executions.executions.any { execution ->
+        execution.goals.goals.any { it.stringValue == KSP_PLUGIN_ID }
+    }
+
+private fun PomFile.hasKspMavenPlugin(): Boolean =
+    KSP_MAVEN_PLUGIN_IDS.any { findPlugin(it) != null }
+
+private fun PomFile.hasKspDependency(): Boolean =
+    domModel.dependencies.dependencies.any { it.groupId.stringValue == KSP_MAVEN_GROUP_ID } ||
+            findPlugin(kotlinPluginId)
+        ?.dependencies
+        ?.dependencies
+        ?.any { it.groupId.stringValue == KSP_MAVEN_GROUP_ID } == true
 
 private fun MavenDomPlugin.createKaptExecution(): MavenDomPluginExecution {
     val execution = executions.addExecution()
@@ -206,11 +264,11 @@ private fun MavenDomPluginExecution.configureAnnotationProcessorPaths(processors
     }
 }
 
-private fun MavenDomDependency.toKnownProcessorPath(mavenProject: MavenProject?): MavenProcessorPath? {
+private fun MavenDomDependency.toKnownProcessorPath(mavenProject: MavenProject): MavenProcessorPath? {
     val processorPath = MavenProcessorPath.of(this) ?: return null
     if (processorPath !in KNOWN_PROCESSOR_ARTIFACTS) return null
     val version = version.stringValue?.takeIf { it.isNotBlank() }
-        ?: mavenProject?.findManagedDependencyVersion(processorPath.groupId, processorPath.artifactId)
+        ?: mavenProject.findManagedDependencyVersion(processorPath.groupId, processorPath.artifactId)
     return processorPath.copy(version = version)
 }
 
@@ -221,11 +279,11 @@ private fun MavenArtifact.toProcessorPath(): MavenProcessorPath? {
     return MavenProcessorPath(groupId, artifactId, version)
 }
 
-private fun XmlTag.toProcessorPath(mavenProject: MavenProject?): MavenProcessorPath? {
+private fun XmlTag.toProcessorPath(mavenProject: MavenProject): MavenProcessorPath? {
     val groupId = findFirstSubTag("groupId")?.value?.text?.trim()?.takeIf { it.isNotBlank() } ?: return null
     val artifactId = findFirstSubTag("artifactId")?.value?.text?.trim()?.takeIf { it.isNotBlank() && it != "lombok" } ?: return null
     val version = findFirstSubTag("version")?.value?.text?.trim()?.takeIf { it.isNotBlank() }
-        ?: mavenProject?.findManagedDependencyVersion(groupId, artifactId)
+        ?: mavenProject.findManagedDependencyVersion(groupId, artifactId)
     return MavenProcessorPath(groupId, artifactId, version)
 }
 

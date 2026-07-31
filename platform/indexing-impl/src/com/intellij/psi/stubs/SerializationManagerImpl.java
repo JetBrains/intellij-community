@@ -211,6 +211,8 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       myStubSerializationHelper.serialize(rootStub, stream);
     }
     catch (IOException e) {
+      // TODO Propagate serialization failures instead of returning a potentially empty or partial stub tree, and mark name storage
+      //  as crashed only for its own I/O failures rather than for exceptions thrown by plugin serializers.
       LOG.info(e);
       nameStorageCrashed();
     }

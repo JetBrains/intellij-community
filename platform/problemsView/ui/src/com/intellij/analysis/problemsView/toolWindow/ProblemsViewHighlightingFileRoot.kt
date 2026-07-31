@@ -4,7 +4,6 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.splitApi.HighlightingFileRoot
-import com.intellij.analysis.problemsView.toolWindow.splitApi.MissingIdDiagnostics
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
 import com.intellij.build.FlowWithHistory
@@ -68,7 +67,6 @@ open class ProblemsViewHighlightingFileRoot(
   override fun getOtherProblems(): Collection<Problem> = emptyList()
 
   override fun problemAppeared(problem: Problem) {
-    MissingIdDiagnostics.trace("FileRoot", "problemAppeared:in", MissingIdDiagnostics.STEP_APPEARED, problem, "file=${file.name}")
     if (problem !is HighlightingProblem || problem.file != file) {
       return
     }
@@ -76,14 +74,12 @@ open class ProblemsViewHighlightingFileRoot(
   }
 
   override fun problemDisappeared(problem: Problem) {
-    MissingIdDiagnostics.trace("FileRoot", "problemDisappeared:in", MissingIdDiagnostics.STEP_DISAPPEARED, problem, "file=${file.name}")
     if (problem is HighlightingProblem && problem.file == file) {
       notify(problem, synchronized(problems) { SetUpdateState.remove(problem, problems) })
     }
   }
 
   override fun problemUpdated(problem: Problem) {
-    MissingIdDiagnostics.trace("FileRoot", "problemUpdated:in", MissingIdDiagnostics.STEP_UPDATED, problem, "file=${file.name}")
     if (problem is HighlightingProblem && problem.file == file) {
       notify(problem, synchronized(problems) { SetUpdateState.update(problem, problems) })
     }
@@ -92,22 +88,18 @@ open class ProblemsViewHighlightingFileRoot(
   private fun notify(problem: Problem, state: SetUpdateState) {
     when (state) {
       SetUpdateState.ADDED -> {
-        MissingIdDiagnostics.trace("FileRoot", "set:ADDED", MissingIdDiagnostics.STEP_APPEARED, problem, "file=${file.name}")
         super.problemAppeared(problem)
         problemEventsFlow.problemAppeared(problem as HighlightingProblem)
       }
       SetUpdateState.REMOVED -> {
-        MissingIdDiagnostics.trace("FileRoot", "set:REMOVED", MissingIdDiagnostics.STEP_DISAPPEARED, problem, "file=${file.name}")
         super.problemDisappeared(problem)
         problemEventsFlow.problemDisappeared(problem as HighlightingProblem)
       }
       SetUpdateState.UPDATED -> {
-        MissingIdDiagnostics.trace("FileRoot", "set:UPDATED", MissingIdDiagnostics.STEP_UPDATED, problem, "file=${file.name}")
         super.problemUpdated(problem)
         problemEventsFlow.problemUpdated(problem as HighlightingProblem)
       }
       SetUpdateState.IGNORED -> {
-        MissingIdDiagnostics.trace("FileRoot", "set:IGNORED", MissingIdDiagnostics.STEP_UPDATED, problem, "file=${file.name}")
       }
     }
   }
@@ -122,8 +114,6 @@ open class ProblemsViewHighlightingFileRoot(
     private val problems = mutableSetOf<HighlightingProblem>()
 
     override fun getHistory(): List<ProblemEvent> {
-      MissingIdDiagnostics.trace("FileRoot.flow", "history-replay/re-subscription", MissingIdDiagnostics.STEP_SUBSCRIPTION,
-                                 "historySize=${problems.size}")
       return problems.map { ProblemEvent.Appeared(it) }
     }
 

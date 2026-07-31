@@ -248,6 +248,9 @@ public interface PopupRenderer {
         content: @Composable () -> Unit,
     )
 
+    /**
+     * Renders the popup with optional [windowShape] support. Falls back to the deprecated overload if not overridden.
+     */
     @Composable
     public fun Popup(
         popupPositionProvider: PopupPositionProvider,
@@ -270,6 +273,7 @@ public interface PopupRenderer {
         )
     }
 
+    /** Companion object for [PopupRenderer]. Currently empty; kept as an extension point for extension functions. */
     public companion object
 }
 

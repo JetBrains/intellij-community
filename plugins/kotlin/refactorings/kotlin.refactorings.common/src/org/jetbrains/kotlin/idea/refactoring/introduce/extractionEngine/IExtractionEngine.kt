@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -111,9 +111,7 @@ abstract class IExtractionEngine<KotlinType,
                 try {
                     helper.validate(analysisResult.descriptor as Descriptor)
                 } catch (e: RuntimeException) {
-                    if (e is ControlFlowException) {
-                        throw e
-                    }
+                    rethrowControlFlowException(e)
                     ExtractableCodeDescriptorWithException(e)
                 }
             }

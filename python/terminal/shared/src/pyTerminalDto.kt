@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
@@ -21,9 +22,8 @@ value class PathDto private constructor(private val pathString: String) {
     EelPath.parse(pathString, eelDescriptor).asNioPath()
 
   companion object {
-    fun create(path: Path): PathDto {
-      return PathDto(path.pathString)
-    }
+    fun create(path: Path): PathDto =
+      PathDto(path.asEelPath().toString())
   }
 }
 

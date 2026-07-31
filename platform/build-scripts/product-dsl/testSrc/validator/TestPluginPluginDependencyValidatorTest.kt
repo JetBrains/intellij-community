@@ -541,7 +541,7 @@ class TestPluginPluginDependencyValidatorTest {
         existingXmlPluginDependencies = emptySet(),
         preserveExistingPluginDependencies = emptySet(),
         writtenPluginDependencies = result.writtenPluginDependencies,
-        allJpsPluginDependencies = result.allJpsPluginDependencies,
+        requiredPluginDependencies = result.requiredPluginDependencies,
         suppressedModules = emptySet(),
         suppressedPlugins = emptySet(),
         suppressionUsages = result.suppressionUsages,

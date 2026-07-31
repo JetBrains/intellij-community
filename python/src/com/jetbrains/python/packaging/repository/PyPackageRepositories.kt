@@ -21,6 +21,13 @@ internal class PyPackageRepositories : PersistentStateComponent<PyPackageReposit
   @Property
   val invalidRepositories = mutableSetOf<PyPackageRepository>()
 
+  /**
+   * Persisted `enabled` state for built-in repositories (PyPI, Conda, …) keyed by repository name.
+   * Custom repositories carry their own `enabled` field inside [repositories].
+   */
+  @Property
+  val defaultRepoEnabled = mutableMapOf<String, Boolean>()
+
 
   override fun getState(): PyPackageRepositories {
     return this
@@ -36,5 +43,11 @@ internal class PyPackageRepositories : PersistentStateComponent<PyPackageReposit
 
   fun markInvalid(url: String) {
     findByUrl(url)?.let(invalidRepositories::add)
+  }
+
+  fun isDefaultRepoEnabled(name: String): Boolean = defaultRepoEnabled[name] ?: true
+
+  fun setDefaultRepoEnabled(name: String, enabled: Boolean) {
+    defaultRepoEnabled[name] = enabled
   }
 }

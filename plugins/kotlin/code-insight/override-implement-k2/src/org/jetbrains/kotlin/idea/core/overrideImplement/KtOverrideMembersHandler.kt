@@ -6,19 +6,12 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaCallableImplementationState
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.implementationState
-import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
-import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -28,7 +21,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.symbols.implementationState
+import org.jetbrains.kotlin.analysis.api.symbols.intersectionOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -47,7 +47,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 context(_: KaSession)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
     if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
-    val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.enumEntryInitializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
+    val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.initializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
     return getOverridableMembers(classSymbol).map { overrideMember ->
         val symbol = overrideMember.symbol
         val bodyType = overrideMember.bodyType
@@ -161,7 +161,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
         val containingSymbol: KaClassSymbol? get() = withValidityAssertion { backingContainingSymbol }
     }
 
-    override fun getChooserTitle() = KotlinIdeaCoreBundle.message("override.members.handler.title")
+    override fun getChooserTitle(): String = KotlinIdeaCoreBundle.message("override.members.handler.title")
 
-    override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("override.members.handler.no.members.hint")
+    override fun getNoMembersFoundHint(): String = KotlinIdeaCoreBundle.message("override.members.handler.no.members.hint")
 }

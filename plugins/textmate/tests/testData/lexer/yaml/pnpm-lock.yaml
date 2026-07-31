@@ -1,0 +1,235 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+overrides:
+  prosemirror-view: 1.42.1
+  prosemirror-model: 1.25.11
+  '@radix-ui/react-dismissable-layer': 1.1.15
+
+importers:
+
+  .:
+    devDependencies:
+      husky:
+        specifier: 9.1.7
+        version: 9.1.7
+      lint-staged:
+        specifier: 17.0.8
+        version: 17.0.8
+      node:
+        specifier: runtime:^24
+        version: runtime:24.16.0
+      postcss-scss:
+        specifier: 4.0.9
+        version: 4.0.9(postcss@8.5.19)
+      prettier:
+        specifier: 3.9.5
+        version: 3.9.5
+      rimraf:
+        specifier: 6.1.3
+        version: 6.1.3
+      syncpack:
+        specifier: 15.3.2
+        version: 15.3.2
+      turbo:
+        specifier: 2.10.5
+        version: 2.10.5
+
+  automations:
+    devDependencies:
+      rimraf:
+        specifier: 6.1.3
+        version: 6.1.3
+
+  automations/apps/backend:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: 2.2.3
+        version: 2.2.3
+      '@concierge/nestjs-authn':
+        specifier: workspace:*
+        version: link:../../packages/nestjs-authn
+      '@concierge/nestjs-feature-flags':
+        specifier: workspace:*
+        version: link:../../packages/nestjs-feature-flags
+      '@concierge/nestjs-kafka':
+        specifier: workspace:*
+        version: link:../../packages/nestjs-kafka
+      '@concierge/nestjs-otel':
+        specifier: workspace:*
+        version: link:../../packages/nestjs-otel
+      '@concierge/notifications-client':
+        specifier: workspace:*
+        version: link:../../packages/notifications-client
+      '@concierge/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@fastify/static':
+        specifier: 9.0.0
+        version: 9.0.0
+      '@jcp/can-i-client':
+        specifier: 1.3.0
+        version: 1.3.0
+      '@jcp/jcp-agent-spawner-sessions-api-client':
+        specifier: 0.2.3
+        version: 0.2.3
+      '@jcp/jcp-org-entities-api-client':
+        specifier: 2.7.0
+        version: 2.7.0
+      '@jcp/jcp-org-jwt-api-client':
+        specifier: 1.1.2
+        version: 1.1.2
+      '@jcp/jcp-secrets-manager-api-client':
+        specifier: 1.2.0
+        version: 1.2.0
+      '@jcp/manage-client':
+        specifier: 0.6.4
+        version: 0.6.4
+      '@nestjs/common':
+        specifier: 11.1.19
+        version: 11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/config':
+        specifier: 4.0.3
+        version: 4.0.3(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: 11.1.19
+        version: 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-fastify':
+        specifier: 11.1.19
+        version: 11.1.19(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@nestjs/swagger':
+        specifier: 11.2.6
+        version: 11.2.6(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(reflect-metadata@0.2.2)
+      '@opentelemetry/api':
+        specifier: 1.9.1
+        version: 1.9.1
+      '@prisma/adapter-pg':
+        specifier: 7.7.0
+        version: 7.7.0
+      '@prisma/client':
+        specifier: 7.7.0
+        version: 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3))(typescript@5.9.3)
+      dotenv:
+        specifier: 17.4.2
+        version: 17.4.2
+      dotenv-expand:
+        specifier: 12.0.3
+        version: 12.0.3
+      nestjs-cls:
+        specifier: 5.4.3
+        version: 5.4.3(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      nestjs-pino:
+        specifier: 4.6.1
+        version: 4.6.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@11.0.0)(pino@10.1.0)(rxjs@7.8.2)
+      nestjs-zod:
+        specifier: 5.2.1
+        version: 5.2.1(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/swagger@11.2.6(@fastify/static@9.0.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(reflect-metadata@0.2.2))(rxjs@7.8.2)(zod@4.4.3)
+      pg:
+        specifier: 8.13.0
+        version: 8.13.0
+      prisma:
+        specifier: 7.7.0
+        version: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
+      reflect-metadata:
+        specifier: 0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: 7.8.2
+        version: 7.8.2
+      uuid:
+        specifier: 13.0.0
+        version: 13.0.0
+      yaml:
+        specifier: 2.8.3
+        version: 2.8.3
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@bufbuild/buf':
+        specifier: 1.46.0
+        version: 1.46.0
+      '@bufbuild/protoc-gen-es':
+        specifier: 2.2.3
+        version: 2.2.3(@bufbuild/protobuf@2.2.3)
+      '@concierge/authn':
+        specifier: workspace:*
+        version: link:../../packages/authn
+      '@concierge/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@concierge/openapi-generator':
+        specifier: workspace:*
+        version: link:../../packages/openapi-generator
+      '@concierge/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@eslint/eslintrc':
+        specifier: 3.3.5
+        version: 3.3.5
+      '@eslint/js':
+        specifier: 10.0.1
+        version: 10.0.1(eslint@10.7.0(jiti@2.6.1))
+      '@nestjs/cli':
+        specifier: 11.0.21
+        version: 11.0.21(@swc/cli@0.8.1(@swc/core@1.15.21))(@swc/core@1.15.21)(@types/node@24.13.2)(esbuild@0.28.0)
+      '@nestjs/schematics':
+        specifier: 11.0.10
+        version: 11.0.10(chokidar@4.0.3)(typescript@5.9.3)
+      '@nestjs/testing':
+        specifier: 11.1.19
+        version: 11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19(@nestjs/common@11.1.19(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@swc/cli':
+        specifier: 0.8.1
+        version: 0.8.1(@swc/core@1.15.21)(chokidar@4.0.3)
+      '@swc/core':
+        specifier: 1.15.21
+        version: 1.15.21
+      '@types/node':
+        specifier: 24.13.2
+        version: 24.13.2
+      '@types/supertest':
+        specifier: 7.2.0
+        version: 7.2.0
+      allure-commandline:
+        specifier: 2.38.1
+        version: 2.38.1
+      allure-vitest:
+        specifier: 3.6.0
+        version: 3.6.0(@vitest/runner@4.1.10)(vitest@4.1.10)
+      eslint:
+        specifier: 10.7.0
+        version: 10.7.0(jiti@2.6.1)
+      globals:
+        specifier: 17.7.0
+        version: 17.7.0
+      pino-pretty:
+        specifier: ^13.1.3
+        version: 13.1.3
+      rimraf:
+        specifier: 6.1.3
+        version: 6.1.3
+      source-map-support:
+        specifier: 0.5.21
+        version: 0.5.21
+      supertest:
+        specifier: 7.2.2
+        version: 7.2.2
+      ts-loader:
+        specifier: 9.5.7
+        version: 9.5.7(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.21)(esbuild@0.28.0))
+      ts-node:
+        specifier: 10.9.2
+        version: 10.9.2(@swc/core@1.15.21)(@types/node@24.13.2)(typescript@5.9.3)
+      tsconfig-paths:
+        specifier: 4.2.0
+        version: 4.2.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.2)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.4(@types/node@24.13.2)(esbuild@0.28.0)(jiti@2.6.1)(sass-embedded@1.100.0)(sass@1.101.0)(terser@5.43.1)(tsx@4.23.1)(yaml@2.8.3))

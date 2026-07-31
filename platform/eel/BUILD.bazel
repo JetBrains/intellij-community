@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "eel-tests_test",
@@ -11,6 +12,12 @@ jps_test(
 ### skip generation section `test intellij.platform.eel.tests`
 
 ### auto-generated section `build intellij.platform.eel` start
+create_kotlinc_options(
+    name = "custom_eel",
+    jvm_target = "8",
+    opt_in = ["com.intellij.platform.eel.channels.EelDelicateApi"],
+)
+
 jvm_library(
     name = "eel",
     srcs = glob(
@@ -23,7 +30,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k8",
+    kotlinc_opts = ":custom_eel",
     module_name = "intellij.platform.eel",
     visibility = ["//visibility:public"],
     deps = [
@@ -41,7 +48,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k8",
+    kotlinc_opts = ":custom_eel",
     module_name = "intellij.platform.eel",
     visibility = ["//visibility:public"],
     runtime_deps = [

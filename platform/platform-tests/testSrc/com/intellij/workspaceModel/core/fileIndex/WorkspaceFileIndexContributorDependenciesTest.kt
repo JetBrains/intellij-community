@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -19,6 +18,7 @@ import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntityBuilder
 import com.intellij.util.indexing.testEntities.SiblingEntity
 import com.intellij.util.indexing.testEntities.SiblingEntityBuilder
+import com.intellij.workspaceModel.core.fileIndex.impl.SkipAddingToWatchedRootsData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -83,7 +83,9 @@ class WorkspaceFileIndexContributorDependenciesTest {
       }
     }
 
-    assertEquals("new parent value", childWorkspaceFileIndexContributor.latestParentProperty, "ChildWorkspaceFileIndexContributor should be called")
+    assertEquals("new parent value",
+                 childWorkspaceFileIndexContributor.latestParentProperty,
+                 "ChildWorkspaceFileIndexContributor should be called")
   }
 
 
@@ -98,7 +100,9 @@ class WorkspaceFileIndexContributorDependenciesTest {
       }
     }
 
-    assertEquals("new child value", parentWorkspaceFileIndexContributor.latestChildProperty, "ParentWorkspaceFileIndexContributor should be called")
+    assertEquals("new child value",
+                 parentWorkspaceFileIndexContributor.latestChildProperty,
+                 "ParentWorkspaceFileIndexContributor should be called")
   }
 
   @Test
@@ -112,7 +116,9 @@ class WorkspaceFileIndexContributorDependenciesTest {
       }
     }
 
-    assertEquals("new sibling property value", childWorkspaceFileIndexContributor.latestSiblingProperty, "ChildWorkspaceFileIndexContributor should be called")
+    assertEquals("new sibling property value",
+                 childWorkspaceFileIndexContributor.latestSiblingProperty,
+                 "ChildWorkspaceFileIndexContributor should be called")
   }
 
   @Test
@@ -155,8 +161,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     assertEquals("new sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
   }
 
-  // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
-  private class ChildWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ChildTestEntity>, SkipAddingToWatchedRoots {
+  private class ChildWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ChildTestEntity> {
     var latestParentProperty: String? = null
     var latestSiblingProperty: String? = null
     val numberOfCalls = AtomicInteger(0)
@@ -177,8 +182,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     }
   }
 
-  // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
-  private class ParentWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ParentTestEntity>, SkipAddingToWatchedRoots {
+  private class ParentWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ParentTestEntity> {
     var latestChildProperty: String? = null
 
     override val entityClass: Class<ParentTestEntity>
@@ -191,7 +195,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
 
     override fun registerFileSets(entity: ParentTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       latestChildProperty = entity.child?.customChildProperty
-      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CUSTOM, entity, null)
+      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CUSTOM, entity, object : SkipAddingToWatchedRootsData {})
     }
   }
 }

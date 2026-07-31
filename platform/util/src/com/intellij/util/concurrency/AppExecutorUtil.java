@@ -16,6 +16,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Prefer <a href="https://plugins.jetbrains.com/docs/intellij/kotlin-coroutines.html">Kotlin coroutines</a> in new code.
+ * A coroutine launched on {@code Dispatchers.IO} replaces a task submitted to the application pool, and
+ * {@code Dispatchers.IO.limitedParallelism(n)} replaces a bounded executor created here. Structured concurrency then ties
+ * the work to a scope, so cancellation and shutdown stop being the caller's bookkeeping.
+ * </p>
+ */
 public final class AppExecutorUtil {
   /**
    * Returns application-wide instance of {@link ScheduledExecutorService} which is:
@@ -58,32 +67,54 @@ public final class AppExecutorUtil {
   }
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * Use {@code Dispatchers.IO.limitedParallelism(maxThreads)} instead, stored in a field and shared by every caller that
+   * belongs to the same limit. Creating one per batch of tasks multiplies the concurrency it was supposed to cap, because
+   * each instance limits only itself while all of them draw from the same underlying pool — the same trap this method has.
+   * See the notice on {@link AppExecutorUtil}.
+   * </p>
+   * <hr>
+   *
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the application pool
    *         (i.e., all tasks are run in the {@link #getAppExecutorService()} global thread pool).
    * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @see #getAppExecutorService()
    */
+  @ApiStatus.Obsolete
   public static @NotNull ExecutorService createBoundedApplicationPoolExecutor(@NotNull @NonNls String name, int maxThreads) {
     return createBoundedApplicationPoolExecutor(name, getAppExecutorService(), maxThreads);
   }
 
+  /**
+   * See <b>obsolescence notice</b> on {@link #createBoundedApplicationPoolExecutor(String, int)}.
+   */
   @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public static @NotNull ExecutorService createBoundedApplicationPoolExecutor(@NotNull @NonNls String name, int maxThreads, boolean changeThreadName) {
     return new BoundedTaskExecutor(name, getAppExecutorService(), maxThreads, changeThreadName);
   }
 
   /**
+   * See <b>obsolescence notice</b> on {@link #createBoundedApplicationPoolExecutor(String, int)}.
+   * <hr>
+   *
    * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    */
+  @ApiStatus.Obsolete
   public static @NotNull ExecutorService createBoundedApplicationPoolExecutor(@NotNull @NonNls String name, @NotNull Executor backendExecutor, int maxThreads) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, true);
   }
   /**
+   * See <b>obsolescence notice</b> on {@link #createBoundedApplicationPoolExecutor(String, int)}.
+   * <hr>
+   *
    * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    * which will shut down itself when {@code parentDisposable} gets disposed.
    */
+  @ApiStatus.Obsolete
   public static @NotNull ExecutorService createBoundedApplicationPoolExecutor(@NotNull @NonNls String name,
                                                                      @NotNull Executor backendExecutor,
                                                                      int maxThreads,

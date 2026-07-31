@@ -32,13 +32,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiProvidesStatement;
-import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -56,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class JavaParametersUtil {
@@ -251,7 +246,7 @@ public final class JavaParametersUtil {
     }
 
     if (!includeTests) {
-      putProvidersOnModulePath(project, forModulePath, forModulePath);
+      forModulePath.addAll(JavaPsiModuleUtil.collectServiceProviders(project, forModulePath));
     }
 
     JarFileSystem jarFS = JarFileSystem.getInstance();
@@ -287,45 +282,6 @@ public final class JavaParametersUtil {
       for (String additionalModule : addedModules.split(",")) {
         ContainerUtil.addIfNotNull(explicitModules, psiFacade.findModule(additionalModule.trim(), GlobalSearchScope.allScope(project)));
       }
-    }
-  }
-
-  private static void putProvidersOnModulePath(Project project, Set<PsiJavaModule> initialModules, Set<PsiJavaModule> forModulePath) {
-    Set<String> interfaces = new HashSet<>();
-    for (PsiJavaModule explicitModule : initialModules) {
-      for (PsiUsesStatement use : explicitModule.getUses()) {
-        PsiClassType useClassType = use.getClassType();
-        if (useClassType != null) {
-          interfaces.add(useClassType.getCanonicalText());
-        }
-      }
-    }
-
-    if (interfaces.isEmpty()) return;
-
-    Set<PsiJavaModule> added = new HashSet<>();
-    Consumer<PsiJavaModule> registerProviders = javaModule -> {
-      if (forModulePath.add(javaModule)) {
-        added.add(javaModule);
-      }
-    };
-    JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
-    for (String key : index.getAllKeys(project)) {
-      nextModule: 
-      for (PsiJavaModule aModule : index.getModules(key, project, GlobalSearchScope.allScope(project))) {
-        if (forModulePath.contains(aModule)) continue;
-        for (PsiProvidesStatement provide : aModule.getProvides()) {
-          PsiClassType provideInterfaceType = provide.getInterfaceType();
-          if (provideInterfaceType != null && interfaces.contains(provideInterfaceType.getCanonicalText())) {
-            registerProviders.accept(aModule);
-            JavaPsiModuleUtil.getAllDependencies(aModule).forEach(registerProviders);
-            continue nextModule;
-          }
-        }
-      }
-    }
-    if (!added.isEmpty()) {
-      putProvidersOnModulePath(project, added, forModulePath);
     }
   }
 

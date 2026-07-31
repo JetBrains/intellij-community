@@ -29,7 +29,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
 
   override fun getFileWatcherAdapter(): FileWatcherAdapter = EelFileWatcherAdapter()
 
-  override fun getCustomLoadingText(): @Nls String? {
+  override fun getCustomLoadingText(): @Nls String {
     return CoreBundle.message("file.chooser.loading.the.installed.wsl.distributions.list")
   }
 }

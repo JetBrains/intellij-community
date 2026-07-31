@@ -169,6 +169,10 @@ supported:
   be listed here, for security reasons. See
   [this issue](https://github.com/typeshed-internal/stub_uploader/issues/90)
   for more information about what external dependencies are allowed.
+* `optional-dependencies` (optional): A list of other stub packages or packages
+  with type information that are imported by some stubs in this package. This
+  is often used for packages that provide optional features that require extra
+  dependencies. The same limitations apply to this field as to `dependencies`.
 * `extra-description` (optional): Can be used to add a custom description to
   the package's long description. It should be a multi-line string in
   Markdown format.
@@ -204,7 +208,8 @@ This has the following keys:
   this field should be identical to `partial-stub`.
 * `stubtest-dependencies` (default: `[]`): A list of Python packages that need
   to be installed for stubtest to run successfully. These packages are installed
-  in addition to the dependencies in the `dependencies` field.
+  in addition to the dependencies in the `dependencies` and
+  `optional-dependencies` fields.
 * `apt-dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully.
 * `brew-dependencies` (default: `[]`): A list of MacOS Homebrew packages
@@ -314,6 +319,25 @@ augment the project's concrete implementation, not the project's
 documentation.  Whenever you find them disagreeing, model the type
 information after the actual implementation and file an issue on the
 project's tracker to fix their documentation.
+
+### Deprecations (using the `@deprecated` decorator)
+
+Generally deprecactions using the `@deprecated` decorator are added more
+liberally in typeshed than runtime deprecation warnings. Here are some
+guidelines that can be deviated from in special cases.
+
+Use `@deprecated` if and only if
+
+- a feature is deprecated at runtime (either using `@deprecated` or with a
+  runtime warning); or
+- a feature is documented to be deprecated (e.g. in API documention,
+  docstrings, or comments).
+
+For standard library features that are not deprecated in all Python versions
+currently supported by typeshed use `@deprecated` for
+
+- all versions starting with the "Deprecated since" version, plus
+- all versions for which an alternative is available.
 
 ### Docstrings
 

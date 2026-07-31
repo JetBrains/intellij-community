@@ -28,8 +28,8 @@ class class_or_instance_method:
 class PathInfo(NamedTuple):
     from_opts: Options
     to_opts: Options
-    target_fields: tuple[Field, ...]
-    join_field: Field
+    target_fields: tuple[Field[Any, Any], ...]
+    join_field: Field[Any, Any]
     m2m: bool
     direct: bool
     filtered_relation: FilteredRelation | None
@@ -67,8 +67,8 @@ class Q(tree.Node):
     def referenced_base_fields(self) -> set[str]: ...
 
 class DeferredAttribute:
-    field: Field
-    def __init__(self, field: Field) -> None: ...
+    field: Field[Any, Any]
+    def __init__(self, field: Field[Any, Any]) -> None: ...
     def __get__(self, instance: Model | None, cls: type[Model] | None = None) -> Any: ...
 
 _R = TypeVar("_R", bound=type)
@@ -96,10 +96,10 @@ class RegisterLookupMixin:
     def _unregister_lookup(cls, lookup: type[Lookup], lookup_name: str | None = None) -> None: ...
 
 def select_related_descend(
-    field: Field,
+    field: Field[Any, Any],
     restricted: bool,
     requested: Mapping[str, Any] | None,
-    select_mask: set[Field] | None,
+    select_mask: set[Field[Any, Any]] | None,
 ) -> bool: ...
 
 _E = TypeVar("_E", bound=BaseExpression)

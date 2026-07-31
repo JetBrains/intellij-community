@@ -6,9 +6,10 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
@@ -34,11 +35,11 @@ internal class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection(
         returnExpressionVisitor(fun(returnExpression: KtReturnExpression) {
             if (returnExpression.labelQualifier != null) return
             val lambda = returnExpression.getParentOfType<KtLambdaExpression>(true, KtNamedFunction::class.java) ?: return
-            val parentFunction = lambda.getStrictParentOfType<KtNamedFunction>() ?: return
+            val parentFunctionName = lambda.getStrictParentOfType<KtNamedFunction>()?.nameIdentifier?.text ?: return
 
             if (hasDiagnosticError(returnExpression)) return
 
-            val action = ChangeToLabeledReturnFix(returnExpression, labeledReturn = "return@${parentFunction.name}")
+            val action = ChangeToLabeledReturnFix(returnExpression, labeledReturn = "return@$parentFunctionName")
             holder.registerProblem(
                 returnExpression.returnKeyword,
                 KotlinBundle.message("unlabeled.return.inside.lambda"),

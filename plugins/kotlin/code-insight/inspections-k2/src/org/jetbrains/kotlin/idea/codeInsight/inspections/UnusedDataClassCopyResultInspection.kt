@@ -34,7 +34,7 @@ internal class UnusedDataClassCopyResultInspection : KotlinApplicableInspectionB
 
     override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val receiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver ?: return null
+        val receiver = resolvedCall.dispatchReceiver ?: return null
         val classSymbol = receiver.type.symbol as? KaNamedClassSymbol ?: return null
 
         if (!classSymbol.isData) return null

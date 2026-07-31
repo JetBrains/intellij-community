@@ -1147,7 +1147,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x = C()
 
       expr = x.method()
-      #└ TYPE C
+      #└ TYPE C | Unknown
       """,
     )
 

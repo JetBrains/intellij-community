@@ -3,48 +3,19 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.IntelliJProjectUtil
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.jetbrains.idea.devkit.inspections.remotedev.EXCLUSIONS_RELATIVE_PATH
 import org.jetbrains.idea.devkit.inspections.remotedev.PROJECT_BASELINE_VERSION_RELATIVE_PATH
-import org.jetbrains.idea.devkit.inspections.remotedev.SPLIT_MODE_API_USAGE_SHORT_NAME
-import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionExclusionProblem
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionExclusionsService
 import org.junit.Assert
 
 internal class SplitModeInspectionExclusionsReloadTest : BasePlatformTestCase() {
   fun testQuickFixesContainOnlyBaselineByDefault() {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    val file = myFixture.addFileToProject("src/example.kt", "class Example")
-
-    val fixes = SplitModeInspectionExclusionsService.getInstance(project).createCommonSuppressionQuickFixes(
-      file,
-      SPLIT_MODE_API_USAGE_SHORT_NAME,
-    )
+    val fixes = SplitModeInspectionExclusionsService.getInstance(project).createCommonSuppressionQuickFixes()
 
     Assert.assertEquals(
       listOf("Bypass incremental Split Mode safe-push tests"),
-      fixes.map { it.familyName },
-    )
-  }
-
-  fun testSuppressionQuickFixIsHiddenBehindRegistry() {
-    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    RegistryManager.getInstance().get("devkit.split.mode.add.to.exclusions.quick.fix.enabled")
-      .setValue(true, testRootDisposable)
-    val file = myFixture.addFileToProject("src/example.kt", "class Example")
-
-    val fixes = SplitModeInspectionExclusionsService.getInstance(project).createCommonSuppressionQuickFixes(
-      file,
-      SPLIT_MODE_API_USAGE_SHORT_NAME,
-    )
-
-    Assert.assertEquals(
-      listOf(
-        "Bypass incremental Split Mode safe-push tests",
-        "Add this violation to the exclusions list",
-      ),
       fixes.map { it.familyName },
     )
   }
@@ -86,45 +57,6 @@ internal class SplitModeInspectionExclusionsReloadTest : BasePlatformTestCase() 
     }
     finally {
       deleteProjectResourceFile(project, baselineVersionFile)
-    }
-  }
-
-  fun testExclusionsReloadAfterProjectFileChange() {
-    val exclusionsFile = createProjectResourceFile(
-      project,
-      EXCLUSIONS_RELATIVE_PATH,
-      """
-        {
-          "exclusions": [
-            {"inspection": "$SPLIT_MODE_API_USAGE_SHORT_NAME", "file": "src/example.kt", "line": 7}
-          ]
-        }
-      """.trimIndent(),
-    )
-    val service = SplitModeInspectionExclusionsService.getInstance(project)
-    val problem = SplitModeInspectionExclusionProblem(
-      inspection = SPLIT_MODE_API_USAGE_SHORT_NAME,
-      file = "src/example.kt",
-      line = 7,
-    )
-
-    try {
-      Assert.assertTrue(service.isExcluded(problem))
-
-      createProjectResourceFile(
-        project,
-        EXCLUSIONS_RELATIVE_PATH,
-        """
-          {
-            "exclusions": []
-          }
-        """.trimIndent(),
-      )
-
-      Assert.assertFalse(service.isExcluded(problem))
-    }
-    finally {
-      deleteProjectResourceFile(project, exclusionsFile)
     }
   }
 }

@@ -19,6 +19,9 @@
 - name: lib/modules/intellij.devkit.debugger.jar
   contentModules:
   - name: intellij.devkit.debugger
+- name: lib/modules/intellij.devkit.experiments.jar
+  contentModules:
+  - name: intellij.devkit.experiments
 - name: lib/modules/intellij.devkit.gradle.jar
   contentModules:
   - name: intellij.devkit.gradle

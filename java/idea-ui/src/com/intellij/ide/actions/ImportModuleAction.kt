@@ -94,6 +94,7 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
     @JvmStatic
     fun selectFileAndCreateWizard(project: Project?, dialogParent: Component?): AddModuleWizard? {
       val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        .withEnvironmentRestricted(true)
       descriptor.isHideIgnored = false
       descriptor.title = JavaUiBundle.message("chooser.title.select.file.or.directory.to.import")
       val providers = getProviders(project)

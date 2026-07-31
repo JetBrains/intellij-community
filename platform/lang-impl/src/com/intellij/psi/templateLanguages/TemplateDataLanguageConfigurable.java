@@ -40,6 +40,8 @@ public final class TemplateDataLanguageConfigurable extends PerFileConfigurableB
     if (key == MAPPING_TITLE) return LangBundle.message("template.data.language.configurable.tree.table.title");
     if (key == OVERRIDE_QUESTION) return LangBundle.message("template.data.language.override.warning.text");
     if (key == OVERRIDE_TITLE) return LangBundle.message("template.data.language.override.warning.title");
+    if (key == ENVIRONMENT_RESTRICTED) return true;
+    if (key == LOCAL_FILE_SYSTEM) return true;
     return null;
   }
 

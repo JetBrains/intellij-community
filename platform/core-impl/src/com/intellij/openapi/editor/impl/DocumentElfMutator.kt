@@ -23,9 +23,10 @@ import kotlin.concurrent.Volatile
  * later sync pass. Those writes do not take the application write lock.
  *
  * Reverting elf changes and applying real changes to elf are synchronization
- * operations. They run on EDT with write access, outside an elf scope, and keep
- * the UI-side view consistent with the real document after conflict handling or
- * real-document edits.
+ * operations. They run on EDT with write access and are entered outside an elf
+ * scope; each operation performs its elf-view mutations inside an elf scope of
+ * its own to keep the UI-side view consistent with the real document after
+ * conflict handling or real-document edits.
  */
 internal abstract class DocumentElfMutator(
   private val settingsElf: DocumentSettings,
@@ -47,13 +48,15 @@ internal abstract class DocumentElfMutator(
     check(changes.isNotEmpty()) { "no elf changes to revert" }
     val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
     val hostDocument = changes.first().changeEvent.document
-    try {
-      for (change in changes.asReversed()) {
-        dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
-        revertChange(change)
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes.asReversed()) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          revertChange(change)
+        }
+      } finally {
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
       }
-    } finally {
-      dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
     }
   }
 
@@ -65,20 +68,22 @@ internal abstract class DocumentElfMutator(
     val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
     val hostDocument = changes.first().changeEvent.document
     isApplyingRealChangesToElf = true
-    try {
-      for (change in changes) {
-        dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
-        changeText(
-          getSnapshot(),
-          change.changeEvent,
-          change.snapshotAfter.text(),
-          DocumentModStamp.next(),
-          false, // TODO: why false?
-        )
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          changeText(
+            getSnapshot(),
+            change.changeEvent,
+            change.snapshotAfter.text(),
+            DocumentModStamp.next(),
+            false, // TODO: why false?
+          )
+        }
+      } finally {
+        isApplyingRealChangesToElf = false
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
       }
-    } finally {
-      isApplyingRealChangesToElf = false
-      dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
     }
   }
 
@@ -225,7 +230,10 @@ internal abstract class DocumentElfMutator(
 
   private fun revertChange(change: ElfTextChange) {
     val eventToRevert = change.changeEvent
-    val currentSnapshot = getSnapshot() // safe to get snapshot because outside elfScope
+    // Safe to read despite running inside the operation's elf scope: nothing runs between this read and changeText,
+    // whose nested-modification guard rejects elf text changes from listeners, and elf metadata cannot change either —
+    // setModStamp/clearLineFlags are unsupported for elf, and updateText merges the latest metadata at CAS time anyway.
+    val currentSnapshot = getSnapshot()
     val initialStartOffset = if (eventToRevert is DocumentEventImpl) eventToRevert.initialStartOffset else eventToRevert.offset
     val changeEvent = DocumentEventImpl(
       eventToRevert.document,

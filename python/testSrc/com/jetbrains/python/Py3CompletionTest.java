@@ -55,6 +55,28 @@ public class Py3CompletionTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-88569")
+  public void testWalrusVariableFromImportCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertContainsElements(strings, "d", "y");
+    assertDoesntContain(strings, "x");
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testWalrusVariableQualifiedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertContainsElements(strings, "d", "y");
+    assertDoesntContain(strings, "x");
+  }
+
   // PY-13157
   public void testMetaClass() {
     doTestByText("""

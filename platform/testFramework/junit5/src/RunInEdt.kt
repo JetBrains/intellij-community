@@ -7,10 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.annotation.Inherited
 
 /**
- * Legacy JUnit5 extension that forces methods to run on EDT.
+ * Legacy JUnit 5 extension that forces test and lifecycle methods to run on EDT.
  *
- * Prefer coroutine-based tests, e.g. `timeoutRunBlocking(context = Dispatchers.UiWithModelAccess)`
- * for model access.
+ * Prefer a bounded coroutine test with `timeoutRunBlocking`, keeping only Swing operations inside
+ * `withContext(Dispatchers.UI)`. The strict UI dispatcher provides UI-thread affinity without
+ * implicitly granting model access. Use `Dispatchers.EDT` only when an inseparable operation is
+ * known to require IntelliJ model or lock access, and keep write actions explicit.
+ *
+ * Running the whole test on EDT slows the suite, moves assertions and lifecycle work onto the UI
+ * thread, and can hide accidental model or write-intent access.
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)

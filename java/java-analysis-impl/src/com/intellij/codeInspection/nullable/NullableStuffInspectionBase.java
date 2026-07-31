@@ -547,8 +547,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               if (TypeNullability.ofTypeParameter(typeParameters[i]).nullability() != Nullability.NOT_NULL) continue;
               TypeNullability nullability = type.getNullability();
               Nullability typeNullability = nullability.nullability();
-              if (typeNullability != Nullability.NOT_NULL &&
-                  !(typeNullability == Nullability.UNKNOWN && type instanceof PsiWildcardType wildcardType && !wildcardType.isExtends())) {
+              if (type instanceof PsiWildcardType wildcardType &&
+                  (nullability.source() instanceof NullabilitySource.ExtendsBound ||
+                   typeNullability == Nullability.UNKNOWN && !wildcardType.isExtends())) {
+                continue;
+              }
+              if (typeNullability != Nullability.NOT_NULL) {
                 String annotationToAdd = manager.getDefaultAnnotation(Nullability.NOT_NULL, reference);
                 PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
                 List<LocalQuickFix> fixes = new ArrayList<>();
@@ -561,11 +565,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   nullability == TypeNullability.UNKNOWN && !REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE ?
                   ProblemHighlightType.INFORMATION :
                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-                if (!isOnTheFly && level == ProblemHighlightType.INFORMATION) continue;
-                holder.registerProblem(typeArgument,
-                                       JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
-                                       level,
-                                       fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+                LocalQuickFix[] fixArray = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
+                if (level == ProblemHighlightType.INFORMATION) {
+                  if (!isOnTheFly) continue;
+                  holder.registerProblem(typeArgument,
+                                         JavaAnalysisBundle.message("non.null.type.argument.is.expected"),
+                                         level,
+                                         fixArray);
+                }
+                else {
+                  reportProblem(holder, typeArgument, fixArray, "non.null.type.argument.is.expected");
+                }
               }
             }
           }

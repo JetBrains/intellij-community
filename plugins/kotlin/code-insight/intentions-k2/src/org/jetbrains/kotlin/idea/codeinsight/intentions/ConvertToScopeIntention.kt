@@ -223,7 +223,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         return when (scopeFunction) {
             ScopeFunction.ALSO, ScopeFunction.APPLY -> {
                 val property = prevProperty()
-                val name = property?.name
+                val name = property?.nameIdentifier?.text
                 if (name !== null) property to name else null
             }
             ScopeFunction.RUN, ScopeFunction.WITH -> {
@@ -232,7 +232,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 val selector = receiver.getQualifiedExpressionForReceiver()?.selectorExpression
                     ?.let { it.safeAs<KtCallExpression>()?.calleeExpression ?: it } as? KtNameReferenceExpression
                 if (selector?.mainReference?.resolve() is KtClassOrObject) return null
-                declaration to receiver.getReferencedName()
+                declaration to receiver.getReferencedNameElement().text
             }
         }
     }
@@ -313,7 +313,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         val (scopeFunctionCall, callExpression) = when (scopeFunction) {
             ScopeFunction.ALSO, ScopeFunction.APPLY -> {
                 if (element !is KtProperty) return null
-                val propertyName = element.name ?: return null
+                val propertyName = element.nameIdentifier?.text ?: return null
                 val initializer = element.initializer ?: return null
 
                 val initializerPattern = when (initializer) {

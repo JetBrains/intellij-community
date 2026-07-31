@@ -108,6 +108,7 @@ public final class FileTypeDetectionService {
   private static final int CHUNK_SIZE = 10;
   private static final int OUR_MAX_FILE_SIZE_TO_LOG = 512;
 
+  private final boolean allowDetectionByContent = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeDetectionService.allowDetectionByContent", true);
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
@@ -229,7 +230,7 @@ public final class FileTypeDetectionService {
 
   @NotNull
   FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
-    if (!isDetectable(file)) {
+    if (!allowDetectionByContent || !isDetectable(file)) {
       if (fileTypeByName == DetectedByContentFileType.INSTANCE) {
         // allow opening empty file in IDEA's editor
         return DetectedByContentFileType.INSTANCE;
@@ -558,7 +559,7 @@ public final class FileTypeDetectionService {
     long start = System.currentTimeMillis();
     if (content == null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null) {
+      if (document != null && file.isCharsetSet()) {
         content = document.getText().getBytes(file.getCharset());
       }
     }

@@ -1,0 +1,17 @@
+UFile (package = ) [public final class WhenElseKt {...]
+    UClass (name = WhenElseKt) [public final class WhenElseKt {...}]
+        UMethod (name = foo) [public static final fun foo() : java.lang.String {...}]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return switch  {...] = Nothing
+                    USwitchExpression [switch  {...] = Undetermined
+                        UExpressionList (when) [     -> {...    ] = Undetermined
+                            USwitchClauseExpressionWithBody [ -> {...] = Undetermined
+                                UExpressionList (when_entry) [{...] = Undetermined
+                                    UYieldExpression [yield switch  {...] = UYieldResult(Undetermined)
+                                        USwitchExpression [switch  {...] = Undetermined
+                                            UExpressionList (when) [     -> {...    ] = Undetermined
+                                                USwitchClauseExpressionWithBody [ -> {...] = Undetermined
+                                                    UExpressionList (when_entry) [{...] = Undetermined
+                                                        UYieldExpression [yield ""] = UYieldResult("")
+                                                            UPolyadicExpression (operator = +) [""] = ""
+                                                                ULiteralExpression (value = "") [""] = ""

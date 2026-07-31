@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/I.class
+End of files
+Compiling files:
+  java/annotations/interfaceToAnnotation/a/ppp/I.java
+End of files
+Cleaning output files:
+  qqq/Impl.class
+End of files
+Compiling files:
+  java/annotations/interfaceToAnnotation/a/qqq/Impl.java
+End of files
+------------------------------------------
+Exit code: ERROR

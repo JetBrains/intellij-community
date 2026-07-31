@@ -10,7 +10,7 @@ import kotlin.reflect.full.isSubclassOf
 abstract class QuickFixesPsiBasedFactory<PSI : PsiElement>(
     private val classTag: KClass<PSI>,
     private val suitabilityChecker: PsiElementSuitabilityChecker<PSI>,
-) : QuickFixFactory {
+) {
     fun createQuickFix(psiElement: PsiElement): List<IntentionAction> {
         checkIfPsiElementIsSupported(psiElement)
         @Suppress("UNCHECKED_CAST")

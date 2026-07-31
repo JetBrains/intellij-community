@@ -12,28 +12,33 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerColors
 import org.jetbrains.jewel.ui.component.styling.PopupContainerMetrics
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 
+/** Creates an Int UI light [PopupContainerStyle] with the provided parameters. */
 public fun PopupContainerStyle.Companion.light(
     colors: PopupContainerColors = PopupContainerColors.light(),
     metrics: PopupContainerMetrics = PopupContainerMetrics.defaults(),
 ): PopupContainerStyle = PopupContainerStyle(isDark = false, colors, metrics)
 
+/** Creates an Int UI dark [PopupContainerStyle] with the provided parameters. */
 public fun PopupContainerStyle.Companion.dark(
     colors: PopupContainerColors = PopupContainerColors.dark(),
     metrics: PopupContainerMetrics = PopupContainerMetrics.defaults(),
 ): PopupContainerStyle = PopupContainerStyle(isDark = true, colors, metrics)
 
+/** Creates an Int UI light [PopupContainerColors] with the provided parameters. */
 public fun PopupContainerColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     border: Color = IntUiLightTheme.colors.gray(9),
     shadow: Color = Color(0x78919191), // Not a palette color
 ): PopupContainerColors = PopupContainerColors(background = background, border = border, shadow = shadow)
 
+/** Creates an Int UI dark [PopupContainerColors] with the provided parameters. */
 public fun PopupContainerColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     border: Color = IntUiDarkTheme.colors.gray(3),
     shadow: Color = Color(0x66000000), // Not a palette color
 ): PopupContainerColors = PopupContainerColors(background = background, border = border, shadow = shadow)
 
+/** Creates an Int UI default [PopupContainerMetrics] with the provided parameters. */
 public fun PopupContainerMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(8.dp),
     menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),

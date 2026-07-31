@@ -12,17 +12,20 @@ from django.conf import LazySettings, Settings
 from django.core.checks.registry import CheckRegistry
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.lookups import Lookup, Transform
-from django.db.models.query import _SupportsContains
 from django.db.models.query_utils import RegisterLookupMixin
 from django.test.runner import DiscoverRunner
 from django.test.testcases import SimpleTestCase
 from typing_extensions import Self, TypeVar, override
 
 _TestClass: TypeAlias = type[SimpleTestCase]
-
-_DecoratedTest: TypeAlias = Callable | _TestClass
+_DecoratedTest: TypeAlias = Callable[..., Any] | _TestClass
 _DT = TypeVar("_DT", bound=_DecoratedTest)
-_C = TypeVar("_C", bound=Callable)  # Any callable
+
+# Django's TestContextDecorator.__call__ only checks isinstance(decorated, type)
+# or callable(decorated) with no fixed signature — decorate_callable wraps using
+# *args, **kwargs since the decorated function/method can have varying signatures.
+# See: https://github.com/django/django/blob/main/django/test/utils.py
+_C = TypeVar("_C", bound=Callable[..., Any])  # Any callable
 
 TZ_SUPPORT: bool
 
@@ -81,13 +84,16 @@ class modify_settings(override_settings):
 
 class override_system_checks(TestContextDecorator):
     registry: CheckRegistry
-    new_checks: list[Callable]
-    deployment_checks: list[Callable] | None
-    def __init__(self, new_checks: list[Callable], deployment_checks: list[Callable] | None = ...) -> None: ...
-    old_checks: set[Callable]
-    old_deployment_checks: set[Callable]
+    new_checks: list[Callable[..., Any]]
+    deployment_checks: list[Callable[..., Any]] | None
+    def __init__(
+        self, new_checks: list[Callable[..., Any]], deployment_checks: list[Callable[..., Any]] | None = ...
+    ) -> None: ...
+    old_checks: set[Callable[..., Any]]
+    old_deployment_checks: set[Callable[..., Any]]
 
-class CaptureQueriesContext(_SupportsContains[dict[str, str]]):
+# Private API removed, iterable-based
+class CaptureQueriesContext:
     connection: BaseDatabaseWrapper
     force_debug_cursor: bool
     initial_queries: int
@@ -108,13 +114,13 @@ class CaptureQueriesContext(_SupportsContains[dict[str, str]]):
 
 class ignore_warnings(TestContextDecorator):
     ignore_kwargs: dict[str, Any]
-    filter_func: Callable
+    filter_func: Callable[..., Any]
     def __init__(self, **kwargs: Any) -> None: ...
     catch_warnings: AbstractContextManager[list | None]
 
 requires_tz_support: Any
 
-def isolate_lru_cache(lru_cache_object: Callable) -> AbstractContextManager[None]: ...
+def isolate_lru_cache(lru_cache_object: Callable[..., Any]) -> AbstractContextManager[None]: ...
 
 class override_script_prefix(TestContextDecorator):
     prefix: str

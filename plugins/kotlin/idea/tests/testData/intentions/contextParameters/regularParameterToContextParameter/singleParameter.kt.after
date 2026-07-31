@@ -19,3 +19,11 @@ fun String.bar() {
         foo()
     }
 }
+
+fun test(string: String) = with(string) {
+    foo()
+}
+
+fun testContext(string: String) = context(string) {
+    foo()
+}

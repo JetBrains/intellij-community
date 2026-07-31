@@ -26,11 +26,7 @@ final class LocalInspectionsPassFactory implements MainHighlightingPassFactory,
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    int[] ghp = {Pass.UPDATE_ALL};
-    boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    registrar.registerTextEditorHighlightingPass(this, serializeCodeInsightPasses ? ghp : null,
-                                                 serializeCodeInsightPasses ? null : ghp, true, Pass.LOCAL_INSPECTIONS);
+    registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @Override

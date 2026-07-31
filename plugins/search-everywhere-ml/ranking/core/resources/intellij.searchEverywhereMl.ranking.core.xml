@@ -2,9 +2,12 @@
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <dependencies>
-    <module name="intellij.platform.searchEverywhere.frontend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">

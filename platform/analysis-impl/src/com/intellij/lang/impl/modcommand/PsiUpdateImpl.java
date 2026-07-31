@@ -702,6 +702,9 @@ final class PsiUpdateImpl {
         myPositionUpdated = true;
         myCaretOffset = range.getStartOffset();
         myCaretVirtualEnd = range.getEndOffset();
+        if (!mySelection.containsOffset(myCaretOffset)) {
+          mySelection = TextRange.create(myCaretOffset, myCaretOffset);
+        }
       }
     }
 

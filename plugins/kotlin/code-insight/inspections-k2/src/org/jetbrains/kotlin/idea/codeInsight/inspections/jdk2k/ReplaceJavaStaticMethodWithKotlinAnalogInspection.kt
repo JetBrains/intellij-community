@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.isCharType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -47,7 +49,7 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
         }
 
         val javaMethodFqName = element.resolveToCall()
-            ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.callableId?.asSingleFqName()
+            ?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
 
         return replacements.filter {
             javaMethodFqName == FqName(it.javaMethodFqName) && it.transformation.isApplicableByAnalyze(element)

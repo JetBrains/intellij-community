@@ -133,8 +133,9 @@ class UniversalToolset : McpToolset {
   private suspend fun resolveRouterTools(): List<McpToolDef> {
     val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
                          ?: mcpFail("Session handler not available")
-    val routerToolsProvider = sessionHandler.routerToolsProvider
-    return routerToolsProvider.mcpTools.value
+    val directTools = sessionHandler.toolsProvider.mcpTools.value
+    val routerTools = sessionHandler.routerToolsProvider.mcpTools.value
+    return (directTools + routerTools).distinctBy { it.descriptor.name }
   }
 
   private fun findTool(name: String, all: List<McpToolDef>): McpToolDef {

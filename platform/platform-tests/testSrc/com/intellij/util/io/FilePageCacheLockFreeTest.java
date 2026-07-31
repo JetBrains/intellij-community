@@ -42,8 +42,8 @@ public class FilePageCacheLockFreeTest {
 
     FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     try (fpCache) {
-      final StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
-      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
+      StorageLockContext storageContext = new StorageLockContext(true, true, true);
+      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext, fpCache)) {
         Thread.sleep(1000L);
       }
     }
@@ -67,13 +67,13 @@ public class FilePageCacheLockFreeTest {
     FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     fpCache.close();
 
-    StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
+    StorageLockContext storageContext = new StorageLockContext(true, true, true);
     assertThrows(
       "Open storage with closed FilePageCache is prohibited",
       IllegalStateException.class,
       () -> {
         //noinspection EmptyTryBlock
-        try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
+        try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext, fpCache)) {
         }
       });
   }
@@ -85,10 +85,10 @@ public class FilePageCacheLockFreeTest {
     try (FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES)) {
       checkCacheIsVeryQuiet(fpCache);
 
-      StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
+      StorageLockContext storageContext = new StorageLockContext(true, true, true);
 
       //do SOMETHING
-      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
+      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext, fpCache)) {
         try (var page = storage.pageByIndex(0, true)) {
           page.write(0, 1, buffer -> buffer.put(0, (byte)1));
         }
@@ -108,14 +108,19 @@ public class FilePageCacheLockFreeTest {
 
     long housekeeperTurnsAfter = statistics.housekeeperTurnsDone();
     assertTrue("Housekeeper thread should do only minor work since there is no external load",
-                 housekeeperTurnsAfter <= housekeeperTurnsBefore + 5);
+               housekeeperTurnsAfter <= housekeeperTurnsBefore + 5);
   }
 
   @NotNull
-  private static PagedFileStorageWithRWLockedPageContent createStorage(File file, StorageLockContext storageContext) throws IOException {
-    return new PagedFileStorageWithRWLockedPageContent(file.toPath(),
-                                                       storageContext,
-                                                       PAGE_SIZE,
-                                                       PageContentLockingStrategy.LOCK_PER_PAGE);
+  private static PagedFileStorageWithRWLockedPageContent createStorage(File file,
+                                                                       StorageLockContext storageContext,
+                                                                       FilePageCacheLockFree fpCache) throws IOException {
+    return new PagedFileStorageWithRWLockedPageContent(
+      file.toPath(),
+      storageContext,
+      fpCache,
+      PAGE_SIZE,
+      PageContentLockingStrategy.LOCK_PER_PAGE
+    );
   }
 }

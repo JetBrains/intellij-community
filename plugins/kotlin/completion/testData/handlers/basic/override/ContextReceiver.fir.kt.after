@@ -10,7 +10,7 @@ interface Foo {
 
 class Bar : Foo {
 
-    context(Context)
+    context(Context: Context)
     override suspend fun foo() {
         <caret><selection>TODO("Not yet implemented")</selection>
     }

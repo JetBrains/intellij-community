@@ -135,7 +135,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, "\n\"\"\"");
     Project project = file.getProject();
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
       // commitDocument is not supported yet for lock-free typing
       return;
     }

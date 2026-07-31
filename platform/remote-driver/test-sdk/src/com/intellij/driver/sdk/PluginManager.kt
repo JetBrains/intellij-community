@@ -67,6 +67,20 @@ interface DynamicPlugins {
   fun loadPlugins(plugins: List<PluginDescriptor>, project: Project?): Boolean
 }
 
+fun Driver.getPluginHomepageUrl(pluginId: String): String? =
+  service(MarketplaceCustomizationService::class)
+    .getPluginHomepageUrl(utility(PluginId::class).getId(pluginId))
+
+@Remote("com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService")
+interface MarketplaceCustomizationService {
+  fun getPluginHomepageUrl(pluginId: PluginId): String?
+}
+
+@Remote("com.intellij.ide.plugins.CountIcon")
+interface CountIcon {
+  fun getText(): String
+}
+
 /**
  * Enables and loads a plugin dynamically without requiring IDE restart.
  *

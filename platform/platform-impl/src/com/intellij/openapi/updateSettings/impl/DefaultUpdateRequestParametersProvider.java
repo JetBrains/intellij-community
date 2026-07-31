@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.system.OS;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,13 +20,11 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
-@ApiStatus.Internal
-public class DefaultUpdateRequestParametersProvider implements UpdateRequestParametersProvider {
+final class DefaultUpdateRequestParametersProvider {
   private static final NullableLazyValue<String> ourMachineId =
     lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
-  @Override
-  public void amendUpdateRequest(@NotNull Map<String, String> parameters) {
+  static void amendUpdateRequest(@NotNull Map<String, String> parameters) {
     parameters.put("build", ApplicationInfo.getInstance().getBuild().asString());
 
     var os = OS.CURRENT;

@@ -19,6 +19,7 @@ import org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Creates an Int UI light [AlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun AlertStyling.Companion.light(
@@ -29,6 +30,7 @@ public fun AlertStyling.Companion.light(
     caution: CautionAlertStyling = CautionAlertStyling.light(),
 ): AlertStyling = AlertStyling(note, tip, important, warning, caution)
 
+/** Creates an Int UI dark [AlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun AlertStyling.Companion.dark(
@@ -39,6 +41,7 @@ public fun AlertStyling.Companion.dark(
     caution: CautionAlertStyling = CautionAlertStyling.dark(),
 ): AlertStyling = AlertStyling(note, tip, important, warning, caution)
 
+/** Creates an Int UI light [NoteAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun NoteAlertStyling.Companion.light(
@@ -64,6 +67,7 @@ public fun NoteAlertStyling.Companion.light(
         textColor,
     )
 
+/** Creates an Int UI dark [NoteAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun NoteAlertStyling.Companion.dark(
@@ -89,6 +93,7 @@ public fun NoteAlertStyling.Companion.dark(
         textColor,
     )
 
+/** Creates an Int UI light [TipAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun TipAlertStyling.Companion.light(
@@ -114,6 +119,7 @@ public fun TipAlertStyling.Companion.light(
         textColor,
     )
 
+/** Creates an Int UI dark [TipAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun TipAlertStyling.Companion.dark(
@@ -139,6 +145,7 @@ public fun TipAlertStyling.Companion.dark(
         textColor,
     )
 
+/** Creates an Int UI light [ImportantAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ImportantAlertStyling.Companion.light(
@@ -164,6 +171,7 @@ public fun ImportantAlertStyling.Companion.light(
         textColor,
     )
 
+/** Creates an Int UI dark [ImportantAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ImportantAlertStyling.Companion.dark(
@@ -189,6 +197,7 @@ public fun ImportantAlertStyling.Companion.dark(
         textColor,
     )
 
+/** Creates an Int UI light [WarningAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun WarningAlertStyling.Companion.light(
@@ -214,6 +223,7 @@ public fun WarningAlertStyling.Companion.light(
         textColor,
     )
 
+/** Creates an Int UI dark [WarningAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun WarningAlertStyling.Companion.dark(
@@ -239,6 +249,7 @@ public fun WarningAlertStyling.Companion.dark(
         textColor,
     )
 
+/** Creates an Int UI light [CautionAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun CautionAlertStyling.Companion.light(
@@ -264,6 +275,7 @@ public fun CautionAlertStyling.Companion.light(
         textColor,
     )
 
+/** Creates an Int UI dark [CautionAlertStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun CautionAlertStyling.Companion.dark(

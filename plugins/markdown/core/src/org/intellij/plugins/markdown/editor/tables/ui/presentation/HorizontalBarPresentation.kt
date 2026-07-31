@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
@@ -118,9 +119,9 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     get() = boundsState.height
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    runReadAction {
+    PsiVersioningService.freezePsiVersion {
       if (isInvalid) {
-        return@runReadAction
+        return@freezePsiVersion
       }
       graphics.useCopy { local ->
         GraphicsUtil.setupAntialiasing(local)

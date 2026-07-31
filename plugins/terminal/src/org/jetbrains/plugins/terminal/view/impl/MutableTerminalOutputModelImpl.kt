@@ -4,11 +4,15 @@ package org.jetbrains.plugins.terminal.view.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.diff.Diff
+import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
@@ -110,13 +114,13 @@ class MutableTerminalOutputModelImpl(
     ensureDocumentHasLine(startLine)
     changeDocumentContent {
       val startOffset = getStartOfLine(startLine)
-      doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset, (endOffset - startOffset).toInt(), text, styles)
+      replaceTextAndUpdateStyles(startOffset, (endOffset - startOffset).toInt(), text, styles)
     }
   }
 
   override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>) {
-    changeDocumentContent(isTypeAhead) { 
-      doReplaceContentIgnoringEqualPrefixAndOrSuffix(offset, length, text, newStyles)
+    changeDocumentContent(isTypeAhead) {
+      replaceTextAndUpdateStyles(offset, length, text, newStyles)
     }
   }
 
@@ -141,7 +145,7 @@ class MutableTerminalOutputModelImpl(
       val spaces = " ".repeat(spacesToAdd)
       changeDocumentContent {
         LOG.debug { "Added $spacesToAdd spaces to make the column valid" }
-        doReplaceContentIgnoringEqualPrefixAndOrSuffix(lineEndOffset, 0, spaces, emptyList())
+        replaceTextAndUpdateStyles(lineEndOffset, 0, spaces, emptyList())
       }
     }
 
@@ -167,7 +171,7 @@ class MutableTerminalOutputModelImpl(
         val newLinesToAdd = (lineIndex - lastLineIndex).toInt()
         val newLines = "\n".repeat(newLinesToAdd)
         LOG.debug { "Add $newLinesToAdd lines to make the line valid" }
-        doReplaceContentIgnoringEqualPrefixAndOrSuffix(endOffset, 0, newLines, emptyList())
+        replaceTextAndUpdateStyles(endOffset, 0, newLines, emptyList())
       }
     }
   }
@@ -183,53 +187,132 @@ class MutableTerminalOutputModelImpl(
     return ModelChange(TerminalOffset.ZERO, oldText, "")
   }
 
-  private fun doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset: TerminalOffset, length: Int, newText: String, styles: List<StyleRange>): ModelChange {
-    val endOffset = startOffset + length.toLong()
-    val effectiveStartOffset = findFirstChangeOffset(startOffset, length, newText)
-    val skipPrefix = (effectiveStartOffset - startOffset).toInt()
-    val effectiveEndOffset = findLastChangeOffset(effectiveStartOffset, length - skipPrefix, newText, skipPrefix) + 1 // exclusive
-    val skipSuffix = (endOffset - effectiveEndOffset).toInt()
-    val effectiveLength = length - skipPrefix - skipSuffix
-    val effectiveNewText = newText.subSequence(skipPrefix, newText.length - skipSuffix)
-    val change = doReplaceContent(effectiveStartOffset, effectiveLength, effectiveNewText)
+  private fun replaceTextAndUpdateStyles(startOffset: TerminalOffset, length: Int, newText: String, styles: List<StyleRange>): ModelChange {
+    val relativeStartOffset = startOffset.toRelative()
+    val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeStartOffset + length)
+    doReplaceText(relativeStartOffset, oldText, newText)
+    // The reported change covers only the characters that actually differ (ignoring the common prefix and suffix).
+    val change = computeChange(startOffset, oldText, newText)
     highlightingsModel.updateHighlightings(startOffset.toRelative(), length, newText.length, styles)
     return change
   }
 
-  private fun doReplaceContent(startOffset: TerminalOffset, length: Int, newText: CharSequence): ModelChange {
-    val relativeStartOffset = startOffset.toRelative()
-    val relativeEndOffset = relativeStartOffset + length
-    val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeEndOffset)
-    document.replaceString(relativeStartOffset, relativeEndOffset, newText)
-    return ModelChange(
-      startOffset,
-      oldText,
-      newText
-    )
+  /**
+   * Rewrites the document range that starts at [relativeStartOffset] and currently holds [oldText] into [newText].
+   * Can perform it in two ways:
+   * 1. Do a single replace in the document
+   * 2. Perform minimal set of edits to invalidate less text ranges in the document
+   *
+   * The second approach is used only if `terminal.minimal.document.edits` Registry is enabled
+   * and change happens in the area of the screen (for now, consider that screen is the last [VISIBLE_SCREEN_LINES]).
+   * TODO: Need to add information about screen start position to the output model.
+   *
+   * The single replace approach is faster, but it has a downside: it may invalidate a big range of the document.
+   * It leads to hyperlinks removal and blinking effect when they are applied again.
+   *
+   * The minimal edits approach tries to make several document edits and preserve as much content as possible,
+   * so hyperlinks whose text is not really changed, won't be invalidated.
+   * The approach of calculating mininal edits is based on a line diff (using [Diff] utility).
+   */
+  private fun doReplaceText(relativeStartOffset: Int, oldText: CharSequence, newText: String) {
+    LOG.trace {
+      "REPLACE relStart=$relativeStartOffset len=${oldText.length} docLen=${document.textLength} newLen=${newText.length} " +
+      "oldLines=${oldText.count { it == '\n' } + 1} newLines=${newText.count { it == '\n' } + 1}\n" +
+      "  OLD:\n${oldText.dumpLinesForTrace()}  NEW:\n${newText.dumpLinesForTrace()}"
+    }
+
+    // Use the minimal edits approach only if it is enabled in Registry
+    if (!Registry.`is`("terminal.minimal.document.edits")) {
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+
+    // Decide whether more performant single replace can be done (if replaced content is too long).
+    if (exceedsScreen(newText) || exceedsScreen(oldText)) {
+      LOG.trace { "  SINGLE REPLACE (update exceeds $VISIBLE_SCREEN_LINES lines)" }
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+
+    // Both old and new text fit the screen: use minimal edits approach
+    val oldLines = oldText.toString().split('\n')
+    val newLines = newText.split('\n')
+    val changes = try {
+      Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
+    }
+    catch (_: FilesTooBigForDiffException) {
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+    // A `null` change means the texts are identical: nothing to do.
+    val hunks = changes?.toList() ?: return
+
+    val oldLineStarts = lineStartOffsets(oldLines)
+    val newLineStarts = lineStartOffsets(newLines)
+    val oldEnd = oldText.length
+    val newEnd = newText.length
+
+    // Each [Diff.Change] hunk deletes `deleted` old lines at `line0` and inserts `inserted` new lines at `line1`.
+    // The lines between hunks are identical and left untouched (so their markers survive).
+    // Apply hunks bottom-up so offsets of not-yet-applied edits stay valid.
+    LOG.trace { "  DIFF: oldLines=${oldLines.size} newLines=${newLines.size} hunks=${hunks.size}" }
+    for (hunk in hunks.asReversed()) {
+      if (hunk.deleted == hunk.inserted) {
+        // A same-size hunk: replace each line on its own,
+        // so Document.replaceString's own common prefix/suffix trimming keeps RangeMarkers over the unchanged part of a line.
+        LOG.trace { "    edit: replace ${hunk.deleted} line(s) individually [oldLines ${hunk.line0}..<${hunk.line0 + hunk.deleted}]" }
+        for (k in hunk.deleted - 1 downTo 0) {
+          val oldLine = oldLines[hunk.line0 + k]
+          val newLine = newLines[hunk.line1 + k]
+          if (oldLine == newLine) continue
+          val start = relativeStartOffset + oldLineStarts[hunk.line0 + k]
+          document.replaceString(start, start + oldLine.length, newLine)
+        }
+      }
+      else {
+        // A hunk that changes the number of lines (insertion/deletion): replace it in one edit.
+        // The boundaries sit at the end of the identical line before the hunk and the start of the identical line after it.
+        val oldHunkStart = if (hunk.line0 > 0) oldLineStarts[hunk.line0 - 1] + oldLines[hunk.line0 - 1].length else 0
+        val oldHunkEnd = if (hunk.line0 + hunk.deleted < oldLines.size) oldLineStarts[hunk.line0 + hunk.deleted] else oldEnd
+        val newHunkStart = if (hunk.line1 > 0) newLineStarts[hunk.line1 - 1] + newLines[hunk.line1 - 1].length else 0
+        val newHunkEnd = if (hunk.line1 + hunk.inserted < newLines.size) newLineStarts[hunk.line1 + hunk.inserted] else newEnd
+        LOG.trace { "    edit: replace old [$oldHunkStart,$oldHunkEnd) (${oldHunkEnd - oldHunkStart} chars) with new [$newHunkStart,$newHunkEnd) (${newHunkEnd - newHunkStart} chars)" }
+        document.replaceString(relativeStartOffset + oldHunkStart,
+                               relativeStartOffset + oldHunkEnd,
+                               newText.subSequence(newHunkStart, newHunkEnd))
+      }
+    }
   }
 
-  private fun findFirstChangeOffset(startOffset: TerminalOffset, length: Int, newText: String): TerminalOffset {
-    val relativeStartOffset = startOffset.toRelative()
-    var srcIndex = relativeStartOffset
-    var dstIndex = 0
-    val text = document.immutableCharSequence
-    while (srcIndex < relativeStartOffset + length && dstIndex < newText.length && text[srcIndex] == newText[dstIndex]) {
-      ++srcIndex
-      ++dstIndex
+  private fun lineStartOffsets(lines: List<CharSequence>): IntArray {
+    val starts = IntArray(lines.size + 1)
+    for (i in lines.indices) {
+      starts[i + 1] = starts[i] + lines[i].length + 1
     }
-    return relativeOffset(srcIndex)
+    return starts
   }
 
-  private fun findLastChangeOffset(startOffset: TerminalOffset, length: Int, newText: String, newTextStart: Int): TerminalOffset {
-    val relativeStartOffset = startOffset.toRelative()
-    var srcIndex = relativeStartOffset + length - 1
-    var dstIndex = newText.length - 1
-    val text = document.immutableCharSequence
-    while (srcIndex >= relativeStartOffset && dstIndex >= newTextStart && text[srcIndex] == newText[dstIndex]) {
-      --srcIndex
-      --dstIndex
+  /**
+   * Whether [text] spans more than [VISIBLE_SCREEN_LINES] lines.
+   */
+  private fun exceedsScreen(text: CharSequence): Boolean {
+    var newlines = 0
+    for (i in text.indices) {
+      if (text[i] == '\n' && ++newlines >= VISIBLE_SCREEN_LINES) return true
     }
-    return relativeOffset(srcIndex)
+    return false
+  }
+
+  /** Computes the change to report to listeners: the range that differs, ignoring the common character prefix and suffix. */
+  private fun computeChange(startOffset: TerminalOffset, oldText: CharSequence, newText: CharSequence): ModelChange {
+    val maxCommon = minOf(oldText.length, newText.length)
+    var prefix = 0
+    while (prefix < maxCommon && oldText[prefix] == newText[prefix]) prefix++
+    var suffix = 0
+    while (suffix < maxCommon - prefix && oldText[oldText.length - 1 - suffix] == newText[newText.length - 1 - suffix]) suffix++
+    val oldCore = oldText.subSequence(prefix, oldText.length - suffix)
+    val newCore = newText.subSequence(prefix, newText.length - suffix)
+    return ModelChange(startOffset + prefix.toLong(), oldCore, newCore)
   }
 
   private fun ensureCorrectCursorOffset() {
@@ -384,6 +467,14 @@ class MutableTerminalOutputModelImpl(
 
       ModelChange(startOffset, oldText, state.text)  // the document is changed from right from the start
     }
+  }
+
+  companion object {
+    @VisibleForTesting
+    /**
+     * The assumed visible-screen height in logical lines.
+     */
+    const val VISIBLE_SCREEN_LINES: Int = 100
   }
 
   private inner class HighlightingsModel {
@@ -635,3 +726,16 @@ private data class TerminalCursorOffsetChangeEventImpl(
 ) : TerminalCursorOffsetChangeEvent
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()
+
+private fun CharSequence.dumpLinesForTrace(maxLines: Int = 200, maxLineLength: Int = 120): String {
+  val lines = split("\n")
+  return buildString {
+    for (i in lines.indices) {
+      if (i >= maxLines) {
+        append("    … (").append(lines.size - maxLines).append(" more lines)\n")
+        break
+      }
+      append("    [").append(i).append("] '").append(lines[i].take(maxLineLength)).append("'\n")
+    }
+  }
+}

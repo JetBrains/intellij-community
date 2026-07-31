@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
@@ -206,7 +207,7 @@ public class PyImportReference extends PyReferenceImpl {
           ResolveResult[] resolved = src.getReference().multiResolve(false);
           for (ResolveResult result : resolved) {
             PsiElement modCandidate = result.getElement();
-            if (modCandidate instanceof PyExpression module) {
+            if (modCandidate instanceof PyTypedElement module) {
               addImportedNames(fromImport.getImportElements()); // don't propose already imported items
               // try to collect submodules
               PyType qualifierType = myContext.getType(module);

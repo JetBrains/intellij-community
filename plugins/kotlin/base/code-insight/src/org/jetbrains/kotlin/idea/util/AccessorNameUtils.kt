@@ -3,9 +3,12 @@ package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.javaGetterName
+import org.jetbrains.kotlin.analysis.api.components.javaSetterName
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import java.util.Collections
@@ -24,7 +27,7 @@ fun KtCallableDeclaration.getAccessorNames(): List<String> {
     analyze(ktDeclaration) {
         val symbol = ktDeclaration.symbol
         val probablePropertySymbol = if (symbol is KaValueParameterSymbol) {
-            symbol.generatedPrimaryConstructorProperty
+            symbol.primaryConstructorProperty
         } else {
             symbol
         }

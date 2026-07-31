@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.TestOnlyThreading
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.elf.ElfFeatureFlag
@@ -150,12 +149,8 @@ class ElfDocumentStressTest {
     var revertedEventCount = 0
       private set
 
-    override fun elfDocumentChanged(event: DocumentEvent) {
-      elfChangedEventCount++
-    }
-
-    override fun elfDocumentReverted(revertedEvent: DocumentEvent, event: DocumentEvent) {
-      revertedEventCount++
+    override fun elfDocumentChanged(event: DocumentEvent, revertedEvent: DocumentEvent?) {
+      if (revertedEvent != null) revertedEventCount++ else elfChangedEventCount++
     }
   }
 
@@ -170,24 +165,11 @@ class ElfDocumentStressTest {
   }
 
   private fun withLockFreeTyping(action: () -> Unit): Unit =
-    timeoutRunBlocking(
-      context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement(),
-    ) {
-      writeIntentReadAction {
-        withLockFreeTypingEnabled(action)
+    timeoutRunBlocking(context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+      ElfFeatureFlag.withEnabled {
+        action.invoke()
       }
     }
-
-  private fun withLockFreeTypingEnabled(action: () -> Unit) {
-    val oldValue = ElfFeatureFlag.isEnabled()
-    ElfFeatureFlag.setEnabled(true)
-    try {
-      action()
-    }
-    finally {
-      ElfFeatureFlag.setEnabled(oldValue)
-    }
-  }
 
   private fun dispatchEventsUntilCondition(
     condition: () -> Boolean,

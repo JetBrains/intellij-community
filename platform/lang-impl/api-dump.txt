@@ -394,7 +394,6 @@ c:com.intellij.codeInsight.actions.ReformatCodeAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
-- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -563,6 +562,7 @@ f:com.intellij.codeInsight.codeVision.ui.popup.layouter.RectangleUtilsKt
 - sf:getRight(java.awt.Rectangle):I
 - sf:getTop(java.awt.Rectangle):I
 c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+- sf:DIRECT_INSERTION_START_OFFSET:com.intellij.openapi.util.Key
 - <init>(com.intellij.codeInsight.completion.CompletionType):V
 - s:createHandler(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - s:setAutoInsertTimeout(I,com.intellij.openapi.Disposable):V
@@ -2555,6 +2555,8 @@ c:com.intellij.ide.actions.CreateFileFromTemplateDialog
 com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - addKind(java.lang.String,javax.swing.Icon,java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:addKind(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
+- addKind(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
+- addKind(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.openapi.ui.InputValidator):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:getCustomProperties():java.util.Map
 - a:setDefaultText(java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:setDialogOwner(java.awt.Component):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
@@ -2670,6 +2672,8 @@ c:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 - setTemplateSelectorMatcher(java.util.function.BiFunction):V
 f:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel$TemplatePresentation
 - java.lang.Record
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String):V
+- targetName():java.lang.String
 c:com.intellij.ide.actions.runAnything.RunAnythingAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -2791,9 +2795,6 @@ f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Comp
 - f:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 a:com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy
 - <init>(java.util.List):V
-com.intellij.ide.actions.searcheverywhere.MergeableElement
-- a:mergeWith(com.intellij.ide.actions.searcheverywhere.MergeableElement):com.intellij.ide.actions.searcheverywhere.MergeableElement
-- a:shouldBeMergedIntoAnother():Z
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
@@ -2858,7 +2859,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.BigPopupUI
-- com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
 c:com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
@@ -3734,7 +3734,6 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel
 c:com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
 - getAction():com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue
-- com.intellij.ide.actions.searcheverywhere.MergeableElement
 - com.intellij.internal.inspector.UiInspectorContextProvider
 c:com.intellij.ide.util.gotoByName.GotoClassModel2
 - com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
@@ -3992,6 +3991,15 @@ f:com.intellij.navigation.ProtocolOpenProjectResult$Success
 c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - com.intellij.openapi.Disposable
 - s:getInstance():com.intellij.openapi.editor.EditorMouseHoverPopupManager
+f:com.intellij.openapi.editor.actions.FlipCommaIntention
+- com.intellij.modcommand.PsiUpdateModCommandAction
+- com.intellij.openapi.project.DumbAware
+com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper
+- sf:EXTENSION:com.intellij.lang.LanguageExtension
+- canFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- a:flip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- s:isCanFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- s:tryFlip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 c:com.intellij.openapi.editor.actions.IncrementalFindAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 f:com.intellij.openapi.editor.actions.ReplaceAction
@@ -5181,6 +5189,20 @@ a:com.intellij.refactoring.memberPullUp.PullUpDialogBase
 - com.intellij.refactoring.ui.RefactoringDialog
 - getSelectedMemberInfos():java.util.List
 - getSuperClass():com.intellij.psi.PsiElement
+c:com.intellij.refactoring.memberPushDown.PushDownProcessor
+- com.intellij.refactoring.BaseRefactoringProcessor
+- <init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy):V
+- p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
+- p:findUsages():com.intellij.usageView.UsageInfo[]
+- p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
+- p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
+- p:getCommandName():java.lang.String
+- p:getElementsToWrite(com.intellij.usageView.UsageViewDescriptor):java.util.Collection
+- p:getRefactoringId():java.lang.String
+- p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
+- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
+- pushDownToClasses(com.intellij.usageView.UsageInfo[]):V
+- p:refreshElements(com.intellij.psi.PsiElement[]):V
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
 f:com.intellij.refactoring.move.MoveHandler

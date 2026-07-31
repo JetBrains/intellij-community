@@ -68,6 +68,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestRev
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.EventListener
+import kotlin.collections.map
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
@@ -132,13 +133,20 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
         }
       }
     }.stateInNow(cs, ComputedResult.loading())
+  internal val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =
+    discussionsVms.newDiscussions.map { newDiscussions ->
+      newDiscussions.map { vm ->
+        val diffDataFlow = createDiffDataFlow(vm.position.mapState { it.position }, patchesByChangeFlow)
+        GitLabMergeRequestEditorNewDiscussionViewModel(vm, diffDataFlow, discussionsViewOption)
+      }
+    }.stateInNow(cs, emptyList())
 
   private val noteByTrackingId: StateFlow<Map<String, DiffDataMappedGitLabMergeRequestEditorViewModel>> =
-    combineStates(discussions, draftNotes) { discussionsResult, draftNotesResult ->
+    combineStates(discussions, draftNotes, newDiscussions) { discussionsResult, draftNotesResult, newDiscussions ->
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes).associateBy { note -> note.trackingId }
+      (discussions + draftNotes + newDiscussions).associateBy { note -> note.trackingId }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)

@@ -35,6 +35,7 @@ private const val LONG_TEXT =
         "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco " +
         "laboris nisi ut aliquip ex ea commodo consequat."
 
+/** Showcases the Typography component. */
 @Composable
 public fun TypographyShowcase(modifier: Modifier = Modifier) {
     Column(modifier) {

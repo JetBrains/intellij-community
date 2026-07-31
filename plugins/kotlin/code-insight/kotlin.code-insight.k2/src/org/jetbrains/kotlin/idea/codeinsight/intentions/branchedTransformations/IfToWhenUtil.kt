@@ -7,7 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getExistingLabelName
@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -265,7 +266,7 @@ private fun KtIfExpression.siblingsUpTo(other: KtExpression): List<PsiElement> {
 private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid(),PsiRecursiveVisitor {
     val labelName: String? by lazy {
         nearestLoopIfAny?.let { loop ->
-            getExistingLabelName(loop) ?: getUniqueLabelName(loop)
+            getExistingLabelName(loop)?.quoteIfNeeded() ?: getUniqueLabelName(loop)
         }
     }
 

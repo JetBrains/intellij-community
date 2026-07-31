@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_topLevelPropertyRemovedUnusedImport-a.kotlin_module
+  lib/DeclKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/topLevelPropertyRemovedUnusedImport/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_topLevelPropertyRemovedUnusedImport-a.kotlin_module
+  app/UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/topLevelPropertyRemovedUnusedImport/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

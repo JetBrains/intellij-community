@@ -487,6 +487,7 @@ class UnindexedFilesScanner(
               }
             }
             catch (t: Throwable) {
+              @Suppress("RethrowControlFlowExceptionWithUtil")
               if (t is CancellationException) throw t
               if (t is ControlFlowException) {
                 LOG.warn("Unexpected exception during scanning: ${t.message}")

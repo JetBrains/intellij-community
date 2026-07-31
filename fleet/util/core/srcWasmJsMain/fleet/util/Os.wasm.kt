@@ -14,6 +14,10 @@ internal fun getVersionWasmJs(): String = ""
 @Actual
 internal fun getArchWasmJs(): String = Os.WASM_ARCH
 
+// a Linux user agent makes `Os.isLinux` true in the browser, where there is no `/etc/os-release` to read
+@Actual
+internal fun getLinuxDistroIdWasmJs(): String? = null
+
 private val osName: String by lazy {
   navigator.userAgent
     // System information commonly found in the first parenthesis

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
-import com.intellij.analysis.problemsView.Problem
-import com.intellij.analysis.problemsView.toolWindow.splitApi.MissingIdDiagnostics
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -23,14 +21,6 @@ class IdValueStore<T : Any> {
     valueToId[value] = newId
 
     scope.awaitCancellationAndInvoke {
-      if (value is Problem) {
-        MissingIdDiagnostics.trace("IdValueStore",
-                                   "scope-cancel-remove",
-                                   MissingIdDiagnostics.STEP_DISAPPEARED,
-                                   value,
-                                   "id=$newId"
-        )
-      }
       remove(value)
     }
 
@@ -46,10 +36,4 @@ class IdValueStore<T : Any> {
   }
 
   fun getSize(): Int = valueToId.size
-
-  fun getSample(count: Int): List<Pair<T, String>> {
-    return valueToId.entries
-      .take(count)
-      .map { (value, id) -> value to id }
-  }
 }

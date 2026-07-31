@@ -1,5 +1,6 @@
 from _typeshed import ConvertibleToInt, Incomplete, Unused
-from typing import ClassVar, Literal, NoReturn, overload
+from typing import ClassVar, Literal, overload
+from typing_extensions import Never
 
 from openpyxl.descriptors import Strict
 from openpyxl.descriptors.base import Alias, Bool, Integer, String, Typed, _ConvertibleToBool
@@ -109,7 +110,7 @@ class AxDataSource(Serialisable):
     @overload
     def __init__(
         self, numRef: None = None, numLit: None = None, strRef: None = None, strLit: None = None, multiLvlStrRef: None = None
-    ) -> NoReturn: ...
+    ) -> Never: ...
     @overload
     def __init__(
         self,

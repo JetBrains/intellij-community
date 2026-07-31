@@ -94,8 +94,10 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
     await withDualProxy(async ({proxyClient}) => {
       const response = await proxyClient.send('tools/list')
       const names = response.result.tools.map((t) => t.name)
-      ok(names.includes('read_file'))
+      ok(names.includes('rename'))
       ok(names.includes('search_text'))
+      ok(names.includes('lint_files'))
+      ok(!names.includes('get_file_problems'))
     })
   })
 
@@ -122,108 +124,6 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       // Both upstreams should have been called
       ok(ideaCalls.length > 0, 'IDEA should have been called')
       ok(riderCalls.length > 0, 'Rider should have been called')
-    })
-  })
-
-  it('routes dotnet/ file reads to Rider', async () => {
-    await withDualProxy(async ({proxyClient, ideaCalls, riderCalls}) => {
-      await proxyClient.send('tools/list')
-      await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'dotnet/Psi/Foo.cs'}
-      })
-
-      // Rider should receive the call with stripped dotnet/ prefix
-      const riderReadCalls = riderCalls.filter((c) => c.name === 'get_file_text_by_path')
-      ok(riderReadCalls.length > 0, 'Rider should have received read call')
-
-      const riderArgs = riderReadCalls[0].args
-      // Path separators may be normalized to OS convention
-      ok(
-        riderArgs.pathInProject === 'Psi/Foo.cs' || riderArgs.pathInProject === 'Psi\\Foo.cs',
-        `Expected Psi/Foo.cs, got ${riderArgs.pathInProject}`
-      )
-    })
-  })
-
-  it('routes non-dotnet file reads to IDEA', async () => {
-    await withDualProxy(async ({proxyClient, ideaCalls, riderCalls}) => {
-      await proxyClient.send('tools/list')
-      await proxyClient.send('tools/call', {
-        name: 'read_file',
-        arguments: {file_path: 'src/Main.kt'}
-      })
-
-      const ideaReadCalls = ideaCalls.filter((c) => c.name === 'get_file_text_by_path')
-      ok(ideaReadCalls.length > 0, 'IDEA should have received read call')
-    })
-  })
-
-  it('falls back to get_file_problems when one upstream lacks lint_files', async () => {
-    const legacyLintTool = buildUpstreamTool('get_file_problems', {
-      filePath: {type: 'string'},
-      errorsOnly: {type: 'boolean'},
-      timeout: {type: 'number'}
-    }, ['filePath'])
-    const lintFilesTool = buildUpstreamTool('lint_files', {
-      files: {type: 'array', items: {type: 'string'}},
-      min_severity: {type: 'string'},
-      timeout: {type: 'number'}
-    }, ['files'])
-
-    await withConfiguredDualProxy({
-      ideaTools: [legacyLintTool],
-      riderTools: [lintFilesTool],
-      ideaOnToolCall({name, args}) {
-        ok(name === 'get_file_problems')
-        strictEqual(args.filePath, 'src/Main.kt')
-        strictEqual(args.errorsOnly, false)
-        return {
-          structuredContent: {
-            filePath: 'src/Main.kt',
-            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
-          },
-          text: JSON.stringify({
-            filePath: 'src/Main.kt',
-            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
-          })
-        }
-      },
-      riderOnToolCall({name, args}) {
-        ok(name === 'lint_files')
-        strictEqual(JSON.stringify(args.files), JSON.stringify(['Psi/Foo.cs']))
-        strictEqual(args.min_severity ?? 'warning', 'warning')
-        return {
-          structuredContent: {
-            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
-          },
-          text: JSON.stringify({
-            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
-          })
-        }
-      }
-    }, async ({proxyClient, ideaCalls, riderCalls}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const names = listResponse.result.tools.map((tool) => tool.name)
-      ok(names.includes('lint_files'))
-      ok(!names.includes('get_file_problems'))
-
-      const response = await proxyClient.send('tools/call', {
-        name: 'lint_files',
-        arguments: {files: ['src/Main.kt', 'dotnet/Psi/Foo.cs']}
-      })
-
-      const parsed = JSON.parse(response.result.content[0].text)
-      strictEqual(parsed.items.length, 2)
-      strictEqual(parsed.items[0].filePath, 'src/Main.kt')
-      strictEqual(parsed.items[0].problems[0].lineText, 'idea line')
-      strictEqual(parsed.items[1].filePath, 'dotnet/Psi/Foo.cs')
-      strictEqual(parsed.items[1].problems[0].lineText, 'rider line')
-
-      strictEqual(ideaCalls.length, 1)
-      strictEqual(ideaCalls[0].name, 'get_file_problems')
-      strictEqual(riderCalls.length, 1)
-      strictEqual(riderCalls[0].name, 'lint_files')
     })
   })
 

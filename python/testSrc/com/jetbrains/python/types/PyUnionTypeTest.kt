@@ -7,7 +7,6 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -103,7 +102,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-90791"])
-    fun `union member attribute of parameterized generics`() = test("""
+    fun `union member generic attribute`() = test("""
       class Box[T]:
           t: T
 
@@ -114,7 +113,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-90791"])
-    fun `union member attribute from generic descriptor of parameterized generics`() = test("""
+    fun `union member generic descriptor`() = test("""
       class Field[T]:
           def __get__(self, instance, owner) -> T:
               raise NotImplementedError
@@ -128,8 +127,21 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-90791", "PY-91007"])
+    fun `union member generic property`() = test("""
+      class Box[T]:
+          @property
+          def t(self) -> T:
+              raise NotImplementedError
+
+      def foo(box: Box[int] | Box[str]):
+          expr = box.t
+      #   └ TYPE int | str
+      """)
+
+    @Test
     @TestFor(issues = ["PY-90791", "PY-90894"])
-    fun `union member attribute from __getattr__ of parameterized generics`() = test("""
+    fun `union member generic __getattr__`() = test("""
       class Box[T]:
           def __getattr__(self, item) -> T:
               raise NotImplementedError
@@ -193,7 +205,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       x = f()
       expr = x.bit_length()
       # │      ^^^^^^^^^^ WEAK-WARNING Member 'slice' of 'int | slice' does not have attribute 'bit_length'
-      # └ TYPE int
+      # └ TYPE int | Unknown
       """)
 
     @Test

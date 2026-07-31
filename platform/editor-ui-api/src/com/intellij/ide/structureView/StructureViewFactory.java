@@ -19,22 +19,28 @@ public abstract class StructureViewFactory {
    * @return the structure view instance.
    */
   public abstract @NotNull StructureView createStructureView(FileEditor fileEditor,
-                                                    @NotNull StructureViewModel treeModel,
-                                                    @NotNull Project project);
+                                                             @NotNull StructureViewModel treeModel,
+                                                             @NotNull Project project);
 
   /**
    * Creates a structure view component instance for the specified editor.
    *
-   * @param fileEditor the editor to which the structure view is linked.
-   * @param treeModel  the model defining the data shown in the structure view.
-   * @param project    the project containing the file for which the structure view is requested.
+   * @param fileEditor   the editor to which the structure view is linked.
+   * @param treeModel    the model defining the data shown in the structure view.
+   * @param project      the project containing the file for which the structure view is requested.
    * @param showRootNode pass {@code false} if root node of the structure built should not actually be shown in result tree.
    * @return the structure view instance.
    */
   public abstract @NotNull StructureView createStructureView(FileEditor fileEditor,
-                                                    @NotNull StructureViewModel treeModel,
-                                                    @NotNull Project project,
-                                                    boolean showRootNode);
+                                                             @NotNull StructureViewModel treeModel,
+                                                             @NotNull Project project,
+                                                             boolean showRootNode);
+
+  /**
+   * Rebuilds the structure view for the current editor and re-resolves its structure view builder.
+   */
+  @ApiStatus.Experimental
+  public abstract void refreshStructureView();
 
   public static StructureViewFactory getInstance(Project project) {
     return project.getService(StructureViewFactory.class);

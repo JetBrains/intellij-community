@@ -74,7 +74,7 @@
              classpath="${maven.resolver.ant.tasks.cache.file}"/>
 
     <resolver:remoterepos id="remoterepos.buildscript">
-      <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
+      <resolver:remoterepo id="central-proxy" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
       <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
       <resolver:remoterepo id="teamcity-repository" url="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository"/>
     </resolver:remoterepos>

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
@@ -13,8 +13,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
-import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -80,21 +78,11 @@ import java.awt.Component
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
 import java.awt.Window
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-private val LOG = logger<ProjectUtil>()
-private var ourProjectPath: String? = null
-
-private const val PROJECTS_DIR = "projects"
-private const val PROPERTY_PROJECT_PATH = "%s.project.path"
-
-private data class ProjectOpenOptionsImpl(
-  val originalOpenProjectTask: OpenProjectTask,
-) : ProjectOpenProcessor.ProjectOpenOptions {
-
+private data class ProjectOpenOptionsImpl(val originalOpenProjectTask: OpenProjectTask) : ProjectOpenProcessor.ProjectOpenOptions {
   override val forceOpenInNewFrame: Boolean
     get() = originalOpenProjectTask.forceOpenInNewFrame
 
@@ -102,16 +90,18 @@ private data class ProjectOpenOptionsImpl(
     get() = originalOpenProjectTask.projectToClose
 }
 
-private fun OpenProjectTask.toProjectOpenOptions(): ProjectOpenProcessor.ProjectOpenOptions {
-  return ProjectOpenOptionsImpl(this)
-}
-
-fun ProjectOpenProcessor.ProjectOpenOptions.toOpenProjectTask(): OpenProjectTask {
-    if (this is ProjectOpenOptionsImpl) return originalOpenProjectTask
-    return OpenProjectTask(forceOpenInNewFrame, projectToClose)
+fun ProjectOpenProcessor.ProjectOpenOptions.toOpenProjectTask(): OpenProjectTask = when (this) {
+  is ProjectOpenOptionsImpl -> originalOpenProjectTask
+  else -> OpenProjectTask(forceOpenInNewFrame, projectToClose)
 }
 
 object ProjectUtil {
+  private val LOG = logger<ProjectUtil>()
+  private var ourProjectPath: String? = null
+
+  private const val PROJECTS_DIR = "projects"
+  private const val PROPERTY_PROJECT_PATH = "%s.project.path"
+
   @JvmStatic
   fun updateLastProjectLocation(lastProjectLocation: Path) {
     var location: Path? = lastProjectLocation
@@ -159,10 +149,9 @@ object ProjectUtil {
   /**
    * @param path                project file path
    * @param projectToClose      currently active project
-   * @param forceOpenInNewFrame forces opening in new frame
-   * @return project by path if the path was recognized as IDEA project file or one of the project formats supported by
-   * installed importers (regardless of opening/import result)
-   * null otherwise
+   * @param forceOpenInNewFrame forces opening in a new frame
+   * @return project by path if the path was recognized as an IDEA project file or one of the project formats
+   * supported by installed importers (regardless of opening/import result), `null` otherwise
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
@@ -203,30 +192,34 @@ object ProjectUtil {
         virtualFileResult = Result.success(it)
       } ?: return null
       if (provider.canOpenProject(virtualFile)) {
-        LOG.info("Opening project at $file with strong project info holder $provider")
+        LOG.info("Opening a project at $file with strong project info holder $provider")
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
     }
 
-    // `isDirectory` test here is for backward compatibility with 252: in 252 we never entered this method with regular files - only with
-    // directories or project files like `.ipr` or `build.gradle`. `build.gradle` is handled in a standard way via ProjectOpenProcessor.
-    // `.ipr` however does not have dedicated ProjectOpenProcessor yet.
-    // The problem here is that any regular file now has a storeDescriptor (getStoreDescriptor return type is not nullable),
-    // which evaluates to `regularFile.parent.resolve(".idea")`, which, if exists, pushes IDE to open a new project, instead of a file in
-    // the opened project. This is a tiny quick-fix for 253. We should rework the project open flow to avoid this strange check here.
+    // `isDirectory` test here is for backward compatibility with 252: in 252, we never entered this method with regular files - only with
+    // directories or project files like `.ipr` or `build.gradle`. `build.gradle` is handled standardly via `ProjectOpenProcessor`.
+    // `.ipr `, however, does not have a dedicated `ProjectOpenProcessor` yet.
+    // The problem here is that any regular file now has a storeDescriptor (`getStoreDescriptor` return type is non-nullable),
+    // which evaluates to `regularFile.parent.resolve(".idea")`, which, if exists, pushes the IDE to open a new project
+    // instead of a file in the open project. This is a tiny quick-fix for 253.
+    // We should rework the project open flow to avoid this strange check here.
     val isDirectory = Files.isDirectory(file)
-    if ((!isDirectory && file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
-        (isDirectory && isValidProjectPath(file))) {
+    if (
+      (!isDirectory && file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
+      (isDirectory && isValidProjectPath(file))
+    ) {
       val descriptor = withContext(Dispatchers.IO) {
         serviceAsync<ProjectStorePathManager>().getStoreDescriptor(file)
       }
 
-      LOG.info("Opening existing project with .idea at $file")
+      LOG.info("Opening an existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       val options = options.copy(
         runConfigurators = true,
         projectRootDir = descriptor.historicalProjectBasePath,
       )
+      @Suppress("UnsafeOpenServiceCast")
       return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
 
@@ -238,7 +231,7 @@ object ProjectUtil {
           for (child in directoryStream) {
             val childPath = child.toString()
             if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-              LOG.info("Opening project with IPR lookup at child path $childPath")
+              LOG.info("Opening a project with IPR lookup at child path $childPath")
               val newOptions = options.copy(
                 projectRootDir = file,
                 isNewProject = false,
@@ -253,7 +246,7 @@ object ProjectUtil {
     }
 
     var nullableVirtualFileResult: Result<VirtualFile?>? = virtualFileResult
-    val processors = computeProcessors(file) {
+    val processors = computeProcessors {
       val capturedNullableVirtualFileResult = nullableVirtualFileResult
       if (capturedNullableVirtualFileResult != null) {
         capturedNullableVirtualFileResult.getOrThrow()
@@ -265,7 +258,7 @@ object ProjectUtil {
       }
     }
     if (processors.isEmpty()) {
-      LOG.info("No processor found for project in $file")
+      LOG.info("No processor found for the project in $file")
       return null
     }
     LOG.info("Processors found for project in $file: ${processors.joinToString { it.name }}")
@@ -280,7 +273,7 @@ object ProjectUtil {
     return project?.let { postProcess(it) }
   }
 
-  private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
+  private fun computeProcessors(lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor ->
       val virtualFile = lazyVirtualFile()
@@ -302,11 +295,10 @@ object ProjectUtil {
   }
 
   fun openProject(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openProject(file = Path.of(path),
-                       options = OpenProjectTask {
-                         this.projectToClose = projectToClose
-                         this.forceOpenInNewFrame = forceOpenInNewFrame
-                       })
+    return openProject(Path.of(path), options = OpenProjectTask {
+      this.projectToClose = projectToClose
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+    })
   }
 
   private suspend fun chooseProcessorAndOpenAsync(
@@ -339,7 +331,7 @@ object ProjectUtil {
     LOG.info("Using processor ${processor.name} to open the project at ${virtualFile.path}")
 
     try {
-      return processor.openProjectAsync(virtualFile, options.toProjectOpenOptions())
+      return processor.openProjectAsync(virtualFile, ProjectOpenOptionsImpl(options))
     }
     catch (e: UnsupportedOperationException) {
       if (e != ProjectOpenProcessor.unimplementedOpenAsync) {
@@ -348,7 +340,7 @@ object ProjectUtil {
     }
 
     return withContext(Dispatchers.EDT) {
-      //readaction is not enough
+      // read action is not enough
       writeIntentReadAction {
         @Suppress("DEPRECATION_ERROR") // TODO: Remove as soon as everyone implement async function
         processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
@@ -496,11 +488,11 @@ object ProjectUtil {
   }
 
   /**
-   * Focuses the specified project's window. If `stealFocusIfAppInactive` is `true` and corresponding logic is supported by OS
+   * Focuses the specified project's window. If `stealFocusIfAppInactive` is `true` and corresponding logic is supported by the OS
    * (making it work on Windows requires enabling focus stealing system-wise, see [com.intellij.ui.WinFocusStealer]), the window will
-   * get the focus even if other application is currently active. Otherwise, there will be some indication that the target window requires
-   * user attention. Focus stealing behaviour (enabled by `stealFocusIfAppInactive`) is generally not considered a proper application
-   * behaviour, and should only be used in special cases, when we know that user definitely expects it.
+   * get the focus even if another application is currently active. Otherwise, there will be some indication that the target window requires
+   * user attention. Focus stealing behavior (enabled by `stealFocusIfAppInactive`) is generally not considered a proper application
+   * behavior and should only be used in special cases, when we know that the user definitely expects it.
    */
   @JvmStatic
   @RequiresEdt
@@ -508,7 +500,7 @@ object ProjectUtil {
     LOG.trace { "focusProjectWindow: project=$project stealFocusIfAppInactive=$stealFocusIfAppInactive" }
 
     val frame = WindowManager.getInstance().getFrame(project) ?: run {
-      LOG.trace { "focusProjectWindow: unable to get frame for project" }
+      LOG.trace { "focusProjectWindow: unable to get a frame for the project" }
       return
     }
     val appIsActive = getActiveWindow() != null
@@ -516,7 +508,7 @@ object ProjectUtil {
     LOG.trace { "focusProjectWindow: appIsActive=$appIsActive" }
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
-    // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
+    // On X Window, restoring a minimized frame can steal focus from an active application, so we do it only when the IDE is active.
     if (SystemInfoRt.isWindows || (StartupUiUtil.isXToolkit() && appIsActive)) {
       val state = frame.extendedState
       if (state and Frame.ICONIFIED != 0) {
@@ -539,16 +531,18 @@ object ProjectUtil {
   }
 
   @JvmStatic
+  @Suppress("IO_FILE_USAGE")
   fun getBaseDir(): String {
     val defaultDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultDirectory.isNotEmpty()) {
-      return defaultDirectory.replace('/', File.separatorChar)
+      return defaultDirectory.replace('/', java.io.File.separatorChar)
     }
     val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
-    return lastProjectLocation?.replace('/', File.separatorChar) ?: getUserHomeProjectDir()
+    return lastProjectLocation?.replace('/', java.io.File.separatorChar) ?: getUserHomeProjectDir()
   }
 
   @JvmStatic
+  @Suppress("IO_FILE_USAGE")
   fun getUserHomeProjectDir(): String {
     val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
       ApplicationNamesInfo.getInstance().productName
@@ -556,7 +550,7 @@ object ProjectUtil {
     else {
       ApplicationNamesInfo.getInstance().lowercaseProductName
     }
-    return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects"
+    return SystemProperties.getUserHome().replace('/', java.io.File.separatorChar) + java.io.File.separator + productName + "Projects"
   }
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {
@@ -594,12 +588,7 @@ object ProjectUtil {
       else {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
-          withContext(Dispatchers.EDT) {
-            //readaction is not enough
-            writeIntentReadAction {
-              OpenFileAction.openFile(virtualFile, projectToClose)
-            }
-          }
+          OpenFileAction.openFileAsync(virtualFile, projectToClose)
         }
         result = projectToClose
       }
@@ -609,6 +598,7 @@ object ProjectUtil {
 
   //todo: merge somehow with getBaseDir
   @JvmStatic
+  @Suppress("DuplicatedCode")
   fun getProjectPath(): @SystemDependent String {
     val application = ApplicationManager.getApplication()
     val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralLocalSettings.getInstance().defaultProjectDirectory
@@ -631,11 +621,9 @@ object ProjectUtil {
   }
 
   private val projectsDirDefault: String
-    get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
+    get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigDir().resolve(PROJECTS_DIR).toString()
 
-  fun getProjectPath(name: String): Path {
-    return Path.of(getProjectPath(), name)
-  }
+  fun getProjectPath(name: String): Path = Path.of(getProjectPath(), name)
 
   fun getProjectFile(name: String): Path? {
     val projectDir = getProjectPath(name)
@@ -644,10 +632,8 @@ object ProjectUtil {
 
   @JvmStatic
   @RequiresEdt
-  fun openOrCreateProject(name: String, file: Path): Project? {
-    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-      openOrCreateProjectInner(name, file)
-    }
+  fun openOrCreateProject(name: String, file: Path): Project? = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+    openOrCreateProjectInner(name, file)
   }
 
   @JvmStatic
@@ -660,9 +646,7 @@ object ProjectUtil {
   }
 
   @JvmStatic
-  fun getProjectForWindow(window: Window?): Project? {
-    return getRootFrameForWindow(window)?.project
-  }
+  fun getProjectForWindow(window: Window?): Project? = getRootFrameForWindow(window)?.project
 
   @JvmStatic
   fun getProjectForComponent(component: Component?): Project? = getProjectForWindow(ComponentUtil.getWindow(component))
@@ -680,9 +664,11 @@ object ProjectUtil {
   @VisibleForTesting
   suspend fun openExistingDir(file: Path, mode: FolderOpeningMode, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
-    val preferAttach = currentProject != null &&
-                       canAttach &&
-                       (PlatformUtils.isDataGrip() && !isValidProjectPath(file))
+    val preferAttach = (
+      currentProject != null &&
+      canAttach &&
+      (PlatformUtils.isDataGrip() && !isValidProjectPath(file))
+    )
     if (preferAttach && attachToProjectAsync(projectToClose = currentProject, projectDir = file, callback = null)) {
       return null
     }
@@ -726,72 +712,79 @@ object ProjectUtil {
       storePathManager.getStoreDescriptor(file).testStoreDirectoryExistsForProjectRoot()
     }
   }
-}
 
-private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-  val storePathManager = serviceAsync<ProjectStorePathManager>()
-  val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
-  val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
-  if (existingFile != null) {
-    for (p in projectManager.openProjects) {
-      if (isSameProject(existingFile, p)) {
-        focusProjectWindow(project = p, stealFocusIfAppInactive = false)
-        return p
+  private fun getActiveWindow(): Window? {
+    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+    LOG.trace { "getActiveWindow: active window is $window" }
+    return window
+  }
+
+  private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
+    @Suppress("UnsafeOpenServiceCast")
+    val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
+    if (existingFile != null) {
+      for (p in projectManager.openProjects) {
+        if (isSameProject(existingFile, p)) {
+          focusProjectWindow(project = p, stealFocusIfAppInactive = false)
+          return p
+        }
+      }
+      return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
+    }
+
+    val created = try {
+      withContext(Dispatchers.IO) {
+        Files.notExists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
       }
     }
-    return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
-  }
-
-  val created = try {
-    withContext(Dispatchers.IO) {
-      Files.notExists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+    catch (_: IOException) {
+      false
     }
-  }
-  catch (_: IOException) {
-    false
-  }
 
-  if (!created) {
-    return null
-  }
-
-  val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
-    isNewProject = true
-    isProjectCreatedWithWizard = true
-    runConfigurators = false //not used inside
-    projectName = name
-  })
-
-  try {
-    runInAutoSaveDisabledMode {
-      saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+    if (!created) {
+      return null
     }
-    PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-      projectFile = file,
-      project = newProject,
-      newProject = true,
-      createModule = true,
-    )
 
-    return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
-      runConfigurators = false //not used when passing project
+    val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
+      isNewProject = true
       isProjectCreatedWithWizard = true
-      project = newProject
-      projectRootDir = file
+      runConfigurators = false //not used inside
+      projectName = name
     })
-  }
-  catch (e: Throwable) {
-    edtWriteAction {
-      Disposer.dispose(newProject)
+
+    try {
+      runInAutoSaveDisabledMode {
+        saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+      }
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+        projectFile = file,
+        project = newProject,
+        newProject = true,
+        createModule = true,
+      )
+
+      return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
+        runConfigurators = false //not used when passing project
+        isProjectCreatedWithWizard = true
+        project = newProject
+        projectRootDir = file
+      })
     }
-    throw e
+    catch (e: Throwable) {
+      edtWriteAction {
+        Disposer.dispose(newProject)
+      }
+      throw e
+    }
   }
 }
 
 @Internal
 @ScheduledForRemoval
 @Deprecated(
-  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
+  "Use runWithModalProgressBlocking on EDT with a proper owner and title, " +
   "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
@@ -806,7 +799,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @Internal
 @ScheduledForRemoval
 @Deprecated(
-  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
+  "Use runWithModalProgressBlocking on EDT with a proper owner and title, " +
   "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
 fun <T> runUnderModalProgressIfIsEdt(project: Project, task: suspend CoroutineScope.() -> T): T {
@@ -816,10 +809,4 @@ fun <T> runUnderModalProgressIfIsEdt(project: Project, task: suspend CoroutineSc
   else {
     return runBlockingMaybeCancellable(task)
   }
-}
-
-private fun getActiveWindow(): Window? {
-  val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-  LOG.trace { "getActiveWindow: active window is $window" }
-  return window
 }

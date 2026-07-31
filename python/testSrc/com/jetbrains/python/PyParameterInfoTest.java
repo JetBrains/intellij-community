@@ -754,7 +754,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
-        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int | Unknown = ...", new String[]{"x: int | Unknown = ..."});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: UnsafeUnion[int, Unknown] = ...", new String[]{"x: UnsafeUnion[int, Unknown] = ..."});
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
     );

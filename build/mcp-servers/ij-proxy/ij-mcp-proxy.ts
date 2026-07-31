@@ -29,9 +29,13 @@ import {
 } from './routing'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling} from './proxy-tools/tooling'
-import {handleReformatFileTool, normalizeReformatFileArgs} from './proxy-tools/handlers/reformat-file'
-import {extractItems, extractStructuredContent, extractTextFromResult} from './proxy-tools/shared'
-import {normalizeProjectRelativePath} from './proxy-tools/handlers/search-shared'
+import {normalizeReformatFileArgs} from './proxy-tools/handlers/reformat-file'
+import {
+  extractItems,
+  extractStructuredContent,
+  extractTextFromResult,
+  normalizeProjectRelativePath
+} from './proxy-tools/shared'
 import type {SearchItem, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 import {detectContainerSession} from './container-session'
 
@@ -59,6 +63,8 @@ const queueWaitTimeoutMs = parseEnvSeconds(
 )
 const STREAM_RETRY_ATTEMPTS = 3
 const STREAM_RETRY_BASE_DELAY_MS = 200
+const IJ_MCP_CLIENT_TAGS = 'IJ_MCP_CLIENT_TAGS'
+const AIR_CONTAINER_CLIENT_TAG_PREFIX = 'air-container:'
 
 type ToolOutput = {
   content: Array<{type: 'text'; text: string}>
@@ -156,13 +162,6 @@ if (containerSession?.projectPath) {
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
 
-function blockedToolMessage(toolName: string): string {
-  if (toolName === 'create_new_file') {
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
-  }
-  return `Tool '${toolName}' is not exposed by ij-proxy.`
-}
-
 // --- IDE upstreams (symmetric: both nullable, discovered lazily) ---
 
 let ideaUpstream: UpstreamConnection | null = null
@@ -173,8 +172,6 @@ type ProxyToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
 let proxyToolSpecs: ToolSpecLike[] = []
 let proxyToolNames: Set<string> = new Set()
-let ideaProxyToolNames: Set<string> = new Set()
-let riderProxyToolNames: Set<string> = new Set()
 let ideaProxyToolCall: ProxyToolCaller | null = null
 let riderProxyToolCall: ProxyToolCaller | null = null
 
@@ -186,32 +183,6 @@ function primaryUpstream(): UpstreamConnection {
 }
 
 function updateProxyTooling(): void {
-  // Re-detect container session — the file may appear after ij-proxy starts
-  if (!containerSession) {
-    containerSession = detectContainerSession(projectPath)
-    if (containerSession) {
-      note(`Container session detected (lazy): id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`)
-      if (containerSession.projectPath) projectPath = containerSession.projectPath
-      if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride) {
-        explicitMcpUrlOverride = containerSession.mcpStreamUrl
-        note(`MCP stream URL override: ${explicitMcpUrlOverride} — reconnecting upstream`)
-        // Drop stale upstream connected to the wrong IDE instance (e.g., main IDE instead of dev-run).
-        // performDiscovery() will reconnect using the correct URL.
-        ideaUpstream = null
-        riderUpstream = null
-        discoveryPromise = null
-      }
-      // In container mode, `.container-sessions.jsonl` is the source of truth for
-      // routing. Make every upstream tool call carry project_path so the IDE can pin
-      // the request to the correct open project (otherwise its dispatcher falls back
-      // to prompting when multiple projects are open).
-      ideaUpstream?.setForceInjectProjectPath(projectPath, true)
-      if (riderUpstream) {
-        riderUpstream.setForceInjectProjectPath(path.join(projectPath, RIDER_PROJECT_SUBPATH), true)
-      }
-    }
-  }
-
   let ideaSpecs: ToolSpecLike[] = []
   let ideaNames: Set<string> = new Set()
   if (ideaUpstream) {
@@ -219,19 +190,12 @@ function updateProxyTooling(): void {
       projectPath,
       callUpstreamTool: (name, args) => ideaUpstream!.callTool(name, args),
       callUpstreamToolRaw: (name, args) => ideaUpstream!.callToolRaw(name, args),
-      searchCapabilities: ideaUpstream.searchCapabilities,
-      analysisCapabilities: ideaUpstream.analysisCapabilities,
-      formattingCapabilities: ideaUpstream.formattingCapabilities,
-      readCapabilities: ideaUpstream.readCapabilities,
-      ideVersion: ideaUpstream.ideVersion,
       containerSession
     })
     ideaSpecs = tooling.proxyToolSpecs
     ideaNames = tooling.proxyToolNames
-    ideaProxyToolNames = tooling.proxyToolNames
     ideaProxyToolCall = tooling.runProxyToolCall
   } else {
-    ideaProxyToolNames = new Set()
     ideaProxyToolCall = null
   }
 
@@ -243,19 +207,12 @@ function updateProxyTooling(): void {
       projectPath: riderProjectPath,
       callUpstreamTool: (name, args) => riderUpstream!.callTool(name, args),
       callUpstreamToolRaw: (name, args) => riderUpstream!.callToolRaw(name, args),
-      searchCapabilities: riderUpstream.searchCapabilities,
-      analysisCapabilities: riderUpstream.analysisCapabilities,
-      formattingCapabilities: riderUpstream.formattingCapabilities,
-      readCapabilities: riderUpstream.readCapabilities,
-      ideVersion: riderUpstream.ideVersion,
       containerSession
     })
     riderSpecs = tooling.proxyToolSpecs
     riderNames = tooling.proxyToolNames
-    riderProxyToolNames = tooling.proxyToolNames
     riderProxyToolCall = tooling.runProxyToolCall
   } else {
-    riderProxyToolNames = new Set()
     riderProxyToolCall = null
   }
 
@@ -263,15 +220,36 @@ function updateProxyTooling(): void {
   proxyToolNames = new Set([...ideaNames, ...riderNames])
 }
 
+async function activateDetectedContainerSession(): Promise<boolean> {
+  if (containerSession) return false
+  const detected = detectContainerSession(projectPath)
+  if (!detected) return false
+
+  containerSession = detected
+  note(`Container session detected (lazy): id=${detected.sessionId}, workspace=${detected.workspacePath}`)
+  if (detected.projectPath) projectPath = detected.projectPath
+  if (detected.mcpStreamUrl) {
+    explicitMcpUrlOverride = detected.mcpStreamUrl
+  }
+
+  // Connection tags are fixed by the initial MCP request. Recreate every upstream even
+  // when its URL is unchanged so the IDE sees this connection as container-scoped.
+  const staleUpstreams = [ideaUpstream, riderUpstream].filter((upstream): upstream is UpstreamConnection => upstream != null)
+  ideaUpstream = null
+  riderUpstream = null
+  discoveryPromise = null
+  await Promise.allSettled(staleUpstreams.map(async (upstream) => upstream.client.close()))
+  updateProxyTooling()
+  return true
+}
+
 function note(message: string): void {
   logToFile(message)
   logProgress(message)
 }
 
-function warn(message: string): void {
-  logToFile(message)
-  logProgress(message)
-}
+/** Same sink as `note`; the separate name marks call sites that report a problem. */
+const warn = note
 
 function buildInstructions(): string | undefined {
   const ides: string[] = []
@@ -293,8 +271,8 @@ function buildInstructions(): string | undefined {
   if (containerSession) {
     parts.push(
       `CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`,
-      `All file and search operations (read_file, apply_patch, search_text, search_regex, search_file, list_dir) are routed to the container.`,
-      `Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.`,
+      `Search operations (search_text, search_regex, search_file) are routed to the container. Use the agent's native file tools for reads, writes, patches, and directory listing.`,
+      `Semantic tools (search_symbol, lint_files, rename) use the host IDE index.`,
       `Use the "bash" tool for ALL shell commands — it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.`,
       `The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.`,
       `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ''}. Fix any compilation errors before finishing.`,
@@ -317,17 +295,14 @@ if (containerSession) {
 
 function createUpstreamForUrl(url: string): UpstreamConnection {
   const transport = createStreamTransport({
-    explicitUrl: url,
-    preferredPorts: [],
-    portScanStart: 0,
-    portScanLimit: 0,
-    connectTimeoutMs,
-    scanTimeoutMs,
+    url,
+    requestHeaders: containerSession
+      ? {[IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}`}
+      : undefined,
     queueLimit,
     queueWaitTimeoutMs,
     retryAttempts: STREAM_RETRY_ATTEMPTS,
     retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-    buildUrl: buildStreamUrl,
     note,
     warn
   })
@@ -560,6 +535,7 @@ const proxyServer = new Server(serverInfo, {capabilities: serverCapabilities})
 
 proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
   // Discover IDEs eagerly — no IDE means no reason to run
+  await activateDetectedContainerSession()
   await performDiscovery()
 
   // Negotiate the protocol version instead of forcing LATEST_PROTOCOL_VERSION:
@@ -584,6 +560,7 @@ proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
 })
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
+  await activateDetectedContainerSession()
   await ensureDiscovered()
   const ideaTools = ideaUpstream ? await ideaUpstream.getTools() : []
   const riderTools = riderUpstream ? await riderUpstream.getTools() : []
@@ -595,16 +572,9 @@ proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
 
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   // Lazy container session detection — file may appear after startup
-  if (!containerSession) {
-    const detected = detectContainerSession(projectPath)
-    if (detected) {
-      containerSession = detected
-      note(`Container session detected on tool call: id=${detected.sessionId}`)
-      updateProxyTooling()
-      // If updateProxyTooling dropped the upstream (URL changed), reconnect now
-      await ensureDiscovered()
-      await proxyServer.sendToolListChanged()
-    }
+  if (await activateDetectedContainerSession()) {
+    await ensureDiscovered()
+    await proxyServer.sendToolListChanged()
   }
 
   const toolName = typeof request.params?.name === 'string' ? request.params.name : ''
@@ -630,23 +600,17 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     if (BASE_BLOCKED_TOOL_NAMES.has(toolName)) {
-      return makeToolError(blockedToolMessage(toolName))
+      return makeToolError(`Tool '${toolName}' is not exposed by ij-proxy.`)
     }
 
     await ensureDiscovered()
 
     // Proxy-handled tools
     if (proxyToolNames.has(toolName)) {
-      // Both IDEs available: merge search tools, route file tools by path
+      // Both IDEs available: merge search tools, route path-scoped tools by path
       if (ideaProxyToolCall && riderProxyToolCall) {
         if (isMergeTool(toolName)) {
           return await callMergedProxyTool(toolName, args)
-        }
-        if (toolName === 'lint_files') {
-          return await callSplitMergedProxyTool(toolName, args)
-      }
-      if (toolName === 'reformat_file') {
-        return await callSplitMergedProxyTool(toolName, args)
         }
         const ide = resolveIdeForPath(args, projectPath)
         const proxyCall = ide === 'rider' ? riderProxyToolCall : ideaProxyToolCall
@@ -663,12 +627,6 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       const proxyCall = ideaProxyToolCall ?? riderProxyToolCall
       if (proxyCall) {
         try {
-          if (toolName === 'lint_files') {
-            return await callSingleLintFilesTool(args)
-          }
-        if (toolName === 'reformat_file') {
-          return await callSingleReformatFileTool(args)
-        }
           return makeToolOutput(await proxyCall(toolName, args))
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
@@ -686,7 +644,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
           return await callMergedPassthroughTool(toolName, args)
 
         case 'split-merge':
-          return await callSplitMergedPassthroughTool(toolName, args)
+          return await callSplitMergedTool(toolName, args)
 
         case 'target-idea':
         case 'target-rider': {
@@ -709,9 +667,9 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (toolName === 'lint_files') {
         return await callSingleLintFilesTool(args)
       }
-    if (toolName === 'reformat_file') {
-      return await callSingleReformatFileTool(args)
-    }
+      if (toolName === 'reformat_file') {
+        return await callSingleReformatFileTool(args)
+      }
       return await primaryUpstream().callToolForClient(toolName, args)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -751,21 +709,6 @@ async function callMergedProxyTool(toolName: string, args: ToolArgs): Promise<To
   return mergeSettledResults(results, 'proxy', [undefined, riderItemTransformer])
 }
 
-async function callSplitMergedProxyTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
-  switch (toolName) {
-    case 'lint_files': {
-      return await callSplitMergedLintFiles(args)
-    }
-
-    case 'reformat_file': {
-      return await callSplitMergedReformatFile(args)
-    }
-
-    default:
-      return makeToolError(`Tool '${toolName}' is not configured for split-merge proxy routing.`)
-  }
-}
-
 async function callMergedPassthroughTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
   const results = await Promise.allSettled([
     ideaUpstream!.callToolForClient(toolName, {...args}),
@@ -774,7 +717,7 @@ async function callMergedPassthroughTool(toolName: string, args: ToolArgs): Prom
   return mergeSettledResults(results, 'passthrough', [undefined, riderItemTransformer])
 }
 
-async function callSplitMergedPassthroughTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
+async function callSplitMergedTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
   switch (toolName) {
     case 'lint_files': {
       return await callSplitMergedLintFiles(args)
@@ -789,63 +732,29 @@ async function callSplitMergedPassthroughTool(toolName: string, args: ToolArgs):
   }
 }
 
-async function callLintFilesViaProxyOrNative(side: 'idea' | 'rider', args: ToolArgs): Promise<unknown> {
-  if (side === 'idea') {
-    if (ideaProxyToolCall && ideaProxyToolNames.has('lint_files')) {
-      return await ideaProxyToolCall('lint_files', {...args})
-    }
-    if (ideaUpstream?.analysisCapabilities.hasLintFilesFiles) {
-      return await ideaUpstream.callToolForClient('lint_files', {...args})
-    }
-  } else {
-    if (riderProxyToolCall && riderProxyToolNames.has('lint_files')) {
-      return await riderProxyToolCall('lint_files', {...args})
-    }
-    if (riderUpstream?.analysisCapabilities.hasLintFilesFiles) {
-      return await riderUpstream.callToolForClient('lint_files', {...args})
-    }
-  }
-
-  throw new Error(`Tool 'lint_files' is not supported by the ${side === 'idea' ? 'IDEA' : 'Rider'} upstream.`)
+function upstreamForSide(side: 'idea' | 'rider'): UpstreamConnection | null {
+  return side === 'idea' ? ideaUpstream : riderUpstream
 }
 
-async function callReformatFileViaProxyOrNative(side: 'idea' | 'rider', args: ToolArgs): Promise<string> {
-  if (side === 'idea') {
-    if (ideaProxyToolCall && ideaProxyToolNames.has('reformat_file')) {
-      return String(await ideaProxyToolCall('reformat_file', {...args}))
-    }
-    if (ideaUpstream?.formattingCapabilities.hasReformatFileFiles) {
-      return extractTextFromResult(await ideaUpstream.callToolForClient('reformat_file', {...args})) ?? 'ok'
-    }
-    if (ideaUpstream?.formattingCapabilities.hasReformatFile) {
-      return await handleReformatFileTool(
-        args,
-        (name, toolArgs) => ideaUpstream!.callTool(name, toolArgs),
-        ideaUpstream.formattingCapabilities
-      )
-    }
-  } else {
-    if (riderProxyToolCall && riderProxyToolNames.has('reformat_file')) {
-      return String(await riderProxyToolCall('reformat_file', {...args}))
-    }
-    if (riderUpstream?.formattingCapabilities.hasReformatFileFiles) {
-      return extractTextFromResult(await riderUpstream.callToolForClient('reformat_file', {...args})) ?? 'ok'
-    }
-    if (riderUpstream?.formattingCapabilities.hasReformatFile) {
-      return await handleReformatFileTool(
-        args,
-        (name, toolArgs) => riderUpstream!.callTool(name, toolArgs),
-        riderUpstream.formattingCapabilities
-      )
-    }
+async function callNativeLintFiles(side: 'idea' | 'rider', args: ToolArgs): Promise<unknown> {
+  const upstream = upstreamForSide(side)
+  if (!upstream?.toolSupport.hasLintFiles) {
+    throw new Error(`Tool 'lint_files' is not supported by the ${side === 'idea' ? 'IDEA' : 'Rider'} upstream.`)
   }
+  return await upstream.callToolForClient('lint_files', {...args})
+}
 
-  throw new Error(`Tool 'reformat_file' is not supported by the ${side === 'idea' ? 'IDEA' : 'Rider'} upstream.`)
+async function callNativeReformatFile(side: 'idea' | 'rider', args: ToolArgs): Promise<string> {
+  const upstream = upstreamForSide(side)
+  if (!upstream?.toolSupport.hasReformatFile) {
+    throw new Error(`Tool 'reformat_file' is not supported by the ${side === 'idea' ? 'IDEA' : 'Rider'} upstream.`)
+  }
+  return extractTextFromResult(await upstream.callToolForClient('reformat_file', {...args})) ?? 'ok'
 }
 
 async function callSingleLintFilesTool(args: ToolArgs): Promise<ToolOutput> {
   const normalizedArgs = normalizeLintFilesArgs(args)
-  const side = getSingleLintFilesSide()
+  const side = getSingleUpstreamSide('lint_files')
   const result = await callLintFilesForSide(side, normalizedArgs)
   const items = side === 'rider' ? riderItemTransformer(result.items) : result.items
   return createLintFilesToolOutput(result.more === true ? {items, more: true} : {items})
@@ -893,7 +802,7 @@ async function callSplitMergedLintFiles(args: ToolArgs): Promise<ToolOutput> {
 }
 
 async function callSingleReformatFileTool(args: ToolArgs): Promise<ToolOutput> {
-  const side = getSingleReformatFileSide()
+  const side = getSingleUpstreamSide('reformat_file')
   const result = await callReformatFileForSide(side, args)
   return makeToolOutput(result)
 }
@@ -930,35 +839,21 @@ async function callSplitMergedReformatFile(args: ToolArgs): Promise<ToolOutput> 
 
 async function callReformatFileForSide(side: 'idea' | 'rider', args: ToolArgs): Promise<string> {
   const normalizedArgs = normalizeReformatFileArgs(args)
-  return await callReformatFileViaProxyOrNative(side, normalizedArgs)
+  return await callNativeReformatFile(side, normalizedArgs)
 }
 
 async function callLintFilesForSide(side: 'idea' | 'rider', args: ToolArgs): Promise<LintFilesToolResult> {
   const normalizedArgs = normalizeLintFilesArgs(args)
-  const result = parseLintFilesToolResult(await callLintFilesViaProxyOrNative(side, normalizedArgs))
+  const result = parseLintFilesToolResult(await callNativeLintFiles(side, normalizedArgs))
   const filePaths = normalizedArgs.files as string[]
   const items = orderLintItems(filePaths, result.items)
   return result.more === true ? {items, more: true} : {items}
 }
 
-function getSingleLintFilesSide(): 'idea' | 'rider' {
-  if (ideaProxyToolCall || ideaUpstream) {
-    return 'idea'
-  }
-  if (riderProxyToolCall || riderUpstream) {
-    return 'rider'
-  }
-  throw new Error("Tool 'lint_files' is not available because no upstream is connected.")
-}
-
-function getSingleReformatFileSide(): 'idea' | 'rider' {
-  if (ideaProxyToolCall || ideaUpstream) {
-    return 'idea'
-  }
-  if (riderProxyToolCall || riderUpstream) {
-    return 'rider'
-  }
-  throw new Error("Tool 'reformat_file' is not available because no upstream is connected.")
+function getSingleUpstreamSide(toolName: string): 'idea' | 'rider' {
+  if (ideaUpstream) return 'idea'
+  if (riderUpstream) return 'rider'
+  throw new Error(`Tool '${toolName}' is not available because no upstream is connected.`)
 }
 
 function normalizeLintFilesArgs(args: ToolArgs): ToolArgs {

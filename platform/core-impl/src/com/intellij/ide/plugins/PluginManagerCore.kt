@@ -7,6 +7,7 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils.getIdString
+import com.intellij.ide.plugins.PluginUtils.findEnabledOrInstalledPlugin
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
@@ -465,12 +466,14 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val osTag = matchedVersion?.groupValues[2] ?: return null
 
-      LOG.warn("Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag")
+      val logMessage = "Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag"
+      LOG.debug(logMessage)
 
       return OS.fromString(osTag)
         .takeIf { it != OS.Other }
         ?.let { IdeaPluginOsRequirement.fromOs(it) }
         ?.takeIf { osReq -> !osReq.isHostOs() }
+        ?.also { LOG.warn(logMessage) }
     }
 
     return descriptor.getDependencies().asSequence()
@@ -485,12 +488,14 @@ object PluginManagerCore {
       val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
       val archTag = matchedVersion?.groupValues[3] ?: return null
 
-      LOG.warn("Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag")
+      val logMessage = "Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag"
+      LOG.debug(logMessage)
 
       return CpuArch.fromString(archTag)
         .takeIf { it != CpuArch.OTHER && it != CpuArch.UNKNOWN }
         ?.let { PluginCpuArchRequirement.fromArch(it) }
         ?.takeIf { osReq -> !osReq.isHostArch() }
+        ?.also { LOG.warn(logMessage) }
     }
 
     return descriptor.getDependencies().asSequence()
@@ -567,9 +572,6 @@ object PluginManagerCore {
     for (pluginList in discoveredPlugins.pluginLists) {
       for (plugin in pluginList.plugins) {
         val exclusionReason = excludedFromLoading[plugin]
-        if (exclusionReason != null) {
-          plugin.isMarkedForLoading = false
-        }
         if (pluginsToLoad.resolvePluginId(plugin.pluginId) == null && exclusionReason != null && exclusionReason !is PluginVersionIsSuperseded) {
           val existing = incompletePlugins[plugin.pluginId]
           if (existing == null || VersionComparatorUtil.compare(plugin.version, existing.version) > 0) {
@@ -665,8 +667,7 @@ object PluginManagerCore {
     val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
-        descriptor.isMarkedForLoading = resolvedPluginSet.isResolved(descriptor)
-        if (!descriptor.isMarkedForLoading) {
+        if (!resolvedPluginSet.isResolved(descriptor)) {
           adaptExclusionReasonAsCycleError(resolvedPluginSet, descriptor, cycleErrors)
         }
       }
@@ -814,6 +815,7 @@ object PluginManagerCore {
         is IncompatibleWithAnotherModule -> {
           registerLoadingError(PluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
         }
+        is OnDemandContentModuleHasNoDependentsLeft -> {} // expected exclusion, not a loading error
         is PackagePrefixConflictWithAnotherModule -> {
           registerLoadingError(PluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
         }
@@ -861,10 +863,9 @@ object PluginManagerCore {
     essentialPlugins: Set<PluginId>,
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   ) {
-    val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)
+    val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)?.getMainDescriptor()
     if (corePlugin != null) {
-      @Suppress("DEPRECATION")
-      val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
+      val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !resolvedPluginSet.isResolved(it) }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
         throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.name })
       }
@@ -939,8 +940,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun findPlugin(id: PluginId): IdeaPluginDescriptorImpl? {
-    val pluginSet = pluginsState.nullablePluginSet ?: return null
-    return pluginSet.findEnabledPlugin(id) ?: pluginSet.findInstalledPlugin(id)
+    return pluginsState.nullablePluginSet?.findEnabledOrInstalledPlugin(id)
   }
 
   @JvmStatic

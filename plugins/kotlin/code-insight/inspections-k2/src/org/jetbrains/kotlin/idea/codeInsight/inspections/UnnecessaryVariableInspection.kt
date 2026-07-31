@@ -19,11 +19,14 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -99,7 +102,8 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
         val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
         val initializer = property.initializer ?: return null
 
-        fun KaSession.isExactCopy(): Boolean {
+        context(session: KaSession)
+        fun isExactCopy(): Boolean {
             if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
 
             val symbol = initializer.mainReference.resolveToSymbol()
@@ -125,7 +129,8 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
             return nameValidator.validate(copyName)
         }
 
-        fun KaSession.isReturnOnly(): Boolean {
+        context(session: KaSession)
+        fun isReturnOnly(): Boolean {
             val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false
             val returned = nextStatement.returnedExpression as? KtNameReferenceExpression ?: return false
 

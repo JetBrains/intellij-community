@@ -8,13 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 sealed interface TerminalHyperlinksOutputEvent {
   /**
-   * A change in terminal hyperlinks.
+   * A change in terminal hyperlinks: a self-contained update for a contiguous range of the output.
    *
-   * If there are a lot of links, they may arrive in batches with the same events having the same [documentModificationStamp].
-   * In this case, only the first event of a batch will have this property set.
-   * When the model receives the first event, it removes the old hyperlinks from that offset onwards.
-   * The next events will only add new hyperlinks to the model.
-   * The last event always has an empty hyperlink list and used to indicate that the hyperlink processing has finished.
+   * The range `[coveredStartOffset, coveredEndOffset)` is one batch the highlighter has finished processing
+   * against the snapshot at [documentModificationStamp]. [hyperlinks] are *exactly* the links found in that range
+   * (possibly empty, meaning "no links here").
    */
   @Serializable
   data class HyperlinksUpdated(
@@ -23,15 +21,15 @@ sealed interface TerminalHyperlinksOutputEvent {
      */
     val documentModificationStamp: Long,
     /**
-     * The absolute offset (document offset plus the trimmed count) from which the links were updated.
-     *
-     * Only set for the first event in a batch.
+     * The absolute offset (document offset plus the trimmed count) at the start of the covered range, inclusive.
      */
-    val removeFromOffset: Long?,
+    val coveredStartOffset: Long,
     /**
-     * The newly computed hyperlinks.
-     *
-     * May be empty for the first event in a batch, always empty for the last event.
+     * The absolute offset at the end of the covered range, exclusive.
+     */
+    val coveredEndOffset: Long,
+    /**
+     * The links found in `[coveredStartOffset, coveredEndOffset)`. May be empty.
      */
     val hyperlinks: List<TerminalFilterResultInfoDto>,
   ) : TerminalHyperlinksOutputEvent

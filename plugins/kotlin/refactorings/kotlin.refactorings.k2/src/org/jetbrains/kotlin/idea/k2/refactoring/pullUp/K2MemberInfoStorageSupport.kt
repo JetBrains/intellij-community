@@ -3,20 +3,22 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingModule
+import org.jetbrains.kotlin.analysis.api.symbols.hasConflictingSignatureWith
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -111,7 +113,8 @@ internal class K2MemberInfoStorageSupport : KotlinMemberInfoStorageSupport {
     }
 }
 
-internal fun KaSession.getClassSymbol(element: PsiNamedElement): KaDeclarationSymbol? {
+context(session: KaSession)
+internal fun getClassSymbol(element: PsiNamedElement): KaDeclarationSymbol? {
     return when (element) {
         is PsiClass -> element.namedClassSymbol
         is KtNamedDeclaration -> element.symbol

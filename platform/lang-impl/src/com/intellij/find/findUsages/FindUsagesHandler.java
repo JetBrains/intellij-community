@@ -93,7 +93,7 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
     }
 
     @Override
-    public boolean processUsagesInText(@NotNull PsiElement element,
+    public boolean processUsagesInText(@NotNull PsiElement psiElement,
                                        @NotNull Processor<? super UsageInfo> processor,
                                        @NotNull GlobalSearchScope searchScope) {
       throw new IncorrectOperationException();

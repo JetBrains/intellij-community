@@ -13,6 +13,70 @@ class KaptKotlinGradleInspectionTest : AbstractGradleMultiFileQuickFixTest() {
     @Test
     @TargetVersions("8.0.0+")
     fun testAddKaptCompilerPluginForAnnotationProcessorKts() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptCompilerPluginInspectionWhenKspConfiguredKts() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testAddKaptCompilerPluginForParenthesizedAnnotationProcessorGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptCompilerPluginInspectionForTestAnnotationProcessorGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptCompilerPluginInspectionWhenKspConfiguredGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionForKnownProcessorInImplementationGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionForKnownProcessorInTestImplementationGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionForLombokOnlyGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionForUnknownImplementationDependencyGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionWhenKaptPluginAlreadyConfiguredGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    @Test
+    @TargetVersions("8.0.0+")
+    fun testNoKaptInspectionWhenOldKaptPluginAppliedGroovy() {
+        doKaptQuickFixTest()
+    }
+
+    private fun doKaptQuickFixTest() {
         doMultiFileQuickFixTest(ignoreChangesInBuildScriptFiles = false)
     }
 }

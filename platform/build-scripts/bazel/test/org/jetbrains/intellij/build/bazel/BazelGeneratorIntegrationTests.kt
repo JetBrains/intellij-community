@@ -151,9 +151,9 @@ class BazelGeneratorIntegrationTests {
         
         http_file(
             name = "org_jetbrains_intellij_deps-debugger-agent-1_161_http",
-            url = "$url",
-            sha256 = "$sha256",
             downloaded_file_path = "debugger-agent-1.161.jar",
+            sha256 = "$sha256",
+            url = "$url",
         )
       """.trimIndent() + "\n"
     )
@@ -326,6 +326,53 @@ class BazelGeneratorIntegrationTests {
     // -Werror must be translated to warn = "error", which the JPS incremental worker turns back into -Werror.
     softly.assertThat(generatedContent)
       .describedAs("-Werror facet option must be translated to warn = \"error\"")
+      .contains("warn = \"error\"")
+
+    // do not delete tempDir on tests failure, it is used in IDE to inspect the generated output
+    if (softly.wasSuccess()) {
+      tempDir.deleteRecursively()
+    }
+  }
+
+  @Test
+  fun `MRI-4701 generator translates -Xwarning-level facet option to x_warning_level`() {
+    val testName = "MRI-4701"
+    val testDataPath = getTestDataPath(testName)
+
+    val projectDataPath = testDataPath.resolve("project")
+    assertTrue("$projectDataPath is not a directory", projectDataPath.isDirectory())
+
+    val tempDir = Files.createTempDirectory("test-$testName")
+    projectDataPath.copyToRecursively(tempDir, followLinks = true, overwrite = false)
+
+    JpsModuleToBazel.main(
+      arrayOf(
+        "--workspace_directory=$tempDir",
+        "--run_without_ultimate_root=true",
+        "--default-custom-modules=false",
+        "--m2-repo=${tempDir.resolve("m2-repo")}",
+      )
+    )
+
+    val generatedBuildFile = tempDir.resolve("module").resolve("BUILD.bazel")
+    assertTrue("Generated $generatedBuildFile is missing", Files.exists(generatedBuildFile))
+    val generatedContent = generatedBuildFile.readText()
+
+    // The module's Kotlin facet sets -Xwarning-level=DEPRECATION:warning, so a custom kotlinc options
+    // target must be generated for it.
+    softly.assertThat(generatedContent)
+      .describedAs("create_kotlinc_options target must be generated for a module with a -Xwarning-level facet option")
+      .contains("create_kotlinc_options(")
+    // -Xwarning-level must be translated to x_warning_level, which the JPS incremental worker turns back into -Xwarning-level.
+    softly.assertThat(generatedContent)
+      .describedAs("-Xwarning-level facet option must be translated to x_warning_level entries")
+      .contains("x_warning_level = [")
+    softly.assertThat(generatedContent)
+      .describedAs("the DEPRECATION:warning level must be preserved")
+      .contains("\"DEPRECATION:warning\"")
+    // the facet also sets -Werror, which must keep working alongside the per-diagnostic override.
+    softly.assertThat(generatedContent)
+      .describedAs("-Werror facet option must still be translated to warn = \"error\"")
       .contains("warn = \"error\"")
 
     // do not delete tempDir on tests failure, it is used in IDE to inspect the generated output

@@ -13,13 +13,11 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
 @State(name = "ShownTips", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
 internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.State> {

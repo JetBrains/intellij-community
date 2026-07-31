@@ -29,7 +29,7 @@ class MarkdownSoftWrapPerformanceTest : BasePlatformTestCase() {
   /**
    * ~1.4 MB of markdown built from long words, so that many soft wrap positions have no whitespace within
    * the quick look-back distance of [com.intellij.openapi.editor.impl.SoftWrapEngine] and the position
-   * calculation is delegated to [org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy].
+   * calculation is delegated to [com.intellij.markdown.frontend.editor.MarkdownLineWrapPositionStrategy].
    */
   private fun generateLargeDocument(): String {
     val words = listOf(

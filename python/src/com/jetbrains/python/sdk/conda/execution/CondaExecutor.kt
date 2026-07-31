@@ -27,7 +27,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.targetEnvConfiguration
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -39,7 +38,6 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-@ApiStatus.Internal
 internal object CondaExecutor {
   suspend fun createNamedEnv(binaryToExec: BinaryToExec, envName: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-n", envName, "python=${pythonVersion}")
@@ -228,8 +226,6 @@ internal object CondaExecutor {
   }
 }
 
-
-@ApiStatus.Internal
 internal fun Sdk.getCondaBinToExecute(): BinaryToExec {
   val targetConfig = targetEnvConfiguration
   val pathOnTarget = (pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget

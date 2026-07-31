@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -11,6 +10,7 @@ import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ContributorsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsContextFields
@@ -28,7 +28,7 @@ internal class SearchEverywhereContextFeaturesProvider {
     private val CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT = ContributorsLocalStatisticsContextFields()
 
 
-    internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("open_file_types", FileTypeUsagesCollector.ValidationRule::class.java)
+    internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("open_file_types", FileTypeValidationRule::class.java)
     internal val NUMBER_OF_OPEN_EDITORS_KEY = EventFields.Int("number_of_open_editors")
     internal val IS_SINGLE_MODULE_PROJECT = EventFields.Boolean("is_single_module_project")
 

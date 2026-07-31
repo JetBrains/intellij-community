@@ -22,6 +22,10 @@ import org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/**
+ * Creates an [AlertStyling] by combining individual alert type stylings, adapting colors to the current IntelliJ LaF
+ * theme.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun AlertStyling.Companion.create(
@@ -32,6 +36,7 @@ public fun AlertStyling.Companion.create(
     caution: CautionAlertStyling = CautionAlertStyling.create(),
 ): AlertStyling = AlertStyling(note, tip, important, warning, caution)
 
+/** Creates a [NoteAlertStyling] with colors adapted to the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun NoteAlertStyling.Companion.create(
@@ -57,6 +62,7 @@ public fun NoteAlertStyling.Companion.create(
         textColor,
     )
 
+/** Creates a [TipAlertStyling] with colors adapted to the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun TipAlertStyling.Companion.create(
@@ -82,6 +88,7 @@ public fun TipAlertStyling.Companion.create(
         textColor,
     )
 
+/** Creates an [ImportantAlertStyling] with colors adapted to the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ImportantAlertStyling.Companion.create(
@@ -107,6 +114,7 @@ public fun ImportantAlertStyling.Companion.create(
         textColor,
     )
 
+/** Creates a [WarningAlertStyling] with colors adapted to the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun WarningAlertStyling.Companion.create(
@@ -132,6 +140,7 @@ public fun WarningAlertStyling.Companion.create(
         textColor,
     )
 
+/** Creates a [CautionAlertStyling] with colors adapted to the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun CautionAlertStyling.Companion.create(

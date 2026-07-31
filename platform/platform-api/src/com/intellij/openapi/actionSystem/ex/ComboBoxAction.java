@@ -34,7 +34,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +191,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       getModel().setEnabled(myPresentation.isEnabled());
       setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
-      setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
       setMargin();
       if (isSmallVariant()) {

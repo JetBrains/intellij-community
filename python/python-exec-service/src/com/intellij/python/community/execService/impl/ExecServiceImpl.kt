@@ -45,7 +45,12 @@ internal class ExecServiceImpl private constructor() : ExecService {
     }
   }
 
-  override suspend fun executeGetProcess(binary: BinaryToExec, args: Args, scopeToBind: CoroutineScope?, options: ExecGetProcessOptions): Result<Process, ExecuteGetProcessError<*>> {
+  override suspend fun executeGetProcess(
+    binary: BinaryToExec,
+    args: Args,
+    scopeToBind: CoroutineScope?,
+    options: ExecGetProcessOptions,
+  ): Result<Process, ExecuteGetProcessError<*>> {
     val launcher = create(binary, args, options, scopeToBind).getOr { return it }
     val process = launcher.start().getOr {
       val createExecError = launcher.createExecError(options.processDescription ?: "", it.error).error
@@ -54,10 +59,14 @@ internal class ExecServiceImpl private constructor() : ExecService {
     return Result.success(process)
   }
 
-  private suspend fun create(binary: BinaryToExec, args: Args, options: ExecOptionsBase, scopeToBind: CoroutineScope? = null): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
+  private suspend fun create(
+    binary: BinaryToExec,
+    args: Args,
+    options: ExecOptionsBase,
+    scopeToBind: CoroutineScope? = null,
+  ): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
     val scope = scopeToBind ?: ApplicationManager.getApplication().service<MyService>().scope
-    val downloadConfig = (options as? ExecOptions)?.downloadAfterExecution
-    val request = LaunchRequest(scope, args, options.env, options.tty, downloadConfig)
+    val request = LaunchRequest(scope, args, options.env, options.tty, options.uploadBeforeExecution, options.downloadAfterExecution)
     return Result.success(
       when (binary) {
         is BinOnEel -> createProcessLauncherOnEel(binary, request)
@@ -70,7 +79,12 @@ internal class ExecServiceImpl private constructor() : ExecService {
       })
   }
 
-  override suspend fun <T> executeAdvanced(binary: BinaryToExec, args: Args, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyResult<T> {
+  override suspend fun <T> executeAdvanced(
+    binary: BinaryToExec,
+    args: Args,
+    options: ExecOptions,
+    processInteractiveHandler: ProcessInteractiveHandler<T>,
+  ): PyResult<T> {
     return coroutineScope {
       val processLauncher = create(binary, args, options, this).getOr {
         return@coroutineScope it.asPyError()
@@ -89,7 +103,8 @@ internal class ExecServiceImpl private constructor() : ExecService {
     processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): Result<T, ExecError> {
     val description = options.processDescription
-                      ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
+                      ?: PyExecBundle.message("py.exec.defaultName.process",
+                                              (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
     val process = processLauncher.start(options.weight).getOr {
       val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
                                                                                                             ?: "unknown")

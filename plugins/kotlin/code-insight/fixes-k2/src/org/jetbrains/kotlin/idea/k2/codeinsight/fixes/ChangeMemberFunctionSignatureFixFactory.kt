@@ -14,12 +14,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaSingleTypeParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -27,12 +28,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -44,6 +52,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -81,7 +90,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     /**
      * Computes all the signatures a 'functionElement' could be changed to in order to remove NOTHING_TO_OVERRIDE error.
      */
-    private fun KaSession.computePossibleSignatures(functionElement: KtNamedFunction): List<Signature> {
+    context(session: KaSession)
+    private fun computePossibleSignatures(functionElement: KtNamedFunction): List<Signature> {
         if (functionElement.valueParameterList == null) { // we won't be able to modify its signature
             return emptyList()
         }
@@ -99,14 +109,15 @@ internal object ChangeMemberFunctionSignatureFixFactory {
      * Changes function's signature to match superFunction's signature. Returns new descriptor.
      */
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.signatureToMatch(function: KaFunctionSymbol, superFunction: KaNamedFunctionSymbol): Signature {
+    context(session: KaSession)
+    private fun signatureToMatch(function: KaFunctionSymbol, superFunction: KaNamedFunctionSymbol): Signature {
         val superParameters = superFunction.valueParameters
         val parameters = function.valueParameters
         val subClass = function.containingSymbol
         val superClass = superFunction.containingSymbol
         val substitutor = if (subClass is KaClassSymbol && superClass is KaClassSymbol) createInheritanceTypeSubstitutor(subClass, superClass) else null
 
-        val names = superParameters.map { it.name.asString() }.toMutableList()
+        val names = superParameters.map { it.name.render() }.toMutableList()
         val substitutedTypes = superParameters.map { superParam ->
             val returnType = superParam.returnType
             (substitutor?.substitute(returnType) ?: returnType).approximateToDenotableSubtypeOrSelf()
@@ -146,7 +157,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.getSignature(
+    context(session: KaSession)
+    private fun getSignature(
         substitutor: KaSubstitutor?,
         types: List<KaType>,
         names: List<String>,
@@ -202,7 +214,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
 
 
             val superParameters = superFunction.valueParameters
-            append(superFunction.name.asString())
+            append(superFunction.name.render())
             append(names.indices.joinToString(prefix = "(", postfix = ")") { index ->
                 val name = names[index]
                 val type = types[index]
@@ -224,16 +236,18 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.renderParameterAnnotations(
+    context(session: KaSession)
+    private fun renderParameterAnnotations(
         parameter: KaValueParameterSymbol,
         declarationRenderer: KaDeclarationRenderer
     ): String {
         val printer = PrettyPrinter()
-        declarationRenderer.annotationRenderer.renderAnnotations(this, parameter, printer)
+        declarationRenderer.annotationRenderer.renderAnnotations(session, parameter, printer)
         return printer.toString()
     }
 
-    private fun KaSession.keepAnnotation(annotation: KaAnnotation, targetFile: KtFile): Boolean {
+    context(session: KaSession)
+    private fun keepAnnotation(annotation: KaAnnotation, targetFile: KtFile): Boolean {
         val classId = annotation.classId ?: return false
         val symbol = findClass(classId)
 
@@ -246,7 +260,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         isRequiresOptInFqName(annotation.classId?.asSingleFqName())
     }
 
-    private fun KaSession.matchParameters(
+    context(session: KaSession)
+    private fun matchParameters(
         parameterChooser: ParameterChooser,
         superParameters: List<KaValueParameterSymbol>,
         parameters: List<KaValueParameterSymbol>,
@@ -262,7 +277,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     if (parameterChooser.accept(parameter, superParameter, substitutedType) && !used[index1]) {
                         used[index1] = true
                         matched[index] = true
-                        names[index] = parameter.name.asString()
+                        names[index] = parameter.name.render()
                         return@forEachIndexed
                     }
                 }
@@ -270,7 +285,8 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         }
     }
 
-    private fun KaSession.getPossibleSuperFunctions(functionSymbol: KaFunctionSymbol): List<KaNamedFunctionSymbol> {
+    context(session: KaSession)
+    private fun getPossibleSuperFunctions(functionSymbol: KaFunctionSymbol): List<KaNamedFunctionSymbol> {
         val containingClass = functionSymbol.containingSymbol as? KaClassSymbol ?: return emptyList()
 
         val name = functionSymbol.name ?: return emptyList()

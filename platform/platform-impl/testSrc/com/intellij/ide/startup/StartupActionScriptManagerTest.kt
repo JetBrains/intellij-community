@@ -35,6 +35,11 @@ class StartupActionScriptManagerTest {
     scriptFile.deleteIfExists()
   }
 
+  @Test fun `command validation`() {
+    assertThatThrownBy { StartupActionScriptManager.DeleteCommand(Path.of("file\npath")) }.isInstanceOf(IllegalArgumentException::class.java)
+    assertThatThrownBy { StartupActionScriptManager.DeleteCommand(Path.of("file:;path")) }.isInstanceOf(IllegalArgumentException::class.java)
+  }
+
   @Test fun `reading and writing empty file`() {
     StartupActionScriptManager.addActionCommands(listOf())
     assertThat(scriptFile).isRegularFile
@@ -77,8 +82,7 @@ class StartupActionScriptManagerTest {
     assertThat(scriptFile).doesNotExist()
   }
 
-  @Test
-  fun `executing commands with path mapping`(@TempDir tempDir: Path) {
+  @Test fun `executing commands with path mapping`(@TempDir tempDir: Path) {
     val oldTarget = tempDir.resolve("old/plugins").createDirectories()
     val newTarget = tempDir.resolve("new/plugins").createDirectories()
     val copySource = tempDir.resolve("source.txt").createFile()

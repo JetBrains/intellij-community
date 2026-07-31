@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointAdapter
@@ -625,7 +626,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         val pluginId = (listenerSource::class.java.classLoader as? PluginAwareClassLoader)?.pluginId?.toString()
         val msg = "(EDT) ExtensionPoint listener notification took too long: ${duration} for ${listenerSource::class.java.name}" +
                   (pluginId?.let { " (plugin: $it)" } ?: "")
-        LOG.warn(msg)
+        if (duration.inWholeMilliseconds > 500) {
+          LOG.error(msg)
+        } else {
+          LOG.warn(msg)
+        }
       }
     }
     for (listener in listeners) {
@@ -1077,9 +1082,7 @@ private inline fun runSafely(
     block()
   }
   catch (e: Throwable) {
-    if (e is CancellationException) {
-      throw e
-    }
+    rethrowControlFlowException(e)
 
     LOG.error(loggingErrorAdapter(e))
   }

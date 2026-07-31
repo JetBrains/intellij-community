@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -26,11 +27,28 @@ import javax.swing.JPanel
 
 typealias LanguagesList = ContributedConfigurationsList<LanguageRuntimeConfiguration, LanguageRuntimeType<out LanguageRuntimeConfiguration>>
 
-class TargetEnvironmentLanguagesPanel(private val project: Project,
-                                      private val targetEnvironmentType: TargetEnvironmentType<*>,
-                                      private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
-                                      val languagesList: LanguagesList,
-                                      private val parentRefresh: () -> Unit) {
+class TargetEnvironmentLanguagesPanel(
+  private val project: Project,
+  private val module: Module?,
+  private val targetEnvironmentType: TargetEnvironmentType<*>,
+  private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+  val languagesList: LanguagesList,
+  private val parentRefresh: () -> Unit,
+) {
+
+  constructor(
+    project: Project,
+    targetEnvironmentType: TargetEnvironmentType<*>,
+    targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+    languagesList: LanguagesList,
+    parentRefresh: () -> Unit,
+  ) :
+    this(project = project,
+         module = null,
+         targetEnvironmentType = targetEnvironmentType,
+         targetSupplier = targetSupplier,
+         languagesList = languagesList,
+         parentRefresh = parentRefresh)
 
   private val languagePanels = mutableListOf<LanguagePanel>()
 
@@ -92,7 +110,9 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
-    val configurable = language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
+    val configurable = module?.let {
+      language.getRuntimeType().createConfigurable(it, language, targetEnvironmentType, targetSupplier)
+    } ?: language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
     val panel = panel {
       row {
         val separator = TitledSeparator(language.getRuntimeType().configurableDescription)

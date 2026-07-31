@@ -767,6 +767,28 @@ async def nosupAssertFalse(b):
     );
   }
 
+  // PY-90011
+  public void testIsInstanceIntWithIntEnumAnnotatedClassObject() {
+    doTestByText(
+      """
+        from enum import IntEnum, Enum
+
+
+        def test_enum(x: type[Enum]):
+            if isinstance(x, int):
+                print("first")
+            else:
+                print("second")
+
+
+        def test_int_enum(x: type[IntEnum]):
+            if isinstance(x, int):
+                print("first")
+            else:
+                print("second")"""
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

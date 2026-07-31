@@ -131,6 +131,15 @@ public class BaseExtractorsHelper implements ExtractorsHelper {
       }
 
       ExtensionScriptsUtil.prepareScript(script);
+      return buildAggregator(config);
+    }
+
+    @Override
+    public @Nullable DataExtractor buildAggregator(@NotNull ExtractorConfig config) {
+      Path script = ExtractorScripts.findAggregatorScript(myScriptFileName);
+      if (script == null) {
+        return null;
+      }
 
       IdeScriptEngine engine = ExtensionScriptsUtil.getEngineFor(config.getProject(),
                                                                  getDefaultClassLoader(ExtractorScripts.getPluginId()),

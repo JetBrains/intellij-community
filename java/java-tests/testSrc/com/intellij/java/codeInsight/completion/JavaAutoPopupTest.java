@@ -67,6 +67,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -78,6 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JList;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -848,6 +850,45 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       });
     }
+  }
+
+  public void testHidingLookupAfterExternalPhaseResetKeepsCompletionUsable() {
+    // IJPL-192597: the phase can be moved away from a live indicator without closing it (handleEmptyLookup,
+    // performance-testing commands, ...), which leaves the lookup on screen. Hiding it afterwards finishes that
+    // orphaned completion: the platform reports the inconsistency, but must not reset a phase it doesn't own anymore.
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          <caret>
+        }
+      }""");
+    type("i");
+    LookupImpl lookup = getLookup();
+    assertNotNull(lookup);
+
+    List<String> loggedErrors = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category,
+                                              @NotNull String message,
+                                              String @NotNull [] details,
+                                              @Nullable Throwable t) {
+        loggedErrors.add(message);
+        return Action.NONE;
+      }
+    }, () -> edt(() -> {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      lookup.hideLookup(false);
+      assertTrue(lookup.isLookupDisposed());
+      assertSame(CompletionPhase.NoCompletion, CompletionServiceImpl.getCompletionPhase());
+    }));
+
+    assertSize(1, loggedErrors);
+    assertTrue(loggedErrors.getFirst(), loggedErrors.getFirst().contains("null!=CompletionProgressIndicator"));
+
+    // the completion machinery is still usable afterwards
+    type("t");
+    assertContains("iterable");
   }
 
   public static class LongReplacementOffsetContributor extends CompletionContributor {

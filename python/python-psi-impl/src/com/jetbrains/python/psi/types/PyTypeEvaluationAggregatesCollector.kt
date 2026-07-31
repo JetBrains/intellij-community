@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import org.HdrHistogram.Recorder
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
@@ -78,28 +79,38 @@ class PyTypeEvaluationAggregatesCollector : ApplicationUsagesCollector() {
       }
     }
 
-    fun recordPyCharmTypeEngineTime(block: () -> PyType?): PyType? {
+    inline fun recordPyCharmTypeEngineTime(block: () -> PyType?): PyType? {
       val (result, duration) = measureTimedValue {
         block()
       }
-      val clampedDuration = duration.coerceAtMost(MAX_TRACKABLE_DURATION)
-      getOrCreateRecorder(PYCHARM_TYPE_ENGINE).recordValue(clampedDuration.inWholeMilliseconds)
+      recordPyCharmDuration(duration)
       return result
     }
 
-    fun recordHybridTypeEngineTime(typeEngine: PyTypeEngine, block: () -> PyType?): PyType? {
+    inline fun recordHybridTypeEngineTime(typeEngine: PyTypeEngine, block: () -> PyType?): PyType? {
       val (result, duration) = measureTimedValue {
         block()
       }
+      recordHybridDuration(typeEngine, duration)
+      return result
+    }
+
+    @PublishedApi
+    internal fun recordPyCharmDuration(duration: Duration) {
+      val clampedDuration = duration.coerceAtMost(MAX_TRACKABLE_DURATION)
+      getOrCreateRecorder(PYCHARM_TYPE_ENGINE).recordValue(clampedDuration.inWholeMilliseconds)
+    }
+
+    @PublishedApi
+    internal fun recordHybridDuration(typeEngine: PyTypeEngine, duration: Duration) {
       val recorderName = typeEngine.name.lowercase()
       // Only record metrics for registered external type engines
       if (recorderName !in EXTERNAL_TYPE_ENGINES) {
         LOG.error("Unknown type engine name '${typeEngine.name}' (normalized: '$recorderName'). Expected one of: ${EXTERNAL_TYPE_ENGINES.joinToString()}")
-        return result
+        return
       }
       val clampedDuration = duration.coerceAtMost(MAX_TRACKABLE_DURATION)
       getOrCreateRecorder(recorderName).recordValue(clampedDuration.inWholeMilliseconds)
-      return result
     }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -15,6 +16,7 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -44,9 +47,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sc
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
-import com.jetbrains.python.psi.types.PyTypeRendererFeature
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -59,6 +60,7 @@ import com.jetbrains.python.inspections.PyDunderSlotsInspection
 import com.jetbrains.python.inspections.PyEnumInspection
 import com.jetbrains.python.inspections.PyFinalInspection
 import com.jetbrains.python.inspections.PyInitNewSignatureInspection
+import com.jetbrains.python.inspections.PyMethodOverridingInspection
 import com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection
 import com.jetbrains.python.inspections.PyNewTypeInspection
 import com.jetbrains.python.inspections.PyOverloadsInspection
@@ -100,6 +102,7 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.fail
 import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
@@ -180,7 +183,8 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
-    val copyDirectoryToProject: List<Pair<String, String>> = emptyList(),
+    val copyDirectoryToProject: Map<String, String> = emptyMap(),
+    val additionalSdkRoots: Map<String, OrderRootType> = emptyMap(),
   )
 
 
@@ -205,6 +209,7 @@ abstract class PyCodeInsightTestCase {
     PyEnumInspection::class.java,
     PyFinalInspection::class.java,
     PyInitNewSignatureInspection::class.java,
+    PyMethodOverridingInspection::class.java,
     PyNewStyleGenericSyntaxInspection::class.java,
     PyNewTypeInspection::class.java,
     PyOverloadsInspection::class.java,
@@ -281,6 +286,31 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
+  protected fun setAdditionalSdkRoots(additionalSdkRoots:  Map<String, OrderRootType>, addElseRemove: Boolean) {
+    if (additionalSdkRoots.isEmpty()) return
+    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)!!
+
+    runWriteAction {
+      val modificator = sdk.getSdkModificator()
+      for ((relativeTestDataPath, rootType) in additionalSdkRoots.entries) {
+        val absPath = PythonTestUtil.getTestDataPath() + "/" + relativeTestDataPath
+        val testDataDir = StandardFileSystems.local().findFileByPath(absPath)
+        if (testDataDir == null) {
+          fail("Could not find additional SDK root at $absPath")
+          break
+        }
+        if (addElseRemove) {
+          modificator.addRoot(testDataDir, rootType)
+        }
+        else {
+          modificator.removeRoot(testDataDir, rootType)
+        }
+      }
+      modificator.commitChanges()
+    }
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
+
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
     test(defaultTestOptions, defaultTestFileName, fileContent, *otherFiles)
   }
@@ -315,10 +345,13 @@ abstract class PyCodeInsightTestCase {
     val oldAnyType = anyTypeKey.asBoolean()
     anyTypeKey.setValue(options.enablePyAnyType)
 
+    setAdditionalSdkRoots(options.additionalSdkRoots, true)
+
     try {
       doTest(options, fileName, fileContent, otherFiles)
     }
     finally {
+      setAdditionalSdkRoots(options.additionalSdkRoots, false)
       setLanguageLevel(null)
       anyTypeKey.setValue(oldAnyType)
       Disposer.dispose(recursionFlagDisposable)
@@ -327,20 +360,22 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun doTest(options: TestOptions, fileName: String, fileContent: String, otherFiles: Array<out Pair<String, String>>) {
-    for ((from, to) in options.copyDirectoryToProject) {
+    for ((from, to) in options.copyDirectoryToProject.entries) {
       myFixture.copyDirectoryToProject(from, to)
     }
     for ((filename, content) in otherFiles) {
       myFixture.createFile(filename, content.trimIndent())
     }
-    val currentFile = myFixture.configureByText(fileName, fileContent.trimIndent())
+    val originalText = fileContent.trimIndent()
+    val expectedAssertions = parseAssertions(originalText)
+    val currentFile = myFixture.configureByText(fileName, PyTestAssertionParser.maskAssertions(originalText, expectedAssertions))
 
     val testInspections = defaultInspections - options.disableInspections + options.enableInspections
     val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
     myFixture.enableInspections(*inspectionInstances)
 
     try {
-      collectAndCheckHighlighting(options)
+      collectAndCheckHighlighting(options, originalText, expectedAssertions)
     }
     finally {
         myFixture.disableInspections(*inspectionInstances)
@@ -374,17 +409,14 @@ abstract class PyCodeInsightTestCase {
   }
 
 
-  private fun collectAndCheckHighlighting(options: TestOptions): Duration {
+  private fun collectAndCheckHighlighting(options: TestOptions, expectedText: String, expectedAssertions: List<PyTestAssertion>): Duration {
     val project = myFixture.project
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
     val file = myFixture.file as? PsiFileImpl ?: error("Expected PsiFileImpl, got ${myFixture.file?.javaClass}")
     val document = file.fileDocument
-    val expectedText = document.text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-    val expectedAssertions = parseAssertions(expectedText)
 
     val (highlights, duration) = measureTimedValue {
       myFixture.doHighlighting()
@@ -537,7 +569,7 @@ abstract class PyCodeInsightTestCase {
     val containingFile = expr.containingFile
 
     fun renderType(context: TypeEvalContext) =
-      PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRendererFeature.UNSAFE_UNION)
+      PythonDocumentationProvider.getTypeName(expr.getType(context), context)
 
     val actualTypeCA = renderType(codeAnalysis(project, containingFile).withTracing())
     val actualTypeUI = renderType(userInitiated(project, containingFile).withTracing())
@@ -556,14 +588,20 @@ abstract class PyCodeInsightTestCase {
 
   private fun assertExpectedVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyReferenceExpression) getExpectedVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyReferenceExpression) {
+      return "Expected variance only available for PyReferenceExpressions"
+    }
+    val actualVariance = getExpectedVariance(element, context)
+    return actualVariance.name
   }
 
   private fun assertInferredVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = if (element is PyTypedElement) getDeclaredOrInferredVariance(element, context) else null
-    return actualVariance?.name ?: "NULL"
+    if (element !is PyTypedElement) {
+      return "Inferred variance only available for PyTypedElements"
+    }
+    val actualVariance = getDeclaredOrInferredVariance(element, context)
+    return actualVariance?.name ?: "Unknown"
   }
 }
 
@@ -883,6 +921,19 @@ private object PyTestAssertionInliner {
 
 object PyTestAssertionParser {
 
+  /**
+   * Blanks out every assertion's text with spaces so it isn't seen as a comment and doesn't affect parsing.
+   */
+  fun maskAssertions(code: String, assertions: List<PyTestAssertion>): String {
+    val chars = code.toCharArray()
+    for (assertion in assertions) {
+      for (i in assertion.assertionOffsetStart until assertion.assertionOffsetEnd) {
+        if (chars[i] != NEWLINE) chars[i] = ' '
+      }
+    }
+    return String(chars)
+  }
+
   fun parseAssertions(code: String): List<PyTestAssertion> {
     val lines = code.split(NEWLINE)
     val lineStartOffsets = computeLineStartOffsets(lines)
@@ -904,7 +955,7 @@ object PyTestAssertionParser {
         continue
       }
 
-      val payload = collectPayload(lines, lineIndex, parsedStart.initialPayload, lineStartOffsets)
+      val payload = collectPayload(lines, lineIndex, parsedStart.initialPayload, lineStartOffsets, parsedStart.assertionColumnStart)
       result += buildAssertion(parsedStart, payload)
 
       lineIndex = payload.nextLineIndex
@@ -1069,6 +1120,7 @@ object PyTestAssertionParser {
     assertionStartLineIndex: Int,
     initialPayload: String,
     lineStartOffsets: IntArray,
+    assertionColumnStart: Int,
   ): CollectedPayload {
     val contentBuilder = StringBuilder()
     val fixmeBuilder = StringBuilder()
@@ -1099,6 +1151,7 @@ object PyTestAssertionParser {
     while (lineIndex < lines.size) {
       val line = lines[lineIndex]
       if (!isCommentLine(line)) break
+      if (line.indexOf(COMMENT_CHAR) != assertionColumnStart) break
       if (isAssertionStartLine(lines, lineIndex)) break
 
       val continuationPayload = extractCommentPayload(line)
@@ -1198,7 +1251,7 @@ object PyTestAssertionParser {
   private fun findReferencedCodeLine(lines: List<String>, assertionLineIndex: Int): Int? {
     var i = assertionLineIndex - 1
     while (i >= 0) {
-      if (!isCommentLine(lines[i])) {
+      if (!isCommentLine(lines[i]) || !isAssertionStartLine(lines, i)) {
         return i
       }
       i--
@@ -1316,6 +1369,52 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     Assertions.assertEquals(2, assertions.size)
     Assertions.assertEquals("first line\ncontinuation", assertions[0].content)
     Assertions.assertEquals("second line", assertions[1].content)
+  }
+
+  @Test
+  fun `parser stops payload collection at differently aligned comment`() {
+    val code = """
+      value = call()
+      #       ^^^^^^ WARNING first line
+      # second line
+          # Not assertion
+      # Also not assertion
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("first line\nsecond line", assertion.content)
+  }
+
+  @Test
+  fun `parser resolves stacked markers under a type comment to the type comment line`() {
+    val code = """
+      def f(x):
+          # type: (int) -> str
+      #           ^^^^^ WARNING first
+      #                    ^^^ WARNING second
+          pass
+    """.trimIndent()
+
+    val assertions = parseAssertions(code)
+    Assertions.assertEquals(2, assertions.size)
+    Assertions.assertTrue(assertions.all { it.codeLineStart == 1 })
+    Assertions.assertEquals(listOf("first", "second"), assertions.map { it.content })
+  }
+
+  @Test
+  fun `masking blanks a marker before a function type comment so it still types the function`() {
+    val code = """
+      def f(a: int) -> int:
+      #   ^ WARNING both
+          # type: (int) -> int
+          pass
+    """.trimIndent()
+
+    val masked = PyTestAssertionParser.maskAssertions(code, parseAssertions(code))
+
+    Assertions.assertEquals(code.length, masked.length) // offsets preserved
+    Assertions.assertFalse(masked.contains("WARNING")) // marker blanked
+    Assertions.assertTrue(masked.contains("# type: (int) -> int")) // type comment intact
   }
 
   @Test

@@ -300,6 +300,8 @@ jvm_library(
         "//libraries/stream:stream_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//platform/statistics/testFramework",
+        "//platform/statistics/testFramework:testFramework_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//libraries/fastutil",

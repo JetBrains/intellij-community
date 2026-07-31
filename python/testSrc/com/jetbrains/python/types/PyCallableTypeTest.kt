@@ -35,7 +35,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       var = dd if random.randint != 42 else dd
       expr = var()
       # │    ^^^^^ WARNING Member 'Eggs2' of '() -> Literal["D"] | Eggs2' is not callable
-      # └ TYPE Literal["D"]
+      # └ TYPE Literal["D"] | Unknown
       """)
 
     @Test
@@ -53,6 +53,43 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
         x(1)
     #     └ WARNING Expected type 'str', got 'Literal[1]' instead
     """)
+
+    @Test
+    @TestFor(issues = ["PY-91052"])
+    fun `calling intersection of callables`() = test("""
+      from typing import Callable
+
+      class A: ...
+      class B: ...
+
+      def f(x: Callable[[], A] & Callable[[], B]):
+          expr = x()
+      #   └ TYPE A & B
+
+      def g(x: Callable[[int], A] & Callable[[], B]):
+          expr1 = x()
+      #   └ TYPE B
+          expr2 = x(1)
+      #   └ TYPE A
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91052"])
+    fun `calling nested union and intersection of callables`() = test("""
+      from typing import Callable
+      
+      class A: ...
+      class B: ...
+      class C: ...
+      
+      def f1(x: Callable[[], A] & (Callable[[], B] | Callable[[], C])):
+          expr = x()
+      #   └ TYPE A & (B | C)
+
+      def f2(x: (Callable[[int], A] | Callable[[], B]) & Callable[[], C]):
+          expr = x()
+      #   └ TYPE C
+      """)
 
     @Test
     @TestFor(issues = ["PY-9605"])

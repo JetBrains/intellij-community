@@ -129,7 +129,7 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
   protected void adjustLineIndent(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (!Elf.getElf().isPsiInteractionAllowed()) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
       // commitDocument is not supported yet for lock-free typing
       return;
     }

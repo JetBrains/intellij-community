@@ -66,7 +66,7 @@ internal class SuspendCoroutineLacksCancellationGuaranteesInspection :
 
         if (!CoroutinesIds.suspendCancellableCoroutine.canBeResolved()) return null
 
-        val singlePassedArgument = functionCall.argumentMapping.keys.single()
+        val singlePassedArgument = functionCall.valueArgumentMapping.keys.single()
 
         val labelReferencesToUpdate = when (singlePassedArgument) {
             // case of lambda with no custom label

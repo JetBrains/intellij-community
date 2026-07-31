@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class SuggestedRefactoringAvailabilityIndicator(
   @get:ApiStatus.Internal
   val project: Project
@@ -219,6 +220,7 @@ class SuggestedRefactoringAvailabilityIndicator(
   }
 }
 
+@ApiStatus.Internal
 class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val tooltip: String) : GutterIconRenderer() {
   override fun getIcon(): Icon = AllIcons.Gutter.SuggestedRefactoringBulb
   override fun getTooltipText(): String = tooltip
@@ -250,6 +252,7 @@ class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val to
   override fun hashCode(): Int = 0
 }
 
+@ApiStatus.Internal
 class RefactoringDisabledGutterIconRenderer(@NlsContexts.Tooltip private val tooltip: String) : GutterIconRenderer() {
   override fun getIcon(): Icon = AllIcons.Gutter.SuggestedRefactoringBulbDisabled
   override fun getTooltipText(): String = tooltip
@@ -259,7 +262,8 @@ class RefactoringDisabledGutterIconRenderer(@NlsContexts.Tooltip private val too
   override fun hashCode(): Int = 0
 }
 
-internal fun SuggestedRefactoringAvailabilityIndicator.update(
+@ApiStatus.Internal
+fun SuggestedRefactoringAvailabilityIndicator.update(
   anchor: PsiElement,
   refactoringData: SuggestedRefactoringData?,
   refactoringSupport: SuggestedRefactoringSupport

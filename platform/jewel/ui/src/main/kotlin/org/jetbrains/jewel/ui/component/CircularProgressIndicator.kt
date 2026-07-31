@@ -25,6 +25,10 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.theme.circularProgressStyle
 
+/**
+ * Renders a small (16x16dp) animated circular progress indicator that spins indefinitely, indicating an ongoing
+ * operation with no known completion time.
+ */
 @Composable
 public fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
@@ -39,6 +43,10 @@ public fun CircularProgressIndicator(
     )
 }
 
+/**
+ * Renders a large (32x32dp) animated circular progress indicator that spins indefinitely, indicating an ongoing
+ * operation with no known completion time.
+ */
 @Composable
 public fun CircularProgressIndicatorBig(
     modifier: Modifier = Modifier,

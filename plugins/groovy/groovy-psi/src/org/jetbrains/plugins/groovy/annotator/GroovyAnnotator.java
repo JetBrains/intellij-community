@@ -85,6 +85,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.GrRemoveExceptionFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.GrReplacePrimitiveTypeWithWrapperFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDelimiterFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -1079,8 +1080,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitModifierList(@NotNull GrModifierList modifierList) {
     final PsiElement parent = modifierList.getParent();
-    if (parent instanceof GrMethod) {
-      checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
+    if (parent instanceof GrMethod method) {
+      checkMethodDefinitionModifiers(myHolder, method);
     }
     else if (parent instanceof GrVariableDeclaration declaration) {
       if (isFieldDeclaration(declaration)) {
@@ -1094,6 +1095,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
     else if (parent instanceof GrClassInitializer) {
       checkClassInitializerModifiers(myHolder, modifierList);
+    }
+    else if (parent instanceof GrParameter) {
+      checkDuplicateModifiers(myHolder, modifierList, parent);
     }
   }
 
@@ -1516,6 +1520,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (PsiModifier.FINAL.equals(modifierText)) continue;
       if (GrModifier.DEF.equals(modifierText)) continue;
       if (GrModifier.VAR.equals(modifierText)) continue;
+      if (GrModifier.VAL.equals(modifierText)) continue;
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("not.allowed.modifier.in.for.in", modifierText)).range(modifier).create();
     }
   }
@@ -1889,7 +1894,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     checkDuplicateModifiers(holder, modifiersList, method);
     checkOverrideAnnotation(holder, modifiersList, method);
 
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, GroovyBundle.message("method.has.incorrect.modifier.volatile"), holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", PsiModifier.VOLATILE), holder);
+    checkModifierIsNotAllowed(modifiersList, GrModifier.VAR,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", GrModifier.VAR), holder);
+    checkModifierIsNotAllowed(modifiersList, GrModifier.VAL,
+                              GroovyBundle.message("modifier.0.not.allowed.on.method", GrModifier.VAL), holder);
 
     checkForAbstractAndFinalCombination(holder, method, modifiersList);
 
@@ -2028,8 +2038,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       checkForAbstractAndFinalCombination(holder, typeDefinition, modifiersList);
     }
 
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.TRANSIENT, GroovyBundle.message("modifier.transient.not.allowed.here"), holder);
-    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, GroovyBundle.message("modifier.volatile.not.allowed.here"), holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.TRANSIENT, holder);
+    checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, holder);
 
     if (typeDefinition.isInterface()) {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("interface.cannot.have.modifier.final"), holder);
@@ -2045,12 +2055,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       @GrModifier.GrModifierConstant String name = modifier.getText();
       if (set.contains(name)) {
         String message = GroovyBundle.message("duplicate.modifier", name);
-        AnnotationBuilder builder =
-          holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
-        GrModifierFix fix = member instanceof PsiMember ? new GrModifierFix((PsiMember)member, name, false, false, GrModifierFix.MODIFIER_LIST) :
-                            member instanceof GrVariable ? new GrModifierFix((GrVariable)member, name, false, GrModifierFix.MODIFIER_LIST) :
-                            null;
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
         if (member != null) {
+          GrModifierFix fix = new GrRemoveModifierFix(name, GrModifierFix.MODIFIER_LIST);
           builder = registerLocalFix(builder, fix, list, message, ProblemHighlightType.ERROR, list.getTextRange());
         }
         builder.create();

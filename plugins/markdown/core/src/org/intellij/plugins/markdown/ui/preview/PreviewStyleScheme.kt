@@ -7,11 +7,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle.AlertType
-import org.intellij.plugins.markdown.highlighting.alertTitleColorKey
+import org.intellij.plugins.markdown.lang.psi.util.alertTitleColorKey
 import java.awt.Color
 
 class PreviewStyleScheme(
@@ -33,14 +34,18 @@ class PreviewStyleScheme(
       val contrastedForeground = scheme.defaultForeground.contrast(0.1)
 
       val panelBackground = UIUtil.getPanelBackground()
+      val backgroundColor = scheme.defaultBackground
 
       val linkActiveForeground = JBUI.CurrentTheme.Link.Foreground.ENABLED
-      val separatorColor = JBColor.namedColor("Group.separatorColor", panelBackground)
+      val separatorColor = ensureContrast(
+        background = backgroundColor,
+        color = JBColor.namedColor("Group.separatorColor", panelBackground),
+        requiredContrast = MIN_BORDER_CONTRAST,
+      )
       val infoForeground = JBColor.namedColor("Component.infoForeground", contrastedForeground)
 
       val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
       val fontSize = PreviewLAFThemeStyles.defaultFontSize
-      val backgroundColor = scheme.defaultBackground
       val scale = service<UISettings>().currentIdeScale
       return PreviewStyleScheme(
         fontSize = fontSize,
@@ -80,6 +85,20 @@ class PreviewStyleScheme(
         (coefficient * (blue - 128) + 128).toInt(),
         alpha
       )
+    }
+
+    private const val MIN_BORDER_CONTRAST = 3f
+
+    private fun ensureContrast(background: Color, color: Color, requiredContrast: Float): Color {
+      val shift = if (ColorUtil.getLuminance(color) >= ColorUtil.getLuminance(background)) ColorUtil::brighter else ColorUtil::darker
+      var tones = 0
+      var shifted = color
+      while (ColorUtil.getContrast(shifted, background) < requiredContrast) {
+        val next = shift(color, ++tones)
+        if (next == shifted) break
+        shifted = next
+      }
+      return shifted
     }
   }
 }

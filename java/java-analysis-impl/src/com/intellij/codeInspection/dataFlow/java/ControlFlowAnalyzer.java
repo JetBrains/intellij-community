@@ -33,6 +33,7 @@ import com.intellij.codeInspection.dataFlow.java.inliner.CollectionUpdateInliner
 import com.intellij.codeInspection.dataFlow.java.inliner.EnumCompareInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.IndexOfInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.LambdaInliner;
+import com.intellij.codeInspection.dataFlow.java.inliner.MapGetOrDefaultInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.MapUpdateInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.OptionalChainInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.SimpleMethodInliner;
@@ -3038,7 +3039,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private static final CallInliner[] INLINERS = {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
-    new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
+    new StreamChainInliner(), new MapUpdateInliner(), new MapGetOrDefaultInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new AllNotNullInliner(), new BoxingInliner(), new SimpleMethodInliner(), new AccessorInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new AssertInstanceOfInliner()
   };

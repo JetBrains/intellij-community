@@ -1,10 +1,6 @@
 ---
 name: notebook-for-experiment
-description: >-
-  Use when asked to create, update, or analyse a performance/profiling/benchmark
-  Jupyter notebook for experimental results. Covers tooling (uv + nb.py helper),
-  standard cell layout, reproducibility (commit + patch), test stability, machine
-  info, log loading patterns, and updating existing notebooks.
+description: Create reproducible Jupyter notebooks for performance, profiling, or benchmark experiments.
 ---
 
 # Notebook for experiment

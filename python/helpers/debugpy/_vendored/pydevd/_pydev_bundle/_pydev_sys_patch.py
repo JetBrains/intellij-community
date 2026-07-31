@@ -21,10 +21,11 @@ def patch_sys_module():
 
 def patched_reload(orig_reload):
     def pydev_debugger_reload(module):
-        orig_reload(module)
+        result = orig_reload(module)
         if module.__name__ == "sys":
             # if sys module was reloaded we should patch it again
             patch_sys_module()
+        return result
 
     return pydev_debugger_reload
 

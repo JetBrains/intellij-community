@@ -790,8 +790,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:getTarget():java.lang.String
 - hashCode():I
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+- checkoutInNewWorktree():V
 - a:fetchAndCheckoutRemoteBranch():V
 - fetchAndShowInLog():V
+- getCanCheckoutInNewWorktree():Z
 - getCanShowInLog():Z
 - a:getShowBranchesRequests():kotlinx.coroutines.flow.SharedFlow
 - a:getSourceBranch():kotlinx.coroutines.flow.StateFlow

@@ -56,6 +56,12 @@ object PluginInitializationDiagnosticUtils {
 
     val dependencyIsNotResolvedRoots = roots.asSequence().filter { resolvedPluginSet.getExclusionReason(it) is DependencyIsNotResolved }.toSet()
     roots.removeAll(dependencyIsNotResolvedRoots)
+
+    val childFreeOnDemandRoots = roots.filter {
+      resolvedPluginSet.getExclusionReason(it) is OnDemandContentModuleHasNoDependentsLeft && exclusionChildren[it].isNullOrEmpty()
+    }.toSet()
+    roots.removeAll(childFreeOnDemandRoots)
+
     val logHeader = "Plugin set resolution:\n"
     val logBuilder = StringBuilder().apply {
       append(logHeader)
@@ -75,6 +81,9 @@ object PluginInitializationDiagnosticUtils {
         }
       for (root in roots) {
         writeExclusionTree(root, 0)
+      }
+      if (childFreeOnDemandRoots.isNotEmpty()) {
+        appendLine("excluded on-demand modules (no dependents left): ${childFreeOnDemandRoots.joinToString(", ") { it.shortLogDescription }}")
       }
     }
     if (logBuilder.last() == '\n') {
@@ -147,6 +156,7 @@ object PluginInitializationDiagnosticUtils {
       is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
       is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
+      is OnDemandContentModuleHasNoDependentsLeft -> "$logDescr is on-demand and has no dependents left"
       is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in " +
                                                    "${preferredConflictingModule.shortLogDescription}: " +
                                                    "${formatPackagePrefixConflictDetails(descriptor)} conflicts with " +

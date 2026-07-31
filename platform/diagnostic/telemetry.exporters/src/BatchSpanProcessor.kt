@@ -14,6 +14,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
@@ -48,7 +49,7 @@ class BatchSpanProcessor(
   }
 
   init {
-    coroutineScope.launch {
+    coroutineScope.launch(Dispatchers.IO) {
       val batch = ArrayList<SpanData>(maxExportBatchSize)
       try {
         while (true) {

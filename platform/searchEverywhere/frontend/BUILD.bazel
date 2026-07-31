@@ -30,6 +30,7 @@ jvm_library(
     exports = ["//platform/searchEverywhere/shared:searchEverywhere"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//platform/searchEverywhere/shared:searchEverywhere",
@@ -77,6 +78,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/searchEverywhere/shared:searchEverywhere_test_lib",

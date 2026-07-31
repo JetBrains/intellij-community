@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -143,7 +144,7 @@ internal fun convertToRootUrl(path: String, virtualUrlManager: VirtualFileUrlMan
   if (localFile != null) {
     val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile)
     if (jarFile != null) {
-      return virtualUrlManager.getOrCreateFromUrl(jarFile.url)
+      return jarFile.toVirtualFileUrl(virtualUrlManager)
     }
   }
 
@@ -201,13 +202,13 @@ private fun findFileUnderContentRoot(path: String,
 }
 
 internal val ModuleEntityBuilder.mainContentRoot: ContentRootEntityBuilder?
-  get() = contentRoots.firstOrNull() {
-    VirtualFileManager.getInstance().findFileByUrl(it.url.url)?.findChild(EclipseXml.PROJECT_FILE) != null
+  get() = contentRoots.firstOrNull {
+    it.url.virtualFile?.findChild(EclipseXml.PROJECT_FILE) != null
   }
 
 internal val ModuleEntity.mainContentRoot: ContentRootEntity?
   get() = contentRoots.firstOrNull {
-    VirtualFileManager.getInstance().findFileByUrl(it.url.url)?.findChild(EclipseXml.PROJECT_FILE) != null
+    it.url.virtualFile?.findChild(EclipseXml.PROJECT_FILE) != null
   }
 
 internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
@@ -223,7 +224,7 @@ internal fun convertToEclipsePath(fileUrl: VirtualFileUrl,
                                   moduleEntity: ModuleEntity,
                                   entitySource: EclipseProjectFile,
                                   pathShortener: ModulePathShortener): String? {
-  val contentRoot = moduleEntity.mainContentRoot?.let { VirtualFileManager.getInstance().findFileByUrl(it.url.url) }
+  val contentRoot = moduleEntity.mainContentRoot?.url?.virtualFile
   var file = fileUrl.virtualFile
   val url = fileUrl.url
   if (file != null) {

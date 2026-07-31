@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
@@ -64,23 +65,13 @@ internal class ProblemLifetimeManager {
     }
   }
 
-  internal fun getDiagnosticSnapshot(): String = buildString {
-    appendLine("Problem IDs Count: ${problemIds.getSize()}")
-    appendLine("Intention IDs Count: ${intentionIds.getSize()}")
-    appendLine("Problem-to-Intentions Mappings: ${problemToIntentions.size}")
-    appendLine()
+  /** Test-only: whether a problem id currently resolves in the store. */
+  @TestOnly
+  fun hasProblemId(id: String): Boolean = problemIds.findValueById(id) != null
 
-    appendLine("Problem IDs (first 20):")
-    val problemSample = problemIds.getSample(20)
-    if (problemSample.isEmpty()) {
-      appendLine("  (empty)")
-    } else {
-      problemSample.forEach { (problem, id) ->
-        appendLine("  $id -> ${problem.text}(hash=${problem.hashCode()})")
-      }
-    }
-    appendLine()
-  }
+  /** Test-only: total number of problem ids currently in the store. */
+  @TestOnly
+  fun getProblemIdsSize(): Int = problemIds.getSize()
 
   companion object{
     fun getInstance(project: Project): ProblemLifetimeManager = project.service()

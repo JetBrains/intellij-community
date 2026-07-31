@@ -45,8 +45,7 @@ class GradleScriptingTest(private val gradleVersion: GradleVersion) {
 
     //KTIJ-34260
     @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
-    // TODO: fix KTIJ-38650 to unmute the test
-    //@Test
+    @Test
     fun processingKotlinScriptShouldNotBlockGradleSync(): Unit = runBlocking {
         val projectRoot = testRoot.resolve("project")
         projectRoot.createSettingsFile(gradleVersion) {

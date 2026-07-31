@@ -7,7 +7,7 @@ import com.intellij.openapi.options.BeanConfigurable
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
-private class KotlinCodeInsightWorkspaceSettingsProvider(project: Project) : BeanConfigurable<KotlinCodeInsightWorkspaceSettings>(
+internal class KotlinCodeInsightWorkspaceSettingsProvider(project: Project) : BeanConfigurable<KotlinCodeInsightWorkspaceSettings>(
     KotlinCodeInsightWorkspaceSettings.getInstance(project), KotlinBundle.message("code.insight.workspace.settings.title")
 ), AutoImportOptionsProvider {
 

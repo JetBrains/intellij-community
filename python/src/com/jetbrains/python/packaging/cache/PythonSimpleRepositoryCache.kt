@@ -51,7 +51,7 @@ internal class PythonSimpleRepositoryCacheService {
 
           cache.reloadCache().getOr {
             thisLogger().error("Failed to refresh repository ${repository.repositoryUrl}")
-            service.markInvalid(repository.repositoryUrl!!)
+            service.markInvalid(repository.repositoryUrl)
             return@withContext Result.Failure(PythonRepositoryIOError(it.error.message))
           }
 
@@ -89,7 +89,7 @@ internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepo
     val packages = mutableSetOf<String>()
 
     try {
-      HttpRequests.request(repository.repositoryUrl!!)
+      HttpRequests.request(repository.repositoryUrl)
         .userAgent(userAgent)
         .withBasicAuthorization(repository)
         .connect { request ->

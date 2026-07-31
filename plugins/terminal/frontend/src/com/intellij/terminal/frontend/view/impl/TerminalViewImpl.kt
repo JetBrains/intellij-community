@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -11,7 +10,6 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -21,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
@@ -37,6 +36,8 @@ import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProvide
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
+import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
+import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionInputListener
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV1
@@ -44,9 +45,7 @@ import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputMode
 import com.intellij.terminal.refreshVfsOnFocusChange
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.ListLayout
-import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CompletableDeferred
@@ -90,6 +89,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessi
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
@@ -105,7 +105,6 @@ import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.Component
@@ -116,6 +115,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.coroutines.cancellation.CancellationException
@@ -180,6 +180,8 @@ class TerminalViewImpl(
   override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
   private val inputInterceptors = ContainerUtil.createLockFreeCopyOnWriteList<TerminalInputInterceptor>()
 
+  override val workingDirectoryFlow: StateFlow<Path?>
+
   override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> =
     CompletableDeferred(coroutineScope.coroutineContext.job)
   override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> =
@@ -190,6 +192,12 @@ class TerminalViewImpl(
 
   init {
     sessionModel = TerminalSessionModelImpl()
+    workingDirectoryFlow = sessionModel.terminalState.mapStateIn(coroutineScope.childScope("workingDirectoryFlow")) {
+      val directoryString = it.currentDirectory ?: return@mapStateIn null
+      val eelDescriptor = sessionDeferred.getNow()?.eelDescriptor ?: return@mapStateIn null
+      convertNativePathToNioPath(directoryString, eelDescriptor)
+    }
+
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
     terminalInput = TerminalInput(
@@ -397,11 +405,14 @@ class TerminalViewImpl(
       )
 
       if (TerminalAiInlineCompletion.isEnabled()) {
-        configureInlineCompletion(
+        val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
+        val inlineCompletionController = TerminalInlineCompletionController(project, outputEditor, outputModel, inlineCompletionScope)
+        val inlineCompletionInputListener = TerminalInlineCompletionInputListener(inlineCompletionController)
+
+        inlineCompletionController.install()
+        inlineCompletionInputListener.install(
           terminalView = this@TerminalViewImpl,
-          outputEditor,
-          shellIntegration,
-          coroutineScope.childScope("TerminalInlineCompletion")
+          coroutineScope = coroutineScope.childScope("TerminalInlineCompletionInputListener"),
         )
       }
 
@@ -640,81 +651,6 @@ class TerminalViewImpl(
     }
   }
 
-  @OptIn(AwaitCancellationAndInvoke::class)
-  private fun configureInlineCompletion(
-    terminalView: TerminalView,
-    editor: EditorEx,
-    shellIntegration: TerminalShellIntegration,
-    coroutineScope: CoroutineScope,
-  ) {
-    InlineCompletion.install(editor, coroutineScope)
-    // Inline completion handler needs to be manually disposed
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
-      InlineCompletion.remove(editor)
-    }
-
-    val outputModel = terminalView.outputModels.regular
-    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      var commandText: String? = null
-      var cursorPosition: Int? = null
-
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) {
-          commandText = null
-          cursorPosition = null
-          return
-        }
-
-        val commandBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return
-        val curCommandText = commandBlock.getTypedCommandText(outputModel) ?: return
-
-        val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-        if (event.isTypeAhead) {
-          // Trim because of differing whitespace between terminal and type ahead
-          commandText = curCommandText
-          val newCursorOffset = outputModel.cursorOffset.toRelative(outputModel) + 1
-          editor.caretModel.moveToOffset(newCursorOffset)
-          inlineCompletionTypingSession?.ignoreDocumentChanges = true
-          inlineCompletionTypingSession?.endTypingSession(editor)
-          cursorPosition = newCursorOffset
-        }
-        else if (commandText != null && (curCommandText != commandText || cursorPosition != outputModel.cursorOffset.toRelative(outputModel))) {
-          inlineCompletionTypingSession?.ignoreDocumentChanges = false
-          inlineCompletionTypingSession?.collectTypedCharOrInvalidateSession(MockDocumentEvent(editor.document, 0), editor)
-          commandText = null
-        }
-      }
-    })
-
-    coroutineScope.launch(Dispatchers.UI) {
-      terminalView.keyEventsFlow.collect {
-        try {
-          val session = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker ?: return@collect
-          when (it.awtEvent.id) {
-            KeyEvent.KEY_PRESSED -> {
-              session.endTypingSession(editor)
-              // To invalidate inline completion in the case of inputs like backspace, CTRL + C, etc.
-              session.ignoreDocumentChanges = false
-            }
-            KeyEvent.KEY_TYPED -> {
-              editor.caretModel.moveToOffset(outputModel.cursorOffset.toRelative(outputModel))
-              session.startTypingSession(editor)
-            }
-            else -> {
-              // Shouldn't be the case.
-            }
-          }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          LOG.error("Exception when handling inline completion key event: $it", e)
-        }
-      }
-    }
-  }
-
   private fun configureCommandCompletion(
     terminalView: TerminalView,
     editor: EditorEx,
@@ -743,7 +679,7 @@ class TerminalViewImpl(
 
   override fun toString(): String {
     val commandText = startupOptionsDeferred.getNow()?.let { "${it.shellCommand}" }
-    return "TerminalViewImpl(state=${sessionState.value}, command=$commandText, cwd=${getCurrentDirectory()})"
+    return "TerminalViewImpl(state=${sessionState.value}, command=$commandText, cwd=${workingDirectoryFlow.value})"
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
@@ -794,7 +730,7 @@ class TerminalViewImpl(
 
       // Hyperlinks data
       val hyperlinksFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinksFacade else outputBufferHyperlinksFacade
-      sink[TerminalHyperlinksSessionId.DATA_KEY] = hyperlinksFacade?.sessionIdDeferred?.getNow()
+      sink[TerminalHyperlinksSessionId.DATA_KEY] = hyperlinksFacade?.sessionId
       sink[TerminalHyperlinkId.KEY] = hyperlinksFacade?.getHoveredHyperlinkId()
     }
 

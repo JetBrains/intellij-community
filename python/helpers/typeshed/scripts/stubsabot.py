@@ -38,6 +38,7 @@ from termcolor import colored
 
 from ts_utils.metadata import ObsoleteMetadata, StubMetadata, read_metadata, update_metadata
 from ts_utils.paths import PYRIGHT_CONFIG, STUBS_PATH, distribution_path
+from ts_utils.stubs import third_party_stubs
 
 TYPESHED_OWNER = "python"
 TYPESHED_API_URL = f"https://api.github.com/repos/{TYPESHED_OWNER}/typeshed"
@@ -534,7 +535,7 @@ async def analyze_github_diff(
     # https://docs.github.com/en/rest/commits/commits#compare-two-commits
     py_files: list[FileInfo] = [file for file in json_resp["files"] if Path(file["filename"]).suffix == ".py"]
     stub_path = distribution_path(distribution)
-    files_in_typeshed = set(stub_path.rglob("*.pyi"))
+    files_in_typeshed = {stub.path for stub in third_party_stubs(distribution)}
     py_files_stubbed_in_typeshed = [file for file in py_files if (stub_path / f"{file['filename']}i") in files_in_typeshed]
     return DiffAnalysis(py_files=py_files, py_files_stubbed_in_typeshed=py_files_stubbed_in_typeshed)
 
@@ -570,7 +571,7 @@ async def analyze_gitlab_diff(
         py_files.append(FileInfo(filename=filename, status=status, additions=additions, deletions=deletions))
 
     stub_path = distribution_path(distribution)
-    files_in_typeshed = set(stub_path.rglob("*.pyi"))
+    files_in_typeshed = {stub.path for stub in third_party_stubs(distribution)}
     py_files_stubbed_in_typeshed = [file for file in py_files if (stub_path / f"{file['filename']}i") in files_in_typeshed]
     return DiffAnalysis(py_files=py_files, py_files_stubbed_in_typeshed=py_files_stubbed_in_typeshed)
 

@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IslandsState;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -113,7 +111,6 @@ public final class IterationState {
   private final boolean myStickyLinesPainting;
   private final boolean myEditorRightAligned;
   private final boolean myReverseIteration;
-  private final boolean myColumnMode;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final GuardedBlocksIndex myGuardedBlocks;
@@ -156,7 +153,6 @@ public final class IterationState {
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
     myReverseIteration = iterateBackwards;
-    myColumnMode = editor.isColumnMode();
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
     myFoldingModel = !useFoldRegions ? null : getFoldingModel(editor);
@@ -173,12 +169,7 @@ public final class IterationState {
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
     myGuardedBlocks =  buildGuardedBlocks(start, end);
     myEndOffset = myStartOffset;
-    if (editor instanceof EditorImpl impl) {
-      myShouldUseNewSelection = impl.shouldUseNewSelection();
-    } else {
-      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && IslandsState.Companion.isEnabled();
-    }
-
+    myShouldUseNewSelection = editor instanceof EditorImpl impl && impl.shouldUseNewSelection();
     advance();
   }
 

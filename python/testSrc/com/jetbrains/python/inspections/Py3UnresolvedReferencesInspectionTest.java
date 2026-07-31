@@ -592,7 +592,21 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-86608
   public void testFromImportComprehensionVariableLeakUnstubbed() {
-    String testDir = getTestCaseDirectory() + "FromImportComprehensionVariableLeak";
+    doUnstubbedComprehensionVariableLeakTest("FromImportComprehensionVariableLeak");
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testFromImportWalrusComprehensionVariableLeak() {
+    doMultiFileTest();
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testFromImportWalrusComprehensionVariableLeakUnstubbed() {
+    doUnstubbedComprehensionVariableLeakTest("FromImportWalrusComprehensionVariableLeak");
+  }
+
+  private void doUnstubbedComprehensionVariableLeakTest(@NotNull String testDirName) {
+    String testDir = getTestCaseDirectory() + testDirName;
     myFixture.copyDirectoryToProject(testDir, "");
     PsiFile cPy = myFixture.configureFromTempProjectFile("c.py");
 

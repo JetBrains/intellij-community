@@ -11,6 +11,7 @@ import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.mainToolbar
 import com.intellij.driver.sdk.ui.components.common.restartDebugButton
 import com.intellij.driver.sdk.ui.components.common.toolwindows.debugToolWindow
+import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.tree
@@ -97,6 +98,18 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
           button.click()
         }
       }
+    }
+  }
+
+  fun waitUntilDebuggerPausedAfterStart(): JTreeUiComponent {
+    return ideFrame.run {
+      debugToolWindow().variableTree.shouldBe(message = "Debugger toolwindow is opened",
+                                              timeout = 3.minutes,
+                                              condition = { present() })
+        .apply {
+          waitForNodesLoaded(3.minutes)
+        }
+        .also { setFocus() }
     }
   }
 

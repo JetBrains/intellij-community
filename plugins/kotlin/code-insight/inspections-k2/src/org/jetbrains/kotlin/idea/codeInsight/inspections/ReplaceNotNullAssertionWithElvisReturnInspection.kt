@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.postfixExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 internal class ReplaceNotNullAssertionWithElvisReturnInspection :
     KotlinApplicableInspectionBase.Simple<KtPostfixExpression, ReplaceNotNullAssertionWithElvisReturnInspection.Context>() {
@@ -127,7 +128,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
                 psiFactory.createExpressionByPattern(
                     "$0 ?: return$1$2",
                     base,
-                    context.returnLabelName?.let { "@$it" } ?: "",
+                    context.returnLabelName?.quoteIfNeeded()?.let { "@$it" } ?: "",
                     returnValueText(context.returnNull)
                 )
             )

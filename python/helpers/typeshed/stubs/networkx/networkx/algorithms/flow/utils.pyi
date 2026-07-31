@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from typing import NoReturn, overload
-from typing_extensions import deprecated
+from typing import overload
+from typing_extensions import Never, deprecated
 
 from networkx.classes.graph import Graph, _Node
 from networkx.classes.multigraph import MultiGraph
@@ -29,7 +29,7 @@ class GlobalRelabelThreshold:
 
 @overload
 @deprecated("MultiGraph and MultiDiGraph not supported (yet).")
-def build_residual_network(G: MultiGraph[_Node], capacity, *, backend: str | None = None, **backend_kwargs) -> NoReturn: ...
+def build_residual_network(G: MultiGraph[_Node], capacity, *, backend: str | None = None, **backend_kwargs) -> Never: ...
 @overload
 def build_residual_network(G: Graph[_Node], capacity, *, backend: str | None = None, **backend_kwargs): ...
 

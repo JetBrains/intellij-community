@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.eel.provider.setEelMachine
@@ -42,6 +43,7 @@ internal class EelProjectPreInit : InitProjectActivity {
       LOG.warn("Failed to resolve EelMachine for $descriptor", e)
       return
     }
+    @OptIn(EelDelicateApi::class)
     project.setEelMachine(machine)
   }
 

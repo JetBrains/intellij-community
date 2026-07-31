@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -22,7 +23,11 @@ public class ShowPluginsWithSearchOptionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), PluginManagerConfigurable.class, c -> c.enableSearch(mySearchOption));
+    PluginManagerOpenSourceEnum openSource = PluginManagerOpenSourceEnum.fromActionPlace(e.getPlace());
+    ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), PluginManagerConfigurable.class, c -> {
+      c.setOpenSource(openSource);
+      c.enableSearch(mySearchOption);
+    });
   }
 
   @Override

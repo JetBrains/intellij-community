@@ -5,6 +5,8 @@ import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
@@ -23,7 +25,8 @@ internal object MakeSuperTypeOpenFixFactory {
         createQuickFixes(diagnostic)
     }
 
-    private fun KaSession.createQuickFixes(
+    context(session: KaSession)
+    private fun createQuickFixes(
         diagnostic: KaFirDiagnostic<KtElement>,
     ): List<ModCommandAction> {
         val typeRef = diagnostic.psi as? KtTypeReference

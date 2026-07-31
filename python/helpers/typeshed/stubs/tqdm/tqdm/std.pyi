@@ -2,8 +2,8 @@ import contextlib
 from _typeshed import Incomplete, SupportsRead, SupportsWrite
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from types import TracebackType
-from typing import Any, ClassVar, Generic, Literal, NoReturn, TypeVar, overload
-from typing_extensions import Self
+from typing import Any, ClassVar, Generic, Literal, TypeVar, overload
+from typing_extensions import Never, Self
 
 from ._monitor import TMonitor
 from .utils import Comparable
@@ -95,7 +95,7 @@ class tqdm(Comparable, Generic[_T]):
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm[NoReturn],
+        self: tqdm[Never],
         iterable: None = None,
         desc: str | None = None,
         total: float | None = None,

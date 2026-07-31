@@ -13,24 +13,35 @@ import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.SegmentedControlState
 
+/** Combines the [colors] and [metrics] that style a segmented control component. */
 public class SegmentedControlStyle(
+    /** The color tokens for the segmented control. */
     public val colors: SegmentedControlColors,
+    /** The size and spacing metrics for the segmented control. */
     public val metrics: SegmentedControlMetrics,
 ) {
 
+    /** Companion object for [SegmentedControlStyle]. */
     public companion object
 }
 
+/** Holds color tokens for a segmented control component in its various states. */
 @Immutable
 @GenerateDataFunctions
 public class SegmentedControlColors(
+    /** The border color in the normal state. */
     public val border: Brush,
+    /** The border color when the control is disabled. */
     public val borderDisabled: Brush,
+    /** The border color when the control is pressed. */
     public val borderPressed: Brush,
+    /** The border color when the control is hovered. */
     public val borderHovered: Brush,
+    /** The border color when the control is focused. */
     public val borderFocused: Brush,
 ) {
 
+    /** Returns a [State] holding the border brush appropriate for the given [state]. */
     @Composable
     public fun borderFor(state: SegmentedControlState): State<Brush> =
         rememberUpdatedState(
@@ -81,12 +92,19 @@ public class SegmentedControlColors(
             ")"
     }
 
+    /** Companion object for [SegmentedControlColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for a segmented control component. */
 @Stable
 @GenerateDataFunctions
-public class SegmentedControlMetrics(public val cornerSize: CornerSize, public val borderWidth: Dp) {
+public class SegmentedControlMetrics(
+    /** The corner radius of the segmented control. */
+    public val cornerSize: CornerSize,
+    /** The width of the control border. */
+    public val borderWidth: Dp,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -107,6 +125,7 @@ public class SegmentedControlMetrics(public val cornerSize: CornerSize, public v
 
     override fun toString(): String = "SegmentedControlMetrics(cornerSize=$cornerSize, borderWidth=$borderWidth)"
 
+    /** Companion object for [SegmentedControlMetrics]. */
     public companion object
 }
 
@@ -126,6 +145,7 @@ private fun <T> SegmentedControlState.chooseValueIgnoreCompat(
         else -> normal
     }
 
+/** CompositionLocal that provides the current [SegmentedControlStyle] to segmented control composables. */
 public val LocalSegmentedControlStyle: ProvidableCompositionLocal<SegmentedControlStyle> = staticCompositionLocalOf {
     error("No LocalSegmentedControlStyle provided. Have you forgotten the theme?")
 }

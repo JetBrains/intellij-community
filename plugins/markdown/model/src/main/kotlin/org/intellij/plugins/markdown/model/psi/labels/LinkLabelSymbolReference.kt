@@ -20,8 +20,8 @@ internal class LinkLabelSymbolReference(
   override fun resolveReference(): Collection<Symbol> {
     val file = element.containingFile
     val declarations = file.collectLinkLabels().asSequence().filter { it.isDeclaration }
-    val matchingDeclarations = declarations.filter { it.text == text }
-    val symbols = matchingDeclarations.mapNotNull { LinkLabelSymbol.createPointer(it)?.dereference() }
+    val matchingDeclarations = declarations.filter { it.labelText == text }
+    val symbols = matchingDeclarations.mapNotNull { LinkLabelSymbol.createPointer(it).dereference() }
     return symbols.toList()
   }
 

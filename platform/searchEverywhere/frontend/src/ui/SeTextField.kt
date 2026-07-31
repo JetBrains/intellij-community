@@ -17,7 +17,11 @@ import javax.accessibility.AccessibleContext
 import javax.swing.text.JTextComponent
 
 @Internal
-open class SeTextField(private val initialText: String?, private val resultListAccessibleContext: () -> AccessibleContext) : ExtendableSearchTextField() {
+open class SeTextField(
+  private val initialText: String?,
+  private val selectSearchText: Boolean = true,
+  private val resultListAccessibleContext: () -> AccessibleContext,
+) : ExtendableSearchTextField() {
   var isInitialSearchPattern: Boolean = true
     private set
   private var onTextChanged: (String) -> Unit = {}
@@ -63,9 +67,13 @@ open class SeTextField(private val initialText: String?, private val resultListA
       if (lastSearchText != null && initialText.isNullOrEmpty()) {
         setText(lastSearchText, selectAll = true, reason = "configure-seed")
       }
-      else {
+      else if (selectSearchText) {
         selectAll()
         SeLog.log(SeLog.CARET) { "SeTextField.configure selectAll - " + stateLogMessage() }
+      }
+      else {
+        caretPosition = text.length
+        SeLog.log(SeLog.CARET) { "SeTextField.configure caret-to-end (no select) - " + stateLogMessage() }
       }
     }
     else {

@@ -10,7 +10,7 @@ enum class DistributionChannel {
       "eap",
         -> EAP
       "eap_candidate" -> EAPCandidate
-      "", null -> Unspecified
+      "", "unspecified", null -> Unspecified
       else -> error("unsupported channel string '$s'")
     }
   }

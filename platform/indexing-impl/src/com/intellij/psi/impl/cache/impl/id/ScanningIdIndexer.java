@@ -4,6 +4,7 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.lang.cacheBuilder.VersionedWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
@@ -28,9 +29,14 @@ public abstract class ScanningIdIndexer implements IdIndexer {
 
   protected static @NotNull Processor<WordOccurrence> createProcessor(@NotNull CharSequence chars, @NotNull IdDataConsumer consumer) {
     final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
+    final int[] count = {0};
     return new Processor<>() {
       @Override
       public boolean process(final WordOccurrence t) {
+        if (count[0] % 100 == 0) {
+          ProgressManager.checkCanceled();
+        }
+        count[0]++;
         if (charsArray != null && t.getBaseText() == chars) {
           consumer.addOccurrence(charsArray, t.getStart(), t.getEnd(), convertToMask(t.getKind()));
         }

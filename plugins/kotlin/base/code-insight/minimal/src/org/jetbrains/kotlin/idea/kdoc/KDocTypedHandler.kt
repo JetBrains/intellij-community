@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
  * Uses only for square brackets inside [KDocTokens.MARKDOWN_LINK]
  * KDoc's round brackets are handled by [org.jetbrains.kotlin.idea.KotlinPairMatcher]
  */
-private class KDocTypedHandler : TypedHandlerDelegate() {
+internal class KDocTypedHandler : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
         if (overwriteClosingBracket(c, editor, file)) {
             EditorModificationUtil.moveCaretRelatively(editor, 1)

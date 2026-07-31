@@ -8,9 +8,11 @@ Compiling files:
   java/classModifiers/becameSealed/a/B.java
 End of files
 Cleaning output files:
+  C.class
   D.class
 End of files
 Compiling files:
+  java/classModifiers/becameSealed/a/C.java
   java/classModifiers/becameSealed/a/D.java
 End of files
 ------------------------------------------

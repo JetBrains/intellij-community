@@ -10,12 +10,15 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -23,7 +26,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveFunctionCall
@@ -117,7 +124,8 @@ class SmartStepTargetVisitor(
         }
     }
 
-    private fun KaSession.recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
+    context(session: KaSession)
+    private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         if (expression !is KtNameReferenceExpression && expression !is KtCallableReferenceExpression) return false
         val targetType = expression.computeTargetType()
         if (symbol is KaSyntheticJavaPropertySymbol) {
@@ -176,7 +184,8 @@ class SmartStepTargetVisitor(
             .singleOrNull()
     }
 
-    private fun KaSession.propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol): String {
+    context(session: KaSession)
+    private fun propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol): String {
         return "${symbol.name}.${calcLabel(propertyAccessSymbol)}"
     }
 
@@ -242,7 +251,8 @@ class SmartStepTargetVisitor(
         }
     }
 
-    private fun KaSession.createJavaLambdaInfo(
+    context(session: KaSession)
+    private fun createJavaLambdaInfo(
         declaration: PsiMethod,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -251,7 +261,8 @@ class SmartStepTargetVisitor(
         return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
     }
 
-    private fun KaSession.createKotlinLambdaInfo(
+    context(session: KaSession)
+    private fun createKotlinLambdaInfo(
         declaration: KtDeclaration,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -344,7 +355,7 @@ class SmartStepTargetVisitor(
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
                 val variableAccessCall = expression.resolveToCall()?.successfulCallOrNull<KaVariableAccessCall>() ?: return
-                val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KaPropertySymbol ?: return
+                val symbol = variableAccessCall.symbol as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }
         }
@@ -355,9 +366,10 @@ class SmartStepTargetVisitor(
         analyzeFunctionCall(expression, highlightExpression)
     }
 
-    private fun KaSession.analyzeFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
+    context(session: KaSession)
+    private fun analyzeFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
         val resolvedCall = resolveFunctionCall(expression) ?: return
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol
+        val symbol = resolvedCall.symbol
         if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
             return
         }
@@ -401,7 +413,8 @@ class SmartStepTargetVisitor(
         )
     }
 
-    private fun KaSession.isEnumEqualityCall(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isEnumEqualityCall(expression: KtExpression): Boolean {
         if (expression !is KtBinaryExpression) return false
         val operationToken = expression.operationToken
         if (operationToken != KtTokens.EQEQ && operationToken != KtTokens.EXCLEQ) return false
@@ -411,7 +424,8 @@ class SmartStepTargetVisitor(
         return isEnumExpression(left) && isEnumExpression(right)
     }
 
-    private fun KaSession.isEnumExpression(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isEnumExpression(expression: KtExpression): Boolean {
         val expressionType = expression.expressionType ?: return false
         return expressionType.isEnum()
     }
@@ -429,7 +443,8 @@ class SmartStepTargetVisitor(
         }
     }
 
-    private fun KaSession.getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
+    context(session: KaSession)
+    private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
         if (symbol.isInvoke()) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1

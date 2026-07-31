@@ -13,6 +13,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.kotlin.uast.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

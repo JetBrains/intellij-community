@@ -12,6 +12,10 @@ import androidx.compose.ui.semantics.getOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
+/**
+ * Internal utilities for inspecting the Compose semantics tree, such as finding the focused node or identifying text
+ * fields.
+ */
 @Internal
 @InternalJewelApi
 public object ComposeSemanticsTreeUtils {
@@ -39,6 +43,10 @@ public object ComposeSemanticsTreeUtils {
             null
         }
 
+    /**
+     * Returns `true` if this [SemanticsNode] represents an editable text field (has editable text or a set-text
+     * action).
+     */
     public fun SemanticsNode.isEditableTextField(): Boolean {
         // Check if the node has editable text or supports setting text
         val editable = config.contains(SemanticsProperties.EditableText)
@@ -46,6 +54,10 @@ public object ComposeSemanticsTreeUtils {
         return editable || hasSetTextAction
     }
 
+    /**
+     * Returns the [CustomAccessibilityAction] with the given [label] from this node's semantics, or `null` if not
+     * found.
+     */
     public fun SemanticsNode.getCustomAction(label: String): CustomAccessibilityAction? =
         config.getOrNull(SemanticsActions.CustomActions)?.firstOrNull { it.label == label }
 }

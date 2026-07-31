@@ -105,6 +105,7 @@ internal class NioReadToEelAdapter(
     }
   }
 
+  @EelDelicateApi
   override fun available(): Int = availableDelegate()
 
   override suspend fun closeForReceive() {

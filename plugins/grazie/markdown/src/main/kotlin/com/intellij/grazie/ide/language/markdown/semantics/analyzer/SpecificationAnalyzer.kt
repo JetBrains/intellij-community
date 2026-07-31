@@ -1,14 +1,10 @@
 package com.intellij.grazie.ide.language.markdown.semantics.analyzer
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
-import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.Contradiction
-import ai.grazie.rules.promptAnalysis.ContradictionAnalyzer.LlmContradiction
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
-import ai.grazie.rules.promptAnalysis.LlmAnalyzer.WithSpending
 import ai.grazie.utils.mpp.money.Credit
-import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
 import com.intellij.openapi.diagnostic.Logger
@@ -17,22 +13,30 @@ import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.updateUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
-private typealias IssuesWithSpending<T> = WithSpending<Map<String, List<LlmIssue<T>>>>
 private typealias AnalyzerCacheKey<T> = Key<Cache<LlmIssue<T>>>
 
 private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
+
+data class Costs(val credits: Double, val since: LocalDateTime = LocalDateTime.now()) {
+  operator fun plus(other: Double): Costs = Costs(credits + other, since)
+}
 
 @ApiStatus.Experimental
 internal object SpecificationAnalyzer {
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
+  private val costKey = Key.create<Costs>("cost key for analyzers")
+
+  fun getCosts(file: PsiFile): Costs? = file.viewProvider.virtualFile.getUserData(costKey)
 
   @RequiresBackgroundThread
   fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
@@ -55,9 +59,9 @@ internal object SpecificationAnalyzer {
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
           log.info("$analyzerName starts executing request with lock")
-          val analysis = analyze(analyzer, specifications, client)
+          val analysis = analyzer.analyze(specifications, client)
           val timeMs = System.currentTimeMillis() - start
-          val credits = analysis.spentCredits / Credit.CREDITS_IN_DOLLAR
+          val credits = analysis.spentCredits() / Credit.CREDITS_IN_DOLLAR
           log.info("""
             Analyzing text with $analyzerName took $timeMs ms on
             text with length ${textLength} and used $credits credits.
@@ -69,6 +73,10 @@ internal object SpecificationAnalyzer {
               analyzerKey,
               Cache(storage.text, dependencies, storage.stamp, analysis.data[storage.name].orEmpty())
             )
+            (storage.file.viewProvider.virtualFile as UserDataHolderEx).updateUserData(costKey) {
+              // Split costs equally across files
+              (it ?: Costs(0.0)) + credits / newStorages.size
+            }
           }
           analysis.data[file.viewProvider.virtualFile.path].orEmpty()
         }
@@ -81,36 +89,6 @@ internal object SpecificationAnalyzer {
       }
       throw e
     }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun <T> analyze(
-    analyzer: LlmAnalyzer<T>, specifications: Set<Specification<T>>, client: SuspendableAPIGatewayClient
-  ): IssuesWithSpending<T> {
-    val analysis = analyzer.analyze(specifications, client)
-    if (analysis.data.values.asSequence().flatMap { it }.any { it.issue is Contradiction }) {
-      return analyzeContradictions(analysis as IssuesWithSpending<Contradiction>) as IssuesWithSpending<T>
-    }
-    return analysis
-  }
-
-  private fun analyzeContradictions(analysis: IssuesWithSpending<Contradiction>): IssuesWithSpending<Contradiction> {
-    val newAnalysis = HashMap<String, MutableList<LlmIssue<Contradiction>>>()
-    analysis.data.forEach { (path, issues) ->
-      issues.forEach { issue ->
-        newAnalysis.computeIfAbsent(path) { ArrayList() }.add(issue)
-        val contradiction = Contradiction(
-          "", "", GrazieBundle.message("specification.contradiction.message"),
-          issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset,
-          issue.issue.startOffset, issue.issue.endOffset, emptyList<String>(),
-          issue.issue.contradictsPath, issue.issue.path
-        )
-        newAnalysis.computeIfAbsent(issue.issue.contradictsPath) { ArrayList() }
-          .add(LlmContradiction(contradiction, issue.issue.contradictsStartOffset, issue.issue.contradictsEndOffset))
-      }
-    }
-
-    return WithSpending(newAnalysis, analysis.spentCredits)
   }
 
   private fun <T> getSpecification(storage: Storage<T>): Specification<T> {
@@ -152,10 +130,10 @@ internal object SpecificationAnalyzer {
 
 private data class Storage<T>(val file: PsiFile, val name: String, val text: String, val stamp: Long, val cache: Cache<LlmIssue<T>>?) {
   constructor(file: PsiFile, analyzerKey: AnalyzerCacheKey<T>) :
-    this(file, file.viewProvider.virtualFile.path, file.text, file.viewProvider.modificationStamp, file.getUserData(analyzerKey))
+    this(file, file.viewProvider.virtualFile.path, file.text, file.modificationStamp, file.getUserData(analyzerKey))
 
   fun isOutdated(dependencies: Set<String>): Boolean =
-    cache == null || cache.stamp < this.stamp || cache.dependencies != dependencies
+    cache == null || cache.stamp != this.stamp || cache.dependencies != dependencies
 }
 
 private data class Cache<T>(val text: String, val dependencies: Set<String>, val stamp: Long, val data: List<T>)

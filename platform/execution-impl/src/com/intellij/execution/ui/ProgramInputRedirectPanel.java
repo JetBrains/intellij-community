@@ -27,7 +27,7 @@ public final class ProgramInputRedirectPanel extends JPanel implements PanelWith
 
   public ProgramInputRedirectPanel() {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, 2));
-    var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
+    var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor().withEnvironmentRestricted(true);
     myInputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     add(myInputFile, BorderLayout.CENTER);
     myInputFile.setEnabled(false);

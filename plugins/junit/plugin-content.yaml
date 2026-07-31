@@ -22,3 +22,6 @@
 - name: lib/junit6-rt.jar
   modules:
   - name: intellij.junit.v6.rt
+- name: lib/modules/intellij.junit.properties.jar
+  contentModules:
+  - name: intellij.junit.properties

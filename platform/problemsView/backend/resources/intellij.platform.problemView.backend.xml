@@ -21,6 +21,7 @@
     <module name="intellij.platform.problemView.collector"/>
     <module name="intellij.platform.problemView.shared"/>
     <module name="intellij.platform.problemView.ui"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -29,7 +30,8 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.problemsView.backend.ProblemsViewRpcProvider"/>
+    <platform.rpc.backend.remoteApi apiInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
+                                    implementationClass="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
     <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider"/>
     

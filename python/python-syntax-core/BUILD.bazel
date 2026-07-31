@@ -36,6 +36,7 @@ jvm_library(
         "//platform/analysis-impl",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/workspace/jps",
+        "//platform/util/jdom",
     ],
 )
 
@@ -68,6 +69,7 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/workspace/jps:jps_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.syntax.core` end

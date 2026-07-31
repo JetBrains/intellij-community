@@ -30,11 +30,8 @@ KtWasmJsInfo = provider(
     },
 )
 
-KtWasmJsBin = provider(
-    fields = {
-        "mjs": "The linked `.mjs` module of that module",
-    },
-)
+def _wasmjs_ir_output_name(ctx):
+    return ctx.attr.ir_output_name or ctx.attr.module_name
 
 def _wasmjs_kotlinc_options(kotlinc_options):
     jvm_specific_options = ["jvm_default", "jvm_target"]
@@ -45,8 +42,7 @@ def _wasmjs_kotlinc_options(kotlinc_options):
     }
     return KotlincOptions(**filtered_options)
 
-def _create_wasmjs_compilation_common_args(ctx):
-    kotlinc_opts_target = ctx.attr.kotlinc_opts
+def _create_wasmjs_common_args(ctx, kotlinc_opts_target, ir_output_name):
     kotlinc_options = _wasmjs_kotlinc_options(kotlinc_opts_target[KotlincOptions])
     kotlinc_extra_options = kotlinc_opts_target[KotlincExtraOptionsInfo]
 
@@ -58,13 +54,18 @@ def _create_wasmjs_compilation_common_args(ctx):
     args.add("-Xmulti-platform")
     args.add_all(kotlinc_options_to_flags(kotlinc_options, kotlinc_extra_options))
 
-    args.add("-ir-output-name", "%s_%s" % (ctx.attr.module_name, ctx.label.name))
+    args.add("-ir-output-name", ir_output_name)
+
+    # Emitted per-module file name in multimodule linking; without it the linker derives an escaped
+    # name from the klib uniqueName (e.g. `_fleet.build-x_`). Same flag the Kotlin Gradle plugin sets
+    # per compilation (KotlinJsIrSubTarget).
+    args.add("-Xir-per-module-output-name=%s" % ir_output_name)
 
     # TODO: add support for `-Xfriend-modules`
 
     return args
 
-def wasmjs_produce_module_actions(ctx, rule_kind):
+def wasmjs_compile_actions(ctx):
     srcs = [f.path for f in ctx.files.fragment_sources]
 
     compile_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.exports])
@@ -82,24 +83,17 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
         return [
             KtWasmJsInfo(
                 compile_klibs = compile_exported_deps_klibs,
-                link_klibs = depset([], transitive = [link_libraries]),
+                link_klibs = link_libraries,
                 klib = None,
                 source_jar = None,  # TODO: support that
-            ),
-            KtWasmJsBin(
-                mjs = None,
             ),
             KotlinInfo(
                 exported_compiler_plugins = exported_deps_exported_compiler_plugins,
             ),
-            OutputGroupInfo(
-                klib = [],
-                js = [],
-            ),
         ]
 
-    compile_args = _create_wasmjs_compilation_common_args(ctx)
-    klib_out = ctx.actions.declare_file("%s_%s.klib" % (ctx.attr.module_name, ctx.label.name))
+    compile_args = _create_wasmjs_common_args(ctx, ctx.attr.kotlinc_opts, _wasmjs_ir_output_name(ctx))
+    klib_out = ctx.actions.declare_file("%s.klib" % _wasmjs_ir_output_name(ctx))
     compile_args.add("-ir-output-dir", klib_out.dirname)
     compile_args.add("-Xir-produce-klib-file")
     all_fragments = set()
@@ -115,8 +109,7 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
     for fragment_name in all_fragments:
         compile_args.add("-Xfragments=%s" % fragment_name)
 
-    perTargetPlugins = ctx.attr.plugins if hasattr(ctx.attr, "plugins") else []
-    plugins = compiler_plugins_from(perTargetPlugins + exported_compiler_plugins_from(deps = ctx.attr.deps + ctx.attr.exports))
+    plugins = compiler_plugins_from(ctx.attr.plugins + exported_compiler_plugins_from(deps = ctx.attr.deps + ctx.attr.exports))
 
     # TODO: switch to -Xcompiler-plugin option when it's ready (currently a prototype, and K2-only) https://jetbrains.slack.com/archives/C942U8L4R/p1708709995859629
     # Note: this is technically wrong, because we resolve each compiler plugin classpath independently, but the
@@ -156,17 +149,45 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
 
     all_link_libraries = depset([klib_out], transitive = [link_libraries])
 
-    mjs_out = ctx.actions.declare_directory("%s_%s-js" % (ctx.attr.module_name, ctx.label.name))
-    link_args = _create_wasmjs_compilation_common_args(ctx)
+    return [
+        KtWasmJsInfo(
+            compile_klibs = depset([klib_out], transitive = [compile_exported_deps_klibs]),
+            link_klibs = all_link_libraries,
+            klib = klib_out,
+            source_jar = None,  # TODO: support that
+        ),
+        KotlinInfo(
+            exported_compiler_plugins = exported_deps_exported_compiler_plugins,
+        ),
+        DefaultInfo(
+            files = depset([klib_out]),
+        ),
+    ]
+
+def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
+    """Registers the KotlinLinkWasmJs action linking `module_klib` against `link_klibs`.
+
+    `link_klibs` is expected to already contain `module_klib` (as `KtWasmJsInfo.link_klibs` does).
+    Requires on ctx: kotlinc_opts, _wasm_source_maps, _wasmjs_builder, _wasmjs_builder_jvm_flags,
+    _wasmjs_builder_launcher, _tool_java_runtime.
+
+    Returns the declared linked output directory (`<ir_output_name>-js`).
+    """
+    mjs_out = ctx.actions.declare_directory("%s-js" % ir_output_name)
+    link_args = _create_wasmjs_common_args(ctx, ctx.attr.kotlinc_opts, ir_output_name)
     link_args.add("-ir-output-dir", mjs_out.path)
     link_args.add("-Xir-produce-js")
-    link_args.add("-Xinclude=%s" % klib_out.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
+    link_args.add("-Xinclude=%s" % module_klib.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
     link_args.add("-Xir-dce")
-    link_args.add_joined("-libraries", [klib.path for klib in all_link_libraries.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
+    if ctx.attr._wasm_source_maps[BuildSettingInfo].value:
+        link_args.add("-source-map")
+    link_args.add_joined("-libraries", [klib.path for klib in link_klibs.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
+
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
 
     ctx.actions.run(
         mnemonic = "KotlinLinkWasmJs",
-        inputs = depset(transitive = [all_link_libraries, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
+        inputs = depset(transitive = [link_klibs, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
         outputs = [mjs_out],
         tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
         executable = java_runtime.java_executable_exec_path,
@@ -182,27 +203,6 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
             ctx.file._wasmjs_builder.path,
             link_args,
         ],
-        progress_message = "Linking %%{label}",
+        progress_message = "Linking %{label}",
     )
-
-    return [
-        KtWasmJsInfo(
-            compile_klibs = depset([klib_out], transitive = [compile_exported_deps_klibs]),
-            link_klibs = all_link_libraries,
-            klib = klib_out,
-            source_jar = None,  # TODO: support that
-        ),
-        KtWasmJsBin(
-            mjs = mjs_out,
-        ),
-        KotlinInfo(
-            exported_compiler_plugins = exported_deps_exported_compiler_plugins,
-        ),
-        DefaultInfo(
-            files = depset([klib_out, mjs_out], transitive = []),  # run both compilation and linking when running `bazel build`
-        ),
-        OutputGroupInfo(
-            klib = depset([klib_out], transitive = []),
-            mjs = depset([mjs_out], transitive = []),
-        ),
-    ]
+    return mjs_out

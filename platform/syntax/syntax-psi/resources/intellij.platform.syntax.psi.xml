@@ -1,5 +1,11 @@
-<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverterFactory"/>

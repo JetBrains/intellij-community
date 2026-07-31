@@ -9,6 +9,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
@@ -142,15 +143,20 @@ private fun loadProductInfo(runDir: Path): ProductInfoData {
 }
 
 private fun getCommandSystemProperties(runDir: Path, command: CustomCommandLaunchData): VmProperties {
+  val macroName = when (OsFamily.currentOs) {
+    OsFamily.WINDOWS -> "%IDE_HOME%"
+    OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
+    OsFamily.LINUX -> $$"$IDE_HOME"
+  }
   val result = command.additionalJvmArguments.asSequence()
     .filter { it.startsWith("-D") }
     .map { it.removePrefix("-D") }
     .associateBy(
       { it.substringBefore('=') },
-      { it.substringAfter('=', "")
-        .replace($$"$IDE_HOME", runDir.pathString)
-        .replace($$"$APP_PACKAGE/Contents", runDir.pathString)
-        .apply { check('$' !in this) { "Unsubstituted macro in JVM argument: $it" } }
+      {
+        val result = it.substringAfter('=', "").replace(macroName, runDir.pathString)
+        check('$' !in result) { "Unsubstituted macro in JVM argument: $it" }
+        result
       })
   return VmProperties(result)
 }

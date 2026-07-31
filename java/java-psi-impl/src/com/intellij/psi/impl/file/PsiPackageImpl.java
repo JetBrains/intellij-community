@@ -10,7 +10,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
@@ -130,7 +129,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     });
   }
 
-  private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
+  private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(boolean includeLibrarySources) {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
@@ -158,7 +157,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public void handleQualifiedNameChange(final @NotNull String newQualifiedName) {
+  public void handleQualifiedNameChange(@NotNull String newQualifiedName) {
     PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
@@ -378,8 +377,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private @Nullable PsiPackage findSubPackageByName(@NotNull String name) {
-    final String qName = getQualifiedName();
-    final String subpackageQName = qName.isEmpty() ? name : qName + "." + name;
+    String qName = getQualifiedName();
+    String subpackageQName = qName.isEmpty() ? name : qName + "." + name;
     return getFacade().findPackage(subpackageQName);
   }
 
@@ -393,10 +392,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    final Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
+    Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     NameHint providedNameHint = processor.getHint(NameHint.KEY);
-    final String providedName = providedNameHint == null ? null : providedNameHint.getName(state);
+    String providedName = providedNameHint == null ? null : providedNameHint.getName(state);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (providedName != null) {
@@ -422,21 +421,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
       if (providedName != null) {
         PsiPackage aPackage = findSubPackageByName(providedName);
-        if (aPackage != null) {
-          if (!processor.execute(aPackage, state)) return false;
-        }
+        return aPackage == null || processor.execute(aPackage, state);
       }
-      else {
-        PsiPackage[] packs = getSubPackages(scope);
-        for (PsiPackage pack : packs) {
-          final String packageName = pack.getName();
-          if (packageName == null) continue;
-          if (!PsiNameHelper.getInstance(getProject()).isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
-            continue;
-          }
-          if (!processor.execute(pack, state)) {
-            return false;
-          }
+      PsiPackage[] packs = getSubPackages(scope);
+      for (PsiPackage pack : packs) {
+        String packageName = pack.getName();
+        if (packageName == null) continue;
+        if (!PsiNameHelper.getInstance(getProject()).isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          continue;
+        }
+        if (!processor.execute(pack, state)) {
+          return false;
         }
       }
     }
@@ -452,12 +447,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       String name = aClass.getName();
       if (name != null && nameCondition.value(name)) {
         try {
-          if (!processor.execute(aClass, state)) return false;
+          if (!processor.execute(aClass, state)) {
+            return false;
+          }
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (IndexNotReadyException e) {
           throw e;
         }
         catch (Exception e) {
+          if (Logger.shouldRethrow(e)) {
+            throw e;
+          }
           LOG.error(e);
         }
       }
@@ -471,7 +471,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public void navigate(final boolean requestFocus) {
+  public void navigate(boolean requestFocus) {
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
 
@@ -512,7 +512,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public boolean hasModifierProperty(final @NonNls @NotNull String name) {
+  public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return false;
   }
 }

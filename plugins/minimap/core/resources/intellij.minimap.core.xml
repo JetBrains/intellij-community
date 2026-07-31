@@ -1,0 +1,77 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.monolith"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <!-- Layer pipeline -->
+    <extensionPoint qualifiedName="com.intellij.minimapLayerFactory"
+                    interface="com.intellij.ide.minimap.layers.MinimapLayerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.minimapLayerVisibilityPolicy"
+                    interface="com.intellij.ide.minimap.layers.MinimapLayerVisibilityPolicy"
+                    dynamic="true"/>
+
+    <!-- Layout and rendering -->
+    <extensionPoint qualifiedName="com.intellij.minimapLayoutPolicy"
+                    interface="com.intellij.ide.minimap.layout.MinimapLayoutPolicy"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.minimapTokenRenderPolicy"
+                    interface="com.intellij.ide.minimap.render.MinimapTokenRenderPolicy"
+                    dynamic="true"/>
+
+    <!-- Interaction -->
+    <extensionPoint qualifiedName="com.intellij.minimapInteractionPolicy"
+                    interface="com.intellij.ide.minimap.interaction.MinimapInteractionPolicy"
+                    dynamic="true"/>
+
+    <!-- File support -->
+    <extensionPoint qualifiedName="com.intellij.minimapFileSupportPolicy"
+                    interface="com.intellij.ide.minimap.model.MinimapFileSupportPolicy"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
+    <applicationConfigurable id="com.intellij.minimap" parentId="editor"
+                             key="settings.name" bundle="messages.MinimapBundle"
+                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
+    <registryKey key="ide.minimap.available" defaultValue="true" restartRequired="true"
+                 description="Makes editor minimap available in PyCharm"/>
+
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.SelectionLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.DiagnosticsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.FoldMarkersLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.BreakpointsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.HoverLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.CaretLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.ThumbLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.EditorSeparatorLayerFactory"/>
+
+    <applicationSettings service="com.intellij.ide.minimap.settings.MinimapSettings"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
+  </extensions>
+
+  <actions resource-bundle="messages.MinimapBundle">
+    <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction" icon="AllIcons.Actions.Minimap">
+      <add-to-group group-id="EditorTabsEntryPoint"/>
+    </action>
+    <action id="EnableMinimap" class="com.intellij.ide.minimap.actions.EnableMinimapAction" icon="AllIcons.Actions.Minimap"/>
+    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
+    <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
+    <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
+    <action id="ToggleMinimapScaleMode" class="com.intellij.ide.minimap.actions.ToggleMinimapScaleModeAction"/>
+
+    <group id="MinimapActionsGroup" searchable="false">
+      <reference ref="OpenMinimapSettings"/>
+      <reference ref="MoveMinimap"/>
+      <reference ref="ToggleMinimapScaleMode"/>
+      <reference ref="DisableMinimap"/>
+    </group>
+  </actions>
+</idea-plugin>

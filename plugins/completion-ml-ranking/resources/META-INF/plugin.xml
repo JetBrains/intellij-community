@@ -20,6 +20,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.vcs.impl"/>
     <!-- endregion -->

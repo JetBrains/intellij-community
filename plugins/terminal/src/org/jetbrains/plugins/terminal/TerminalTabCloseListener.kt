@@ -70,7 +70,7 @@ abstract class TerminalTabCloseListener(
 
   protected fun runCloseCheckBlocking(shouldConfirmClosing: suspend () -> Boolean): CloseCheckResult {
     return try {
-      runWithModalProgressBlocking(myProject, "") {
+      runWithModalProgressBlocking(myProject, TerminalBundle.message("checking.running.terminal.processes.progress")) {
         if (shouldConfirmClosing()) {
           CloseCheckResult.SHOULD_ASK_CONFIRMATION
         }

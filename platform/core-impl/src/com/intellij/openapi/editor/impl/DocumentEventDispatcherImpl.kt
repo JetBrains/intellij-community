@@ -37,7 +37,7 @@ internal open class DocumentEventDispatcherImpl private constructor(
   }
 
   fun <T> withFiringTextUpdate(changeEvent: DocumentEvent, action: () -> T): T {
-    return textUpdate.withFiringTextUpdate(null, changeEvent, action)
+    return textUpdate.withFiringTextUpdate(changeEvent, null, action)
   }
 
   override fun addDocumentListener(listener: DocumentListener, parentDisposable: Disposable) {

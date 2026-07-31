@@ -198,7 +198,10 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). This functionality is obsolete.
  */
+@Deprecated
 public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent, SearchEverywherePopupInstance {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
@@ -332,7 +335,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @Override
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public void addSplitSearchListener(@NotNull SplitSearchListener listener) {
     addSearchListener(listener.toSearchListener());
   }

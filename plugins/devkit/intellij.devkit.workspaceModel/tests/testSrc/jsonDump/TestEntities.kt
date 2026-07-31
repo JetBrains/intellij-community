@@ -26,6 +26,8 @@ interface BaseTestEntity : WorkspaceEntityWithSymbolicId {
   val children: List<ChildEntity>
   val singleChild: SingleChild?
   val listOfAbstract: List<AbstractClass>
+  val stringList: List<String>
+  val stringSet: Set<String>
   override val symbolicId: TestSymbolicId
     get() = TestSymbolicId(name)
 }

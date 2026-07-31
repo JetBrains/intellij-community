@@ -1,0 +1,18 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_kotlinc_options")
+
+# Step 2: downgrade ONLY DEPRECATION. UNCHECKED_CAST is still an error under -Werror,
+# so the build must stay red -- this proves the second warning level is actually needed.
+kt_kotlinc_options(
+  name = "opts",
+  warn = "error",
+  x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.kt"], allow_empty = True),
+    kotlinc_opts = ":opts",
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

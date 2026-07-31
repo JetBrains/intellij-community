@@ -1,18 +1,120 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
+- name: lib/intellij.kotlin.base.analysis.jar
+  contentModules:
+  - name: intellij.kotlin.base.analysis
+- name: lib/intellij.kotlin.base.analysis.utils.jar
+  contentModules:
+  - name: intellij.kotlin.base.analysis.utils
+- name: lib/intellij.kotlin.base.codeInsight.jar
+  contentModules:
+  - name: intellij.kotlin.base.codeInsight
+- name: lib/intellij.kotlin.base.compilerConfiguration.jar
+  contentModules:
+  - name: intellij.kotlin.base.compilerConfiguration
+- name: lib/intellij.kotlin.base.compilerConfiguration.ui.jar
+  contentModules:
+  - name: intellij.kotlin.base.compilerConfiguration.ui
+- name: lib/intellij.kotlin.base.facet.jar
+  contentModules:
+  - name: intellij.kotlin.base.facet
+- name: lib/intellij.kotlin.base.indices.jar
+  contentModules:
+  - name: intellij.kotlin.base.indices
+- name: lib/intellij.kotlin.base.jps.jar
+  contentModules:
+  - name: intellij.kotlin.base.jps
+- name: lib/intellij.kotlin.base.kdoc.jar
+  contentModules:
+  - name: intellij.kotlin.base.kdoc
+- name: lib/intellij.kotlin.base.platforms.jar
+  contentModules:
+  - name: intellij.kotlin.base.platforms
+- name: lib/intellij.kotlin.base.plugin.jar
+  contentModules:
+  - name: intellij.kotlin.base.plugin
+- name: lib/intellij.kotlin.base.projectStructure.jar
+  contentModules:
+  - name: intellij.kotlin.base.projectStructure
+- name: lib/intellij.kotlin.base.psi.jar
+  contentModules:
+  - name: intellij.kotlin.base.psi
 - name: lib/intellij.kotlin.base.resources.jar
   contentModules:
   - name: intellij.kotlin.base.resources
+- name: lib/intellij.kotlin.base.scripting.shared.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.shared
+- name: lib/intellij.kotlin.base.serialization.jar
+  contentModules:
+  - name: intellij.kotlin.base.serialization
+- name: lib/intellij.kotlin.base.statistics.jar
+  contentModules:
+  - name: intellij.kotlin.base.statistics
+- name: lib/intellij.kotlin.base.util.jar
+  contentModules:
+  - name: intellij.kotlin.base.util
+- name: lib/intellij.kotlin.codeInsight.api.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.api
+- name: lib/intellij.kotlin.codeInsight.descriptions.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.descriptions
 - name: lib/intellij.kotlin.codeInsight.shared.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.shared
+- name: lib/intellij.kotlin.codeInsight.utils.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.utils
+- name: lib/intellij.kotlin.compilerPlugins.support.bundled.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.support.bundled
+- name: lib/intellij.kotlin.compilerPlugins.support.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.support
+- name: lib/intellij.kotlin.completion.api.jar
+  contentModules:
+  - name: intellij.kotlin.completion.api
+- name: lib/intellij.kotlin.formatter.jar
+  contentModules:
+  - name: intellij.kotlin.formatter
+- name: lib/intellij.kotlin.formatter.minimal.jar
+  contentModules:
+  - name: intellij.kotlin.formatter.minimal
+- name: lib/intellij.kotlin.ide.jar
+  contentModules:
+  - name: intellij.kotlin.ide
 - name: lib/intellij.kotlin.jvm.debugger.base.util.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.base.util
-- name: lib/intellij.kotlin.jvm.debugger.coroutines.jar
+- name: lib/intellij.kotlin.jvm.debugger.core.jar
   contentModules:
-  - name: intellij.kotlin.jvm.debugger.coroutines
+  - name: intellij.kotlin.jvm.debugger.core
+- name: lib/intellij.kotlin.jvm.debugger.eval4j.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.eval4j
+- name: lib/intellij.kotlin.native.jar
+  contentModules:
+  - name: intellij.kotlin.native
+- name: lib/intellij.kotlin.plugin.updater.jar
+  contentModules:
+  - name: intellij.kotlin.plugin.updater
+- name: lib/intellij.kotlin.preferences.jar
+  contentModules:
+  - name: intellij.kotlin.preferences
+- name: lib/intellij.kotlin.projectConfiguration.jar
+  contentModules:
+  - name: intellij.kotlin.projectConfiguration
+- name: lib/intellij.kotlin.refactorings.base.jar
+  contentModules:
+  - name: intellij.kotlin.refactorings.base
+- name: lib/intellij.kotlin.references.jar
+  contentModules:
+  - name: intellij.kotlin.references
+- name: lib/intellij.kotlin.searching.base.jar
+  contentModules:
+  - name: intellij.kotlin.searching.base
 - name: lib/javax-inject.jar
   library: javax-inject
   files:
@@ -23,28 +125,10 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
   reason: withProjectLibrary
-- name: lib/kotlin-base-jps.jar
-  modules:
-  - name: intellij.kotlin.base.jps
-- name: lib/kotlin-gradle-tooling.jar
-  projectLibraries:
-  - name: kotlin-gradle-plugin-idea
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1/kotlin-gradle-plugin-idea-1.jar
-  - name: kotlin-gradle-plugin-idea-proto
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1/kotlin-gradle-plugin-idea-proto-1.jar
-  - name: kotlin-tooling-core
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
-  modules:
-  - name: intellij.kotlin.base.projectModel
-  - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:
   - name: intellij.kotlin.base.codeInsight.minimal
   - name: intellij.kotlin.highlighting.minimal
-  - name: intellij.kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
   - name: kotlin-metadata
@@ -101,55 +185,8 @@
   modules:
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k2
-  - name: intellij.kotlin.base.util
-  - name: intellij.kotlin.base.indices
-  - name: intellij.kotlin.base.compilerConfiguration
-  - name: intellij.kotlin.base.plugin
-  - name: intellij.kotlin.base.psi
-  - name: intellij.kotlin.base.kdoc
-  - name: intellij.kotlin.base.platforms
-  - name: intellij.kotlin.base.facet
-  - name: intellij.kotlin.base.projectStructure
-  - name: intellij.kotlin.base.analysis
-  - name: intellij.kotlin.base.codeInsight
-  - name: intellij.kotlin.base.analysis.utils
-  - name: intellij.kotlin.base.compilerConfiguration.ui
-  - name: intellij.kotlin.base.statistics
-  - name: intellij.kotlin.ide
-  - name: kotlin.fir.frontend-independent
-  - name: intellij.kotlin.compilerPlugins.parcelize.common
-  - name: intellij.kotlin.compilerPlugins.parcelize
-  - name: intellij.kotlin.compilerPlugins.support
-  - name: intellij.kotlin.completion.api
-  - name: kotlin.completion.impl.shared
-  - name: intellij.kotlin.native
-  - name: intellij.kotlin.formatter
   - name: kotlin.scripting
-  - name: intellij.kotlin.spellchecker
-  - name: kotlin.j2k.shared
-  - name: intellij.kotlin.plugin.updater
-  - name: intellij.kotlin.preferences
-  - name: intellij.kotlin.references
-  - name: intellij.kotlin.projectConfiguration
-  - name: intellij.kotlin.jvm.debugger.core
-  - name: kotlin.jvm-debugger.evaluation
-  - name: intellij.kotlin.jvm.debugger.eval4j
-  - name: intellij.kotlin.uast.base
-  - name: intellij.kotlin.uast.idea.base
-  - name: intellij.kotlin.migration
-  - name: kotlin.inspections
-  - name: intellij.kotlin.codeInsight.api
-  - name: intellij.kotlin.codeInsight.utils
-  - name: intellij.kotlin.codeInsight.descriptions
-  - name: intellij.kotlin.codeInsight.overrideImplement
-  - name: kotlin.fir
-  - name: intellij.kotlin.searching.base
-  - name: intellij.kotlin.uast
-  - name: intellij.kotlin.uast.idea
-  - name: intellij.kotlin.refactorings.base
-  - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
-  - name: intellij.kotlin.base.serialization
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
@@ -162,21 +199,9 @@
   - name: intellij.debugger.jvm.advanced.kotlin
   - name: intellij.debugger.logpoints.kotlin
   - name: kotlin.plugin
+- name: lib/kotlin.fir.frontend-independent.jar
   contentModules:
-  - name: intellij.kotlin.scripting
-  - name: intellij.kotlin.gradle.tooling
-  - name: intellij.kotlin.gradle.gradle
-  - name: intellij.kotlin.gradle.codeInsight.common
-  - name: intellij.kotlin.gradle.codeInsight.groovy
-  - name: intellij.kotlin.gradle.codeInsight.toml
-  - name: kotlin.gradle.gradle-java
-  - name: intellij.kotlin.gradle.java
-  - name: kotlin.gradle.scripting.shared
-  - name: intellij.kotlin.gradle.scripting
-  - name: intellij.kotlin.base.scripting
-  - name: intellij.kotlin.base.scripting.main.kts
-  - name: intellij.kotlin.base.scripting.shared
-  - name: intellij.kotlin.base.scripting.scratch.definition
+  - name: kotlin.fir.frontend-independent
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
@@ -264,6 +289,18 @@
 - name: lib/modules/intellij.kotlin.base.externalSystem.jar
   contentModules:
   - name: intellij.kotlin.base.externalSystem
+- name: lib/modules/intellij.kotlin.base.projectModel.jar
+  contentModules:
+  - name: intellij.kotlin.base.projectModel
+- name: lib/modules/intellij.kotlin.base.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting
+- name: lib/modules/intellij.kotlin.base.scripting.main.kts.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.main.kts
+- name: lib/modules/intellij.kotlin.base.scripting.scratch.definition.jar
+  contentModules:
+  - name: intellij.kotlin.base.scripting.scratch.definition
 - name: lib/modules/intellij.kotlin.codeInsight.base.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.base
@@ -285,12 +322,18 @@
 - name: lib/modules/intellij.kotlin.codeInsight.liveTemplates.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.liveTemplates
+- name: lib/modules/intellij.kotlin.codeInsight.overrideImplement.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.overrideImplement
 - name: lib/modules/intellij.kotlin.codeInsight.postfixTemplates.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.postfixTemplates
 - name: lib/modules/intellij.kotlin.codeInsight.structuralSearch.jar
   contentModules:
   - name: intellij.kotlin.codeInsight.structuralSearch
+- name: lib/modules/intellij.kotlin.codeInsight.vcs.jar
+  contentModules:
+  - name: intellij.kotlin.codeInsight.vcs
 - name: lib/modules/intellij.kotlin.compilerPlugins.allopen.maven.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.allopen.maven
@@ -321,6 +364,9 @@
 - name: lib/modules/intellij.kotlin.compilerPlugins.noarg.maven.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.noarg.maven
+- name: lib/modules/intellij.kotlin.compilerPlugins.parcelize.jar
+  contentModules:
+  - name: intellij.kotlin.compilerPlugins.parcelize
 - name: lib/modules/intellij.kotlin.compilerPlugins.powerAssert.gradle.jar
   contentModules:
   - name: intellij.kotlin.compilerPlugins.powerAssert.gradle
@@ -369,6 +415,30 @@
 - name: lib/modules/intellij.kotlin.git.jar
   contentModules:
   - name: intellij.kotlin.git
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.common.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.common
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.groovy.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.groovy
+- name: lib/modules/intellij.kotlin.gradle.codeInsight.toml.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.codeInsight.toml
+- name: lib/modules/intellij.kotlin.gradle.gradle.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.gradle
+- name: lib/modules/intellij.kotlin.gradle.java.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.java
+- name: lib/modules/intellij.kotlin.gradle.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.scripting
+- name: lib/modules/intellij.kotlin.gradle.tooling.impl.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.tooling.impl
+- name: lib/modules/intellij.kotlin.gradle.tooling.jar
+  contentModules:
+  - name: intellij.kotlin.gradle.tooling
 - name: lib/modules/intellij.kotlin.grazie.jar
   contentModules:
   - name: intellij.kotlin.grazie
@@ -387,6 +457,9 @@
 - name: lib/modules/intellij.kotlin.j2k.jar
   contentModules:
   - name: intellij.kotlin.j2k
+- name: lib/modules/intellij.kotlin.jvm.debugger.coroutines.jar
+  contentModules:
+  - name: intellij.kotlin.jvm.debugger.coroutines
 - name: lib/modules/intellij.kotlin.jvm.debugger.evaluation.jar
   contentModules:
   - name: intellij.kotlin.jvm.debugger.evaluation
@@ -402,6 +475,9 @@
 - name: lib/modules/intellij.kotlin.maven.jar
   contentModules:
   - name: intellij.kotlin.maven
+- name: lib/modules/intellij.kotlin.migration.jar
+  contentModules:
+  - name: intellij.kotlin.migration
 - name: lib/modules/intellij.kotlin.navigation.jar
   contentModules:
   - name: intellij.kotlin.navigation
@@ -456,12 +532,60 @@
 - name: lib/modules/intellij.kotlin.runConfigurations.testng.jar
   contentModules:
   - name: intellij.kotlin.runConfigurations.testng
+- name: lib/modules/intellij.kotlin.scripting.jar
+  contentModules:
+  - name: intellij.kotlin.scripting
 - name: lib/modules/intellij.kotlin.searching.jar
   contentModules:
   - name: intellij.kotlin.searching
+- name: lib/modules/intellij.kotlin.spellchecker.jar
+  contentModules:
+  - name: intellij.kotlin.spellchecker
+- name: lib/modules/intellij.kotlin.uast.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.base
+- name: lib/modules/intellij.kotlin.uast.idea.base.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea.base
+- name: lib/modules/intellij.kotlin.uast.idea.jar
+  contentModules:
+  - name: intellij.kotlin.uast.idea
+- name: lib/modules/intellij.kotlin.uast.jar
+  contentModules:
+  - name: intellij.kotlin.uast
+- name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.gradle.plugin.idea
+    libraries:
+      kotlin-gradle-plugin-idea:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1/kotlin-gradle-plugin-idea-1.jar
+- name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.proto.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.gradle.plugin.idea.proto
+    libraries:
+      kotlin-gradle-plugin-idea-proto:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1/kotlin-gradle-plugin-idea-proto-1.jar
+- name: lib/modules/intellij.libraries.kotlin.tooling.core.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.tooling.core
+    libraries:
+      kotlin-tooling-core:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
 - name: lib/modules/kotlin.base.injection.jar
   contentModules:
   - name: kotlin.base.injection
+- name: lib/modules/kotlin.fir.jar
+  contentModules:
+  - name: kotlin.fir
+- name: lib/modules/kotlin.gradle.gradle-java.jar
+  contentModules:
+  - name: kotlin.gradle.gradle-java
+- name: lib/modules/kotlin.gradle.scripting.shared.jar
+  contentModules:
+  - name: kotlin.gradle.scripting.shared
+- name: lib/modules/kotlin.jvm-debugger.evaluation.jar
+  contentModules:
+  - name: kotlin.jvm-debugger.evaluation
 - name: lib/modules/kotlin.jvm.shared.jar
   contentModules:
   - name: kotlin.jvm.shared

@@ -49,7 +49,8 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
       }
     }
     else {
-      if (ref == null || isPrivate(ref)) {
+      if (ref == null || ref instanceof JavacRef.JavacPackageImport || isPrivate(ref)) {
+        // on-demand package imports have no owner and are not represented in the compiler reference index
         return null;
       }
       String ownerName = ref.getOwnerName();

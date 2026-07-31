@@ -4,6 +4,9 @@ package com.jetbrains.python.sdk.add.v2.conda
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.VersionFormatException
+import com.intellij.python.pytools.getToolVersion
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
@@ -13,16 +16,14 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
-import com.intellij.python.pytools.Version
-import com.intellij.python.pytools.VersionFormatException
 import com.jetbrains.python.sdk.add.v2.existingSdks
-import com.intellij.python.pytools.getToolVersion
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.flow.takeWhile
 
 @RequiresEdt
@@ -39,7 +40,8 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleO
 
   val result = createCondaCommand().getOr { return it }.createCondaSdkAlongWithNewEnv(
     newCondaEnvInfo = request,
-      existingSdks = existingSdks
+    existingSdks = existingSdks,
+    moduleOrProject.workingDirectory ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found")),
   )
     .onSuccess { sdk ->
       val module = PyProjectCreateHelpers.getModule(moduleOrProject, null)
@@ -74,12 +76,15 @@ internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleO
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   executable.validationResult.getOr { return it }
 
+  val workingDirectory = moduleOrProject.workingDirectory
+                         ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found"))
   val sdk = PyCondaCommand(
     fullCondaPathOnTarget = executable.pathHolder.toString(),
     targetConfig = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   ).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,
     existingSdks = this@selectCondaEnvironment.existingSdks,
+    workingDirectory = workingDirectory,
   ).getOr { return it }
 
   PyProjectCreateHelpers.getModule(moduleOrProject, null)?.let { sdk.setAssociationToModule(it) }

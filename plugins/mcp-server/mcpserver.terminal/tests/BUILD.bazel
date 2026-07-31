@@ -44,6 +44,8 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "//plugins/mcp-server:mcpserver",
         "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.plugin",
+        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//plugins/mcp-server/mcpserver.testFramework",
         "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests",

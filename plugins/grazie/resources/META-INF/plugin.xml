@@ -39,6 +39,7 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreSpellcheckingStrategy"/>
     <typedHandler implementation="com.intellij.grazie.ide.inspection.auto.GrazieTypedHandler"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerConfigurable"
                          id="reference.settings.ide.settings.spelling"
@@ -121,8 +122,6 @@
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
     <registryKey key="grazie.show.gpl.warning" defaultValue="false" description="Whether to show warning for GPL licensed languages"/>
-    <registryKey key="grazie.batch.language.detector" defaultValue="true" description="Whether to use batch language detector instead of regular one"/>
-    <registryKey key="grazie.correct.text.enabled" defaultValue="true" description="Whether to use new /correct-text REST API"/>
 
     <!-- Order matters for TextCheckerManager scheduling: there is async work that can suspended while LanguageToolChecker works. -->
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker" id="treeRules"/>
@@ -160,6 +159,7 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <cloudConnector implementation="com.intellij.grazie.cloud.DefaultGrazieCloudConnector" order="last"/>
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
+    <textExtractor language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommitProblemFilter"/>

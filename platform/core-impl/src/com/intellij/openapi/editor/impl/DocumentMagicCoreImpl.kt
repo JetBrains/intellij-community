@@ -5,12 +5,11 @@ import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentMagicCore
-import com.intellij.util.ui.EDT
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.concurrent.Volatile
 
@@ -56,10 +55,10 @@ internal class DocumentMagicCoreImpl private constructor(
     val snapshot = this.snapshot
     if (!snapshot.isDirty) {
       // it is a performance optimization for frequent path in hot method,
-      // in most cases snapshot is clean, no need to call "expensive" isElfViewActive
+      // in most cases snapshot is clean, no need to call "expensive" isInElfScope
       return snapshot.real
     }
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       snapshot.elf
     } else {
       snapshot.real
@@ -67,7 +66,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun live(): CharSequence {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       liveElf
     } else {
       liveReal
@@ -79,7 +78,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun dispatcher(): DocumentEventDispatcher {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       dispatcher.elf()
     } else {
       dispatcher.real()
@@ -87,7 +86,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun mutator(): DocumentMutator {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       mutatorElf
     } else {
       mutatorReal
@@ -99,7 +98,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   override fun frozen(): FrozenDocument {
-    return if (isElfViewActive()) {
+    return if (Elf.getElf().isInElfScope()) {
       getFrozenElf()
     } else {
       getFrozenReal()
@@ -154,14 +153,6 @@ internal class DocumentMagicCoreImpl private constructor(
       }
       return frozen
     }
-  }
-
-  /**
-   * This check is thread local, otherwise elf snapshot leaks to all background threads
-   */
-  private fun isElfViewActive(): Boolean {
-    return Elf.getElf().isInElfScope() ||
-           (dispatcher.isFiringElfTextChangeOutsideElfScope() && EDT.isCurrentThreadEdt())
   }
 
   private inner class ElfRealSyncImpl : ElfRealSync(mutatorElf, mutatorReal) {

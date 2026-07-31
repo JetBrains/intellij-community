@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.runAnything
 
 import com.intellij.execution.RunManager
@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -38,19 +37,7 @@ internal fun GeneralCommandLine.findExecutableInPath(): String? {
   val executable = exePath
   if ("/" in executable || "\\" in executable) return executable
   val paths = listOfNotNull(effectiveEnvironment["PATH"], System.getenv("PATH"), EnvironmentUtil.getValue("PATH"))
-  return paths
-    .asSequence()
-    .mapNotNull { path ->
-      if (SystemInfo.isWindows) {
-        PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions()
-          .mapNotNull { ext -> PathEnvironmentVariableUtil.findInPath("$executable$ext", path, null)?.path }
-          .firstOrNull()
-      }
-      else {
-        PathEnvironmentVariableUtil.findInPath(executable, path, null)?.path
-      }
-    }
-    .firstOrNull()
+  return paths.firstNotNullOfOrNull { PathEnvironmentVariableUtil.findFirst(executable, it)?.toString() }
 }
 
 internal fun createPythonConfiguration(dataContext: DataContext,

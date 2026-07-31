@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -30,6 +29,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -59,6 +61,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -201,39 +204,39 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Set<Library> excluded = new HashSet<>();
     Set<Library> withTestScope = new HashSet<>();
     ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
+    var currentSnapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     for (PsiMember aClass : allowedDependencies) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, ObjectUtils.tryCast(aClass, PsiClass.class))) continue;
       PsiFile psiFile = aClass.getContainingFile();
       if (psiFile == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
-      for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
-        if (orderEntry instanceof LibraryOrderEntry libraryEntry) {
-          final Library library = libraryEntry.getLibrary();
-          if (library == null) continue;
-          VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-          if (files.length == 0) continue;
-          final VirtualFile jar = files[0];
+      for (LibraryEntity libraryEntity : fileIndex.findContainingLibraries(virtualFile)) {
+        final Library library = LibraryBridgesKt.findLibraryBridge(libraryEntity, currentSnapshot);
+        if (library == null) continue;
+        boolean isModuleLevel = libraryEntity.getSymbolicId().getTableId() instanceof LibraryTableId.ModuleLibraryTableId;
+        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+        if (files.length == 0) continue;
+        final VirtualFile jar = files[0];
 
-          String qualifiedName = aClass instanceof PsiClass cls ? cls.getQualifiedName() : null;
-          if (qualifiedName == null) continue;
+        String qualifiedName = aClass instanceof PsiClass cls ? cls.getQualifiedName() : null;
+        if (qualifiedName == null) continue;
 
-          if (jar == null || 
-              libraryEntry.isModuleLevel() && !jars.add(jar) || 
-              librariesToAdd.putIfAbsent(library, qualifiedName) != null) {
-            continue;
+        if (jar == null ||
+            isModuleLevel && !jars.add(jar) ||
+            librariesToAdd.putIfAbsent(library, qualifiedName) != null) {
+          continue;
+        }
+        OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
+        if (entryForFile != null) {
+          boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry exportableOrderEntry &&
+                                                 exportableOrderEntry.getScope() == DependencyScope.TEST &&
+                                                 !moduleFileIndex.isInTestSourceContent(refVFile);
+          if (testScopeLibraryInProduction) {
+            withTestScope.add(library);
           }
-          OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
-          if (entryForFile != null) {
-            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry exportableOrderEntry &&
-                                                   exportableOrderEntry.getScope() == DependencyScope.TEST &&
-                                                   !moduleFileIndex.isInTestSourceContent(refVFile);
-            if (testScopeLibraryInProduction) {
-              withTestScope.add(library);
-            }
-            else {
-              excluded.add(library);
-            }
+          else {
+            excluded.add(library);
           }
         }
       }
@@ -295,6 +298,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                         @NotNull Module currentModule,
                                         @NotNull DependencyScope scope,
                                         @NotNull List<? super @NotNull LocalQuickFix> result) {
+    var currentSnapshot = WorkspaceModel.getInstance(currentModule.getProject()).getCurrentSnapshot();
     ProjectFileIndex index = ProjectRootManager.getInstance(currentModule.getProject()).getFileIndex();
     List<PsiElement> targets = Stream.of(reference.multiResolve(true))
       .map(ResolveResult::getElement)
@@ -316,8 +320,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
     Set<Library> lightLibraries = targets.stream()
       .map(e -> e instanceof LightJavaModule light ? light.getRootVirtualFile() : null)
-      .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
-      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
+      .flatMap(vf -> vf != null ? index.findContainingLibraries(vf).stream() : Stream.empty())
+      .map(e -> LibraryBridgesKt.findLibraryBridge(e, currentSnapshot))
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
     if (!lightLibraries.isEmpty()) {
@@ -329,8 +333,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
       .map(f -> f != null ? f.getVirtualFile() : null)
       .filter(vf -> vf != null && !index.isInSource(vf))
-      .flatMap(vf -> index.getOrderEntriesForFile(vf).stream())
-      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
+      .flatMap(vf -> index.findContainingLibraries(vf).stream())
+      .map(e -> LibraryBridgesKt.findLibraryBridge(e, currentSnapshot))
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
     if (!clsLibraries.isEmpty()) {

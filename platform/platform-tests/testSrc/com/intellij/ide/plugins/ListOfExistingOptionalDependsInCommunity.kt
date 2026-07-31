@@ -7,36 +7,17 @@ package com.intellij.ide.plugins
  * Instead of adding new items here, create plugin content modules with additional dependencies.
  */
 val existingOptionalDependsTagInCommunityPlugins = mapOf(
-  "com.android.tools.design" to setOf(
+  "com.android.tools.design" to setOf( // IDEA-391292
     "com.intellij.modules.androidstudio",
   ),
-  "org.jetbrains.android" to setOf(
+  "org.jetbrains.android" to setOf( // IDEA-391293
     "com.android.tools.idea.smali",
     "com.intellij.modules.androidstudio",
     "com.intellij.modules.idea",
     "intellij.webp",
   ),
-  "org.intellij.groovy" to setOf(
-    "org.intellij.intelliLang",
-    "com.intellij.modules.structuralsearch",
-    "JUnit",
-  ),
-  "Coverage" to setOf(
+  "Coverage" to setOf( // IDEA-391283
     "TestNG-J",
     "JUnit",
-  ),
-  "JUnit" to setOf(
-    "com.intellij.properties",
-  ),
-  "TestNG-J" to setOf(
-    "org.intellij.intelliLang",
-  ),
-  "com.intellij.tasks" to setOf(
-    "com.intellij.java",
-    "XPathView",
-  ),
-  "com.jetbrains.filePrediction" to setOf(
-    "com.intellij.java",
-    "Git4Idea",
   ),
 )

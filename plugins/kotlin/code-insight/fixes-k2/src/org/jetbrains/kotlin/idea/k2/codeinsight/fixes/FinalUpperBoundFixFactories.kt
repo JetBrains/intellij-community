@@ -5,7 +5,9 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.InlineTypeParameterFix
 import org.jetbrains.kotlin.idea.quickfix.prepareInlineTypeParameterContext
@@ -20,7 +22,8 @@ internal object FinalUpperBoundFixFactories {
         listOfNotNull(createQuickFix(element))
     }
 
-    private fun KaSession.createQuickFix(element: KtTypeReference): InlineTypeParameterFix? {
+    context(session: KaSession)
+    private fun createQuickFix(element: KtTypeReference): InlineTypeParameterFix? {
         val parameterListOwner = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return null
         val parameterList = parameterListOwner.typeParameterList ?: return null
         val (parameter, _, _) = prepareInlineTypeParameterContext(element, parameterList) ?: return null

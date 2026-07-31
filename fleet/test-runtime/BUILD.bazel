@@ -1,4 +1,13 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = "@rules_jvm//:default-kotlinc-opts",
+    module_name = "fleet.test.runtime",
+    visibility = ["//visibility:public"],
+    exports = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_test"],
+)
 
 ### auto-generated section `build fleet.test.runtime` start
 jvm_library(

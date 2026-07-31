@@ -9,18 +9,16 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.builtinTypes
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -88,23 +86,23 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val receiver = element.receiverExpression
         val argument = callExpression.singleArgumentExpression() ?: return null
 
-        analyze(element) {
-            val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-            if (resolvedCall.symbol.valueParameters.size != 1) return null
-            if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
-            if (!element.isReceiverExpressionWithValue()) return null
+        val resolvedCall =
+            callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        if (resolvedCall.symbol.valueParameters.size != 1) return null
+        if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
+        if (!element.isReceiverExpressionWithValue()) return null
 
-            val operationToken = getOperationToken(calleeExpression) ?: return null
-            val isFloatingPointEquals =
-                operationToken == KtTokens.EQEQ && receiver.hasDoubleOrFloatType() && argument.hasDoubleOrFloatType()
+        val operationToken = getOperationToken(calleeExpression) ?: return null
+        val isFloatingPointEquals =
+            operationToken == KtTokens.EQEQ && receiver.hasDoubleOrFloatType() && argument.hasDoubleOrFloatType()
 
-            if (!isFloatingPointEquals) {
-                if (operationToken in floatUnfriendlyTokens
-                    && (receiver.hasDoubleOrFloatType() || argument.hasDoubleOrFloatType())) return null
-            }
-
-            return Context(operationToken, isFloatingPointEquals)
+        if (!isFloatingPointEquals) {
+            if (operationToken in floatUnfriendlyTokens
+                && (receiver.hasDoubleOrFloatType() || argument.hasDoubleOrFloatType())
+            ) return null
         }
+
+        return Context(operationToken, isFloatingPointEquals)
     }
 
     override fun createQuickFix(
@@ -231,7 +229,7 @@ private fun KaCallableSymbol.isAnyEquals(): Boolean {
 
 context(_: KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return false
+    val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
 

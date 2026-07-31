@@ -29,75 +29,8 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     val MODULES: List<String> = java.util.List.of(
       "kotlin.plugin.common",
       "kotlin.plugin.k2",
-      "intellij.kotlin.base.util",
-      "intellij.kotlin.base.indices",
-      "intellij.kotlin.base.compilerConfiguration",
-      "intellij.kotlin.base.plugin",
-      "intellij.kotlin.base.psi",
-      "intellij.kotlin.base.kdoc",
-      "intellij.kotlin.base.platforms",
-      "intellij.kotlin.base.facet",
-      "intellij.kotlin.base.projectStructure",
-      "intellij.kotlin.base.scripting",
-      "intellij.kotlin.base.scripting.main.kts",
-      "intellij.kotlin.base.scripting.shared",
-      "intellij.kotlin.base.scripting.scratch.definition",
-      "intellij.kotlin.base.analysis",
-      "intellij.kotlin.base.codeInsight",
-      "intellij.kotlin.base.jps",
-      "intellij.kotlin.base.analysis.utils",
-      "intellij.kotlin.base.compilerConfiguration.ui",
-      "intellij.kotlin.base.statistics",
-      "intellij.kotlin.ide",
-      "kotlin.fir.frontend-independent",
-      "intellij.kotlin.compilerPlugins.parcelize.common",
-      "intellij.kotlin.compilerPlugins.parcelize",
-      "intellij.kotlin.compilerPlugins.support",
-      "intellij.kotlin.completion.api",
-      "kotlin.completion.impl.shared",
-      "intellij.kotlin.gradle.tooling",
-      "intellij.kotlin.gradle.gradle",
-      "intellij.kotlin.gradle.codeInsight.common",
-      "kotlin.gradle.gradle-java",
-      "intellij.kotlin.gradle.java",
-      "intellij.kotlin.gradle.scripting",
-      "kotlin.gradle.scripting.shared",
-      "intellij.kotlin.gradle.codeInsight.groovy",
-      "intellij.kotlin.gradle.codeInsight.toml",
-      "intellij.kotlin.native",
-      "intellij.kotlin.formatter",
       "kotlin.scripting",
-      "intellij.kotlin.spellchecker",
-      "kotlin.j2k.shared",
-      "intellij.kotlin.plugin.updater",
-      "intellij.kotlin.preferences",
-      "intellij.kotlin.references",
-      "intellij.kotlin.projectConfiguration",
-      "intellij.kotlin.jvm.debugger.core",
-      "kotlin.jvm-debugger.evaluation",
-      "intellij.kotlin.jvm.debugger.eval4j",
-      "intellij.kotlin.uast.base",
-      "intellij.kotlin.uast.idea.base",
-      "intellij.kotlin.i18n",
-      "intellij.kotlin.migration",
-      "kotlin.inspections",
-      "intellij.kotlin.featuresTrainer",
-      "intellij.kotlin.codeInsight.base",
-      "intellij.kotlin.scripting",
-      "intellij.kotlin.codeInsight.api",
-      "intellij.kotlin.codeInsight.utils",
-      "intellij.kotlin.codeInsight.descriptions",
-      "intellij.kotlin.codeInsight.overrideImplement",
-      "kotlin.fir",
-      "intellij.kotlin.searching.base",
-      "intellij.kotlin.highlighting",
-      "intellij.kotlin.uast",
-      "intellij.kotlin.uast.idea",
-      "intellij.kotlin.refactorings.base",
-      "intellij.kotlin.performanceExtendedPlugin",
-      "intellij.kotlin.compilerPlugins.support.bundled",
       "kotlin.jsr223",
-      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -107,8 +40,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
     private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
       "intellij.kotlin.base.codeInsight.minimal",
-      "intellij.kotlin.highlighting.minimal",
-      "intellij.kotlin.formatter.minimal"
+      "intellij.kotlin.highlighting.minimal"
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(
@@ -135,17 +67,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.kotlin-jps-common",
       "vavr",
       "javax-inject",
-    )
-
-    private val GRADLE_TOOLING_MODULES = java.util.List.of(
-      "intellij.kotlin.base.projectModel",
-      "intellij.kotlin.gradle.tooling.impl",
-    )
-
-    private val GRADLE_TOOLING_LIBRARIES = java.util.List.of(
-      "kotlin-gradle-plugin-idea",
-      "kotlin-gradle-plugin-idea-proto",
-      "kotlin-tooling-core",
     )
 
     private val COMPILER_PLUGINS = java.util.List.of(
@@ -177,14 +98,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       }
 
       basePluginsAndLibraries(spec)
-
-      val toolingJarName = "kotlin-gradle-tooling.jar"
-      for (moduleName in GRADLE_TOOLING_MODULES) {
-        spec.withModule(moduleName, toolingJarName)
-      }
-      for (library in GRADLE_TOOLING_LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(library, toolingJarName)
-      }
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withKotlincInPluginDirectory(spec = spec)

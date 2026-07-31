@@ -4,6 +4,7 @@
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.platform.ide.internal"/>
   </dependencies>
   <!-- endregion -->
 
@@ -11,6 +12,10 @@
 
   <actions>
     <action id="UiDslShowcaseAction" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction"/>
+    <group id="UiDslShowcaseInternalGroup" internal="true">
+      <reference ref="UiDslShowcaseAction"/>
+      <add-to-group group-id="Internal.UI.KotlinUiDsl"/>
+    </group>
     <action id="UISandboxAction" internal="true" class="com.intellij.devkit.uiDsl.sandbox.UISandboxAction">
       <add-to-group group-id="Internal.UI"/>
     </action>

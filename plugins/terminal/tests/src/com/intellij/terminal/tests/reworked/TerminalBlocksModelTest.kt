@@ -363,6 +363,45 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `active block reflects the new command after a full-screen app redraws over the previous block`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = createBlocksModel(outputModel)
+
+    // Block A: the finished "ls" command with a 3-line output.
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "> \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(2))
+    outputModel.update(0, "> ls\n\n\n")
+    blocksModel.startCommand(TerminalOffset.of(5), "ls")
+    // "ls" output, doc = "> ls\nfile1\nfile2\nfile3\n\n" (file1 @5, file2 @11, file3 @17)
+    outputModel.update(1, "file1\nfile2\nfile3\n\n")
+
+    // Block B: the "nano" command is typed and started right after the "ls" block (prompt @23).
+    blocksModel.startNewBlock(TerminalOffset.of(23))
+    outputModel.update(4, "> \n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(25))
+    outputModel.update(4, "> nano\n")  // doc = "> ls\nfile1\nfile2\nfile3\n> nano\n"
+    blocksModel.startCommand(TerminalOffset.of(30), "nano")
+
+    assertEquals(2, blocksModel.blocks.size)
+
+    // nano redraws its full-screen UI, overwriting only the last 2 output lines (file2 @11, file3) and the
+    // "nano" prompt line, but leaving the first output line (file1) intact.
+    // The change offset (11) lands inside the "ls" block, before the "nano" block start (23), so the "nano"
+    // block is removed and the "ls" block is extended to cover the new content.
+    outputModel.update(2, "GNU nano\n\n\n\n^X Exit\n")
+
+    // The "nano" block is gone, a single block is left.
+    assertEquals(1, blocksModel.blocks.size)
+
+    // The surviving active block now contains nano's screen, so it must report the "nano" command,
+    // not the stale "ls" command from the block that got overwritten.
+    val block = blocksModel.activeBlock as TerminalCommandBlock
+    assertEquals("nano", block.executedCommand)
+  }
+
+  @Test
   fun `initial block is left if there was some text`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = createBlocksModel(outputModel)
@@ -726,6 +765,12 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   private fun TerminalBlocksModelImpl.updateOutputStartOffset(offset: TerminalOffset) {
     updateActiveCommandBlock { block ->
       block.copy(outputStartOffset = offset)
+    }
+  }
+
+  private fun TerminalBlocksModelImpl.startCommand(offset: TerminalOffset, command: String) {
+    updateActiveCommandBlock { block ->
+      block.copy(outputStartOffset = offset, executedCommand = command)
     }
   }
 }

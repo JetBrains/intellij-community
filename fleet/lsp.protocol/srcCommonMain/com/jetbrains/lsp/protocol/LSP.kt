@@ -26,6 +26,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.annotations.Nls
 import kotlin.jvm.JvmInline
 
 /**
@@ -48,6 +49,7 @@ value class URI(val uri: String) {
         const val JRT: String = "jrt"
         const val JAR: String = "jar"
         const val ZIP: String = "zip"
+        const val UNTITLED: String = "untitled"
     }
 }
 
@@ -408,7 +410,7 @@ data class Command(
     /**
      * Title of the command, like `save`.
      */
-    val title: String,
+    val title: @Nls String,
 
     /**
      * The identifier of the actual command handler.

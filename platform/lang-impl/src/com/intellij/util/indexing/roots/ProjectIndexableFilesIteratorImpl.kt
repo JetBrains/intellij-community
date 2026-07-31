@@ -3,11 +3,11 @@ package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
 import com.intellij.util.indexing.roots.origin.ProjectFileOrDirOriginImpl
 import com.intellij.util.indexing.unwrapCacheAvoiding
@@ -33,12 +33,20 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter,
   ): Boolean {
-    val processor = fileIterator.unwrapCacheAvoiding()
-    val filter = fileFilter.andIndexable(WorkspaceFileIndexEx.getInstance(project))
-    return ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, processor, filter)
+    val processor = toContentIteratorEx(fileIterator).unwrapCacheAvoiding()
+    return WorkspaceFileIndexEx.getInstance(project).processIndexableContentUnderDirectory(fileOrDir, processor, fileFilter) {
+      !project.isDisposed
+    }
   }
 
   override fun getRootUrls(project: Project): Set<String> {
     throw UnsupportedOperationException()
   }
+}
+
+private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {
+  if (processor is ContentIteratorEx) {
+    return processor
+  }
+  return ContentIteratorEx { fileOrDir: VirtualFile -> if (processor.processFile(fileOrDir)) TreeNodeProcessingResult.CONTINUE else TreeNodeProcessingResult.STOP }
 }

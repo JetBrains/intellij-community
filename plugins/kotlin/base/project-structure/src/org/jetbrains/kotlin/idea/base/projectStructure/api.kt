@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
 
 package org.jetbrains.kotlin.idea.base.projectStructure
@@ -15,8 +16,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
@@ -161,7 +162,7 @@ fun Module.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElemen
 /**
  * Converts the [Module] to the production or test [KaSourceModule] which contains [element].
  *
- * In contrast to [KaModuleProvider.getModule] and [getKaModule], this function works for [PSI directories][com.intellij.psi.PsiDirectory]
+ * In contrast to [kaModule] and [getKaModule], this function works for [PSI directories][com.intellij.psi.PsiDirectory]
  * and should generally be more efficient when the [Module] is already known.
  */
 fun Module.toKaSourceModuleContainingElement(element: PsiElement): KaSourceModule? =
@@ -252,15 +253,15 @@ fun SdkId.toKaLibraryModule(project: Project): KaLibraryModule =
  * are performing analysis, most of the time we do so from the point of view of a particular [KaModule] or [PsiElement]. If this module
  * is already known, it should be passed as the [useSiteModule] to [getKaModule].
  *
- * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
  */
 fun PsiElement.getKaModule(project: Project, useSiteModule: KaModule?): KaModule =
-    KaModuleProvider.getModule(project, this, useSiteModule)
+    kaModule(useSiteModule)
 
 /**
  * @return [KaModule] for a given PsiElement in the context of the [useSiteModule] if it's of type [M]. Returns `null` otherwise.
  *
- * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
  */
 inline fun <reified M : KaModule> PsiElement.getKaModuleOfTypeSafe(project: Project, useSiteModule: KaModule?): M? =
     getKaModule(project, useSiteModule) as? M
@@ -269,7 +270,7 @@ inline fun <reified M : KaModule> PsiElement.getKaModuleOfTypeSafe(project: Proj
 /**
  * @return [KaModule] for a given PsiElement in the context of the [useSiteModule] if it's of type [M]. Throws an exception otherwise.
  *
- * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
  */
 inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project, useSiteModule: KaModule?): M =
     getKaModule(project, useSiteModule) as M

@@ -36,9 +36,10 @@ final class CleanPycAction extends AnAction {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         for (PsiElement element : elements) {
-          var dir = Path.of(((PsiDirectory)element).getVirtualFile().getName());
-          if (!Files.isDirectory(dir)) continue;
-          Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+          var vfsDir = ((PsiDirectory)element).getVirtualFile();
+          var nioDir = vfsDir.getFileSystem().getNioPath(vfsDir);
+          if (nioDir == null || !Files.isDirectory(nioDir)) continue;
+          Files.walkFileTree(nioDir, new SimpleFileVisitor<>() {
             @Override
             public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
               if (PyNames.PYCACHE.equals(NioFiles.getFileName(dir))) {

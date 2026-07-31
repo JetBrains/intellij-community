@@ -32,6 +32,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
     testGroup("code-insight/inspections-k2/tests", category = INSPECTIONS, testDataPath = "../../..") {
         testClass<AbstractK2LocalInspectionTest>(commonSuite = false) {
             val pattern = Patterns.forRegex("^([\\w\\-_\\.]+)\\.(kt|kts)$")
+            model("${idea}/inspectionsLocal/unusedContextParameterCall", pattern = pattern)
             model("${idea}/inspectionsLocal/unusedVariable", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/unusedEquals")
@@ -121,6 +122,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
             model("${idea}/inspectionsLocal/collections/redundantAsSequence")
             model("${idea}/inspectionsLocal/collections/simplifiableCall")
+            model("${idea}/inspectionsLocal/collections/concatenationToBuildCollection", pattern = pattern)
             model("${idea}/inspectionsLocal/canSimplifyDollarLiteral")
             model("${idea}/inspectionsLocal/canConvertToMultiDollarString")
             model("${idea}/inspectionsLocal/floatingPointLiteralPrecision")

@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.testGenerator.generator.Code
 import org.jetbrains.kotlin.testGenerator.generator.TestMethod
 import org.jetbrains.kotlin.testGenerator.generator.appendAnnotation
 import org.jetbrains.kotlin.testGenerator.generator.appendBlock
+import org.jetbrains.kotlin.testGenerator.generator.appendLine
 import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.makeJavaIdentifier
 import java.io.File
@@ -53,6 +54,16 @@ data class TestCaseMethod(
             } else {
                 append("runTest(\"$contentRootPath\");")
             }
+        }
+    }
+
+    /** JUnit 5 counterpart of [render]: a `@Test fun` that delegates to the base's `runTest` bridge. */
+    fun Code.renderKotlin() {
+        if (ignored) return
+        appendLine("@Test")
+        appendLine("@TestMetadata(\"$localPath\")")
+        appendBlock("fun $methodName()") {
+            append("runTest(\"$contentRootPath\")")
         }
     }
 }

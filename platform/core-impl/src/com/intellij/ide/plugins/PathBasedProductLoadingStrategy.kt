@@ -11,13 +11,18 @@ import kotlinx.coroutines.flow.StateFlow
 import java.nio.file.Path
 
 internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
-  // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
-  override val currentModeId: String
-    get() = when {
+  private val productModeId by lazy {
+    val explicitValue = System.getProperty("intellij.platform.product.mode")
+    explicitValue ?: when {
       AppMode.isRemoteDevHost() -> "backend"
-      PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process 
+      PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process
       else -> "monolith"
     }
+  }
+
+  // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
+  override val currentModeId: String
+    get() = productModeId
 
   // this strategy doesn't support advancing between modes, so the flow always reports the current mode id
   override val currentModeIdFlow: StateFlow<String> = MutableStateFlow(currentModeId)

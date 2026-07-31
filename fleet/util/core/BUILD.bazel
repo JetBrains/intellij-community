@@ -1,5 +1,33 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.util.core",
+    plugins = [
+        "@community//fleet/compiler-plugins/expects:expects-plugin",
+        "@lib//:kotlin-serialization-plugin",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/multiplatform.shims:wasmjs_module_lib",
+        "@community//fleet/util/logging/api:wasmjs_module_lib",
+        "@community//fleet/util/multiplatform:wasmjs_module_lib",
+        "@community//fleet/util/serialization:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
+    ],
+    deps = [
+        "@community//fleet/reporting/api:wasmjs_module_lib",
+        "@community//fleet/reporting/shared:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlin_wrappers_kotlin_browser",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
 
 ### auto-generated section `build fleet.util.core` start
 create_kotlinc_options(
@@ -8,6 +36,7 @@ create_kotlinc_options(
     x_consistent_data_class_copy_visibility = True,
     x_context_parameters = True,
     x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
 )
 
 jvm_provided_library(

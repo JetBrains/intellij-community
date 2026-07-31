@@ -110,6 +110,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testQualifierK2() = doTest()
     fun testRangeAnnotation() = doTest()
     fun testReifiedGenericK2() = doTest()
+    fun testReifiedGenericContractK2() = doTest()
     fun testReturnContractK2() = doTest()
     fun testSingleton() = doTest()
     fun testSmartCastConflictK2() = doTest()

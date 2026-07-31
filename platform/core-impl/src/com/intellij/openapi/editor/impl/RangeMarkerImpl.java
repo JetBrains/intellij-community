@@ -80,6 +80,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     document.registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
+  @ApiStatus.Internal
   protected void unregisterInTree() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (!isValid(node)) {
@@ -157,8 +158,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public final @NotNull DocumentEx getDocument() {
     Object file = myDocumentOrFile;
-    DocumentEx document =
-      file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
+    DocumentEx document = file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file)
+                                                      : (DocumentEx)file;
     if (document == null) {
       LOG.error("document is null; isValid=" + isValid()+"; file="+file);
     }

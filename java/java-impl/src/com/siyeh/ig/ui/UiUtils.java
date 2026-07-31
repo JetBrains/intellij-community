@@ -74,12 +74,6 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemovePanel(final ListTable table, final @NlsContexts.Label String panelLabel, boolean removeHeader) {
-    if (removeHeader) table.setTableHeader(null);
-    final JPanel panel = createAddRemovePanel(table);
-    return UI.PanelFactory.panel(panel).withLabel(panelLabel).moveLabelOnTop().resizeY(true).createPanel();
-  }
-
   public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final @NlsContexts.DialogTitle String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
@@ -130,16 +124,6 @@ public final class UiUtils {
     panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
     panel.setPreferredSize(InspectionOptionsPanel.getMinimumListSize());
     return panel;
-  }
-
-  public static JPanel createAddRemoveTreeClassChooserPanel(final @NlsContexts.DialogTitle String chooserTitle,
-                                                            final @NlsContexts.Label String treeLabel,
-                                                            final ListTable table,
-                                                            boolean removeHeader,
-                                                            @NonNls String... ancestorClasses) {
-    if (removeHeader) table.setTableHeader(null);
-    final JPanel panel = createAddRemoveTreeClassChooserPanel(table, chooserTitle, ancestorClasses);
-    return UI.PanelFactory.panel(panel).withLabel(treeLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
   private static void editTableCell(final ListTable table, final int row, final int column) {

@@ -82,6 +82,7 @@ jvm_library(
     ),
     module_name = "intellij.python.mcp.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/mcp-server/mcpserver.plugin"],
 )
 
 jvm_library(
@@ -100,7 +101,11 @@ jvm_library(
         "//python/mcp:mcp_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":mcp-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":mcp-tests",
+        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

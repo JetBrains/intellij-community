@@ -1,0 +1,17 @@
+// WITH_STDLIB
+// KTIJ-38076
+class Holder(val value: String)
+
+fun test(h: Holder) {
+    when (h.value) {
+        "a" -> {
+            println("a")
+        }
+        "b" -> {
+            println("b")
+        }
+        else -> {
+            println("c")
+        }
+    }
+}

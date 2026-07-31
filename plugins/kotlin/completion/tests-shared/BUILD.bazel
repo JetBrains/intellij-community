@@ -21,7 +21,6 @@ jvm_library(
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/completion/api",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
         "//platform/analysis-impl",
         "//platform/service-container",
     ],
@@ -86,8 +85,6 @@ jvm_library(
         "//plugins/kotlin/formatter:formatter_test_lib",
         "//plugins/kotlin/completion/api",
         "//plugins/kotlin/completion/api:api_test_lib",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/test-framework",
@@ -104,6 +101,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl",
+        "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.completion.tests.shared` end

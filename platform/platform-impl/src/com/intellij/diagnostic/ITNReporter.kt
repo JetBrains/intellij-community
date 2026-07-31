@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -23,6 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,6 +35,87 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, reporter API does not support any optional args
 internal val SHOW_NEW_BUILD_DIALOG = AtomicBoolean(true) // ensures the "New Build Available" dialog is shown at most once per user action
+
+private val LOG = Logger.getInstance(ITNReporter::class.java)
+
+@Service
+internal class ITNReporterSubmitService(val coroutineScope: CoroutineScope) {
+  fun submit(
+    postUrl: URI?,
+    project: Project?,
+    errorBean: ErrorBean,
+    parentComponent: Component,
+    callback: (SubmittedReportInfo) -> Unit,
+  ): Boolean {
+    coroutineScope.launch(DiagnosticDispatchers.Default) {
+      try {
+        val reportId = if (project != null) {
+          withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
+            ITNProxy.sendError(errorBean, postUrl)
+          }
+        }
+        else {
+          ITNProxy.sendError(errorBean, postUrl)
+        }
+        onSuccess(project, reportId, callback)
+      }
+      catch (e: Exception) {
+        onError(postUrl, project, e, errorBean, parentComponent, callback)
+      }
+    }
+    return true
+  }
+
+  private fun onSuccess(project: Project?, reportId: Long, callback: (SubmittedReportInfo) -> Unit) {
+    val reportUrl = ITNProxy.getBrowseUrl(reportId)
+    callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
+
+    if (!NOTIFY_SUCCESS_EACH_REPORT.get()) return
+
+    val content = DiagnosticBundle.message("error.report.gratitude")
+    val title = DiagnosticBundle.message("error.report.submitted")
+    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
+    if (reportUrl != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
+    }
+    notification.notify(project)
+  }
+
+  private suspend fun onError(
+    postUrl: URI?,
+    project: Project?,
+    e: Exception,
+    errorBean: ErrorBean,
+    parentComponent: Component,
+    callback: (SubmittedReportInfo) -> Unit
+  ) {
+    LOG.info("reporting failed: ${e}")
+    LOG.debug(e)
+    withContext(Dispatchers.EDT) {
+      if (e is UpdateAvailableException) {
+        if (SHOW_NEW_BUILD_DIALOG.compareAndSet(true, false)) {
+          val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
+          val title = DiagnosticBundle.message("error.report.new.build.title")
+          val icon = Messages.getWarningIcon()
+          if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
+          else Messages.showMessageDialog(project, message, title, icon)
+        }
+        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+      }
+      else if (e is CancellationException) {
+        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+      }
+      else {
+        val message = DiagnosticBundle.message("error.report.failed.message", e.message ?: e.javaClass.name)
+        val title = DiagnosticBundle.message("error.report.failed.title")
+        val result = MessageDialogBuilder.yesNo(title, message).ask(project)
+        if (!result || !submit(postUrl, project, errorBean, parentComponent, callback)) {
+          callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+        }
+      }
+    }
+  }
+}
 
 /**
  * This is an internal implementation of [ErrorReportSubmitter] which is used to report exceptions in IntelliJ platform
@@ -91,75 +174,6 @@ open class ITNReporter internal constructor(private val postUrl: URI?) : ErrorRe
     parentComponent: Component,
     callback: (SubmittedReportInfo) -> Unit,
   ): Boolean {
-    service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-      try {
-        val reportId = if (project != null) {
-          withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
-            ITNProxy.sendError(errorBean, postUrl)
-          }
-        }
-        else {
-          ITNProxy.sendError(errorBean, postUrl)
-        }
-        onSuccess(project, reportId, callback)
-      }
-      catch (e: Exception) {
-        onError(project, e, errorBean, parentComponent, callback)
-      }
-    }
-    return true
-  }
-
-  private fun onSuccess(project: Project?, reportId: Long, callback: (SubmittedReportInfo) -> Unit) {
-    val reportUrl = ITNProxy.getBrowseUrl(reportId)
-    callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
-
-    if (!NOTIFY_SUCCESS_EACH_REPORT.get()) return
-
-    val content = DiagnosticBundle.message("error.report.gratitude")
-    val title = DiagnosticBundle.message("error.report.submitted")
-    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
-    if (reportUrl != null) {
-      notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
-    }
-    notification.notify(project)
-  }
-
-  private suspend fun onError(
-    project: Project?,
-    e: Exception,
-    errorBean: ErrorBean,
-    parentComponent: Component,
-    callback: (SubmittedReportInfo) -> Unit
-  ) {
-    LOG.info("reporting failed: ${e}")
-    LOG.debug(e)
-    withContext(Dispatchers.EDT) {
-      if (e is UpdateAvailableException) {
-        if (SHOW_NEW_BUILD_DIALOG.compareAndSet(true, false)) {
-          val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
-          val title = DiagnosticBundle.message("error.report.new.build.title")
-          val icon = Messages.getWarningIcon()
-          if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-          else Messages.showMessageDialog(project, message, title, icon)
-        }
-        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
-      }
-      else if (e is CancellationException) {
-        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
-      }
-      else {
-        val message = DiagnosticBundle.message("error.report.failed.message", e.message ?: e.javaClass.name)
-        val title = DiagnosticBundle.message("error.report.failed.title")
-        val result = MessageDialogBuilder.yesNo(title, message).ask(project)
-        if (!result || !submit(project, errorBean, parentComponent, callback)) {
-          callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
-        }
-      }
-    }
-  }
-
-  private companion object {
-    private val LOG = Logger.getInstance(ITNReporter::class.java)
+    return service<ITNReporterSubmitService>().submit(postUrl, project, errorBean, parentComponent, callback)
   }
 }

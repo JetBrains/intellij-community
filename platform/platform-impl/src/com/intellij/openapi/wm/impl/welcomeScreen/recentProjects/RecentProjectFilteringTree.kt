@@ -126,9 +126,7 @@ class RecentProjectFilteringTree(
 
     treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItems(treeComponent) }
 
-    val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group)
-    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid, popupMenu)
+    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid)
     treeComponent.addMouseListener(mouseListener)
     treeComponent.addMouseMotionListener(mouseListener)
     treeComponent.addTreeWillExpandListener(ToggleStateListener())
@@ -275,11 +273,11 @@ class RecentProjectFilteringTree(
     private val tree: Tree,
     private val projectActionButtonViewModel: ProjectActionButtonViewModel,
     private val isProjectPathValid: (String) -> Boolean,
-    private val popupMenu: ActionPopupMenu,
   ) : PopupHandler() {
+    private var popupMenu: ActionPopupMenu? = null
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
-      if (popupMenu.component.isVisible || mouseEvent.isMultipleSelectionInProgress) return
+      if (actionIsInProgress(mouseEvent)) return
 
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
@@ -297,16 +295,19 @@ class RecentProjectFilteringTree(
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
     }
 
+    private fun actionIsInProgress(mouseEvent: MouseEvent): Boolean {
+      return popupMenu?.component?.isVisible == true || mouseEvent.isMultipleSelectionInProgress
+    }
+
     override fun mouseExited(e: MouseEvent?) {
       val mouseEvent = e ?: return
-      if (popupMenu.component.isVisible || mouseEvent.isMultipleSelectionInProgress) return
+      if (actionIsInProgress(mouseEvent)) return
 
       tree.clearSelection()
     }
 
     override fun mouseReleased(mouseEvent: MouseEvent) {
       super.mouseReleased(mouseEvent)
-
       if (mouseEvent.isConsumed || mouseEvent.isMultipleSelectionInProgress) {
         return
       }
@@ -361,6 +362,7 @@ class RecentProjectFilteringTree(
       sourceItem: RecentProjectTreeItem,
       selectedItems: List<RecentProjectTreeItem> = emptyList(),
     ) {
+      val popupMenu = getPopupMenu()
       popupMenu.setDataContext {
         SimpleDataContext.builder()
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, selectedItems)
@@ -369,6 +371,15 @@ class RecentProjectFilteringTree(
           .build()
       }
       popupMenu.component.show(component, x, y)
+    }
+
+    private fun getPopupMenu(): ActionPopupMenu {
+      return popupMenu ?: ActionManager.getInstance().let { actionManager ->
+        val group = actionManager.getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
+        actionManager.createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).also {
+          popupMenu = it
+        }
+      }
     }
 
     private fun intersectWithActionIcon(point: Point): Boolean {

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
+import com.intellij.openapi.wm.impl.getStripeToolbarButtonIconSize
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
@@ -90,7 +91,7 @@ private fun createPresentation(): Presentation {
 private fun scaleIcon(): Icon {
   return loadIconCustomVersionOrScale(
     icon = AllIcons.Actions.MoreHorizontal as ScalableIcon,
-    size = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+    size = getStripeToolbarButtonIconSize()
   )
 }
 

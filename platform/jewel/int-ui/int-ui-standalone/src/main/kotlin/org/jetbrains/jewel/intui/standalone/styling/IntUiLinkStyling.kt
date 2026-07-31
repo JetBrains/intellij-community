@@ -15,6 +15,7 @@ import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+/** Creates an Int UI light [LinkStyle] with the provided parameters. */
 public fun LinkStyle.Companion.light(
     colors: LinkColors = LinkColors.light(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
@@ -22,6 +23,7 @@ public fun LinkStyle.Companion.light(
     underlineBehavior: LinkUnderlineBehavior = LinkUnderlineBehavior.ShowOnHover,
 ): LinkStyle = LinkStyle(colors, metrics, icons, underlineBehavior)
 
+/** Creates an Int UI dark [LinkStyle] with the provided parameters. */
 public fun LinkStyle.Companion.dark(
     colors: LinkColors = LinkColors.dark(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
@@ -29,6 +31,7 @@ public fun LinkStyle.Companion.dark(
     underlineBehavior: LinkUnderlineBehavior = LinkUnderlineBehavior.ShowOnHover,
 ): LinkStyle = LinkStyle(colors, metrics, icons, underlineBehavior)
 
+/** Creates an Int UI light [LinkColors] with the provided parameters. */
 public fun LinkColors.Companion.light(
     content: Color = IntUiLightTheme.colors.blue(2),
     contentDisabled: Color = IntUiLightTheme.colors.gray(8),
@@ -46,6 +49,7 @@ public fun LinkColors.Companion.light(
         contentVisited = contentVisited,
     )
 
+/** Creates an Int UI dark [LinkColors] with the provided parameters. */
 public fun LinkColors.Companion.dark(
     content: Color = IntUiDarkTheme.colors.blue(9),
     contentDisabled: Color = IntUiDarkTheme.colors.gray(7),
@@ -63,12 +67,14 @@ public fun LinkColors.Companion.dark(
         contentVisited = contentVisited,
     )
 
+/** Creates an Int UI default [LinkMetrics] with the provided parameters. */
 public fun LinkMetrics.Companion.defaults(
     focusHaloCornerSize: CornerSize = CornerSize(2.dp),
     textIconGap: Dp = 0.dp,
     iconSize: DpSize = DpSize(16.dp, 16.dp),
 ): LinkMetrics = LinkMetrics(focusHaloCornerSize, textIconGap, iconSize)
 
+/** Creates an Int UI default [LinkIcons] with the provided parameters. */
 public fun LinkIcons.Companion.defaults(
     dropdownChevron: IconKey = AllIconsKeys.General.ChevronDown,
     externalLink: IconKey = AllIconsKeys.Ide.External_link_arrow,

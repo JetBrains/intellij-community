@@ -456,10 +456,10 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
-    int size = things.size();
     boolean isQueueBounded = things.contains(tombStone);
+    int remainingSize = things.size() + failedToProcess.size() - (isQueueBounded ? 1 : 0);
     // start up (CPU cores) parallel tasks but no more than (queue size)
-    int n = Math.max(1, Math.min(isQueueBounded ? size-1 : Integer.MAX_VALUE, JobSchedulerImpl.getJobPoolParallelism() - 1));
+    int n = Math.max(1, Math.min(isQueueBounded ? remainingSize : Integer.MAX_VALUE, JobSchedulerImpl.getJobPoolParallelism() - 1));
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     List<T> firstElements = new ArrayList<>(n);
     things.drainTo(firstElements, n);

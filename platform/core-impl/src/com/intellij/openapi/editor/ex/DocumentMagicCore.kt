@@ -7,8 +7,9 @@ import org.jetbrains.annotations.ApiStatus
  * Context-dependent core used by a magic document.
  *
  * Document roles:
- * - real document is the old lock-guarded document model. It remains authoritative
- *   and may be changed only on EDT under the global RW lock.
+ * - real document is the old lock-guarded document model. It remains authoritative;
+ *   its text may be changed only on EDT under the global RW lock, while metadata
+ *   and bulk-mode updates are also allowed off EDT.
  * - elf document is the UI view used by typing code inside an elf scope.
  *   Changes made there are synchronized back to the real document later.
  * - magic document is context-dependent: inside an elf scope it behaves like the

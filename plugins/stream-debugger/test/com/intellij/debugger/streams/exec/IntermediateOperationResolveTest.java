@@ -19,6 +19,18 @@ public class IntermediateOperationResolveTest extends TraceExecutionTestCase {
     doTest(false);
   }
 
+  public void testMapMulti() {
+    doTest(false);
+  }
+
+  public void testMapMultiFilter() {
+    doTest(false);
+  }
+
+  public void testMapMultiEmpty() {
+    doTest(false);
+  }
+
   public void testDistinctSame() {
     doTest(false);
   }

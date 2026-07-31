@@ -16,6 +16,10 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
+  override var enabled: Boolean
+    get() = service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().isDefaultRepoEnabled(name)
+    set(value) { service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+
   override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<CondaPackageCache>().search(needle, pageSize)
 

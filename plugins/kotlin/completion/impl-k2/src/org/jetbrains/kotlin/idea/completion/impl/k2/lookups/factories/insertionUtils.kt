@@ -106,7 +106,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
         defaultReferenceShortening
     }
 
-    shortenCommand.invokeShortening()
+    shortenCommand.invokeShortening(results = null)
 
     commitDocument()
     doPostponedOperationsAndUnblockDocument()

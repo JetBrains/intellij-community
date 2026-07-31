@@ -18,7 +18,6 @@ import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyFrameListener
 import org.apache.thrift.protocol.TBinaryProtocol
 import org.apache.thrift.transport.TTransport
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
@@ -26,7 +25,6 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-@ApiStatus.Internal
 internal class PydevConsoleCommunicationServer(project: Project,
                                       host: String,
                                       port: Int) : PydevConsoleCommunication(project) {

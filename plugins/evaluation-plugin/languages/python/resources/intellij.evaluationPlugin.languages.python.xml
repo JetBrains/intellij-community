@@ -1,10 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.cce">
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonCompletionEvaluationVisitor"/>

@@ -681,6 +681,10 @@ private fun CheckBoxImage(checkboxPainter: Painter, modifier: Modifier = Modifie
     Box(modifier.paint(checkboxPainter, alignment = Alignment.TopStart))
 }
 
+/**
+ * Encodes the toggleable (on/off/indeterminate), enabled, focused, hovered, pressed, and active states of a checkbox as
+ * a bit mask.
+ */
 @Immutable
 @JvmInline
 public value class CheckboxState(private val state: ULong) : ToggleableComponentState, FocusableComponentState {
@@ -702,6 +706,7 @@ public value class CheckboxState(private val state: ULong) : ToggleableComponent
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [CheckboxState] with the given fields replaced by their new values. */
     public fun copy(
         toggleableState: ToggleableState = this.toggleableState,
         enabled: Boolean = isEnabled,
@@ -723,7 +728,9 @@ public value class CheckboxState(private val state: ULong) : ToggleableComponent
         "${javaClass.simpleName}(toggleableState=$toggleableState, isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [CheckboxState]. */
     public companion object {
+        /** Constructs a [CheckboxState] from individual flags. */
         public fun of(
             toggleableState: ToggleableState,
             enabled: Boolean = true,

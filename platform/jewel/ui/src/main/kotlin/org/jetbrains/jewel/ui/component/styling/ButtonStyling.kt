@@ -19,13 +19,18 @@ import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.ButtonState
 
+/** Combines [ButtonColors] and [ButtonMetrics] styling sub-objects for a button component. */
 @Stable
 @GenerateDataFunctions
 public class ButtonStyle(
+    /** The color tokens for the button in its various interaction states. */
     public val colors: ButtonColors,
+    /** The size and spacing metrics for the button. */
     public val metrics: ButtonMetrics,
+    /** The alignment of the focus outline stroke relative to the button border. */
     public val focusOutlineAlignment: Stroke.Alignment,
 ) {
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -54,28 +59,46 @@ public class ButtonStyle(
             ")"
     }
 
+    /** Companion object for [ButtonStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the button component in its various interaction states. */
 @Immutable
 @GenerateDataFunctions
 public class ButtonColors(
+    /** The background brush in the normal state. */
     public val background: Brush,
+    /** The background brush when the button is disabled. */
     public val backgroundDisabled: Brush,
+    /** The background brush when the button is focused. */
     public val backgroundFocused: Brush,
+    /** The background brush when the button is pressed. */
     public val backgroundPressed: Brush,
+    /** The background brush when the button is hovered. */
     public val backgroundHovered: Brush,
+    /** The content (foreground) color in the normal state. */
     public val content: Color,
+    /** The content color when the button is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the button is focused. */
     public val contentFocused: Color,
+    /** The content color when the button is pressed. */
     public val contentPressed: Color,
+    /** The content color when the button is hovered. */
     public val contentHovered: Color,
+    /** The border brush in the normal state. */
     public val border: Brush,
+    /** The border brush when the button is disabled. */
     public val borderDisabled: Brush,
+    /** The border brush when the button is focused. */
     public val borderFocused: Brush,
+    /** The border brush when the button is pressed. */
     public val borderPressed: Brush,
+    /** The border brush when the button is hovered. */
     public val borderHovered: Brush,
 ) {
+    /** Returns a [State] holding the background brush appropriate for the given [state]. */
     @Composable
     public fun backgroundFor(state: ButtonState): State<Brush> =
         rememberUpdatedState(
@@ -89,6 +112,7 @@ public class ButtonColors(
             )
         )
 
+    /** Returns a [State] holding the content color appropriate for the given [state]. */
     @Composable
     public fun contentFor(state: ButtonState): State<Color> =
         rememberUpdatedState(
@@ -102,6 +126,10 @@ public class ButtonColors(
             )
         )
 
+    /**
+     * Returns a [State] holding the border brush appropriate for the given [state], taking Swing compatibility mode
+     * into account.
+     */
     @Composable
     public fun borderFor(state: ButtonState): State<Brush> =
         rememberUpdatedState(
@@ -189,16 +217,23 @@ public class ButtonColors(
             ")"
     }
 
+    /** Companion object for [ButtonColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the button component. */
 @Stable
 @GenerateDataFunctions
 public class ButtonMetrics(
+    /** The corner radius of the button. */
     public val cornerSize: CornerSize,
+    /** The inner padding of the button content. */
     public val padding: PaddingValues,
+    /** The minimum width and height of the button. */
     public val minSize: DpSize,
+    /** The width of the button border stroke. */
     public val borderWidth: Dp,
+    /** The amount by which the focus outline expands beyond the button border. */
     public val focusOutlineExpand: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -235,21 +270,26 @@ public class ButtonMetrics(
             ")"
     }
 
+    /** Companion object for [ButtonMetrics]. */
     public companion object
 }
 
+/** CompositionLocal providing the [ButtonStyle] for default (filled) buttons. */
 public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No default ButtonStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the [ButtonStyle] for outlined buttons. */
 public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No outlined ButtonStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the [ButtonStyle] for default (filled) slim buttons. */
 public val LocalDefaultSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No default slim ButtonStyle provided. Have you forgotten the theme?")
 }
 
+/** CompositionLocal providing the [ButtonStyle] for outlined slim buttons. */
 public val LocalOutlinedSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No outlined slim ButtonStyle provided. Have you forgotten the theme?")
 }

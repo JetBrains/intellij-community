@@ -21,7 +21,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -29,12 +30,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.codeinsight.intentions.CollectAffectedCallablesUtils.getAffectedCallables
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.add
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.addConflictIfCantRefactor
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.findReferencesToElement
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionToPropertyAndViceVersaUtils.reportDeclarationConflict
+import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
@@ -77,7 +78,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
         element: KtProperty,
     ): ModCommand {
         val elementContext = analyze(element) {
-            prepareContext(element)
+            useSiteSession.prepareContext(element)
         } ?: return ModCommand.nop()
         return ModCommand
             .showConflicts(elementContext.conflicts)
@@ -100,7 +101,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
     }
 
     private fun isApplicableByAnalyze(element: KtProperty): Boolean =
-        analyze(element) { prepareContext(element, true) } != null
+        analyze(element) { useSiteSession.prepareContext(element, true) } != null
 }
 
 private fun convertPropertyToFunction(
@@ -236,7 +237,7 @@ private fun KaSession.prepareContext(
                     if (usage is KtSimpleNameReference) {
                         val expression = usage.expression
                         analyze(expression) {
-                            if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
+                            if (with(contextOf<KaSession>()) { expression.resolveToCall() } != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
                                 kotlinRefsToReplaceWithCall.add(expression)
                             } else if (nameChanged) {
                                 refsToRename.add(usage)

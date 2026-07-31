@@ -210,7 +210,8 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       return link.startsWith("/") ||
              link.startsWith("./") ||
              link.startsWith("../") ||
-             link.startsWith("~/")
+             link.startsWith("~/") ||
+             (link.startsWith(".") && link.getOrNull(1)?.isLetter() == true)
     }
 
     private fun isLocalHost(hostName: String?): Boolean {

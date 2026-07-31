@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -12,13 +12,14 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccess
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -111,20 +112,20 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         val call = (callInfo as? KaSuccessCallInfo)?.call ?: return
 
         when (call) {
-            is KaSimpleFunctionCall -> processCallable(call.symbol)
-            is KaSimpleVariableAccessCall -> {
+            is KaFunctionCall<*> -> processCallable(call.symbol)
+            is KaVariableAccessCall -> {
                 val symbol = call.symbol
                 if (symbol is KaPropertySymbol) {
-                    when (call.simpleAccess) {
-                        is KaSimpleVariableAccess.Read -> symbol.getter?.let { processCallable(it) }
-                        is KaSimpleVariableAccess.Write -> symbol.setter?.let { processCallable(it) }
+                    when (call.kind) {
+                        is KaVariableAccessCall.Kind.Read -> symbol.getter?.let { processCallable(it) }
+                        is KaVariableAccessCall.Kind.Write -> symbol.setter?.let { processCallable(it) }
                     }
                 }
             }
-            is KaCompoundVariableAccessCall -> processCallable(call.compoundOperation.operationPartiallyAppliedSymbol.symbol)
+            is KaCompoundVariableAccessCall -> processCallable(call.compoundOperation.operationCall.symbol)
             is KaCompoundArrayAccessCall -> {
-                processCallable(call.getPartiallyAppliedSymbol.symbol)
-                processCallable(call.setPartiallyAppliedSymbol.symbol)
+                processCallable(call.getterCall.symbol)
+                processCallable(call.setterCall.symbol)
             }
             else -> {}
         }
@@ -157,11 +158,10 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
             is KaAnnotationValue.ClassLiteralValue -> {
                 val type = value.type
                 if (type is KaClassType) {
-                    val classId = type.classId
-                    if (classId.isLocal) {
+                    if (type.symbol.isLocal) {
                         hasLocalClasses = true
                     } else {
-                        mutableExceptionClasses.add(classId)
+                        mutableExceptionClasses.add(type.classId)
                     }
                 }
             }

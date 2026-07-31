@@ -873,6 +873,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-87730"])
     fun `ellipsis default argument in protocol method is allowed`() = test("""
       from typing import Protocol
 
@@ -1254,6 +1255,8 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     class Cls:
         def __eq__(self, other) -> 'Cls':
+    #                              ^^^^^ WARNING Return type of method 'Cls.__eq__()' does not match return type the base method in class 'object'
+        
             pass
 
         def function(self) -> None:

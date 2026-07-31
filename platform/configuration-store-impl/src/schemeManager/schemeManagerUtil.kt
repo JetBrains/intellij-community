@@ -2,7 +2,7 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import java.util.concurrent.CancellationException
 
 internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
@@ -13,9 +13,7 @@ internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
     throw e
   }
   catch (e: Throwable) {
-    if (e is ControlFlowException) {
-      throw e
-    }
+    rethrowControlFlowException(e)
     LOG.error("Cannot read scheme ${file()}", e)
   }
   return null

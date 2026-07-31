@@ -1,14 +1,9 @@
 package org.intellij.plugins.markdown.model.psi.labels
 
-import com.intellij.model.Pointer
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
 import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
 import com.intellij.refactoring.rename.api.RenameUsageSearcher
-import com.intellij.refactoring.rename.api.fileRangeUpdater
 import com.intellij.util.Query
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiUsage
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher
@@ -23,42 +18,8 @@ internal class LinkLabelRenameUsageSearcher: RenameUsageSearcher {
     val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
     val usages = MarkdownSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
     val selfUsage = MarkdownDirectUsageQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
-    val modifiedUsages = usages.mapping { LinkLabelModifiableRenameUsage(it.file, it.range, declaration = false) }
-    val modifiedSelfUsage = selfUsage.mapping { LinkLabelModifiableRenameUsage(it.file, it.range, declaration = true) }
+    val modifiedUsages = usages.mapping(PsiModifiableRenameUsage::defaultPsiModifiableRenameUsage)
+    val modifiedSelfUsage = selfUsage.mapping(PsiModifiableRenameUsage::defaultPsiModifiableRenameUsage)
     return listOf(modifiedUsages, modifiedSelfUsage)
-  }
-
-  private class LinkLabelModifiableRenameUsage(
-    override val file: PsiFile,
-    override val range: TextRange,
-    override val declaration: Boolean
-  ): PsiModifiableRenameUsage {
-    override fun createPointer(): Pointer<out LinkLabelModifiableRenameUsage> {
-      return createPointer(file, range, declaration)
-    }
-
-    // Inplace rename for such case is not supported yet
-    override val fileUpdater: ModifiableRenameUsage.FileUpdater
-      get() = fileRangeUpdater(this::buildNewName)
-
-    private fun buildNewName(name: String): String {
-      return buildString {
-        if (!name.startsWith("[")) {
-          append("[")
-        }
-        append(name)
-        if (!name.startsWith("]")) {
-          append("]")
-        }
-      }
-    }
-
-    companion object {
-      private fun createPointer(file: PsiFile, range: TextRange, declaration: Boolean): Pointer<LinkLabelModifiableRenameUsage> {
-        return Pointer.fileRangePointer(file, range) { restoredFile, restoredRange ->
-          LinkLabelModifiableRenameUsage(restoredFile, restoredRange, declaration)
-        }
-      }
-    }
   }
 }

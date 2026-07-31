@@ -30,6 +30,7 @@ import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
+import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val logger = logger<LspClientManagerImpl>()
-private const val MAX_LSP_CLIENTS = 10 //
+private const val MAX_LSP_CLIENTS = 10
 
 /**
  * Project service for managing LSP servers for the current project
@@ -63,6 +64,8 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   override fun getClients(providerClass: Class<out LspIntegrationProvider>): Collection<LspClientImpl> =
     lspClients.filter { it.providerClass == providerClass }
+
+  internal fun getAllClients(): List<LspClientImpl> = lspClients.toList()
 
   @Deprecated("Use getClients", ReplaceWith("getClients(providerClass)"))
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -145,6 +148,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     if (!TrustedProjects.isProjectTrusted(project)) return
 
     cs.launch {
+      // make sure its listener is registered before the first `clientAdded` event, so the console gets all lifecycle events
+      LspServiceViewSupport.getInstance(project)
+
       readAndEdtWriteAction {
         if (lspClients.any { client -> client.providerClass == providerClass && client.descriptor.getServerId() == descriptor.getServerId() }) {
           return@readAndEdtWriteAction value(Unit)
@@ -160,7 +166,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
           val client = LspClientImpl(providerClass, descriptor, eventDispatcher.multicaster)
           client.start()
           lspClients.add(client)
-          Unit
+          eventDispatcher.multicaster.clientAdded(client)
         }
       }
     }
@@ -216,7 +222,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
       // - plugin-specific technology disabled in Settings (stopServers(providerClass) called),
       // - manual server restart (RestartLspServerAction).
       // In any case, we need to remove it from the `lspClients` collection
-      lspClients.remove(lspClient)
+      if (lspClients.remove(lspClient)) {
+        eventDispatcher.multicaster.clientRemoved(lspClient)
+      }
     }
     else {
       // ShutdownUnexpectedly servers stay in the `lspClients` collection so that they show up as 'Terminated' in the status bar widget.

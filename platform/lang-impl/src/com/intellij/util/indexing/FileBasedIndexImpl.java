@@ -134,6 +134,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -812,6 +813,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           myConnection.disconnect();
         }
         //CorruptionMarker.markIndexesAsClosed();
+      }
+      catch (CancellationException cex) {//shouldn't happen?
+        LOG.error("Index shutdown cancelled (not a good thing: some shutdown ops could be skipped!)", new RuntimeException(cex));
       }
       catch (Throwable e) {
         LOG.error("Problems during index shutdown", e);

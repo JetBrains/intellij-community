@@ -256,7 +256,17 @@ The generator computes **both** production and test dependencies for each conten
 | `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME (and TEST for test-runtime-only modules) | Yes | Production validation |
 | `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST` | COMPILE, RUNTIME, TEST | No | Test plugin validation |
 
-For written XML, test scope is also included when a module runs only in test runtime (test descriptor `._test` modules and modules that only have test-plugin content sources). For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
+For written XML, TEST scope (together with PROVIDED, which JPS puts in test runtime) is included in exactly three cases:
+
+1. the descriptor is a **test descriptor** (`foo._test.xml`, `isTestDescriptor == true`);
+2. the module is **test support** (`*.testFramework`, IDE starter, a `testFramework` descriptor path, …) and has no production content source;
+3. the **descriptor file itself lies under a JPS test source root** — e.g. `tests/testResources/intellij.foo.tests.xml` in a module whose `.iml` declares that root as `java-test-resource`.
+
+Case 3 is what makes test-only content modules work. It is decided by descriptor *location*, never by the module name: a module named `*.tests` whose descriptor sits in a production `resources` root is generated as production code, and a test-resource descriptor without a `.tests` suffix still gets TEST scope. For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
+
+**A descriptor generated with test scope never gains a *new* `<plugin>` dependency.** In these three cases the generator writes `<module>` entries only: its required plugin dependency set is limited to JPS dependencies already present in the XML before suppression handling and [missing plugin dependency validation](validators/plugin-content-dependency.md). Nothing has to be declared for the remaining JPS plugin dependencies, so they are not suppressions.
+
+Rationale: a `<plugin id>` entry is a **hard gate**. If the plugin is not in the layout, the content module is silently excluded together with everything that depends on it, and the failure surfaces far away as `module ... not found in product layout`. TEST/PROVIDED scope order entries routinely point at plugins that the layout the tests run in does not contain, so writing them breaks test entry points - this is exactly how IJPL-248736 broke the Rider TestNG suites. Plugin entries already in the XML are kept, the same grandfathering as `isTestOnlyContentModule` in [test-plugins.md](test-plugins.md).
 
 **Key insight**: Content modules are production code with intrinsic dependencies. Scope filtering is based on where the module is sourced (production vs test-only), not on ad-hoc XML state.
 
@@ -508,6 +518,19 @@ val plan = planContentModuleDependenciesWithBothSets(
 // plan.moduleDependencies -> main descriptor
 // plan.testDependencies -> moduleName._test.xml for non-test descriptor modules
 ```
+
+### `*.tests.xml` is not `*._test.xml`
+
+Test-only content modules such as `intellij.clion.profiling.tests` (descriptor
+`CIDR/clion-profiling/tests/testResources/intellij.clion.profiling.tests.xml`) are **ordinary content modules** —
+`isTestDescriptor == false`, no `._test` counterpart. They are generated through the same path as any other content
+module; the only thing that distinguishes them is that their descriptor lives in a test source root, so TEST-scope JPS
+deps are included in the written XML (case 3 above), and that no *new* `<plugin>` dependency is written for them. The
+`.tests` name suffix has no meaning to descriptor generation.
+
+There is exactly one supported way to freeze a descriptor's generated `<dependencies>`: put the
+`@skip-dependency-generation` marker in it. Suffix-based freezing is not supported — it silently disabled regeneration
+for the whole class of test-resource descriptors (IJPL-248736).
 
 ## XML Generation Format
 

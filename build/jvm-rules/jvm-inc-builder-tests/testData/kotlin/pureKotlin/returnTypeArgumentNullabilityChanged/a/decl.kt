@@ -1,0 +1,3 @@
+fun items(): List<String> = listOf("a")
+
+val names: List<String> = listOf("b")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public final class ShowControlFlowHandler implements CodeInsightActionHandler {
 
@@ -94,14 +94,13 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
   }
 
   public static boolean toSvgFile(final @NotNull String outSvgFile, final @NotNull PsiElement target) throws IOException, ExecutionException {
-    String dotUtilName = SystemInfo.isUnix ? "dot" : "dot.exe";
-    File dotFullPath = PathEnvironmentVariableUtil.findInPath(dotUtilName);
+    var dotFullPath = PathEnvironmentVariableUtil.findFirst("dot");
     if (dotFullPath == null) {
       throw new FileNotFoundException("Cannot find dot utility in path");
     }
     ControlFlow controlFlow = null;
     ControlFlowProvider provider = null;
-    for (ControlFlowProvider extension : ControlFlowProvider.EP_NAME.getExtensions()) {
+    for (ControlFlowProvider extension : ControlFlowProvider.EP_NAME.getExtensionList()) {
       controlFlow = extension.getControlFlow(target);
       if (controlFlow != null) {
         provider = extension;
@@ -112,16 +111,21 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
       return false;
     }
 
-    File tmpFile = FileUtil.createTempFile("control-flow", ".dot", true);
+    var tmpFile = Files.createTempFile("control-flow", ".dot");
     try {
-      FileUtil.writeToFile(tmpFile, toDot(controlFlow, provider));
-      GeneralCommandLine generalCommandLine = new GeneralCommandLine(dotFullPath.getAbsolutePath()).withInput(tmpFile.getAbsoluteFile())
-        .withParameters("-Tsvg", "-o" + outSvgFile, tmpFile.getAbsolutePath()).withRedirectErrorStream(true);
+      Files.writeString(tmpFile, toDot(controlFlow, provider));
+      var generalCommandLine = new GeneralCommandLine(dotFullPath.toString())
+        .withInput(tmpFile.toFile())
+        .withParameters("-Tsvg", "-o" + outSvgFile, tmpFile.toString())
+        .withRedirectErrorStream(true);
       ExecUtil.execAndGetOutput(generalCommandLine);
     }
     finally {
-      if (!tmpFile.delete()) {
-        LOGGER.warn("Cannot delete tmp file: " + tmpFile);
+      try {
+        Files.deleteIfExists(tmpFile);
+      }
+      catch (IOException e) {
+        LOGGER.warn("Cannot delete tmp file: " + tmpFile, e);
       }
     }
 

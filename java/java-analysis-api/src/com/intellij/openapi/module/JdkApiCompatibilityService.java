@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,11 +71,11 @@ public final class JdkApiCompatibilityService {
    *   its super method is annotated as {@code @since 8} this method will return {@link LanguageLevel#JDK_1_8}.
    *
    *   <li>if {@code member} is not annotated with a {@code @since} tag this method will return null.
-   *   
-   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22, 
+   *
+   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22,
    *   and the context language level is {@link LanguageLevel#JDK_22}, then this method will return null.</li>
    *
-   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22, 
+   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22,
    *   and the context language level is {@link LanguageLevel#JDK_21}, then this method will return {@link LanguageLevel#JDK_24}.</li>
    * </ul>
    *
@@ -88,10 +88,9 @@ public final class JdkApiCompatibilityService {
     LevelInfo info = firstCompatibleLanguageLevelInfo(member, contextLanguageLevel);
     if (info == null) return null;
     LanguageLevel targetLevel = info.outOfPreviewLevel() == null ? info.firstAppearLevel() : info.outOfPreviewLevel();
-    if (contextLanguageLevel.isLessThan(targetLevel)) return targetLevel;
-    return null;
+    return contextLanguageLevel.isLessThan(targetLevel) ? targetLevel : null;
   }
-  
+
   public @Nullable LevelInfo firstCompatibleLanguageLevelInfo(@NotNull PsiMember member, @NotNull LanguageLevel contextLanguageLevel) {
     if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
@@ -107,9 +106,7 @@ public final class JdkApiCompatibilityService {
     LanguageLevel incompatibleLevelForContext = contextLanguageLevel.next();
     LevelInfo lowestCompatibleLanguageLevel = null;
     for (PsiMember checkMember : membersToCheck) {
-      String signature = getSignature(checkMember);
-      if (signature == null) return null;
-      LevelInfo compatibleLanguageLevelForMember = getIntroducedApiLevel(signature, incompatibleLevelForContext);
+      LevelInfo compatibleLanguageLevelForMember = getIntroducedApiLevel(checkMember, incompatibleLevelForContext);
       if (compatibleLanguageLevelForMember == null) return null;
       if (lowestCompatibleLanguageLevel == null || compatibleLanguageLevelForMember.isLessThan(lowestCompatibleLanguageLevel)) {
         lowestCompatibleLanguageLevel = compatibleLanguageLevelForMember;
@@ -141,16 +138,25 @@ public final class JdkApiCompatibilityService {
     });
   }
 
+  private @Nullable LevelInfo getIntroducedApiLevel(@NotNull PsiMember member, @Nullable LanguageLevel languageLevel) {
+    LevelInfo info = getIntroducedApiLevel(getSignature(member), languageLevel);
+    if (info == null) {
+      PsiClass aClass = member.getContainingClass();
+      if (aClass != null) return getIntroducedApiLevel(aClass, languageLevel);
+    }
+    return info;
+  }
+
   /**
    * @param signature     The signature, example: "java.util.Iterator#remove()" as specified by {@link #getSignature(PsiMember)}.
    * @param languageLevel to start the search.
-   * @return The information about newly introduced API if it appears after or including {@code languageLevel}. 
+   * @return The information about newly introduced API if it appears after or including {@code languageLevel}.
    * If the API was fully introduced before {@code languageLevel}, null is returned.
    * If the API is in preview for {@code languageLevel}, but later standardized, the {@link LevelInfo#outOfPreviewLevel()} will be set.
    */
   @Contract("_, null -> null")
-  private @Nullable LevelInfo getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
-    if (languageLevel == null) return null;
+  private @Nullable LevelInfo getIntroducedApiLevel(@Nullable String signature, @Nullable LanguageLevel languageLevel) {
+    if (signature == null || languageLevel == null) return null;
     LanguageLevel curLevel = LanguageLevel.HIGHEST;
     while (true) {
       if (getIntroducedApis(curLevel).contains(signature)) {
@@ -172,7 +178,7 @@ public final class JdkApiCompatibilityService {
   /**
    * @param firstAppearLevel language level at which the feature appeared the first
    * @param outOfPreviewLevel language level at which the feature was standardized if it was in preview first;
-   *                          null if the feature was not in preview at all or it's still in preview and was not standardized yet.
+   *                          null if the feature was not in preview at all, or it's still in preview and was not standardized yet.
    */
   public record LevelInfo(@NotNull LanguageLevel firstAppearLevel, @Nullable LanguageLevel outOfPreviewLevel) {
     boolean isLessThan(LevelInfo level) {
@@ -181,7 +187,6 @@ public final class JdkApiCompatibilityService {
              Comparator.nullsFirst(Comparator.<LanguageLevel>naturalOrder()).compare(outOfPreviewLevel, level.outOfPreviewLevel) < 0;
     }
   }
-  
 
   /**
    * Serializes a {@code member} for storage in apiX.txt files.
@@ -199,14 +204,9 @@ public final class JdkApiCompatibilityService {
       String containingClass = getSignature(member.getContainingClass());
       if (containingClass == null) return null;
 
-      StringBuilder buf = new StringBuilder();
-      buf.append(containingClass);
-      buf.append('#');
-      buf.append(method.getName());
-      buf.append('(');
+      StringBuilder buf = new StringBuilder(containingClass).append('#').append(method.getName()).append('(');
       for (PsiType type : method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes()) {
-        buf.append(type.getCanonicalText());
-        buf.append(";");
+        buf.append(type.getCanonicalText()).append(";");
       }
       buf.append(')');
       return buf.toString();

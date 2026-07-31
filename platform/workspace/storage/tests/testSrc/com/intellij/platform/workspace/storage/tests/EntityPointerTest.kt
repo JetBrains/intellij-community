@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.toBuilder
@@ -19,7 +19,7 @@ class EntityPointerTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileUrlManager = VirtualFileUrlManagerImpl()
+    virtualFileUrlManager = ConcurrentVirtualFileUrlManager()
   }
 
   @Test

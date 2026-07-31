@@ -32,6 +32,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
@@ -479,7 +480,8 @@ private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, pyProjectManager
       }
     }
     if (participatedManagers.isEmpty()) {
-      toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
+      // PY-91089: safeGet instead of getString, which throws when `build-system.build-backend` is not a string.
+      toml.toml.safeGet<String>("build-system.build-backend", unquotedDottedKey = true).successOrNull?.let { buildBackend ->
         pyProjectManagers.firstOrNull { it.id.id in buildBackend }?.let { buildTool ->
           participatedManagers.add(buildTool.id)
         }

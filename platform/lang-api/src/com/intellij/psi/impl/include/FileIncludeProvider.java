@@ -45,6 +45,14 @@ public abstract class FileIncludeProvider {
 
   public abstract void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
 
+  /**
+   * BEWARE: this method's return value should depend _only_ on the FileContent provided -- not on anything else in a universe
+   * (other files, network resources, etc).
+   * This is because this method is used in {@link com.intellij.util.indexing.DataIndexer#map(Object)} which has the same
+   * contract: it should be a pure function of FileContent provided.
+   * If the rule is violated, index state become dependent on the ordering between included file(s) modifications and indexing
+   * rounds -- which is UB.
+   */
   public abstract FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content);
 
   /**

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +26,7 @@ import java.util.function.Consumer
 @TestApplication
 @ParameterizedClass
 @AllGradleVersionsSource
+@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
 class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersion) {
 
   private val testRootFixture = tempPathFixture()
@@ -71,7 +73,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
 
     assertAnyOf({
       buildView.assertSyncViewTree {
-        assertNode("(failed|finished)".toRegex()) {
+        assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("build.gradle") {
             assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
@@ -80,7 +82,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
       }
     }, {
       buildView.assertSyncViewTree {
-        assertNode("(failed|finished)".toRegex()) {
+        assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
         }

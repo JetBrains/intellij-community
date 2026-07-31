@@ -7,9 +7,13 @@ import androidx.compose.ui.node.TraversableNode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
+/**
+ * A [Modifier.Node] that tracks focus and exposes data to the IntelliJ Platform action system via a
+ * [DataProviderContext] lambda.
+ */
 @InternalJewelApi
 @ApiStatus.Internal
-public class DataProviderNode(@Suppress("DEPRECATION") public var dataProvider: DataProviderContext.() -> Unit) :
+public class DataProviderNode(public var dataProvider: DataProviderContext.() -> Unit) :
     Modifier.Node(), FocusEventModifierNode, TraversableNode {
     public var hasFocus: Boolean = false
 
@@ -19,5 +23,6 @@ public class DataProviderNode(@Suppress("DEPRECATION") public var dataProvider: 
 
     override val traverseKey: TraverseKey = TraverseKey
 
+    /** The traversal key used to locate [DataProviderNode] instances in the Modifier node tree. */
     public companion object TraverseKey
 }

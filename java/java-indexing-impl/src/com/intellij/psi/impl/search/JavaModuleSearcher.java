@@ -117,7 +117,7 @@ public final class JavaModuleSearcher implements QueryExecutor<PsiJavaModule, Ja
       }
 
       // do not create auto-module if manifest exists without "Automatic-Module-Name" to avoid conflict with SourceModuleNameIndex
-      if (autoModuleName == null && ContainerUtil.exists(sourceRoots, r -> r.findFileByRelativePath(JarFile.MANIFEST_NAME) != null)) {
+      if (autoModuleName == null && ContainerUtil.exists(sourceRoots, JavaModuleSearcher::existsManifestClaimsModuleName)) {
         continue;
       }
 
@@ -174,5 +174,10 @@ public final class JavaModuleSearcher implements QueryExecutor<PsiJavaModule, Ja
     VirtualFile root = parent.getParent();
     if (root == null) return null;
     return root;
+  }
+
+  private static boolean existsManifestClaimsModuleName(@NotNull VirtualFile sourceRoot) {
+    VirtualFile manifest = sourceRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    return manifest != null && LightJavaModule.claimedModuleName(manifest) != null;
   }
 }

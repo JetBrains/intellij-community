@@ -1,6 +1,6 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.mcpServer"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kotlin.reflect"/>
@@ -8,6 +8,8 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.mcpserver"/>
+    <module name="intellij.mcpserver.stdio"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -15,6 +17,6 @@
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.util.ex"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

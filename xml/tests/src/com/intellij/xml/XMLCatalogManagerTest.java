@@ -100,7 +100,7 @@ public class XMLCatalogManagerTest extends BasePlatformTestCase {
   }
 
   public void testConfigurable() {
-    assertFalse(new XMLCatalogConfigurable().isModified());
+    assertFalse(new XMLCatalogConfigurable(getProject()).isModified());
   }
 
   private XMLCatalogManager getManager() {

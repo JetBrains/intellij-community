@@ -17,7 +17,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlArray

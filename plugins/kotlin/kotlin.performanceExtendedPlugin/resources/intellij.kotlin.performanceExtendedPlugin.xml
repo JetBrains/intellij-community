@@ -1,11 +1,19 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.ide"/>
+    <module name="intellij.kotlin.j2k"/>
+    <module name="intellij.kotlin.searching.base"/>
     <module name="intellij.performanceTesting.vcs"/>
-    <!-- endregion -->
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.performance.performancePlugin.KotlinPluginCommandProvider"/>

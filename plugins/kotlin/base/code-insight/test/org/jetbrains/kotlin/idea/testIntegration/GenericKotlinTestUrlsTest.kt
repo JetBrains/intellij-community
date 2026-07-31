@@ -48,14 +48,4 @@ class GenericKotlinTestUrlsTest {
         val foo = ktClass.findFunctionByName("foo") ?: error("Cannot find foo()")
         assertEquals(listOf("java:test://a.b.c.Foo/foo"), foo.genericKotlinTestUrls())
     }
-
-    companion object {
-        @JvmStatic
-        @AfterAll
-        fun cleanupProject() {
-            runInEdtAndGet {
-                LeakHunter.cleanupAllProjects()
-            }
-        }
-    }
 }
