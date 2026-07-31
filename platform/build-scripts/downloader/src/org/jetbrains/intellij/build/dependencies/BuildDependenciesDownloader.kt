@@ -144,6 +144,7 @@ object BuildDependenciesDownloader {
     return targetDirectory
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use BuildDependenciesDownloader.extractFile(communityRoot, archiveFile, options)", level = DeprecationLevel.ERROR)
   fun extractFileSync(archiveFile: Path, target: Path, communityRoot: BuildDependenciesCommunityRoot) {
     runBlocking {

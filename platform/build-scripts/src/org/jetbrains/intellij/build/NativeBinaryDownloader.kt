@@ -19,12 +19,13 @@ object NativeBinaryDownloader {
   private const val LICENSE_FILE_NAME = "xplat-launcher-third-party-licenses.html"
 
   /**
-   * Attempts to locate a local debug build of cross-platform launcher when in the development mode
+   * Attempts to locate a local debug build of the launcher when in the development mode
    * and [org.jetbrains.intellij.build.BuildOptions.useLocalLauncher] is set to `true`.
    *
    * Otherwise, downloads and unpacks the launcher tarball.
    *
-   * Returns a tuple of paths `(executable, license, extra-file?)` for the given platform (e.g., a console executable for Windows).
+   * Returns a tuple of paths `(executable, license, extra-file?)` for the given platform.
+   * The `extra-file` is specific to the platform – e.g., a Windows console executable.
    */
   suspend fun getLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Triple<Path, Path, Path?> {
     if (context.options.isInDevelopmentMode && context.options.useLocalLauncher) {

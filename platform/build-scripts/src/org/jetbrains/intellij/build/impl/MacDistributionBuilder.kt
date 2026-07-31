@@ -103,13 +103,12 @@ class MacDistributionBuilder(
         |      </dict>""".trimMargin()
     }
 
-    for (fileAssociation in customizer.fileAssociations) {
-      val iconPath = fileAssociation.iconPath
+    for ((extension, iconPath) in customizer.fileAssociations) {
       associations += """
         |<dict>
         |        <key>CFBundleTypeExtensions</key>
         |        <array>
-        |          <string>${fileAssociation.extension}</string>
+        |          <string>${extension}</string>
         |        </array>
         |        <key>CFBundleTypeIconFile</key>
         |        <string>${if (iconPath.isEmpty()) targetIcnsFileName else Path.of(iconPath).name}</string>        
@@ -166,10 +165,10 @@ class MacDistributionBuilder(
     )
 
     if (context.isLanguageServer) {
-       layoutMacCli(macDistDir = targetPath, arch = arch)
+      layoutMacCli(targetPath, arch)
     }
     else {
-      layoutMacApp(docTypes = getDocTypes(), macDistDir = targetPath, arch = arch)
+      layoutMacApp(getDocTypes(), targetPath, arch)
     }
     generateBuildTxt(targetPath.resolve(productInfoPathPrefix), context)
 
@@ -290,24 +289,19 @@ class MacDistributionBuilder(
   private suspend fun layoutMacCli(macDistDir: Path, arch: JvmArchitecture) {
     val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
-    val copy = macDistDir.resolve("bin/$executable")
-    context.addExtraExecutablePattern(OsFamily.MACOS, "bin/${context.productProperties.baseFileName}")
+    val copy = macDistDir.resolve("bin/${executable}")
+    context.addExtraExecutablePattern(OsFamily.MACOS, "bin/${executable}")
     copyFile(execPath, copy)
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
     macDistDir.resolve("Resources").createDirectories()
   }
 
-  private suspend fun layoutMacApp(
-    docTypes: String?,
-    macDistDir: Path,
-    arch: JvmArchitecture,
-  ) {
+  private suspend fun layoutMacApp(docTypes: String?, macDistDir: Path, arch: JvmArchitecture) {
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
-    val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
-    val copy = macDistDir.resolve("MacOS/$executable")
+    val copy = macDistDir.resolve("MacOS/${context.productProperties.baseFileName}")
     copyFile(execPath, copy)
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
@@ -329,9 +323,9 @@ class MacDistributionBuilder(
       }
     }
 
-    for (fileAssociation in customizer.fileAssociations) {
-      if (!fileAssociation.iconPath.isEmpty()) {
-        val source = Path.of(fileAssociation.iconPath)
+    for ((_, iconPath) in customizer.fileAssociations) {
+      if (!iconPath.isEmpty()) {
+        val source = Path.of(iconPath)
         val dest = resourcesDistDir.resolve(source.fileName)
         Files.deleteIfExists(dest)
         copyFile(source, dest)
@@ -352,7 +346,7 @@ class MacDistributionBuilder(
     macZip: Path, macZipProductInfoJson: Path,
     macZipWithoutRuntime: Path, macZipWithoutRuntimeProductInfoJson: Path,
   ) {
-    spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
+    spanBuilder("build macOS artifacts for the specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
       val notarize =
         (System.getProperty("intellij.build.mac.notarize")?.toBoolean() ?: !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)) &&
         !context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)
@@ -483,7 +477,7 @@ class MacDistributionBuilder(
                 sourceFile.fileName.toString() == ".DS_Store" -> false
                 isContentDir && context.isLanguageServer && sourceFile.extension == "sh" -> true
                 isContentDir && sourceFile.fileName.toString() != "Info.plist" -> {
-                  error("Only Info.plist file is allowed in ${zipRoot} directory but found ${zipRoot}/${relativePath}")
+                  error("Only the Info.plist file is allowed in ${zipRoot} directory but found ${zipRoot}/${relativePath}")
                 }
                 !isContentDir && relativePath.startsWith("bin/") && sourceFile.extension == "jnilib" -> {
                   val dylib = "${sourceFile.nameWithoutExtension}.dylib"
@@ -505,13 +499,13 @@ class MacDistributionBuilder(
               }
             }
 
-            for (item in extraFiles) {
-              when (val content = item.content) {
+            for ((content, relativePath) in extraFiles) {
+              when (content) {
                 is LocalDistFileContent -> {
-                  zipOutStream.entry("${zipRoot}/${item.relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
+                  zipOutStream.entry("${zipRoot}/${relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
                 }
                 is InMemoryDistFileContent -> {
-                  zipOutStream.entry("${zipRoot}/${item.relativePath}", content.data)
+                  zipOutStream.entry("${zipRoot}/${relativePath}", content.data)
                 }
               }
             }
@@ -524,11 +518,7 @@ class MacDistributionBuilder(
 
   private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val executable = context.productProperties.baseFileName
-    val vmOptions = generateVmOptions(
-      context, listOf(
-        "-Dapple.awt.application.appearance=system"
-      )
-    )
+    val vmOptions = generateVmOptions(context, extra = listOf("-Dapple.awt.application.appearance=system"))
     val vmOptionsPath = distBinDir.resolve("${executable}.vmoptions")
     writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
     return vmOptionsPath
