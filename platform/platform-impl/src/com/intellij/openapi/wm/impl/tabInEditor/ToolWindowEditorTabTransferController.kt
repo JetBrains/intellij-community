@@ -21,8 +21,8 @@ internal class ToolWindowEditorTabTransferController(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
-  fun canMoveContentToEditor(toolWindow: ToolWindow): Boolean {
-    return ToolWindowEditorTabSupportUtil.isEnabled() && getSupport(toolWindow) != null
+  fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean {
+    return ToolWindowEditorTabSupportUtil.isEnabled() && getSupport(toolWindow)?.canBeMovedToEditor(content) == true
   }
 
   fun moveContentToEditor(
@@ -31,7 +31,7 @@ internal class ToolWindowEditorTabTransferController(
     window: EditorWindow? = null,
     sourceDecorator: InternalDecoratorImpl? = null,
   ) {
-    if (!canMoveContentToEditor(toolWindow)) return
+    if (!canMoveContentToEditor(toolWindow, content)) return
 
     val support = getSupport(toolWindow) ?: return
 

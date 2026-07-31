@@ -33,21 +33,33 @@ import javax.swing.JPanel
  * [presentationFlow] drives the tab presentation, [canClose] controls the default
  * [filterTabsToClose] behavior, and [filterTabsToCloseAction] can emulate partial close decisions.
  * [filterTabsToCloseInvocations] records the [Content] groups passed to [filterTabsToClose].
+ *
+ * [canBeMovedToEditorAction] decides per [Content] whether it may be moved to the editor and
+ * defaults to accepting everything. [presentationFlowRequests] records contents passed to [getTabPresentationFlow],
+ * so tests can assert that the presentation flow is requested only for accepted contents.
  */
 internal class FakeToolWindowEditorTabSupport(
   private val presentationFlow: Flow<ToolWindowEditorTabPresentation>,
   private val canClose: Boolean = true,
   private val filterTabsToCloseAction: ((List<Content>) -> List<Content>)? = null,
+  private val canBeMovedToEditorAction: ((Content) -> Boolean)? = null,
 ) : ToolWindowEditorTabSupport {
   val filterTabsToCloseInvocations: MutableList<List<Content>> = mutableListOf()
+  val presentationFlowRequests: MutableList<Content> = mutableListOf()
 
   override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
     filterTabsToCloseInvocations += contents
     return filterTabsToCloseAction?.invoke(contents) ?: if (canClose) contents else emptyList()
   }
 
-  override fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation> =
-    presentationFlow
+  override fun canBeMovedToEditor(content: Content): Boolean {
+    return canBeMovedToEditorAction?.invoke(content) ?: true
+  }
+
+  override fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation> {
+    presentationFlowRequests += content
+    return presentationFlow
+  }
 }
 
 /**

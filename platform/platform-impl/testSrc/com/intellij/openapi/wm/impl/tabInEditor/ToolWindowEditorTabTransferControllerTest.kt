@@ -67,11 +67,19 @@ class ToolWindowEditorTabTransferControllerTest {
     // Real ToolWindowImpl cells initialize tab-label actions. The Code With Me provider hard-casts
     // the project tool window manager, which is unrelated to the transfer logic under test here.
     ExtensionTestUtil.maskExtensions(ContentTabActionProvider.EP_NAME, emptyList(), disposable)
-    registerFakeToolWindowEditorTabSupport(
-      toolWindowId,
-      FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Tab"))),
-      disposable,
+    registerSupport(toolWindowId)
+  }
+
+  private fun registerSupport(
+    id: String,
+    canBeMovedToEditorAction: ((Content) -> Boolean)? = null,
+  ): FakeToolWindowEditorTabSupport {
+    val support = FakeToolWindowEditorTabSupport(
+      presentationFlow = flowOf(ToolWindowEditorTabPresentation("Tab")),
+      canBeMovedToEditorAction = canBeMovedToEditorAction,
     )
+    registerFakeToolWindowEditorTabSupport(id, support, disposable)
+    return support
   }
 
   /**
@@ -87,8 +95,8 @@ class ToolWindowEditorTabTransferControllerTest {
     }
   }
 
-  private fun addContent(toolWindow: ToolWindow): Content {
-    val content = createTabContent()
+  private fun addContent(toolWindow: ToolWindow, displayName: String = "tab"): Content {
+    val content = createTabContent(displayName = displayName)
     toolWindow.contentManager.addContent(content)
     return content
   }
@@ -116,7 +124,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val toolWindow = createToolWindow(toolWindowId)
       val content = addContent(toolWindow)
 
-      assertThat(controller.canMoveContentToEditor(toolWindow)).isTrue()
+      assertThat(controller.canMoveContentToEditor(toolWindow, content)).isTrue()
       controller.moveContentToEditor(toolWindow, content)
 
       val tabFile = openTabFile()
@@ -205,7 +213,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val registryValue = Registry.get(ToolWindowEditorTabSupportUtil.REGISTRY_KEY)
       registryValue.setValue(false)
       try {
-        assertThat(controller.canMoveContentToEditor(toolWindow)).isFalse()
+        assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
         controller.moveContentToEditor(toolWindow, content)
 
         assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
@@ -223,10 +231,47 @@ class ToolWindowEditorTabTransferControllerTest {
       val toolWindow = createToolWindow("UnsupportedToolWindow")
       val content = addContent(toolWindow)
 
-      assertThat(controller.canMoveContentToEditor(toolWindow)).isFalse()
+      assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
       controller.moveContentToEditor(toolWindow, content)
 
       assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+    }
+
+  @Test
+  fun `move to editor is rejected when the support does not accept the content`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val rejectingToolWindowId = "RejectingToolWindow"
+      registerSupport(rejectingToolWindowId, canBeMovedToEditorAction = { false })
+      val toolWindow = createToolWindow(rejectingToolWindowId)
+      val content = addContent(toolWindow)
+
+      assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
+      controller.moveContentToEditor(toolWindow, content)
+
+      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+      assertThat(toolWindow.contentManager.contents.toList()).contains(content)
+    }
+
+  @Test
+  fun `support decides per content which tab can be moved to the editor`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val mixedToolWindowId = "MixedToolWindow"
+      val toolWindow = createToolWindow(mixedToolWindowId)
+      val supported = addContent(toolWindow, displayName = "supported")
+      val unsupported = addContent(toolWindow, displayName = "unsupported")
+      val mixedSupport = registerSupport(mixedToolWindowId, canBeMovedToEditorAction = { it === supported })
+
+      assertThat(controller.canMoveContentToEditor(toolWindow, supported)).isTrue()
+      assertThat(controller.canMoveContentToEditor(toolWindow, unsupported)).isFalse()
+
+      controller.moveContentToEditor(toolWindow, unsupported)
+      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+
+      controller.moveContentToEditor(toolWindow, supported)
+
+      assertThat(openTabFile().content).isSameAs(supported)
+      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(unsupported)
+      assertThat(mixedSupport.presentationFlowRequests).containsExactly(supported)
     }
 
   @Test

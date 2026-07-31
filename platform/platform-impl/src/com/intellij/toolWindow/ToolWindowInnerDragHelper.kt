@@ -553,7 +553,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private fun canMoveTabToEditor(decorator: InternalDecoratorImpl, content: Content?): Boolean {
     return content != null &&
            ToolWindowEditorTabSupportUtil.isEnabled() &&
-           ToolWindowEditorTabTransferController.getInstance(decorator.toolWindow.project).canMoveContentToEditor(decorator.toolWindow)
+           ToolWindowEditorTabTransferController.getInstance(decorator.toolWindow.project).canMoveContentToEditor(decorator.toolWindow, content)
   }
 
   private sealed interface EditorDropTarget {

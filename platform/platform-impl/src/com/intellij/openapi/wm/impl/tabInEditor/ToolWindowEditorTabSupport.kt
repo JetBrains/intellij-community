@@ -23,7 +23,15 @@ interface ToolWindowEditorTabSupport {
   fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> = contents
 
   /**
+   * Checks whether the given tool window tab [content] may be moved to the editor area as a tool window editor tab.
+   */
+  @RequiresEdt
+  fun canBeMovedToEditor(content: Content): Boolean
+
+  /**
    * Returns the current tab presentation and subsequent presentation updates.
+   *
+   * **Contract:** this method is called only for [content] that [canBeMovedToEditor] accepted at the moment the tab was moved to the editor.
    */
   fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation>
 }
@@ -33,5 +41,5 @@ interface ToolWindowEditorTabSupport {
 data class ToolWindowEditorTabPresentation(
   val title: @NlsContexts.TabTitle String,
   val icon: Icon? = null,
-  val tooltip: HtmlChunk? = null
+  val tooltip: HtmlChunk? = null,
 )

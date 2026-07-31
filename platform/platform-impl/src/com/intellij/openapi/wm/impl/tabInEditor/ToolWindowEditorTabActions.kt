@@ -24,7 +24,7 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
                   project != null &&
                   toolWindow != null &&
                   content != null &&
-                  ToolWindowEditorTabTransferController.getInstance(project).canMoveContentToEditor(toolWindow)
+                  ToolWindowEditorTabTransferController.getInstance(project).canMoveContentToEditor(toolWindow, content)
 
     e.presentation.isEnabledAndVisible = enabled
   }

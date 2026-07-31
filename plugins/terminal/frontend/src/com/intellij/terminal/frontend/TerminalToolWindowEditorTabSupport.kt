@@ -97,6 +97,10 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
     }.distinctUntilChanged()
   }
 
+  override fun canBeMovedToEditor(content: Content): Boolean {
+    return content.toTerminalContentOrNull() != null
+  }
+
   private fun buildTabPresentation(project: Project, content: Content): ToolWindowEditorTabPresentation {
     return ToolWindowEditorTabPresentation(
       title = getTabTitle(content),
