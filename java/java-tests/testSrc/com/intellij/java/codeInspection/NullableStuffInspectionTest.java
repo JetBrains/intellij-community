@@ -638,16 +638,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testJSpecifySameInstanceGenericOptionOn() {
-    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
-    addJSpecifyNullMarked(myFixture);
-    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    addNullnessUnspecified();
-    doTest();
-  }
-
-  public void testJSpecifySameInstanceGenericOptionOff() {
-    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
+  public void testJSpecifySameInstanceGenericUnspecified() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     addNullnessUnspecified();
@@ -655,7 +646,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testJSpecifySameInstanceGenericShadow() {
-    myInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     addNullnessUnspecified();
@@ -665,6 +655,13 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testJSpecifySameInstanceGenericInheritedBound() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyUnspecifiedBoundTypeArgument() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
     doTest();
   }
 

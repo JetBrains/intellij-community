@@ -57,17 +57,68 @@ public final class JavaTypeNullabilityUtil {
    * @return type nullability
    */
   public static @NotNull TypeNullability getTypeNullability(@NotNull PsiClassType type) {
-    return getTypeNullability(type, null, !shouldIgnoreContainer(type));
+    return getTypeNullability(type, null, !shouldIgnoreContainer(type), false);
   }
 
+  /**
+   * Computes the nullability of a <em>value</em> whose static type is the supplied type.
+   * <p>
+   * Unlike {@link PsiType#getNullability()}, an unspecified nullness (e.g. JSpecify's {@code @NullnessUnspecified})
+   * on a type variable is transparent here: the upper-bound chain of the type parameter is followed through it.
+   * This mirrors JSpecify's "most convenient world", in which an unspecified nullness operator behaves as if absent, so a
+   * value of type {@code T extends @NullnessUnspecified P} with {@code P extends @Nullable Object} may definitely be null.
+   * <p>
+   * {@link PsiType#getNullability()} deliberately keeps the unspecified nullness as a distinct third state instead,
+   * because type-argument containment relies on telling {@code Lib<@NullnessUnspecified T>} apart from
+   * {@code Lib<@Nullable T>}; see {@link #getNullabilityConflictInAssignment}.
+   * <p>
+   * The case this exists for (a {@code @NullMarked} scope):
+   * <pre>{@code
+   * class Sample<P extends @Nullable Object, T extends @NullnessUnspecified P> {
+   *   Object take(T t) {
+   *     // getNullability(t) is UNKNOWN: the unspecified bound of T stops the bound walk.
+   *     // getValueNullability(t) is NULLABLE: the chain continues through it and reaches @Nullable Object,
+   *     // so returning the value where a non-null Object is expected is a nullness mismatch.
+   *     return t;
+   *   }
+   * }}</pre>
+   *
+   * @param type type of the value
+   * @return the bound-chain nullability when that chain provably reaches a nullable type through unspecified nullness only;
+   * {@link PsiType#getNullability()} unchanged otherwise
+   */
+  public static @NotNull TypeNullability getValueNullability(@NotNull PsiType type) {
+    TypeNullability declared = type.getNullability();
+    if (!(type instanceof PsiClassType)) return declared;
+    PsiClassType classType = (PsiClassType)type;
+    if (declared.nullability() != Nullability.UNKNOWN || declared.source() == NullabilitySource.Standard.NONE) {
+      return declared;
+    }
+    if (!(classType.resolve() instanceof PsiTypeParameter)) return declared;
+    TypeNullability throughBounds = getTypeNullability(classType, null, !shouldIgnoreContainer(classType), true);
+    return throughBounds.nullability() == Nullability.NULLABLE ? throughBounds : declared;
+  }
+
+  /**
+   * @param lookThroughUnspecified whether an unspecified nullness on a type variable should be ignored, so that the walk
+   *                               continues into the upper bounds of the type parameter; see {@link #getValueNullability}.
+   *                               For {@code T extends @NullnessUnspecified P} with {@code P extends @Nullable Object},
+   *                               {@code false} stops at the unspecified bound and yields UNKNOWN, while {@code true}
+   *                               continues through it and yields NULLABLE.
+   */
   private static @NotNull TypeNullability getTypeNullability(@NotNull PsiClassType type,
                                                              @Nullable Set<PsiClassType> visited,
-                                                             boolean checkContainer) {
+                                                             boolean checkContainer,
+                                                             boolean lookThroughUnspecified) {
     if (visited != null && visited.contains(type)) return TypeNullability.UNKNOWN;
     TypeNullability fromAnnotations = getNullabilityFromAnnotations(type.getAnnotations());
-    if (!fromAnnotations.equals(TypeNullability.UNKNOWN)) return fromAnnotations;
+    boolean explicit = !fromAnnotations.equals(TypeNullability.UNKNOWN);
+    boolean transparent = lookThroughUnspecified &&
+                          isUnspecifiedNullness(fromAnnotations) &&
+                          type.resolve() instanceof PsiTypeParameter;
+    if (explicit && !transparent) return fromAnnotations;
     PsiElement context = type.getPsiContext();
-    if (context != null && checkContainer) {
+    if (context != null && checkContainer && !transparent) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
       if (manager != null) {
         NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
@@ -85,26 +136,80 @@ public final class JavaTypeNullabilityUtil {
       Set<PsiClassType> nextVisited = visited == null ? new HashSet<>() : visited;
       nextVisited.add(type);
       //superTypes returns Object for `empty` parameter list, which can contain external annotations
-      List<TypeNullability> nullabilities = ContainerUtil.map(typeParameter.getSuperTypes(), t -> getTypeNullability(t, nextVisited, checkContainer));
+      List<TypeNullability> nullabilities =
+        ContainerUtil.map(typeParameter.getSuperTypes(), t -> getTypeNullability(t, nextVisited, checkContainer, lookThroughUnspecified));
       TypeNullability fromSuper = TypeNullability.intersect(nullabilities).inherited();
-      if (fromSuper != TypeNullability.UNKNOWN) return fromSuper;
+      if (fromSuper != TypeNullability.UNKNOWN) return keepUnspecified(fromSuper, transparent ? fromAnnotations : null);
       //but this Object cannot hold nullability container, because doesn't have a reference
       if (extendTypes.length == 0 && checkContainer) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(typeParameter.getProject());
         if (manager != null) {
           NullabilityAnnotationInfo effective = manager.findOwnNullabilityInfo(typeParameter);
           if (effective != null) {
-            return effective.toTypeNullability().inherited();
+            return keepUnspecified(effective.toTypeNullability().inherited(), transparent ? fromAnnotations : null);
           }
           // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
           NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(typeParameter);
           if (typeUseNullability != null) {
-            return typeUseNullability.toTypeNullability().inherited();
+            return keepUnspecified(typeUseNullability.toTypeNullability().inherited(), transparent ? fromAnnotations : null);
           }
         }
       }
     }
-    return TypeNullability.UNKNOWN;
+    return transparent ? fromAnnotations : TypeNullability.UNKNOWN;
+  }
+
+  private static @NotNull TypeNullability keepUnspecified(@NotNull TypeNullability fromBound,
+                                                          @Nullable TypeNullability unspecified) {
+    if (unspecified == null || !isUnspecifiedNullness(unspecified)) return fromBound;
+    return fromBound.nullability() != Nullability.NULLABLE ? unspecified : fromBound;
+  }
+
+  /**
+   * Checks that the nullability is an unspecified nullness written explicitly at a use site with an annotation the bound walk of
+   * {@link #getValueNullability} may go through. Which unknown-nullability annotations those are is decided by the annotation
+   * support of the respective framework, see {@link NullableNotNullManager#shouldGoThroughUnspecifiedNullnessAnnotation};
+   * currently only JSpecify's {@code @NullnessUnspecified} qualifies.
+   *
+   * @param nullability nullability to check
+   * @return true if the nullability comes from an explicit annotation the bound walk may go through
+   */
+  private static boolean isUnspecifiedNullness(@NotNull TypeNullability nullability) {
+    return isUnspecifiedNullness(nullability, false);
+  }
+
+  /**
+   * Same as {@link #isUnspecifiedNullness(TypeNullability)}, but the annotation may also be written on the bound of the
+   * type parameter instead of the use site.
+   *
+   * @param nullability      nullability to check
+   * @param lookThroughBound whether to unwrap {@link NullabilitySource.ExtendsBound} and {@link NullabilitySource.MultiSource},
+   *                         so that {@code V} declared as {@code V extends @NullnessUnspecified P} counts as unspecified,
+   *                         just like a use-site {@code @NullnessUnspecified V} does
+   * @return true if the nullability comes from a transparent unspecified-nullness annotation
+   */
+  private static boolean isUnspecifiedNullness(@NotNull TypeNullability nullability, boolean lookThroughBound) {
+    if (nullability.nullability() != Nullability.UNKNOWN) return false;
+    NullabilitySource source = nullability.source();
+    if (lookThroughBound) {
+      //`ExtendsBound` is never nested: `ExtendsBound.inherited()` returns itself
+      if (source instanceof NullabilitySource.ExtendsBound) {
+        source = ((NullabilitySource.ExtendsBound)source).boundSource();
+      }
+      if (source instanceof NullabilitySource.MultiSource) {
+        //one unspecified bound among several is enough to hide the nullable bound
+        return ContainerUtil.exists(((NullabilitySource.MultiSource)source).sources(),
+                                    JavaTypeNullabilityUtil::shouldGoThroughUnspecifiedNullnessAnnotation);
+      }
+    }
+    return shouldGoThroughUnspecifiedNullnessAnnotation(source);
+  }
+
+  private static boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull NullabilitySource source) {
+    if (!(source instanceof NullabilitySource.ExplicitAnnotation)) return false;
+    PsiAnnotation annotation = ((NullabilitySource.ExplicitAnnotation)source).annotation();
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(annotation.getProject());
+    return manager != null && manager.shouldGoThroughUnspecifiedNullnessAnnotation(annotation);
   }
 
   private static boolean shouldIgnoreContainer(PsiClassType classType) {
@@ -151,7 +256,7 @@ public final class JavaTypeNullabilityUtil {
    * @param declaredLeftType the left type before substitution of the enclosing method/class type arguments
    * @param rightType        assigned value
    * @param options          how to check nullability conflicts
-   * @see JavaTypeNullabilityUtil#getNullabilityConflictTypeContext(PsiType, PsiType, PsiType, NullabilityConflictOptions)
+   * @see JavaTypeNullabilityUtil#getNullabilityConflictTypeContext(PsiType, PsiType, PsiType)
    */
   public static @NotNull NullabilityConflictContext getNullabilityConflictInAssignment(@Nullable PsiType leftType,
                                                                                        @Nullable PsiType declaredLeftType,
@@ -177,7 +282,7 @@ public final class JavaTypeNullabilityUtil {
 
     if (rightType instanceof PsiCapturedWildcardType) {
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftType, declaredLeftType, rightType, options);
+        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftType, declaredLeftType, rightType);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) return context;
       }
       return getNullabilityConflictInAssignment(leftType, declaredLeftType, ((PsiCapturedWildcardType)rightType).getUpperBound(true), level,
@@ -189,7 +294,7 @@ public final class JavaTypeNullabilityUtil {
     }
     if (rightType instanceof PsiWildcardType) {
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftType, declaredLeftType, rightType, options);
+        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftType, declaredLeftType, rightType);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) return context;
       }
       return getNullabilityConflictInAssignment(leftType, declaredLeftType, GenericsUtil.getWildcardBound(rightType), level, options);
@@ -201,7 +306,7 @@ public final class JavaTypeNullabilityUtil {
     if (leftType instanceof PsiArrayType && rightType instanceof PsiArrayType) {
       PsiType leftComponent = ((PsiArrayType)leftType).getComponentType();
       PsiType rightComponent = ((PsiArrayType)rightType).getComponentType();
-      NullabilityConflictContext context = getNullabilityConflictTypeContext(leftComponent, null, rightComponent, options);
+      NullabilityConflictContext context = getNullabilityConflictTypeContext(leftComponent, null, rightComponent);
       if (isAllowedNullabilityConflictType(level != 0 && options.checkNotNullToNull, context)) return context;
       return getNullabilityConflictInAssignment(leftComponent,
                                                 null, rightComponent, level, options);
@@ -225,7 +330,7 @@ public final class JavaTypeNullabilityUtil {
         rightType = GenericsUtil.getWildcardBound(rightType);
       }
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(rightType, null, leftBound, options);
+        NullabilityConflictContext context = getNullabilityConflictTypeContext(rightType, null, leftBound);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) {
           context = new NullabilityConflictContext(NullabilityConflict.COMPLEX, leftBound, rightType);
           return context;
@@ -239,7 +344,7 @@ public final class JavaTypeNullabilityUtil {
     }
     else {
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftBound, null, rightType, options);
+        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftBound, null, rightType);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) return context;
       }
       return getNullabilityConflictInAssignment(leftBound, null, rightType, level, options);
@@ -320,7 +425,7 @@ public final class JavaTypeNullabilityUtil {
       }
 
       NullabilityConflictContext contextTheCurrentCheck =
-        getNullabilityConflictTypeContext(leftParameterType, declaredLeftParameterType, rightParameterType, options);
+        getNullabilityConflictTypeContext(leftParameterType, declaredLeftParameterType, rightParameterType);
       if (isAllowedNullabilityConflictType(options.checkNotNullToNull, contextTheCurrentCheck)) return contextTheCurrentCheck;
 
       NullabilityConflictContext context = getNullabilityConflictInAssignment(
@@ -370,13 +475,11 @@ public final class JavaTypeNullabilityUtil {
    * @param leftType         type to assign to
    * @param declaredLeftType left type before substitution of the enclosing method/class type arguments
    * @param rightType        assigned value
-   * @param options          to analyze
    * @see NullabilityConflict
    */
   private static @NotNull NullabilityConflictContext getNullabilityConflictTypeContext(@Nullable PsiType leftType,
                                                                                        @Nullable PsiType declaredLeftType,
-                                                                                       @Nullable PsiType rightType,
-                                                                                       @NotNull NullabilityConflictOptions options) {
+                                                                                       @Nullable PsiType rightType) {
     if (leftType == null || rightType == null) return NullabilityConflictContext.UNKNOWN;
     TypeNullability leftTypeNullability = leftType.getNullability();
     TypeNullability rightTypeNullability = rightType.getNullability();
@@ -400,17 +503,17 @@ public final class JavaTypeNullabilityUtil {
     }
 
     // Don't let @NullnessUnspecified hide a known nullable bound for the right type
-    else if (options.reportUnspecifiedBound &&
-             leftNullability == Nullability.NOT_NULL && rightNullability == Nullability.UNKNOWN) {
+    else if (leftNullability == Nullability.NOT_NULL && rightNullability == Nullability.UNKNOWN &&
+             isUnspecifiedNullness(rightTypeNullability, true)) {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
-      if (psiClass instanceof PsiTypeParameter &&
-          TypeNullability.ofTypeParameter((PsiTypeParameter)psiClass).nullability() == Nullability.NULLABLE) {
+      if (psiClass instanceof PsiTypeParameter && hasNullableBound(rightType, (PsiTypeParameter)psiClass)) {
         return new NullabilityConflictContext(NullabilityConflict.NULL_TO_NOT_NULL, leftType, rightType);
       }
     }
     //similar to the previous, but for the left type
-    else if (options.reportUnspecifiedBound && declaredLeftType != null &&
-             leftNullability == Nullability.UNKNOWN && rightNullability == Nullability.NULLABLE) {
+    else if (declaredLeftType != null &&
+             leftNullability == Nullability.UNKNOWN && rightNullability == Nullability.NULLABLE &&
+             isUnspecifiedNullness(leftTypeNullability, true)) {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(declaredLeftType);
       if (psiClass instanceof PsiTypeParameter &&
           TypeNullability.ofTypeParameter((PsiTypeParameter)psiClass).nullability() == Nullability.NOT_NULL) {
@@ -426,6 +529,37 @@ public final class JavaTypeNullabilityUtil {
   }
 
   /**
+   * Decides whether an unspecified type argument still hides a nullable bound, which makes it incompatible with a not-null
+   * type argument on the other side of the assignment:
+   * <pre>{@code
+   * class Sample {                                        // in a @NullMarked scope
+   *   interface Box<E extends @Nullable Object> {}
+   *   interface Source<V extends @Nullable Object> {
+   *     Box<@NullnessUnspecified V> createUnspec();
+   *     void acceptNonNull(Box<? extends Object> box);
+   *     default void use() {
+   *       // the unspecified type argument hides V's @Nullable bound, so this is a NULL_TO_NOT_NULL conflict
+   *       acceptNonNull(createUnspec());
+   *     }
+   *   }
+   * }}</pre>
+   * Both sources are needed: {@link #getValueNullability} looks through an unspecified nullness written on the bound chain,
+   * which {@link TypeNullability#ofTypeParameter} stops at, while {@code ofTypeParameter} walks the bounds of the type
+   * parameter declaration and therefore also covers types without a PSI context, such as inferred types.
+   * <p>
+   * Neither of them checks <em>which</em> annotation made the nullness unspecified; the caller is expected to have filtered
+   * that already with {@link #isUnspecifiedNullness(TypeNullability, boolean)}.
+   *
+   * @param type      usage of {@code parameter} whose own nullability is unspecified
+   * @param parameter type parameter the type resolves to
+   * @return true if a value of this type may still be null because of a nullable upper bound
+   */
+  private static boolean hasNullableBound(@NotNull PsiType type, @NotNull PsiTypeParameter parameter) {
+    return getValueNullability(type).nullability() == Nullability.NULLABLE ||
+           TypeNullability.ofTypeParameter(parameter).nullability() == Nullability.NULLABLE;
+  }
+
+  /**
    * Holds information about options for the nullability conflict analysis.
    */
   public static class NullabilityConflictOptions {
@@ -434,14 +568,8 @@ public final class JavaTypeNullabilityUtil {
      */
     public final boolean checkNotNullToNull;
 
-    /**
-     * Report problems for unspecified-nullness type variables that hide a known bound
-     */
-    public final boolean reportUnspecifiedBound;
-
-    public NullabilityConflictOptions(boolean checkNotNullToNull, boolean reportUnspecifiedBound) {
+    public NullabilityConflictOptions(boolean checkNotNullToNull) {
       this.checkNotNullToNull = checkNotNullToNull;
-      this.reportUnspecifiedBound = reportUnspecifiedBound;
     }
   }
 

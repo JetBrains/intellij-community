@@ -105,26 +105,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     ),
     new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
       Set.of(
-        new Pair<>("TypeVariableToObject.java", 109), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 58), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 78), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 98), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 103), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 108), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 113), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 118), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 53), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 68), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 83), //IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 98), //IDEA-380143
-
-        new Pair<>("DereferenceTypeVariable.java", 123),
-        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
-        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) //IDEA-380143
       )
     ),
-
     new SkipIndividuallyFilter(
       Set.of(
         new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30) //IDEA-380248
@@ -208,7 +191,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
-      nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {

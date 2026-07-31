@@ -69,6 +69,16 @@ public abstract class NullableNotNullManager {
 
   public abstract boolean canAnnotateLocals(String name);
 
+  /**
+   * Tells whether the supplied annotation denotes an unspecified nullness in the sense of JSpecify.
+   *
+   * @param annotation annotation to check
+   * @return true if the bound walk may go through this annotation
+   * @see com.intellij.util.JavaTypeNullabilityUtil#getValueNullability
+   */
+  @ApiStatus.Internal
+  public abstract boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation);
+
   public static NullableNotNullManager getInstance(Project project) {
     return project.getService(NullableNotNullManager.class);
   }

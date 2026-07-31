@@ -100,6 +100,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -220,6 +221,12 @@ public final class DfaPsiUtil {
           }
         }
       }
+      if (fromAnnotation.getNullability() == Nullability.UNKNOWN) {
+        PsiType type = resultType != null ? resultType : PsiUtil.getTypeByPsiElement(owner);
+        if (type != null && JavaTypeNullabilityUtil.getValueNullability(type).nullability() == Nullability.NULLABLE) {
+          return Nullability.NULLABLE;
+        }
+      }
       return fromAnnotation.getNullability();
     }
 
@@ -254,7 +261,7 @@ public final class DfaPsiUtil {
 
   private static @Nullable Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
     if (resultType == null) return null;
-    TypeNullability typeNullability = resultType.getNullability();
+    TypeNullability typeNullability = JavaTypeNullabilityUtil.getValueNullability(resultType);
     if (typeNullability.equals(TypeNullability.UNKNOWN)) return null;
     Nullability fromType = typeNullability.nullability();
     if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
@@ -345,7 +352,7 @@ public final class DfaPsiUtil {
         return nullability.nullability();
       }
     }
-    return type.getNullability().nullability();
+    return JavaTypeNullabilityUtil.getValueNullability(type).nullability();
   }
 
   public static @NotNull Nullability getTypeNullability(@Nullable PsiType type) {

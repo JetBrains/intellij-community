@@ -337,6 +337,28 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true);
   }
 
+  public void testJSpecifyUnspecifiedBoundDereference() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyUnspecifiedSameTypeVariableArgument() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  private void addNullnessUnspecified() {
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
+  }
+
   public void testFlowMethodTests() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);

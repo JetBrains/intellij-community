@@ -108,4 +108,9 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
   public boolean canAnnotateLocals() {
     return false;
   }
+
+  @Override
+  public boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation) {
+    return NULLNESS_UNKNOWN.equals(annotation.getQualifiedName());
+  }
 }

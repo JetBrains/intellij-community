@@ -220,6 +220,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return support == null || support.canAnnotateLocals();
   }
 
+  @Override
+  public boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation) {
+    return ContainerUtil.exists(myAnnotationSupports, support -> support.shouldGoThroughUnspecifiedNullnessAnnotation(annotation));
+  }
+
   private @Nullable AnnotationPackageSupport findAnnotationSupport(String name) {
     AnnotationPackageSupport support = myDefaultUnknowns.get(name);
     if (support == null) {

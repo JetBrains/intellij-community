@@ -158,7 +158,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = false;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
-  @SuppressWarnings("WeakerAccess") public boolean REPORT_UNSPECIFIED_BOUND_CONFLICTS = false;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -189,7 +188,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
-          "REPORT_UNSPECIFIED_BOUND_CONFLICTS".equals(name) && "false".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -711,8 +709,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     JavaTypeNullabilityUtil.NullabilityConflictContext
       context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, declaredExpectedType, actualType,
                                                                            new JavaTypeNullabilityUtil.NullabilityConflictOptions(
-                                                                             REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS,
-                                                                             REPORT_UNSPECIFIED_BOUND_CONFLICTS)
+                                                                             REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS)
                                                                            );
     JavaTypeNullabilityUtil.NullabilityConflict conflict = context.nullabilityConflict();
     String messageKey = switch (conflict) {

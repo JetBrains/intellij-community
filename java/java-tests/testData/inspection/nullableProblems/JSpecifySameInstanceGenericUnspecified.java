@@ -3,7 +3,7 @@ import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
-class JSpecifySameInstanceGenericOptionOn {
+class JSpecifySameInstanceGenericUnspecified {
   interface Box<E extends @Nullable Object> {}
 
   interface Source<V extends @Nullable Object> {
@@ -16,7 +16,7 @@ class JSpecifySameInstanceGenericOptionOn {
     void acceptNullable(Box<@Nullable V> box);
 
     default void use() {
-      // NOT_NULL expected, unspecified actual that hides a @Nullable bound: reported only with the option on
+      // NOT_NULL expected, unspecified actual that hides a @Nullable bound
       acceptNonNull(<warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">createUnspec()</warning>);
 
       // both nullable, but one nullability comes from the bound: always reported (COMPLEX)
