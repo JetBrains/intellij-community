@@ -130,11 +130,13 @@ object PyTypeInferenceCspFactory {
       return temporarySubstitutions // early exit in case of recursion
     }
 
-    val nonTempContext = if (context is TypeEvalContextImpl.TemporaryContext) context.myParent else context
+    // Use a CSP-shared TemporaryContext to avoid pollution of original context with intermediate results
+    val tmpContext = context as? TypeEvalContextImpl.TemporaryContext ?: TypeEvalContextImpl.TemporaryContext(context, true)
+    val nonTmpContext = if (context is TypeEvalContextImpl.TemporaryContext) context.myParent else context
 
     val builder =
       recursionGuard.computePreventingRecursion<CspBuilder?, Throwable>(topCsp.expression, false) {
-        buildAndSolveCsp(topCsp, nonTempContext)
+        buildAndSolveCsp(topCsp, tmpContext)
       } // returns also null in case of recursion
 
     val solution = builder?.getSolution()
@@ -149,19 +151,17 @@ object PyTypeInferenceCspFactory {
       val nestedInstantiations = solution.instantiations[nestedSi] ?: emptyMap()
       val solvedSubstitutions = substitutions.addToCopy(nestedInstantiations)
       val simplifiedSubstitutions = solvedSubstitutions.simplify(context)
-      nonTempContext.putSubstitutions(nestedSi, simplifiedSubstitutions)
+      nonTmpContext.putSubstitutions(nestedSi, simplifiedSubstitutions)
     }
 
-    return nonTempContext.getKnownSubstitutions(si)
+    return nonTmpContext.getKnownSubstitutions(si)
   }
 
   // TODO: wrong parameter mapping passed by testExplicitlyParameterizedGenericConstructorCall: self missing?
 
 
-  private fun buildAndSolveCsp(si: SubstitutionsIdentifier, nonTempContext: TypeEvalContextImpl) : CspBuilder? {
+  private fun buildAndSolveCsp(si: SubstitutionsIdentifier, tmpContext: TypeEvalContextImpl) : CspBuilder? {
     try {
-      // Use TemporaryContext to avoid pollution of original context with intermediate results
-      val tmpContext = TypeEvalContextImpl.TemporaryContext(nonTempContext, true)
       val builder = CspBuilder(tmpContext)
       val returnType = when (si.expression) {
         is PyCallExpression -> buildCallSiteExpressionCsp(si, builder, tmpContext)
