@@ -17,6 +17,7 @@ import icons.CollaborationToolsIcons
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JCheckBox
@@ -182,6 +183,15 @@ internal class CodeReviewProgressRendererComponent(
     commentIconLabel.text = state.discussionsCount.toString()
 
     return commentIconLabel
+  }
+
+  /**
+   * @see [com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer.paintComponent]
+   */
+  override fun paintComponent(g: Graphics?) {
+    if (isOpaque) {
+      super.paintComponent(g)
+    }
   }
 
   companion object {
