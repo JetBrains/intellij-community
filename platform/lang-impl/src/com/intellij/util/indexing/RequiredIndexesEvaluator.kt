@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.search.FileTypeIndex
@@ -70,8 +71,8 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     return HintAwareIndexList(sure, unsure)
   }
 
-  private class HintAwareIndexList(private val sureIndexIds: List<ID<*, *>>,
-                                   private val unsureIndexIds: List<Pair<ID<*, *>, IndexedFilePredicate>>) {
+  private inner class HintAwareIndexList(private val sureIndexIds: List<ID<*, *>>,
+                                         private val unsureIndexIds: List<Pair<ID<*, *>, IndexedFilePredicate>>) {
     fun getRequiredIndexes(indexedFile: IndexedFile): List<ID<*, *>> {
       if (unsureIndexIds.isEmpty()) return sureIndexIds
 
@@ -82,7 +83,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       //FileBasedIndexImpl.LOG.assertTrue(indexedFile.project != null, "Should not index files from unknown project")
       val acceptedCandidates: MutableList<ID<*, *>> = ArrayList(sureIndexIds)
       for ((indexId, filter) in unsureIndexIds) {
-        if (filter.test(indexedFile)) {
+        if (acceptsInputSafely(indexId, filter, indexedFile)) {
           acceptedCandidates.add(indexId)
         }
       }
@@ -98,6 +99,31 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
 
   private val indexesForFileType: MutableMap<FileType, HintAwareIndexList> = ConcurrentHashMap()
   private val indexesForDirectories: HintAwareIndexList = indexesForDirectories(registeredIndexes.indicesForDirectories)
+
+  /**
+   * Indexes whose input filter has already been reported as broken: each one is reported only once, to not flood the log.
+   */
+  private val brokenInputFiltersReported: MutableSet<ID<*, *>> = ConcurrentHashMap.newKeySet()
+
+  /**
+   * Asks the index's input filter if it accepts the file, tolerating a filter that fails.
+   * A filter is a plugin's code, and it can throw anything.
+   *
+   * @return true if the index accepts the file, false if it doesn't -- or if we can't tell because the filter failed
+   */
+  private fun acceptsInputSafely(indexId: ID<*, *>, filter: Predicate<IndexedFile>, indexedFile: IndexedFile): Boolean =
+    runCatching {
+      filter.test(indexedFile)
+    }.getOrHandleException { t ->
+      val message = "Index '${indexId.name}': input filter failed on '${indexedFile.fileName}', the index is skipped for this file"
+      if (brokenInputFiltersReported.add(indexId)) {
+        LOG.error("$message. Files will keep being skipped by this index, but this is reported only once", t)
+      }
+      else {
+        LOG.debug(t) { message }
+      }
+    } ?: false
+
   private fun getState(): IndexConfiguration = registeredIndexes.configurationState
   private fun getInputFilter(indexId: ID<*, *>): FileBasedIndex.InputFilter = getState().getInputFilter(indexId)
 
