@@ -9,6 +9,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -18,6 +20,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PRIVATE
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PUBLIC
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.builtins.StandardNames.EQUALS_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.TO_STRING_NAME
@@ -81,7 +93,8 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
     override fun createQuickFix(element: KtNamedFunction, context: Unit): KotlinModCommandQuickFix<KtNamedFunction> =
         RedundantOverrideFix
 
-    override fun KaSession.prepareContext(element: KtNamedFunction): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtNamedFunction): Unit? {
         val symbol = element.symbol
         val qualifiedExpression = element.qualifiedExpression()
         val superCallElement = qualifiedExpression?.selectorExpression as? KtCallElement ?: return null
@@ -172,7 +185,8 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
         return function.name == superCallMethodName
     }
 
-    private fun KaSession.hasDerivedProperty(function: KtNamedFunction, functionSymbol: KaFunctionSymbol): Boolean {
+    context(session: KaSession)
+    private fun hasDerivedProperty(function: KtNamedFunction, functionSymbol: KaFunctionSymbol): Boolean {
         val functionName = function.nameAsName ?: return false
         if (!canBePropertyAccessor(functionName.asString())) return false
         val functionType = functionSymbol.returnType
@@ -191,7 +205,8 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
         }
     }
 
-    private fun KaSession.isAmbiguouslyDerived(
+    context(session: KaSession)
+    private fun isAmbiguouslyDerived(
         allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
     ): Boolean {
         // less than 2 functions
@@ -217,7 +232,8 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
      * Members from interfaces implemented by delegation and their super interfaces are affected.
      * Explicit overrides in this case replace the overrides from delegation and are not unused.
      */
-    private fun KaSession.isOverridingDelegatedImplementation(
+    context(session: KaSession)
+    private fun isOverridingDelegatedImplementation(
         function: KtNamedFunction,
         allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
     ): Boolean {

@@ -9,6 +9,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -46,7 +47,8 @@ class ReplaceInvokeIntention : KotlinApplicableModCommandAction<KtDotQualifiedEx
                 selectorExpression.typeArgumentList == null
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val resolvedCall = element.callExpression?.referenceExpression()?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
 

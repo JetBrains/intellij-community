@@ -12,7 +12,11 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -39,7 +43,8 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
 
     data class Context(val replacementOperator: String, val messageKey: String, val messageParam: String?)
 
-    override fun KaSession.prepareContext(element: KtElement): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtElement): Context? {
         if (!isAvailable(element)) return null
         return determineContextFromElement(element as? KtExpression ?: return null)
     }
@@ -61,13 +66,15 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.isAvailable(element: KtElement): Boolean =
+    context(session: KaSession)
+    private fun isAvailable(element: KtElement): Boolean =
         //checks if the reference expressions are used in the range
         (element as? KtBinaryExpression)?.let { it.left is KtNameReferenceExpression || it.right is KtNameReferenceExpression } == true ||
                 element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXPERIMENTAL_CHECKERS).any { it is KaFirDiagnostic.EmptyRange }
 
 
-    private fun KaSession.determineContextFromElement(element: KtExpression): Context? {
+    context(session: KaSession)
+    private fun determineContextFromElement(element: KtExpression): Context? {
         val rangeType = getRangeBinaryExpressionType(element) ?: return null
         val (start, end) = getComparableArguments<Comparable<Any>>(element) ?: return null
         val isIterable = element.expressionType?.isSubtypeOf(StandardClassIds.Iterable) == true
@@ -92,7 +99,8 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
         else Context("", "this.range.is.empty", null)
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> KaSession.getComparableArguments(element: KtExpression): Pair<T, T>? where T : Comparable<T> {
+    context(session: KaSession)
+    private fun <T> getComparableArguments(element: KtExpression): Pair<T, T>? where T : Comparable<T> {
         val (left, right) = getRangeArguments(element) ?: return null
         
         fun KtExpression.normalizedValue(): T? = when (this) {

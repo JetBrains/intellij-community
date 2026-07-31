@@ -41,7 +41,8 @@ class EvaluateCompileTimeExpressionIntention : KotlinApplicableModCommandAction<
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("evaluate.compile.time.expression")
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): String? {
         val expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(element.language)
         val value = expressionEvaluator.computeConstantExpression(element, false) ?: return null
         return when (value) {

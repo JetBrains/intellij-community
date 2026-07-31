@@ -34,7 +34,8 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
         return Presentation.of(actionName)
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): DemorgansLawUtils.Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): DemorgansLawUtils.Context? {
         val operands = getOperandsIfAllBoolean(element) ?: return null
         return DemorgansLawUtils.prepareContext(operands)
     }

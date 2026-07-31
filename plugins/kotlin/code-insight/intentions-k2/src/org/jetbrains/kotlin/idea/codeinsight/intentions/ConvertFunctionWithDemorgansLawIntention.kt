@@ -9,10 +9,14 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isBooleanType
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -74,7 +78,8 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return Presentation.of(KotlinBundle.message("replace.0.with.1", fromFunctionName, toFunctionName))
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =

@@ -63,7 +63,8 @@ class AddNameToArgumentIntention :
                 element == argumentList.arguments.last { !it.isNamed() }
     }
 
-    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): Context? {
         if (element.getArgumentExpression()?.hasMixingDiagnosticsPresent() == true) return null
         return getStableNameFor(element)?.let { Context(it) }
     }

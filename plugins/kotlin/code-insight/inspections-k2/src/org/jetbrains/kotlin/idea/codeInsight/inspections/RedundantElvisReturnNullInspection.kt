@@ -8,6 +8,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.targetSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -58,7 +61,8 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
         return isTargetOfReturn && element.operationToken == KtTokens.ELVIS
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         val outerReturn = element.getStrictParentOfType<KtReturnExpression>() ?: return null
         val innerReturn = element.right as? KtReturnExpression ?: return null
 

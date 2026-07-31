@@ -37,11 +37,12 @@ internal class MapAwaitOnCollectionOfDeferredInspection : KotlinApplicableInspec
         visitTargetElement(callExpression, holder, isOnTheFly)
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
-        if (!isIterableMapFunctionCall(element)) return null
-        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Deferred.await)) return null
+        if (!session.isIterableMapFunctionCall(element)) return null
+        if (!session.isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Deferred.await)) return null
 
         return Unit
     }

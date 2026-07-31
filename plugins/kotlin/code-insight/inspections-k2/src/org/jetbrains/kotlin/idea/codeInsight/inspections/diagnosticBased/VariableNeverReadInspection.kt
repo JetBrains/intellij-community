@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -22,7 +23,8 @@ import org.jetbrains.kotlin.psi.namedDeclarationVisitor
 internal class VariableNeverReadInspection : KotlinApplicableInspectionBase<KtNamedDeclaration, Unit>() {
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtNamedDeclaration): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtNamedDeclaration): Unit? {
         return element
             .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .any { it is KaFirDiagnostic.VariableNeverRead }.asUnit

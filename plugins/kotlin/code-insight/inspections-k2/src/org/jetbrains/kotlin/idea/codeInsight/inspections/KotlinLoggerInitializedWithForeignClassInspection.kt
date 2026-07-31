@@ -19,6 +19,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.siyeh.ig.BaseInspection
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -106,7 +107,8 @@ internal class KotlinLoggerInitializedWithForeignClassInspection :
         return listOf(TextRange.from(classLiteral.textRange.startOffset - element.textRange.startOffset, classLiteral.textLength))
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val (_, classLiteralName, containingClassName) = element.foreignClassLiteral() ?: return null
 
         val callee = element.calleeExpression ?: return null

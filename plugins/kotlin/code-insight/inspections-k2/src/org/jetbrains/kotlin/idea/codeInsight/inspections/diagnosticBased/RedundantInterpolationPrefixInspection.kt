@@ -38,7 +38,8 @@ internal class RedundantInterpolationPrefixInspection :
         }
     }
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.RedundantInterpolationPrefix
     ): Unit = Unit

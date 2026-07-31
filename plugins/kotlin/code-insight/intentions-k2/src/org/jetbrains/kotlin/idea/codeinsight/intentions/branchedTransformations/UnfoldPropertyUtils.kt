@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -15,7 +17,8 @@ object UnfoldPropertyUtils {
     class Context(val propertyExplicitType: String?)
 
     @OptIn(KaExperimentalApi::class)
-    internal fun KaSession.prepareUnfoldPropertyContext(element: KtProperty): Context? {
+    context(session: KaSession)
+    internal fun prepareUnfoldPropertyContext(element: KtProperty): Context? {
         val initializer = element.initializer ?: return null
 
         if (element.typeReference != null) return Context(null)

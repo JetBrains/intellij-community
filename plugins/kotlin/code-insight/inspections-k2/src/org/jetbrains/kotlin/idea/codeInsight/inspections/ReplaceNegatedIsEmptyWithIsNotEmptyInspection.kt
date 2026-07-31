@@ -35,7 +35,8 @@ internal class ReplaceNegatedIsEmptyWithIsNotEmptyInspection :
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
         element.operationToken == KtTokens.EXCL
 
-    override fun KaSession.prepareContext(element: KtPrefixExpression): Pair<String, String>? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtPrefixExpression): Pair<String, String>? {
         val base = element.baseExpression?.let { KtPsiUtil.deparenthesize(it) } ?: return null
         val from = base.calleeText() ?: return null
 

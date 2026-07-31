@@ -10,6 +10,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -41,7 +43,8 @@ internal class DuplicateArgumentsInSetOfAndMapOfFunctionsInspection :
         return functionName in mapFunctionNames || functionName in setFunctionNames
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val duplicates = getDuplicateArguments(element).ifEmpty { return null }
         return Context(duplicates)
     }
@@ -85,7 +88,8 @@ internal class DuplicateArgumentsInSetOfAndMapOfFunctionsInspection :
         }
     }
 
-    private fun KaSession.getDuplicateArguments(element: KtCallExpression): Map<Any?, List<SmartPsiElementPointer<KtExpression>>> {
+    context(session: KaSession)
+    private fun getDuplicateArguments(element: KtCallExpression): Map<Any?, List<SmartPsiElementPointer<KtExpression>>> {
         val callableId = element.resolveToCall()
             ?.singleFunctionCallOrNull()
             ?.symbol

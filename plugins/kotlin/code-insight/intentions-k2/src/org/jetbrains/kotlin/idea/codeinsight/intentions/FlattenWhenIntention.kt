@@ -44,7 +44,8 @@ internal class FlattenWhenIntention : KotlinApplicableModCommandAction<KtWhenExp
         return KtPsiUtil.checkWhenExpressionHasSingleElse(element)
     }
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): Unit? {
         val subject = element.subjectExpression
 
         val elseEntry = element.entries.singleOrNull { it.isElse } ?: return null

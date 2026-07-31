@@ -7,8 +7,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasOrOverridesCallableId
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -16,8 +19,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
+import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -50,7 +53,8 @@ internal class NullableHashCodeInspection : KotlinApplicableInspectionBase.Simpl
         return element.getHashCodeSafeQualifiedExpression() != null
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         val safeQualifiedExpression = element.getHashCodeSafeQualifiedExpression() ?: return null
         val receiverType = safeQualifiedExpression.receiverExpression.expressionType ?: return null
         if (!receiverType.isNullable) return null

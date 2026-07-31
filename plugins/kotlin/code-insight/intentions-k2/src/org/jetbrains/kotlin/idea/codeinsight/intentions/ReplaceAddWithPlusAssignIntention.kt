@@ -6,9 +6,13 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -34,7 +38,8 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         element.callExpression?.valueArguments?.size == 1 && element.calleeName in setOf("add", "addAll")
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (element.isUsedAsExpression) return null
 
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null

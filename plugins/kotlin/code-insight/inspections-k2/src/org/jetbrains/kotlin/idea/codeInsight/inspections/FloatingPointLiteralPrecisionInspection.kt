@@ -7,6 +7,8 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isFloatType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -51,7 +53,8 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
         context: String
     ): KotlinModCommandQuickFix<KtConstantExpression> = FloatingPointLiteralPrecisionQuickFix(context)
 
-    override fun KaSession.prepareContext(element: KtConstantExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtConstantExpression): String? {
         if (element.elementType == KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)) {
             val isFloat = element.expressionType?.isFloatType == true
             val uppercaseSuffix = isFloat && element.text?.endsWith('F') == true

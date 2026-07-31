@@ -8,8 +8,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -43,7 +49,8 @@ internal class SelfReferenceConstructorParameterInspection :
     ): @InspectionMessage String = KotlinBundle.message("constructor.has.non.null.self.reference.parameter")
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtPrimaryConstructor): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtPrimaryConstructor): Context? {
         val parameterList = element.valueParameterList ?: return null
         val containingClass = parameterList.containingClass() ?: return null
         val classSymbol = containingClass.symbol
@@ -84,7 +91,8 @@ internal class SelfReferenceConstructorParameterInspection :
     }
 }
 
-private fun KaSession.isSelfReferenceParameter(
+context(session: KaSession)
+private fun isSelfReferenceParameter(
     parameter: KtParameter,
     classSymbol: KaDeclarationSymbol,
 ): Boolean = parameter.typeReference?.type?.symbol == classSymbol

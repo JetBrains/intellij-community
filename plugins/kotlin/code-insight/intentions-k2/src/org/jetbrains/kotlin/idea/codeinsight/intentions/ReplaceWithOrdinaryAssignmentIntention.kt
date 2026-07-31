@@ -37,7 +37,8 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.operationReference }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
 
     @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     private fun isApplicableTo(element: KtBinaryExpression): Boolean {

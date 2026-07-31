@@ -80,7 +80,8 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return null
         val receiver = element.receiverExpression

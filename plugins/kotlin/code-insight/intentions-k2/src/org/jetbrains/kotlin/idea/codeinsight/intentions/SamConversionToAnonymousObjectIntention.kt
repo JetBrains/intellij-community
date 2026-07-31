@@ -9,9 +9,15 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -43,7 +49,8 @@ internal class SamConversionToAnonymousObjectIntention :
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    override fun KaSession.prepareContext(element: KtCallExpression): SamConversionToAnonymousObjectContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): SamConversionToAnonymousObjectContext? {
         val lambda = element.getLambdaExpressionForSamConversion() ?: return null
         val functionLiteral = lambda.functionLiteral
 
@@ -98,7 +105,8 @@ private fun KaClassType.getInterfaceName(): String =
     (abbreviation ?: this).classId.asSingleFqName().render()
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.computeTypeArguments(
+context(session: KaSession)
+private fun computeTypeArguments(
     element: KtCallExpression,
     callType: KaClassType,
     classSymbol: KaNamedClassSymbol,

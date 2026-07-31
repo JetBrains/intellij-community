@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import kotlin.collections.get
 
 internal class ReplaceAssertBooleanWithAssertEqualityInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, ReplaceAssertBooleanWithAssertEqualityInspection.Context>() {
@@ -48,8 +47,9 @@ internal class ReplaceAssertBooleanWithAssertEqualityInspection :
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.extractAssertionInfo() != null
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
-        val assertionInfo = element.extractAssertionInfo(analysisSession = this) ?: return null
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
+        val assertionInfo = element.extractAssertionInfo(analysisSession = session) ?: return null
         val replacementAssertion = assertionMap[assertionInfo] ?: return null
 
         return Context(replacementAssertion)

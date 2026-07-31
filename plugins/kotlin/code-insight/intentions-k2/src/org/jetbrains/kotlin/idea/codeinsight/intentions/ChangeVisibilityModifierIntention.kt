@@ -13,23 +13,26 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Internal
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Private
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Protected
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Public
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeInternal
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePrivate
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeProtected
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePublic
 import org.jetbrains.kotlin.idea.codeinsight.utils.setVisibility
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Internal
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Private
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Protected
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntention.Public
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -131,7 +134,8 @@ sealed class ChangeVisibilityModifierIntention(
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtDeclaration): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDeclaration): Unit? {
         // Skip the visibility-change intention when there is an [EXPLICIT_FIELD_VISIBILITY_MUST_BE_LESS_PERMISSIVE],
         // as there are already dedicated quick fixes for that compiler error.
         if (element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

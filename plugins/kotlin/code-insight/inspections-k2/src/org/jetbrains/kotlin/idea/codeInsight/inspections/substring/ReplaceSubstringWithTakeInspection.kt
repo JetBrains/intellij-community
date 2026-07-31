@@ -7,11 +7,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -32,7 +35,8 @@ internal class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection()
         return !isAccessedOnSameReceiver(secondArg, element.receiverExpression)
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!prepareContextBase(element)) return null
         if (!isFirstArgumentZero(element)) return null
         val leftType = element.receiverExpression.expressionType
@@ -41,7 +45,8 @@ internal class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection()
         return Unit
     }
 
-    private fun KaSession.getNextCallReceiverType(element: KtDotQualifiedExpression): KaType? {
+    context(session: KaSession)
+    private fun getNextCallReceiverType(element: KtDotQualifiedExpression): KaType? {
         // take() consumes `CharSequence`/`String` and returns `CharSequence`/`String` as well;
         // we should not break the call chain if the following call receiver is not `CharSequence`/`String`
         val next =

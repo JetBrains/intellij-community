@@ -22,12 +22,16 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -72,7 +76,8 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Context? {
         val prefix = element.getPrefix() ?: return null
         val parentBinary = element as? KtBinaryExpression
         if (isUsedAsExpression(prefix, parentBinary)) return null
@@ -89,7 +94,8 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
         return Context(addMoveUnaryOperatorFix)
     }
 
-    private fun KaSession.isAddMoveUnaryOperatorFixNeeded(element: KtExpression, prefix: KtPrefixExpression): Boolean {
+    context(session: KaSession)
+    private fun isAddMoveUnaryOperatorFixNeeded(element: KtExpression, prefix: KtPrefixExpression): Boolean {
         val prevLeaf = element.getPrevLeafIgnoringWhitespaceAndComments() ?: return false
         val prevOperandExpression = prevLeaf.getStrictParentOfType<KtExpression>() ?: return false
         val prevOperandType = prevOperandExpression.expressionType ?: return false

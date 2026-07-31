@@ -20,7 +20,8 @@ internal class ConvertVariableAssignmentToExpressionIntention : KotlinApplicable
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         element.operationToken == KtTokens.EQ
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit = Unit
 
     override fun invoke(
         actionContext: ActionContext,

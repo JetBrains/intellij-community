@@ -21,15 +21,16 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.isNothingType
 import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.types.restore
@@ -87,7 +88,7 @@ internal class ConvertFunctionToPropertyIntention :
         element: KtNamedFunction
     ): ModCommand {
         val elementContext = analyze(element) {
-            useSiteSession.prepareContext(element)
+            prepareContext(element)
         } ?: return ModCommand.nop()
         return ModCommand
             .showConflicts(elementContext.conflicts)
@@ -138,7 +139,8 @@ private fun KtNamedFunction.getPropertyName(): String? {
     return (propertyNameByGetMethodName(functionName) ?: functionName).toString()
 }
 
-private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
+context(session: KaSession)
+private fun prepareContext(element: KtNamedFunction): Context? {
     val propertyName = element.getPropertyName() ?: return null
     val newGetterName = JvmAbi.getterName(propertyName)
 
@@ -146,7 +148,7 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
     val elementsToChange = ElementsToChange()
 
     val functionSymbol = element.symbol
-    val affectedCallablesWithSelf = getAffectedCallables(functionSymbol)
+    val affectedCallablesWithSelf = session.getAffectedCallables(functionSymbol)
 
     val conflictCheckContext = ConflictCheckContext(
         conflicts = conflicts,
@@ -325,7 +327,8 @@ private fun checkValueArgumentsNotEmpty(callElement: KtCallElement, conflicts: M
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.addConflictIfSamePropertyFound(
+context(session: KaSession)
+private fun addConflictIfSamePropertyFound(
     affectedCallable: PsiNamedElement,
     initialElementFunctionSymbol: KaCallableSymbol,
     context: ConflictCheckContext

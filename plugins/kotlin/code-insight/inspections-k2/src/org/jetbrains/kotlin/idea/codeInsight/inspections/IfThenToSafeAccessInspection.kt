@@ -50,7 +50,8 @@ internal class IfThenToSafeAccessInspection :
         return condition !is KtIsExpression || condition.typeReference != null
     }
 
-    override fun KaSession.prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
         val data = IfThenTransformationUtils.buildTransformationData(element) ?: return null
         // there are no usages of expression, except possibly at nested levels, which are currently not supported
         if (data.checkedExpression !is KtThisExpression && IfThenTransformationUtils.collectCheckedExpressionUsages(data).isEmpty()) return null

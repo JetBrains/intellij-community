@@ -5,21 +5,23 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.ReturnsToReplace
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.computeReturnsToReplace
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.replaceReturnsWithContinue
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.suggestLoopName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.computeReturnsToReplace
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.suggestLoopName
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.ReturnsToReplace
-import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.replaceReturnsWithContinue
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -39,7 +41,6 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.name.render
 
 private val FOR_EACH_NAME: Name = Name.identifier("forEach")
 
@@ -86,7 +87,8 @@ internal class ConvertForEachToForLoopIntention
     private fun KtCallExpression.getSingleLambdaArgument(): KtLambdaExpression? =
         valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
         if (element.isUsedAsExpression) return null
 

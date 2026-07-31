@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -38,7 +38,8 @@ internal class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringIn
         return arg is KtDotQualifiedExpression && isMethodCall(arg.callExpression, "indexOf")
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!resolvesToMethod(element, "kotlin.text.substring")) return null
 
         val arguments = element.callExpression?.valueArguments ?: return null
@@ -102,7 +103,8 @@ internal class ReplaceSubstringWithSubstringBeforeInspection : ReplaceSubstringI
                 (secondArg.callExpression?.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() == "indexOf"
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (!resolvesToMethod(element, "kotlin.text.substring")) return null
         val arguments = element.callExpression?.valueArguments ?: return null
         if (arguments.size != 2) return null

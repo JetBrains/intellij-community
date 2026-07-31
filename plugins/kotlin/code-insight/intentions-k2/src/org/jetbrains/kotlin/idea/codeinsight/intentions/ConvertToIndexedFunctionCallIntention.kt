@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -55,7 +56,8 @@ internal class ConvertToIndexedFunctionCallIntention :
             .firstOrNull()
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val callee = element.calleeExpression ?: return null
         val (functionFqName, newFunctionName) = functions[callee.text] ?: return null
 

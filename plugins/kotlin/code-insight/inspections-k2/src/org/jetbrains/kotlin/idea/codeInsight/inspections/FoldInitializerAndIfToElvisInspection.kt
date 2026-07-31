@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -46,7 +45,8 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         return prepareData(element, enforceNonNullableTypeIfPossible = true)
     }
 

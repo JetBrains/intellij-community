@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -38,7 +39,8 @@ internal class ReplaceRangeStartEndInclusiveWithFirstLastInspection : KotlinAppl
         return selectorExpression.text == START || selectorExpression.text == END_INCLUSIVE
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val receiverType = element.receiverExpression.expressionType as? KaClassType ?: return null
         val classSymbol = receiverType.symbol as? KaClassSymbol ?: return null
         return classSymbol.isRange().asUnit

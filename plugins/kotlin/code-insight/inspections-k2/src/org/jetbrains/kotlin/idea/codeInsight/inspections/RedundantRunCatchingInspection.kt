@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -59,7 +60,8 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
         return lambdaArgument?.anyDescendantOfType<KtReturnExpression>() != true
     }
 
-    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val firstCalleeCall = callChainExpressions.firstCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val secondCalleeCall = callChainExpressions.secondCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null

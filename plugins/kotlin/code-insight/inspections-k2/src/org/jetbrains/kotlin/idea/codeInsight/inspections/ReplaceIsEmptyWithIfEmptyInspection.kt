@@ -13,8 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -123,7 +125,8 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
-    override fun KaSession.prepareContext(element: KtIfExpression): Replacement? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression): Replacement? {
         if (element.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
         if (element.node.elementType == KtNodeTypes.ELSE) return null
         val thenExpression = element.then ?: return null

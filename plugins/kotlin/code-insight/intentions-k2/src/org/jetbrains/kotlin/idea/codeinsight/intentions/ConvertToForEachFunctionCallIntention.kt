@@ -10,10 +10,12 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -78,7 +80,8 @@ internal class ConvertToForEachFunctionCallIntention :
 
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtForExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtForExpression): Unit? {
         val loopRange = element.loopRange ?: return null
 
         val callExpression = loopRange.getPossiblyQualifiedCallExpression()

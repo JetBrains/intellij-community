@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.name.render
 
 internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<KtExpression, ImplicitReceiverInfo>() {
 
@@ -54,7 +54,8 @@ internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): ImplicitReceiverInfo? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): ImplicitReceiverInfo? {
         return element.getImplicitReceiverInfo()
     }
 

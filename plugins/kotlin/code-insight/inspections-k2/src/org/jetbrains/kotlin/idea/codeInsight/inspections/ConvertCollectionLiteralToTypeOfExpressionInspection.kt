@@ -10,11 +10,17 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -60,7 +66,8 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
     override fun getApplicableRanges(element: KtCollectionLiteralExpression) = ApplicabilityRange.self(element)
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtCollectionLiteralExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCollectionLiteralExpression): Context? {
         if (element.directDiagnostics(filter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()) return null
         val classSymbol = findClassSymbolForLiteral(element) ?: return null
         val className = classSymbol.name.asString()
@@ -99,7 +106,8 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.findClassSymbolForLiteral(element: KtCollectionLiteralExpression): KaNamedClassSymbol? {
+    context(session: KaSession)
+    private fun findClassSymbolForLiteral(element: KtCollectionLiteralExpression): KaNamedClassSymbol? {
         val resolvedSymbol = element.resolveSymbol()
         if (resolvedSymbol != null && resolvedSymbol.name.asString() == "of" && resolvedSymbol.isOperator) {
             val companion = resolvedSymbol.containingSymbol as? KaClassSymbol

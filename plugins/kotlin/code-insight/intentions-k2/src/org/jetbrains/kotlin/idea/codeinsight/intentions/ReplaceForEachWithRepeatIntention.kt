@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -69,7 +70,8 @@ internal class ReplaceForEachWithRepeatIntention :
         return lambda.bodyExpression != null && lambda.valueParameters.size <= 1
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val callee = element.calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return null
         if (callee.callableId !in FOR_EACH_CALLABLE_IDS) return null
 

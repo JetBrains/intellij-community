@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -43,7 +45,8 @@ internal class RemoveEmptyParenthesesFromAnnotationEntryInspection : KotlinAppli
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtValueArgumentList): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgumentList): Unit? {
         val annotationEntry = element.parent as? KtAnnotationEntry ?: return null
         val annotationClassSymbol = annotationEntry.typeReference?.type?.symbol as? KaClassSymbol ?: return null
 

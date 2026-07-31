@@ -12,9 +12,12 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -47,7 +50,8 @@ class Fastjson2MissingKotlinReflectInspection :
         visitTargetElement(expression, holder, isOnTheFly)
     }
 
-    override fun KaSession.prepareContext(
+    context(session: KaSession)
+    override fun prepareContext(
         element: KtCallExpression,
     ): Context? {
         val symbol = element.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -59,7 +58,8 @@ class UnsafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtB
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit = Unit
 
     override fun buildVisitor(
       holder: ProblemsHolder,

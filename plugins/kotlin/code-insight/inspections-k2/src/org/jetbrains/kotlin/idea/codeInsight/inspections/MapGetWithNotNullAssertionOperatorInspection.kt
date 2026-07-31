@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -49,7 +50,8 @@ class MapGetWithNotNullAssertionOperatorInspection : KotlinApplicableInspectionB
     override fun isApplicableByPsi(element: KtPostfixExpression): Boolean =
         element.operationToken == KtTokens.EXCLEXCL && element.getReplacementData() != null
 
-    override fun KaSession.prepareContext(element: KtPostfixExpression): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtPostfixExpression): Unit? =
         (element.baseExpression
             ?.resolveToCall()
             ?.successfulFunctionCallOrNull()

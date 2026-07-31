@@ -8,13 +8,17 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantRequireNotNullCallInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantRequireNotNullCallInspection.Context
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -42,7 +46,8 @@ internal class RedundantRequireNotNullCallInspection : KotlinApplicableInspectio
                 functionName == CHECK_NOT_NULL_FUNCTION_NAME
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         if (!validateFunctionCall(element)) return null
         val functionName = getFunctionName(element) ?: return null
         val argument = extractArgument(element) ?: return null
@@ -94,7 +99,8 @@ private fun extractArgument(element: KtCallExpression): KtReferenceExpression? =
 private fun getFunctionName(element: KtCallExpression): String? =
     element.calleeExpression?.text
 
-private fun KaSession.validateFunctionCall(element: KtCallExpression): Boolean {
+context(session: KaSession)
+private fun validateFunctionCall(element: KtCallExpression): Boolean {
     val call = element.resolveToCall() ?: return false
     val callableFqName = call.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?: return false
     return callableFqName == REQUIRE_NOT_NULL_FQ_NAME ||

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -36,7 +37,8 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
-    override fun KaSession.prepareContext(element: KtValueArgumentList): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgumentList): Unit? =
         ((element.parent as? KtCallExpression)
             ?.resolveToCall() is KaSuccessCallInfo)
             .asUnit

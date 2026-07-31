@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.isBooleanType
@@ -44,7 +43,8 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.boolean.const.to.elvis")
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         if (element.operationToken != KtTokens.EQEQ && element.operationToken != KtTokens.EXCLEQ) return null
         val lhs = element.left ?: return null
         val rhs = element.right ?: return null

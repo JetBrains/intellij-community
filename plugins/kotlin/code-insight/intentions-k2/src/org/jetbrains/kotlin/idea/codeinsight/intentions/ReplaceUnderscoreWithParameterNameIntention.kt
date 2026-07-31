@@ -5,10 +5,17 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
@@ -33,7 +40,8 @@ internal class ReplaceUnderscoreWithParameterNameIntention :
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =
         element.name == "_" && (element is KtDestructuringDeclarationEntry || element is KtParameter)
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableDeclaration): String? {
         val validator = KotlinNameValidatorProvider.getInstance().createNameValidator(
             container = element.parent?.parent ?: element,
             target = KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
@@ -59,7 +67,8 @@ internal class ReplaceUnderscoreWithParameterNameIntention :
     }
 }
 
-private fun KaSession.dataClassParameterName(declarationEntry: KtDestructuringDeclarationEntry): String? {
+context(session: KaSession)
+private fun dataClassParameterName(declarationEntry: KtDestructuringDeclarationEntry): String? {
     val declaration = declarationEntry.parent as? KtDestructuringDeclaration ?: return null
     val entryIndex = declaration.entries.indexOf(declarationEntry).takeIf { it >= 0 } ?: return null
 
@@ -79,7 +88,8 @@ private fun KaSession.dataClassParameterName(declarationEntry: KtDestructuringDe
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.lambdaParameterName(parameter: KtParameter): String? {
+context(session: KaSession)
+private fun lambdaParameterName(parameter: KtParameter): String? {
     val functionLiteral = parameter.ownerFunction as? KtFunctionLiteral ?: return null
     val parameterIndex = functionLiteral.valueParameters.indexOf(parameter).takeIf { it >= 0 } ?: return null
     val lambdaArgument = functionLiteral.getParentOfType<KtLambdaArgument>(strict = true) ?: return null

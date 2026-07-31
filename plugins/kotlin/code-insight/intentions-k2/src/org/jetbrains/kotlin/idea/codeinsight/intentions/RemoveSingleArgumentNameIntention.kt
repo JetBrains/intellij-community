@@ -59,7 +59,8 @@ internal class RemoveSingleArgumentNameIntention :
         return (element.parent as? KtValueArgumentList)?.parent is KtCallElement
     }
 
-    override fun KaSession.prepareContext(element: KtValueArgument): SingleArgumentContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): SingleArgumentContext? {
         val callElement = element.getStrictParentOfType<KtCallElement>() ?: return null
         val (argumentsThatCanBeUnnamed, vararg, varargIsArrayOfCall) = collectArgumentsContext(callElement) ?: return null
         if (element !in argumentsThatCanBeUnnamed) return null

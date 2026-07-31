@@ -9,6 +9,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -34,7 +36,8 @@ internal class LateinitVarOverridesLateinitVarInspection : KotlinApplicableInspe
     override fun getApplicableRanges(element: KtProperty): List<TextRange> =
         ApplicabilityRanges.declarationName(element)
 
-    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
         val symbol = element.symbol as? KaPropertySymbol ?: return null
         return symbol.allOverriddenSymbols
             .filterIsInstance<KaKotlinPropertySymbol>()

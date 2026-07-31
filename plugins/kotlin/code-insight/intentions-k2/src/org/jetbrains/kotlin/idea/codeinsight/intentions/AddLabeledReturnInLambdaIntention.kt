@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -47,7 +48,8 @@ internal class AddLabeledReturnInLambdaIntention : KotlinApplicableModCommandAct
     ): List<TextRange> =
         listOfNotNull(element.statements.lastOrNull()?.textRangeIn(element))
 
-    override fun KaSession.prepareContext(
+    context(session: KaSession)
+    override fun prepareContext(
         element: KtBlockExpression
     ): Unit? =
         element.statements.lastOrNull().takeIf { it !is KtReturnExpression }?.isUsedAsExpression?.asUnit

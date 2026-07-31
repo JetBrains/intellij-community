@@ -53,5 +53,6 @@ class RemoveUnnecessaryParenthesesInspection : KotlinApplicableInspectionBase.Si
         }
     }
 
-    override fun KaSession.prepareContext(element: KtParenthesizedExpression) {}
+    context(session: KaSession)
+    override fun prepareContext(element: KtParenthesizedExpression) {}
 }

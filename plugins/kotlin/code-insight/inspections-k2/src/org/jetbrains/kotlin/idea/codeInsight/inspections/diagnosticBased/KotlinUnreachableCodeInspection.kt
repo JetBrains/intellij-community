@@ -30,7 +30,8 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
     override val diagnosticType: KClass<KaFirDiagnostic.UnreachableCode>
         get() = KaFirDiagnostic.UnreachableCode::class
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.UnreachableCode
     ): Context? {

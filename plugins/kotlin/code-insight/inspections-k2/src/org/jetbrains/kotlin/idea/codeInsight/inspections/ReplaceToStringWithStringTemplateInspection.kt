@@ -30,7 +30,8 @@ class ReplaceToStringWithStringTemplateInspection : KotlinApplicableInspectionBa
             }
         }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (element.receiverExpression !is KtReferenceExpression) return null
         if (element.parent is KtBlockStringTemplateEntry) return null
         return element.isToString().asUnit

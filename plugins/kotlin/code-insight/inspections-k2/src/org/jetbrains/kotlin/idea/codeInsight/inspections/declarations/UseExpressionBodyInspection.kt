@@ -11,9 +11,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -95,7 +95,8 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatementResult = element.findValueStatement() ?: return null
         val valueStatement = valueStatementResult.statement
         val requireType = valueStatement?.expressionType?.isNothingType == true

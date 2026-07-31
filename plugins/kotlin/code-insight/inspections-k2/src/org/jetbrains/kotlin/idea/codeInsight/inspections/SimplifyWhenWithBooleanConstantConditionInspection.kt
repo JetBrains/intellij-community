@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.SimplifyWhenWithBooleanConstantConditionInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -50,7 +51,8 @@ internal class SimplifyWhenWithBooleanConstantConditionInspection : KotlinApplic
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): Context {
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): Context {
         return Context(element.isUsedAsExpression)
     }
 

@@ -7,9 +7,12 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -63,7 +66,8 @@ internal class ReplaceMapGetOrDefaultInspection :
         return callExpression.arguments() != null
     }
 
-    private fun KaSession.isApplicableByAnalyze(callExpression: KtCallExpression, receiverExpression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isApplicableByAnalyze(callExpression: KtCallExpression, receiverExpression: KtExpression): Boolean {
         val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
         if (call.symbol.getFqNameIfPackageOrNonLocal() != getOrDefaultFqName) return false
         val receiverType = receiverExpression.expressionType as? KaClassType ?: return false
@@ -71,7 +75,8 @@ internal class ReplaceMapGetOrDefaultInspection :
         return lastTypeArgument.type?.isMarkedNullable != true
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.callExpression ?: return null
         val receiverExpression = element.receiverExpression
         if (!isApplicableByAnalyze(callExpression, receiverExpression)) return null

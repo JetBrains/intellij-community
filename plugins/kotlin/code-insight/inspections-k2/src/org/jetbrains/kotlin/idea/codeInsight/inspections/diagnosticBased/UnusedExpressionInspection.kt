@@ -10,8 +10,12 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -28,7 +32,8 @@ internal class UnusedExpressionInspection : KotlinApplicableInspectionBase<KtExp
     @JvmInline
     value class Context(val isQuickFixAvailable: Boolean)
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Context? {
         if (!isAvailable(element)) return null
         return Context(isQuickFixAvailable(element))
     }
@@ -67,12 +72,14 @@ internal class UnusedExpressionInspection : KotlinApplicableInspectionBase<KtExp
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.isAvailable(element: KtExpression): Boolean =
+context(session: KaSession)
+private fun isAvailable(element: KtExpression): Boolean =
     element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         .any { it is KaFirDiagnostic.UnusedExpression }
 
 
-private fun KaSession.isQuickFixAvailable(element: KtExpression): Boolean {
+context(session: KaSession)
+private fun isQuickFixAvailable(element: KtExpression): Boolean {
     if (!element.isLastStatementInFunctionBody()) return false
 
     val function = element.parent?.parent as? KtNamedFunction ?: return false

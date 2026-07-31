@@ -30,7 +30,8 @@ internal class SimplifyBooleanWithConstantsInspection : KotlinApplicableInspecti
         visitTargetElement(expression, holder, isOnTheFly)
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         return SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified(element.topBinary()).asUnit
     }
 

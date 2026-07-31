@@ -7,6 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -38,18 +41,19 @@ internal class RedundantUnitReturnTypeInspection :
     override fun getProblemDescription(element: KtElement, context: CallableReturnTypeUpdaterUtils.TypeInfo): String =
         KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
 
-    override fun KaSession.prepareContextByDiagnostic(
+    context(session: KaSession)
+    override fun prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.RedundantReturnUnitType,
     ): CallableReturnTypeUpdaterUtils.TypeInfo? {
         val typeReference = element as? KtTypeReference ?: return null
         val returnType = typeReference.type.fullyExpandedType
 
-        if (returnType.isUnitType) {
-            return CallableReturnTypeUpdaterUtils.TypeInfo(CallableReturnTypeUpdaterUtils.TypeInfo.UNIT)
+        return if (returnType.isUnitType) {
+            CallableReturnTypeUpdaterUtils.TypeInfo(CallableReturnTypeUpdaterUtils.TypeInfo.UNIT)
+        } else {
+            null
         }
-
-        return null
     }
 
     override fun createQuickFix(

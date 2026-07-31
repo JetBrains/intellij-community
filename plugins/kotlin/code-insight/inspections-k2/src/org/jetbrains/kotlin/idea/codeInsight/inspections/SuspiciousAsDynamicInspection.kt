@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +36,8 @@ internal class SuspiciousAsDynamicInspection : KotlinApplicableInspectionBase.Si
         return element.getQualifiedExpressionForSelector()?.receiverExpression != null
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression ?: return null
         return (receiver.expressionType is KaDynamicType).asUnit
     }

@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.convertIfToWhen
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddBracesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.convertIfToWhen
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -46,7 +46,8 @@ internal class SuspiciousCascadingIfInspection : KotlinApplicableInspectionBase<
         return candidateExpression is KtIfExpression
     }
 
-    override fun KaSession.prepareContext(element: KtIfExpression) {}
+    context(session: KaSession)
+    override fun prepareContext(element: KtIfExpression) {}
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)

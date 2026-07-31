@@ -37,11 +37,12 @@ internal class ForEachJoinOnCollectionOfJobInspection : KotlinApplicableInspecti
         visitTargetElement(callExpression, holder, isOnTheFly)
     }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
-        if (!isIterableForEachFunctionCall(element)) return null
-        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Job.join)) return null
+        if (!session.isIterableForEachFunctionCall(element)) return null
+        if (!session.isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Job.join)) return null
 
         return Unit
     }

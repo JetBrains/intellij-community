@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 internal class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitespace: Boolean = false) :
     KotlinApplicableInspectionBase.Simple<KtBlockStringTemplateEntry, Unit>() {
 
-    override fun KaSession.prepareContext(element: KtBlockStringTemplateEntry): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBlockStringTemplateEntry): Unit = Unit
 
     override fun buildVisitor(
         holder: ProblemsHolder,

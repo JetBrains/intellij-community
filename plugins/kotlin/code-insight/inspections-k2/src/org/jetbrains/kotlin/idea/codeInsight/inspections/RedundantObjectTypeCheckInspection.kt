@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -45,7 +46,8 @@ internal class RedundantObjectTypeCheckInspection :
     override fun isApplicableByPsi(element: KtIsExpression): Boolean =
         element.typeReference != null
 
-    override fun KaSession.prepareContext(element: KtIsExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtIsExpression): Context? {
         val typeReference = element.typeReference ?: return null
         val typeSymbol = typeReference.type.symbol as? KaNamedClassSymbol ?: return null
 

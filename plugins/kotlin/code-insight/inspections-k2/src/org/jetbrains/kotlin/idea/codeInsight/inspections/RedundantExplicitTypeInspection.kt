@@ -6,10 +6,15 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -33,7 +38,8 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
         return symbol.classKind == KaClassKind.COMPANION_OBJECT
     }
 
-    private fun KaSession.hasRedundantType(property: KtProperty): Boolean {
+    context(session: KaSession)
+    private fun hasRedundantType(property: KtProperty): Boolean {
         if (!property.isLocal) return false
         val typeReference = property.typeReference ?: return false
         if (typeReference.annotationEntries.isNotEmpty()) return false
@@ -102,7 +108,8 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
         return element.typeReference != null
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
         return hasRedundantType(element).asUnit
     }
 }

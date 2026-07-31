@@ -93,7 +93,8 @@ class CanUnescapeDollarLiteralInspection :
      * If the length exceeds `prefixLength - 1`, don't add the index of the last entry as replacing it will change the string.
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
-    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtStringTemplateExpression): Context? {
         val prefixLength = element.templatePrefixLength
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()

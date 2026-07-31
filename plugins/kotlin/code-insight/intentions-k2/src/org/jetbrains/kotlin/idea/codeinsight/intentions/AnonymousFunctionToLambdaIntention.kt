@@ -31,5 +31,6 @@ class AnonymousFunctionToLambdaIntention : KotlinApplicableModCommandAction<KtNa
         AnonymousFunctionToLambdaUtil.convertAnonymousFunctionToLambda(element, elementContext)
     }
 
-    override fun KaSession.prepareContext(element: KtNamedFunction): KtExpression? = AnonymousFunctionToLambdaUtil.prepareAnonymousFunctionToLambdaContext(element)
+    context(session: KaSession)
+    override fun prepareContext(element: KtNamedFunction): KtExpression? = AnonymousFunctionToLambdaUtil.prepareAnonymousFunctionToLambdaContext(element)
 }

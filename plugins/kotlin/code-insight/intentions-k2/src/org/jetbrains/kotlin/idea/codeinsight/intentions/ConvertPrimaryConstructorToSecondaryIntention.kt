@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -62,7 +63,8 @@ class ConvertPrimaryConstructorToSecondaryIntention :
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtClass): List<Item> {
+    context(session: KaSession)
+    override fun prepareContext(element: KtClass): List<Item> {
         val items = mutableListOf<Item>()
         for (property in element.getProperties()) {
             val propertyName = property.name ?: continue

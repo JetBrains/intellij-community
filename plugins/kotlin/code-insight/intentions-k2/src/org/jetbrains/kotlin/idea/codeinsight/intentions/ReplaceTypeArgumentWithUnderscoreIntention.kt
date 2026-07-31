@@ -35,7 +35,8 @@ internal class ReplaceTypeArgumentWithUnderscoreIntention : KotlinApplicableModC
         return !typeArgumentList.arguments.any { it.typeReference?.isAnnotatedDeep() == true }
     }
 
-    override fun KaSession.prepareContext(element: KtTypeProjection): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtTypeProjection): Unit? {
         val typeArgumentList = element.parent as? KtTypeArgumentList ?: return null
         val callExpression = typeArgumentList.parent as? KtCallExpression ?: return null
         if (!element.canBeReplacedWithUnderscore(callExpression)) return null

@@ -6,9 +6,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullInspection.Context
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
@@ -55,7 +55,8 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection :
         return ConvertNameBasedDestructuringShortFormToFullFix(context)
     }
 
-    override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDestructuringDeclaration): Context? {
         if (element.isPositionalDestructuringType()) return null
         if (element.entries.all { it.name == "_" }) return null
         val constructorParameters = extractPrimaryParameters(element) ?: return null

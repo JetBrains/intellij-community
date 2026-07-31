@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -61,7 +62,8 @@ class ReplaceReadLineWithReadlnInspection : KotlinApplicableInspectionBase.Simpl
     ): KotlinModCommandQuickFix<KtExpression> =
         ReplaceFix(context.targetExpression, context.newFunctionName)
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Context? {
         val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
         val callableId = resolvedCall?.symbol?.callableId ?: return null
         if (callableId.packageName != StandardKotlinNames.KOTLIN_IO_PACKAGE || callableId.callableName != readLineName) return null

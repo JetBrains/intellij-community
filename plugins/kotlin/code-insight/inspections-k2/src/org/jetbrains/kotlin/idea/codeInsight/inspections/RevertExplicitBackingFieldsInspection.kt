@@ -12,8 +12,12 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -70,7 +74,8 @@ internal class RevertExplicitBackingFieldsInspection :
     override fun getApplicableRanges(element: KtProperty): List<TextRange> =
         ApplicabilityRange.single(element) { it.fieldDeclaration?.fieldKeyword }
 
-    override fun KaSession.prepareContext(element: KtProperty): Context {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Context {
         val initializerText = element.allChildren
             .firstIsInstanceOrNull<KtBackingField>()
             ?.let { computeInitializerText(it) }
@@ -132,7 +137,8 @@ internal class RevertExplicitBackingFieldsInspection :
                 }
             }
 
-    private fun KaSession.isReferenceTo(ref: KtNameReferenceExpression, property: KtProperty): Boolean {
+    context(session: KaSession)
+    private fun isReferenceTo(ref: KtNameReferenceExpression, property: KtProperty): Boolean {
         val propertySymbol = property.symbol
         val resolvedSymbol = ref.mainReference.resolveToSymbol()
         if (ref.getReferencedName() != property.name) return false
@@ -156,7 +162,8 @@ internal class RevertExplicitBackingFieldsInspection :
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.computeInitializerText(backingField: KtBackingField): String? {
+    context(session: KaSession)
+    private fun computeInitializerText(backingField: KtBackingField): String? {
         val initializer = backingField.initializer ?: return null
         if (backingField.typeReference != null) return initializer.text
         val callExpr = initializer as? KtCallExpression ?: return initializer.text

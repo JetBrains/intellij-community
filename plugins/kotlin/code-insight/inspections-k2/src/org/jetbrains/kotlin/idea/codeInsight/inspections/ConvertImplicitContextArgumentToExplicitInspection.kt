@@ -18,15 +18,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -86,7 +89,8 @@ internal class ConvertImplicitContextArgumentToExplicitInspection :
                 element.calleeExpression != null
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Context? {
         val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val contextParameters = resolvedCall.symbol.contextParameters
         val contextArguments = resolvedCall.contextArguments
@@ -209,7 +213,8 @@ private fun appendArgumentToExpression(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.createReplacementForContextArgument(
+context(session: KaSession)
+private fun createReplacementForContextArgument(
     callExpression: KtCallExpression,
     receiverValue: KaReceiverValue,
     expectedType: KaType,
@@ -234,7 +239,8 @@ private fun KaSession.createReplacementForContextArgument(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.findExpressionInEnclosingContextBlock(
+context(session: KaSession)
+private fun findExpressionInEnclosingContextBlock(
     callExpression: KtCallExpression,
     expectedType: KaType,
 ): String? {
@@ -244,7 +250,7 @@ private fun KaSession.findExpressionInEnclosingContextBlock(
         val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return null
         val contextCall = lambdaArg.parent as? KtCallExpression ?: return null
 
-        if (isKotlinContextCall(contextCall)) {
+        if (session.isKotlinContextCall(contextCall)) {
             for (valueArg in contextCall.valueArguments) {
                 val contextArgExpr = valueArg.getArgumentExpression() ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue
@@ -262,12 +268,13 @@ private fun KaSession.findExpressionInEnclosingContextBlock(
  * meaning the context block can be removed after converting to explicit arguments.
  */
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.isSingleUsageContext(callExpression: KtCallExpression): Boolean {
+context(session: KaSession)
+private fun isSingleUsageContext(callExpression: KtCallExpression): Boolean {
     val lambdaExpr = callExpression.parentOfType<KtLambdaExpression>() ?: return false
     val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return false
     val contextCall = lambdaArg.parent as? KtCallExpression ?: return false
 
-    if (!isKotlinContextCall(contextCall)) return false
+    if (!session.isKotlinContextCall(contextCall)) return false
 
     val bodyExpression = lambdaExpr.bodyExpression ?: return false
     val statements = bodyExpression.statements

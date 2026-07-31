@@ -35,7 +35,8 @@ internal class ConvertReferenceToLambdaInspection : KotlinApplicableInspectionBa
     override fun getApplicableRanges(element: KtCallableReferenceExpression): List<TextRange> =
         listOf(TextRange(0, element.textLength))
 
-    override fun KaSession.prepareContext(element: KtCallableReferenceExpression): String? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableReferenceExpression): String? {
         if (skip(element)) return null
         return ConvertReferenceToLambdaUtil.prepareLambdaExpressionText(element)
     }

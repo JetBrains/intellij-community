@@ -7,10 +7,15 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -62,7 +67,8 @@ internal class ConvertTryFinallyToUseCallInspection :
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtTryExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtTryExpression): Context? {
         val finallySection = element.finallyBlock ?: return null
         val stmt = finallySection.finalExpression.statements.singleOrNull() ?: return null
         val call = (stmt as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression ?: (stmt as? KtCallExpression) ?: return null

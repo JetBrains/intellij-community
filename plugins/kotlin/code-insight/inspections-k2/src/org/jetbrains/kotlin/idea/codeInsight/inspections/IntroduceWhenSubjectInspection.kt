@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.introduceSubjectIfPossible
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenExpression
@@ -65,7 +65,8 @@ internal class IntroduceWhenSubjectInspection :
     override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRanges.whenKeyword(element)
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): String? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): String? =
         element.getSubjectToIntroduce()?.text
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true

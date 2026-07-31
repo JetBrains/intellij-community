@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
@@ -43,7 +44,8 @@ internal class MoveLambdaInsideParenthesesIntention :
             null
         }
 
-    override fun KaSession.prepareContext(element: KtLambdaArgument): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaArgument): Context? {
         if (element.getArgumentName() != null) {
             // Already used as a named argument
             return null
@@ -52,7 +54,7 @@ internal class MoveLambdaInsideParenthesesIntention :
             val callExpression = element.parent as KtCallExpression
             element.getArgumentExpression()?.let { expr ->
                 analyze(callExpression) {
-                    with(contextOf<KaSession>()) { callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping[expr]?.name }
+                    callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping[expr]?.name
                 }
             }
         } else {

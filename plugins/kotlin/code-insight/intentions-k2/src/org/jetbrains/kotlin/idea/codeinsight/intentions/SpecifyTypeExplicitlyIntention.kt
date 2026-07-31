@@ -70,7 +70,8 @@ class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTe
         return Presentation.of(actionName)
     }
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): TypeInfo? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? =
         if (skip(element)) {
             null
         } else {

@@ -6,8 +6,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyUtils.prepareUnfoldPropertyContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyUtils.prepareUnfoldPropertyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.BranchedUnfoldingUtils
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -35,6 +35,7 @@ class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty
         return initializer.entries.none { it.expression == null }
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
         prepareUnfoldPropertyContext(element)
 }

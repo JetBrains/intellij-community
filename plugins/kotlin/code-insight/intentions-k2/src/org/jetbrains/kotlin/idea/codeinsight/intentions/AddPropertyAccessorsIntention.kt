@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -58,7 +59,8 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
         if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
         val symbol = element.symbol as? KaPropertySymbol ?: return null

@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -30,7 +31,8 @@ internal class AddOpenModifierIntention :
                 && !element.hasModifier(KtTokens.ABSTRACT_KEYWORD)
                 && !element.hasModifier(KtTokens.PRIVATE_KEYWORD)
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
         val elementSymbol = element.symbol

@@ -40,7 +40,8 @@ internal sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolea
         }
     }
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaExpression): Unit = Unit
 
     override fun invoke(
         actionContext: ActionContext,

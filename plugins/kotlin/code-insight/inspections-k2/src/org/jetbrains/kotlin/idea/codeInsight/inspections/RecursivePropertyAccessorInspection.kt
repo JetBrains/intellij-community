@@ -79,7 +79,8 @@ class RecursivePropertyAccessorInspection : KotlinApplicableInspectionBase<KtSim
         return RecursivePropertyAccessUtil.isApplicablePropertyAccessPsi(element) || RecursivePropertyAccessUtil.isApplicableSyntheticPropertyAccessPsi(element)
     }
 
-    override fun KaSession.prepareContext(element: KtSimpleNameExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtSimpleNameExpression): Context? {
         val accessType = when {
             element.isRecursivePropertyAccess(false) -> AccessType.RECURSIVE_PROPERTY_ACCESS
             RecursivePropertyAccessUtil.isRecursiveSyntheticPropertyAccess(element) -> AccessType.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS

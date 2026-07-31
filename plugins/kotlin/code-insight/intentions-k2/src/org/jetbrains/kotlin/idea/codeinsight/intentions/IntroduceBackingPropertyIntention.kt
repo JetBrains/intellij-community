@@ -10,6 +10,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -56,7 +58,8 @@ class IntroduceBackingPropertyIntention :
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("introduce.backing.property")
 
-    override fun KaSession.prepareContext(element: KtProperty): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Context? {
         val name = element.name ?: return null
         if (!isBackingFieldRequiredAndCanBeUsed(element)) return null
 
@@ -81,7 +84,8 @@ class IntroduceBackingPropertyIntention :
         return !element.hasJvmFieldAnnotation()
     }
 
-    private fun KaSession.isBackingFieldRequiredAndCanBeUsed(property: KtProperty): Boolean {
+    context(session: KaSession)
+    private fun isBackingFieldRequiredAndCanBeUsed(property: KtProperty): Boolean {
         if (property.isAbstract()) return false
 
         if (property.isLocal) return false
@@ -191,7 +195,8 @@ class IntroduceBackingPropertyIntention :
     }
 
     @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
-    private fun KaSession.collectFieldReferences(element: KtElement): List<SmartPsiElementPointer<KtSimpleNameExpression>> {
+    context(session: KaSession)
+    private fun collectFieldReferences(element: KtElement): List<SmartPsiElementPointer<KtSimpleNameExpression>> {
         val fieldReferences = mutableListOf<SmartPsiElementPointer<KtSimpleNameExpression>>()
         element.acceptChildren(object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {

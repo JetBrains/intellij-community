@@ -7,8 +7,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -54,7 +57,8 @@ internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Si
     override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }
 
-    override fun KaSession.prepareContext(element: KtQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtQualifiedExpression): Unit? {
         val call = element.callExpression ?: return null
         if (!call.isCallingAnyOf(*allowedSequenceFunctionFqNames)) return null
         val functionSymbol = resolveToFunctionSymbol(call) ?: return null
@@ -97,25 +101,30 @@ internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Si
     }
 }
 
-private fun KaSession.areTypeArgumentsRedundant(expression: KtCallExpression): Boolean {
+context(session: KaSession)
+private fun areTypeArgumentsRedundant(expression: KtCallExpression): Boolean {
     return RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(expression) &&
             areTypeArgumentsRedundant(expression.typeArgumentList!!)
 }
 
-private fun KaSession.isTermination(expression: KtCallExpression): Boolean =
+context(session: KaSession)
+private fun isTermination(expression: KtCallExpression): Boolean =
     checkFunctionCall(expression, terminations)
 
-private fun KaSession.isTransformationOrTermination(expression: KtCallExpression): Boolean =
+context(session: KaSession)
+private fun isTransformationOrTermination(expression: KtCallExpression): Boolean =
     checkFunctionCall(expression, transformationsAndTerminations)
 
-private fun KaSession.checkFunctionCall(expression: KtCallExpression, nameToFqNameMap: Map<String, FqName>): Boolean {
+context(session: KaSession)
+private fun checkFunctionCall(expression: KtCallExpression, nameToFqNameMap: Map<String, FqName>): Boolean {
     val calleeText = expression.calleeExpression?.text ?: return false
     val fqName = nameToFqNameMap[calleeText] ?: return false
     val functionSymbol = resolveToFunctionSymbol(expression) ?: return false
     return functionSymbol.callableId?.asSingleFqName() == fqName
 }
 
-private fun KaSession.resolveToFunctionSymbol(expression: KtCallExpression): KaNamedFunctionSymbol? =
+context(session: KaSession)
+private fun resolveToFunctionSymbol(expression: KtCallExpression): KaNamedFunctionSymbol? =
     expression.calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol
 
 private val collectionTerminationFunctionNames: List<String> = listOf(

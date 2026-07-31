@@ -48,7 +48,8 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "count" && element.valueArguments.isEmpty()
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val functionSymbol = element.resolveToFunctionSymbol() ?: return null
         val receiverClassId = (functionSymbol.receiverType as? KaClassType)?.classId ?: return null
         return (functionSymbol.callableId == COLLECTION_COUNT_CALLABLE_ID

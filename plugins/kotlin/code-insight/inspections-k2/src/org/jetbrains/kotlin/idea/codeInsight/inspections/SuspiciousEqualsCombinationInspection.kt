@@ -34,7 +34,8 @@ internal class SuspiciousEqualsCombinationInspection : KotlinApplicableInspectio
         return eqeq.intersect(eqeqeq).isNotEmpty()
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit = Unit
 
     override fun InspectionManager.createProblemDescriptor(
         element: KtBinaryExpression,

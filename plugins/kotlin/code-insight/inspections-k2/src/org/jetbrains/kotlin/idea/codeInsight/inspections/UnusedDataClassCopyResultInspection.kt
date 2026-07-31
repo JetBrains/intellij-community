@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -32,7 +34,8 @@ internal class UnusedDataClassCopyResultInspection : KotlinApplicableInspectionB
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == COPY_METHOD_NAME
 
-    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): Unit? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: return null
         val classSymbol = receiver.type.symbol as? KaNamedClassSymbol ?: return null

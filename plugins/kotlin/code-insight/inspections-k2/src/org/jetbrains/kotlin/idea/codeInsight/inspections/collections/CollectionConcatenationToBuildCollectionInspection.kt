@@ -143,7 +143,8 @@ class CollectionConcatenationToBuildCollectionInspection :
         return operationToken == KtTokens.PLUS || operationToken == KtTokens.MINUS
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtExpression): Context? {
         val expressionToConvert = element.safeDeparenthesize().expressionToConvert()
         val expressionType = expressionToConvert.expressionType ?: return null
         val collectionType = when {

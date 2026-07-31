@@ -13,12 +13,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -85,7 +87,8 @@ internal class ConvertExplicitContextArgumentToImplicitInspection :
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtValueArgument): Context? {
         val argumentExpression = element.getArgumentExpression() ?: return null
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return null
 
@@ -203,7 +206,8 @@ private fun KtCallExpression.resolvesToSameTargetWhenWrapped(
     }
 }
 
-private fun KaSession.contextWrapNotNeeded(
+context(session: KaSession)
+private fun contextWrapNotNeeded(
     callExpression: KtCallExpression,
     selectedArgument: KtValueArgument,
     expectedPsi: PsiElement,
@@ -216,7 +220,8 @@ private fun KaSession.contextWrapNotNeeded(
     )
 }
 
-private fun KaSession.isValueInEnclosingContextBlock(
+context(session: KaSession)
+private fun isValueInEnclosingContextBlock(
     callExpression: KtCallExpression,
     expectedPsi: PsiElement,
     expectedType: KaType,
@@ -227,7 +232,7 @@ private fun KaSession.isValueInEnclosingContextBlock(
         val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return false
         val contextCall = lambdaArg.parent as? KtCallExpression ?: return false
 
-        if (isKotlinContextCall(contextCall)) {
+        if (session.isKotlinContextCall(contextCall)) {
             for (valueArg in contextCall.valueArguments) {
                 val contextArgExpr = valueArg.getArgumentExpression() as? KtSimpleNameExpression ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue

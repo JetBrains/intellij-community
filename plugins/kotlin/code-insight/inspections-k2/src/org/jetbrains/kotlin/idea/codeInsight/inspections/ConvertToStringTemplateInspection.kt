@@ -50,7 +50,8 @@ class ConvertToStringTemplateInspection :
         }
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Context? =
         if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) {
             null
         } else {

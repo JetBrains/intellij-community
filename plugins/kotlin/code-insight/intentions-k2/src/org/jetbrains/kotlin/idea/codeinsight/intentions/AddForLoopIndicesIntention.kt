@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -61,7 +62,8 @@ class AddForLoopIndicesIntention :
         return element.loopRange != null
     }
 
-    override fun KaSession.prepareContext(element: KtForExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange ?: return null
         val loopParameter = element.loopParameter ?: return null
 
@@ -75,9 +77,7 @@ class AddForLoopIndicesIntention :
         ).getContentElement() ?: return null
 
         analyze(potentialExpression) {
-            val potentialResolvedCall = with(contextOf<KaSession>()) {
-                potentialExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
-            }
+            val potentialResolvedCall = potentialExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
             if (potentialResolvedCall !in WITH_INDEX_FQ_NAMES) return null
         }
 

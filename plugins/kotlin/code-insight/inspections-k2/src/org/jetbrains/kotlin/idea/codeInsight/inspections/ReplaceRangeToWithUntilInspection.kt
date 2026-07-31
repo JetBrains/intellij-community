@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.AbstractReplaceRangeToInspection.Context
@@ -29,8 +31,10 @@ abstract class AbstractReplaceRangeToInspection : AbstractRangeInspection<Contex
         val right: SmartPsiElementPointer<KtExpression>,
     )
 
-    abstract fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean
-    abstract fun KaSession.isApplicableArgumentType(type: KaType): Boolean
+    context(session: KaSession)
+    abstract fun isApplicableToRangeExpression(expression: KtExpression): Boolean
+    context(session: KaSession)
+    abstract fun isApplicableArgumentType(type: KaType): Boolean
 
     abstract val replacementPattern: String
     abstract val problemDescription: @InspectionMessage String
@@ -44,7 +48,8 @@ abstract class AbstractReplaceRangeToInspection : AbstractRangeInspection<Contex
     override fun isApplicableByPsi(range: RangeExpression): Boolean =
         range.type == RangeKtExpressionType.RANGE_TO
 
-    override fun KaSession.prepareContext(range: RangeExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(range: RangeExpression): Context? {
         if (!isApplicableToRangeExpression(range.expression)) return null
 
         val (left, right) = range.arguments
@@ -59,7 +64,8 @@ abstract class AbstractReplaceRangeToInspection : AbstractRangeInspection<Contex
         )
     }
 
-    private fun KaSession.unfoldMinusOne(expression: KtExpression): KtExpression? {
+    context(session: KaSession)
+    private fun unfoldMinusOne(expression: KtExpression): KtExpression? {
         if (expression !is KtBinaryExpression || expression.operationToken != KtTokens.MINUS) return null
 
         val constantValue = expression.right?.evaluate() ?: return null
@@ -101,10 +107,12 @@ abstract class AbstractReplaceRangeToInspection : AbstractRangeInspection<Contex
 }
 
 class ReplaceRangeToWithUntilInspection : AbstractReplaceRangeToInspection() {
-    override fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean =
+    context(session: KaSession)
+    override fun isApplicableToRangeExpression(expression: KtExpression): Boolean =
         !expression.canUseRangeUntil()
 
-    override fun KaSession.isApplicableArgumentType(type: KaType): Boolean =
+    context(session: KaSession)
+    override fun isApplicableArgumentType(type: KaType): Boolean =
         type.isIntegralType
 
     override val replacementPattern: String
@@ -117,10 +125,12 @@ class ReplaceRangeToWithUntilInspection : AbstractReplaceRangeToInspection() {
 }
 
 class ReplaceRangeToWithRangeUntilInspection : AbstractReplaceRangeToInspection() {
-    override fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean =
+    context(session: KaSession)
+    override fun isApplicableToRangeExpression(expression: KtExpression): Boolean =
         expression.canUseRangeUntil()
 
-    override fun KaSession.isApplicableArgumentType(type: KaType): Boolean =
+    context(session: KaSession)
+    override fun isApplicableArgumentType(type: KaType): Boolean =
         type.isIntegralType || type.isFloatingPointType
 
     override val replacementPattern: String

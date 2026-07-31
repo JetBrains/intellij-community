@@ -44,7 +44,8 @@ class SortModifiersInspection : KotlinApplicableInspectionBase<KtModifierList, S
         val contextParametersBeforeAnnotations: Boolean = false,
     )
 
-    override fun KaSession.prepareContext(element: KtModifierList): Context {
+    context(session: KaSession)
+    override fun prepareContext(element: KtModifierList): Context {
         val modifierTokens = element.modifierKeywordTokens()
         return Context(
             modifiersInWrongOrder = modifierTokens.isNotEmpty() && modifierTokens != sortModifiers(modifierTokens),

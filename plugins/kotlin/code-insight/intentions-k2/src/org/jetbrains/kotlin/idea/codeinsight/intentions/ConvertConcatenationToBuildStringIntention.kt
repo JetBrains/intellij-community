@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,7 +23,8 @@ internal class ConvertConcatenationToBuildStringIntention :
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         element.operationToken == KtTokens.PLUS && !element.isInsideAnnotationEntryArgumentList()
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
         val parent = element.parent
         val isApplicable = element.expressionType?.isStringType == true
                 && (parent !is KtBinaryExpression

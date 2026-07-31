@@ -10,8 +10,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyUtils.prepareUnfoldPropertyContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyUtils.prepareUnfoldPropertyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.BranchedUnfoldingUtils
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -34,7 +34,8 @@ internal class UnfoldPropertyToIfIntention :
         return listOf(TextRange(0, endOffset))
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
         prepareUnfoldPropertyContext(element)
 
     override fun invoke(

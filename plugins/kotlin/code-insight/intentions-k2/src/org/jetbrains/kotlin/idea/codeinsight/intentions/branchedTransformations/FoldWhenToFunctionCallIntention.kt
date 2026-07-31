@@ -24,7 +24,8 @@ internal class FoldWhenToFunctionCallIntention :
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = canFoldByPsi(element)
 
-    override fun KaSession.prepareContext(element: KtWhenExpression): Context? = getFoldingContext(element)
+    context(session: KaSession)
+    override fun prepareContext(element: KtWhenExpression): Context? = getFoldingContext(element)
 
     override fun invoke(
       actionContext: ActionContext,

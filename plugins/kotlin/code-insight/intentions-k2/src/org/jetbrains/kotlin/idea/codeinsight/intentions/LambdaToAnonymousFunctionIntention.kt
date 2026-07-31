@@ -7,7 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
@@ -46,7 +48,8 @@ internal class LambdaToAnonymousFunctionIntention :
         KotlinBundle.message("convert.to.anonymous.function"),
     )
 
-    override fun KaSession.prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
         val declarationSymbol = element.functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
         if (declarationSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
 

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.types.isDoubleType
 import org.jetbrains.kotlin.analysis.api.types.isIntType
 import org.jetbrains.kotlin.analysis.api.types.isLongType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.isUIntType
 import org.jetbrains.kotlin.analysis.api.types.isULongType
@@ -98,7 +98,8 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return true
     }
 
-    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainConversion? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }

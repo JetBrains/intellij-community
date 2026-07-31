@@ -54,7 +54,8 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
         return listOfNotNull(labelRange)
     }
 
-    override fun KaSession.prepareContext(element: KtReturnExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtReturnExpression): Unit? {
         val block = element.getStrictParentOfType<KtBlockExpression>() ?: return null
         val lambdaExpr = block.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val lambdaBody = lambdaExpr.bodyExpression ?: return null

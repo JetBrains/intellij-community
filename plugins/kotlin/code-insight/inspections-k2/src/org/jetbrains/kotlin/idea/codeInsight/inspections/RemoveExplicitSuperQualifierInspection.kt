@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -50,7 +51,8 @@ internal class RemoveExplicitSuperQualifierInspection :
     override fun isApplicableByPsi(element: KtSuperExpression): Boolean =
         element.superTypeQualifier != null
 
-    override fun KaSession.prepareContext(element: KtSuperExpression): Context? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtSuperExpression): Context? {
         if (element.superTypeQualifier == null) return null
 
         val qualifiedExpression = element.getQualifiedExpressionForReceiver() ?: return null
@@ -68,9 +70,7 @@ internal class RemoveExplicitSuperQualifierInspection :
         val newCallableId =
             analyze(newQualifiedExpression) {
                 val callableMemberCall =
-                    with(contextOf<KaSession>()) {
-                        newQualifiedExpression.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
-                    }
+                    newQualifiedExpression.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
                 callableMemberCall?.partiallyAppliedSymbol?.signature?.callableId
             }
 

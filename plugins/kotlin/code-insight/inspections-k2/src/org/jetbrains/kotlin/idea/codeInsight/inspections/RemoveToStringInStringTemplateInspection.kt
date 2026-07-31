@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
@@ -58,7 +59,8 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
         return referenceExpression.getReferencedNameAsName() == OperatorNameConventions.TO_STRING && callExpression.valueArguments.isEmpty()
     }
 
-    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = call.symbol.allOverriddenSymbolsWithSelf
         return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }

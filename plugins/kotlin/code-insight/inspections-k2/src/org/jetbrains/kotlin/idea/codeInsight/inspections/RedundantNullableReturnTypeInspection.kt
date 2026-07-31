@@ -54,7 +54,8 @@ internal class RedundantNullableReturnTypeInspection :
         return listOf(questionMark.textRangeIn(element))
     }
 
-    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? =
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallableDeclaration): Unit? =
         ReturnTypeNullabilityUtil.hasOnlyNonNullableReturns(element).asUnit
 
     override fun getProblemDescription(element: KtCallableDeclaration, context: Unit): String =

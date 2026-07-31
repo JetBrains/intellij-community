@@ -29,7 +29,8 @@ internal class ConvertLazyPropertyToOrdinaryIntention :
         return !lambdaBody.statements.isEmpty()
     }
 
-    override fun KaSession.prepareContext(element: KtProperty): Unit? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
         val delegateExpression = element.delegateExpression() ?: return null
         if (!delegateExpression.isCallingAnyOf(StandardKotlinNames.lazy)) return null
         return Unit

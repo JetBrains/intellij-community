@@ -24,7 +24,8 @@ internal class AddUnderscoresToNumericLiteralIntention : KotlinApplicableModComm
         return element.isNumeric() && !text.hasUnderscore() && text.takeWhile { it.isDigit() }.length > 3
     }
 
-    override fun KaSession.prepareContext(element: KtConstantExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtConstantExpression): Unit = Unit
 
     override fun invoke(
         actionContext: ActionContext,
@@ -51,7 +52,8 @@ internal class RemoveUnderscoresFromNumericLiteralIntention : KotlinApplicableMo
     override fun isApplicableByPsi(element: KtConstantExpression): Boolean =
         element.isNumeric() && element.text.hasUnderscore()
 
-    override fun KaSession.prepareContext(element: KtConstantExpression): Unit = Unit
+    context(session: KaSession)
+    override fun prepareContext(element: KtConstantExpression): Unit = Unit
 
     override fun invoke(
         actionContext: ActionContext,

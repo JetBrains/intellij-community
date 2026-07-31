@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -43,7 +44,8 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         !findReplacementCandidatesByPsi(element).isEmpty()
 
-    override fun KaSession.prepareContext(element: KtCallExpression): List<Replacement>? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): List<Replacement>? {
         val replacements = findReplacementCandidatesByPsi(element).filter {
             it.isApplicable(element)
         }

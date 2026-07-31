@@ -10,6 +10,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -84,7 +87,8 @@ internal class UnusedContextParameterCallInspection :
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> =
         callExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
 
-    override fun KaSession.prepareContext(element: KtCallExpression): BodyContext? {
+    context(session: KaSession)
+    override fun prepareContext(element: KtCallExpression): BodyContext? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         if (resolvedCall.symbol.callableId != contextCallableId) return null
         val lambda = element.contextLambda() ?: return null
@@ -122,7 +126,8 @@ internal class UnusedContextParameterCallInspection :
         )
     }
 
-    private fun KaSession.isSideEffectFree(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isSideEffectFree(expression: KtExpression): Boolean {
         return when (val unwrapped = KtPsiUtil.deparenthesize(expression)) {
             is KtConstantExpression -> true
             is KtThisExpression -> true
@@ -138,7 +143,8 @@ internal class UnusedContextParameterCallInspection :
         }
     }
 
-    fun KaSession.consumedContextParameters(
+    context(session: KaSession)
+    fun consumedContextParameters(
         lambda: KtLambdaExpression,
         contextParameters: List<KaContextParameterSymbol>
     ): Set<KaContextParameterSymbol> {
