@@ -40,8 +40,13 @@ internal class PyDapPluginInstallGotItListener : XDebuggerManagerListener {
     if (isAcked()) return
 
     val project = session.project
-    val builder = GotItComponentBuilder { PyBundle.message("debugger.dap.plugin.install.got.it.text") }
-      .withHeader(PyBundle.message("debugger.dap.plugin.install.got.it.header"))
+    // Resolved lazily: the tooltip can appear up to 30 seconds later, and the plugin may be enabled meanwhile.
+    val builder = GotItComponentBuilder {
+      PyBundle.message(
+        if (isPythonDapPluginInstalledButDisabled()) "debugger.dap.plugin.enable.got.it.text"
+        else "debugger.dap.plugin.install.got.it.text"
+      )
+    }.withHeader(PyBundle.message("debugger.dap.plugin.install.got.it.header"))
     showGotItWhenContentSelected(session, builder) {
       findBackendSwitcherButton(project)
     }
