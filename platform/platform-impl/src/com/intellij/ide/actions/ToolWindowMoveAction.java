@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.toolWindow.ToolWindowDragHelper;
+import com.intellij.toolWindow.ToolWindowExtension;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.ApiStatus;
@@ -204,7 +205,8 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     private static boolean isAllowed(Anchor anchor) {
-      if (ExperimentalUI.isNewUI()) {
+      // The New UI has no TOP stripe unless a ToolWindowExtension provides real Top/Bottom bars.
+      if (ExperimentalUI.isNewUI() && !ToolWindowExtension.exists()) {
         return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
       }
 

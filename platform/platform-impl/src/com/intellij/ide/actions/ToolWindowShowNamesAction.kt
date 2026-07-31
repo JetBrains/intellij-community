@@ -26,6 +26,6 @@ internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isEnabledAndVisible = ToolWindowExtension.getInstance() == null
+    e.presentation.isEnabledAndVisible = !ToolWindowExtension.exists
   }
 }

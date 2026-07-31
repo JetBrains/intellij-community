@@ -37,6 +37,9 @@ import kotlin.math.max
 abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
+  /**
+   * With the ToolWindowExtension the bottomStripe is unused
+   */
   internal abstract val bottomStripe: AbstractDroppableStripe
   internal abstract val topStripe: AbstractDroppableStripe
 
@@ -60,9 +63,15 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
-    topWrapper.add(topStripe, BorderLayout.NORTH)
-    add(topWrapper, BorderLayout.NORTH)
-    add(bottomStripe, BorderLayout.SOUTH)
+    if (ToolWindowExtension.exists) {
+      topWrapper.add(topStripe, BorderLayout.CENTER)
+      add(topWrapper, BorderLayout.CENTER)
+    }
+    else {
+      topWrapper.add(topStripe, BorderLayout.NORTH)
+      add(topWrapper, BorderLayout.NORTH)
+      add(bottomStripe, BorderLayout.SOUTH)
+    }
 
     topStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
     bottomStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
@@ -78,7 +87,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     updateVisibleButtons()
   }
 
-  private fun updateVisibleButtons() {
+  protected fun updateVisibleButtons() {
     val hasVisibleButtons = hasButtons() || moreButton.isVisible
     if (this.hasVisibleButtons != hasVisibleButtons) {
       this.hasVisibleButtons = hasVisibleButtons
@@ -92,7 +101,12 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   fun initMoreButton(project: Project) {
     if (isPrimary) {
-      topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+      if (ToolWindowExtension.exists) {
+          topStripe.moreButton = moreButton
+      }
+      else {
+          topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+      }
       moreButton.updateState(project)
     }
   }
@@ -127,7 +141,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     if (topStripe.containsPoint(screenPoint)) {
       return topStripe
     }
-    if (bottomStripe.containsPoint(screenPoint)) {
+    if (!ToolWindowExtension.exists && bottomStripe.containsPoint(screenPoint)) {
       return bottomStripe
     }
     return null
@@ -174,7 +188,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     }
   }
 
-  internal class StripeV2(private val toolBar: ToolWindowToolbar,
+  internal open class StripeV2(protected val toolBar: ToolWindowToolbar,
     paneId: String,
     override val anchor: ToolWindowAnchor,
     override val split: Boolean = false,
@@ -197,9 +211,12 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
     override fun containsPoint(screenPoint: Point): Boolean {
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        // With ToolWindowExtension the whole column height is the drop zone
+        val halfColumn = !ToolWindowExtension.exists
+
         if (!toolBar.isShowing) {
           val bounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
-          bounds.height /= 2
+          if (halfColumn) bounds.height /= 2
 
           val toolWindowWidth = getFirstVisibleToolWindowSize(true)
 
@@ -213,7 +230,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
         }
 
         val bounds = Rectangle(toolBar.locationOnScreen, toolBar.size)
-        bounds.height /= 2
+        if (halfColumn) bounds.height /= 2
 
         val toolWindowWidth = getFirstVisibleToolWindowSize(true)
 
@@ -240,7 +257,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
       return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics as Graphics2D)
     }
 
-    private fun getFirstVisibleToolWindowSize(width: Boolean): Int {
+    protected fun getFirstVisibleToolWindowSize(width: Boolean): Int {
       for (button in getButtons()) {
         if (button.toolWindow.isVisible) {
           if (width) {
@@ -253,7 +270,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
       return JBUI.scale(350)
     }
 
-    private fun getStatusBarHeight(): Int {
+    protected fun getStatusBarHeight(): Int {
       val statusBar = WindowManager.getInstance().getStatusBar(this, null)
       if (statusBar != null) {
         val component = statusBar.component
@@ -288,6 +305,10 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     override fun getButtonFor(toolWindowId: String): StripeButtonManager? = toolBar.getButtonFor(toolWindowId)
 
     override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
+      if (useSplitGap) {
+        super.tryDroppingOnGap(data, gap, insertOrder)
+        return
+      }
       toolBar.tryDroppingOnGap(data, gap, dropRectangle) {
         layoutDragButton(data, gap)
       }

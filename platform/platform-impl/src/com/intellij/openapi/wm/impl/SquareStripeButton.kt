@@ -158,9 +158,10 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
     return when (anchor) {
       ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
-      ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
       ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-      ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
+      ToolWindowAnchor.TOP,
+      ToolWindowAnchor.BOTTOM,
+        -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
       else -> HelpTooltip.Alignment.RIGHT
     }
   }
@@ -435,6 +436,9 @@ internal fun Component.isOnTheLeftStripe(): Boolean {
   return stripe is ToolWindowLeftToolbar
 }
 
+/**
+ * A helper enum to avoid dead code in when/if constructions
+ */
 @ApiStatus.Internal
 enum class ToolWindowAnchorEnum {
   TOP,
@@ -444,13 +448,17 @@ enum class ToolWindowAnchorEnum {
 }
 
 @ApiStatus.Internal
-fun ToolWindowImpl.getAnchorEnum(): ToolWindowAnchorEnum {
-  when (anchor) {
-    ToolWindowAnchor.LEFT -> return ToolWindowAnchorEnum.LEFT
-    ToolWindowAnchor.RIGHT -> return ToolWindowAnchorEnum.RIGHT
-    ToolWindowAnchor.TOP -> return ToolWindowAnchorEnum.TOP
-    ToolWindowAnchor.BOTTOM -> return ToolWindowAnchorEnum.BOTTOM
-  }
+fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
+  return this == ToolWindowAnchorEnum.TOP || this == ToolWindowAnchorEnum.BOTTOM
+}
 
-  throw IllegalStateException("Unknown anchor: $anchor")
+@ApiStatus.Internal
+fun ToolWindowImpl.getAnchorEnum(): ToolWindowAnchorEnum {
+  return when (anchor) {
+    ToolWindowAnchor.LEFT -> ToolWindowAnchorEnum.LEFT
+    ToolWindowAnchor.RIGHT -> ToolWindowAnchorEnum.RIGHT
+    ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
+    ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
+    else -> throw IllegalStateException("Unknown anchor: $anchor")
+  }
 }

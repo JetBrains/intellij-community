@@ -725,7 +725,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val stripe = dragSourcePane.getStripeFor(devicePoint, preferredStripe)
                  ?: getTargetStripeForOtherPanes(devicePoint, preferredStripe)
     // TODO: If we want to get rid of the top stripe, we should remove it in the button managers
-    return if (stripe?.anchor == TOP) null else stripe
+    return if (stripe?.anchor == TOP && !ToolWindowExtension.exists) null else stripe
   }
 
   /**

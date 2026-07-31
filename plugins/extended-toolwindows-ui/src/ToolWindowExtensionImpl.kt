@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.SquareStripeButtonLookExtension
 import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.openapi.wm.impl.getAnchorEnum
+import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
@@ -51,22 +52,30 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
+    if (actionButton == null) {
+      return
+    }
+
     val anchorEnum = toolWindow.getAnchorEnum()
+    val isHorizontal = anchorEnum.isHorizontal()
     val labelWidth = getLabelWidth()
     val scaledInsets = getButtonScaledInsets()
 
     // because SquareStripeButtonLook doesn't know about name and pref size, we need to do some trick for right icon layout
     val buttonWrapper = object : ActionButtonComponent {
-      override fun getPopState() = actionButton!!.popState
+      override fun getPopState() = actionButton.popState
 
-      override fun getWidth() = actionButton!!.width
-
-      override fun getHeight(): Int {
-        return button.getPreferredSize().height - scaledInsets.fullWidth - labelWidth
+      override fun getWidth(): Int {
+        return if (isHorizontal) button.getPreferredSize().width - scaledInsets.fullWidth - labelWidth else actionButton.width
       }
 
-      override fun getInsets() = actionButton!!.insets
+      override fun getHeight(): Int {
+        return if (isHorizontal) actionButton.height else button.getPreferredSize().height - scaledInsets.fullWidth - labelWidth
+      }
+
+      override fun getInsets() = actionButton.insets
     }
+
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
     val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
     val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
@@ -81,6 +90,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
       ToolWindowAnchorEnum.TOP,
       ToolWindowAnchorEnum.BOTTOM,
         -> {
+        iconPosition.x += scaledInsets.leftRightExtraInset
       }
     }
 
@@ -110,19 +120,26 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
           val textTopY = iconPosition.y + renderedIcon.iconHeight + scaledInsets.iconLabelInset
           g2.drawString(text, textTopY, -baselineX)
         }
-        ToolWindowAnchorEnum.TOP -> {
-          // todo
-        }
-        ToolWindowAnchorEnum.BOTTOM -> {
-          // todo
+        ToolWindowAnchorEnum.TOP,
+        ToolWindowAnchorEnum.BOTTOM,
+          -> {
+          val textX = iconPosition.x + renderedIcon.iconWidth + scaledInsets.iconLabelInset
+          val iconCenterY = iconPosition.y + renderedIcon.iconHeight / 2
+          val baselineY = iconCenterY + (fm.ascent - fm.descent) / 2
+          g2.drawString(text, textX, baselineY)
         }
       }
     }
   }
 
   override fun getPreferredSize(size: Dimension): Dimension {
-    val scaledInsets = getButtonScaledInsets()
-    size.height += scaledInsets.fullWidth + getLabelWidth()
+    val labelSpace = getButtonScaledInsets().fullWidth + getLabelWidth()
+    if (toolWindow.getAnchorEnum().isHorizontal()) {
+      size.width += labelSpace
+    }
+    else {
+      size.height += labelSpace
+    }
     return size
   }
 

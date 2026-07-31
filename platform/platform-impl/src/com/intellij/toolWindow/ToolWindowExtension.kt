@@ -17,6 +17,13 @@ interface ToolWindowExtension {
     fun getInstance(): ToolWindowExtension? {
       return if (ExperimentalUI.isNewUI()) EP_NAME.extensionList.firstOrNull() else null
     }
+
+    /**
+     * The extension requires restart, so cache the value
+     */
+    @JvmStatic
+    @get:JvmName("exists")
+    val exists: Boolean by lazy { getInstance() != null }
   }
 
   fun isStripeResizable(): Boolean

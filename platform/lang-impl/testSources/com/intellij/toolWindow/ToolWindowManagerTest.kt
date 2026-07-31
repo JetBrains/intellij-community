@@ -8,6 +8,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -25,6 +26,12 @@ class ToolWindowManagerTest {
   @ValueSource(strings = ["left", "bottom"])
   fun `button layout`(anchor: String) = runBlocking(Dispatchers.EDT) {
     testButtonLayout(isNewUi = true, anchor = ToolWindowAnchor.fromText(anchor))
+  }
+
+  @Test
+  fun `horizontal button layout keeps natural order`() = runBlocking(Dispatchers.EDT) {
+    testButtonLayout(isNewUi = true, anchor = ToolWindowAnchor.TOP, isHorizontal = true)
+    testButtonLayout(isNewUi = true, anchor = ToolWindowAnchor.BOTTOM, isHorizontal = true)
   }
 
   @ParameterizedTest
