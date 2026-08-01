@@ -3533,6 +3533,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testTopLevelProperty() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/topLevelProperty.kt");
             }
+
+            @TestMetadata("withModalityKeyword.kt")
+            public void testWithModalityKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/withModalityKeyword.kt");
+            }
+
+            @TestMetadata("withSuspendKeyword.kt")
+            public void testWithSuspendKeyword() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addContext/withSuspendKeyword.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

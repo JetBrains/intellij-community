@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 
 sealed class AddContextParameterFix(
     element: KtElement,
@@ -62,9 +61,10 @@ sealed class AddContextParameterFix(
                 (targetFunction.addBefore(templateModifierList, funKeyword) as? KtModifierList)?.contextParameterList
             } else {
                 val newContextClause = templateModifierList.contextParameterList ?: return
-                val visibilityModifier = targetModifierList.visibilityModifier()
-                if (visibilityModifier != null) {
-                    targetModifierList.addBefore( newContextClause, visibilityModifier)
+                // insert before the first modifier keyword
+                val insertPoint = targetModifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
+                if (insertPoint != null) {
+                    targetModifierList.addBefore(newContextClause, insertPoint)
                 } else {
                     targetModifierList.add(newContextClause)
                 } as? KtContextParameterList
