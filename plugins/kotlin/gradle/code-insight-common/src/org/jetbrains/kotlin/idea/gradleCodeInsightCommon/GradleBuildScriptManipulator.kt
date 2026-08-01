@@ -82,6 +82,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
      */
     fun hasKotlinPluginApplyFalse(): Boolean
 
+    fun hasRepositoryConfiguredInScope(scopeNames: List<String>): Boolean
+
     fun configureBuildScripts(
         kotlinPluginName: String,
         kotlinPluginExpression: String,
