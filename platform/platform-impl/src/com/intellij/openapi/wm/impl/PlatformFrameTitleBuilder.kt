@@ -40,7 +40,7 @@ open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
   }
 
   override suspend fun getFileTitleAsync(project: Project, file: VirtualFile): String {
-    EditorHistoryManager.getInstanceAsync(project) // make sure we preload it ouf of EDT
+    EditorHistoryManager.preloadHistory(project)
 
     val overriddenTitle = getCustomEditorTabTitleAsync(project, file)
     return readAction {

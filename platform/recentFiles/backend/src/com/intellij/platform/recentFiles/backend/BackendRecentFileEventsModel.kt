@@ -131,11 +131,11 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {
     LOG.debug("Switcher emit recent files: $searchRequest")
+    EditorHistoryManager.preloadHistory(project)
+
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
     targetFlow.emit(BackendRecentFilesEvent.AllItemsRemoved())
-
-    EditorHistoryManager.getInstanceAsync(project) // make sure we preload it out of EDT
 
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {

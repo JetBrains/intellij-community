@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CompletableDeferred
@@ -164,21 +165,24 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     }
   }
 
-  override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
-    val state = super<TextEditorProvider>.readState(element, project, file) as TextEditorState
+  override fun readStateByUrl(element: Element, project: Project, urlString: String): FileEditorState {
+    val state = super<TextEditorProvider>.readStateByUrl(element, project, urlString) as TextEditorState
     val foldingElement = element.getChild(FOLDING_ELEMENT)
-    if (foldingElement == null) {
-      return state
-    }
-    val document = ReadAction.computeBlocking<Document, RuntimeException> {
-      if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
-        //otherwise we will decompile files and cause performance issues
-        FileDocumentManager.getInstance().getCachedDocument(file)
+    if (foldingElement == null) return state
+
+    val documentFile = VirtualFileManager.getInstance().findFileByUrl(urlString)
+    val document = documentFile?.let { file ->
+      ReadAction.computeBlocking<Document, RuntimeException> {
+        if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
+          //otherwise we will decompile files and cause performance issues
+          FileDocumentManager.getInstance().getCachedDocument(file)
+        }
+        else {
+          FileDocumentManager.getInstance().getDocument(file)
+        }
       }
-      else {
-        FileDocumentManager.getInstance().getDocument(file)
-      }
     }
+
     return if (document != null) {
       val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
       state.withFoldingState(foldingState)

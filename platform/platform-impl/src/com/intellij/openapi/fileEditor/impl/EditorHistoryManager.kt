@@ -78,6 +78,16 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
 
     suspend fun getInstanceAsync(project: Project): EditorHistoryManager = project.serviceAsync()
+
+    /**
+     * Initializes the [EditorHistoryManager] service so that its persisted history is loaded
+     * within this suspending call. Invoke it before synchronous [getInstance] access on a
+     * latency-sensitive path so that history loading does not block the caller.
+     */
+    @ApiStatus.Internal
+    suspend fun preloadHistory(project: Project) {
+      getInstanceAsync(project)
+    }
   }
 
   @Synchronized

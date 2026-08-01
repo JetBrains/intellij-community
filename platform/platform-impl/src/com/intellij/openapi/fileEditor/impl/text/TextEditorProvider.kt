@@ -141,7 +141,19 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     )
   }
 
-  override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
+  @Deprecated("Implemented to keep compatibility, do not call directly")
+  override fun readState(
+    element: Element,
+    project: Project,
+    file: VirtualFile,
+  ): FileEditorState {
+    if (element.isEmpty) {
+      return TextEditorState()
+    }
+    return TextEditorState(readCarets(element), readRelativeCaretPosition(element))
+  }
+
+  override fun readStateByUrl(element: Element, project: Project, urlString: String): FileEditorState {
     if (element.isEmpty) {
       return TextEditorState()
     }

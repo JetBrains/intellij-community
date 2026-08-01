@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
@@ -141,11 +140,10 @@ private fun parseEntry(
     throw IllegalArgumentException("unexpected tag: $element")
   }
 
-  val url = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
+  val urlString = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
   var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
   var selectedProvider: FileEditorProvider? = null
 
-  val file = VirtualFileManager.getInstance().findFileByUrl(url)
   for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
@@ -153,15 +151,13 @@ private fun parseEntry(
       selectedProvider = provider
     }
 
-    if (file != null) {
-      val stateElement = providerElement.getChild(STATE_ELEMENT)
-      val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
-      providerStates = providerStates.adding(provider to state)
-    }
+    val stateElement = providerElement.getChild(STATE_ELEMENT)
+    val state = provider.readStateByUrl(stateElement ?: EMPTY_ELEMENT, project, urlString)
+    providerStates = providerStates.adding(provider to state)
   }
 
   return EntryData(
-    url = url,
+    url = urlString,
     providerStates = providerStates,
     selectedProvider = selectedProvider,
     preview = element.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),
