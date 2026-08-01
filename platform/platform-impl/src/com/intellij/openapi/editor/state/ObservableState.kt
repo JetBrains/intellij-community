@@ -7,11 +7,18 @@ import com.intellij.util.EventDispatcher
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.typeOf
+
+/**
+ * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
+ * so the raw Java interface is referenced here explicitly.
+ */
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+private val JAVA_LIST_CLASS: Class<*> = java.util.List::class.java
 
 fun <T : ObservableState> T.init(): T {
   refreshAll()
@@ -106,10 +113,17 @@ abstract class ObservableState {
     val classifier = clazz.classifier
     if (classifier !is KClass<*>) return true
 
-    // Lists work fine, CharSequences - no
-    if (classifier.isSubclassOf(List::class)) return false
+    // plain java.lang.Class API is used here on purpose: kotlin-reflect members like `isSubclassOf`/`isAbstract`
+    // deserialize the whole class metadata and may freeze the EDT (IJPL-251839)
+    val javaClass = classifier.java
 
-    return classifier.isAbstract
+    // Lists work fine, CharSequences - no
+    if (JAVA_LIST_CLASS.isAssignableFrom(javaClass)) return false
+
+    // the JVM marks primitives, arrays and enums with constant-specific bodies as abstract, while they are final in Kotlin terms
+    if (javaClass.isPrimitive || javaClass.isArray || javaClass.isEnum) return false
+
+    return Modifier.isAbstract(javaClass.modifiers)
   }
 
   fun refreshAll() {
