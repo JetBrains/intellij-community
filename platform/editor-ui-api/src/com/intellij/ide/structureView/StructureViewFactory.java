@@ -36,6 +36,12 @@ public abstract class StructureViewFactory {
                                                     @NotNull Project project,
                                                     boolean showRootNode);
 
+  /**
+   * Rebuilds the structure view for the current editor and re-resolves its structure view builder.
+   */
+  @ApiStatus.Experimental
+  public abstract void refreshStructureView();
+
   public static StructureViewFactory getInstance(Project project) {
     return project.getService(StructureViewFactory.class);
   }
