@@ -43,6 +43,7 @@
   {kind: "moduleId", id: "intellij.codeWithMe.datagrip.main", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.codeWithMe.pycharm.community.main", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.codeWithMe.appcode.main", moduleKind: "backend"},
+  {kind: "moduleId", id: "intellij.platform.vcs", moduleKind: "backend"},
 
   {kind: "moduleId", id: "intellij.rider", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
   {kind: "moduleId", id: "intellij.rider.backend.split", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
