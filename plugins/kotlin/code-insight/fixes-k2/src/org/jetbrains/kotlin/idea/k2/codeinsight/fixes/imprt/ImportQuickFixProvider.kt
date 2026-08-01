@@ -116,6 +116,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         return KotlinAddImportActionFactory.getInstance().createAddImportFix(position, text, data.importVariants)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun createImportData(
         position: KtElement,
@@ -161,6 +162,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
                 SymbolBasedAutoImportVariant(
                     candidate.createPointer(),
                     candidate.getFqName(),
+                    candidate.isDeprecated,
                     candidate.psi,
                     getIconFor(candidate),
                     renderCandidate(candidate),

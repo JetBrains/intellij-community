@@ -103,6 +103,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../../idea/tests/testData/editor/autoImport/multipleCandidates2/");
     }
 
+    @TestMetadata("multipleCandidatesWithDeprecated")
+    public void testMultipleCandidatesWithDeprecated() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/multipleCandidatesWithDeprecated/");
+    }
+
     @TestMetadata("nestedClassifier")
     public void testNestedClassifier() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/nestedClassifier/");
