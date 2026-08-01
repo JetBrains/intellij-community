@@ -278,6 +278,8 @@ open class EditorComposite internal constructor(
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
 
+    EditorHistoryManager.getInstanceAsync(project) // ake sure we preload it out of EDT
+
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
       withContext(Dispatchers.EDT) {

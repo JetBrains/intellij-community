@@ -23,6 +23,12 @@ c:com.intellij.notification.Notification
 - f:getLocation(java.lang.String):com.intellij.notification.NotificationLocation
 f:com.intellij.notification.Notifications$Bus
 - *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
+a:com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
+- *:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.UniqueVFileProjectPathBuilder
+*:com.intellij.openapi.fileEditor.UniqueVFileProjectPathBuilder
+- a:getUniqueVirtualFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getUniqueVirtualFilePath(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.search.GlobalSearchScope):java.lang.String
+- a:getUniqueVirtualFilePathWithinOpenedFileEditors(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 *:com.intellij.openapi.options.Configurable$InnerWithModifiableParent
 - a:getModifiableParents():java.util.List
 *:com.intellij.openapi.options.Configurable$NewOptions

@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -72,7 +73,11 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     private val LOG = logger<EditorHistoryManager>()
 
     @JvmStatic
-    fun getInstance(project: Project): EditorHistoryManager = project.service()
+    fun getInstance(project: Project): EditorHistoryManager {
+      return project.service()
+    }
+
+    suspend fun getInstanceAsync(project: Project): EditorHistoryManager = project.serviceAsync()
   }
 
   @Synchronized

@@ -1077,6 +1077,8 @@ open class FileEditorManagerImpl(
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    EditorHistoryManager.getInstanceAsync(project) // make sure we preload it out of EDT
+
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.openFileAsync(
         file = file,
@@ -1973,6 +1975,8 @@ open class FileEditorManagerImpl(
     newEditorWithProvider: FileEditorWithProvider?,
     publisher: FileEditorManagerListener,
   ) {
+    EditorHistoryManager.getInstanceAsync(project) // make sure we preload it out of EDT
+
     oldEditorWithProvider?.fileEditor?.deselectNotify()
     val newEditor = newEditorWithProvider?.fileEditor
     if (newEditor != null) {

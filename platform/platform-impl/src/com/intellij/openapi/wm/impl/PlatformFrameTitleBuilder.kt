@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitleAsync
 import com.intellij.openapi.project.Project
@@ -39,6 +40,8 @@ open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
   }
 
   override suspend fun getFileTitleAsync(project: Project, file: VirtualFile): String {
+    EditorHistoryManager.getInstanceAsync(project) // make sure we preload it ouf of EDT
+
     val overriddenTitle = getCustomEditorTabTitleAsync(project, file)
     return readAction {
       doGetFileTitle(
