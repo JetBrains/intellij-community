@@ -1,6 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>

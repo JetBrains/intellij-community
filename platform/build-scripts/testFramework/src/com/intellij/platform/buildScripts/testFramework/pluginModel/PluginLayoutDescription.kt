@@ -140,7 +140,7 @@ private class ContentReportBasedPluginLayoutProvider(
       pluginDescriptorPath = corePluginDescriptorPath,
       mainLibDir = "dist.all/lib",
       jarsToIgnore = setOf("dist.all/lib/testFramework.jar"),
-      projectLibraryRootResolver = { libraryName -> outputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName = null) },
+      libraryRootResolver = outputProvider::findLibraryRoots,
     )
   }
 
@@ -168,7 +168,7 @@ private class ContentReportBasedPluginLayoutProvider(
       pluginDescriptorPath = pluginDescriptorPath,
       mainLibDir = "lib",
       jarsToIgnore = emptySet(),
-      projectLibraryRootResolver = { libraryName -> outputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName = null) },
+      libraryRootResolver = outputProvider::findLibraryRoots,
     )
   }
 
@@ -313,7 +313,7 @@ internal fun toPluginLayoutDescription(
   pluginDescriptorPath: String,
   mainLibDir: String,
   jarsToIgnore: Set<String>,
-  projectLibraryRootResolver: (libraryName: String) -> List<Path> = { emptyList() },
+  libraryRootResolver: (libraryName: String, moduleLibraryModuleName: String?) -> List<Path> = { _, _ -> emptyList() },
 ): PluginLayoutDescription {
   val libEntries = entries
     .asSequence()
@@ -327,12 +327,18 @@ internal fun toPluginLayoutDescription(
       projectLibraryNames + fileProjectLibraryName
     }
     .toCollection(LinkedHashSet())
+  val moduleLibraries = libEntries
+    .asSequence()
+    .flatMap { it.modules + it.contentModules }
+    .flatMap { module -> module.libraries.keys.asSequence().filterNot { it.endsWith(".jar") }.map { it to module.name } }
+    .toCollection(LinkedHashSet())
 
   return PluginLayoutDescription(
     mainJpsModule = mainModuleName,
     pluginDescriptorPath = pluginDescriptorPath,
     jpsModulesInClasspath = libEntries
       .flatMapTo(LinkedHashSet()) { entry -> entry.modules.map { it.name } },
-    libraryRootsInClasspath = projectLibraries.flatMap(projectLibraryRootResolver),
+    libraryRootsInClasspath = projectLibraries.flatMap { libraryRootResolver(it, null) } +
+                              moduleLibraries.flatMap { (libraryName, moduleName) -> libraryRootResolver(libraryName, moduleName) },
   )
 }

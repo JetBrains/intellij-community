@@ -34,6 +34,7 @@ jvm_library(
         "//plugins/gradle/java",
         "//plugins/toml",
         "//plugins/gradle/java/toml",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
 
@@ -64,6 +65,7 @@ jvm_library(
         "//plugins/gradle/java:java_test_lib",
         "//plugins/toml:toml_test_lib",
         "//plugins/gradle/java/toml:toml_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end

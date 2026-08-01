@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.gradle.java.toml" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
   </component>
 </module>

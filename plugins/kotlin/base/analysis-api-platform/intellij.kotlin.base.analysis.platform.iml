@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
   </component>
 </module>
