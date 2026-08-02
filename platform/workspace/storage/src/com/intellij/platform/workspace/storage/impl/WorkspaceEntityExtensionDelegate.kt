@@ -6,7 +6,13 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubclassOf
+
+/**
+ * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
+ * so the raw Java interface is referenced here explicitly.
+ */
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+private val JAVA_LIST_CLASS: Class<*> = java.util.List::class.java
 
 internal val calculatedCache = mutableMapOf<KProperty<*>, PropertyMetadata>()
 internal data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val isCollection: Boolean, val isNullable: Boolean)
@@ -79,7 +85,9 @@ public class WorkspaceEntityExtensionDelegate<T> {
 }
 
 private val KType.isCollection: Boolean
-  get() = (classifier as KClass<*>).isSubclassOf(List::class)
+  // plain java.lang.Class API is used here on purpose: kotlin-reflect members like `isSubclassOf`
+  // deserialize the whole class metadata and may freeze the EDT (IJPL-249864, IJPL-251839)
+  get() = JAVA_LIST_CLASS.isAssignableFrom((classifier as KClass<*>).java)
 
 
 private val KProperty<*>.isChildProperty: Boolean
