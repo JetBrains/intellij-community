@@ -167,7 +167,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                     refHolder.registerLocalRef(call.symbol.psi)
                 }
                 if (call is KaCompoundAccessCall) {
-                    refHolder.registerLocalRef(call.compoundOperation.operationCall.symbol.psi)
+                    refHolder.registerLocalRef(call.operationCall.symbol.psi)
                 }
             }
 

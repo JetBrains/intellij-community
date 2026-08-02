@@ -3,7 +3,13 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNotNull
+import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNull
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -35,7 +41,8 @@ class FirKotlinUastAnalysisPlugin : UastAnalysisPlugin {
         }
     }
 
-    private fun KaSession.checkNullabilityForType(kaType: KaType): UNullability? {
+    context(session: KaSession)
+    private fun checkNullabilityForType(kaType: KaType): UNullability? {
         return when {
             kaType.hasFlexibleNullability -> UNullability.UNKNOWN
             kaType.isMarkedNullable -> UNullability.NULLABLE
@@ -43,7 +50,8 @@ class FirKotlinUastAnalysisPlugin : UastAnalysisPlugin {
         }
     }
 
-    private fun KaSession.checkNullabilityForExpression(expression: KtExpression): UNullability? {
+    context(session: KaSession)
+    private fun checkNullabilityForExpression(expression: KtExpression): UNullability? {
         val unwrappedExpression = expression.unwrapBlockOrParenthesis()
 
         return when {

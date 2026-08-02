@@ -20,15 +20,21 @@ import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -100,7 +106,8 @@ constructor(
         }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.lookupTypeArgument(type: KaTypeParameterType): KaType? {
+    context(session: KaSession)
+    private fun lookupTypeArgument(type: KaTypeParameterType): KaType? {
         for (symbolPointer in typeArgumentMapping.keys) {
             val typeParameterSymbol = symbolPointer.restoreSymbol()
             if (typeParameterSymbol == type.symbol) {

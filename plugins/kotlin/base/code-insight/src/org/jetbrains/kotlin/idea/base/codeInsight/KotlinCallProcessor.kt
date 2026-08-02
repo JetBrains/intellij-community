@@ -230,7 +230,7 @@ object KotlinCallProcessor {
                 is KaFunctionCall<*> -> processCallTarget(FunctionCallTarget(element, call))
                 is KaCompoundVariableAccessCall -> {
                     processCallTarget(VariableCallTarget(element, call.variableCall))
-                    processCallTarget(FunctionCallTarget(element, call.compoundOperation.operationCall))
+                    processCallTarget(FunctionCallTarget(element, call.operationCall))
                 }
 
                 is KaVariableAccessCall -> {
