@@ -2,12 +2,16 @@
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.model.Activation;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblemCollector;
 import org.apache.maven.model.profile.ProfileActivationContext;
 import org.apache.maven.model.profile.activation.ProfileActivator;
+import org.apache.maven.model.validation.DefaultModelValidator;
+import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
@@ -42,6 +46,17 @@ final class RepositorySystemHolder {
         // allow pom profiles to make dependency resolution deterministic and predictable:
         // consider all possible dependencies the artifact can potentially have.
         return new ProfileActivator[] {new ProfileActivatorProxy(super.newProfileActivators())};
+      }
+
+      // Note(k15tfu): Temporarily synchronize DefaultModelValidator#validateEffectiveModel to allow concurrent dependency collection.  See https://github.com/apache/maven/pull/11734 and https://youtrack.jetbrains.com/issue/IJPL-251892.
+      @Override
+      protected ModelValidator newModelValidator() {
+        return new DefaultModelValidator(newModelVersionPropertiesProcessor()) {
+          @Override
+          public synchronized void validateEffectiveModel(Model model, ModelBuildingRequest request, ModelProblemCollector problems) {
+            super.validateEffectiveModel(model, request, problems);
+          }
+        };
       }
     }.newInstance());
     locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {
