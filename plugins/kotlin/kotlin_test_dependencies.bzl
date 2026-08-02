@@ -7,7 +7,7 @@ def download_file(name, url, sha256):
     _files.append(struct(name = name, url = url, sha256 = sha256))
 
 kotlinCompilerCliVersion = "2.4.20-ij262-52"
-kotlincKotlinJpsPluginTestsVersion = "2.3.20"
+kotlincKotlinJpsPluginTestsVersion = "2.4.0"
 
 download_file(
     name = "kotlinx-serialization-core-1.7.1.jar",
@@ -210,7 +210,7 @@ download_file(
 download_file(
     name = "js-ir-runtime-for-ide.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-ir-runtime-for-ide/{0}/js-ir-runtime-for-ide-{0}.klib".format(kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "b67c578ddb29fb6520368735790b8afb4906cafaa2958d10b8d2ff38d1dbf0fb",
+    sha256 = "72cc3f7175c4c2c956c5b8b54484c6b7f41215d8cf21a1b8b1ace1df66e650c1",
 )
 
 download_file(
@@ -246,13 +246,13 @@ download_file(
 download_file(
     name = "kotlin-dist-for-ide-increment-compilation.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/{0}/kotlin-dist-for-ide-{0}.jar".format(kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "74eabb16163c4575b5dc4b2038268026f389849200f466870714342ccc3792d3",
+    sha256 = "d12b996e50fe7b245a0a5045bac8c0bd5cbc227a792e44b41b0ae80e042c8490",
 )
 
 download_file(
     name = "kotlin-dist-for-ide.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/{0}/kotlin-dist-for-ide-{0}.jar".format(kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "74eabb16163c4575b5dc4b2038268026f389849200f466870714342ccc3792d3",
+    sha256 = "d12b996e50fe7b245a0a5045bac8c0bd5cbc227a792e44b41b0ae80e042c8490",
 )
 
 download_file(
@@ -264,7 +264,7 @@ download_file(
 download_file(
     name = "kotlin-jps-plugin-classpath.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/{0}/kotlin-jps-plugin-classpath-{0}.jar".format(kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "0d6103ec6a0eb9c36e856c04d3478099ab86437dd5f19a22a69d9e80b4cff2cb",
+    sha256 = "80d785cfe4309db0246069b3313d11a119fe8ee38bd8b102bd8bb4978a1c61be",
 )
 
 download_file(
