@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
@@ -204,3 +204,9 @@ private class ShortenCommandForIdeWrapper(
         element?.findSameElementInCopy()
             ?.createSmartPointer()
 }
+
+internal fun Char.isSmartEnterCompletion(): Boolean = this == Lookup.COMPLETE_STATEMENT_SELECT_CHAR
+internal fun Char.isReplaceCompletion(): Boolean = this == Lookup.REPLACE_SELECT_CHAR
+internal fun Char.isNormalCompletion(): Boolean = this == Lookup.NORMAL_SELECT_CHAR
+
+internal fun Char.isWhiteSpaceCompletionChar(): Boolean = this.isSmartEnterCompletion() || this.isReplaceCompletion() || this.isNormalCompletion()

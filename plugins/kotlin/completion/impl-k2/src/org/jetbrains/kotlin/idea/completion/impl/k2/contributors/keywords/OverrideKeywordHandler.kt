@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirL
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.ContextParametersListRenderer
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember

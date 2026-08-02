@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameter
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils

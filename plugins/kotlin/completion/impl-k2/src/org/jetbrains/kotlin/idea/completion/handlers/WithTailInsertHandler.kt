@@ -7,7 +7,10 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 
@@ -54,7 +57,7 @@ data class WithTailInsertHandler(
         if (overwriteText) {
             var offset = tailOffset
             if (tailText != " ") {
-                offset = document.charsSequence.skipSpacesAndLineBreaks(offset)
+                offset = skipWhitespacesAndComments(context, offset)
             }
             if (shouldOverwriteChar(document, offset)) {
                 insert = false
@@ -83,6 +86,15 @@ data class WithTailInsertHandler(
                 AutoPopupController.getInstance(context.project)?.autoPopupParameterInfo(context.editor, null)
             }
         }
+    }
+
+    private fun skipWhitespacesAndComments(context: InsertionContext, offset: Int): Int {
+        val element = context.file.findElementAt(offset) ?: return offset
+        if (element !is PsiWhiteSpace && PsiTreeUtil.getNonStrictParentOfType(element, PsiComment::class.java) == null) {
+            return offset
+        }
+        val codeLeaf = PsiTreeUtil.nextCodeLeaf(element) ?: return offset
+        return maxOf(offset, codeLeaf.textRange.startOffset)
     }
 
     private fun shouldOverwriteChar(document: Document, offset: Int): Boolean {

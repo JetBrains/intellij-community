@@ -1,0 +1,11 @@
+class Apple()
+fun makeJuice(a: Apple) {}
+
+fun test() {
+    makeJuice(
+         Apple() // comment
+    )<caret>
+}
+
+// ELEMENT: Apple
+// TAIL_TEXT: () (<root>)
