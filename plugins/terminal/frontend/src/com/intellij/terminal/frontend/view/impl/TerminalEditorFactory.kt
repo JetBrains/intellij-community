@@ -154,6 +154,7 @@ object TerminalEditorFactory {
     editor.settings.isUseCustomSoftWrapIndent = false
     val softWrapModel = editor.softWrapModel
     softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
+    softWrapModel.applianceManager.setAllowGridModeOptimizations(true)
     softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
     softWrapModel.setSoftWrapPainter(EmptySoftWrapPainter)
   }

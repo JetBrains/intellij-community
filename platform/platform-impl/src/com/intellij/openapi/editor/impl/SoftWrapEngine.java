@@ -42,6 +42,7 @@ public final class SoftWrapEngine {
   private final int mySoftWrapWidth;
   private final IncrementalCacheUpdateEvent myEvent;
   private final int myRelativeIndent;
+  private final boolean myAllowGridModeOptimizations;
 
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
 
@@ -52,7 +53,8 @@ public final class SoftWrapEngine {
                         @NotNull IncrementalCacheUpdateEvent event,
                         @Nullable LineWrapPositionStrategy lineWrapStrategy,
                         int visibleWidth,
-                        int relativeIndent) {
+                        int relativeIndent,
+                        boolean allowGridModeOptimizations) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myText = myDocument.getImmutableCharSequence();
@@ -65,6 +67,7 @@ public final class SoftWrapEngine {
     myEvent = event;
     myRelativeIndent = relativeIndent;
     myLineWrapPositionStrategy = lineWrapStrategy;
+    myAllowGridModeOptimizations = allowGridModeOptimizations;
   }
 
   public void generate() {
@@ -79,7 +82,8 @@ public final class SoftWrapEngine {
     var customWraps = myEditor.getCustomWrapModel().getWrapsInRange(startOffset, maxEndOffset);
 
     var grid = myEditor.getCharacterGrid();
-    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()
+    if (grid != null && myAllowGridModeOptimizations
+        && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()
         && !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset)) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
