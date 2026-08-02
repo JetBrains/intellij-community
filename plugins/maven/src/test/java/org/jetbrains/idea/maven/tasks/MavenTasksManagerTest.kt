@@ -11,8 +11,10 @@ import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.isModel410
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.openapi.application.writeAction
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -322,6 +324,9 @@ class MavenTasksManagerTest(mavenVersion: String, modelVersion: String) {
                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
 
     // Remove m1 from parent modules list, re-sync
+    writeAction {
+      m1File.delete(this)
+    }
     maven.updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
