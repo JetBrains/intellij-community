@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.sandbox
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
@@ -19,6 +19,7 @@ import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.listCellRenderer.LcrExamplesPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.validation.CrossValidationPanel
@@ -155,6 +156,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     JTextFieldPanel(),
     OnOffButtonPanel(),
     SearchTextFieldPanel(),
+    ShimmerLabelPanel(),
     ThreeStateCheckBoxPanel(),
     IconsPanel()
   ))
