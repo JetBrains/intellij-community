@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -42,11 +41,11 @@ inline fun <R> analyzeInModalWindow(
 )
 inline fun <T : KtElement, R> allowAnalysisFromWriteActionInEdt(
     useSiteElement: T,
-    action: KaSession.(T) -> R,
+    action: context(KaSession) (T) -> R,
 ): R = allowAnalysisOnEdt {
     allowAnalysisFromWriteAction {
         analyze(useSiteElement) {
-            useSiteSession.action(useSiteElement)
+            action(useSiteElement)
         }
     }
 }

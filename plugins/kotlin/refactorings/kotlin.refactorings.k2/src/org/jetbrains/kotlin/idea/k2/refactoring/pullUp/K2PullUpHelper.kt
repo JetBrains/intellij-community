@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -422,13 +423,11 @@ internal class K2PullUpHelper(
         when (data.targetClass) {
             is KtClass -> {
                 allowAnalysisFromWriteActionInEdt(data.sourceClass) {
-                    analyze(data.sourceClass) {
-                        addSuperTypeEntry(
-                            currentSpecifier,
-                            data.targetClass,
-                            data.getSourceToTargetClassSubstitutor(),
-                        )
-                    }
+                    addSuperTypeEntry(
+                        currentSpecifier,
+                        data.targetClass,
+                        data.getSourceToTargetClassSubstitutor(),
+                    )
                 }
                 data.sourceClass.removeSuperTypeListEntry(currentSpecifier)
             }
@@ -554,14 +553,12 @@ internal class K2PullUpHelper(
         } else if (targetClass !is KtClass) return
 
         val markedElements = allowAnalysisFromWriteActionInEdt(member) {
-            analyze(member) {
-                markElements(
-                    member,
-                    data.sourceClass,
-                    targetClass,
-                    data.getSourceToTargetClassSubstitutor(),
-                )
-            }
+            markElements(
+                member,
+                data.sourceClass,
+                targetClass,
+                data.getSourceToTargetClassSubstitutor(),
+            )
         }
         val memberCopy = member.copy() as KtNamedDeclaration
 
@@ -578,9 +575,7 @@ internal class K2PullUpHelper(
         fun moveCallableMember(member: KtCallableDeclaration, memberCopy: KtCallableDeclaration): KtCallableDeclaration {
             val movedMember: KtCallableDeclaration
             val clashingSuper = allowAnalysisFromWriteActionInEdt(member) {
-                analyze(member) {
-                    fixOverrideAndGetClashingSuper(member, memberCopy)
-                }
+                fixOverrideAndGetClashingSuper(member, memberCopy)
             }
 
             val psiFactory = KtPsiFactory(member.project)
@@ -778,9 +773,7 @@ internal class K2PullUpHelper(
                 val info = propertyToInitializerInfo.getValue(oldProperty)
 
                 allowAnalysisFromWriteActionInEdt(constructorElement) {
-                    analyze(constructorElement) {
-                        addUsedParameters(constructorElement, info)
-                    }
+                    addUsedParameters(constructorElement, info)
                 }
 
                 info.initializer?.let {
