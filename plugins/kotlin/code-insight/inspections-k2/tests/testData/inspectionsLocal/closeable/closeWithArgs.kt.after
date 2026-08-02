@@ -1,0 +1,18 @@
+class AC : AutoCloseable {
+    fun read() {
+        print("read")
+    }
+    override fun close() {
+        print("close")
+    }
+    fun close(times: Int) {
+        repeat(times) { print("close") }
+    }
+}
+
+fun c() {
+    AC().use { s ->
+        s.read()
+        s.close(2)
+    }
+}

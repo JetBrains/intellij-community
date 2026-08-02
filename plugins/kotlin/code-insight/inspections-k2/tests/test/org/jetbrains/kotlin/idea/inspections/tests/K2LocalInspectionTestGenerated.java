@@ -13338,6 +13338,114 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/closeable")
+        public static class Closeable extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("alreadyUse.kt")
+            public void testAlreadyUse() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/alreadyUse.kt");
+            }
+
+            @TestMetadata("alreadyUseWithAlso.kt")
+            public void testAlreadyUseWithAlso() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/alreadyUseWithAlso.kt");
+            }
+
+            @TestMetadata("alreadyUseWithUseResult.kt")
+            public void testAlreadyUseWithUseResult() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/alreadyUseWithUseResult.kt");
+            }
+
+            @TestMetadata("closeWithArgs.kt")
+            public void testCloseWithArgs() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/closeWithArgs.kt");
+            }
+
+            @TestMetadata("escapedCannotWrap.kt")
+            public void testEscapedCannotWrap() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/escapedCannotWrap.kt");
+            }
+
+            @TestMetadata("escapedWithClose.kt")
+            public void testEscapedWithClose() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/escapedWithClose.kt");
+            }
+
+            @TestMetadata("expression.kt")
+            public void testExpression() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/expression.kt");
+            }
+
+            @TestMetadata("expressionInBlock.kt")
+            public void testExpressionInBlock() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/expressionInBlock.kt");
+            }
+
+            @TestMetadata("expressionWithAlso.kt")
+            public void testExpressionWithAlso() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/expressionWithAlso.kt");
+            }
+
+            @TestMetadata("lambdaInBlock.kt")
+            public void testLambdaInBlock() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/lambdaInBlock.kt");
+            }
+
+            @TestMetadata("lambdaInBlock2.kt")
+            public void testLambdaInBlock2() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/lambdaInBlock2.kt");
+            }
+
+            @TestMetadata("notCloseable.kt")
+            public void testNotCloseable() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/notCloseable.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/property.kt");
+            }
+
+            @TestMetadata("propertyWithDeclaration.kt")
+            public void testPropertyWithDeclaration() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/propertyWithDeclaration.kt");
+            }
+
+            @TestMetadata("propertyWithLastProperty.kt")
+            public void testPropertyWithLastProperty() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/propertyWithLastProperty.kt");
+            }
+
+            @TestMetadata("propertyWithStatement.kt")
+            public void testPropertyWithStatement() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/propertyWithStatement.kt");
+            }
+
+            @TestMetadata("singleProperty.kt")
+            public void testSingleProperty() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/singleProperty.kt");
+            }
+
+            @TestMetadata("statementInBlock.kt")
+            public void testStatementInBlock() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/statementInBlock.kt");
+            }
+
+            @TestMetadata("useReturnsClosable.kt")
+            public void testUseReturnsClosable() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/useReturnsClosable.kt");
+            }
+
+            @TestMetadata("withClose.kt")
+            public void testWithClose() throws Exception {
+                runTest("testData/inspectionsLocal/closeable/withClose.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collapseCollectionLiteralChainCall")
         public static class CollapseCollectionLiteralChainCall extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

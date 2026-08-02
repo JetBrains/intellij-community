@@ -1,0 +1,76 @@
+<html>
+<body>
+Reports <code>Closeable</code> or <code>AutoCloseable</code> resources that are not managed with the <code>use { }</code> function.
+<p>
+    Resources that implement <code>Closeable</code> or <code>AutoCloseable</code> must be properly closed after use.
+    The idiomatic Kotlin way is to call <code>use { }</code>, which automatically closes the resource even if an exception is thrown.
+    Explicit <code>close()</code> calls are not exception-safe and should be replaced with <code>use { }</code>.
+</p>
+<!-- tooltip end -->
+<p>The inspection covers the following cases:</p>
+<ul>
+    <li>A closeable resource assigned to a local variable without being wrapped in <code>use { }</code>.</li>
+    <li>A closeable expression used directly (e.g. method call, <code>also</code> chain) without <code>use { }</code>.</li>
+    <li>A closeable expression returned as the last expression of a lambda block, without <code>use { }</code>.</li>
+    <li>A result of <code>use { }</code> that is itself a closeable resource not wrapped in another <code>use { }</code>.</li>
+</ul>
+<p>Example (variable):</p>
+<pre><code>
+val stream = FileInputStream("file.txt") // resource is never closed safely
+stream.read()
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+FileInputStream("file.txt").use { stream ->
+    stream.read()
+}
+</code></pre>
+<p>Example (variable, last statement produces a value):</p>
+<pre><code>
+val stream = FileInputStream("file.txt")
+val result = stream.read()
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+val result = FileInputStream("file.txt").use { stream -> stream.read() }
+</code></pre>
+<p>Example (variable with explicit close — not exception-safe):</p>
+<pre><code>
+val stream = FileInputStream("file.txt")
+stream.read()
+stream.close()
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+FileInputStream("file.txt").use { stream ->
+    stream.read()
+}
+</code></pre>
+<p>Example (expression):</p>
+<pre><code>
+getStream().also { it.read() }.read() // resource is never closed
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+getStream().use { it.also { it.read() }.read() }
+</code></pre>
+<p>Example (lambda block returning a closeable):</p>
+<pre><code>
+run {
+    AC() // returned but never closed
+}
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+run {
+    AC()
+}.use { }
+</code></pre>
+<p>The following cases are <b>not</b> reported:</p>
+<ul>
+    <li>Resources already wrapped in <code>use { }</code>, or chained with <code>also { ... }</code> before <code>use { }</code>.</li>
+    <li>Types that declare a <code>close()</code> method but do not implement <code>Closeable</code> or <code>AutoCloseable</code>.</li>
+    <li>Resources that are explicitly closed with <code>close()</code> before their derived values escape the enclosing scope.</li>
+</ul>
+</body>
+</html>

@@ -1435,6 +1435,15 @@
                      bundle="messages.KotlinBundle"
                      key="inspection.duplicate.arguments.in.setof.mapof.functions.display.name"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.CloseableInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     bundle="messages.KotlinBundle"
+                     key="inspection.closable.display.name"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveExplicitSuperQualifierInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"

@@ -156,6 +156,8 @@ object StandardKotlinNames {
 
     @JvmField val context: FqName = BUILT_INS_PACKAGE_FQ_NAME + "context"
 
+    @JvmField val use: FqName = BUILT_INS_PACKAGE_FQ_NAME + "use"
+
     private val collectionTransformationFunctionNames = listOf(
         "chunked",
         "distinct",
