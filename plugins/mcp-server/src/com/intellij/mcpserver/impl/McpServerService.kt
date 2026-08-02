@@ -65,6 +65,16 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = logger<McpServerService>()
 internal val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
+internal const val IJ_MCP_CLIENT_TAGS: String = "IJ_MCP_CLIENT_TAGS"
+
+internal fun parseMcpClientTags(value: String?): Set<String> {
+  return value
+           ?.splitToSequence(',')
+           ?.map { it.trim() }
+           ?.filter { it.isNotEmpty() }
+           ?.toCollection(linkedSetOf())
+         ?: emptySet()
+}
 
 open class McpServerService(val cs: CoroutineScope) {
   enum class AskCommandExecutionMode {
@@ -85,6 +95,9 @@ open class McpServerService(val cs: CoroutineScope) {
     var elicitationKind: McpElicitationKind? = null
       private set
 
+    var clientTags: Set<String> = emptySet()
+      private set
+
     constructor(
       commandExecutionMode: AskCommandExecutionMode,
       toolFilter: McpToolFilter?,
@@ -93,6 +106,28 @@ open class McpServerService(val cs: CoroutineScope) {
       elicitationKind: McpElicitationKind?,
     ) : this(commandExecutionMode, toolFilter, localAgentId, invocationMode) {
       this.elicitationKind = elicitationKind
+    }
+
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter?,
+      localAgentId: String?,
+      invocationMode: McpSessionInvocationMode?,
+      elicitationKind: McpElicitationKind?,
+      clientTags: Set<String>,
+    ) : this(commandExecutionMode, toolFilter, localAgentId, invocationMode, elicitationKind) {
+      this.clientTags = clientTags.toSet()
+    }
+
+    internal fun withToolFilter(toolFilter: McpToolFilter): McpSessionOptions {
+      return McpSessionOptions(
+        commandExecutionMode = commandExecutionMode,
+        toolFilter = toolFilter,
+        localAgentId = localAgentId,
+        invocationMode = invocationMode,
+        elicitationKind = elicitationKind,
+        clientTags = clientTags,
+      )
     }
 
     @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
@@ -348,6 +383,7 @@ open class McpServerService(val cs: CoroutineScope) {
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
+        val clientTagsHeader = applicationCall.request.headers[IJ_MCP_CLIENT_TAGS]
 
         // Check for tool filter from header (for stdio/CLI usage)
         val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS]
@@ -358,16 +394,18 @@ open class McpServerService(val cs: CoroutineScope) {
 
         // Merge filters: auth-based session options take precedence over header
         val baseSessionOptions = getSessionOptions(authToken)
+        val clientTags = clientTagsHeader?.let(::parseMcpClientTags) ?: baseSessionOptions.clientTags
         val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions
-        val sessionOptions = if (headerFilter != null) {
+        val sessionOptions = if (headerFilter != null || clientTagsHeader != null) {
           McpSessionOptions(
             commandExecutionMode = baseSessionOptions.commandExecutionMode,
-            toolFilter = headerFilter,
+            toolFilter = baseSessionOptions.toolFilter,
             localAgentId = baseSessionOptions.localAgentId,
             invocationMode = baseSessionOptions.invocationMode,
             elicitationKind = baseSessionOptions.elicitationKind,
-          )
+            clientTags = clientTags,
+          ).let { options -> headerFilter?.let(options::withToolFilter) ?: options }
         } else {
           baseSessionOptions
         }
