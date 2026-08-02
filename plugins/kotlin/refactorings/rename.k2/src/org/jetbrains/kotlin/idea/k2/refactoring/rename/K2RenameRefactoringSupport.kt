@@ -119,7 +119,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         analyseOnEdt(propertyOrParameter) {
             val propertySymbol = when (val symbol = propertyOrParameter.symbol) {
                 is KaKotlinPropertySymbol -> symbol
-                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
+                is KaValueParameterSymbol -> symbol.primaryConstructorProperty
                 else -> null
             }
 
@@ -143,7 +143,7 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
      * [allowAnalysisOnEdt] should generally be avoided.
      */
     @OptIn(KaAllowAnalysisOnEdt::class, ExperimentalContracts::class)
-    private inline fun <T> analyseOnEdt(element: KtElement, action: KaSession.() -> T) {
+    private inline fun <T> analyseOnEdt(element: KtElement, action: context(KaSession) () -> T) {
         contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
 
         return allowAnalysisOnEdt { analyze(element, action = action) }

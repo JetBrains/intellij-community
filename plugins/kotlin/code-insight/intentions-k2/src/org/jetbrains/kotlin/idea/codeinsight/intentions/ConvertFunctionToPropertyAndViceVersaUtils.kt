@@ -36,7 +36,8 @@ object ConvertFunctionToPropertyAndViceVersaUtils {
         getOrPut(element) { ModShowConflicts.Conflict(mutableListOf()) }.messages().add(message)
     }
 
-    fun KaSession.isOverride(symbol: KaCallableSymbol): Boolean =
+    context(session: KaSession)
+    fun isOverride(symbol: KaCallableSymbol): Boolean =
         symbol.allOverriddenSymbolsWithSelf.singleOrNull() != null
 
     fun addConflictIfCantRefactor(callable: PsiElement, conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>) {

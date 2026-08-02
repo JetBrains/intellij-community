@@ -24,7 +24,8 @@ interface KotlinCallHighlighterExtension {
      * Note that this function is used by [KotlinFunctionCallSemanticAnalyzer]. When this function returns a non-null [HighlightInfoType],
      * [KotlinFunctionCallSemanticAnalyzer] uses it instead of the default one to highlight [call].
      */
-    fun KaSession.highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType?
+    context(session: KaSession)
+    fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType?
 
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCallHighlighterExtension> = ExtensionPointName.create("org.jetbrains.kotlin.callHighlighterExtension")

@@ -542,7 +542,7 @@ internal tailrec fun psiForUast(
         }
 
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
-        return with(psiProvider) { session.provide(symbol, context) }
+        return with(psiProvider) { provide(symbol, context) }
     }
 
     if (symbol is KaConstructorSymbol) {

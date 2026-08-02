@@ -41,8 +41,8 @@ internal class ForEachJoinOnCollectionOfJobInspection : KotlinApplicableInspecti
     override fun prepareContext(element: KtCallExpression): Unit? {
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
-        if (!session.isIterableForEachFunctionCall(element)) return null
-        if (!session.isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Job.join)) return null
+        if (!isIterableForEachFunctionCall(element)) return null
+        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Job.join)) return null
 
         return Unit
     }

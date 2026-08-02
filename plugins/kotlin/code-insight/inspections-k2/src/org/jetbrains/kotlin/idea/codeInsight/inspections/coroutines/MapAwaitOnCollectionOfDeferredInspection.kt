@@ -41,8 +41,8 @@ internal class MapAwaitOnCollectionOfDeferredInspection : KotlinApplicableInspec
     override fun prepareContext(element: KtCallExpression): Unit? {
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
-        if (!session.isIterableMapFunctionCall(element)) return null
-        if (!session.isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Deferred.await)) return null
+        if (!isIterableMapFunctionCall(element)) return null
+        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Deferred.await)) return null
 
         return Unit
     }

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
@@ -86,7 +85,6 @@ internal class ConvertExplicitContextArgumentToImplicitInspection :
         return argumentList.parent is KtCallExpression
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtValueArgument): Context? {
         val argumentExpression = element.getArgumentExpression() ?: return null
@@ -232,7 +230,7 @@ private fun isValueInEnclosingContextBlock(
         val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return false
         val contextCall = lambdaArg.parent as? KtCallExpression ?: return false
 
-        if (session.isKotlinContextCall(contextCall)) {
+        if (isKotlinContextCall(contextCall)) {
             for (valueArg in contextCall.valueArguments) {
                 val contextArgExpr = valueArg.getArgumentExpression() as? KtSimpleNameExpression ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue
@@ -246,7 +244,6 @@ private fun isValueInEnclosingContextBlock(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun isResolvedImplicitlyToSameValue(
     callExpression: KtCallExpression,
     selectedArgument: KtValueArgument,

@@ -87,7 +87,8 @@ internal fun checkRequiresComposePlugin(expression: KtSimpleNameExpression): Boo
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boolean {
+context(session: KaSession)
+internal fun isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boolean {
   fun hasComposableAnnotation(annotated: KaAnnotated?): Boolean {
     return annotated != null && COMPOSABLE_ANNOTATION_CLASS_ID in annotated.annotations
   }
@@ -110,7 +111,8 @@ internal fun KaSession.isComposableInvocation(memberCall: KaCallableMemberCall<*
   }
 }
 
-internal fun KaSession.isRememberInCompositionCall(memberCall: KaCallableMemberCall<*, *>): Boolean {
+context(session: KaSession)
+internal fun isRememberInCompositionCall(memberCall: KaCallableMemberCall<*, *>): Boolean {
   fun hasRememberInCompositionAnnotation(annotated: KaAnnotated?): Boolean {
     return annotated != null && REMEMBER_IN_COMPOSITION_CLASS_ID in annotated.annotations
   }

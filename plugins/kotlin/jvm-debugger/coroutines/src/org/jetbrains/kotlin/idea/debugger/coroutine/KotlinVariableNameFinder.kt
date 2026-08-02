@@ -11,8 +11,11 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -68,7 +71,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         }
     }
 
-    private fun KaSession.findVariableNames(
+    context(session: KaSession)
+    private fun findVariableNames(
         expression: KtExpression,
         boundaryElement: PsiElement,
         blocksToVisit: Sequence<KtBlockExpression>
@@ -108,7 +112,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return parameterList.parameters.mapNotNull { it.name }
     }
 
-    private fun KaSession.findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
+    context(session: KaSession)
+    private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
         var lastSeenBlockExpression = expression
         for (parent in expression.parents(withSelf = true)) {
             when (parent) {
@@ -125,16 +130,19 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return lastSeenBlockExpression
     }
 
-    private fun KaSession.isCoroutineContextAvailable(expression: KtExpression) =
+    context(session: KaSession)
+    private fun isCoroutineContextAvailable(expression: KtExpression) =
         isCoroutineContextAvailableFromFunction(expression) || isCoroutineContextAvailableFromLambda(expression)
 
-    private fun KaSession.isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
         val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
         val symbol = functionParent.symbol as? KaNamedFunctionSymbol ?: return false
         return symbol.isSuspend
     }
 
-    private fun KaSession.isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
+    context(session: KaSession)
+    private fun isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
         val call = parentCall.resolveToCall()?.singleFunctionCallOrNull() ?: return false
@@ -163,7 +171,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
             false
         }
 
-    private fun KaSession.isInlined(expression: KtBlockExpression): Boolean {
+    context(session: KaSession)
+    private fun isInlined(expression: KtBlockExpression): Boolean {
         val parentFunction = expression.parentOfType<KtFunction>() ?: return false
         return isInlinedArgument(parentFunction)
     }

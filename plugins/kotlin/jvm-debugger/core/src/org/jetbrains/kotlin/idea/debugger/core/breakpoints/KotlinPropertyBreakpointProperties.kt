@@ -13,7 +13,7 @@ class KotlinPropertyBreakpointProperties(
     var watchAccess: Boolean = false
     var watchInitialization: Boolean = false
 
-    override fun getState() = this
+    override fun getState(): KotlinPropertyBreakpointProperties = this
 
     override fun loadState(state: KotlinPropertyBreakpointProperties) {
         super.loadState(state)

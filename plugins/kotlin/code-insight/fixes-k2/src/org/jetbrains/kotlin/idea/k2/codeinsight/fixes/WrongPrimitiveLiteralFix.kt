@@ -5,7 +5,12 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isDoubleType
+import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.isLongType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -33,7 +38,8 @@ private data class PrimitiveLiteralData(
     val fixedExpression: String
 )
 
-private fun KaSession.preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiteralData {
+context(session: KaSession)
+private fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiteralData {
     val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloatType
     val expectedTypeIsDouble = type.isDoubleType

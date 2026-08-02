@@ -28,7 +28,8 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KaDiagnostic) -> Boolean {
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToDirectory(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+context(session: KaSession)
+fun compileToDirectory(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
     val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         for (outputFile in result.output) {
@@ -42,7 +43,8 @@ fun KaSession.compileToDirectory(file: KtFile, options: KaCompilationOptions, de
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToJar(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+context(session: KaSession)
+fun compileToJar(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
     val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         destination.outputStream().buffered().use { os ->

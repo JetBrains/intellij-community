@@ -148,7 +148,7 @@ private fun prepareContext(element: KtNamedFunction): Context? {
     val elementsToChange = ElementsToChange()
 
     val functionSymbol = element.symbol
-    val affectedCallablesWithSelf = session.getAffectedCallables(functionSymbol)
+    val affectedCallablesWithSelf = getAffectedCallables(functionSymbol)
 
     val conflictCheckContext = ConflictCheckContext(
         conflicts = conflicts,

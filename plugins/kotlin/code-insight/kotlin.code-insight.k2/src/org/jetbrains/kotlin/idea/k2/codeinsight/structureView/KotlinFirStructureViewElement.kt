@@ -116,7 +116,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier: KaSession.(KaSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: context(KaSession)(KaSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null

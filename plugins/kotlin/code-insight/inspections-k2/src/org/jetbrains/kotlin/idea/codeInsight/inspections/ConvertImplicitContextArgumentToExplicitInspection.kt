@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -88,7 +87,6 @@ internal class ConvertImplicitContextArgumentToExplicitInspection :
         element.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments) &&
                 element.calleeExpression != null
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
@@ -212,7 +210,6 @@ private fun appendArgumentToExpression(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun createReplacementForContextArgument(
     callExpression: KtCallExpression,
@@ -238,7 +235,6 @@ private fun createReplacementForContextArgument(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun findExpressionInEnclosingContextBlock(
     callExpression: KtCallExpression,
@@ -250,7 +246,7 @@ private fun findExpressionInEnclosingContextBlock(
         val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return null
         val contextCall = lambdaArg.parent as? KtCallExpression ?: return null
 
-        if (session.isKotlinContextCall(contextCall)) {
+        if (isKotlinContextCall(contextCall)) {
             for (valueArg in contextCall.valueArguments) {
                 val contextArgExpr = valueArg.getArgumentExpression() ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue
@@ -267,14 +263,13 @@ private fun findExpressionInEnclosingContextBlock(
  * Checks if the call is the only statement inside an enclosing `context()` block's lambda,
  * meaning the context block can be removed after converting to explicit arguments.
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isSingleUsageContext(callExpression: KtCallExpression): Boolean {
     val lambdaExpr = callExpression.parentOfType<KtLambdaExpression>() ?: return false
     val lambdaArg = lambdaExpr.parent as? KtLambdaArgument ?: return false
     val contextCall = lambdaArg.parent as? KtCallExpression ?: return false
 
-    if (!session.isKotlinContextCall(contextCall)) return false
+    if (!isKotlinContextCall(contextCall)) return false
 
     val bodyExpression = lambdaExpr.bodyExpression ?: return false
     val statements = bodyExpression.statements

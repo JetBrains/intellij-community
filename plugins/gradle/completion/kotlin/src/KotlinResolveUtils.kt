@@ -7,13 +7,19 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -55,7 +61,8 @@ private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean 
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.isReceiverForCallASubtypeOf(call: KaSingleCall<*, *>, supertype: KaType): Boolean {
+context(session: KaSession)
+private fun isReceiverForCallASubtypeOf(call: KaSingleCall<*, *>, supertype: KaType): Boolean {
   val receiverType = call.extensionReceiver?.type
                      ?: call.dispatchReceiver?.type
                      ?: return false

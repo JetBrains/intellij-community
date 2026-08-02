@@ -107,12 +107,12 @@ interface KotlinCallTargetProcessor {
     fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean
 }
 
-private fun (KaSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
+private fun (context(KaSession) (CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
     val processor = this
     return object : KotlinCallTargetProcessor {
         context(session: KaSession)
         override fun processCallTarget(target: CallTarget): Boolean {
-            session.processor(target)
+            processor(target)
             return true
         }
 
@@ -133,7 +133,7 @@ object KotlinCallProcessor {
         KDoc::class.java
     )
 
-    fun process(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
+    fun process(element: PsiElement, processor: context(KaSession) (CallTarget) -> Unit) {
         process(element, processor.toCallTargetProcessor())
     }
 
@@ -248,7 +248,7 @@ object KotlinCallProcessor {
     }
 }
 
-fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KaSession.(CallTarget) -> Unit) {
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: context(KaSession) (CallTarget) -> Unit) {
     process(elements, processor.toCallTargetProcessor())
 }
 

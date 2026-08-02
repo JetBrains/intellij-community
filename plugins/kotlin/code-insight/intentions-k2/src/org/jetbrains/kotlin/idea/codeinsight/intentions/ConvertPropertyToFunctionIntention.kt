@@ -202,7 +202,7 @@ private fun prepareContext(
     val newName = JvmAbi.getterName(callableSymbol.name?.asString() ?: return null)
     val nameChanged = propertyName != newName
     val conflicts = mutableMapOf<PsiElement, ModShowConflicts.Conflict>()
-    val callables = session.getAffectedCallables(callableSymbol)
+    val callables = getAffectedCallables(callableSymbol)
     val kotlinRefsToReplaceWithCall = mutableListOf<KtSimpleNameExpression>()
     val refsToRename = mutableListOf<PsiReference>()
     val javaRefsToReplaceWithCall = mutableListOf<PsiReferenceExpression>()
