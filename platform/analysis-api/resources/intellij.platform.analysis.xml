@@ -11,4 +11,72 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.fileEditorProvider"
+                    interface="com.intellij.openapi.fileEditor.FileEditorProvider"
+                    hasAttributes="true"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vfs.local.fileOperationsHandler" interface="com.intellij.openapi.vfs.LocalFileOperationsHandler" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.refGraphAnnotator" interface="com.intellij.codeInspection.reference.RefGraphAnnotator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.annotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.annotation.Annotator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.contributedReferencesAnnotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.annotation.ContributedReferencesAnnotator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalAnnotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.lang.braceMatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.customScopesProvider" interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customScopesFilter" interface="com.intellij.psi.search.scope.packageSet.CustomScopesFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.scratch.rootType" interface="com.intellij.ide.scratch.RootType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.inlinePrompt" dynamic="true"
+                    interface="com.intellij.inlinePrompt.InlinePromptExtension"/>
+    <extensionPoint qualifiedName="com.intellij.completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.lookup.may.have.custom.preview.provider" interface="com.intellij.codeInsight.lookup.LookupMayHaveCustomPreviewProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.modcompletion.completionItemProvider" 
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.modcompletion.ModCompletionItemProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.modcompletion.completionItemFilter" 
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.modcompletion.ModCompletionItemFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandCompletionFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.suffixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandCompletionSuffixProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.provider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <liveTemplateContext id="OTHER" contextId="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType"
+                         order="last"/>
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
+              topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
 </idea-plugin>

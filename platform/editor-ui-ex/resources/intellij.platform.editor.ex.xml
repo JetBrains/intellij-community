@@ -16,4 +16,15 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper" open="true"
+                    serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
+                        serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
+                        serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration" open="true"/>
+    <indexPatternSearch implementation="com.intellij.psi.impl.search.IndexPatternSearcher"/>
+    <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
+  </extensions>
 </idea-plugin>

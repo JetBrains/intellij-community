@@ -1,4 +1,3 @@
-<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
@@ -44,71 +43,5 @@
   <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
-                        serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
-
-    <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider" open="true"/>
-
-    <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
-
-    <projectOpenProcessor implementation="com.intellij.platform.FolderProjectOpenProcessor"/>
-    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
-
-    <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper" open="true"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService" open="true"/>
-    <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule" open="true"/>
-    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory" open="true"
-                    serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
-    <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
-    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
-                    serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil$ImplService"
-                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil$ImplServiceImpl"/>
-    <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
-    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider" open="true"
-                        serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
-
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
-    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
-
-    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer" id="ProjectConfigurationDirectoryConcealer"/>
-
-    <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
-    <applicationService serviceInterface="com.intellij.execution.ui.ExecutionUiService"
-                        serviceImplementation="com.intellij.execution.ui.ExecutionUiServiceImpl"/>
-
-    <projectConfigurable groupId="editor" groupWeight="160" bundle="messages.CodeInsightBundle" key="configurable.InspectionToolsConfigurable.display.name"
-                         id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
-    <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
-
-    <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
-                    serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
-    <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEscapeHandler" order="last"/>
-    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEnterHandler" order="last"/>
-    <advancedSetting id="promote.suggested.refactoring.in.editor" default="false"
-                     groupKey="suggested.refactoring.group.key"
-                     bundle="messages.RefactoringBundle"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
-                        serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTracker"
-                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
-
-    <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
-
-    <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
-                        serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
-
-    <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
-                 description="Switches submenu in File - New to popup step" />
-
-    <registryKey key="ide.allow.folder.as.project" defaultValue="false"
-                 description="Allow opening folder as project without modules" />
-    <applicationSettings service="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
-  </extensions>
 
 </idea-plugin>

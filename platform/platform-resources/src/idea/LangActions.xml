@@ -793,6 +793,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
     <group id="StructureViewToolbar"/>
     <group id="StructureViewFloatingToolbar" popup="true"/>
 
@@ -1145,5 +1146,7 @@
       <action id="DumpCodeStyleCache" class="com.intellij.ide.actions.DumpCodeStyleCacheAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
+    <group id="Jcef.ContextMenuGroup" popup="true"/>
   </actions>
 </idea-plugin>

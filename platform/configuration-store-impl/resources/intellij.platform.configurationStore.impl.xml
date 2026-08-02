@@ -29,4 +29,122 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.configurationStore.ProjectStorePathManager"
+                        serviceImplementation="com.intellij.configurationStore.NestedProjectStorePathManager"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory" open="true"
+                        serviceImplementation="com.intellij.configurationStore.PlatformProjectStoreFactory"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager" open="true"
+                    serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
+    <vfs.asyncListener implementation="com.intellij.configurationStore.StorageVfsListener"/>
+    <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+                        serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
+    <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
+                        serviceImplementation="com.intellij.configurationStore.schemeManager.ApplicationSchemeManagerFactory"/>
+    <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
+                    serviceImplementation="com.intellij.configurationStore.schemeManager.ProjectSchemeManagerFactory"/>
+    <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" preload="notHeadless"
+                        serviceImplementation="com.intellij.configurationStore.SaveAndSyncHandlerImpl"
+                        testServiceImplementation="com.intellij.configurationStore.NoOpSaveAndSyncHandler"
+                        headlessImplementation="com.intellij.configurationStore.HeadlessSaveAndSyncHandler"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
+    <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.configurationStore.statistic.eventLog.SettingsChangesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.configurationStore.statistic.eventLog.SettingsCollector"/>
+    <statistic.eventLog.fusStateEventTracker
+      implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
+    <obsoleteStorage file="pluginAdvertiser.xml">
+      <components>
+        <component>PluginAdvertiserExtensions</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="menu.item.text.update.xml">
+      <components>
+        <component>ActionMenuItemUpdateCollector</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.toolbar.clicks.xml">
+      <components>
+        <component>ToolbarClicksCollector</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.shortcuts.xml">
+      <components>
+        <component>ShortcutsCollector</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="statistics.application.usages.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="usage.statistics.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+        <component>ToolWindowCollector</component>
+        <component>ToolWindowsCollector</component>
+        <component>ShortcutsCollector</component>
+        <component>ToolbarClicksCollector</component>
+        <component>IntentionsCollector</component>
+        <component>ActionsCollector</component>
+        <component>FUSApplicationUsageTrigger</component>
+        <component>EventLogAllowedList</component>
+        <component>PhpLanguageFeatureUsagesStatistics</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="lastSelectedPropertiesFile.xml">
+      <components>
+        <component>LastSelectedPropertiesFileStore</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="vcs.log.big.repos.xml">
+      <components>
+        <component>Vcs.Log.Big.Repositories</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="errorReporting.xml">
+      <components>
+        <component>ErrorReportConfigurable</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="$CACHE_FILE$">
+      <components>
+        <component>KnownExtensionsService</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="$WORKSPACE_FILE$" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </obsoleteStorage>
+    <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>
+    <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
+                        serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
+    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
+                        serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
+                        overrides="true"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
+                    overrides="true"/>
+    <applicationService serviceInterface="com.intellij.configurationStore.ModuleStoreFactory"
+                        serviceImplementation="com.intellij.configurationStore.DefaultModuleStoreFactory"/>
+    <obsoleteStorage file="extensionsRootType.xml">
+      <components>
+        <component>ExtensionsRootType</component>
+      </components>
+    </obsoleteStorage>
+  </extensions>
 </idea-plugin>

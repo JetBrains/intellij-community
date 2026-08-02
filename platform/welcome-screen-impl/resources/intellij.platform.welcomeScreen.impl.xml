@@ -15,4 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectFrameCapabilitiesProvider implementation="com.intellij.platform.welcomeScreen.WelcomeScreenProjectFrameCapabilitiesProvider"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.welcome.projectDetector" interface="com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

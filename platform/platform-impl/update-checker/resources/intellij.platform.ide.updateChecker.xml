@@ -20,4 +20,33 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.updateCheckFirstRunDeferral" interface="com.intellij.openapi.updateSettings.impl.UpdateCheckFirstRunDeferral" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"
+                        serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacadeImpl"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"
+                             id="preferences.updates"
+                             key="updates.settings.title" bundle="messages.IdeBundle"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector$UrlValidationRule"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.DuplicatingPluginIdStateCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation="" open="true"/>
+    <applicationService
+      serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade"
+      serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacadeImpl"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
+    <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider"
+                                      order="first"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider$LifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

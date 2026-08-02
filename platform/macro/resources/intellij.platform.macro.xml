@@ -13,4 +13,13 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.macro" interface="com.intellij.ide.macro.Macro" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.macroFilter" interface="com.intellij.ide.macro.MacroFilter" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"
+                        overrides="true"/>
+  </extensions>
 </idea-plugin>

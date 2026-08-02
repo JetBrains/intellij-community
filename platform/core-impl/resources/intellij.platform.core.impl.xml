@@ -15,4 +15,35 @@
     <module name="intellij.platform.util.diff"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.CommentTokenSetProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.treeGenerator" interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.util.PsiVersioningService"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.mvcc.PsiVersioningServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.util.graph.GraphFactory"
+                        serviceImplementation="com.intellij.util.graph.impl.GraphFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
+                        serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState" preload="true"/>
+    <postStartupActivity implementation="com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning$PsiVersioningWriteActionActivity"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport" open="true"
+                        serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
+    <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
+                        serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
+    <applicationService serviceInterface="com.intellij.model.psi.PsiSymbolReferenceService"
+                        serviceImplementation="com.intellij.model.psi.impl.PsiSymbolReferenceServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.lang.DefaultASTFactory"
+                        serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
+    <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
+    <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
+  </extensions>
 </idea-plugin>

@@ -5,4 +5,15 @@
     <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
+                    interface="com.intellij.platform.ml.environment.EnvironmentExtender"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.descriptor"
+                    interface="com.intellij.platform.ml.TierDescriptor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.taskListener"
+                    interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

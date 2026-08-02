@@ -9,4 +9,56 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.lang.syntaxHighlighterFactory"
+                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.gutterMarkPreprocessor" interface="com.intellij.openapi.editor.GutterMarkPreprocessor" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.protanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.deuteranopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.tritanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.editor.injectedFileChangesHandlerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editor.rd.localSupport" dynamic="true"
+                    beanClass="com.intellij.openapi.editor.rd.LocalEditorSupportBean"/>
+    <extensionPoint qualifiedName="com.intellij.lang.syntaxHighlighter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.lang.psiStructureViewFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.anonymousElementProvider" interface="com.intellij.navigation.AnonymousElementProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structureViewBuilder" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.ide.structureView.StructureViewBuilder"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
+    <extensionPoint qualifiedName="com.intellij.readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
+    <extensionPoint qualifiedName="com.intellij.wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ClientEditorManager"
+                        client="all"/>
+    <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.vcs.FileStatusCleaner"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 </idea-plugin>

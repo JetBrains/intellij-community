@@ -43,11 +43,11 @@ public final class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
     Map.ofEntries(
-      Map.entry("intellij.platform.ide", "PlatformExtensions.xml"),
-      Map.entry("intellij.platform.ide.impl", "PlatformExtensions.xml"),
-      Map.entry("intellij.platform.lang", "LangExtensions.xml"),
-      Map.entry("intellij.platform.execution.impl", "LangExtensions.xml"),
-      Map.entry("intellij.platform.lang.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.ide", "intellij.platform.ide.xml"),
+      Map.entry("intellij.platform.ide.impl", "intellij.platform.ide.impl.xml"),
+      Map.entry("intellij.platform.lang", "intellij.platform.lang.xml"),
+      Map.entry("intellij.platform.execution.impl", "intellij.platform.execution.impl.xml"),
+      Map.entry("intellij.platform.lang.impl", "intellij.platform.lang.impl.xml"),
       Map.entry("intellij.platform.vcs", "VcsExtensions.xml"),
       Map.entry("intellij.platform.vcs.impl", "VcsExtensions.xml"),
       Map.entry("intellij.java", "IdeaPlugin.xml"),

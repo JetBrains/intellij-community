@@ -18,4 +18,20 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageTargetProvider" interface="com.intellij.usages.UsageTargetProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageFeaturesProvider" interface="com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageGroupingRuleProvider" interface="com.intellij.usages.rules.UsageGroupingRuleProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageContextPanelProvider" interface="com.intellij.usages.UsageContextPanel$Provider" area="IDEA_PROJECT" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.usages.UsageViewSettings" open="true"/>
+    <applicationService serviceImplementation="com.intellij.usages.ShowUsagesSettings"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.usages.impl.UsageViewStateCollector"/>
+  </extensions>
 </idea-plugin>

@@ -40,4 +40,7 @@
   <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml"/>
   <xi:include href="/META-INF/ExternalSystemActions.xml"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
+  </extensions>
 </idea-plugin>
