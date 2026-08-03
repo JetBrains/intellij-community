@@ -1798,6 +1798,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/intellij.properties.backend.iml" filepath="$PROJECT_DIR$/plugins/properties/intellij.properties.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.backend.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.backend.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/copyright/intellij.properties.copyright.iml" filepath="$PROJECT_DIR$/plugins/properties/copyright/intellij.properties.copyright.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/properties/property-tests/intellij.properties.propertyBased.tests.iml" filepath="$PROJECT_DIR$/plugins/properties/property-tests/intellij.properties.propertyBased.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/tests/intellij.properties.tests.iml" filepath="$PROJECT_DIR$/plugins/properties/tests/intellij.properties.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.iml" />

@@ -604,6 +604,8 @@ jvm_library(
         "//plugins/junit5_rt_tests:junit-v5-rt-tests_test_lib",
         "//plugins/properties/tests",
         "//plugins/properties/tests:tests_test_lib",
+        "//plugins/properties/property-tests:propertyBased-tests",
+        "//plugins/properties/property-tests:propertyBased-tests_test_lib",
         "//platform/execution-impl:execution-tests",
         "//platform/execution-impl:execution-tests_test_lib",
         "//plugins/commander",

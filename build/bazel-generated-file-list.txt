@@ -1526,6 +1526,7 @@ plugins/properties/copyright
 plugins/properties/properties-common
 plugins/properties/properties-psi-api
 plugins/properties/properties-psi-impl
+plugins/properties/property-tests
 plugins/properties/tests
 plugins/rareJavaRefactorings
 plugins/remote-control
