@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.pane
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
@@ -31,11 +32,15 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   private val paneDescriptorsDeferred: Deferred<Collection<AggregatedDescriptor>> = coroutineScope.async { 
     // TODO: for Light, we need to be able to transition for specific panes with matching IDs from the front to the back
     // In other words, for now it's just "backend wins," but we need "backend replaces frontend when it becomes available."
-    (frontendService().getPaneDescriptors().associate { 
+    val frontendDescriptors = frontendService().getPaneDescriptors().associate {
       it.id to AggregatedDescriptor(it, isFrontend = true)
-    } + backendService().getPaneDescriptors(project.projectId()).associate { 
+    }
+    LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.descriptor.id.idString }}")
+    val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associate {
       it.id to AggregatedDescriptor(it, isFrontend = false)
-    }).values
+    }
+    LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.descriptor.id.idString }}")
+    (frontendDescriptors + backendDescriptors).values
   }
 
   private val frontendIdsDeferred: Deferred<Set<ProjectViewPaneId>> = coroutineScope.async { 
@@ -87,3 +92,5 @@ private data class AggregatedDescriptor(
   val descriptor: ProjectViewPaneDescriptorImpl,
   val isFrontend: Boolean,
 )
+
+private val LOG = logger<FrontendProjectViewPaneAggregatorImpl>()
