@@ -62,6 +62,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -109,6 +110,13 @@ import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
 
 private const val leftPanel: Boolean = false
+
+/**
+ * The size of the browser panel when nothing is stored in the dimension service yet.
+ * A half of the screen is used only when the screen is too small to fit these values.
+ */
+private const val defaultWidth: Int = 700
+private const val defaultHeight: Int = 500
 
 @ApiStatus.Internal
 object UniversalFileChooser {
@@ -225,7 +233,10 @@ object UniversalFileChooser {
       toolbarActionGroup = group
       popupActionGroup = DefaultActionGroup(toolbarActionGroup, Separator.getInstance(), extraPopupActions)
       val screenSize = Toolkit.getDefaultToolkit().screenSize
-      preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
+      preferredSize = Dimension(
+        minOf(screenSize.width / 2, JBUI.scale(defaultWidth)),
+        minOf(screenSize.height / 2, JBUI.scale(defaultHeight)),
+      )
       tabbedPane = JBTabbedPane()
       val projectContrib = projectContributor(project)
       val localContrib = localContributor(contributors)
