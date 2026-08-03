@@ -7,9 +7,12 @@ import com.sun.jna.Callback
 import com.sun.jna.Pointer
 import java.awt.Component
 import java.awt.Window
+import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 import javax.swing.SwingUtilities
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.styling.default
@@ -82,13 +85,15 @@ public object MacPlatformServicesDefaultImpl : MacPlatformServices {
         try {
             val cPlatformWindow = getPlatformWindow(w)
             if (cPlatformWindow != null) {
-                val ptr = cPlatformWindow.javaClass.superclass.getDeclaredField("ptr")
+                val ptr = findFieldInHierarchy(cPlatformWindow.javaClass, "ptr")
+                if (ptr == null) {
+                    logger.warn("Fail to get cPlatformWindow from awt window: no 'ptr' field found.")
+                    return ID.NIL
+                }
                 ptr.setAccessible(true)
                 return ID(ptr.getLong(cPlatformWindow))
             }
         } catch (e: IllegalAccessException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
-        } catch (e: NoSuchFieldException) {
             logger.warn("Fail to get cPlatformWindow from awt window.", e)
         }
         return ID.NIL
@@ -105,21 +110,63 @@ public object MacPlatformServicesDefaultImpl : MacPlatformServices {
             val getPeer = componentAccessor.javaClass.getMethod("getPeer", Component::class.java).accessible()
             val peer = getPeer.invoke(componentAccessor, w)
             if (peer != null) {
-                val cWindowPeerClass: Class<*> = peer.javaClass
-                val getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow")
+                // The method may be declared on a superclass of the runtime peer class (e.g., on JBR 25 the peer
+                // is sun.lwawt.macosx.LWCWindowPeer, which inherits getPlatformWindow() from sun.lwawt.LWWindowPeer),
+                // so we must search the whole class hierarchy rather than just the runtime class.
+                val getPlatformWindowMethod = findMethodInHierarchy(peer.javaClass, "getPlatformWindow")
+                if (getPlatformWindowMethod == null) {
+                    logger.warn("Fail to get cPlatformWindow from awt window: no getPlatformWindow() method found.")
+                    return null
+                }
                 val cPlatformWindow = getPlatformWindowMethod.invoke(peer)
                 if (cPlatformWindow != null) {
                     return cPlatformWindow
                 }
             }
-        } catch (e: NoSuchMethodException) {
-            logger.warn("Fail to get cPlatformWindow from awt window.", e)
         } catch (e: IllegalAccessException) {
             logger.warn("Fail to get cPlatformWindow from awt window.", e)
         } catch (e: InvocationTargetException) {
             logger.warn("Fail to get cPlatformWindow from awt window.", e)
         } catch (e: ClassNotFoundException) {
             logger.warn("Fail to get cPlatformWindow from awt window.", e)
+        }
+        return null
+    }
+
+    /**
+     * Finds a method with the given [name] and no parameters declared on [clazz] or any of its superclasses, or `null`
+     * if no such method exists.
+     */
+    @VisibleForTesting
+    @ApiStatus.Internal
+    @InternalJewelApi
+    public fun findMethodInHierarchy(clazz: Class<*>, name: String): Method? {
+        var current: Class<*>? = clazz
+        while (current != null) {
+            try {
+                return current.getDeclaredMethod(name)
+            } catch (_: NoSuchMethodException) {
+                current = current.superclass
+            }
+        }
+        return null
+    }
+
+    /**
+     * Finds a field with the given [name] declared on [clazz] or any of its superclasses, or `null` if no such field
+     * exists.
+     */
+    @VisibleForTesting
+    @ApiStatus.Internal
+    @InternalJewelApi
+    public fun findFieldInHierarchy(clazz: Class<*>, name: String): Field? {
+        var current: Class<*>? = clazz
+        while (current != null) {
+            try {
+                return current.getDeclaredField(name)
+            } catch (_: NoSuchFieldException) {
+                current = current.superclass
+            }
         }
         return null
     }
