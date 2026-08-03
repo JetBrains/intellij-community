@@ -27,6 +27,7 @@ val LOG: Logger = Logger.getInstance(BuiltInHelpManager::class.java)
 //Later we'll add more languages here, for now it's Chinese only
 val localesToUrls: Map<String, String> = mapOf(
   "zh-cn" to "zh-cn",
+  "ja" to "ja-jp"
 )
 
 class BuiltInHelpManager : HelpManager() {
