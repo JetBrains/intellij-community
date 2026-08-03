@@ -3317,6 +3317,7 @@ f:com.intellij.ui.paint.PaintUtil
 - s:getFractOffsetInRootPane(javax.swing.JComponent):java.awt.geom.Point2D
 - s:getParityMode(D,com.intellij.ui.scale.ScaleContext,com.intellij.ui.paint.PaintUtil$RoundingMode):com.intellij.ui.paint.PaintUtil$ParityMode
 - s:getParityMode(D,java.awt.Graphics2D):com.intellij.ui.paint.PaintUtil$ParityMode
+- s:getUserSpacePixelOffset(java.awt.Graphics2D):java.awt.geom.Point2D
 - s:insets2offset(java.awt.Insets):java.awt.geom.Point2D
 - s:isFractionalScale(java.awt.geom.AffineTransform):Z
 - s:negate(java.awt.geom.Point2D):java.awt.geom.Point2D
@@ -3341,6 +3342,7 @@ e:com.intellij.ui.paint.PaintUtil$RoundingMode
 - s:values():com.intellij.ui.paint.PaintUtil$RoundingMode[]
 f:com.intellij.ui.paint.PaintUtilKt
 - sf:alignToInt(java.awt.Graphics):V
+- sf:use(java.awt.Graphics,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:withTxAndClipAligned(java.awt.Graphics,I,I,I,I,kotlin.jvm.functions.Function1):V
 e:com.intellij.ui.paint.RectanglePainter
 - java.lang.Enum

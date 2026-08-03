@@ -270,7 +270,7 @@ public final class PaintUtil {
   public static @Nullable AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
-      if (isFractionalScale(tx) && (tx.getType() & AffineTransform.TYPE_MASK_ROTATION) == 0) {
+      if (isFractionalScaleWithoutRotation(tx)) {
         double scaleX = tx.getScaleX();
         double scaleY = tx.getScaleY();
         AffineTransform alignedTx = new AffineTransform();
@@ -295,6 +295,58 @@ public final class PaintUtil {
       Logger.getInstance(PaintUtil.class).error(e);
     }
     return null;
+  }
+
+  /**
+   * Returns the offset from the nearest device pixel coordinate to the painting origin.
+   *<p>
+   *   Example: Windows, system scaling 150%, the (0,0) coordinate in the given graphics
+   *   is (105, 215) in the user space relative to whatever underlying physical pixel buffer is currently being painted.
+   *   The buffer can be anything, determined by the painting internals,
+   *   but it's always properly aligned with physical pixels to begin with, so that's not a concern.
+   *   But inside this buffer, (105, 215) in the user space corresponds to (157.5, 322.5) in the device space,
+   *   which is halfway inside a pixel.
+   *   Of course, during the actual painting, pixels will be somehow arranged, rounding up/down, scaling, etc.
+   *   But the result can be unpredictable, even if internally consistent.
+   *   The problem is that one can't predict how these pixels will be arranged, so attempting to reproduce it
+   *   by painting parts of a component into a buffer can give off-by-1-pixel results.
+   *   To mitigate it, one can use the actual pixel alignment to imitate the same effect when painting into a buffer.
+   *   In other words, translating the {@code Graphics} by {@code (-x, -y)} of the returned value is guaranteed
+   *   to produce a graphics transform that has its (0,0) point matching some real physical pixel.
+   *</p>
+   * <p>
+   *   In the example above, this function would return (0.333...,0.333...), because the nearest physical pixel is (157,322),
+   *   and the distance is 0.5 in the device space, which is 0.5 / 1.5 in the user space.
+   * </p>
+   * <p>
+   *   Keep in mind that translating (0,0) to a physical pixel doesn't magically make all integer user-space pixel coordinates aligned.
+   *   If the scaling is 150%, and (0,0) is aligned, (1,0) won't be, as it'll map to (1.5,0).
+   *   If you need to align a specific user-space pixel, something along the following lines can be used.
+   * </p>
+   * <pre>
+   var x = ...;// some integer user-space coordinate
+   var alignment = getUserSpacePixelOffset(g);
+   var alignedX = PaintUtil.alignToInt(alignment.getX() + x, g, FLOOR);
+   * </pre>
+   *<p>
+   *   In environments without JRE-side fractional scaling (anything except Windows at the time of writing) always returns {@code null}.
+   *</p>
+   * @return the unscaled (user space) offset from the nearest device pixel to (0,0) in the current transform
+   * @see #alignTxToInt(Graphics2D, Point2D, boolean, boolean, RoundingMode)
+   */
+  public static @Nullable Point2D getUserSpacePixelOffset(@NotNull Graphics2D g) {
+    var tx = g.getTransform();
+    if (isFractionalScaleWithoutRotation(tx)) {
+      return new Point2D.Double(
+        (tx.getTranslateX() - Math.floor(tx.getTranslateX())) / tx.getScaleX(),
+        (tx.getTranslateY() - Math.floor(tx.getTranslateY())) / tx.getScaleY()
+      );
+    }
+    return null;
+  }
+
+  private static boolean isFractionalScaleWithoutRotation(AffineTransform tx) {
+    return isFractionalScale(tx) && (tx.getType() & AffineTransform.TYPE_MASK_ROTATION) == 0;
   }
 
   /**
@@ -366,6 +418,11 @@ public final class PaintUtil {
    *   }
    * }
    * </pre>
+   * </p>
+   * <p>
+   *   <em>Note: it doesn't always produce correct results depending on the environment and how the painting buffer is set up.</em>
+   *   Consider {@link #getUserSpacePixelOffset(Graphics2D)} as an alternative.
+   * </p>
    */
   public static @NotNull Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
     if (!comp.isShowing() || !isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform())) return new Point2D.Double();
