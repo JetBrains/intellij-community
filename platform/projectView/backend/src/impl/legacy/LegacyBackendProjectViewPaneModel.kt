@@ -834,7 +834,7 @@ private class AbstractProjectViewPaneStateManager(
 
     override fun treeStructureChanged(e: TreeModelEvent) {
       val treePath = e.treePath
-      if (treePath == null || treePath.parentPath == null) {
+      if (treePath?.parentPath == null) {
         updateNodeStructure(SuperRoot)
         return
       }

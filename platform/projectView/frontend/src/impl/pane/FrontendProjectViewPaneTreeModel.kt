@@ -84,20 +84,16 @@ internal class FrontendProjectViewPaneTreeModel(
     )
   }
 
-  private val _requestChannel = Channel<ProjectViewPaneRequest>(Channel.UNLIMITED)
-
   internal val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
-    get() = _requestChannel
-
-  private val _selectionRequests = Channel<ProjectViewNodePath>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    field = Channel<ProjectViewPaneRequest>(Channel.UNLIMITED)
 
   /**
    * Node paths requested to be selected (via [ProjectViewSelectNodeEvent]). The UI consumes this channel
    * and performs the actual tree selection, because selection needs the `JTree` this class doesn't own.
    */
   internal val selectionRequests: ReceiveChannel<ProjectViewNodePath>
-    get() = _selectionRequests
-  
+    field = Channel<ProjectViewNodePath>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   internal fun setCurrent(isCurrent: Boolean) {
     if (isCurrent) {
       sendRequest(ProjectViewPaneSelectionChanged(descriptor.id))
@@ -105,7 +101,7 @@ internal class FrontendProjectViewPaneTreeModel(
   }
 
   private fun sendRequest(request: ProjectViewPaneRequest) {
-    check(_requestChannel.trySend(request).isSuccess)
+    check(requestChannel.trySend(request).isSuccess)
   }
 
   /**
@@ -190,7 +186,7 @@ internal class FrontendProjectViewPaneTreeModel(
         // The actual selection needs the JTree, which lives in the UI. Enqueue the request instead;
         // the UI consumes selectionRequests and performs the selection. Doing it inline here would
         // block the event pipeline until the node loads (a latent deadlock).
-        _selectionRequests.trySend(event.nodePath)
+        selectionRequests.trySend(event.nodePath)
       }
     }
     updateEpoch.update { it + 1 }

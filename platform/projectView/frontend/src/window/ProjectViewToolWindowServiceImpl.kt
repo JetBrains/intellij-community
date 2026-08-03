@@ -76,9 +76,8 @@ internal class ProjectViewToolWindowServiceImpl(
   private val persistentState = ProjectViewToolWindowServiceState()
   private val currentPaneMutableFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
   val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = currentPaneMutableFlow.asStateFlow()
-  private val _panes = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
   val panes: Map<ProjectViewPaneId, FrontendProjectViewPane>
-    get() = _panes
+    field = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       if (event.operation == ContentManagerEvent.ContentOperation.add) {
@@ -126,7 +125,7 @@ internal class ProjectViewToolWindowServiceImpl(
                 val pane = withContext(Dispatchers.UI) {
                   provider.createPane(project, descriptor)
                 }
-                _panes[descriptor.id] = pane
+                panes[descriptor.id] = pane
                 LOG.debug { "Created pane ${descriptor.id}" }
                 managePane(toolWindow, pane)
               }
@@ -135,7 +134,7 @@ internal class ProjectViewToolWindowServiceImpl(
                 LOG.error("Failed to initialize pane ${descriptor.id}", e)
               }
               finally {
-                _panes.remove(descriptor.id)
+                panes.remove(descriptor.id)
               }
             }
           }

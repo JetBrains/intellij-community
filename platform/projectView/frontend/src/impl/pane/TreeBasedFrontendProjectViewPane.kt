@@ -95,7 +95,6 @@ internal class TreeBasedFrontendProjectViewPane(
     CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
-  private val contentPanel = ContentPanel(scrollPane)
   private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
   private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
@@ -125,7 +124,7 @@ internal class TreeBasedFrontendProjectViewPane(
     get() = paneTreeModel.selectInTargets
 
   override val component: JComponent
-    get() = contentPanel
+    field = ContentPanel(scrollPane)
 
   override val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
     get() = paneTreeModel.requestChannel
