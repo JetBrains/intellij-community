@@ -344,18 +344,6 @@
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.xml</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.gwt/META-INF/plugin.xml">
-    <id>-com-intellij-gwt-</id>
-    <name>GWT</name>
-    <depends>-JavaScript-</depends>
-    <depends>-com-intellij-java-i18n-</depends>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-com-intellij-css-</depends>
-    <depends optional="true">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
-    <depends optional="true">-com-intellij-spring-</depends>
-    <depends optional="true">-JavaScriptDebugger-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.javascript.debugger/META-INF/plugin.xml">
     <id>-JavaScriptDebugger-</id>
     <name>JavaScript Debugger</name>
@@ -898,7 +886,6 @@
     <id>-com-intellij-appengine-</id>
     <name>Google App Engine</name>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true">-com-intellij-gwt-</depends>
     <depends>com.intellij.modules.ultimate</depends>
     <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>

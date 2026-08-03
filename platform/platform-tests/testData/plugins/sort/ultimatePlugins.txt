@@ -123,7 +123,6 @@
 + -com-intellij-javaee-batch-
 + -com-intellij-jsf-
 + -com-intellij-hibernate-
-+ -com-intellij-gwt-
 + -WebSphere-
 + -Tomcat-
 + -Weblogic-
