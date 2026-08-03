@@ -996,6 +996,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginUpdateSourceService.isPluginUpdateSourceShownInUI()
   }
 
+  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return PluginUpdateSourceService.getInstance().getAllSources()
+  }
+
   private fun getContextElement(modalityState: ModalityState?): CoroutineContext {
     return modalityState?.let { Dispatchers.EDT + it.asContextElement() } ?: Dispatchers.EDT
   }

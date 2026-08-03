@@ -73,6 +73,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun isPluginUpdateSourceVisibleInUI(): Boolean
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId>
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

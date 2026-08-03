@@ -355,6 +355,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isPluginUpdateSourceVisibleInUI()
   }
 
+  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return PluginManagerApi.getInstance().getAllPluginUpdateSources()
+  }
+
   private fun List<PluginUiModel>.withSource(): List<PluginUiModel> {
     forEach { it.source = PluginSource.REMOTE }
     return this

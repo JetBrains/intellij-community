@@ -308,6 +308,10 @@ class UiPluginManager {
     return getController().isPluginUpdateSourceVisibleInUI()
   }
 
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return getController().getAllPluginUpdateSources()
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(): UiPluginManager = service()

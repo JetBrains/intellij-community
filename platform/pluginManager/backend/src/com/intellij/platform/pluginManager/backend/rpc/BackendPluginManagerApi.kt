@@ -267,4 +267,8 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return DefaultUiPluginManagerController.isPluginUpdateSourceVisibleInUI()
   }
+
+  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+    return DefaultUiPluginManagerController.getAllPluginUpdateSources()
+  }
 }

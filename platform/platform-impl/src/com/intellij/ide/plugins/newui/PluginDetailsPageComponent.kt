@@ -31,6 +31,7 @@ import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.logger
@@ -86,6 +87,7 @@ import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -947,19 +949,8 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createPopup(link: DropDownLink<PluginUpdateSourceId?>): JBPopup {
-    val initialItems: List<PluginUpdateSourceId?> = PluginUpdateSourceService.getInstance().getAllSources()
-      .filter { it.isMarketplace || it.host.isNotBlank() }
-      .sortedWith { first, second ->
-        when {
-          first.isMarketplace && second.isMarketplace -> 0
-          first.isMarketplace -> -1
-          second.isMarketplace -> 1
-          else -> first.host.compareTo(second.host)
-        }
-      }
-
     val builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(initialItems)
+      .createPopupChooserBuilder(emptyList<PluginUpdateSourceId>())
       .setNamerForFiltering {
         it.getPresentableName()
       }
@@ -979,6 +970,36 @@ class PluginDetailsPageComponent private constructor(
       }
 
     val popup = builder.createPopup()
+    popup.setSize(Dimension(popup.content.preferredSize.width, JBUI.scale(40)))
+    val updater = builder.backgroundUpdater
+    popup.content.launchOnShow("Plugin update sources loader") {
+      updater.paintBusy(true)
+      var shouldPack = false
+      try {
+        val loadedItems = withContext(Dispatchers.IO) {
+          UiPluginManager.getInstance().getAllPluginUpdateSources()
+            .filter { it.isMarketplace || it.host.isNotBlank() }
+            .sortedWith { first, second ->
+            when {
+              first.isMarketplace && second.isMarketplace -> 0
+              first.isMarketplace -> -1
+              second.isMarketplace -> 1
+              else -> first.host.compareTo(second.host)
+            }
+          }
+        }
+        updater.replaceModel(loadedItems)
+        shouldPack = true
+      }
+      finally {
+        updater.paintBusy(false)
+        if (shouldPack) {
+          withContext(Dispatchers.UI) {
+            popup.pack(true, true)
+          }
+        }
+      }
+    }
     return popup
   }
 
