@@ -98,10 +98,6 @@ internal fun outputPattern(pattern: String): TerminalOutputPattern {
             processNodes(node.childNodes(), styleIndex)
             val endOffset = textBuilder.length
 
-            require(!textBuilder.substring(startOffset, endOffset).contains('\n')) {
-              "Style tags cannot span multiple lines: <s$styleNum>"
-            }
-
             // Cursor was placed inside this style tag — check it's not at the boundary
             if (cursorOffset != null && cursorOffset != cursorBefore) {
               require(cursorOffset != startOffset && cursorOffset != endOffset) {

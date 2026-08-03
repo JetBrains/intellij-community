@@ -2,18 +2,16 @@
 package com.intellij.terminal.tests.reworked
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.tests.reworked.util.TerminalOutputPattern
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
-import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.replace
-import com.intellij.terminal.tests.reworked.util.parseTextWithReplacement
+import com.intellij.terminal.tests.reworked.util.assertMatches
+import com.intellij.terminal.tests.reworked.util.outputPattern
+import com.intellij.terminal.tests.reworked.util.replaceContent
+import com.intellij.terminal.tests.reworked.util.updateContent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
-import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
-import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,291 +21,422 @@ internal class TerminalOutputModelReplacementTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `insert into empty - no highlighting`() =
-    testReplace("<|12345>")
+  fun `insert into empty - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("12345"),
+    expectedPattern = outputPattern("<cursor>12345"),
+  )
 
   @Test
-  fun `insert into empty - with highlighting`() =
-    testReplace("<|[12](1)345>")
+  fun `insert into empty - with highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("<s1>12</s1>345"),
+    expectedPattern = outputPattern("<cursor><s1>12</s1>345"),
+  )
 
   @Test
-  fun `insert at end - no highlighting`() =
-    testReplace("12345\n<|abcd\n>")
+  fun `insert at end - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("abcd\n"),
+    expectedPattern = outputPattern("<cursor>12345\nabcd\n"),
+  )
 
   @Test
-  fun `insert at end - with highlighting`() =
-    testReplace("12345\n<|[ab](1)cd\n>")
+  fun `insert at end - with highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("<s1>ab</s1>cd\n"),
+    expectedPattern = outputPattern("<cursor>12345\n<s1>ab</s1>cd\n"),
+  )
 
   @Test
-  fun `insert at start - no highlighting`() =
-    testReplace("<|abcd\n>12345\n")
+  fun `insert at start - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("abcd\n"),
+    expectedPattern = outputPattern("<cursor>abcd\n12345\n"),
+  )
 
   @Test
-  fun `insert at start - with new highlighting`() =
-    testReplace("<|[ab](1)cd\n>12345\n")
+  fun `insert at start - with new highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("<s1>ab</s1>cd\n"),
+    expectedPattern = outputPattern("<cursor><s1>ab</s1>cd\n12345\n"),
+  )
 
   @Test
-  fun `insert at start - with existing highlighting right after`() =
-    testReplace("<|abcd\n>[12](1)345\n")
+  fun `insert at start - with existing highlighting right after`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12</s1>345\n"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("abcd\n"),
+    expectedPattern = outputPattern("<cursor>abcd\n<s1>12</s1>345\n"),
+  )
 
   @Test
-  fun `insert at start - with existing highlighting further away`() =
-    testReplace("<|abcd\n>1[23](1)45\n")
+  fun `insert at start - with existing highlighting further away`() = testReplace(
+    patternBefore = outputPattern("<cursor>1<s1>23</s1>45\n"),
+    replacementOffset = 0,
+    replacementLength = 0,
+    replacementPattern = outputPattern("abcd\n"),
+    expectedPattern = outputPattern("<cursor>abcd\n1<s1>23</s1>45\n"),
+  )
 
   @Test
-  fun `insert in the middle - no highlightings`() =
-    testReplace("12345\n<|qwer>\nabcd\n")
+  fun `insert in the middle - no highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n\nabcd\n"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("qwer"),
+    expectedPattern = outputPattern("<cursor>12345\nqwer\nabcd\n"),
+  )
 
   @Test
-  fun `insert in the middle - with existing highlightings around`() =
-    testReplace("[12345\n](1)<|qwer\n>[abcd\n](2)")
+  fun `insert in the middle - with existing highlightings around`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12345\n</s1><s2>abcd\n</s2>"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("qwer\n"),
+    expectedPattern = outputPattern("<cursor><s1>12345\n</s1>qwer\n<s2>abcd\n</s2>"),
+  )
 
   @Test
-  fun `insert in the middle - inside existing highlighting`() =
-    testReplace("[12345\n<|qwer\n>abcd\n](1)")
+  fun `insert in the middle - inside existing highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12345\nabcd\n</s1>"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("qwer\n"),
+    expectedPattern = outputPattern("<cursor><s1>12345\n</s1>qwer\n<s1>abcd\n</s1>"),
+  )
 
   @Test
-  fun `insert in the middle - inside existing highlighting with adjacent highlightings around`() =
-    testReplace("[1234](1)[5\n<|qwer\n>abc](2)d\n")
+  fun `insert in the middle - inside existing highlighting with adjacent highlightings around`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>1234</s1><s2>5\nabc</s2>d\n"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("qwer\n"),
+    expectedPattern = outputPattern("<cursor><s1>1234</s1><s2>5\n</s2>qwer\n<s2>abc</s2>d\n"),
+  )
 
   @Test
-  fun `insert in the middle - inside existing highlighting with non-adjacent highlightings around`() =
-    testReplace("[123](1)4[5\n<|qwer\n>ab](2)cd\n")
+  fun `insert in the middle - inside existing highlighting with non-adjacent highlightings around`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>123</s1>4<s2>5\nab</s2>cd\n"),
+    replacementOffset = 6,
+    replacementLength = 0,
+    replacementPattern = outputPattern("qwer\n"),
+    expectedPattern = outputPattern("<cursor><s1>123</s1>4<s2>5\n</s2>qwer\n<s2>ab</s2>cd\n"),
+  )
 
   @Test
-  fun `delete at start - no highlightings`() =
-    testReplace("<12345\n|>abcd\n")
+  fun `delete at start - no highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\nabcd\n"),
+    replacementOffset = 0,
+    replacementLength = 6,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>abcd\n"),
+  )
 
   @Test
-  fun `delete at start - whole style range`() =
-    testReplace("<[12345\n](1)|>abcd\n")
+  fun `delete at start - whole style range`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12345\n</s1>abcd\n"),
+    replacementOffset = 0,
+    replacementLength = 6,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>abcd\n"),
+  )
 
   @Test
-  fun `delete at start - end of the deleted region covered by a style range`() =
-    testReplace("<1[2345\n](1)|>abcd\n")
+  fun `delete at start - end of the deleted region covered by a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>1<s1>2345\n</s1>abcd\n"),
+    replacementOffset = 0,
+    replacementLength = 6,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>abcd\n"),
+  )
 
   @Test
-  fun `delete at start - start of the deleted region covered by a style range`() =
-    testReplace("<[1234](1)5\n|>abcd\n")
+  fun `delete at start - start of the deleted region covered by a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>1234</s1>5\nabcd\n"),
+    replacementOffset = 0,
+    replacementLength = 6,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>abcd\n"),
+  )
 
   @Test
-  fun `delete at start - style range extends beyond`() =
-    testReplace("<[12345\n|>a](1)bcd\n")
+  fun `delete at start - style range extends beyond`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12345\na</s1>bcd\n"),
+    replacementOffset = 0,
+    replacementLength = 6,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor><s1>a</s1>bcd\n"),
+  )
 
   @Test
-  fun `delete at end - whole style range`() =
-    testReplace("12345\n<[abcd\n](1)|>")
+  fun `delete at end - whole style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n<s1>abcd\n</s1>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>12345\n"),
+  )
 
   @Test
-  fun `delete at end - end of the deleted region covered by a style range`() =
-    testReplace("12345\n<a[bcd\n](1)|>")
+  fun `delete at end - end of the deleted region covered by a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\na<s1>bcd\n</s1>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>12345\n"),
+  )
 
   @Test
-  fun `delete at end - start of the deleted region covered by a style range`() =
-    testReplace("12345\n<[abc](1)d\n|>")
+  fun `delete at end - start of the deleted region covered by a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n<s1>abc</s1>d\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>12345\n"),
+  )
 
   @Test
-  fun `delete at end - style range starts before the deleted region`() =
-    testReplace("123[45\n<abc](1)d\n|>")
+  fun `delete at end - style range starts before the deleted region`() = testReplace(
+    patternBefore = outputPattern("<cursor>123<s1>45\nabc</s1>d\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>123<s1>45\n</s1>"),
+  )
 
   @Test
-  fun `delete in the middle - whole style range with adjacent highlightings`() =
-    testReplace("[12345\n](1)<[abcd](2)\n|>[qwer\n](1)")
+  fun `delete in the middle - whole style range with adjacent highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12345\n</s1><s2>abcd</s2>\n<s1>qwer\n</s1>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor><s1>12345\n</s1><s1>qwer\n</s1>"),
+  )
 
   @Test
-  fun `delete in the middle - whole style range without adjacent highlightings`() =
-    testReplace("[12](1)345\n<[abcd](2)\n|>q[wer\n](1)")
+  fun `delete in the middle - whole style range without adjacent highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12</s1>345\n<s2>abcd</s2>\nq<s1>wer\n</s1>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor><s1>12</s1>345\nq<s1>wer\n</s1>"),
+  )
 
   @Test
-  fun `delete in the middle - the end of a style range`() =
-    testReplace("123[45\n<abcd\n](2)|>qwer\n")
+  fun `delete in the middle - the end of a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>123<s2>45\nabcd\n</s2>qwer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>123<s2>45\n</s2>qwer\n"),
+  )
 
   @Test
-  fun `delete in the middle - the beginning of a style range`() =
-    testReplace("12345\n<[abcd\n|>q](2)wer\n")
+  fun `delete in the middle - the beginning of a style range`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n<s2>abcd\nq</s2>wer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern(""),
+    expectedPattern = outputPattern("<cursor>12345\n<s2>q</s2>wer\n"),
+  )
 
   @Test
-  fun `replace at start - no highlighting`() =
-    testReplace("<12|abc>345\n")
+  fun `replace at start - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 0,
+    replacementLength = 2,
+    replacementPattern = outputPattern("abc"),
+    expectedPattern = outputPattern("<cursor>abc345\n"),
+  )
 
   @Test
-  fun `replace at start - insert highlighting`() =
-    testReplace("<12|[abc](1)>345\n")
+  fun `replace at start - insert highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 0,
+    replacementLength = 2,
+    replacementPattern = outputPattern("<s1>abc</s1>"),
+    expectedPattern = outputPattern("<cursor><s1>abc</s1>345\n"),
+  )
 
   @Test
-  fun `replace at start - replace highlighting`() =
-    testReplace("<[12](1)|[abc](2)>345\n")
+  fun `replace at start - replace highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12</s1>345\n"),
+    replacementOffset = 0,
+    replacementLength = 2,
+    replacementPattern = outputPattern("<s2>abc</s2>"),
+    expectedPattern = outputPattern("<cursor><s2>abc</s2>345\n"),
+  )
 
   @Test
-  fun `replace at start - partially replace highlighting`() =
-    testReplace("<[12|[abc](2)>3](1)45\n")
+  fun `replace at start - partially replace highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>123</s1>45\n"),
+    replacementOffset = 0,
+    replacementLength = 2,
+    replacementPattern = outputPattern("<s2>abc</s2>"),
+    expectedPattern = outputPattern("<cursor><s2>abc</s2><s1>3</s1>45\n"),
+  )
 
   @Test
-  fun `replace at start - remove highlighting`() =
-    testReplace("<[12](1)|abc>345\n")
+  fun `replace at start - remove highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor><s1>12</s1>345\n"),
+    replacementOffset = 0,
+    replacementLength = 2,
+    replacementPattern = outputPattern("abc"),
+    expectedPattern = outputPattern("<cursor>abc345\n"),
+  )
 
   @Test
-  fun `replace at end - no highlighting`() =
-    testReplace("123<45\n|abc\n>")
+  fun `replace at end - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 3,
+    replacementLength = 3,
+    replacementPattern = outputPattern("abc\n"),
+    expectedPattern = outputPattern("<cursor>123abc\n"),
+  )
 
   @Test
-  fun `replace at end - insert highlighting`() =
-    testReplace("123<45\n|[abc\n](1)>")
+  fun `replace at end - insert highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n"),
+    replacementOffset = 3,
+    replacementLength = 3,
+    replacementPattern = outputPattern("<s1>abc\n</s1>"),
+    expectedPattern = outputPattern("<cursor>123<s1>abc\n</s1>"),
+  )
 
   @Test
-  fun `replace at end - replace highlighting`() =
-    testReplace("123<[45\n](1)|[abc](2)>")
+  fun `replace at end - replace highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>123<s1>45\n</s1>"),
+    replacementOffset = 3,
+    replacementLength = 3,
+    replacementPattern = outputPattern("<s2>abc</s2>"),
+    expectedPattern = outputPattern("<cursor>123<s2>abc</s2>"),
+  )
 
   @Test
-  fun `replace at end - partially replace highlighting`() =
-    testReplace("12[3<45\n](1)|[abc](2)>")
+  fun `replace at end - partially replace highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12<s1>345\n</s1>"),
+    replacementOffset = 3,
+    replacementLength = 3,
+    replacementPattern = outputPattern("<s2>abc</s2>"),
+    expectedPattern = outputPattern("<cursor>12<s1>3</s1><s2>abc</s2>"),
+  )
 
   @Test
-  fun `replace at end - remove highlighting`() =
-    testReplace("123<[45\n](1)|abc>")
+  fun `replace at end - remove highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>123<s1>45\n</s1>"),
+    replacementOffset = 3,
+    replacementLength = 3,
+    replacementPattern = outputPattern("abc"),
+    expectedPattern = outputPattern("<cursor>123abc"),
+  )
 
   @Test
-  fun `replace in the middle - no highlighting`() =
-    testReplace("12345\n<abcd\n|xyz\n>qwer\n")
+  fun `replace in the middle - no highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\nabcd\nqwer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("xyz\n"),
+    expectedPattern = outputPattern("<cursor>12345\nxyz\nqwer\n"),
+  )
 
   @Test
-  fun `replace in the middle - insert highlighting`() =
-    testReplace("12345\n<abcd\n|[xyz\n](1)>qwer\n")
+  fun `replace in the middle - insert highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\nabcd\nqwer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s1>xyz\n</s1>"),
+    expectedPattern = outputPattern("<cursor>12345\n<s1>xyz\n</s1>qwer\n"),
+  )
 
   @Test
-  fun `replace in the middle - replace highlighting`() =
-    testReplace("12345\n<[abcd\n](1)|[xyz\n](2)>qwer\n")
+  fun `replace in the middle - replace highlighting`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n<s1>abcd\n</s1>qwer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor>12345\n<s2>xyz\n</s2>qwer\n"),
+  )
 
   @Test
-  fun `replace in the middle - replace the end of a highlighting region`() =
-    testReplace("1234[5\n<abcd\n](1)|[xyz\n](2)>qwer\n")
+  fun `replace in the middle - replace the end of a highlighting region`() = testReplace(
+    patternBefore = outputPattern("<cursor>1234<s1>5\nabcd\n</s1>qwer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor>1234<s1>5\n</s1><s2>xyz\n</s2>qwer\n"),
+  )
 
   @Test
-  fun `replace in the middle - replace the start of a highlighting region`() =
-    testReplace("12345\n<[abcd\n|[xyz\n](2)>q](1)wer\n")
+  fun `replace in the middle - replace the start of a highlighting region`() = testReplace(
+    patternBefore = outputPattern("<cursor>12345\n<s1>abcd\nq</s1>wer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor>12345\n<s2>xyz\n</s2><s1>q</s1>wer\n"),
+  )
 
   @Test
-  fun `replace in the middle - replace the middle of a highlighting region`() =
-    testReplace("1234[5\n<abcd\n|[xyz\n](2)>q](1)wer\n")
+  fun `replace in the middle - replace the middle of a highlighting region`() = testReplace(
+    patternBefore = outputPattern("<cursor>1234<s1>5\nabcd\nq</s1>wer\n"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor>1234<s1>5\n</s1><s2>xyz\n</s2><s1>q</s1>wer\n"),
+  )
 
   @Test
-  fun `replace in the middle - replace the middle of a highlighting region with adjacent highlightings`() =
-    testReplace("[1234](3)[5\n<abcd\n|[xyz\n](2)>q](1)[wer\n](4)")
+  fun `replace in the middle - replace the middle of a highlighting region with adjacent highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor><s3>1234</s3><s1>5\nabcd\nq</s1><s4>wer\n</s4>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor><s3>1234</s3><s1>5\n</s1><s2>xyz\n</s2><s1>q</s1><s4>wer\n</s4>"),
+  )
 
   @Test
-  fun `replace in the middle - replace the middle of a highlighting region with non-adjacent highlightings`() =
-    testReplace("[123](3)4[5\n<abcd\n|[xyz\n](2)>q]w(1)[er\n](4)")
-}
+  fun `replace in the middle - replace the middle of a highlighting region with non-adjacent highlightings`() = testReplace(
+    patternBefore = outputPattern("<cursor><s3>123</s3>4<s1>5\nabcd\nq</s1>w<s4>er\n</s4>"),
+    replacementOffset = 6,
+    replacementLength = 5,
+    replacementPattern = outputPattern("<s2>xyz\n</s2>"),
+    expectedPattern = outputPattern("<cursor><s3>123</s3>4<s1>5\n</s1><s2>xyz\n</s2><s1>q</s1>w<s4>er\n</s4>"),
+  )
 
-/**
- * Runs a single text replacement test.
- *
- * Argument syntax:
- *
- * - Style regions are indicated with Markdown-like syntax:
- * ```
- * abcd[ef](2)gh
- * ```
- * meaning that the "ef" part will have some highlighting style. There are different styles numbered from 1 to 4.
- * - The (only) replacement region is indicated with `<>`, where the texts "before" and "after" are separated with `|`, for example:
- * ```
- * ab<cd|ef>gh
- * ```
- * meaning "replace cd with ef."
- * - Style regions, excluding the "after" part, which has separate styles, may not be nested, but they can cross the `<>` boundaries, for example:
- * ```
- * [ab<cd|ef>gh](2)
- * ```
- * meaning that "before" will be `[abcdgh](2)` and "after" will be `[ab](2)ef[gh](2)` (because the replacement has no highlighting here).
- * - Style regions in the "after" part can have their own highlighting regions, for example:
- * ```
- * ab<c[d|[gh](2)>ef](1)
- * ```
- * meaning, in `abc[def](1)` replace "cd" with `[gh](2)`, so the end result will be `ab[gh](2)[ef](1)`.
- */
-private fun testReplace(
-  textWithReplacement: String,
-) {
-  runBlocking(Dispatchers.EDT) {
-    val model = TerminalTestUtil.createOutputModel()
-    val textWithReplacement = parseTextWithReplacement(textWithReplacement)
-    model.replace(0, 0, textWithReplacement.originalText.text, textWithReplacement.originalText.styles)
-    // We assert on both the initial content and changed content
-    // because there was a bug when the first access caused the value to be cached,
-    // and then the second call would return the (wrong) cached value.
-    // Without the first access, the test would pass even though there's a serious bug.
-    assertHighlightings(
-      model,
-      textWithReplacement.originalText.styles.map {
-        highlighting(it.startOffset.toInt(), it.endOffset.toInt(), it.style)
-      }
-    )
-    assertText(model, textWithReplacement.originalText.text)
-    model.replace(
-      textWithReplacement.removedIndex,
-      textWithReplacement.removedLength,
-      textWithReplacement.insertedText.text,
-      textWithReplacement.insertedText.styles,
-    )
-    assertText(model, textWithReplacement.modifiedText.text)
-    assertHighlightings(
-      model,
-      textWithReplacement.modifiedText.styles.map {
-        highlighting(it.startOffset.toInt(), it.endOffset.toInt(), it.style)
-      }
-    )
-  }
-}
-
-private fun assertText(model: MutableTerminalOutputModelImpl, expectedText: String) {
-  assertEquals(expectedText, model.document.text)
-}
-
-private fun assertHighlightings(model: MutableTerminalOutputModelImpl, expectedHighlightings: List<HighlightingInfo>) {
-  val actualHighlightings = model.getHighlightings()
-  assertActualHighlightingsCoverTheDocument(model, actualHighlightings)
-  assertActualHighlightingsMatchExpected(model, expectedHighlightings, actualHighlightings)
-}
-
-private fun assertActualHighlightingsCoverTheDocument(model: MutableTerminalOutputModelImpl, actualHighlightings: TerminalOutputHighlightingsSnapshot) {
-  var previousEnd = 0
-  val validRange = 0..model.document.textLength
-  for (i in 0 until actualHighlightings.size) {
-    val highlighting = actualHighlightings[i]
-    assertThat(highlighting.startOffset).`as`("highlightings[$i].startOffset")
-      .isBetween(validRange.first, validRange.last)
-      .isEqualTo(previousEnd)
-    assertThat(highlighting.endOffset).`as`("highlightings[$i].endOffset")
-      .isBetween(validRange.first, validRange.last)
-      .isGreaterThanOrEqualTo(highlighting.startOffset)
-    previousEnd = highlighting.endOffset
-  }
-  assertThat(previousEnd).`as`("last end index").isEqualTo(model.document.textLength)
-}
-
-private fun assertActualHighlightingsMatchExpected(
-  model: MutableTerminalOutputModelImpl,
-  expectedHighlightings: List<HighlightingInfo>,
-  actualHighlightings: TerminalOutputHighlightingsSnapshot,
-) {
-  for (offset in 0 until model.document.textLength) {
-    val expectedHighlighting = expectedHighlightings.getHighlightingAtOffset(offset)?.textAttributesProvider
-    val actualHighlighting = actualHighlightings.getHighlightingAtOffset(offset)?.textAttributesProvider
-    assertThat(actualHighlighting).`as`("highlighting at offset %d", offset).isEqualTo(expectedHighlighting)
-  }
-}
-
-private fun List<HighlightingInfo>.getHighlightingAtOffset(offset: Int): HighlightingInfo? =
-  filter { offset in it.startOffset until it.endOffset }
-    .let {
-      when (it.size) {
-        0 -> null
-        1 -> it.single()
-        else -> throw AssertionError("Highlightings overlap: $it")
-      }
+  /**
+   * Establishes [patternBefore], then replaces [replacementLength] characters starting at
+   * [replacementOffset] with [replacementPattern], and asserts the model matches [expectedPattern].
+   */
+  private fun testReplace(
+    patternBefore: TerminalOutputPattern,
+    replacementOffset: Int,
+    replacementLength: Int,
+    replacementPattern: TerminalOutputPattern,
+    expectedPattern: TerminalOutputPattern,
+  ) {
+    runBlocking(Dispatchers.EDT) {
+      val model = TerminalTestUtil.createOutputModel()
+      model.updateContent(0, patternBefore)
+      // We assert on both the initial content and changed content
+      // because there was a bug when the first access caused the value to be cached,
+      // and then the second call would return the (wrong) cached value.
+      // Without the first access, the test would pass even though there's a serious bug.
+      model.assertMatches(patternBefore)
+      model.replaceContent(TerminalOffset.of(replacementOffset.toLong()), replacementLength, replacementPattern)
+      model.assertMatches(expectedPattern)
     }
-
-private fun TerminalOutputHighlightingsSnapshot.getHighlightingAtOffset(offset: Int): HighlightingInfo? =
-  findHighlightingIndex(offset)
-    .let { index -> if (index in 0 until size) get(index) else null }
-    ?.takeIf { offset in it.startOffset until it.endOffset && it.textAttributesProvider !is EmptyTextAttributesProvider}
+  }
+}

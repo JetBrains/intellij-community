@@ -156,6 +156,15 @@ class TerminalOutputPatternTest {
   }
 
   @Test
+  fun `parse style spanning multiple lines`() {
+    val pattern = outputPattern("<s1>hello\nworld</s1>")
+    assertThat(pattern.text).isEqualTo("hello\nworld")
+    assertThat(pattern.styles).containsExactly(
+      styleRange(0, 11, TerminalOutputPattern.STYLES[0])
+    )
+  }
+
+  @Test
   fun `parse all nine styles`() {
     val pattern = outputPattern("<s1>1</s1><s2>2</s2><s3>3</s3><s4>4</s4><s5>5</s5><s6>6</s6><s7>7</s7><s8>8</s8><s9>9</s9>")
     assertThat(pattern.text).isEqualTo("123456789")
@@ -215,13 +224,6 @@ class TerminalOutputPatternTest {
     assertThatThrownBy { outputPattern("<s1>hello <s2>world</s2></s1>") }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("Nested")
-  }
-
-  @Test
-  fun `style spanning multiple lines throws`() {
-    assertThatThrownBy { outputPattern("<s1>hello\nworld</s1>") }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("multiple lines")
   }
 
   @Test
