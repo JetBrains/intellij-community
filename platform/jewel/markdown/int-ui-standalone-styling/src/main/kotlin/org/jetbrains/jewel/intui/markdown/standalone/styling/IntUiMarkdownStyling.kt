@@ -45,6 +45,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 /** Creates an Int UI light [MarkdownStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION") // The htmlBlock parameter is only kept for compatibility reasons
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
@@ -64,6 +65,7 @@ public fun MarkdownStyling.Companion.light(
 /** Creates an Int UI dark [MarkdownStyling]. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION") // The htmlBlock parameter is only kept for compatibility reasons
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
@@ -835,9 +837,15 @@ public fun ThematicBreak.Companion.dark(
     lineColor: Color = Color.DarkGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
-/** Creates an Int UI light [HtmlBlock]. */
+/**
+ * Creates an Int UI light [HtmlBlock].
+ *
+ * @deprecated HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION")
+@Deprecated("HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.")
 public fun HtmlBlock.Companion.light(
     textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.DarkGray),
     padding: PaddingValues = PaddingValues(8.dp),
@@ -848,9 +856,15 @@ public fun HtmlBlock.Companion.light(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
-/** Creates an Int UI dark [HtmlBlock]. */
+/**
+ * Creates an Int UI dark [HtmlBlock].
+ *
+ * @deprecated HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
+@Suppress("DEPRECATION")
+@Deprecated("HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release.")
 public fun HtmlBlock.Companion.dark(
     textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.Gray),
     padding: PaddingValues = PaddingValues(8.dp),

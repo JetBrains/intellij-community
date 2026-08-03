@@ -37,7 +37,7 @@ internal class GitHubTableBlockRenderer(
 ) : MarkdownBlockRendererExtension {
     override fun canRender(block: CustomBlock): Boolean = block is TableBlock
 
-    @Suppress("LambdaParameterEventTrailing")
+    @Suppress("LambdaParameterEventTrailing", "DEPRECATION") // HTML block styling is kept for compatibility
     @Composable
     override fun RenderCustomBlock(
         block: CustomBlock,

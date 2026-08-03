@@ -48,7 +48,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 import java.awt.Font
 
 @OptIn(ExperimentalTextApi::class)
-@Suppress("FunctionName")
+@Suppress("FunctionName", "DEPRECATION") // HTML block styling is kept for compatibility
 internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
   val fontSizeDp = fontSize.value.dp
   val defaultTextStyle = TextStyle(
@@ -266,6 +266,7 @@ private fun createThematicBreakStyling(scheme: PreviewStyleScheme): ThematicBrea
   lineColor = scheme.separatorColor.toComposeColor(),
 )
 
+@Suppress("DEPRECATION") // HTML block styling is kept for compatibility
 private fun createHtmlBlockStyling(
   baseTextStyle: TextStyle,
   scheme: PreviewStyleScheme,
