@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCallableReferenceExpression
@@ -2951,6 +2952,134 @@ interface UastResolveApiFixtureTestBase {
                         else "MyStringsKt__MyStringJVMKt" // multi-file class part
                     TestCase.assertEquals(txt, expectedName, containingClass?.name)
 
+                    return super.visitCallableReferenceExpression(node)
+                }
+            })
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
+    fun checkResolveTopLevelInlineReifiedPropertyFromLibrary(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        val propertyNames = setOf("reifiedVal", "reifiedVar", "reified var", "nonReifiedVal", "nonReifiedVar", "non reified var")
+
+        fun getterName(name: String): String = "get" + name.replaceFirstChar { it.uppercase() }
+        fun setterName(name: String): String = "set" + name.replaceFirstChar { it.uppercase() }
+
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "ReifiedProp.kt", """
+                package test.pkg
+
+                inline val <reified T : Any> T.reifiedVal: String
+                    get() = "test"
+
+                inline var <reified T : Any> T.reifiedVar: String
+                    get() = "test"
+                    set(value) {}
+
+                inline var <reified T : Any> T.`reified var`: String
+                    get() = "test"
+                    set(value) {}
+
+                inline val <T : Any> T.nonReifiedVal: String
+                    get() = "test"
+
+                inline var <T : Any> T.nonReifiedVar: String
+                    get() = "test"
+                    set(value) {}
+
+                inline var <T : Any> T.`non reified var`: String
+                    get() = "test"
+                    set(value) {}
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.reifiedVal
+                import test.pkg.reifiedVar
+                import test.pkg.`reified var`
+                import test.pkg.nonReifiedVal
+                import test.pkg.nonReifiedVar
+                import test.pkg.`non reified var`
+
+                fun test() {
+                    val propVal = Any().reifiedVal
+                    val ref = Any::reifiedVal
+                    Any().reifiedVar = "new"
+                    val reifiedVarPropVal = Any().`reified var`
+                    val refReifiedVar = Any::`reified var`
+                    Any().`reified var` = "new"
+                    val nonReifiedPropVal = Any().nonReifiedVal
+                    val refNonReified = Any::nonReifiedVal
+                    Any().nonReifiedVar = "new"
+                    val nonReifiedEscapedVar = Any().`non reified var`
+                    val refNonReifiedEscapedVar = Any::`non reified var`
+                    Any().`non reified var` = "new"
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uFile = myFixture.file.toUElementOfType<UFile>()!!
+            uFile.accept(object : AbstractUastVisitor() {
+                override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
+                    if (node.operator == UastBinaryOperator.ASSIGN) {
+                        val txt = node.sourcePsi?.text
+                        val resolved = node.resolveOperator()
+                        TestCase.assertNotNull(txt, resolved)
+
+                        val containingClass = resolved!!.containingClass
+                        val expectedName = "ReifiedPropKt"
+                        TestCase.assertEquals(txt, expectedName, containingClass?.name)
+
+                        val propName = (node.leftOperand as? UQualifiedReferenceExpression)?.selector?.let { (it as? USimpleNameReferenceExpression)?.identifier }
+                            ?: (node.leftOperand as? USimpleNameReferenceExpression)?.identifier
+                        if (propName != null && propName in propertyNames) {
+                            TestCase.assertEquals(txt, setterName(propName), resolved.name)
+                        }
+
+                        TestCase.assertEquals(txt, 1, resolved.typeParameters.size)
+                        TestCase.assertEquals(txt, "T", resolved.typeParameters[0].name)
+                        TestCase.assertTrue(txt, resolved.hasModifierProperty(PsiModifier.STATIC))
+                    }
+                    return super.visitBinaryExpression(node)
+                }
+
+                override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                    if (node.identifier in propertyNames) {
+                        val txt = node.sourcePsi?.text
+                        val resolved = node.resolve() as? PsiMethod
+                        TestCase.assertNotNull(txt, resolved)
+
+                        val containingClass = resolved!!.containingClass
+                        val expectedName = "ReifiedPropKt"
+                        TestCase.assertEquals(txt, expectedName, containingClass?.name)
+
+                        val parent = (node.uastParent as? UQualifiedReferenceExpression)?.uastParent
+                        val isWrite = parent is UBinaryExpression && parent.operator == UastBinaryOperator.ASSIGN && parent.leftOperand == node.uastParent
+                        val expectedMethodName = if (isWrite) setterName(node.identifier) else getterName(node.identifier)
+                        TestCase.assertEquals(txt, expectedMethodName, resolved.name)
+                        TestCase.assertEquals(txt, 1, resolved.typeParameters.size)
+                        TestCase.assertEquals(txt, "T", resolved.typeParameters[0].name)
+                        TestCase.assertTrue(txt, resolved.hasModifierProperty(PsiModifier.STATIC))
+                    }
+                    return super.visitSimpleNameReferenceExpression(node)
+                }
+
+                override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+                    if (node.callableName in propertyNames) {
+                        val txt = node.sourcePsi?.text
+                        val resolved = node.resolve() as? PsiMethod
+                        TestCase.assertNotNull(txt, resolved)
+
+                        val containingClass = resolved!!.containingClass
+                        val expectedName = "ReifiedPropKt"
+                        TestCase.assertEquals(txt, expectedName, containingClass?.name)
+                        TestCase.assertEquals(txt, getterName(node.callableName), resolved.name)
+                        TestCase.assertEquals(txt, 1, resolved.typeParameters.size)
+                        TestCase.assertEquals(txt, "T", resolved.typeParameters[0].name)
+                        TestCase.assertTrue(txt, resolved.hasModifierProperty(PsiModifier.STATIC))
+                    }
                     return super.visitCallableReferenceExpression(node)
                 }
             })
