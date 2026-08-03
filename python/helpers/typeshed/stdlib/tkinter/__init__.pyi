@@ -3905,7 +3905,7 @@ class OptionMenu(Menubutton):
             variable: StringVar,
             value: str,
             *values: str,
-            command: Callable[[StringVar], object] | None = ...,
+            command: Callable[[str], object] | None = ...,
             name: str | None = None,
         ) -> None: ...
     else:
@@ -3916,7 +3916,7 @@ class OptionMenu(Menubutton):
             variable: StringVar,
             value: str,
             *values: str,
-            command: Callable[[StringVar], object] | None = ...,
+            command: Callable[[str], object] | None = ...,
         ) -> None: ...
     # configure, config, cget are inherited from Menubutton
     # destroy and __getitem__ are overridden, signature does not change

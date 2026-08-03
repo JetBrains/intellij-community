@@ -1,6 +1,6 @@
 version = "26.0.0"
 upstream-repository = "https://github.com/benoitc/gunicorn"
-dependencies = ["types-gevent"]
+optional-dependencies = ["types-gevent"]
 
 [tool.stubtest]
 supported-platforms = ["linux", "darwin"]

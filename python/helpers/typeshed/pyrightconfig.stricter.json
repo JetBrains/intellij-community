@@ -40,6 +40,7 @@
         "stubs/Flask-SocketIO",
         "stubs/fpdf2",
         "stubs/gdb",
+        "stubs/geojson",
         "stubs/geopandas",
         "stubs/google-cloud-ndb",
         "stubs/grpcio-channelz/grpc_channelz/v1",

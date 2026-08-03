@@ -24,13 +24,13 @@ def find_cliques(G: Graph[_Node], nodes: Iterable[Incomplete] | None = None) -> 
 def find_cliques_recursive(G: Graph[_Node], nodes: Iterable[Incomplete] | None = None) -> Iterator[list[_Node]]: ...
 @_dispatchable
 def make_max_clique_graph(
-    G: Graph[_Node], create_using: Graph[_Node, _NodeData, _EdgeData] | None = None
+    G: Graph[_Node], create_using: Graph[_Node, _NodeData, _EdgeData] | type[Graph[_Node, _NodeData, _EdgeData]] | None = None
 ) -> Graph[_Node, _NodeData, _EdgeData]: ...
 @_dispatchable
 def make_clique_bipartite(
     G: Graph[_Node, _NodeData, _EdgeData],
     fpos: bool | None = None,
-    create_using: Graph[_Node, _NodeData, _EdgeData] | None = None,
+    create_using: Graph[_Node, _NodeData, _EdgeData] | type[Graph[_Node, _NodeData, _EdgeData]] | None = None,
     name=None,
 ) -> Graph[_Node]: ...
 
@@ -41,9 +41,11 @@ def node_clique_number(
 @overload
 def node_clique_number(G: Graph[_Node], nodes=None, cliques: Iterable[Incomplete] | None = None, separate_nodes=False) -> int: ...
 
-def number_of_cliques(G: Graph[_Node], nodes=None, cliques=None) -> int | dict[Incomplete, Incomplete]: ...
+def number_of_cliques(
+    G: Graph[_Node], nodes: list[_Node] | _Node | None = None, cliques: Iterable[Incomplete] | None = None
+) -> int | dict[Incomplete, Incomplete]: ...
 @_dispatchable
-def max_weight_clique(G: Graph[_Node], weight="weight") -> tuple[list[Incomplete], int]: ...
+def max_weight_clique(G: Graph[_Node], weight: str | None = "weight") -> tuple[list[Incomplete], int]: ...
 
 class MaxWeightClique:
     G: Graph[Incomplete]

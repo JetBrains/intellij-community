@@ -1,4 +1,5 @@
 from _typeshed import Incomplete
+from collections import Counter
 from collections.abc import Generator, Iterable
 
 from networkx.classes.graph import Graph, _NBunch, _Node
@@ -29,4 +30,6 @@ def transitivity(G: Graph[_Node]) -> float: ...
 @_dispatchable
 def square_clustering(G: Graph[_Node], nodes: Iterable[_Node] | None = None) -> float | int | dict[Incomplete, float | int]: ...
 @_dispatchable
-def generalized_degree(G: Graph[_Node], nodes: Iterable[_Node] | None = None): ...
+def generalized_degree(
+    G: Graph[_Node], nodes: Iterable[_Node] | None = None
+) -> Counter[Incomplete] | dict[Incomplete, Counter[Incomplete]]: ...

@@ -2,6 +2,7 @@ import asyncio
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
 from logging import Logger
+from typing_extensions import Self
 
 from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils import io_services_utils
@@ -12,7 +13,7 @@ from pika.adapters.utils.nbio_interface import (
     AbstractIOServices,
     AbstractTimerReference,
 )
-from pika.connection import Connection, Parameters
+from pika.connection import Parameters
 
 LOGGER: Logger
 
@@ -20,9 +21,9 @@ class AsyncioConnection(BaseConnection[asyncio.AbstractEventLoop]):
     def __init__(
         self,
         parameters: Parameters | None = None,
-        on_open_callback: Callable[[Connection], object] | None = None,
-        on_open_error_callback: Callable[[Connection, BaseException], object] | None = None,
-        on_close_callback: Callable[[Connection, BaseException], object] | None = None,
+        on_open_callback: Callable[[Self], object] | None = None,
+        on_open_error_callback: Callable[[Self, BaseException], object] | None = None,
+        on_close_callback: Callable[[Self, BaseException], object] | None = None,
         custom_ioloop: asyncio.AbstractEventLoop | AbstractIOServices | None = None,
         internal_connection_workflow: bool = True,
     ) -> None: ...
@@ -30,7 +31,7 @@ class AsyncioConnection(BaseConnection[asyncio.AbstractEventLoop]):
     def create_connection(
         cls,
         connection_configs: Sequence[Parameters],
-        on_done: Callable[[Connection | AMQPConnectorException], object],
+        on_done: Callable[[Self | AMQPConnectorException], object],
         custom_ioloop: asyncio.AbstractEventLoop | None = None,
         workflow: AbstractAMQPConnectionWorkflow | None = None,
     ) -> AbstractAMQPConnectionWorkflow: ...

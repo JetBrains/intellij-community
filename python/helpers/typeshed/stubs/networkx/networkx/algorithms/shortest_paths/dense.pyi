@@ -2,13 +2,16 @@ from _typeshed import Incomplete, SupportsGetItem
 from collections import defaultdict
 from collections.abc import Collection
 
+import numpy as np
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
 
 __all__ = ["floyd_warshall", "floyd_warshall_predecessor_and_distance", "reconstruct_path", "floyd_warshall_numpy"]
 
 @_dispatchable
-def floyd_warshall_numpy(G: Graph[_Node], nodelist: Collection[_Node] | None = None, weight: str | None = "weight"): ...
+def floyd_warshall_numpy(
+    G: Graph[_Node], nodelist: Collection[_Node] | None = None, weight: str | None = "weight"
+) -> np.ndarray[Incomplete, Incomplete]: ...
 @_dispatchable
 def floyd_warshall_predecessor_and_distance(
     G: Graph[_Node], weight: str | None = "weight"

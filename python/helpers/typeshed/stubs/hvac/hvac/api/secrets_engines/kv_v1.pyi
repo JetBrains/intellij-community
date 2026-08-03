@@ -1,3 +1,5 @@
+from typing import Any
+
 from hvac.api.vault_api_base import VaultApiBase
 
 DEFAULT_MOUNT_POINT: str
@@ -6,6 +8,6 @@ class KvV1(VaultApiBase):
     def read_secret(self, path: str, mount_point: str = "secret"): ...
     def list_secrets(self, path: str, mount_point: str = "secret"): ...
     def create_or_update_secret(
-        self, path: str, secret: dict[str, str], method: str | None = None, mount_point: str = "secret"
+        self, path: str, secret: dict[str, Any], method: str | None = None, mount_point: str = "secret"
     ): ...
     def delete_secret(self, path: str, mount_point: str = "secret"): ...
