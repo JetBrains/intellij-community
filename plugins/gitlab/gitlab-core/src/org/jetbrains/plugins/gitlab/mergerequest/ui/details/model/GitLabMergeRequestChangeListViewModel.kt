@@ -11,6 +11,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -40,10 +41,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabMergeRequestChangeListViewModel
   : CodeReviewChangeListViewModel.WithDetails,
-    CodeReviewChangeListViewModel.WithGrouping {
+    CodeReviewChangeListViewModel.WithGrouping,
+    CodeReviewChangeListViewModel.WithViewedState {
   val isOnLatest: Boolean
-
-  fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
 }
 
 internal class GitLabMergeRequestChangeListViewModelImpl(
@@ -102,6 +102,9 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   override fun showDiff() = showDiffPreview()
 
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
+    // viewed state is tracked per (path, latest sha), which is not the revision shown in a commit-scoped changelist
+    if (!isOnLatest) return
+
     val filePathsWithShas = changes.mapNotNull { change ->
       val path = change.filePath
       parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, path)?.let {
