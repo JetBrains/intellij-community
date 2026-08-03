@@ -30,6 +30,22 @@ public final @NonNls class CoreGraphics {
                                                          imageOption);
   }
 
+  /**
+   * Whether this process may record the screen. When it may not, a capture still succeeds but shows only the
+   * desktop background, so callers that would otherwise hand the user an empty picture must check this first.
+   */
+  public static boolean preflightScreenCaptureAccess() {
+    return myCoreGraphicsLibrary.CGPreflightScreenCaptureAccess();
+  }
+
+  /**
+   * Asks for screen-recording access, which shows the system dialog the first time and does nothing on a later
+   * call. Returns the access state at call time, so a first ask returns {@code false} while the dialog is up.
+   */
+  public static boolean requestScreenCaptureAccess() {
+    return myCoreGraphicsLibrary.CGRequestScreenCaptureAccess();
+  }
+
   @Structure.FieldOrder({"origin", "size"})
   public static final class CGRect extends Structure implements Structure.ByValue {
     public CGPoint origin;

@@ -3052,6 +3052,8 @@ com.intellij.ui.icons.UpdatableIcon
 - a:notifyPaint(java.awt.Component,I,I):V
 f:com.intellij.ui.mac.foundation.CoreGraphics
 - s:cgWindowListCreateImage(com.intellij.ui.mac.foundation.CoreGraphics$CGRect,I,com.intellij.ui.mac.foundation.ID,I):com.intellij.ui.mac.foundation.ID
+- s:preflightScreenCaptureAccess():Z
+- s:requestScreenCaptureAccess():Z
 f:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - com.sun.jna.NativeMapped
 - <init>():V

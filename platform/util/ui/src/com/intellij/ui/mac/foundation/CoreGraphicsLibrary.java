@@ -7,6 +7,10 @@ import com.sun.jna.Pointer;
 public interface CoreGraphicsLibrary extends Library {
   ID CGWindowListCreateImage(CoreGraphics.CGRect screenBounds, int windowOption, ID windowID, int imageOption);
 
+  boolean CGPreflightScreenCaptureAccess();
+
+  boolean CGRequestScreenCaptureAccess();
+
   ID objc_getClass(String className);
   Pointer sel_registerName(String selectorName);
 }
