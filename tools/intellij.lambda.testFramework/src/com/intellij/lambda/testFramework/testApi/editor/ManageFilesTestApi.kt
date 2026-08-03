@@ -10,6 +10,8 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -141,6 +143,59 @@ suspend fun waitForExpectedSelectedFile(
     it.editorImplOrThrow.waitCaretPosition(expectedLine, expectedColumn)
   }
   return fileEditor
+}
+
+context(lambdaIdeContext: LambdaIdeContext)
+suspend fun openFileAndWaitEditorSelected(
+  file: VirtualFile,
+  project: Project = getProject(),
+  expectedEditorName: String? = null,
+  timeout: Duration = 20.seconds,
+): FileEditor {
+  FileEditorManagerEx.getInstanceEx(project).openFile(file, FileEditorOpenOptions(requestFocus = true))
+  return awaitEditorSelected(file.name, project, expectedEditorName, timeout)
+}
+
+context(lambdaIdeContext: LambdaIdeContext)
+suspend fun awaitEditorSelected(
+  fileName: String,
+  project: Project = getProject(),
+  expectedEditorName: String? = null,
+  timeout: Duration = 20.seconds,
+): FileEditor {
+  return waitSuspending(
+    "Editor '$fileName' is selected in project $project",
+    timeout,
+    getter = { project.selectedFileEditor },
+    checker = {
+      frameworkLogger.info("file=${it?.file}, fileName=${it?.file?.name}, editorName=${it?.name}")
+      it?.file?.name == fileName && (expectedEditorName == null || it.name == expectedEditorName)
+    },
+  )!!
+}
+
+context(lambdaIdeContext: LambdaIdeContext)
+suspend fun closeFileAndWaitEditorClosed(
+  file: VirtualFile,
+  project: Project = getProject(),
+  fileName: String = file.name,
+  timeout: Duration = 20.seconds,
+) {
+  edtWriteAction {
+    FileEditorManagerEx.getInstanceEx(project).closeFile(file)
+  }
+  awaitEditorClosed(fileName, project, timeout)
+}
+
+context(lambdaIdeContext: LambdaIdeContext)
+suspend fun awaitEditorClosed(
+  fileName: String,
+  project: Project = getProject(),
+  timeout: Duration = 20.seconds,
+) {
+  waitSuspending("Editor '$fileName' is closed", timeout) {
+    project.allOpenFileEditors.none { it.file?.name == fileName }
+  }
 }
 
 /**
