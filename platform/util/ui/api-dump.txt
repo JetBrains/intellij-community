@@ -3083,6 +3083,8 @@ f:com.intellij.ui.mac.foundation.CoreGraphics$CGSize
 - <init>(D,D):V
 com.intellij.ui.mac.foundation.CoreGraphicsLibrary
 - com.sun.jna.Library
+- a:CGPreflightScreenCaptureAccess():Z
+- a:CGRequestScreenCaptureAccess():Z
 - a:CGWindowListCreateImage(com.intellij.ui.mac.foundation.CoreGraphics$CGRect,I,com.intellij.ui.mac.foundation.ID,I):com.intellij.ui.mac.foundation.ID
 - a:objc_getClass(java.lang.String):com.intellij.ui.mac.foundation.ID
 - a:sel_registerName(java.lang.String):com.sun.jna.Pointer
