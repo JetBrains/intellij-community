@@ -6,7 +6,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.collectImplicitReceiverTypes
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
@@ -59,8 +59,8 @@ private fun isClassAvailableAsImplicitReceiver(
     return usageElement is KtElement && analyze(usageElement) {
         val targetClassId = targetClass.classSymbol?.classId ?: return@analyze false
         if (isExtensionForTargetClass(referencedElement, targetClassId)) return@analyze true
-        collectImplicitReceiverTypes(usageElement).any { implicitReceiverType ->
-            implicitReceiverType.isSubtypeOf(targetClassId)
+        usageElement.containingKtFile.scopeContext(usageElement).implicitReceivers.any { implicitReceiver ->
+            implicitReceiver.type.isSubtypeOf(targetClassId)
         }
     }
 }

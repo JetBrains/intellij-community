@@ -20,8 +20,8 @@ import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.collectImplicitReceiverTypes
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -245,9 +245,9 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       return buildList<LocalQuickFix> {
         add(ReplaceInvokeLaterWithWithContextQuickFix(callExpression))
 
-        val implicitReceiverTypesAtPosition = collectImplicitReceiverTypes(callExpression)
+        val implicitReceiverTypesAtPosition = callExpression.containingKtFile.scopeContext(callExpression).implicitReceivers
         val coroutineScopeClassId = ClassId.topLevel(FqName(COROUTINE_SCOPE))
-        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { it.isSubtypeOf(coroutineScopeClassId) }
+        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { it.type.isSubtypeOf(coroutineScopeClassId) }
         if (hasCoroutineScope) {
           add(ReplaceInvokeLaterWithLaunchQuickFix(callExpression))
         }
