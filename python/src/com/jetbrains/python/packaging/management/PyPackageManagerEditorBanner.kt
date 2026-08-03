@@ -22,6 +22,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.components.TwoSideComponent
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.requirements.RequirementsFileType
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
@@ -116,6 +117,7 @@ internal class PyPackageManagerEditorBanner : EditorNotificationProvider, DumbAw
 
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
+      PythonPackagesToolwindowStatisticsCollector.navigateFromDependencyFileEvent.log()
       ToolWindowManager.getInstance(project).getToolWindow(PACKAGING_TOOL_WINDOW_ID)?.activate(null)
     }
 
