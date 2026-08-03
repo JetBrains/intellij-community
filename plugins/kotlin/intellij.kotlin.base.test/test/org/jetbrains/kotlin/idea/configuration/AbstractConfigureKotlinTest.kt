@@ -9,10 +9,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -55,7 +55,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
         val propertiesComponent = PropertiesComponent.getInstance(project)
         for (i in 1..5) {
             if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
-            UIUtil.dispatchAllInvocationEvents()
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
             Thread.sleep(100)
         }
         Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
