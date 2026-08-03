@@ -870,6 +870,22 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("b.winner.module")
   }
 
+  @Test
+  fun `depends declaration does not implicitly demand on-demand modules of the target`() {
+    plugin("provider") {
+      content {
+        module("provider.ondemand", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { }
+      }
+    }.installAt(pluginsDirPath)
+    plugin("consumer") {
+      depends("provider")
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("provider", "consumer")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors()
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginsDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
