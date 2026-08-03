@@ -53,8 +53,6 @@ public class MarkdownStyling(
     public val image: Image,
     /** Styling for thematic break (horizontal rule) elements. */
     public val thematicBreak: ThematicBreak,
-    /** Styling for HTML block elements. */
-    public val htmlBlock: HtmlBlock,
 ) {
     /** The base [InlinesStyling] derived from the [paragraph] styling, used as a fallback for inline rendering. */
     @ApiStatus.Experimental
@@ -1112,73 +1110,6 @@ public class MarkdownStyling(
         public companion object
     }
 
-    /**
-     * Styling for Markdown HTML block elements. HTML blocks are not rendered by default; this styling only takes effect
-     * for custom renderers that opt in to rendering them.
-     */
-    @ApiStatus.Experimental
-    @ExperimentalJewelApi
-    @GenerateDataFunctions
-    public class HtmlBlock(
-        /** The text style used to render the HTML block content. */
-        public val textStyle: TextStyle,
-        /** The padding applied inside the HTML block container. */
-        public val padding: PaddingValues,
-        /** The shape of the HTML block container. */
-        public val shape: Shape,
-        /** The background color of the HTML block container. */
-        public val background: Color,
-        /** The width of the HTML block border. */
-        public val borderWidth: Dp,
-        /** The color of the HTML block border. */
-        public val borderColor: Color,
-        /** Whether the HTML block expands to fill the available width. */
-        public val fillWidth: Boolean,
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as HtmlBlock
-
-            if (fillWidth != other.fillWidth) return false
-            if (textStyle != other.textStyle) return false
-            if (padding != other.padding) return false
-            if (shape != other.shape) return false
-            if (background != other.background) return false
-            if (borderWidth != other.borderWidth) return false
-            if (borderColor != other.borderColor) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = fillWidth.hashCode()
-            result = 31 * result + textStyle.hashCode()
-            result = 31 * result + padding.hashCode()
-            result = 31 * result + shape.hashCode()
-            result = 31 * result + background.hashCode()
-            result = 31 * result + borderWidth.hashCode()
-            result = 31 * result + borderColor.hashCode()
-            return result
-        }
-
-        override fun toString(): String {
-            return "HtmlBlock(" +
-                "textStyle=$textStyle, " +
-                "padding=$padding, " +
-                "shape=$shape, " +
-                "background=$background, " +
-                "borderWidth=$borderWidth, " +
-                "borderColor=$borderColor, " +
-                "fillWidth=$fillWidth" +
-                ")"
-        }
-
-        /** Companion object for [HtmlBlock]. */
-        public companion object
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -1193,7 +1124,6 @@ public class MarkdownStyling(
         if (list != other.list) return false
         if (image != other.image) return false
         if (thematicBreak != other.thematicBreak) return false
-        if (htmlBlock != other.htmlBlock) return false
 
         return true
     }
@@ -1207,7 +1137,6 @@ public class MarkdownStyling(
         result = 31 * result + list.hashCode()
         result = 31 * result + image.hashCode()
         result = 31 * result + thematicBreak.hashCode()
-        result = 31 * result + htmlBlock.hashCode()
         return result
     }
 
@@ -1220,8 +1149,7 @@ public class MarkdownStyling(
             "code=$code, " +
             "list=$list, " +
             "image=$image, " +
-            "thematicBreak=$thematicBreak, " +
-            "htmlBlock=$htmlBlock" +
+            "thematicBreak=$thematicBreak" +
             ")"
     }
 

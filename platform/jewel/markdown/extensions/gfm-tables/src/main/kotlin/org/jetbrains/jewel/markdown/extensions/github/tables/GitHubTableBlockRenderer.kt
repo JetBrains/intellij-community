@@ -67,7 +67,6 @@ internal class GitHubTableBlockRenderer(
                     rootStyling.list,
                     rootStyling.image,
                     rootStyling.thematicBreak,
-                    rootStyling.htmlBlock,
                 )
             }
 

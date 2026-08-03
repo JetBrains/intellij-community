@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.foundation.background
@@ -87,7 +89,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
-import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlockWithAttributes
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
@@ -150,7 +151,6 @@ public open class DefaultMarkdownBlockRenderer(
             is FencedCodeBlock -> RenderFencedCodeBlock(block, rootStyling.code.fenced, enabled, modifier)
             is IndentedCodeBlock -> RenderIndentedCodeBlock(block, rootStyling.code.indented, enabled, modifier)
             is Heading -> RenderHeading(block, rootStyling.heading, enabled, onUrlClick, modifier)
-            is HtmlBlock -> RenderHtmlBlock(block, rootStyling.htmlBlock, enabled, modifier)
             is OrderedList -> RenderOrderedList(block, rootStyling.list.ordered, enabled, onUrlClick, modifier)
             is UnorderedList -> RenderUnorderedList(block, rootStyling.list.unordered, enabled, onUrlClick, modifier)
             is ListItem -> RenderListItem(block, enabled, onUrlClick, modifier)
@@ -529,6 +529,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
+                @Suppress("DEPRECATION")
                 if (MIME_TYPE_REGEX.matches(language)) {
                     val mimeType = MimeType.Known.fromMimeTypeString(language)
                     // Enabled is always true as the container handles the disabled alpha
@@ -551,6 +552,7 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated(
         message =
             "This class function is not scalable as it relies on a pre-resolved MimeType object. " +
@@ -633,16 +635,6 @@ public open class DefaultMarkdownBlockRenderer(
             color = styling.lineColor,
             thickness = styling.lineWidth,
         )
-    }
-
-    @Composable
-    override fun RenderHtmlBlock(
-        block: HtmlBlock,
-        styling: MarkdownStyling.HtmlBlock,
-        enabled: Boolean,
-        modifier: Modifier,
-    ) {
-        // HTML blocks are intentionally not rendered
     }
 
     @Composable
@@ -1184,6 +1176,7 @@ private fun rebuildWithFailedImagesAsLinks(
     }
 }
 
+@Suppress("DEPRECATION")
 @Deprecated(
     message =
         "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +

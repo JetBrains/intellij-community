@@ -3,7 +3,6 @@
 package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -37,7 +36,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Heading
-import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
@@ -75,7 +73,6 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
   val list: List = createListStyling(baseTextStyle)
   val image: Image = createImageStyling()
   val thematicBreak: ThematicBreak = createThematicBreakStyling(scheme)
-  val htmlBlock: HtmlBlock = createHtmlBlockStyling(baseTextStyle, scheme)
 
   return MarkdownStyling(
     blockVerticalSpacing,
@@ -86,7 +83,6 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
     list,
     image,
     thematicBreak,
-    htmlBlock,
   )
 }
 
@@ -264,17 +260,4 @@ private fun createThematicBreakStyling(scheme: PreviewStyleScheme): ThematicBrea
   padding = PaddingValues(),
   lineWidth = 2.dp,
   lineColor = scheme.separatorColor.toComposeColor(),
-)
-
-private fun createHtmlBlockStyling(
-  baseTextStyle: TextStyle,
-  scheme: PreviewStyleScheme,
-): HtmlBlock = HtmlBlock(
-  textStyle = baseTextStyle,
-  padding = PaddingValues(8.dp),
-  shape = RoundedCornerShape(4.dp),
-  background = scheme.fenceBackgroundColor.toComposeColor(),
-  borderWidth = 1.dp,
-  borderColor = scheme.separatorColor.toComposeColor(),
-  fillWidth = true,
 )
