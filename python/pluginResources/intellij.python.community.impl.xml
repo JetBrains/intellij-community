@@ -1430,5 +1430,7 @@
       implementation="com.jetbrains.python.pipenv.PipEnvDependenciesPsiProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
       implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesPsiProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.packaging.setupPy.SetupPyDependenciesPsiProvider"/>
   </extensions>
 </idea-plugin>
