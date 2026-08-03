@@ -28,24 +28,24 @@
                  description="Regex pattern to define specification-like files"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
-                     shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationContradiction" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationContradictionInspection"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.security.name"
-                     shortName="SpecificationSecurity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationSecurity" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSecurityInspection"/>
 
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.semanticCoverage.name"
-                     shortName="SpecificationSemanticCoverage" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationSemanticCoverage" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSematicCoverageInspection"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.ambiguity.name"
-                     shortName="SpecificationAmbiguity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationAmbiguity" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationAmbiguityInspection"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.cognitiveLoad.name"
-                     shortName="SpecificationCognitiveLoad" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationCognitiveLoad" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationCognitiveLoadInspection"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector"/>

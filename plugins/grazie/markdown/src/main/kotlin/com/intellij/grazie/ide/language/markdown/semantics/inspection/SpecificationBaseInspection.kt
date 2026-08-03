@@ -14,6 +14,7 @@ import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUt
 import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -57,7 +58,9 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    if (!isOnTheFly || !isAnalysisEnabled()) return PsiElementVisitor.EMPTY_VISITOR
+    if (!isOnTheFly || !isAnalysisEnabled() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
     val client = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
 
     return object : PsiElementVisitor() {
