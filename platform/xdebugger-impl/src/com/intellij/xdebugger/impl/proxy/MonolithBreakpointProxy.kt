@@ -148,7 +148,7 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
 
-  override fun getGutterIconRenderer(): GutterIconRenderer = MonolithBreakpointGutterIconRenderer(this)
+  override fun getGutterIconRenderer(): GutterIconRenderer? = null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -178,15 +178,6 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
       breakpoint2: XBreakpoint<*>,
     ): Int = breakpoint1.compareTo(breakpoint2 as B)
   }
-}
-
-private class MonolithBreakpointGutterIconRenderer(private val breakpoint: MonolithBreakpointProxy) : GutterIconRenderer() {
-  override fun equals(obj: Any?): Boolean {
-    return obj is MonolithBreakpointGutterIconRenderer && obj.breakpoint == breakpoint
-  }
-
-  override fun hashCode(): Int = breakpoint.hashCode()
-  override fun getIcon() = breakpoint.getIcon()
 }
 
 @ApiStatus.Internal

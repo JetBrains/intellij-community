@@ -13,7 +13,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
@@ -22,13 +21,11 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
-import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.scale.JBUIScale
@@ -36,6 +33,7 @@ import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
@@ -52,10 +50,11 @@ import kotlin.math.max
 object XBreakpointUIUtil {
   @JvmStatic
   @JvmOverloads
-  fun findSelectedBreakpointProxy(
-    project: Project, editor: Editor,
+  fun findSelectedBreakpoint(
+    project: Project,
+    editor: Editor,
     placement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
-  ): Pair<GutterIconRenderer?, XBreakpointProxy?> {
+  ): XBreakpointProxy? {
     var offset = editor.caretModel.offset
     val editorDocument = editor.document
 
@@ -64,43 +63,15 @@ object XBreakpointUIUtil {
       offset = textLength
     }
 
-    val breakpoint = findBreakpoint(project, editorDocument, editorDocument.getLineNumber(offset), placement)
-    if (breakpoint != null) {
-      return Pair.create(breakpoint.getGutterIconRenderer(), breakpoint)
-    }
+    val lineBreakpoint = findBreakpoint(project, editorDocument, editorDocument.getLineNumber(offset), placement)
+    if (lineBreakpoint != null) return lineBreakpoint
 
-    val session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project)
-    if (session != null) {
-      val breakpoint = session.getActiveNonLineBreakpoint()
-      if (breakpoint != null) {
-        val position = session.getCurrentPosition()
-        if (position != null) {
-          if (position.file == FileDocumentManager.getInstance().getFile(editorDocument) &&
-              editorDocument.getLineNumber(offset) == position.line
-          ) {
-            return Pair.create(breakpoint.getGutterIconRenderer(), breakpoint)
-          }
-        }
-      }
-    }
-
-    return Pair.create(null, null)
-  }
-
-  fun findBreakpoint(
-    project: Project,
-    file: VirtualFile,
-    line: Int,
-    placement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
-  ): XLineBreakpointProxy? {
-    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-    for (type in breakpointManager.getLineBreakpointTypes()) {
-      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line, placement)
-      if (breakpoint != null) {
-        return breakpoint
-      }
-    }
-    return null
+    val session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project) ?: return null
+    val breakpoint = session.getActiveNonLineBreakpoint() ?: return null
+    val position = session.getCurrentPosition() ?: return null
+    val isCurrentBreakpoint = position.file == FileDocumentManager.getInstance().getFile(editorDocument) &&
+                              editorDocument.getLineNumber(offset) == position.line
+    return breakpoint.takeIf { isCurrentBreakpoint }
   }
 
   fun findBreakpoint(
@@ -110,7 +81,14 @@ object XBreakpointUIUtil {
     placement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
   ): XLineBreakpointProxy? {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return null
-    return findBreakpoint(project, file, line, placement)
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+    for (type in breakpointManager.getLineBreakpointTypes()) {
+      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line, placement)
+      if (breakpoint != null) {
+        return breakpoint
+      }
+    }
+    return null
   }
 
   @JvmStatic
