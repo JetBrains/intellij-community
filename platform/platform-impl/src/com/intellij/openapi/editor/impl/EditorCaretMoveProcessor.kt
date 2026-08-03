@@ -264,8 +264,8 @@ private class CaretEasing(val type: CaretEasingType) {
   companion object {
     fun fromSettings(settings: EditorSettings): CaretEasing {
       val type = when (settings.caretEasing) {
-        EditorSettings.CaretEasing.NINJA -> CaretEasingType.Ninja
-        EditorSettings.CaretEasing.EASE -> CaretEasingType.Ease
+        EditorSettings.CaretEasing.SNAPPY -> CaretEasingType.Ninja
+        EditorSettings.CaretEasing.GLIDING -> CaretEasingType.Ease
       }
       return CaretEasing(type)
     }

@@ -269,7 +269,7 @@ public interface EditorSettings {
 
   @ApiStatus.Experimental
   enum CaretEasing {
-    NINJA,
-    EASE
+    SNAPPY,
+    GLIDING
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
     @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_MOVEMENT = false;
-    @ApiStatus.Experimental public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.NINJA;
+    @ApiStatus.Experimental
+    @OptionTag(converter = CaretEasingConverter.class)
+    public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.SNAPPY;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;

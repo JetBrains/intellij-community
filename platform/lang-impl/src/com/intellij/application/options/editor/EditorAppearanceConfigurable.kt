@@ -97,8 +97,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
             DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
             renderer = textListCellRenderer {
               when (it) {
-                EditorSettings.CaretEasing.NINJA -> ApplicationBundle.message("settings.editor.animated.caret.ninja")
-                EditorSettings.CaretEasing.EASE -> ApplicationBundle.message("settings.editor.animated.caret.ease")
+                EditorSettings.CaretEasing.SNAPPY -> ApplicationBundle.message("settings.editor.animated.caret.snappy")
+                EditorSettings.CaretEasing.GLIDING -> ApplicationBundle.message("settings.editor.animated.caret.gliding")
                 null -> ""
               }
             }
