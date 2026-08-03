@@ -43,9 +43,11 @@ fun ChangesTree.setupCodeReviewProgressModel(vm: CodeReviewChangeListViewModel, 
   cellRenderer = CodeReviewProgressRenderer(
     hasViewedState,
     textRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false),
+    canEditTest = { it.userObject?.asSafely<RefComparisonChange>()?.let(vm::canEdit) ?: false },
     codeReviewProgressStateProvider = model::getState
   )
   installViewedStateToggleHandler(vm, model)
+  installJumpToSourceHandler(vm)
 
   model.addChangeListener {
     repaint()
@@ -76,6 +78,13 @@ private fun ChangesTree.installViewedStateToggleHandler(
       vm.setViewedState(listOf(change), isViewed)
       tree.repaint()
     }
+  }
+}
+
+private fun ChangesTree.installJumpToSourceHandler(vm: CodeReviewChangeListViewModel) {
+  installRendererComponentClickHandler(CodeReviewProgressRendererComponent::getJumpToSourceIconBounds) { node ->
+    val change = node.userObject.asSafely<RefComparisonChange>() ?: return@installRendererComponentClickHandler
+    vm.startEditing(change)
   }
 }
 

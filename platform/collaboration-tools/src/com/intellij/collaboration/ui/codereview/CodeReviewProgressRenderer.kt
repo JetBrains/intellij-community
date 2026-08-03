@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ClientProperty
@@ -31,9 +32,10 @@ import javax.swing.tree.TreeCellRenderer
 internal class CodeReviewProgressRenderer(
   hasViewedState: Boolean,
   textRenderer: ColoredTreeCellRenderer,
+  canEditTest: (ChangesBrowserNode<*>) -> Boolean,
   codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState,
 ) : TreeCellRenderer {
-  private val component = CodeReviewProgressRendererComponent(hasViewedState, textRenderer, codeReviewProgressStateProvider)
+  private val component = CodeReviewProgressRendererComponent(hasViewedState, textRenderer, canEditTest, codeReviewProgressStateProvider)
 
   override fun getTreeCellRendererComponent(
     tree: JTree,
@@ -50,6 +52,7 @@ internal class CodeReviewProgressRenderer(
 internal class CodeReviewProgressRendererComponent(
   private val hasViewedState: Boolean,
   private val textRenderer: ColoredTreeCellRenderer,
+  private val canEditTest: (ChangesBrowserNode<*>) -> Boolean,
   private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState,
 ) : CellRendererPanel() {
   private val checkbox = JCheckBox().apply {
@@ -66,6 +69,13 @@ internal class CodeReviewProgressRendererComponent(
   private val unreadIconLabel = JLabel().apply {
     border = JBUI.Borders.empty()
     icon = CollaborationToolsIcons.Review.FileUnread
+    horizontalAlignment = JLabel.CENTER
+    verticalAlignment = JLabel.CENTER
+  }
+
+  private val jumpToSourceIconLabel = JLabel().apply {
+    border = JBUI.Borders.empty()
+    icon = AllIcons.Actions.EditSource
     horizontalAlignment = JLabel.CENTER
     verticalAlignment = JLabel.CENTER
   }
@@ -102,6 +112,12 @@ internal class CodeReviewProgressRendererComponent(
   }
 
   @RequiresEdt
+  fun getJumpToSourceIconBounds(cellSize: Dimension): Rectangle? {
+    bounds = Rectangle(0, 0, cellSize.width, cellSize.height)
+    return jumpToSourceIconLabel.calculateBoundsWithin(this)
+  }
+
+  @RequiresEdt
   fun prepareComponent(
     tree: JTree,
     value: Any,
@@ -126,7 +142,8 @@ internal class CodeReviewProgressRendererComponent(
       // if loading, don't show any icons yet
       if (!state.isLoading) {
         val isHovered = TreeHoverListener.getHoveredRow(tree) == row
-        val stateContainer = updateStateContainer(state, leaf, isHovered)
+        val canEdit = canEditTest(value)
+        val stateContainer = updateStateContainer(state, canEdit, leaf, isHovered)
         add(stateContainer, BorderLayout.EAST)
       }
     }
@@ -149,11 +166,21 @@ internal class CodeReviewProgressRendererComponent(
       (this as? JComponent)?.border = JBUI.Borders.empty()
     }
 
-  private fun updateStateContainer(state: NodeCodeReviewProgressState, allowToggleRead: Boolean, isHovered: Boolean): JComponent =
+  private fun updateStateContainer(
+    state: NodeCodeReviewProgressState,
+    canEdit: Boolean,
+    allowToggleRead: Boolean,
+    isHovered: Boolean,
+  ): JComponent =
     stateContainer.apply {
       removeAll()
 
-      updateCommentIconLabel(state)?.let(::add)
+      if (isHovered && canEdit) {
+        add(jumpToSourceIconLabel)
+      }
+      else {
+        updateCommentIconLabel(state)?.let(::add)
+      }
 
       val unReadComponent = if (hasViewedState && allowToggleRead && (isHovered || state.isRead)) {
         checkbox.apply {

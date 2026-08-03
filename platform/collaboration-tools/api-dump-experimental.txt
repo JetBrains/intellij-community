@@ -821,12 +821,14 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - hashCode():I
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$Companion
+- canEdit(com.intellij.collaboration.util.RefComparisonChange):Z
 - a:getChanges():java.util.List
 - a:getChangesSelection():kotlinx.coroutines.flow.StateFlow
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSelectionRequests():kotlinx.coroutines.flow.SharedFlow
 - a:showDiff():V
 - a:showDiffPreview():V
+- startEditing(com.intellij.collaboration.util.RefComparisonChange):V
 - a:updateSelectedChanges(com.intellij.collaboration.util.ChangesSelection):V
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$Companion
 - f:getDATA_KEY():com.intellij.openapi.actionSystem.DataKey
