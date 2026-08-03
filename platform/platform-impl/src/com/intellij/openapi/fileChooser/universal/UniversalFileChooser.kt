@@ -730,6 +730,7 @@ object UniversalFileChooser {
         val scrollPane = ScrollPaneFactory.createScrollPane(fileTree.getTree())
 
         pathTextField.showHiddenSupplier = BooleanSupplier { fileTree.areHiddensShown() }
+        pathTextField.pathParser = contributor::parsePresentablePath
         ComponentValidator(disposable)
           .withValidator(Supplier<ValidationInfo?> {
             if (pathTextFieldInvalid)
@@ -1030,7 +1031,7 @@ object UniversalFileChooser {
         }
         scope.launch {
           withContext(Dispatchers.IO) {
-            val path = runCatching { Path.of(text) }.getOrNull()
+            val path = contributor.parsePresentablePath(text)
             val exists = path != null && runCatching { Files.exists(path) }.getOrDefault(false)
             if (path == null || !exists) {
               runOnEdt {
@@ -1075,7 +1076,7 @@ object UniversalFileChooser {
 
       private fun updatePathField(selection: List<Path?>) {
         val file = selection.firstOrNull()
-        pathTextField.text = file?.toString() ?: ""
+        pathTextField.text = file?.let { contributor.getPresentablePath(it) } ?: ""
         pathTextField.caretPosition = pathTextField.text.length
       }
 

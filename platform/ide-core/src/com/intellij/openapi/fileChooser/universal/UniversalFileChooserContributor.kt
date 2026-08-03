@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.FileSystems
@@ -65,6 +66,10 @@ interface UniversalFileChooserContributor {
   suspend fun getPresentation(path: Path): Presentation? = null
 
   fun getFileName(path: Path): String? = path.fileName?.toString()
+
+  fun getPresentablePath(path: Path): @NlsSafe String = path.toString()
+
+  fun parsePresentablePath(text: String): Path? = runCatching { Path.of(text) }.getOrNull()
 
   fun getDesktopPath(): Path? = null
 

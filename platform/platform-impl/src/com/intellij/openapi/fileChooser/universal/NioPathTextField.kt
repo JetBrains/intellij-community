@@ -28,6 +28,11 @@ internal class NioPathTextField(
 
   var showHiddenSupplier: BooleanSupplier = BooleanSupplier { false }
 
+  /**
+   * Converts the text of this field into a path, see [UniversalFileChooserContributor.parsePresentablePath].
+   */
+  var pathParser: (String) -> Path? = { text -> runCatching { Path.of(text) }.getOrNull() }
+
   private var completionPopup: JBPopup? = null
 
   init {
@@ -62,12 +67,7 @@ internal class NioPathTextField(
   private fun showCompletion(x: Int) {
     closeCompletionPopup()
     val currentText = text
-    val directory = try {
-      Path.of(currentText)
-    }
-    catch (_: Exception) {
-      return
-    }
+    val directory = pathParser(currentText) ?: return
 
     val showHidden = showHiddenSupplier.asBoolean
     scope.launch {
