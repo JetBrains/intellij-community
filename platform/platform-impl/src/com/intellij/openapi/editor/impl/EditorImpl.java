@@ -363,6 +363,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
 
+  private boolean myIsCurrentlyBuildingCache = false;
   private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
@@ -939,6 +940,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFocusKeepSelectionOnMousePress = false;
     mySelectionModel.reinitSettings();
+    myView.invalidateContentAnimationCache(null);
 
     clearCaretThread();
     for (Caret caret : myCaretModel.getAllCarets()) {
@@ -2483,6 +2485,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myView.setPaintCallback(callback);
   }
 
+  @ApiStatus.Internal
+  public boolean isCurrentlyBuildingCache() {
+    return myIsCurrentlyBuildingCache;
+  }
+
+  @ApiStatus.Internal
+  public void setCurrentlyBuildingCache(boolean isCurrentlyBuildingCache) {
+    myIsCurrentlyBuildingCache = isCurrentlyBuildingCache;
+  }
+
+  @ApiStatus.Internal
+  public void invalidateAnimationCaches(@Nullable Rectangle clip) {
+    myView.invalidateContentAnimationCache(clip);
+  }
+
   @Override
   public boolean isStickySelection() {
     return myState.isStickySelection();
@@ -2594,7 +2611,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
   }
 
-  void paint(@NotNull Graphics2D g) {
+  @ApiStatus.Internal
+  public void paint(@NotNull Graphics2D g) {
     if (g.getClipBounds() == null) {
       return;
     }
@@ -6017,7 +6035,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myIsStickyLinePainting = stickyLinePainting;
   }
 
-  boolean isPaintingDumbBuffer() {
+  /**
+   * If true, the editor's content is being rendered into the offscreen buffer that {@link #startDumb()} snapshots.
+   * That buffer may be aligned differently from the main area, so content prepared for the main area must not be reused for it.
+   */
+  @ApiStatus.Internal
+  public boolean isPaintingDumbBuffer() {
     return myPaintingDumbBuffer;
   }
 

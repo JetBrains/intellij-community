@@ -419,6 +419,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
   }
 
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      editor.invalidateAnimationCaches(new Rectangle(x, y, width, height));
+    });
+    super.repaint(tm, x, y, width, height);
+  }
+
+  @ApiStatus.Internal
+  public void repaintCaret(int x, int y, int width, int height) {
+    super.repaint(0L, x, y, width, height);
+  }
+
   //--implementation of Scrollable interface--------------------------------------
   @DirtyUI
   @Override

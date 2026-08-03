@@ -73,6 +73,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -149,6 +150,10 @@ public final class EditorPainter implements TextDrawingCallback {
 
   void paint(Graphics2D g) {
     new Session(myView, g).paint();
+  }
+
+  void paintCaret(Graphics2D g, CaretRectangle[] locations, int yShift) {
+    new Session(myView, g).paintCaret(locations, yShift);
   }
 
   /**
@@ -243,7 +248,7 @@ public final class EditorPainter implements TextDrawingCallback {
   void repaintCarets(CaretRectangle @NotNull [] locations) {
     var editor = myView.getEditor();
     for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN)) {
-      editor.getContentComponent().repaint(
+      editor.getContentComponent().repaintCaret(
         rectangle.x, rectangle.y, rectangle.width, rectangle.height
       );
     }
@@ -297,6 +302,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
     private final CaretDataInView myCaretDataInView;
+    private final boolean myIsBuildingCache;
 
     private Session(EditorView view, Graphics2D g) {
       myView = view;
@@ -333,9 +339,13 @@ public final class EditorPainter implements TextDrawingCallback {
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       myScaleContext = ScaleContext.create(myGraphics);
       myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myCaretModel, myStartOffset, myEndOffset) : null;
+      myIsBuildingCache = myEditor.isCurrentlyBuildingCache();
     }
 
     private void paint() {
+      if (!myIsBuildingCache) {
+        myEditor.invalidateAnimationCaches(myClip);
+      }
       if (myEditor.getContentComponent().isOpaque()) {
         myGraphics.setColor(myBackgroundColor);
         myGraphics.fillRect(myClip.x, myClip.y, myClip.width, myClip.height);
@@ -1554,11 +1564,16 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintCaret() {
+      if (myIsBuildingCache) return;
       if (myEditor.isPurePaintingMode()) return;
       if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
       CaretRectangle[] locations = myEditor.getCaretLocations(true);
       if (locations == null) return;
 
+      paintCaret(locations, 0);
+    }
+
+    private void paintCaret(CaretRectangle[] locations, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
       int caretHeight = myView.getCaretHeight();
       EditorSettings settings = myEditor.getSettings();
@@ -1568,7 +1583,7 @@ public final class EditorPainter implements TextDrawingCallback {
       int minX = myInsets.left;
       for (CaretRectangle location : locations) {
         float x = (float)location.getX();
-        int y = (int)location.getY() - topOverhang + myYShift;
+        int y = (int)location.getY() - topOverhang + myYShift + yShift;
         Caret caret = location.getCaret();
         CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.getDefault() : caret.getVisualAttributes();
 
@@ -1696,22 +1711,28 @@ public final class EditorPainter implements TextDrawingCallback {
                                 int topOverhang,
                                 boolean isRtl) {
       if (caret != null) {
-        int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
-        for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
-                                                                                                caret.getVisualLineStart(),
-                                                                                                false)) {
-          if (fragment.getCurrentInlay() != null) continue;
-          int startVisualColumn = fragment.getStartVisualColumn();
-          int endVisualColumn = fragment.getEndVisualColumn();
-          if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
-            g.setColor(withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity));
-            fragment.draw(x, y + topOverhang + myAscent,
-                          fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
-                          fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn)).accept(g);
-            break;
+        var config = GraphicsUtil.setupAAPainting(g);
+        try {
+          int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
+          for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
+                                                                                                  caret.getVisualLineStart(),
+                                                                                                  false)) {
+            if (fragment.getCurrentInlay() != null) continue;
+            int startVisualColumn = fragment.getStartVisualColumn();
+            int endVisualColumn = fragment.getEndVisualColumn();
+            if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
+              g.setColor(withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity));
+              fragment.draw(x, y + topOverhang + myAscent,
+                            fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
+                            fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn)).accept(g);
+              break;
+            }
           }
+          ComplexTextFragment.flushDrawingCache(g);
         }
-        ComplexTextFragment.flushDrawingCache(g);
+        finally {
+          config.restore();
+        }
       }
     }
 

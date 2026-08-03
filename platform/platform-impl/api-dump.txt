@@ -2656,6 +2656,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - getCaretPosition():I
 - getEditor():com.intellij.openapi.editor.impl.EditorImpl
 - paint(java.awt.Graphics):V
+- repaint(J,I,I,I,I):V
 f:com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl
 - com.intellij.openapi.editor.EditorCopyPasteHelper
 - s:getCopiedFromEmptySelectionPasteMode():com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode
