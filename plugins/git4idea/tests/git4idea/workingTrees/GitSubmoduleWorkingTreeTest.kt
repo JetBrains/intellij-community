@@ -2,30 +2,69 @@
 package git4idea.workingTrees
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.repo.GitRepository
-import git4idea.repo.GitWorkingTreeHolderImpl
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.git
 import git4idea.test.registerRepo
 import git4idea.test.setupDefaultUsername
-import git4idea.update.GitSubmoduleTestBase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import git4idea.update.addSubmodule
+import git4idea.update.createPlainRepo
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitSubmoduleWorkingTreeTest : GitSubmoduleTestBase() {
-  private lateinit var sub: GitRepository
+@TestApplication
+internal class GitSubmoduleWorkingTreeTest {
+  private val contextFixture = submoduleWorkingTreeFixture()
+  private val context: GitSubmoduleWorkingTreeContext get() = contextFixture.get()
 
-  override fun setUp() {
-    super.setUp()
+  @Test
+  fun `test submodule main worktree is recognized as current`(): Unit = with(context) {
+    sub.ensureWorkingTreesUpToDateForTests()
 
+    assertThat(sub.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(
+      listOf(GitWorkingTree(sub.root.path, sub.currentBranch!!.fullName, true, true))
+    )
+  }
+
+  @Test
+  @RegistryKey("git.enable.working.trees.feature", "true")
+  fun `test branch is not reported as checked out in another worktree`(): Unit = with(context) {
+    sub.ensureWorkingTreesUpToDateForTests()
+
+    val branch = sub.currentBranch!!
+    assertThat(GitSingleRefAction.getWorkingTreeWithRef(branch, sub, skipCurrentWorkingTree = true))
+      .describedAs("Submodule branch must not be reported as checked out in another worktree")
+      .isNull()
+  }
+}
+
+internal interface GitSubmoduleWorkingTreeContext : GitPlatformTestContext {
+  /** The submodule repository of the project. */
+  val sub: GitRepository
+}
+
+private fun submoduleWorkingTreeFixture(): TestFixture<GitSubmoduleWorkingTreeContext> =
+  gitWorkingTreePlatformFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH).submoduleFixture()
+
+/**
+ * Prepares a remote main repository with a `sub` submodule, clones it into the project directory
+ * and registers both repositories.
+ */
+private fun TestFixture<GitPlatformTestContext>.submoduleFixture(): TestFixture<GitSubmoduleWorkingTreeContext> = testFixture {
+  val platformContext = init()
+  with(platformContext) {
     // prepare remote main + remote sub, add the submodule to main
-    val mainRemote = createPlainRepo("main")
-    val subRemote = createPlainRepo("sub")
-    addSubmodule(mainRemote.local, subRemote.remote, "sub")
+    val mainRemote = createPlainRepo(project, testNioRoot, "main")
+    val subRemote = createPlainRepo(project, testNioRoot, "sub")
+    addSubmodule(project, mainRemote.local, subRemote.remote, "sub")
 
     // clone the main project with the submodule into the project directory
     cd(testNioRoot)
@@ -34,42 +73,19 @@ class GitSubmoduleWorkingTreeTest : GitSubmoduleTestBase() {
     cd(projectRoot)
     setupDefaultUsername()
 
-    val subFile = projectNioRoot.resolve("sub")
-    cd(subFile)
+    val subRoot = projectNioRoot.resolve("sub")
+    cd(subRoot)
     setupDefaultUsername()
     git("checkout master") // a submodule is checked out in detached HEAD by default
 
     refresh()
     registerRepo(project, projectNioRoot)
-    sub = registerRepo(project, subFile)
+    val sub = registerRepo(project, subRoot)
     sub.update()
-  }
 
-  fun `test submodule main worktree is recognized as current`() {
-    sub.ensureWorkingTreesUpToDate()
-
-    assertSameElements(
-      sub.workingTreeHolder.getWorkingTrees(),
-      listOf(GitWorkingTree(sub.root.path, sub.currentBranch!!.fullName, true, true)),
-    )
-  }
-
-  fun `test branch is not reported as checked out in another worktree`() {
-    Registry.get("git.enable.working.trees.feature").setValue(true, testRootDisposable)
-    sub.ensureWorkingTreesUpToDate()
-
-    val branch = sub.currentBranch!!
-    assertNull(
-      "Submodule branch must not be reported as checked out in another worktree",
-      GitSingleRefAction.getWorkingTreeWithRef(branch, sub, skipCurrentWorkingTree = true),
-    )
-  }
-
-  private fun GitRepository.ensureWorkingTreesUpToDate() {
-    runBlocking {
-      withContext(Dispatchers.IO) {
-        (workingTreeHolder as GitWorkingTreeHolderImpl).updateState()
-      }
+    val result = object : GitSubmoduleWorkingTreeContext, GitPlatformTestContext by platformContext {
+      override val sub = sub
     }
+    initialized(result) {}
   }
 }

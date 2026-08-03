@@ -1,58 +1,66 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.openapi.util.registry.Registry
-import git4idea.test.GitPlatformTest
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.createRepository
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitWorktreeSupportStatusTest : GitPlatformTest() {
+@TestApplication
+@RegistryKey("git.enable.working.trees.feature", "true")
+internal class GitWorktreeSupportStatusTest {
+  private val contextFixture = gitWorkingTreePlatformFixture()
+  private val context: GitPlatformTestContext get() = contextFixture.get()
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    Registry.get("git.enable.working.trees.feature").setValue(true, testRootDisposable)
+  @Test
+  fun `test returns unsupported when project has no repositories`(): Unit = with(context) {
+    assertThat(GitWorkingTreesService.getWorktreeSupportStatus(project)).isEqualTo(GitWorktreeSupportStatus.Unsupported)
   }
 
-  fun `test returns unsupported when project has no repositories`() {
-    assertEquals(GitWorktreeSupportStatus.Unsupported, GitWorkingTreesService.getWorktreeSupportStatus(project))
-  }
-
-  fun `test returns single repository status for single repository project`() {
+  @Test
+  fun `test returns single repository status for single repository project`(): Unit = with(context) {
     val repository = createRepository(project, projectNioRoot, true)
 
     val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
 
-    assertEquals(GitWorktreeSupportStatus.SingleRepository(repository), status)
+    assertThat(status).isEqualTo(GitWorktreeSupportStatus.SingleRepository(repository))
   }
 
-  fun `test returns multiple repository status for multi repository project`() {
+  @Test
+  fun `test returns multiple repository status for multi repository project`(): Unit = with(context) {
     val firstRepository = createRepository(project, projectNioRoot, true)
     val secondRepository = createRepository(project, testNioRoot.resolve("community"), true)
 
     val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
 
-    assertTrue(status is GitWorktreeSupportStatus.MultipleRepository)
+    assertThat(status).isInstanceOf(GitWorktreeSupportStatus.MultipleRepository::class.java)
     val multipleRepositoryStatus = status as GitWorktreeSupportStatus.MultipleRepository
-    assertSameElements(multipleRepositoryStatus.repositories, listOf(firstRepository, secondRepository))
+    assertThat(multipleRepositoryStatus.repositories).containsExactlyInAnyOrder(firstRepository, secondRepository)
   }
 
-  fun `test worktree creation supported for single repository`() {
+  @Test
+  fun `test worktree creation supported for single repository`(): Unit = with(context) {
     val repository = createRepository(project, projectNioRoot, true)
 
-    assertTrue(GitWorkingTreesService.isWorktreeCreationSupported(repository))
+    assertThat(GitWorkingTreesService.isWorktreeCreationSupported(repository)).isTrue()
   }
 
-  fun `test worktree creation not supported for multi repository`() {
+  @Test
+  fun `test worktree creation not supported for multi repository`(): Unit = with(context) {
     val firstRepository = createRepository(project, projectNioRoot, true)
     createRepository(project, testNioRoot.resolve("community"), true)
 
-    assertFalse(GitWorkingTreesService.isWorktreeCreationSupported(firstRepository))
+    assertThat(GitWorkingTreesService.isWorktreeCreationSupported(firstRepository)).isFalse()
   }
 
-  fun `test worktree creation not supported when feature disabled`() {
-    Registry.get("git.enable.working.trees.feature").setValue(false, testRootDisposable)
+  // the feature flag is read in the test body, so overriding it for the invocation is enough
+  @Test
+  @RegistryKey("git.enable.working.trees.feature", "false")
+  fun `test worktree creation not supported when feature disabled`(): Unit = with(context) {
     val repository = createRepository(project, projectNioRoot, true)
 
-    assertFalse(GitWorkingTreesService.isWorktreeCreationSupported(repository))
+    assertThat(GitWorkingTreesService.isWorktreeCreationSupported(repository)).isFalse()
   }
 }

@@ -107,15 +107,19 @@ internal fun setupLocalIgnore(repoRoot: Path) {
 }
 
 fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean) {
+  cloneRepo(project, source, destination, bare)
+}
+
+internal fun cloneRepo(project: Project?, source: String, destination: String, bare: Boolean) {
   cd(source)
   if (bare) {
-    git("clone --bare -- . $destination")
+    git(project, "clone --bare -- . $destination")
   }
   else {
-    git("clone -- . $destination")
+    git(project, "clone -- . $destination")
   }
   cd(destination)
-  setupDefaultUsername()
+  setupDefaultUsername(project)
 }
 
 internal fun setupDefaultUsername(project: Project?) {
@@ -123,6 +127,10 @@ internal fun setupDefaultUsername(project: Project?) {
 }
 
 internal fun GitPlatformTest.setupDefaultUsername() {
+  setupDefaultUsername(project)
+}
+
+internal fun VcsPlatformTestContext.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 

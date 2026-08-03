@@ -13,26 +13,69 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.fail
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 interface VcsPlatformTestContext : ExecutorContext {
   val project: Project
   val projectRoot: VirtualFile
   val projectNioRoot: Path
   val projectPath: String
+
+  /**
+   * Directory which contains the project directory.
+   *
+   * Use it for repositories, clones, bare parent repositories and linked working trees which have to live
+   * outside of the project. It is only meaningful if the project path comes from [vcsTestProjectPathFixture]
+   * or [projectPathFixture]: only then it is a dedicated directory which is removed together with the fixture.
+   */
+  val testNioRoot: Path
   val changeListManager: ChangeListManagerImpl
   val vcsManager: ProjectLevelVcsManagerImpl
   val vcsNotifier: TestVcsNotifier
 }
+
+/**
+ * Temp directory which plays the role of the test root: the project is expected to be created in its subdirectory,
+ * see [projectPathFixture]. The whole directory is removed recursively during tear down.
+ */
+fun vcsTestRootFixture(): TestFixture<Path> = tempPathFixture(prefix = "vcsTestRoot")
+
+/**
+ * Path of the project directory inside the test root, which becomes [VcsPlatformTestContext.testNioRoot].
+ *
+ * Pass `createDirectory = false` if the directory has to be created by the test setup itself,
+ * e.g. by `git worktree add`.
+ */
+fun TestFixture<Path>.projectPathFixture(name: String = "project", createDirectory: Boolean = true): TestFixture<Path> = testFixture {
+  val projectPath = init().resolve(name)
+  if (createDirectory) {
+    withContext(Dispatchers.IO) {
+      projectPath.createDirectories()
+    }
+  }
+  initialized(projectPath) {
+    // removed together with the test root
+  }
+}
+
+/**
+ * Path of the project directory in a dedicated test root, mirroring the layout of [VcsPlatformTest].
+ */
+fun vcsTestProjectPathFixture(): TestFixture<Path> = vcsTestRootFixture().projectPathFixture()
 
 fun TestFixture<Project>.vcsPlatformFixture(): TestFixture<VcsPlatformTestContext> = testFixture {
   val project = init()
@@ -58,6 +101,7 @@ fun TestFixture<Project>.vcsPlatformFixture(): TestFixture<VcsPlatformTestContex
     override val projectRoot = projectRoot
     override val projectNioRoot = projectNioRoot
     override val projectPath: String = projectPath
+    override val testNioRoot: Path = projectNioRoot.parent
     override val changeListManager = changeListManager
     override val vcsManager = vcsManager
     override val vcsNotifier = vcsNotifier
@@ -78,6 +122,18 @@ private fun selfTearDownRunnable(vcsPlatformTestContext: VcsPlatformTestContext)
 fun VcsPlatformTestContext.updateChangeListManager() {
   VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
   changeListManager.ensureUpToDate()
+}
+
+/**
+ * Refreshes the given directory recursively, [testNioRoot] by default.
+ */
+fun VcsPlatformTestContext.refresh(dir: Path = testNioRoot) {
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir) ?: return
+  refresh(virtualFile)
+}
+
+fun refresh(dir: VirtualFile) {
+  dir.refresh(false, true)
 }
 
 fun VcsPlatformTestContext.assertSuccessfulNotification(title: String = "", message: String, actions: List<String>? = null): Notification {

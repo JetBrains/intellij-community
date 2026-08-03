@@ -122,7 +122,7 @@ fun GitPlatformTestContext.tac(file: String, content: String = "content" + Math.
   touch(file, content)
   return addCommit(project, "Touched $file")
 }
-private fun tac(project: Project, file: String, content: String): String {
+internal fun tac(project: Project, file: String, content: String): String {
   touch(file, content)
   return addCommit(project, "Touched $file")
 }
