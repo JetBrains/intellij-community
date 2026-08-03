@@ -78,7 +78,7 @@ object XBreakpointUIUtil {
           if (position.file == FileDocumentManager.getInstance().getFile(editorDocument) &&
               editorDocument.getLineNumber(offset) == position.line
           ) {
-            return Pair.create(breakpoint.createGutterIconRenderer(), breakpoint)
+            return Pair.create(breakpoint.getGutterIconRenderer(), breakpoint)
           }
         }
       }

@@ -110,7 +110,6 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
 
-    <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconMerge"/>
     <xdebugger.inlineValuePopupProvider implementation="com.intellij.xdebugger.impl.InlineTextValuePopupProvider"/>
 
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager"/>
@@ -344,8 +343,4 @@
     </group>
   </actions>
 
-  <projectListeners>
-    <listener class="com.intellij.xdebugger.impl.ExecutionPointManagerChangeListener"
-              topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>
-  </projectListeners>
 </idea-plugin>

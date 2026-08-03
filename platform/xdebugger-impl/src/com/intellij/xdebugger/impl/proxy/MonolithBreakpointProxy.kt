@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.proxy
 
-import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -35,10 +34,6 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
   override val type: XBreakpointTypeProxy get() = breakpoint.type.asProxy(breakpoint.project)
 
   override val project: Project get() = breakpoint.project
-
-  override fun createBreakpointDraggableObject(): GutterDraggableObject? {
-    return null
-  }
 
   override fun getDisplayText(): String = XBreakpointUtil.getShortText(breakpoint)
   override fun getShortText(): @NlsSafe String = XBreakpointUtil.getShortText(breakpoint)
@@ -153,13 +148,7 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
 
-  override fun createGutterIconRenderer(): GutterIconRenderer? {
-    return breakpoint.createGutterIconRenderer()
-  }
-
-  override fun getGutterIconRenderer(): GutterIconRenderer? {
-    return null
-  }
+  override fun getGutterIconRenderer(): GutterIconRenderer = MonolithBreakpointGutterIconRenderer(this)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -189,6 +178,15 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
       breakpoint2: XBreakpoint<*>,
     ): Int = breakpoint1.compareTo(breakpoint2 as B)
   }
+}
+
+private class MonolithBreakpointGutterIconRenderer(private val breakpoint: MonolithBreakpointProxy) : GutterIconRenderer() {
+  override fun equals(obj: Any?): Boolean {
+    return obj is MonolithBreakpointGutterIconRenderer && obj.breakpoint == breakpoint
+  }
+
+  override fun hashCode(): Int = breakpoint.hashCode()
+  override fun getIcon() = breakpoint.getIcon()
 }
 
 @ApiStatus.Internal

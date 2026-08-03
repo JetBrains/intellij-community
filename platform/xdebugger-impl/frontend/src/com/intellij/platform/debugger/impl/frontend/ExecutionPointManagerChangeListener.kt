@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl
+package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
@@ -8,8 +8,9 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
+import com.intellij.xdebugger.impl.XSourceKind
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
 
 private class ExecutionPointManagerChangeListener(val project: Project) : XDebuggerManagerProxyListener {
@@ -95,8 +96,7 @@ private fun detectSourceKind(session: XDebugSessionProxy): XSourceKind {
   return if (useAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
 }
 
-@ApiStatus.Internal
-fun updateExecutionPosition(session: XDebugSessionProxy, checkAlternativePosition: Boolean = false) {
+private fun updateExecutionPosition(session: XDebugSessionProxy, checkAlternativePosition: Boolean = false) {
   val currentSession = XDebugManagerProxy.getInstance().getCurrentSessionProxy(session.project) ?: return
   if (currentSession.id != session.id) return
 
@@ -115,7 +115,7 @@ fun updateExecutionPosition(session: XDebugSessionProxy, checkAlternativePositio
 }
 
 private fun getGutterRenderer(breakpoint: XBreakpointProxy?, session: XDebugSessionProxy): GutterIconRenderer? =
-  breakpoint?.createGutterIconRenderer() ?: session.getCurrentExecutionStack()?.executionLineIconRenderer
+  breakpoint?.getGutterIconRenderer() ?: session.getCurrentExecutionStack()?.executionLineIconRenderer
 
 private fun setGutterRenderer(project: Project, renderer: GutterIconRenderer?) {
   XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.gutterIconRenderer = renderer

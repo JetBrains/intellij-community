@@ -24,7 +24,7 @@ interface XLightLineBreakpointProxy {
 
   fun isEnabled(): Boolean
   fun updateIcon()
-  fun createGutterIconRenderer(): GutterIconRenderer?
+  fun getGutterIconRenderer(): GutterIconRenderer?
 
 }
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints;
+package com.intellij.platform.debugger.impl.frontend.breakpoints;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.debugger.impl.frontend.FrontendXBreakpointProxy;
+import com.intellij.platform.debugger.impl.frontend.FrontendXLineBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
@@ -26,10 +28,9 @@ import javax.swing.Icon;
 
 @ApiStatus.Internal
 public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
-  private final XBreakpointProxy myBreakpoint;
+  private final FrontendXBreakpointProxy myBreakpoint;
 
-  @ApiStatus.Internal
-  public BreakpointGutterIconRenderer(XBreakpointProxy breakpoint) { myBreakpoint = breakpoint; }
+  public BreakpointGutterIconRenderer(FrontendXBreakpointProxy breakpoint) { myBreakpoint = breakpoint; }
 
   @Override
   public @NotNull Icon getIcon() {
@@ -101,7 +102,10 @@ public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIc
 
   @Override
   public GutterDraggableObject getDraggableObject() {
-    return myBreakpoint.createBreakpointDraggableObject();
+    if (myBreakpoint instanceof FrontendXLineBreakpointProxy lineBreakpoint) {
+      return lineBreakpoint.createBreakpointDraggableObject();
+    }
+    return null;
   }
 
   XBreakpointProxy getBreakpoint() {

@@ -183,7 +183,7 @@ class XBreakpointVisualRepresentation internal constructor(
       highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
     }
     if (highlighter == null) return
-    highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer())
+    highlighter.setGutterIconRenderer(myBreakpoint.getGutterIconRenderer())
     highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, true)
     highlighter.setEditorFilter(MarkupEditorFilter { editor -> isHighlighterAvailableIn(editor) })
     this.rangeMarker = highlighter

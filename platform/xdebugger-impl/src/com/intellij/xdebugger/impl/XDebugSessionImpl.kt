@@ -85,7 +85,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
-import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.rpc.models.RunnerLayoutUiBridge
 import com.intellij.xdebugger.impl.rpc.models.XDebugSessionAdditionalTabComponentManager
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
@@ -934,8 +933,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @Deprecated("Update should go via front-end listeners")
   override fun updateExecutionPosition() {
-    // Actually, it is just a fallback. All information should go via front-end listeners.
-    updateExecutionPosition(this.asProxy())
   }
 
   val isTopFrameSelected: Boolean

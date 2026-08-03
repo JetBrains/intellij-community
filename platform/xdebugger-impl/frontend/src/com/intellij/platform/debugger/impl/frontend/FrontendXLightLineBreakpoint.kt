@@ -5,12 +5,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.frontend.breakpoints.CommonBreakpointGutterIconRenderer
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-import com.intellij.xdebugger.impl.breakpoints.CommonBreakpointGutterIconRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -75,7 +75,7 @@ internal class FrontendXLightLineBreakpoint(
     // Do nothing for light breakpoint
   }
 
-  override fun createGutterIconRenderer(): GutterIconRenderer? {
+  override fun getGutterIconRenderer(): GutterIconRenderer {
     return FrontendXLightBreakpointGutterIconRenderer(this)
   }
 

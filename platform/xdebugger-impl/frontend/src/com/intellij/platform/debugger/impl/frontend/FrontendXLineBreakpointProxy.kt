@@ -271,10 +271,6 @@ internal class FrontendXLineBreakpointProxy(
     return visualRepresentation.highlighter
   }
 
-  override fun getGutterIconRenderer(): GutterIconRenderer? {
-    return visualRepresentation.highlighter?.gutterIconRenderer
-  }
-
   private fun <T> updateLineBreakpointStateIfNeeded(
     newValue: T,
     getter: (XLineBreakpointInfo) -> T,
@@ -292,8 +288,12 @@ internal class FrontendXLineBreakpointProxy(
     }
   }
 
-  override fun createBreakpointDraggableObject(): GutterDraggableObject {
+  fun createBreakpointDraggableObject(): GutterDraggableObject {
     return breakpointDraggableObjectFactory.create()
+  }
+
+  override fun getGutterIconRenderer(): GutterIconRenderer {
+    return visualRepresentation.highlighter?.gutterIconRenderer ?: super.getGutterIconRenderer()
   }
 
   override fun updateIcon() {
