@@ -6,6 +6,8 @@ import com.intellij.codeInsight.highlighting.HeavyBraceHighlighter
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.runInEdtAndWait
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @TestFor(issues = ["PY-53379"])
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyControlFlowKeywordMatchingTest : PyCodeInsightTestCase() {
 
   // region off-screen header preview (HeavyBraceHighlighter)

@@ -7,6 +7,8 @@ import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
@@ -29,6 +31,8 @@ import org.opentest4j.AssertionFailedError
  * @see PyInspectionMessages.CodifiedParam
  */
 @TestFor(classes = [PyInspectionMessages::class], issues = ["PY-90264"])
+@Subsystems.Inspections
+@Layers.Functional
 class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
 
   @Test

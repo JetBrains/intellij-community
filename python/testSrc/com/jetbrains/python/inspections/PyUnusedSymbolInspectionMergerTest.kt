@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.JDOMUtil
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection
 
@@ -13,6 +15,8 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection
  * it into, so users who had disabled or reconfigured it are not silently reset to defaults.
  */
 @TestFor(issues = ["PY-9687"])
+@Subsystems.Inspections
+@Layers.Functional
 class PyUnusedSymbolInspectionMergerTest : PyTestCase() {
   private lateinit var profile: InspectionProfileImpl
 

@@ -8,6 +8,8 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfo
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.junit5.framework.annotations.InspectionTest
 import com.jetbrains.python.junit5.framework.annotations.MultiFileTest
@@ -23,6 +25,8 @@ import org.junit.jupiter.api.TestMethodOrder
 @TestDataPath("\$CONTENT_ROOT/../testData/junit5/showcase/PyTypeCheckerInspection")
 @PyCodeInsightTestApplication
 @InspectionTest(PyTypeCheckerInspection::class)
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyJUnit5CodeInsightIsolationTest {
 
   @Order(1)

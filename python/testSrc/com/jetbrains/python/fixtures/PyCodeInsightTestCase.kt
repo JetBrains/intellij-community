@@ -34,6 +34,8 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.COMMENT_CHAR
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.FIXME_KEYWORD
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.GUIDE_BAR
@@ -1333,6 +1335,8 @@ object PyTestAssertionParser {
 }
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
 
   @Test
@@ -1597,6 +1601,8 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
  *  2. A re-initialized per-test state (open editors closed, temp dir wiped, [testCallCount] reset).
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
 
   companion object {

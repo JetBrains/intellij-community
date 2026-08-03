@@ -8,6 +8,8 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -22,6 +24,8 @@ import org.junit.jupiter.api.Test
  */
 @TestApplication
 @TestDataPath($$"$PROJECT_ROOT/community/python/testData/junit5/showcase/PyTypeCheckerInspection")
+@Subsystems.CodeInsight
+@Layers.Functional
 class PlatformWayJUnit5CodeInsightTest {
   companion object {
     private val tempDir = tempPathFixture()

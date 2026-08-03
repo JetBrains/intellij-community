@@ -1,9 +1,13 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyPydanticFieldConstraintInspectionTest : PyCodeInsightTestCase() {
 
   @Test

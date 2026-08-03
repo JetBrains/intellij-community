@@ -12,6 +12,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.formatter.PyClassicStyleGuide
 import com.jetbrains.python.formatter.PyCodeStylePropertyAccessor
 import com.jetbrains.python.formatter.PyCodeStyleSettings
@@ -34,6 +36,8 @@ import org.junit.jupiter.api.Test
  * round-trip.
  */
 @TestApplication
+@Subsystems.Formatter
+@Layers.Functional
 class PyDefaultProfileFormatterTest {
   companion object {
     private val tempDir = tempPathFixture()

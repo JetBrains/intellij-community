@@ -4,6 +4,8 @@ package com.jetbrains.python
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyMethodOverridingInspection
@@ -29,6 +31,8 @@ import kotlin.jvm.java
  * test additionally checks that the breakdown lands in the editor tooltip and never in the flat description.
  */
 @TestFor(classes = [PyTypeChecker::class, PyTypeCheckerInspection::class], issues=["PY-80221"])
+@Subsystems.Typing
+@Layers.Functional
 class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
 
   @Test

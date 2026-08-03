@@ -9,6 +9,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
 import com.jetbrains.python.junit5.framework.pyExternalSystemProjectFixture
 import com.jetbrains.python.junit5.framework.util.completeBasicAtProjectFile
@@ -28,6 +30,8 @@ import kotlin.time.Duration.Companion.minutes
 @TestClassInfo(Repository.PY_COMMUNITY)
 @TestDataPath($$"$CONTENT_ROOT/../testData/junit5/showcase/multimodule")
 @PyCodeInsightTestApplication
+@Subsystems.CodeInsight
+@Layers.Functional
 internal class PyJUnit5MultiModuleCodeInsightTest(val project: Project) {
 
   companion object {

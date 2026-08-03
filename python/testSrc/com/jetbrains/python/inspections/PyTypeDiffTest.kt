@@ -11,6 +11,8 @@ import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
@@ -29,6 +31,8 @@ import org.junit.jupiter.api.Test
  * editor diff, the incompatible parts of the provided value are red and those of the expected type are green.
  */
 @TestFor(issues = ["PY-85381"])
+@Subsystems.Inspections
+@Layers.Functional
 class PyTypeDiffTest : PyCodeInsightTestCase() {
 
   private val providedColor = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground())

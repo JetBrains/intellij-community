@@ -88,6 +88,8 @@ abstract class PyExternalDocTest : PyTestCase() {
   }
 }
 
+@Subsystems.QuickDocumentation
+@Layers.Functional
 class PyExternalDocTestPy3 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
@@ -132,6 +134,8 @@ print(os.path.isf<caret>ile)
 }
 
 
+@Subsystems.QuickDocumentation
+@Layers.Functional
 class PyExternalDocTestPy2 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/2.7 Mock SDK/library"
 
