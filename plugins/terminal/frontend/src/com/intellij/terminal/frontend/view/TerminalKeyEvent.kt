@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.view
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.awt.event.KeyEvent
 
@@ -21,7 +22,9 @@ sealed interface TerminalKeyEvent {
   val cursorOffset: TerminalOffset
 }
 
-internal data class TerminalKeyEventImpl(
+@ApiStatus.Internal
+@VisibleForTesting
+data class TerminalKeyEventImpl(
   override val awtEvent: KeyEvent,
   override val cursorOffset: TerminalOffset,
 ) : TerminalKeyEvent

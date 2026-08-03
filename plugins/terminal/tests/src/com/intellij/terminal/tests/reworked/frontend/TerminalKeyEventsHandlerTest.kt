@@ -7,12 +7,11 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.terminal.frontend.view.impl.TerminalKeyEncodingManager
-import com.intellij.terminal.frontend.view.impl.TerminalKeyEventsHandler
 import com.intellij.terminal.frontend.view.impl.TerminalKeyEventsHandlerImpl
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
@@ -26,7 +25,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -67,8 +65,8 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(fixture.session.processedEvents).containsExactly(event.original)
         assertThat(awaitWrittenString(fixture.session)).isEqualTo("x")
         assertThat(fixture.typeAhead!!.typedStrings).containsExactly("x")
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(event.original)
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.cursorOffset }).containsOnly(TerminalOffset.of(2))
+        assertThat(fixture.afterKeyEvents.map { it.awtEvent }).containsExactly(event.original)
+        assertThat(fixture.afterKeyEvents.map { it.cursorOffset }).containsOnly(TerminalOffset.of(2))
       }
     }
 
@@ -137,7 +135,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(typed.original.isConsumed).isTrue()
         assertThat(fixture.session.processedEvents).containsExactly(pressed.original)
         assertThat(awaitWrittenString(fixture.session)).isEqualTo("a")
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(pressed.original)
+        assertThat(fixture.afterKeyEvents.map { it.awtEvent }).containsExactly(pressed.original)
       }
     }
 
@@ -157,7 +155,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(typed.original.isConsumed).isTrue()
         assertThat(fixture.session.processedEvents).containsExactly(pressed.original, typed.original)
         assertThat(awaitWrittenString(fixture.session)).isEqualTo("b")
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(pressed.original, typed.original)
+        assertThat(fixture.afterKeyEvents.map { it.awtEvent }).containsExactly(pressed.original, typed.original)
       }
     }
 
@@ -264,7 +262,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(awaitWrittenString(fixture.session)).isEqualTo("b")
         assertThat(fixture.session.processedEvents).containsExactly(first.original, second.original)
         assertThat(fixture.typeAhead!!.typedStrings).containsExactly("a", "b")
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(first.original, second.original)
+        assertThat(fixture.afterKeyEvents.map { it.awtEvent }).containsExactly(first.original, second.original)
       }
     }
 
@@ -288,17 +286,20 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       }
     }
 
-  // Interceptors can reserve an event before it reaches the terminal session.
+  // Listeners can reserve an event before it reaches the terminal session.
 
   @Test
-  fun `intercepted keyTyped is consumed and not sent to session`(): Unit =
+  fun `listener can handle keyTyped before it reaches session`(): Unit =
     timeoutRunBlocking(context = Dispatchers.EDT) {
       var interceptedEvent: KeyEvent? = null
-      val interceptor = TerminalInputInterceptor { event ->
-        interceptedEvent = event
-        true
+      val listener = object : TerminalKeyEventsListener {
+        override fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
+          interceptedEvent = event.awtEvent
+          return true
+        }
       }
-      createFixture(inputInterceptors = listOf(interceptor)).use { fixture ->
+      createFixture().use { fixture ->
+        fixture.addListener(listener)
         val event = typedKeyEvent(fixture.editor.contentComponent, 'x')
 
         fixture.handler.keyTyped(event)
@@ -307,7 +308,33 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(interceptedEvent).isSameAs(event.original)
         assertThat(fixture.session.processedEvents).isEmpty()
         assertThat(fixture.session.inputEvents.tryReceive().getOrNull()).isNull()
-        assertThat(fixture.keyEventsFlow.replayCache.map { it.awtEvent }).containsExactly(event.original)
+        assertThat(fixture.afterKeyEvents.map { it.awtEvent }).containsExactly(event.original)
+      }
+    }
+
+  @Test
+  fun `key events listener is called before and after terminal handling`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val calls = mutableListOf<String>()
+      val listener = object : TerminalKeyEventsListener {
+        override fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
+          calls += "before"
+          return false
+        }
+
+        override fun afterKeyEvent(event: TerminalKeyEvent) {
+          calls += "after"
+        }
+      }
+      createFixture().use { fixture ->
+        fixture.addListener(listener)
+        val event = typedKeyEvent(fixture.editor.contentComponent, 'x')
+        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("x", shouldScrollToBottom = false))
+
+        fixture.handler.keyTyped(event)
+
+        assertThat(calls).containsExactly("before", "after")
+        assertThat(fixture.typeAhead!!.typedStrings).containsExactly("x")
       }
     }
 
@@ -329,7 +356,6 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
 
   private fun createFixture(
     completeSessionImmediately: Boolean = true,
-    inputInterceptors: List<TerminalInputInterceptor> = emptyList(),
     scrollingModel: TerminalOutputScrollingModel? = null,
     withTypeAhead: Boolean = true,
   ): Fixture {
@@ -337,13 +363,12 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
     val session = RecordingTerminalSession(scope)
     val sessionDeferred =
       if (completeSessionImmediately) CompletableDeferred<TerminalSession>(session) else CompletableDeferred()
-    val keyEventsFlow = MutableSharedFlow<TerminalKeyEvent>(replay = 16, extraBufferCapacity = 16)
+    val listeners = mutableListOf<TerminalKeyEventsListener>()
     val editor = TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), scope)
     val outputModel = MutableTerminalOutputModelImpl(editor.document, maxOutputLength = 0)
     val typeAhead = if (withTypeAhead) RecordingTypeAhead() else null
     val sessionModel = TerminalSessionModelImpl()
     val handler = TerminalKeyEventsHandlerImpl(
-      keyEventsFlow = keyEventsFlow,
       editor = editor,
       terminalInput = TerminalInput(
         terminalSessionDeferred = sessionDeferred,
@@ -355,7 +380,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       scrollingModel = scrollingModel,
       outputModel = outputModel,
       typeAhead = typeAhead,
-      inputInterceptors = { inputInterceptors },
+      keyEventsListeners = listeners,
       sessionDeferred = sessionDeferred,
       coroutineScope = scope,
     )
@@ -363,12 +388,17 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       scope = scope,
       session = session,
       sessionDeferred = sessionDeferred,
-      keyEventsFlow = keyEventsFlow,
       editor = editor,
       outputModel = outputModel,
       typeAhead = typeAhead,
       handler = handler,
+      listeners = listeners,
     )
+    fixture.addListener(object : TerminalKeyEventsListener {
+      override fun afterKeyEvent(event: TerminalKeyEvent) {
+        fixture.afterKeyEvents.add(event)
+      }
+    })
     return fixture
   }
 
@@ -376,12 +406,18 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
     private val scope: CoroutineScope,
     val session: RecordingTerminalSession,
     val sessionDeferred: CompletableDeferred<TerminalSession>,
-    val keyEventsFlow: MutableSharedFlow<TerminalKeyEvent>,
     val editor: EditorEx,
     val outputModel: MutableTerminalOutputModelImpl,
     val typeAhead: RecordingTypeAhead?,
     val handler: TerminalKeyEventsHandlerImpl,
+    private val listeners: MutableList<TerminalKeyEventsListener>,
   ) : AutoCloseable {
+    val afterKeyEvents = mutableListOf<TerminalKeyEvent>()
+
+    fun addListener(listener: TerminalKeyEventsListener) {
+      listeners.add(listener)
+    }
+
     suspend fun awaitBufferedEventsDrained() {
       handler.awaitBufferedEventsDrained()
     }
