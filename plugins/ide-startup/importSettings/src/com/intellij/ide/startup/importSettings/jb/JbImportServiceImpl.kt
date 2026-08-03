@@ -458,11 +458,13 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       suspend fun performImport(): ImportResult {
         if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && data.featuredPluginIds.isEmpty()) {
           logger.info("Started importing all...")
-          progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
+          progressIndicator.text = ImportSettingsBundle.message("progress.text.migrating.options")
+          progressIndicator.fraction = 0.5
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           ImportSettingsEventsCollector.jbRawSelected(productInfo.codeName)
           importer.importRaw()
+          progressIndicator.fraction = 0.99
           return ImportResult.RestartWithExistingConfigMarker
         }
         else {
