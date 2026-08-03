@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -201,6 +202,23 @@ private fun UsageIndex.usagesOf(element: KtElement): List<KtElement> = this[elem
 private fun UsageIndex.usagesWithin(element: KtElement, scope: PsiElement): List<KtElement> =
     usagesOf(element).filter { scope.isAncestor(it) }
 
+
+private val GETTER_APPLICABLE_ANNOTATION_TARGETS = setOf("FUNCTION", "PROPERTY_GETTER", "METHOD")
+private val PROPERTY_APPLICABLE_ANNOTATION_TARGETS = setOf("PROPERTY")
+private val JAVA_TARGET_CLASS_ID = ClassId.fromString("java/lang/annotation/Target")
+
+context(_: KaSession)
+private fun KaAnnotation.isApplicableToGetterButNotProperty(): Boolean {
+    val annotationClass = constructorSymbol?.containingDeclaration as? KaNamedClassSymbol ?: return false
+    val targets = annotationClass.annotations
+        .filter { it.classId == StandardNames.FqNames.targetClassId || it.classId == JAVA_TARGET_CLASS_ID }
+        .flatMap { (it.arguments.firstOrNull()?.expression as? ArrayValue)?.values.orEmpty() }
+        .mapNotNull { (it as? EnumEntryValue)?.callableId?.callableName?.asString() }
+        .toSet()
+        .ifEmpty { return false }
+
+    return targets.any { it in GETTER_APPLICABLE_ANNOTATION_TARGETS } && targets.none { it in PROPERTY_APPLICABLE_ANNOTATION_TARGETS }
+}
 
 /**
  * Extracts groups of (getter, setter, property) for a class
@@ -573,7 +591,22 @@ private class PropertiesDataFilter(
             ?: realProperty?.copy(isVar = isVar)
             ?: FakeProperty(name, renderedType, isVar)
 
-        return PropertyWithAccessors(property, getter, setter)
+        val fieldAnnotationsToRetargetToGetter =
+            if (realProperty != null && realGetter != null && getter.target == null && setter?.target == null) {
+                val propertySymbol = realProperty.property.symbol as? KaPropertySymbol
+                val candidateAnnotations =
+                    propertySymbol?.annotations.orEmpty() + propertySymbol?.backingFieldSymbol?.annotations.orEmpty()
+                candidateAnnotations.mapNotNull { annotation ->
+                    val entry = annotation.psi as? KtAnnotationEntry ?: return@mapNotNull null
+                    val currentTarget = entry.useSiteTarget?.getAnnotationUseSiteTarget()
+                    if (currentTarget != null && currentTarget != AnnotationUseSiteTarget.FIELD) return@mapNotNull null
+                    if (annotation.isApplicableToGetterButNotProperty()) entry.createSmartPointer() else null
+                }.distinct()
+            } else {
+                emptyList()
+            }
+
+        return PropertyWithAccessors(property, getter, setter, fieldAnnotationsToRetargetToGetter)
     }
 
     context(_: KaSession)
@@ -754,6 +787,7 @@ private class ClassConverter(
         // As we already know that property is not directly used in the code
         if (getter.target == null && setter?.target == null) {
             ktProperty.initializer = null
+            retargetAnnotationsToGetter(propertyWithAccessors.fieldAnnotationsToRetargetToGetter)
         }
 
         if (property is MergedProperty) {
@@ -962,6 +996,19 @@ private class ClassConverter(
         }
     }
 
+    private fun retargetAnnotationsToGetter(annotationPointers: List<SmartPsiElementPointer<KtAnnotationEntry>>) {
+        for (pointer in annotationPointers) {
+            val entry = pointer.element ?: continue
+            val ktPsiFactory = KtPsiFactory(entry.project)
+            val annotationText = buildString {
+                append('@').append(PROPERTY_GETTER.renderName).append(':')
+                entry.typeReference?.text?.let(::append)
+                entry.valueArgumentList?.text?.let(::append)
+            }
+            entry.replace(ktPsiFactory.createAnnotationEntry(annotationText))
+        }
+    }
+
     private fun moveAccessorAnnotationsToProperty(property: KtProperty) {
         val ktPsiFactory = KtPsiFactory(property.project)
 
@@ -1016,7 +1063,8 @@ private fun KtExpression.isReferenceToThis(): Boolean {
 private data class PropertyWithAccessors(
     val property: Property,
     val getter: Getter,
-    val setter: Setter?
+    val setter: Setter?,
+    val fieldAnnotationsToRetargetToGetter: List<SmartPsiElementPointer<KtAnnotationEntry>> = emptyList()
 )
 
 private data class PropertyData(

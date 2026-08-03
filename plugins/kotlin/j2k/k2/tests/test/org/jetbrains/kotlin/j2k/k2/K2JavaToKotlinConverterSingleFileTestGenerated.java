@@ -1769,6 +1769,21 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FalseSetter.java");
         }
 
+        @TestMetadata("FieldAnnotationOnBackingFieldProperty.java")
+        public void testFieldAnnotationOnBackingFieldProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldAnnotationOnBackingFieldProperty.java");
+        }
+
+        @TestMetadata("FieldAnnotationOnComputedProperty.java")
+        public void testFieldAnnotationOnComputedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldAnnotationOnComputedProperty.java");
+        }
+
+        @TestMetadata("FieldOnlyAnnotationOnComputedProperty.java")
+        public void testFieldOnlyAnnotationOnComputedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldOnlyAnnotationOnComputedProperty.java");
+        }
+
         @TestMetadata("FieldUsagesInFactoryMethods.java")
         public void testFieldUsagesInFactoryMethods() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldUsagesInFactoryMethods.java");
