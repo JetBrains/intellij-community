@@ -11,6 +11,8 @@ internal class IjPluginPackagerTest {
   fun packagesPlugin(@TempDir tempDirectory: Path) {
     val pluginXml = """
       <idea-plugin>
+        <id>my.plugin</id>
+        <description><![CDATA[long < description > of the plugin]]></description>
         <content>
           <module name="embedded.module" loading="embedded"/>
           <module name="optional.module"/>
@@ -18,6 +20,13 @@ internal class IjPluginPackagerTest {
       </idea-plugin>
     """.trimIndent()
     val inputDirectory = tempDirectory.resolve("input")
+    val optionalModuleXml = """
+      <idea-plugin>
+        <actions>
+          <action id="foo" class="Foo"/>
+        </actions>
+      </idea-plugin>
+    """.trimIndent()
     directoryContent {
       zip("descriptor.jar") {
         file("icon-robots.txt", "")
@@ -28,11 +37,11 @@ internal class IjPluginPackagerTest {
       zip("embedded-module.jar") {
         dir("subdir") {
           file("icon-robots.txt", "")
-          file("one.txt", "one")
         }
+        file("embedded.module.xml", "<idea-plugin></idea-plugin>")
       }
       zip("optional-module.jar") {
-        file("two.txt", "two")
+        file("optional.module.xml", optionalModuleXml)
       }
     }.generate(inputDirectory)
 
@@ -47,24 +56,36 @@ internal class IjPluginPackagerTest {
       "optional.module:${inputDirectory.resolve("optional-module.jar")}",
     ))
 
+    val expectedPluginXml = """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <description><![CDATA[long < description > of the plugin]]></description>
+        <content>
+          <module name="embedded.module" loading="embedded"><![CDATA[<idea-plugin />]]></module>
+          <module name="optional.module"><![CDATA[<idea-plugin>
+        <actions>
+          <action id="foo" class="Foo" />
+        </actions>
+      </idea-plugin>]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
     outputDirectory.assertMatches(directoryContent {
       dir("lib") {
         zip("descriptor.jar") {
           file("__index__")
           dir("META-INF") {
-            file("plugin.xml", pluginXml)
+            file("plugin.xml", expectedPluginXml)
           }
         }
         zip("embedded.module.jar") {
           file("__index__")
-          dir("subdir") {
-            file("one.txt", "one")
-          }
+          file("embedded.module.xml", "<idea-plugin></idea-plugin>")
         }
         dir("modules") {
           zip("optional.module.jar") {
             file("__index__")
-            file("two.txt", "two")
+            file("optional.module.xml", optionalModuleXml)
           }
         }
       }

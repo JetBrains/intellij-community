@@ -20,6 +20,8 @@ kt_jvm_library(
   deps = [
       "@rules_jvm//:annotations_import",
       "@community//build:zip",
+      "@community//platform/util/jdom",
+      "@community//platform/util",
       "//platform/pluginSystem/parser/impl",
   ]
 )
