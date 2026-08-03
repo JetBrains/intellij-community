@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.javaInterop.containingJvmClassName
+import org.jetbrains.kotlin.analysis.api.javaInterop.javaMethodName
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -34,10 +35,13 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -48,6 +52,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.originalConstructorIfTypeAliased
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -161,23 +166,38 @@ internal fun toPsiClass(
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun fakePsiMethodForReifiedInline(
-    functionSymbol: KaFunctionSymbol,
+    callableSymbol: KaCallableSymbol,
     context: KtElement,
     kaCallInfo: KaCallInfo? = null,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
-    if (functionSymbol.origin == KaSymbolOrigin.LIBRARY &&
-        (functionSymbol as? KaNamedFunctionSymbol)?.isInline == true &&
-        functionSymbol.typeParameters.any { it.isReified }
+    if (callableSymbol.origin == KaSymbolOrigin.LIBRARY &&
+        callableSymbol.isInline() &&
+        callableSymbol.isReified()
     ) {
-        functionSymbol.containingJvmClassName?.let { fqName ->
+        callableSymbol.containingJvmClassName?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)
                 .findClass(fqName, context.resolveScope)
                 ?.let { containingClass ->
+                    val actualSymbol = if (callableSymbol is KaPropertySymbol) {
+                        if ((context as? KtExpression)?.readWriteAccess()?.isWrite == true) {
+                            callableSymbol.setter ?: callableSymbol
+                        } else {
+                            callableSymbol.getter ?: callableSymbol
+                        }
+                    } else {
+                        callableSymbol
+                    }
+
+                    val methodName = when (actualSymbol) {
+                        is KaPropertyAccessorSymbol -> actualSymbol.javaMethodName ?: ""
+                        is KaNamedFunctionSymbol -> actualSymbol.name.identifier
+                        else -> actualSymbol.callableId?.callableName?.identifier ?: ""
+                    }
                     return UastFakeDeserializedSymbolLightMethod(
-                        functionSymbol.createPointer(),
-                        functionSymbol.name.identifier,
+                        actualSymbol.createPointer(),
+                        methodName,
                         containingClass,
                         context,
                         kaCallInfo.typeArgumentsMappingOrEmptyMap()
@@ -186,6 +206,20 @@ private fun fakePsiMethodForReifiedInline(
         }
     }
     return null
+}
+
+context(_: KaSession)
+private fun KaDeclarationSymbol.isReified(): Boolean = when (this) {
+    is KaPropertyAccessorSymbol -> containingDeclaration?.isReified() == true
+    else -> typeParameters.any { it.isReified }
+}
+
+context(_: KaSession)
+private fun KaCallableSymbol.isInline(): Boolean = when (this) {
+    is KaNamedFunctionSymbol -> isInline
+    is KaPropertySymbol -> getter?.isInline == true || setter?.isInline == true
+    is KaPropertyAccessorSymbol -> isInline
+    else -> false
 }
 
 context(session: KaSession)
@@ -536,7 +570,7 @@ internal tailrec fun psiForUast(
     context: KtElement,
 ): PsiElement? {
     if (symbol.origin == KaSymbolOrigin.LIBRARY) {
-        if (symbol is KaFunctionSymbol) {
+        if (symbol is KaCallableSymbol) {
             fakePsiMethodForReifiedInline(symbol, context, null)?.let { return it }
         }
 
