@@ -671,6 +671,14 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testJSpecifyUnspecifiedTypeArgumentInstantiatedWithNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+
   private void addNullnessUnspecified() {
     myFixture.addClass("""
                          package org.jspecify.annotations;

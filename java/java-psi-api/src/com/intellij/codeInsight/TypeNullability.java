@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,18 @@ public final class TypeNullability {
     if (nullability.nullability() == Nullability.NOT_NULL && this.source() instanceof NullabilitySource.ExtendsBound) {
       return nullability;
     }
+    //  Given (in a @NullMarked scope)
+    //
+    //   interface Cache<V extends @Nullable Object> {}
+    //   interface CacheFactory<V extends @Nullable Object> { Cache<@NullnessUnspecified V> createCache(); }
+    //
+    // createCache() returns Cache<@NullnessUnspecified Object> for a CacheFactory<Object>, but Cache<@Nullable Object>
+    // for a CacheFactory<@Nullable Object>.
+    if (JavaTypeNullabilityUtil.isUnspecifiedNullness(this) &&
+        nullability.nullability() == Nullability.NULLABLE &&
+        !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
+      return nullability;
+    }
     if (this.source() == NullabilitySource.Standard.NONE) {
       return nullability;
     }
@@ -122,6 +135,13 @@ public final class TypeNullability {
     }
     if (other.nullability() == Nullability.NOT_NULL) {
       return other;
+    }
+    // The caller is PsiCapturedWildcardType#getUpperBound, which meets the bound of the wildcard with the bound of the
+    // captured type parameter. For `Super<T extends @Nullable Object>` the upper bound of the capture of
+    // `? extends @NullnessUnspecified Object` stays UNKNOWN
+    TypeNullability unspecified = this.nullability() == Nullability.UNKNOWN ? this : other;
+    if (JavaTypeNullabilityUtil.isUnspecifiedNullness(unspecified)) {
+      return unspecified;
     }
     return this.nullability() == Nullability.NULLABLE ? this : other;
   }

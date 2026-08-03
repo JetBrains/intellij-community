@@ -512,8 +512,9 @@ public final class JavaTypeNullabilityUtil {
     }
     //similar to the previous, but for the left type
     else if (declaredLeftType != null &&
-             leftNullability == Nullability.UNKNOWN && rightNullability == Nullability.NULLABLE &&
-             isUnspecifiedNullness(leftTypeNullability, true)) {
+             rightNullability == Nullability.NULLABLE &&
+             (isUnspecifiedNullness(leftTypeNullability, true) ||
+              isUnspecifiedNullness(declaredLeftType.getNullability(), true))) {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(declaredLeftType);
       if (psiClass instanceof PsiTypeParameter &&
           TypeNullability.ofTypeParameter((PsiTypeParameter)psiClass).nullability() == Nullability.NOT_NULL) {

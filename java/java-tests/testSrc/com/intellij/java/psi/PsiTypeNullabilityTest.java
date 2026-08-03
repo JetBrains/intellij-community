@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -252,6 +253,45 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     // Comparable is not a type parameter, so the unspecified nullness is opaque here and intersect keeps UNKNOWN
     assertNullability("UNKNOWN (inherited @NullnessUnspecified)", "UNKNOWN (inherited @NullnessUnspecified)", type);
+  }
+
+  private @NotNull Nullability captureUpperBoundNullability(@NotNull String wildcardBound) {
+    setupJSpecifyAnnotations();
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.UnknownNullability;
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+      import org.jspecify.annotations.NullnessUnspecified;
+
+      @NullMarked
+      class A {
+        interface Super<T extends @Nullable Object> {
+          T get();
+        }
+
+        static void test(Super<? extends %s Object> s) {
+          s.get(<caret>);
+        }
+      }
+      """.formatted(wildcardBound));
+    PsiCapturedWildcardType captured = assertInstanceOf(type, PsiCapturedWildcardType.class);
+    return captured.getUpperBound().getNullability().nullability();
+  }
+
+  /**
+   * A JSpecify unspecified nullness is a distinct third state and wins over the nullable bound of the type parameter,
+   * so the capture stays unspecified instead of turning nullable.
+   */
+  public void testCaptureOfUnspecifiedWildcardOverNullableTypeParameterBound() {
+    assertEquals(Nullability.UNKNOWN, captureUpperBoundNullability("@NullnessUnspecified"));
+  }
+
+  public void testCaptureOfNullableWildcardOverNullableTypeParameterBound() {
+    assertEquals(Nullability.NULLABLE, captureUpperBoundNullability("@Nullable"));
+  }
+
+  public void testCaptureOfUnknownNullabilityWildcardOverNullableTypeParameterBound() {
+    assertEquals(Nullability.NULLABLE, captureUpperBoundNullability("@UnknownNullability"));
   }
 
   public void testArrayType() {

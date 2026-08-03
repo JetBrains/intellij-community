@@ -112,12 +112,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       //unspecified
       Set.of(
         new Pair<>("CaptureConvertedUnspecToObject.java", 77),
-        new Pair<>("CaptureConvertedUnspecToOther.java", 77),
-        new Pair<>("NotNullMarkedUseOfTypeVariableAsTypeArgument.java", 74),
-        new Pair<>("UseOfTypeVariableAsTypeArgument.java", 67),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 45),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 60),
-        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 70)
+        new Pair<>("CaptureConvertedUnspecToOther.java", 77)
 
       )
     )
