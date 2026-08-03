@@ -9,11 +9,6 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
 )
@@ -55,6 +50,7 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/references",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
         "//platform/lang-impl",
@@ -62,7 +58,6 @@ jvm_library(
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/util",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
@@ -98,7 +93,6 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",

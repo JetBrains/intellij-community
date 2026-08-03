@@ -6,11 +6,6 @@ jvm_provided_library(
     lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
 )
 
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
 jvm_library(
     name = "kotlin-dev",
     srcs = glob(
@@ -38,8 +33,8 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/util:util-ui",
         "//java/java-psi-api:psi",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -66,7 +61,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )

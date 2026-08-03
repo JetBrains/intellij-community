@@ -35,6 +35,7 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//platform/workspace/storage",
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
         "//java/openapi:java",
@@ -66,7 +67,6 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//java/openapi:java_test_lib",
@@ -121,7 +121,11 @@ jvm_library(
     ),
     module_name = "intellij.devkit.workspaceModel.k2.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/junit5"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/junit5",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
 )
 
 jvm_library(

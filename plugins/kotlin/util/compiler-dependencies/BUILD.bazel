@@ -9,6 +9,7 @@ jvm_library(
     ),
     module_name = "kotlin.util.compiler-dependencies",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common"],
 )
 
 jvm_library(
@@ -38,7 +39,6 @@ jvm_library(
         "@lib//:kotlinc-kotlin-build-common-tests-provided",
         "@lib//:kotlinc-kotlin-compiler-cli-provided",
         "@lib//:kotlinc-kotlin-compiler-tests-provided",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fe10-provided",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",

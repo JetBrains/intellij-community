@@ -1,11 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.dotenv.kotlin` start
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
 jvm_library(
     name = "kotlin",
     srcs = glob(
@@ -34,7 +29,7 @@ jvm_library(
         "//platform/core-impl",
         "//platform/projectModel-api:projectModel",
         "//java/java-psi-api:psi",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
@@ -60,7 +55,6 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//java/java-psi-api:psi_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
 )

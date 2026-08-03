@@ -2,11 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.compose.ide.plugin.resources` start
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
 jvm_library(
     name = "ide-plugin-resources",
     srcs = glob(
@@ -26,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//java/java-psi-api:psi",
@@ -70,7 +66,6 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//platform/code-style-api:codeStyle",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -86,7 +81,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-plugin-resources",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -181,6 +175,7 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin.resources.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common"],
 )
 
 jvm_library(

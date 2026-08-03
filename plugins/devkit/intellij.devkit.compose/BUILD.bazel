@@ -12,11 +12,6 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
 )
@@ -65,6 +60,7 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/jps",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl",
         "//uast/uast-common:uast",
@@ -82,7 +78,6 @@ jvm_library(
         "//plugins/gradle",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
@@ -122,7 +117,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
