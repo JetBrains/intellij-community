@@ -1,11 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.gradle.completion.kotlin` start
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
-    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-)
-
 jvm_library(
     name = "kotlin",
     srcs = glob(
@@ -25,6 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/util",
@@ -44,7 +40,6 @@ jvm_library(
         "//plugins/gradle/java",
         "//platform/lang-api:lang",
         "//plugins/kotlin/base/code-insight",
-        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
 
@@ -60,7 +55,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

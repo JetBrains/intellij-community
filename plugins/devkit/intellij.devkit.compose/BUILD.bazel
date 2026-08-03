@@ -11,11 +11,6 @@ create_kotlinc_options(
     plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
 )
 
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
-    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-)
-
 jvm_library(
     name = "compose",
     srcs = glob(
@@ -61,6 +56,7 @@ jvm_library(
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/jps",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl",
         "//uast/uast-common:uast",
@@ -78,7 +74,6 @@ jvm_library(
         "//plugins/gradle",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
-        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
 
@@ -118,7 +113,6 @@ jvm_library(
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/base/jps:jps_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//platform/lang-impl:lang-impl_test_lib",

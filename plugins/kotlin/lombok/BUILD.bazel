@@ -2,11 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.lombok` start
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
-    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
     lib = "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
 )
@@ -37,6 +32,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
@@ -52,7 +48,6 @@ jvm_library(
         "//java/java-impl:impl",
         "//java/java-psi-api:psi",
         "@lib//:kotlinc-lombok-compiler-plugin",
-        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
         ":libraries_kotlinc_libraries-kotlinc-analysis-api-platform-interface_provided",
     ],
 )
@@ -76,7 +71,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",

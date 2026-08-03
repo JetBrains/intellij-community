@@ -35,6 +35,7 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//platform/workspace/storage",
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:workspace-model-codegen",
         "//platform/core-impl",
@@ -65,7 +66,6 @@ jvm_library(
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/workspace/storage:storage_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -124,6 +124,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/junit5",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )

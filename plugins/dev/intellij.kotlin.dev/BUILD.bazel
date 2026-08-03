@@ -1,11 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.dev` start
-jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
-    lib = "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-)
-
 jvm_library(
     name = "kotlin-dev",
     srcs = glob(
@@ -33,8 +28,8 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/util:util-ui",
         "//java/java-psi-api:psi",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        ":libraries_kotlinc_libraries-kotlinc-analysis-api_provided",
     ],
 )
 
@@ -59,7 +54,6 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/util:util-ui_test_lib",
         "//java/java-psi-api:psi_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
     ],
