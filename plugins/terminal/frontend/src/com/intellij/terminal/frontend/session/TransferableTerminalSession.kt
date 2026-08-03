@@ -6,13 +6,19 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
+import com.intellij.terminal.frontend.view.impl.awaitLaidOutTermSize
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.initOnShow
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -228,11 +234,19 @@ private class TransferableTerminalProjectBindingScope(val coroutineScope: Corout
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineScope) {
+  /**
+   * @param deferSessionStartUntilUiShown when true, the returned session is bound but still
+   * [TerminalViewSessionState.NotStarted]: the process is started once the bound view is shown, with the grid size
+   * the view actually has, instead of the default [options] fall back to. Callers that must observe a running
+   * process as soon as `create` returns keep the default; callers that show the view right away should not, because
+   * a process started before layout paints its first frame at a guessed size.
+   */
   suspend fun create(
     project: Project,
     options: ShellStartupOptions,
     sourceNavigationProjectPath: String? = null,
     startupFusInfo: TerminalStartupFusInfo? = null,
+    deferSessionStartUntilUiShown: Boolean = false,
   ): TransferableTerminalSession {
     return TransferableTerminalSessionImpl.create(
       parentScope = coroutineScope,
@@ -240,6 +254,7 @@ class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineSc
       requestedOptions = options,
       sourceNavigationProjectPath = sourceNavigationProjectPath,
       startupFusInfo = startupFusInfo,
+      deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
     )
   }
 
@@ -254,8 +269,9 @@ class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineSc
 suspend fun createTransferableTerminalSessionForTest(
   parentScope: CoroutineScope,
   initialProject: Project,
-  sessionStarter: (CoroutineScope) -> TerminalSession,
+  sessionStarter: (ShellStartupOptions, CoroutineScope) -> TerminalSession,
   stateTransitionObserver: (TerminalViewSessionState) -> Unit,
+  deferSessionStartUntilUiShown: Boolean = false,
 ): TransferableTerminalSession {
   return TransferableTerminalSessionImpl.create(
     parentScope = parentScope,
@@ -263,7 +279,8 @@ suspend fun createTransferableTerminalSessionForTest(
     requestedOptions = ShellStartupOptions.Builder().build(),
     sourceNavigationProjectPath = null,
     startupFusInfo = null,
-    sessionStarter = { _, _, scope -> sessionStarter(scope) },
+    deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
+    sessionStarter = { _, options, scope -> sessionStarter(options, scope) },
     stateTransitionObserver = stateTransitionObserver,
   )
 }
@@ -285,7 +302,12 @@ private class TransferableTerminalSessionImpl(
   private val closed = AtomicBoolean(false)
   private val stateLock = Any()
   private val viewLock = Any()
-  private lateinit var session: TerminalSession
+
+  /**
+   * Completed once the process is running. A deferred start binds presentations before the session exists, so
+   * every consumer of the session awaits it instead of reading a field that may not be initialized yet.
+   */
+  private val session = CompletableDeferred<TerminalSession>()
 
   @Volatile
   private lateinit var currentView: TerminalView
@@ -297,20 +319,27 @@ private class TransferableTerminalSessionImpl(
     initialProject: Project,
     requestedOptions: ShellStartupOptions,
     sourceNavigationProjectPath: String?,
+    deferSessionStartUntilUiShown: Boolean,
   ): TransferableTerminalSessionImpl {
     try {
       stateTransitionObserver(TerminalViewSessionState.NotStarted)
-      session = withContext(Dispatchers.IO) {
-        sessionStarter(initialProject, requestedOptions, coroutineScope)
-      }
       coroutineScope.coroutineContext.job.invokeOnCompletion {
         transitionToTerminated()
       }
-      check(transitionToRunning()) { "Transferable terminal runtime terminated during startup" }
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        bind(initialProject, sourceNavigationProjectPath)
+      if (deferSessionStartUntilUiShown) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          bind(initialProject, sourceNavigationProjectPath)
+          scheduleSessionStartOnShow(initialProject, requestedOptions, currentView)
+        }
       }
-      check(sessionState.value == TerminalViewSessionState.Running) { "Transferable terminal runtime terminated during startup" }
+      else {
+        startSession(initialProject, requestedOptions)
+        check(transitionToRunning()) { "Transferable terminal runtime terminated during startup" }
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          bind(initialProject, sourceNavigationProjectPath)
+        }
+        check(sessionState.value == TerminalViewSessionState.Running) { "Transferable terminal runtime terminated during startup" }
+      }
       return this
     }
     catch (t: Throwable) {
@@ -318,6 +347,42 @@ private class TransferableTerminalSessionImpl(
         close()
       }
       throw t
+    }
+  }
+
+  private suspend fun startSession(project: Project, options: ShellStartupOptions) {
+    val started = withContext(Dispatchers.IO) {
+      sessionStarter(project, options, coroutineScope)
+    }
+    session.complete(started)
+  }
+
+  /**
+   * Starts the process once [view] is laid out, with the grid size it really has.
+   *
+   * The session stays [TerminalViewSessionState.NotStarted] until then, which is the state consumers already wait
+   * to leave before they treat the runtime as usable. A failure here can no longer be thrown at the caller of
+   * `create`, so it is reported through [sessionState] instead — the runtime closes and observers see `Terminated`.
+   */
+  private fun scheduleSessionStartOnShow(project: Project, options: ShellStartupOptions, view: TerminalView) {
+    // Non-cancellable because the start must happen once even if the component is hidden again immediately.
+    view.component.initOnShow(SESSION_START_NAME, context = NonCancellable) {
+      // Launched on the runtime scope so the start survives the component being hidden again.
+      coroutineScope.launch(CoroutineName(SESSION_START_NAME)) {
+        try {
+          startSession(project, options.builder().initialTermSize(view.awaitLaidOutTermSize()).build())
+          transitionToRunning()
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          LOG.error("Failed to start the deferred transferable terminal session", t)
+          withContext(NonCancellable) {
+            close()
+          }
+        }
+      }
     }
   }
 
@@ -360,9 +425,10 @@ private class TransferableTerminalSessionImpl(
     }
     val binding = prepared.binding
     binding.scope.launch {
+      val activeSession = session.await()
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (binding.scope.isActive) {
-          binding.value.connectToSession(session)
+          binding.value.connectToSession(activeSession)
           installPortForwarding(binding.value, binding.scope.childScope("PortForwarding"))
         }
       }
@@ -408,16 +474,19 @@ private class TransferableTerminalSessionImpl(
     }
   }
 
-  override suspend fun processId(): Long = session.processId
+  override suspend fun processId(): Long = session.await().processId
 
   override fun close() {
     if (!closed.compareAndSet(false, true)) return
     transitionToTerminated()
+    // Releases presentations that are still waiting for a session that will now never start.
+    session.cancel()
     lifetime.close()
   }
 
   companion object {
     private val nextRuntimeId = AtomicLong(1)
+    private const val SESSION_START_NAME = "Transferable terminal session start"
 
     suspend fun create(
       parentScope: CoroutineScope,
@@ -425,6 +494,7 @@ private class TransferableTerminalSessionImpl(
       requestedOptions: ShellStartupOptions,
       sourceNavigationProjectPath: String?,
       startupFusInfo: TerminalStartupFusInfo?,
+      deferSessionStartUntilUiShown: Boolean = false,
       sessionStarter: (Project, ShellStartupOptions, CoroutineScope) -> TerminalSession = { project, options, scope ->
         startStandardTerminalSession(
           project = project,
@@ -444,7 +514,10 @@ private class TransferableTerminalSessionImpl(
         initialProject = initialProject,
         requestedOptions = requestedOptions,
         sourceNavigationProjectPath = sourceNavigationProjectPath,
+        deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
       )
     }
   }
 }
+
+private val LOG = logger<TransferableTerminalSession>()

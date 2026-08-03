@@ -46,7 +46,7 @@ class TransferableTerminalLifetimeTest {
     val session = createTransferableTerminalSessionForTest(
       parentScope = applicationScope,
       initialProject = project,
-      sessionStarter = { runtimeScope ->
+      sessionStarter = { _, runtimeScope ->
         runtimeStartedOnEdt = ApplicationManager.getApplication().isDispatchThread
         TestRawTerminalSession(runtimeScope)
       },
@@ -64,6 +64,43 @@ class TransferableTerminalLifetimeTest {
     Unit
   }
 
+  /**
+   * A full-screen TUI started before its view is laid out paints its first frame at a default grid size and has to
+   * reflow, so callers that show the view right away ask for the start to wait. Nothing may start the process while
+   * the caller is still assembling the UI.
+   */
+  @Test
+  fun deferredStartCreatesThePresentationButNotTheProcess() = runBlocking(Dispatchers.EDT) {
+    val applicationScope = childScope("test application")
+    val transitions = mutableListOf<TerminalViewSessionState>()
+    var startedSessions = 0
+    try {
+      val session = createTransferableTerminalSessionForTest(
+        parentScope = applicationScope,
+        initialProject = project,
+        sessionStarter = { _, startedScope ->
+          startedSessions++
+          TestRawTerminalSession(startedScope)
+        },
+        stateTransitionObserver = transitions::add,
+        deferSessionStartUntilUiShown = true,
+      )
+
+      assertThat(startedSessions).isZero()
+      assertThat(session.sessionState.value).isEqualTo(TerminalViewSessionState.NotStarted)
+      assertThat(transitions).containsExactly(TerminalViewSessionState.NotStarted)
+      assertThat(session.view.component).isNotNull
+
+      session.close()
+
+      assertThat(session.sessionState.value).isEqualTo(TerminalViewSessionState.Terminated)
+    }
+    finally {
+      applicationScope.cancel()
+    }
+    Unit
+  }
+
   @Test
   fun startupFailureClosesRuntimeBeforeReturning() = runBlocking {
     val applicationScope = childScope("test application")
@@ -74,7 +111,7 @@ class TransferableTerminalLifetimeTest {
         createTransferableTerminalSessionForTest(
           parentScope = applicationScope,
           initialProject = project,
-          sessionStarter = { startedScope ->
+          sessionStarter = { _, startedScope ->
             runtimeScope = startedScope
             error("runtime startup failed")
           },
@@ -156,7 +193,7 @@ class TransferableTerminalLifetimeTest {
         createTransferableTerminalSessionForTest(
           parentScope = applicationScope,
           initialProject = project,
-          sessionStarter = { startedScope ->
+          sessionStarter = { _, startedScope ->
             runtimeScope = startedScope
             startedScope.cancel()
             TestRawTerminalSession(startedScope)
