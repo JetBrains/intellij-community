@@ -134,7 +134,6 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    *
    * It is guaranteed that this method invokes onFinish, even if the method itself threw an exception
    */
-  @OptIn(InternalCoroutinesApi::class)
   fun startBackgroundProcess(onFinish: () -> Unit) {
     var startedInBackground = false
     try {
@@ -166,7 +165,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
                 }
               }
             }
-          }.invokeOnCompletion(onCancelling = true) {
+          }.invokeOnCompletion {
             if (!actionStarted.get()) {
               task.close()
               onFinish()
