@@ -26,7 +26,7 @@ internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
       AllIcons.Actions.MoveToBottomLeft to PyBundle.message("python.toolwindow.packages.move.to.bottom.action")
     }
     else {
-      AllIcons.Actions.MoveToRightBottom to PyBundle.message("python.toolwindow.packages.move.to.right.action")
+      AllIcons.Actions.MoveToRightTop to PyBundle.message("python.toolwindow.packages.move.to.right.action")
     }
     e.presentation.icon = icon
     e.presentation.text = text
@@ -38,10 +38,10 @@ internal class PyTogglePackagingToolWindowAnchorAction : DumbAwareAction() {
     // whichever of those two matches the current basic anchor is exact — no need to reach into
     // `WindowInfo` (internal API) to distinguish split states we never produce ourselves.
     val (from, to) = if (toolWindow.anchor == ToolWindowAnchor.RIGHT) {
-      ToolWindowMoveAction.Anchor.RightBottom to ToolWindowMoveAction.Anchor.BottomLeft
+      ToolWindowMoveAction.Anchor.RightTop to ToolWindowMoveAction.Anchor.BottomLeft
     }
     else {
-      ToolWindowMoveAction.Anchor.BottomLeft to ToolWindowMoveAction.Anchor.RightBottom
+      ToolWindowMoveAction.Anchor.BottomLeft to ToolWindowMoveAction.Anchor.RightTop
     }
     to.applyTo(toolWindow)
     PythonPackagesToolwindowStatisticsCollector.anchorToggledEvent.log(from, to)
