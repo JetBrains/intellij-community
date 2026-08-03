@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.impl
 
+import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.openapi.application.readAction
@@ -12,6 +14,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus
 
@@ -67,7 +70,7 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
 }
 
 @ApiStatus.Experimental
-open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectViewPaneSettingsAccessor) : ViewSettings {
+open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectViewPaneSettingsAccessor) : ProjectViewSettings {
 
   override fun isStructureView(): Boolean = false
 
@@ -119,5 +122,21 @@ open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectView
 
   override fun isShowLibraryContents(): Boolean {
     return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowLibraryContents)
+  }
+
+  override fun isShowExcludedFiles(): Boolean {
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowExcludedFiles)
+  }
+
+  override fun isShowVisibilityIcons(): Boolean {
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowVisibilityIcons)
+  }
+
+  override fun getSortKey(): NodeSortKey {
+    return settingsAccessor.getSortKey().toLegacySortKey()
+  }
+
+  override fun isUseFileNestingRules(): Boolean {
+    return settingsAccessor.getFileNesting().isFileNestingOn
   }
 }

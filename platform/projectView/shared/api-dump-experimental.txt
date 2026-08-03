@@ -14,20 +14,24 @@
 - a:getDeep():Z
 - a:setDeep(Z):V
 *c:com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
-- com.intellij.ide.projectView.ViewSettings
+- com.intellij.ide.projectView.ProjectViewSettings
 - <init>(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
+- getSortKey():com.intellij.ide.projectView.NodeSortKey
 - isAbbreviatePackageNames():Z
 - isCompactDirectories():Z
 - isFlattenModules():Z
 - isFlattenPackages():Z
 - isFoldersAlwaysOnTop():Z
 - isHideEmptyMiddlePackages():Z
+- isShowExcludedFiles():Z
 - isShowLibraryContents():Z
 - isShowMembers():Z
 - isShowModules():Z
 - isShowScratchesAndConsoles():Z
 - isShowURL():Z
+- isShowVisibilityIcons():Z
 - isStructureView():Z
+- isUseFileNestingRules():Z
 *:com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 - a:extractLibraryGroups(java.util.List):java.util.List
 - a:extractModuleGroups(java.util.List):java.util.List
