@@ -2144,7 +2144,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
                 returnType = PyAnyType.unknown
               }
               if (parametersExpr is PyEllipsisLiteralExpression) {
-                return PyCallableTypeImpl(null as PyCallableParameterVariadicType?, returnType)
+                return PyCallableTypeImpl.withUnknownParameters(returnType)
               }
               val parametersType = Ref.deref<PyType?>(getType(parametersExpr, context))
               if (parametersType is PyCallableParameterListType) {
@@ -2155,7 +2155,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
               }
             }
           }
-          return PyCallableTypeImpl(null as PyCallableParameterListType?, returnType)
+          return PyCallableTypeImpl.withUnknownParameters(returnType)
         }
       }
       else if (resolved is PyTargetExpression) {
@@ -2165,7 +2165,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             CALLABLE_EXT,
           )
         ) {
-          return PyCallableTypeImpl(null as PyCallableParameterListType?, PyAnyType.unknown)
+          return PyCallableTypeImpl.withUnknownParameters(PyAnyType.unknown)
         }
       }
       return null

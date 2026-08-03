@@ -62,6 +62,10 @@ public class PyCallableTypeImpl implements PyCallableType {
     this(null, parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null, returnType, callable, modifier);
   }
 
+  public static @NotNull PyCallableTypeImpl withUnknownParameters(@Nullable PyType returnType) {
+    return new PyCallableTypeImpl(null, null, returnType, null, null);
+  }
+
   @Override
   public @Nullable List<PyTypeParameterType> getTypeParameters(TypeEvalContext context) {
     return myTypeParameters;
