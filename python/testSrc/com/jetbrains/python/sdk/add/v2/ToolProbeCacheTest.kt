@@ -3,6 +3,8 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.Result
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -16,6 +18,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
 @TestFor(classes = [ToolProbeCache::class])
+@Subsystems.Interpreters
+@Layers.Functional
 class ToolProbeCacheTest {
 
   @Test
