@@ -12,8 +12,9 @@ import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModelImpl
-import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
-import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.updateCursor
+import com.intellij.terminal.tests.reworked.util.TerminalOutputPattern
+import com.intellij.terminal.tests.reworked.util.outputPattern
+import com.intellij.terminal.tests.reworked.util.updateContent
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -42,17 +43,15 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   fun `scroll position is on top when lines fit the screen`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val editor = createEditor(rows = 3)
     doTest(editor, expectedScrollOffset = 0) {
-      updateText(0, """
-        
-        
-        
-      """.trimIndent())
-      updateText(0, """
+      updateText(0, outputPattern("""
+
+
+      """.trimIndent()))
+      updateText(0, outputPattern("""
         123
-        456
-        
-      """.trimIndent())
-      updateCursor(1, 3)
+        456<cursor>
+
+      """.trimIndent()))
     }
   }
 
@@ -62,21 +61,20 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // two lines are hidden and there is an inset in the bottom
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
-        
-        
-        
-      """.trimIndent())
-      updateText(0, """
+      updateText(0, outputPattern("""
+
+
+      """.trimIndent()))
+      updateText(0, outputPattern("""
         1
         2
-        
-      """.trimIndent())
-      updateText(2, """
+
+      """.trimIndent()))
+      updateText(2, outputPattern("""
         3
         4
-      """.trimIndent())
-      updateText(4, "5")
+      """.trimIndent()))
+      updateText(4, outputPattern("5"))
     }
   }
 
@@ -86,13 +84,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // the first line is hidden and there is an inset in the bottom
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        
-        
-      """.trimIndent())
-      updateCursor(3, 0)
+
+        <cursor>
+      """.trimIndent()))
     }
   }
 
@@ -102,17 +99,15 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // the first line is hidden due to last line is wrapped and there is an inset in the bottom
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        12345
-      """.trimIndent())
-      updateCursor(2, 5)
+        12345<cursor>
+      """.trimIndent()))
 
-      updateText(2, """
-        12345678
-      """.trimIndent())
-      updateCursor(2, 8)
+      updateText(2, outputPattern("""
+        12345678<cursor>
+      """.trimIndent()))
     }
   }
 
@@ -122,17 +117,16 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // the first line be partially hidden but still visible due to the top inset, the last 5 lines are visible.
     val expected = editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        3
-      """.trimIndent())
-      updateCursor(2, 1)
-      updateText(3, """
-        
-        
-        
-      """.trimIndent())
+        3<cursor>
+      """.trimIndent()))
+      updateText(3, outputPattern("""
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -142,18 +136,16 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // the first line is partially hidden to make the last 5 lines visible
     val expected = editor.lineHeight
     doTest(editor, expected, showCursor = false) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        3
-      """.trimIndent())
-      updateCursor(2, 1)
-      updateText(3, """
-        
-        
-        
-      """.trimIndent())
-      updateCursor(5, 0)
+        3<cursor>
+      """.trimIndent()))
+      updateText(3, outputPattern("""
+
+
+        <cursor>
+      """.trimIndent()))
     }
   }
 
@@ -164,45 +156,41 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val expected = 1 * editor.lineHeight
     doTest(editor, expected) {
       // prepare: fill the screen
-      updateText(0, """
-        prompt> pwd
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 11)
+      updateText(0, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Ctrl+L will first replace the current line and add the new line
-      updateText(0, """
-        prompt> pwd
-        
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 11)
+      updateText(0, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on a new line
-      updateText(1, """
-        prompt> 
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(1, 8)
+      updateText(1, outputPattern("""
+        prompt> <cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the command
-      updateText(1, """
-        prompt> pwd
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(1, 11)
+      updateText(1, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -213,47 +201,43 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val expected = 7 * editor.lineHeight
     doTest(editor, expected) {
       // prepare: fill the screen
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
         6
-        prompt> pwd
-      """.trimIndent())
-      updateCursor(6, 11)
+        prompt> pwd<cursor>
+      """.trimIndent()))
 
       // Ctrl+L will first replace the current line and add the new lines
-      updateText(6, """
-        prompt> pwd
-        
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(6, 11)
+      updateText(6, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on a new line
-      updateText(7, """
-        prompt> 
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(7, 8)
+      updateText(7, outputPattern("""
+        prompt> <cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the command
-      updateText(7, """
-        prompt> pwd
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(7, 11)
+      updateText(7, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -264,45 +248,41 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val expected = 3 * editor.lineHeight
     doTest(editor, expected) {
       // prepare: fill the screen
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        prompt> pwd
-        
-        
-      """.trimIndent())
-      updateCursor(2, 11)
+        prompt> pwd<cursor>
+
+
+      """.trimIndent()))
 
       // Ctrl+L will first replace the current line and add the new line
-      updateText(2, """
-        prompt> pwd
-        
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(2, 11)
+      updateText(2, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on a new line
-      updateText(3, """
-        prompt> 
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(3, 8)
+      updateText(3, outputPattern("""
+        prompt> <cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the command
-      updateText(3, """
-        prompt> pwd
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(3, 11)
+      updateText(3, outputPattern("""
+        prompt> pwd<cursor>
+
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -311,28 +291,25 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val editor = createEditor(rows = 3)
     doTest(editor, expectedScrollOffset = 0) {
       // prepare: fill the screen
-      updateText(0, """
-        prompt> clear
-        
-        
-      """.trimIndent())
-      updateCursor(0, 13)
+      updateText(0, outputPattern("""
+        prompt> clear<cursor>
+
+
+      """.trimIndent()))
 
       // "clear" first replaces all lines with empty
-      updateText(0, """
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 0)
+      updateText(0, outputPattern("""
+        <cursor>
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on the first line
-      updateText(0, """
-        prompt> 
-        
-        
-      """.trimIndent())
-      updateCursor(0, 8)
+      updateText(0, outputPattern("""
+        prompt> <cursor>
+
+
+      """.trimIndent()))
     }
   }
 
@@ -341,43 +318,39 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val editor = createEditor(rows = 5)
     doTest(editor, expectedScrollOffset = 0) {
       // prepare: fill the screen
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
         6
-        prompt> clear
-      """.trimIndent())
-      updateCursor(6, 13)
+        prompt> clear<cursor>
+      """.trimIndent()))
 
       // "Clear" first adds the new line
-      updateText(6, """
+      updateText(6, outputPattern("""
         prompt> clear
-        
-      """.trimIndent())
-      updateCursor(7, 0)
+        <cursor>
+      """.trimIndent()))
 
       // Then it replaces everything with empty lines
-      updateText(0, """
-        
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 0)
+      updateText(0, outputPattern("""
+        <cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on the first line
-      updateText(0, """
-        prompt> 
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 8)
+      updateText(0, outputPattern("""
+        prompt> <cursor>
+
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -386,34 +359,31 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val editor = createEditor(rows = 5)
     doTest(editor, expectedScrollOffset = 0) {
       // prepare: fill the screen
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
-        prompt> clear
-        
-        
-      """.trimIndent())
-      updateCursor(2, 13)
+        prompt> clear<cursor>
+
+
+      """.trimIndent()))
 
       // "clear" first replaces all lines with empty
-      updateText(0, """
-        
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 0)
+      updateText(0, outputPattern("""
+        <cursor>
+
+
+
+
+      """.trimIndent()))
 
       // Then it will print the new prompt on the first line
-      updateText(0, """
-        prompt> 
-        
-        
-        
-        
-      """.trimIndent())
-      updateCursor(0, 8)
+      updateText(0, outputPattern("""
+        prompt> <cursor>
+
+
+
+
+      """.trimIndent()))
     }
   }
 
@@ -424,27 +394,25 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
     doTest(editor, expected) {
       // prepare: fill the screen
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
         6
-        prompt> command
-      """.trimIndent())
-      updateCursor(6, 15)
+        prompt> command<cursor>
+      """.trimIndent()))
 
       // Suppose command printed two lines
-      updateText(6, """
+      updateText(6, outputPattern("""
         prompt> command
         persistentOutput
-        tempOutput
-      """.trimIndent())
-      updateCursor(8, 10)
+        tempOutput<cursor>
+      """.trimIndent()))
 
-      // Then it removed the "tempOutput" line
-      updateText(8, "")
+      // Then it removed the "tempOutput" line.
+      updateText(8, outputPattern(""))
       updateCursor(7, 16)
     }
   }
@@ -457,20 +425,18 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // the new output below must not pull it back down.
     val expected = TerminalUi.blockTopInset + 2 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
-        6
-      """.trimIndent())
-      updateCursor(5, 1)
+        6<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.LineUp")
 
-      updateText(6, "7")
-      updateCursor(6, 1)
+      updateText(6, outputPattern("7<cursor>"))
     }
   }
 
@@ -480,21 +446,19 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // Scrolled back down to the exact bottom by the same kind of action, so following resumes for the new output.
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
-        6
-      """.trimIndent())
-      updateCursor(5, 1)
+        6<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.LineUp")
       invokeAction("Terminal.LineDown")
 
-      updateText(6, "7")
-      updateCursor(6, 1)
+      updateText(6, outputPattern("7<cursor>"))
     }
   }
 
@@ -503,20 +467,18 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     val editor = createEditor(rows = 3)
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
-        6
-      """.trimIndent())
-      updateCursor(5, 1)
+        6<cursor>
+      """.trimIndent()))
 
       scrollWithoutUserAction(TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight)
 
-      updateText(6, "7")
-      updateCursor(6, 1)
+      updateText(6, outputPattern("7<cursor>"))
     }
   }
 
@@ -527,21 +489,19 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // scrollToCursor(force = true) directly, and following must resume for the subsequent output too.
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 4 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
-        6
-      """.trimIndent())
-      updateCursor(5, 1)
+        6<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.LineUp")
       scrollToCursor(true)
 
-      updateText(6, "7")
-      updateCursor(6, 1)
+      updateText(6, outputPattern("7<cursor>"))
     }
   }
 
@@ -552,21 +512,19 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // back to the bottom. Following stays off, so the position after the line-up is preserved for the later output.
     val expected = TerminalUi.blockTopInset + 2 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
         4
         5
-        6
-      """.trimIndent())
-      updateCursor(5, 1)
+        6<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.LineUp")
       scrollToCursor(false)
 
-      updateText(6, "7")
-      updateCursor(6, 1)
+      updateText(6, outputPattern("7<cursor>"))
     }
   }
 
@@ -577,7 +535,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // Two line-ups from the followed bottom must land exactly on a whole line's top (no bottom inset remainder).
     val expected = TerminalUi.blockTopInset + 3 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
@@ -585,9 +543,8 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         7
-        8
-      """.trimIndent())
-      updateCursor(7, 1)
+        8<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.LineUp")
       invokeAction("Terminal.LineUp")
@@ -600,7 +557,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // Stepping up more times than there are hidden lines must rest exactly at the top (offset 0, revealing the top inset)
     // without over-scrolling, and following must stay off there (the new output does not pull it back down).
     doTest(editor, expectedScrollOffset = 0) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
@@ -608,14 +565,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         7
-        8
-      """.trimIndent())
-      updateCursor(7, 1)
+        8<cursor>
+      """.trimIndent()))
 
       repeat(10) { invokeAction("Terminal.LineUp") }
 
-      updateText(8, "9")
-      updateCursor(8, 1)
+      updateText(8, outputPattern("9<cursor>"))
     }
   }
 
@@ -625,7 +580,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     // Page up unsticks, paging back down to the bottom resumes following, so the later output is followed again.
     val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 6 * editor.lineHeight
     doTest(editor, expected) {
-      updateText(0, """
+      updateText(0, outputPattern("""
         1
         2
         3
@@ -633,15 +588,13 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         7
-        8
-      """.trimIndent())
-      updateCursor(7, 1)
+        8<cursor>
+      """.trimIndent()))
 
       invokeAction("Terminal.PageUp")
       invokeAction("Terminal.PageDown")
 
-      updateText(8, "9")
-      updateCursor(8, 1)
+      updateText(8, outputPattern("9<cursor>"))
     }
   }
 
@@ -708,13 +661,13 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     private val outputModel: MutableTerminalOutputModel,
     private val scrollingModel: TerminalOutputScrollingModelImpl,
   ) {
-    suspend fun updateText(absoluteLineIndex: Long, text: String) {
-      outputModel.update(absoluteLineIndex, text)
+    suspend fun updateText(absoluteLineIndex: Long, pattern: TerminalOutputPattern) {
+      outputModel.updateContent(absoluteLineIndex, pattern)
       scrollingModel.awaitEventProcessing()
     }
 
     suspend fun updateCursor(absoluteLineIndex: Long, column: Int) {
-      outputModel.updateCursor(absoluteLineIndex, column)
+      outputModel.updateCursorPosition(absoluteLineIndex, column)
       scrollingModel.awaitEventProcessing()
     }
 
