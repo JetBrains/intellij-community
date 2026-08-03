@@ -123,6 +123,7 @@ internal class PyInstallDialogVersionPanel(
     val panel = JPanel(BorderLayout()).apply {
       isOpaque = false
       preferredSize = Dimension(-1, JBUI.CurrentTheme.List.rowHeight() * 2 + JBValue.UIInteger("Component.focusWidth", 2).get() * 2)
+      border = JBUI.Borders.customLineTop(JBUI.CurrentTheme.Popup.separatorColor())
     }
     val mainPanel = JPanel(BorderLayout()).apply {
       isOpaque = false
