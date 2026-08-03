@@ -1,4 +1,4 @@
 version = "2.1.*"
+upstream-repository = "https://github.com/shapely/shapely"
 # Requires a version of numpy with a `py.typed` file
 dependencies = ["numpy>=1.20"]
-upstream-repository = "https://github.com/shapely/shapely"

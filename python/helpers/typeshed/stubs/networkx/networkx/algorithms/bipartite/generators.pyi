@@ -17,27 +17,32 @@ __all__ = [
 ]
 
 @_dispatchable
-def complete_bipartite_graph(n1, n2, create_using: Graph[_Node] | None = None): ...
+def complete_bipartite_graph(n1, n2, create_using: Graph[_Node] | type[Graph[_Node]] | None = None): ...
 @_dispatchable
 def configuration_model(
     aseq: Iterable[Incomplete],
     bseq: Iterable[Incomplete],
-    create_using: Graph[_Node] | None = None,
+    create_using: Graph[_Node] | type[Graph[_Node]] | None = None,
     seed: int | RandomState | None = None,
 ): ...
 @_dispatchable
-def havel_hakimi_graph(aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | None = None): ...
+def havel_hakimi_graph(
+    aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | type[Graph[_Node]] | None = None
+): ...
 @_dispatchable
 def reverse_havel_hakimi_graph(
-    aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | None = None
+    aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | type[Graph[_Node]] | None = None
 ): ...
 @_dispatchable
 def alternating_havel_hakimi_graph(
-    aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | None = None
+    aseq: Iterable[Incomplete], bseq: Iterable[Incomplete], create_using: Graph[_Node] | type[Graph[_Node]] | None = None
 ): ...
 @_dispatchable
 def preferential_attachment_graph(
-    aseq: Iterable[Incomplete], p: float, create_using: Graph[_Node] | None = None, seed: int | RandomState | None = None
+    aseq: Iterable[Incomplete],
+    p: float,
+    create_using: Graph[_Node] | type[Graph[_Node]] | None = None,
+    seed: int | RandomState | None = None,
 ): ...
 @_dispatchable
 def random_graph(n: int, m: int, p: float, seed: int | RandomState | None = None, directed: bool | None = False): ...

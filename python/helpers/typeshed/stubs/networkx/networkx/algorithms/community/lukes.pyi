@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Final
 
 from networkx.classes.graph import Graph, _Node
@@ -13,4 +14,4 @@ PKEY: Final = "partitions"
 CLUSTER_EVAL_CACHE_SIZE: Final = 2048
 
 @_dispatchable
-def lukes_partitioning(G: Graph[_Node], max_size: int, node_weight=None, edge_weight=None): ...
+def lukes_partitioning(G: Graph[_Node], max_size: int, node_weight=None, edge_weight=None) -> list[Incomplete]: ...

@@ -11,18 +11,18 @@ def equivalence_classes(iterable: Iterable[_Node], relation: Callable[[_Node, _N
 @_dispatchable
 def quotient_graph(
     G: Graph[_Node],
-    partition,
-    edge_relation=None,
+    partition: Callable[..., Incomplete] | dict[Incomplete, Incomplete] | list[set[Incomplete]],
+    edge_relation: Callable[..., Incomplete] | None = None,
     node_data: Callable[..., Incomplete] | None = None,
     edge_data: Callable[..., Incomplete] | None = None,
     weight: str | None = "weight",
     relabel: bool = False,
-    create_using: Graph[_Node] | None = None,
-): ...
+    create_using: Graph[_Node] | type[Graph[_Node]] | None = None,
+) -> Graph[Incomplete]: ...
 @_dispatchable
 def contracted_nodes(
     G: Graph[_Node], u, v, self_loops: bool = True, copy: bool = True, *, store_contraction_as: str | None = "contraction"
-): ...
+) -> Graph[Incomplete]: ...
 
 identified_nodes = contracted_nodes
 
@@ -34,4 +34,4 @@ def contracted_edge(
     copy: bool = True,
     *,
     store_contraction_as: str | None = "contraction",
-): ...
+) -> Graph[Incomplete]: ...

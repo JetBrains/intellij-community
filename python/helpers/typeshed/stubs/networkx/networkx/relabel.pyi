@@ -26,5 +26,5 @@ def convert_node_labels_to_integers(
     G: Graph[Hashable],
     first_label: int = 0,
     ordering: Literal["default", "sorted", "increasing degree", "decreasing degree"] = "default",
-    label_attribute=None,
+    label_attribute: str | None = None,
 ) -> Graph[int]: ...

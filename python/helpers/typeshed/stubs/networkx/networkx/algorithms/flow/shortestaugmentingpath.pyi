@@ -1,3 +1,6 @@
+from _typeshed import Incomplete
+
+from networkx.classes.digraph import DiGraph
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
 
@@ -13,4 +16,4 @@ def shortest_augmenting_path(
     value_only: bool = False,
     two_phase: bool = False,
     cutoff: float | None = None,
-): ...
+) -> DiGraph[Incomplete]: ...

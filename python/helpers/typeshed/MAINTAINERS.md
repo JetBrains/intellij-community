@@ -97,3 +97,9 @@ requests as "not planned" with an explanation like this:
     We gladly accept type stub contributions for third-party libraries that are published on PyPI in typeshed. To contribute a new library, please follow the steps outlined in [CONTRIBUTING.md](/python/typeshed/blob/main/CONTRIBUTING.md). The `create_baseline_stubs.py` script can be useful to create an initial version, suitable for inclusion in typeshed.
 
     That said, we don't keep requests for third-party library stubs open, unless there are issues that need to be addressed before a PR can be opened. Therefore, I'm closing this issue.
+
+### Asking to remove tests
+
+    Please remove the tests. In typeshed, we only add regression tests for functions and classes which are known to have caused complex problems in the past, or where stubs are difficult to get right. 100% test coverage for typeshed is neither necessary nor desirable, as it would lead to code duplication.
+
+    See [`tests/REGRESSION.md`](https://github.com/python/typeshed/blob/main/tests/REGRESSION.md) for more information.

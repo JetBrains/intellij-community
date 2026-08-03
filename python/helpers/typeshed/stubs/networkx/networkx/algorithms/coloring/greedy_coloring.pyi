@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Generator
-from typing import Final
+from typing import Final, Literal
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -37,4 +37,21 @@ def strategy_saturation_largest_first(G: Graph[_Node], colors) -> Generator[Inco
 STRATEGIES: Final[dict[str, Callable[..., Incomplete]]]
 
 @_dispatchable
-def greedy_color(G: Graph[_Node], strategy="largest_first", interchange: bool = False): ...
+def greedy_color(
+    G: Graph[_Node],
+    strategy: (
+        Callable[..., Incomplete]
+        | Literal[
+            "largest_first",
+            "random_sequential",
+            "smallest_last",
+            "independent_set",
+            "connected_sequential_bfs",
+            "connected_sequential_dfs",
+            "connected_sequential",
+            "saturation_largest_first",
+            "DSATUR",
+        ]
+    ) = "largest_first",
+    interchange: bool = False,
+) -> dict[Incomplete, Incomplete]: ...

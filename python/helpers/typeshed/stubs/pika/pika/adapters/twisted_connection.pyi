@@ -5,6 +5,7 @@ from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Mapping
 from logging import Logger
 from typing import Generic, NamedTuple, TypeVar
+from typing_extensions import Self
 
 from pika import amqp_object
 from pika.adapters.utils.nbio_interface import AbstractTimerReference
@@ -137,9 +138,9 @@ class _TwistedConnectionAdapter(Connection):
     def __init__(
         self,
         parameters: Parameters | None,
-        on_open_callback: Callable[[Connection], object] | None,
-        on_open_error_callback: Callable[[Connection, BaseException], object] | None,
-        on_close_callback: Callable[[Connection, Exception], object] | None,
+        on_open_callback: Callable[[Self], object] | None,
+        on_open_error_callback: Callable[[Self, BaseException], object] | None,
+        on_close_callback: Callable[[Self, Exception], object] | None,
         custom_reactor: ReactorBase | None = None,
     ) -> None: ...
     def connection_made(self, transport: ITransport) -> None: ...

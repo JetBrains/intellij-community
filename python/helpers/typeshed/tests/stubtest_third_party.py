@@ -149,7 +149,7 @@ def run_stubtest(dist: Path, *, verbose: bool = False, ci_platforms_only: bool =
                 subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
                 print_time(time() - t)
-                print_error("fail")
+                print_error(f"failed with exit code {e.returncode}")
 
                 print_divider()
                 print("Commands run:")

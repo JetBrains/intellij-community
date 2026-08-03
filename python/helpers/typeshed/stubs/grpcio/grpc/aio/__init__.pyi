@@ -28,6 +28,7 @@ from grpc import (
     RpcError,
     RpcMethodHandler,
     ServerCredentials,
+    Status,
     StatusCode,
     _Options,
 )
@@ -278,6 +279,8 @@ class ServicerContext(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def send_initial_metadata(self, initial_metadata: _MetadataType) -> None: ...
     def add_done_callback(self, callback: _DoneCallback[_TRequest, _TResponse]) -> None: ...
+    @abc.abstractmethod
+    async def abort_with_status(self, status: Status) -> Never: ...
     @abc.abstractmethod
     def set_trailing_metadata(self, trailing_metadata: _MetadataType) -> None: ...
     @abc.abstractmethod

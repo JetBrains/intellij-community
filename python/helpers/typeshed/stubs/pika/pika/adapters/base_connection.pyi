@@ -21,9 +21,9 @@ class BaseConnection(Connection, Generic[_IOLoop], metaclass=abc.ABCMeta):
     def __init__(
         self,
         parameters: Parameters | None,
-        on_open_callback: Callable[[Connection], object] | None,
-        on_open_error_callback: Callable[[Connection, BaseException], object] | None,
-        on_close_callback: Callable[[Connection, BaseException], object] | None,
+        on_open_callback: Callable[[Self], object] | None,
+        on_open_error_callback: Callable[[Self, BaseException], object] | None,
+        on_close_callback: Callable[[Self, BaseException], object] | None,
         nbio: AbstractIOServices,
         internal_connection_workflow: bool = True,
     ) -> None: ...
@@ -104,7 +104,7 @@ class _StreamingProtocolShim(AbstractStreamProtocol, Generic[_IOLoop]):
     def create_connection(
         cls,
         connection_configs: Sequence[Parameters],
-        on_done: Callable[[Connection | AMQPConnectorException], object],
+        on_done: Callable[[Self | AMQPConnectorException], object],
         custom_ioloop: _IOLoop | None = None,
         workflow: AbstractAMQPConnectionWorkflow | None = None,
     ) -> AbstractAMQPConnectionWorkflow: ...

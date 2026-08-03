@@ -1,6 +1,7 @@
 from collections.abc import Callable, Sequence
 from logging import Logger
 from typing import Final
+from typing_extensions import Self
 
 from gevent._types import _Loop, _TimerWatcher
 from gevent.hub import Hub
@@ -8,7 +9,7 @@ from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils.connection_workflow import AbstractAMQPConnectionWorkflow, AMQPConnectorException
 from pika.adapters.utils.nbio_interface import AbstractIOReference, AbstractIOServices
 from pika.adapters.utils.selector_ioloop_adapter import AbstractSelectorIOLoop, SelectorIOServicesAdapter, _SupportsCancel
-from pika.connection import Connection, Parameters
+from pika.connection import Parameters
 
 LOGGER: Logger
 
@@ -16,9 +17,9 @@ class GeventConnection(BaseConnection[_Loop]):
     def __init__(
         self,
         parameters: Parameters | None = None,
-        on_open_callback: Callable[[Connection], object] | None = None,
-        on_open_error_callback: Callable[[Connection, BaseException], object] | None = None,
-        on_close_callback: Callable[[Connection, BaseException], object] | None = None,
+        on_open_callback: Callable[[Self], object] | None = None,
+        on_open_error_callback: Callable[[Self, BaseException], object] | None = None,
+        on_close_callback: Callable[[Self, BaseException], object] | None = None,
         custom_ioloop: _Loop | AbstractIOServices | None = None,
         internal_connection_workflow: bool = True,
     ) -> None: ...
@@ -26,7 +27,7 @@ class GeventConnection(BaseConnection[_Loop]):
     def create_connection(
         cls,
         connection_configs: Sequence[Parameters],
-        on_done: Callable[[Connection | AMQPConnectorException], object],
+        on_done: Callable[[Self | AMQPConnectorException], object],
         custom_ioloop: _Loop | None = None,
         workflow: AbstractAMQPConnectionWorkflow | None = None,
     ) -> AbstractAMQPConnectionWorkflow: ...

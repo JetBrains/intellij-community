@@ -3,13 +3,14 @@ import select
 from collections.abc import Callable, Sequence
 from logging import Logger
 from typing import ClassVar, Final, Literal, TypeAlias, TypedDict
+from typing_extensions import Self
 
 import pika.compat
 from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils.connection_workflow import AbstractAMQPConnectionWorkflow, AMQPConnectorException
 from pika.adapters.utils.nbio_interface import AbstractIOServices
 from pika.adapters.utils.selector_ioloop_adapter import AbstractSelectorIOLoop
-from pika.connection import Connection, Parameters
+from pika.connection import Parameters
 
 SELECT_ERROR_T: TypeAlias = OSError | IOError | InterruptedError | select.error
 
@@ -24,9 +25,9 @@ class SelectConnection(BaseConnection[IOLoop]):
     def __init__(
         self,
         parameters: Parameters | None = None,
-        on_open_callback: Callable[[Connection], object] | None = None,
-        on_open_error_callback: Callable[[Connection, BaseException], object] | None = None,
-        on_close_callback: Callable[[Connection, BaseException], object] | None = None,
+        on_open_callback: Callable[[Self], object] | None = None,
+        on_open_error_callback: Callable[[Self, BaseException], object] | None = None,
+        on_close_callback: Callable[[Self, BaseException], object] | None = None,
         custom_ioloop: IOLoop | AbstractIOServices | None = None,
         internal_connection_workflow: bool = True,
     ) -> None: ...
@@ -34,7 +35,7 @@ class SelectConnection(BaseConnection[IOLoop]):
     def create_connection(
         cls,
         connection_configs: Sequence[Parameters],
-        on_done: Callable[[Connection | AMQPConnectorException], object],
+        on_done: Callable[[Self | AMQPConnectorException], object],
         custom_ioloop: IOLoop | None = None,
         workflow: AbstractAMQPConnectionWorkflow | None = None,
     ) -> AbstractAMQPConnectionWorkflow: ...

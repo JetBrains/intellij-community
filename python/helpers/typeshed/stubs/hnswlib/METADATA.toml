@@ -1,4 +1,9 @@
 version = "0.8.*"
+upstream-repository = "https://github.com/nmslib/hnswlib"
 # Requires a version of numpy with a `py.typed` file
 dependencies = ["numpy>=1.21"]
-upstream-repository = "https://github.com/nmslib/hnswlib"
+
+[tool.stubtest]
+# TODO: stubtest fails on Linux because it gets killed with a SIGILL
+# for unknown reasons. See https://github.com/python/typeshed/issues/16100
+ci-platforms = ["darwin"]
