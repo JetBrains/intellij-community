@@ -23,7 +23,6 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         cp = "cp",
         cut = "cut",
         env = "env",
-        getent = "getent",
         head = "head",
         mktemp = "mktemp",
         rm = "rm",
@@ -31,6 +30,8 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         tail = "tail",
         uname = "uname",
         whoami = "whoami",
+        getent = "getent",
+        id = "id",
       ))
     }
 
@@ -45,7 +46,6 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         cp = "cp",
         cut = "cut",
         env = "env",
-        getent = "getent",
         head = "head",
         mktemp = "mktemp",
         rm = "rm",
@@ -53,6 +53,8 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         tail = "tail",
         uname = "uname",
         whoami = "whoami",
+        getent = "getent",
+        id = "id",
       ))
     }
 
@@ -67,7 +69,6 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         cp = "cp",
         cut = "cut",
         env = "env",
-        getent = "getent",
         head = "head",
         mktemp = "mktemp",
         rm = "rm",
@@ -75,6 +76,33 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         tail = "tail",
         uname = "uname",
         whoami = "whoami",
+        getent = "getent",
+        id = "id",
+      ))
+    }
+
+    /** macOS has neither `getent` nor `busybox`, but the deployment must work there anyway. */
+    @Test
+    fun `all commands without getent and without busybox`(): Unit = runBlocking {
+      val context = createDeployingContext { commands ->
+        "busybox" should beIn(commands)
+        "getent" should beIn(commands)
+        commands - "busybox" - "getent"
+      }
+      context should be(DeployingContext(
+        chmod = "chmod",
+        cp = "cp",
+        cut = "cut",
+        env = "env",
+        head = "head",
+        mktemp = "mktemp",
+        rm = "rm",
+        sed = "sed",
+        tail = "tail",
+        uname = "uname",
+        whoami = "whoami",
+        getent = null,
+        id = "id",
       ))
     }
 
@@ -89,7 +117,6 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         cp = "busybox cp",
         cut = "busybox cut",
         env = "busybox env",
-        getent = "busybox getent",
         head = "busybox head",
         mktemp = "busybox mktemp",
         rm = "busybox rm",
@@ -97,6 +124,8 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         tail = "busybox tail",
         uname = "busybox uname",
         whoami = "busybox whoami",
+        getent = "busybox getent",
+        id = "busybox id",
       ))
     }
 

@@ -140,10 +140,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator {
+    val targetPlatform = getTargetPlatform()
     return getMyContext().execCommand {
       when (val strategy = executionStrategy) {
-        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo)
-        else -> execIjent(binaryPath)
+        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo, targetPlatform)
+        else -> execIjent(binaryPath, targetPlatform)
       }
     }
   }
@@ -281,7 +282,6 @@ internal data class DeployingContext(
   val cp: String,
   val cut: String,
   val env: String,
-  val getent: String,
   val head: String,
   val mktemp: String,
   val rm: String,
@@ -289,6 +289,12 @@ internal data class DeployingContext(
   val tail: String,
   val uname: String,
   val whoami: String,
+
+  /** `getent` is a part of glibc, therefore it is absent on macOS and other BSD-like systems. */
+  val getent: String?,
+
+  /** Although `id` is defined by POSIX, there's no guarantee that a stripped down system has it. */
+  val id: String?,
 )
 
 /**
@@ -327,13 +333,12 @@ private suspend fun createDeployingContext(
 @VisibleForTesting
 internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
   // This strange at first glance code helps reduce copy-paste errors.
-  val commands: Set<String> = setOf(
+  val requiredCommands: Set<String> = setOf(
     "busybox",
     "chmod",
     "cp",
     "cut",
     "env",
-    "getent",
     "head",
     "mktemp",
     "rm",
@@ -342,10 +347,26 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     "uname",
     "whoami",
   )
+
+  // Not every operating system has these utilities, and the deployment can be performed without any of them.
+  val optionalCommands: Set<String> = setOf(
+    "getent",
+    "id",
+  )
+
   val outputOfWhich = mutableListOf<String>()
 
+  fun getOptionalCommandPath(name: String): String? {
+    assert(name in optionalCommands)
+    return when {
+      name in outputOfWhich -> name
+      "busybox" in outputOfWhich -> "busybox $name"
+      else -> null
+    }
+  }
+
   fun getCommandPath(name: String): String {
-    assert(name in commands)
+    assert(name in requiredCommands)
     return when {
       name in outputOfWhich -> name
       "busybox" in outputOfWhich -> "busybox $name"
@@ -353,14 +374,13 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     }
   }
 
-  outputOfWhich += filterAvailableBinariesCmd(commands)
+  outputOfWhich += filterAvailableBinariesCmd(requiredCommands + optionalCommands)
 
   return DeployingContext(
     chmod = getCommandPath("chmod"),
     cp = getCommandPath("cp"),
     cut = getCommandPath("cut"),
     env = getCommandPath("env"),
-    getent = getCommandPath("getent"),
     head = getCommandPath("head"),
     mktemp = getCommandPath("mktemp"),
     rm = getCommandPath("rm"),
@@ -368,6 +388,8 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     tail = getCommandPath("tail"),
     uname = getCommandPath("uname"),
     whoami = getCommandPath("whoami"),
+    getent = getOptionalCommandPath("getent"),
+    id = getOptionalCommandPath("id"),
   )
 }
 
@@ -375,15 +397,31 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
   // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
   // verbose, and that information may be sufficient for choosing the right binary.
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
-  process.write("${context.uname} -pm")
+  //
+  // All known implementations of `uname`, including busybox and GNU coreutils, print the fields in the same order regardless of the order
+  // of the options: the operating system, the machine, the processor. A single call saves a round trip, and round trips are expensive
+  // on slow connections.
+  process.write("${context.uname} -spm")
 
-  val arch = process.readLine().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
+  val unameOutput = process.readLine().split(" ").filter(String::isNotEmpty)
+  if (unameOutput.isEmpty()) {
+    throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
+  }
 
-  val targetPlatform = when {
-    arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.Arch.X86_64)
-    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.Arch.ARM_64)
+  val osName = unameOutput.first()
+  val arch = unameOutput.drop(1).toSet()
+
+  // Linux calls the 64-bit ARM architecture `aarch64`, while macOS calls the same architecture `arm64`.
+  val targetArch = when {
+    "x86_64" in arch || "amd64" in arch -> EelPlatform.Arch.X86_64
+    "aarch64" in arch || "arm64" in arch -> EelPlatform.Arch.ARM_64
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
+  }
+
+  val targetPlatform = when (osName) {
+    "Linux" -> EelPlatform.Linux(targetArch)
+    "Darwin" -> EelPlatform.Darwin(targetArch)
+    else -> throw IjentStartupError.IncompatibleTarget("No binary for the operating system $osName")
   }
   return targetPlatform
 }
@@ -449,19 +487,39 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
 }
 
 
-private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionProcessMediator {
+private suspend fun DeployingContextAndShell.execIjent(
+  remotePathToBinary: String,
+  targetPlatform: EelPlatform.Posix,
+): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
-  return createMediator(remotePathToBinary, joinedCmd)
+  return createMediator(remotePathToBinary, joinedCmd, targetPlatform)
 }
+
+/**
+ * Returns a shell command that writes the login shell of the current user into stdout, or null if there's no known way to get it
+ * on [targetPlatform].
+ */
+private fun DeployingContext.getLoginShellCmd(targetPlatform: EelPlatform.Posix): String? =
+  when (targetPlatform) {
+    is EelPlatform.Linux ->
+      getent?.let { """$it passwd "${'$'}($whoami)" | $cut -d: -f7""" }
+
+    // BSD-like systems, including macOS, don't have `getent`, but their `id` prints the whole passwd entry with the option `-P`.
+    // GNU coreutils, in contrast, don't have such an option in `id`.
+    is EelPlatform.Darwin, is EelPlatform.FreeBSD ->
+      id?.let { """$it -P "${'$'}($whoami)" | $cut -d: -f10""" }
+  }
 
 private suspend fun DeployingContextAndShell.createMediator(
   remotePathToBinary: String,
   joinedCmd: String,
+  targetPlatform: EelPlatform.Posix,
 ): IjentSessionProcessMediator {
   val commandLineArgs = context.run {
+    val loginShell = getLoginShellCmd(targetPlatform)?.let { "\"${'$'}($it)\"" } ?: "''"
     """
     | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
-    | export SHELL="${'$'}($getent passwd "${'$'}($whoami)" | $cut -d: -f7)";
+    | export SHELL=$loginShell;
     | if [ -z "${'$'}SHELL" ]; then export SHELL='/bin/sh' ; fi;
     | exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}
     """.trimMargin()
@@ -471,11 +529,15 @@ private suspend fun DeployingContextAndShell.createMediator(
 }
 
 
-private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, deployInfo: TcpDeployInfo): IjentSessionProcessMediator {
+private suspend fun DeployingContextAndShell.execIjentWithTcp(
+  remotePathToBinary: String,
+  deployInfo: TcpDeployInfo,
+  targetPlatform: EelPlatform.Posix,
+): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
                                    deployInfo = deployInfo).joinToString(" ")
-  return createMediator(remotePathToBinary, joinedCmd)
+  return createMediator(remotePathToBinary, joinedCmd, targetPlatform)
 }
 
 /**
