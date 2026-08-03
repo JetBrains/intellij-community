@@ -199,9 +199,8 @@ public final class SoftWrapEngine {
       if (position != -1) return position;
     }
 
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(),
-                                                                      minOffset - 1, maxOffset + 1, maxOffset + 1,
-                                                                      false, true);
+    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myEditor, minOffset - 1, maxOffset + 1,
+                                                                      maxOffset + 1, false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
     if (wrapOffset > maxOffset) return maxOffset;
