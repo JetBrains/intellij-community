@@ -122,12 +122,7 @@ object CommunityModuleSets {
     // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
     moduleSet(debugger())
 
-    // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
-    // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
-    // this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
-    // This ensures proper classloader hierarchy is maintained for modules that depend on intellij.platform.scopes.
-    // This attribute should be removed once the find module no longer needs to be embedded.
-    embeddedModule("intellij.platform.scopes")
+    module("intellij.platform.scopes")
     module("intellij.platform.scopes.backend")
 
     module("intellij.platform.find")
