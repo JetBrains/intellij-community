@@ -46,9 +46,8 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -75,6 +74,7 @@
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
     <module name="intellij.markdown.fenceInjector.textMate"/>
+    <module name="intellij.markdown.projectView"/>
   </content>
 
   <description><![CDATA[
@@ -256,8 +256,6 @@
 
     <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
 
-    <lang.psiStructureViewFactory language="Markdown"
-                                  implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 

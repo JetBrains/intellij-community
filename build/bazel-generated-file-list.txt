@@ -1467,6 +1467,7 @@ plugins/markdown/java
 plugins/markdown/jcef
 plugins/markdown/model
 plugins/markdown/plugin
+plugins/markdown/projectView
 plugins/markdown/spellchecker
 plugins/markdown/test
 plugins/markdown/textMate

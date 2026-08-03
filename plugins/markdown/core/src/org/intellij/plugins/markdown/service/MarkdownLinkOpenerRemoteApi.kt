@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.service
 
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -16,8 +16,8 @@ interface MarkdownLinkOpenerRemoteApi: RemoteApi<Unit> {
 
   companion object {
     @JvmStatic
-    suspend fun getInstance(): MarkdownLinkOpenerRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<MarkdownLinkOpenerRemoteApi>())
+    fun tryGetInstance(): MarkdownLinkOpenerRemoteApi? {
+      return LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<MarkdownLinkOpenerRemoteApi>())
     }
   }
 }

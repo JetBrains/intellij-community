@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.structureView;
+package com.intellij.markdown.projectView;
 
 import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation;
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
- class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> implements SortableTreeElement, LocationPresentation,
-                                                                                  Queryable {
+class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> implements SortableTreeElement, LocationPresentation,
+                                                                                 Queryable {
 
   private static final ItemPresentation DUMMY_PRESENTATION = new MarkdownBasePresentation() {
     @Override
