@@ -15,6 +15,7 @@ android/android
 android/android-adb
 android/android-adb-ui
 android/android-common
+android/android-concurrency
 android/android-kotlin/idea-android
 android/android-kotlin/idea-android/common
 android/android-kotlin/idea-android/idea-android-output-parser

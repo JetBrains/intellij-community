@@ -480,6 +480,7 @@ private fun createAndroidPluginLayout(
 
     // android-common.jar
     spec.withModule("intellij.android.common", "android-common.jar")
+    spec.withModule("intellij.android.concurrency", "android-common.jar")
     spec.withModule("intellij.android.jps.model", "android-common.jar")
 
     //android-gradle-tooling.jar
