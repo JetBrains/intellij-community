@@ -273,12 +273,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   override suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
+    val originException = Throwable()
+
     var counterIncremented = false
     suspend fun incrementCounter() {
       // we need correct modality
       // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
       // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
-      incrementDumbCounterBlocking(trace = Throwable())
+      incrementDumbCounterBlocking(trace = originException)
       counterIncremented = true
     }
 
@@ -287,7 +289,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         incrementCounter()
       }
       else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
-        incrementDumbCounterSuspending(Throwable()) {
+        incrementDumbCounterSuspending(originException) {
           counterIncremented = true
         }
       }
