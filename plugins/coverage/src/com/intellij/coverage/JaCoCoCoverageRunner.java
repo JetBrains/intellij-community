@@ -111,6 +111,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     if (!(coverageSuite instanceof JavaCoverageSuite javaSuite)) {
       return new FailedCoverageLoadingResult("Unsupported coverage suite: " + coverageSuite);
     }
+    javaSuite.setSkipUnloadedClassesAnalysis(true);
     final Project project = javaSuite.getProject();
     if (project == null) {
       return new FailedCoverageLoadingResult("Failed to locate Project for coverage suite: " + coverageSuite);

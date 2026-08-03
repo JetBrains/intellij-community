@@ -224,7 +224,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
     val outputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
     val classFile = Path.of(VfsUtilCore.urlToPath(outputUrl)).resolve("foo/FooClass.class")
-    val annotator = PackageAnnotator(loadIJSuite(), myProject, ProjectData())
+    val annotator = PackageAnnotator(ProjectData())
     val sourceFileName = annotator.getSourceFileName("foo.FooClass") { AnalysisUtils.loadClassBytes(classFile) }
     assertEquals("FooClass.java", sourceFileName)
   }

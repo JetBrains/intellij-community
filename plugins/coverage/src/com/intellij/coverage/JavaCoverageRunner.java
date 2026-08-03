@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author Roman.Chernyatchik
@@ -76,6 +78,18 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   @ApiStatus.Internal
   public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
     return Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ClassData getOrLoadCoverage(
+    Project project,
+    ProjectData projectData,
+    @NotNull Supplier<? extends @NotNull ProjectData> unloadedClassesProjectData,
+    @NotNull String className,
+    boolean isBranchCoverage,
+    @NotNull Supplier<byte[]> classBytes
+  ) {
+    return projectData.getClassData(className);
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {

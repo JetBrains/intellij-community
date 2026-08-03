@@ -1,17 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.analysis;
 
-import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.coverage.IDEACoverageRunner;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.BranchData;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
-import com.intellij.rt.coverage.util.ClassNameUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +14,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,24 +21,16 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class PackageAnnotator {
-  private final CoverageSuitesBundle mySuite;
-  private final Project myProject;
   private final ProjectData myProjectData;
   private ProjectData myUnloadedClassesProjectData;
 
-  public PackageAnnotator(CoverageSuitesBundle suite,
-                          Project project,
-                          ProjectData projectData) {
-    mySuite = suite;
-    myProject = project;
+  public PackageAnnotator(ProjectData projectData) {
     myProjectData = projectData;
-    IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
   }
 
-  private synchronized ProjectData getUnloadedClassesProjectData() {
+  public synchronized ProjectData getUnloadedClassesProjectData() {
     if (myUnloadedClassesProjectData == null) {
       myUnloadedClassesProjectData = new ProjectData();
-      IDEACoverageRunner.setExcludeAnnotations(myProject, myUnloadedClassesProjectData);
     }
     return myUnloadedClassesProjectData;
   }
@@ -74,29 +60,7 @@ public final class PackageAnnotator {
     return sourceFileName[0];
   }
 
-  public @Nullable ClassCoverageInfo collectClassCoverage(@NotNull String className,
-                                                          @Nullable Supplier<byte[]> classBytes) {
-    ClassData classData = myProjectData.getClassData(className);
-    final boolean classExists = classData != null && classData.getLines() != null;
-    if (classBytes != null && (!classExists || !classData.isFullyAnalysed())) {
-      var bytes = classBytes.get();
-      if (bytes != null) {
-        ClassData fullClassData = collectNonCoveredClassInfo(className, bytes, getUnloadedClassesProjectData());
-        if (fullClassData != null) {
-          if (classData == null) {
-            classData = fullClassData;
-          }
-          else {
-            classData.merge(fullClassData);
-          }
-        }
-      }
-    }
-
-    return getSummaryInfo(classData);
-  }
-
-  private static @Nullable ClassCoverageInfo getSummaryInfo(@Nullable ClassData classData) {
+  public static @Nullable ClassCoverageInfo getSummaryInfo(@Nullable ClassData classData) {
     if (classData == null || classData.getLines() == null) return null;
     ClassCoverageInfo info = new ClassCoverageInfo();
     Set<String> coveredMethods = new HashSet<>();
@@ -138,20 +102,6 @@ public final class PackageAnnotator {
       }
     }
     return info;
-  }
-
-  public @Nullable ClassData collectNonCoveredClassInfo(final @NotNull Path classFile, @NotNull ProjectData projectData) {
-    var bytes = AnalysisUtils.loadClassBytes(classFile);
-    if (bytes == null) return null;
-    String className = ClassNameUtil.convertToFQName(new ClassReader(bytes).getClassName());
-    return collectNonCoveredClassInfo(className, bytes, projectData);
-  }
-
-  private @Nullable ClassData collectNonCoveredClassInfo(@NotNull String className,
-                                                         byte @NotNull [] bytes,
-                                                         @NotNull ProjectData projectData) {
-    UnloadedUtil.appendUnloadedClass(projectData, className, bytes, mySuite.isBranchCoverage());
-    return projectData.getClassData(className);
   }
 
   public abstract static class SummaryCoverageInfo {

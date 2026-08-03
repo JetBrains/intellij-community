@@ -4,6 +4,7 @@ package com.intellij.coverage.analysis
 import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageEngineExtension
+import com.intellij.coverage.JavaCoverageRunner
 import com.intellij.coverage.JavaCoverageSuite
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.DirCoverageInfo
@@ -37,13 +38,11 @@ object JavaCoverageSummaryBuilder {
   ) {
     reportSequentialProgress(size = 2) { progress ->
       val projectData = progress.itemStep(CoverageBundle.message("coverage.view.load.report")) { suite.coverageData } ?: return
-      if (suite.suites.all { it is JavaCoverageSuite && it.isSkipUnloadedClassesAnalysis }) {
-        progress.itemStep(CoverageBundle.message("coverage.view.build.statistics")) {
+      progress.itemStep(CoverageBundle.message("coverage.view.build.statistics")) {
+        if (suite.suites.all { it is JavaCoverageSuite && it.isSkipUnloadedClassesAnalysis }) {
           buildFromProjectData(suite, project, projectData, collector)
         }
-      }
-      else {
-        progress.itemStep(CoverageBundle.message("coverage.view.build.statistics")) {
+        else {
           buildWithUnloadedClassesCollection(suite, project, projectData, collector)
         }
       }
@@ -64,7 +63,6 @@ object JavaCoverageSummaryBuilder {
       val vmName = AnalysisUtils.fqnToInternalName(classData.name)
       AnalysisUtils.getSourceToplevelFQName(vmName)
     }
-    val packageAnnotator = PackageAnnotator(bundle, project, projectData)
     reportProgressScope(classes.size) { progress ->
       for ((topLevelName, classData) in classes) {
         progress.itemStep {
@@ -73,7 +71,7 @@ object JavaCoverageSummaryBuilder {
           val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
           val info = ClassCoverageInfo()
           for (data in classData) {
-            packageAnnotator.collectClassCoverage(data.name, null)?.let(info::append)
+            PackageAnnotator.getSummaryInfo(data)?.let(info::append)
           }
           collector.addClass(topLevelName, info, file)
           flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(info)
@@ -219,14 +217,14 @@ private fun getSourceFolders(module: Module) = ModuleRootManager.getInstance(mod
 private class ModuleCoverageBuilder(
   private val suite: CoverageSuitesBundle,
   private val project: Project,
-  projectData: ProjectData,
+  private val projectData: ProjectData,
   private val moduleRequest: ModuleRequest,
 ) {
   private val classes = HashMap<String, CollectedClass>()
   private val pendingClasses = HashMap<String, PendingClassCoverage>()
   private val flattenPackages = HashMap<String, PackageCoverageInfo>()
   private val flattenDirectories = HashMap<VirtualFile, PackageCoverageInfo>()
-  private val packageAnnotator = PackageAnnotator(suite, project, projectData)
+  private val packageAnnotator = PackageAnnotator(projectData)
 
   suspend fun build(): ModuleCoverageResult {
     val module = moduleRequest.module
@@ -263,7 +261,15 @@ private class ModuleCoverageBuilder(
 
     val className = AnalysisUtils.internalNameToFqn(classVMName)
     val pending = pendingClasses.getOrPut(topLevelClassName) { PendingClassCoverage(classFile.packageVMName) }
-    packageAnnotator.collectClassCoverage(className) { classFile.loadBytes() }?.let(pending.info::append)
+    val classData = suite.suites.mapNotNull { it.runner as? JavaCoverageRunner }.firstNotNullOfOrNull {
+      it.getOrLoadCoverage(project,
+                           projectData,
+                           packageAnnotator::getUnloadedClassesProjectData,
+                           className,
+                           suite.isBranchCoverage(),
+                           classFile::loadBytes)
+    } ?: projectData.getClassData(className)
+    PackageAnnotator.getSummaryInfo(classData)?.let(pending.info::append)
     if (pending.sourceFileName == null) {
       pending.sourceFileName = packageAnnotator.getSourceFileName(className) { classFile.loadBytes() }
     }
