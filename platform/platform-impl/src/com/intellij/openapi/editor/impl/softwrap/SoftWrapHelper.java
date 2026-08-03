@@ -4,11 +4,13 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -130,5 +132,19 @@ public final class SoftWrapHelper {
       int srcOffset = DocumentEventUtil.getMoveOffsetBeforeInsertion(event);
       storage.removeCustomWrapsInRange(srcOffset, srcOffset + event.getNewLength() + /* end-inclusive */ 1);
     }
+  }
+
+  /**
+   * Answers whether there are any offsets collapsed by fold regions inside {@code [startOffset; endOffset)}.
+   * <p>
+   * Since soft-wraps may be placed at either edge of a collapsed fold region,
+   * this method will not return {@code true} due to a collapsed fold region
+   * where {@code region.endOffset == startOffset} or where {@code region.startOffset == endOffset}.
+   */
+  public static boolean hasCollapsedOffsetsIn(@NotNull FoldingModelEx foldingModel, int startOffset, int endOffset) {
+    FoldRegion[] topLevel = foldingModel.fetchTopLevel();
+    if (topLevel == null) return false;
+    int idx = foldingModel.getLastCollapsedRegionBefore(startOffset) + 1;
+    return idx < topLevel.length && topLevel[idx].getStartOffset() < endOffset;
   }
 }

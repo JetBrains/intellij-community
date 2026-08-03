@@ -37,4 +37,14 @@ public class EditorCharacterGridSizeTest extends AbstractEditorTest {
 
     assertTrue("preferred=" + preferredWidth(), preferredWidth() < CONTENT_WIDTH);
   }
+
+  // IJPL-251582: The grid mode optimized soft-wrapping must not place soft-wraps inside collapsed fold regions.
+  public void testGridEditorWithSoftWrapOptimizationsDoesNotWrapInsideCollapsedFoldRegion() {
+    initText(LONG_LINE.substring(0, 20));
+    configureSoftWraps(10, false);
+    addCollapsedFoldRegion(8, 14, "..."); // covers the grid column boundary at offset 11
+    enableGridMode();
+
+    verifySoftWrapPositions(8);
+  }
 }
