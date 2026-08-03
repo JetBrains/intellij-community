@@ -427,7 +427,8 @@ class TerminalViewImpl(
 
       if (TerminalAiInlineCompletion.isEnabled()) {
         val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
-        val inlineCompletionController = TerminalInlineCompletionController(project, outputEditor, outputModel, inlineCompletionScope)
+        val inlineCompletionController =
+          TerminalInlineCompletionController(project, outputEditor, outputModel, shellIntegration, inlineCompletionScope)
         val inlineCompletionInputListener = TerminalInlineCompletionInputListener(inlineCompletionController)
 
         inlineCompletionController.install()
