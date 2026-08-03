@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isPublic
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.io.IOException
 import java.net.URI
 import java.util.ServiceLoader
 import java.util.jar.Manifest
@@ -188,11 +187,24 @@ object CodeWriter {
     val sourceFile = ktClasses[sourceClassName]?.containingKtFile ?: return
     copyHeaderComment(sourceFile, file)
   }
+  
+  private data class ApiVersion(val major: Int, val minor: Int, val patch: Int) : Comparable<ApiVersion> {
 
-  /**
-   * Documentation for [com.intellij.openapi.project.IndexNotReadyException] says that it's enough to run completeJustSubmittedTasks only
-   * once. However, in practice this is not enough.
-   */
+    fun compatible(other: ApiVersion): Boolean {
+      return major == other.major && minor == other.minor
+    }
+
+    override fun toString(): String = "$major.$minor.$patch"
+
+    override fun compareTo(other: ApiVersion): Int {
+      return when {
+        major != other.major -> major - other.major
+        minor != other.minor -> minor - other.minor
+        else -> patch - other.patch
+      }
+    }
+  }
+
   private suspend fun waitSmartMode(project: Project) {
     for (i in 1..100) {
       if (i == 100) error("99 delays were not enough to wait for smart mode")
@@ -207,13 +219,28 @@ object CodeWriter {
   private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
     val apiVersionInDevkit = getApiVersionFromJSON(CodeGenerator::class.java)
     val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
+    if (apiVersionInDevkit == null || apiVersionFromDownloadedJar == null) {
+      val where = if (apiVersionInDevkit == null) "devkit plugin" else "codegen-impl"
+      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.none", where)
+      return false
+    }
 
-    if (apiVersionInDevkit == apiVersionFromDownloadedJar) {
+    if (apiVersionInDevkit.compatible(apiVersionFromDownloadedJar)) {
+      if (apiVersionInDevkit.patch == apiVersionFromDownloadedJar.patch)
+        return true
+      val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions")
+      val message = DevKitWorkspaceModelBundle.message("notification.workspace.compatible.but.different.codegen.api.versions.content",
+                                                       apiVersionInDevkit,
+                                                       apiVersionFromDownloadedJar)
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(groupId)
+        .createNotification(title = groupId, message, NotificationType.WARNING)
+        .notify(project)
       return true
     }
 
     val message =
-      if (apiVersionFromDownloadedJar == CodegenApiVersion.UNKNOWN_VERSION || apiVersionInDevkit > apiVersionFromDownloadedJar) {
+      if (apiVersionInDevkit > apiVersionFromDownloadedJar) {
         DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.newer",
                                            apiVersionInDevkit,
                                            apiVersionFromDownloadedJar)
@@ -233,7 +260,7 @@ object CodeWriter {
     return false
   }
 
-  private fun getApiVersionFromJSON(clazz: Class<*>): String {
+  private fun getApiVersionFromJSON(clazz: Class<*>): ApiVersion? {
     return getApiVersionFromJarFile(clazz, CodegenApiVersion.JSON_RELATIVE_PATH) { jsonPath ->
       URI(jsonPath).toURL().openStream().reader().use { reader ->
         val jsonReader = JsonReaderEx(reader.readText())
@@ -243,7 +270,7 @@ object CodeWriter {
     }
   }
 
-  private fun getApiVersionFromManifest(clazz: Class<*>): String {
+  private fun getApiVersionFromManifest(clazz: Class<*>): ApiVersion? {
     return getApiVersionFromJarFile(clazz, CodegenApiVersion.MANIFEST_RELATIVE_PATH) { manifestPath ->
       URI(manifestPath).toURL().openStream().use {
         val manifest = Manifest(it)
@@ -253,23 +280,34 @@ object CodeWriter {
     }
   }
 
-  private fun getApiVersionFromJarFile(clazz: Class<*>, relativePathToFile: String, readApiVersionFromFile: (String) -> String?): String {
+  private fun getApiVersionFromJarFile(
+    clazz: Class<*>,
+    relativePathToFile: String,
+    readApiVersionFromFile: (String) -> String?,
+  ): ApiVersion? {
     val classPath = "${clazz.name.replace(".", "/")}.class"
     val classAbsolutePath = clazz.getResource("${clazz.simpleName}.class")?.toString() // Absolute path is jar path + class path
-                            ?: error("Absolute path for the class $clazz was not found")
+    if (classAbsolutePath == null) {
+      LOG.warn("Failed to read codegen-api version: Absolute path for the class $clazz was not found")
+      return null
+    }
 
     val fileAbsolutePath = classAbsolutePath.replace(classPath, relativePathToFile)
 
-    val apiVersion: String?
+    var apiVersion: ApiVersion? = null
     try {
-      apiVersion = readApiVersionFromFile(fileAbsolutePath)
+      val stringVersion = readApiVersionFromFile(fileAbsolutePath)
+      if (stringVersion != null) {
+        val (major, minor, patch) = stringVersion.split(".", "-").take(3).map { it.toInt() }
+        apiVersion = ApiVersion(major, minor, patch)
+      }
     }
-    catch (e: IOException) {
-      LOG.info("Failed to read codegen-api version from file \"$fileAbsolutePath\": " + e.message)
-      return CodegenApiVersion.UNKNOWN_VERSION
+    catch (e: Exception) {
+      LOG.warn("Failed to read codegen-api version from file \"$fileAbsolutePath\": " + e.message)
+      return null
     }
 
-    return apiVersion ?: CodegenApiVersion.UNKNOWN_VERSION
+    return apiVersion
   }
 
   private fun generate(
@@ -458,7 +496,5 @@ object CodeWriter {
     const val MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF"
 
     const val ATTRIBUTE_NAME = "Codegen-Api-Version"
-
-    const val UNKNOWN_VERSION = "unknown version"
   }
 }
