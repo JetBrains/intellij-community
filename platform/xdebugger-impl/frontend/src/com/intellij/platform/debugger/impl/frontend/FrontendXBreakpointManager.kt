@@ -27,6 +27,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
@@ -78,11 +79,11 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val breakpointsChangedWithReplay = breakpointsChanged.shareIn(cs, SharingStarted.Eagerly, replay = 1)
 
-  private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
+  private val breakpoints: ConcurrentMap<XBreakpointId, FrontendXBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
-  private val lineBreakpointManager = XLineBreakpointManager(project, this)
+  private val lineBreakpointManager = XLineBreakpointManager<FrontendXLineBreakpointProxy>(project, this)
 
   private val lineBreakpointVisualizationManager = FrontendXLineBreakpointVisualizationManager(project, cs, lineBreakpointManager)
 
@@ -100,6 +101,8 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   override val dependentBreakpointManager: XDependentBreakpointManagerProxy =
     FrontendXDependentBreakpointManagerProxy(project, cs, breakpointById = {
       breakpoints[it]
+    }, onDependencyChanged = {
+      breakpoints[it]?.dependencyChanged()
     })
 
   override val inlineBreakpointsCache: InlineBreakpointsCache = FrontendInlineBreakpointsCache(project, cs, this)
@@ -151,7 +154,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
             }
             is XBreakpointEvent.BreakpointPresentationUpdated -> {
               log.debug { "Breakpoint presentation update from backend: ${event.breakpointId}" }
-              val breakpoint = breakpoints[event.breakpointId] as? FrontendXBreakpointProxy
+              val breakpoint = breakpoints[event.breakpointId]
               if (breakpoint != null) {
                 breakpoint.updatePresentation(event.customPresentation, event.currentSessionCustomPresentation)
               } else {
@@ -212,7 +215,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)
     newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
-      if (newBreakpoint is XLineBreakpointProxy) {
+      if (newBreakpoint is FrontendXLineBreakpointProxy) {
         lineBreakpointVisualizationManager.breakpointChanged(newBreakpoint)
       }
       DebuggerUIUtil.notifyBreakpointAttachments(newBreakpoint)
@@ -292,7 +295,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     breakpointIdsRemovedLocally.add(breakpointId)
     val removedBreakpoint = breakpoints.remove(breakpointId)
 
-    if (trigger == BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED && removedBreakpoint is XLineBreakpointProxy) {
+    if (trigger == BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED && removedBreakpoint is FrontendXLineBreakpointProxy) {
       for (attachment in removedBreakpoint.attachments) {
         attachment.breakpointRemoved()
       }
@@ -340,7 +343,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     return breakpoints.values.toList()
   }
 
-  override fun getLineBreakpointManager(): XLineBreakpointManager {
+  override fun getLineBreakpointManager(): XLineBreakpointManagerProxy {
     return lineBreakpointManager
   }
 
@@ -420,7 +423,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointVerticalPlacement): List<XLineBreakpointProxy> {
-    return breakpoints.values.filterIsInstance<XLineBreakpointProxy>().filter {
+    return breakpoints.values.filterIsInstance<FrontendXLineBreakpointProxy>().filter {
       it.type == type && it.getFile() == file && it.getLine() == line &&
       it.getPlacement() == placement
     }

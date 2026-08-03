@@ -51,12 +51,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachmentNotifier;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
@@ -441,10 +440,8 @@ public final class DebuggerUIUtil {
 
   @ApiStatus.Internal
   public static void notifyBreakpointAttachments(@NotNull XBreakpointProxy breakpoint) {
-    if (breakpoint instanceof XLineBreakpointProxy breakpointProxy) {
-      for (XBreakpointAttachment attachment : breakpointProxy.getAttachments()) {
-        attachment.breakpointChanged();
-      }
+    if (breakpoint instanceof XBreakpointAttachmentNotifier notifier) {
+      notifier.notifyBreakpointAttachments();
     }
   }
 

@@ -153,17 +153,12 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
 
-  override fun dispose() {
-    breakpoint.dispose()
-  }
-
   override fun createGutterIconRenderer(): GutterIconRenderer? {
     return breakpoint.createGutterIconRenderer()
   }
 
   override fun getGutterIconRenderer(): GutterIconRenderer? {
-    val lineBreakpoint = breakpoint as? XLineBreakpointImpl<*> ?: return null
-    return lineBreakpoint.highlighter?.getGutterIconRenderer()
+    return null
   }
 
   override fun equals(other: Any?): Boolean {

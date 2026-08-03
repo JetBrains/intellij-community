@@ -27,9 +27,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerUtil
@@ -51,10 +48,9 @@ import org.jetbrains.annotations.TestOnly
 private data class UpdateUICallback(val callOnUpdate: Runnable)
 
 @ApiStatus.Internal
-class XBreakpointVisualRepresentation(
+class XBreakpointVisualRepresentation internal constructor(
   cs: CoroutineScope,
-  private val myBreakpoint: XLightLineBreakpointProxy,
-  private val myBreakpointManager: XBreakpointManagerProxy,
+  private val myBreakpoint: FrontendXLineBreakpointVisualizable,
 ) {
   private val myProject: Project = myBreakpoint.project
   private val channel = Channel<UpdateUICallback>(Channel.UNLIMITED)
@@ -87,7 +83,7 @@ class XBreakpointVisualRepresentation(
     }
   }
 
-  var rangeMarker: RangeMarker? = null
+  internal var rangeMarker: RangeMarker? = null
     private set
 
   val highlighter: RangeHighlighter?
@@ -163,7 +159,7 @@ class XBreakpointVisualRepresentation(
   private fun getBreakpointAttributes(): TextAttributes? {
     var attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES)
 
-    if (!myBreakpoint.isEnabled() || (myBreakpoint as? XBreakpointProxy)?.getSuspendPolicy() == SuspendPolicy.NONE) {
+    if (!myBreakpoint.isEnabled() || (myBreakpoint as? FrontendXBreakpointProxy)?.getSuspendPolicy() == SuspendPolicy.NONE) {
       attributes = attributes.clone()
       attributes.backgroundColor = null
     }
@@ -213,7 +209,7 @@ class XBreakpointVisualRepresentation(
     return document
   }
 
-  fun removeHighlighter() {
+  internal fun removeHighlighter() {
     val marker = rangeMarker ?: return
     rangeMarker = null
     DebuggerUIUtil.invokeLater {
@@ -230,7 +226,7 @@ class XBreakpointVisualRepresentation(
     redrawInlineInlays(myBreakpoint.getFile(), myBreakpoint.getLine())
   }
 
-  fun redrawInlineInlays(file: VirtualFile?, line: Int) {
+  internal fun redrawInlineInlays(file: VirtualFile?, line: Int) {
     if (file == null) return
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
@@ -242,7 +238,7 @@ class XBreakpointVisualRepresentation(
   }
 
   @TestOnly
-  fun installRangeMarkerForTest(rangeMarker: RangeMarker) {
+  internal fun installRangeMarkerForTest(rangeMarker: RangeMarker) {
     this.rangeMarker = rangeMarker
   }
 

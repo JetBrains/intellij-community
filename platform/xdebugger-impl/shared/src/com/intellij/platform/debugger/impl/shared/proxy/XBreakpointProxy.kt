@@ -89,8 +89,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
   fun isDisposed(): Boolean
 
-  fun dispose()
-
   fun createGutterIconRenderer(): GutterIconRenderer?
   fun getGutterIconRenderer(): GutterIconRenderer?
 

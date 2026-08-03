@@ -42,8 +42,6 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -55,21 +53,25 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
+
+@ApiStatus.Internal
+sealed interface FrontendXLineBreakpointVisualizable : XLightLineBreakpointProxy {
+  val visualRepresentation: XBreakpointVisualRepresentation
+}
 
 internal class FrontendXLineBreakpointVisualizationManager(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  private val manager: XLineBreakpointManager
+  private val manager: XLineBreakpointManager<FrontendXLineBreakpointProxy>,
 ) {
   private val cs = coroutineScope.childScope("XLineBreakpointVisualizationManager")
   private val breakpointUpdateQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
@@ -90,8 +92,6 @@ internal class FrontendXLineBreakpointVisualizationManager(
       editorEventMulticaster.addDocumentListener(MyDocumentListener(), disposable)
       editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), disposable)
       editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), disposable)
-
-      busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
 
       Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
@@ -132,17 +132,14 @@ internal class FrontendXLineBreakpointVisualizationManager(
     if (breakpoints.isEmpty() || ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
-    SlowOperations.knownIssue("IJPL-162343").use {
-      breakpoints.forEach { it.updatePosition() }
-    }
     cleanUpBreakpoints(document)
   }
 
   private fun cleanUpBreakpoints(document: Document) {
     val breakpoints = manager.getDocumentBreakpointProxies(document)
     val file = FileDocumentManager.getInstance().getFile(document)
-    val valid = mutableListOf<XLineBreakpointProxy>()
-    val invalid = mutableListOf<XLineBreakpointProxy>()
+    val valid = mutableListOf<FrontendXLineBreakpointProxy>()
+    val invalid = mutableListOf<FrontendXLineBreakpointProxy>()
     for (breakpoint in breakpoints) {
       val highlighter = breakpoint.getHighlighter()
       if (highlighter == null) {
@@ -186,8 +183,8 @@ internal class FrontendXLineBreakpointVisualizationManager(
   }
 
   private fun removeInvalidBreakpoints(
-    valid: List<XLineBreakpointProxy>,
-    invalid: List<XLineBreakpointProxy>,
+    valid: List<FrontendXLineBreakpointProxy>,
+    invalid: List<FrontendXLineBreakpointProxy>,
     document: Document,
     file: VirtualFile?,
   ) {
@@ -206,12 +203,12 @@ internal class FrontendXLineBreakpointVisualizationManager(
   }
 
   private data class InterLineSaveCandidateBreakpoint(
-    val breakpoint: XLineBreakpointProxy,
+    val breakpoint: FrontendXLineBreakpointProxy,
     val file: VirtualFile,
     val line: Int,
   )
 
-  private fun XLineBreakpointProxy.createInterLineSaveCandidate(
+  private fun FrontendXLineBreakpointProxy.createInterLineSaveCandidate(
     document: Document,
     file: VirtualFile?,
   ): InterLineSaveCandidateBreakpoint? {
@@ -279,7 +276,7 @@ internal class FrontendXLineBreakpointVisualizationManager(
     }
   }
 
-  fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
+  fun breakpointChanged(breakpoint: FrontendXLineBreakpointVisualizable) {
     if (isImmediateUiUpdateAllowed()) {
       updateBreakpointNow(breakpoint)
     }
@@ -288,22 +285,16 @@ internal class FrontendXLineBreakpointVisualizationManager(
     }
   }
 
-  private fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
-    if (slave == null) return
-    val proxy = XDebuggerEntityConverter.asProxy(slave) as? XLineBreakpointProxy ?: return
-    queueBreakpointUpdate(proxy, callOnUpdate)
-  }
-
   // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
-  fun updateBreakpointNow(breakpoint: XLightLineBreakpointProxy) {
+  fun updateBreakpointNow(breakpoint: FrontendXLineBreakpointVisualizable) {
     queueBreakpointUpdate(breakpoint)
     breakpointUpdateQueue.sendFlush()
   }
 
-  private fun queueBreakpointUpdate(breakpoint: XLightLineBreakpointProxy, callOnUpdate: Runnable? = null) {
+  private fun queueBreakpointUpdate(breakpoint: FrontendXLineBreakpointVisualizable, callOnUpdate: Runnable? = null) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
-        breakpoint.doUpdateUI {
+        breakpoint.visualRepresentation.doUpdateUI {
           callOnUpdate?.run()
         }
       }
@@ -314,7 +305,7 @@ internal class FrontendXLineBreakpointVisualizationManager(
     breakpointUpdateQueue.queue(object : Update("all breakpoints") {
       override fun run() {
         for (breakpoint in manager.getAllBreakpoints()) {
-          breakpoint.doUpdateUI()
+          breakpoint.visualRepresentation.doUpdateUI {}
         }
       }
     })
@@ -339,12 +330,12 @@ internal class FrontendXLineBreakpointVisualizationManager(
       val breakpoints = manager.getDocumentBreakpointProxies(document)
       if (breakpoints.isEmpty()) return false
 
-      // fastUpdatePosition leads to the breakpointChanged call,
+      // updatePosition leads to the breakpointChanged call,
       // but for the document update we do not need immediate UI update
       withImmediateUiUpdateDisabled {
         // Update position immediately to avoid races with doUpdateUI
         // We must mark the range as dirty so that no other asynchronous repaint makes breakpoint presentation incorrect.
-        breakpoints.forEach { it.fastUpdatePosition() }
+        breakpoints.forEach { it.updatePosition() }
       }
 
       scheduleDocumentUpdate(document)
@@ -454,16 +445,6 @@ internal class FrontendXLineBreakpointVisualizationManager(
       }
     }
     return false
-  }
-
-  private inner class MyDependentBreakpointListener : XDependentBreakpointListener {
-    override fun dependencySet(slave: XBreakpoint<*>, master: XBreakpoint<*>) {
-      queueBreakpointUpdate(slave)
-    }
-
-    override fun dependencyCleared(breakpoint: XBreakpoint<*>?) {
-      queueBreakpointUpdate(breakpoint)
-    }
   }
 
   private inner class MyEditorColorsListener : EditorColorsListener {

@@ -179,6 +179,10 @@ internal open class FrontendXBreakpointProxy(
     listener?.invoke()
   }
 
+  internal fun dependencyChanged() {
+    onBreakpointChange()
+  }
+
   override fun getDisplayText(): String = currentState.displayText
 
   override fun getShortText(): @NlsSafe String {
@@ -377,7 +381,7 @@ internal open class FrontendXBreakpointProxy(
     }
   }
 
-  override fun dispose() {
+  fun dispose() {
     breakpointRequestCounter.remove(id)
     cs.cancel()
     listener = null

@@ -36,3 +36,11 @@ interface XBreakpointAttachment {
    */
   fun breakpointRemoved() {}
 }
+
+/**
+ * Optional capability for breakpoint proxies that own attachments.
+ */
+@ApiStatus.Internal
+interface XBreakpointAttachmentNotifier {
+  fun notifyBreakpointAttachments()
+}

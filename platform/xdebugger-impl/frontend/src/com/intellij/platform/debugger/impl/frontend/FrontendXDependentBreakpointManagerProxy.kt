@@ -17,6 +17,7 @@ internal class FrontendXDependentBreakpointManagerProxy(
   private val project: Project,
   cs: CoroutineScope,
   private val breakpointById: (XBreakpointId) -> XBreakpointProxy?,
+  private val onDependencyChanged: (XBreakpointId) -> Unit,
 ) : XDependentBreakpointManagerProxy {
   private val dependantBreakpoints = mutableMapOf<XBreakpointId, XBreakpointDependencyDto>()
   private val sequentialExecutor = SequentialRpcRequestsExecutor.create(cs)
@@ -27,21 +28,23 @@ internal class FrontendXDependentBreakpointManagerProxy(
         val breakpointsDependencies = XDependentBreakpointManagerApi.getInstance().breakpointDependencies(project.projectId())
 
         for (dto in breakpointsDependencies.initialDependencies) {
-          dependantBreakpoints[dto.child] = dto
+          updateDependency(dto)
         }
 
         breakpointsDependencies.dependencyEvents.toFlow().collect {
           when (it) {
             is XBreakpointDependencyEvent.Add -> {
-              dependantBreakpoints[it.dependency.child] = it.dependency
+              updateDependency(it.dependency)
             }
             is XBreakpointDependencyEvent.Remove -> {
-              dependantBreakpoints.remove(it.child)
+              removeDependency(it.child)
             }
           }
         }
       }, stateReset = {
+        val affectedBreakpoints = dependantBreakpoints.keys.toList()
         dependantBreakpoints.clear()
+        affectedBreakpoints.forEach(onDependencyChanged)
       })
     }
   }
@@ -55,7 +58,7 @@ internal class FrontendXDependentBreakpointManagerProxy(
   }
 
   override fun clearMasterBreakpoint(breakpoint: XBreakpointProxy) {
-    dependantBreakpoints.remove(breakpoint.id)
+    removeDependency(breakpoint.id)
 
     sequentialExecutor.execute {
       XDependentBreakpointManagerApi.getInstance().clearMasterBreakpoint(breakpoint.id)
@@ -63,13 +66,25 @@ internal class FrontendXDependentBreakpointManagerProxy(
   }
 
   override fun setMasterBreakpoint(breakpoint: XBreakpointProxy, masterBreakpoint: XBreakpointProxy, selected: Boolean) {
-    dependantBreakpoints[breakpoint.id] = XBreakpointDependencyDto(
+    updateDependency(XBreakpointDependencyDto(
       child = breakpoint.id,
       parent = masterBreakpoint.id,
       isLeaveEnabled = selected,
-    )
+    ))
     sequentialExecutor.execute {
       XDependentBreakpointManagerApi.getInstance().setMasterDependency(breakpoint.id, masterBreakpoint.id, selected)
+    }
+  }
+
+  private fun updateDependency(dependency: XBreakpointDependencyDto) {
+    if (dependantBreakpoints.put(dependency.child, dependency) != dependency) {
+      onDependencyChanged(dependency.child)
+    }
+  }
+
+  private fun removeDependency(breakpointId: XBreakpointId) {
+    if (dependantBreakpoints.remove(breakpointId) != null) {
+      onDependencyChanged(breakpointId)
     }
   }
 }

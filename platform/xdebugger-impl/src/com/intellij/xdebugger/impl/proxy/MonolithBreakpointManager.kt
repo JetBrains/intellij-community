@@ -64,7 +64,7 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     return breakpointManager.allBreakpoints.map { it.asProxy() }
   }
 
-  override fun getLineBreakpointManager(): XLineBreakpointManager {
+  override fun getLineBreakpointManager(): XLineBreakpointManager<XLineBreakpointProxy> {
     return breakpointManager.lineBreakpointManager
   }
 

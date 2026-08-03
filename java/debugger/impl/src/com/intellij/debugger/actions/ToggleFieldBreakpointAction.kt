@@ -38,12 +38,12 @@ class ToggleFieldBreakpointAction : AnAction(), ActionRemoteBehaviorSpecificatio
     project.service<ToggleFieldBreakpointActionService>().cs.launch {
       val place = getPlace(e) ?: return@launch
       withContext(Dispatchers.EDT) {
-        toggleFieldBreakpoint(project, place, e)
+        toggleFieldBreakpoint(project, place)
       }
     }
   }
 
-  private fun toggleFieldBreakpoint(project: Project, place: SourcePosition, e: AnActionEvent) {
+  private fun toggleFieldBreakpoint(project: Project, place: SourcePosition) {
     val document = place.getFile().getViewProvider().getDocument() ?: return
     val debuggerManager = DebuggerManagerEx.getInstanceEx(project)
     val manager = debuggerManager.getBreakpointManager()
@@ -51,9 +51,7 @@ class ToggleFieldBreakpointAction : AnAction(), ActionRemoteBehaviorSpecificatio
     val breakpoint = if (offset >= 0) manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) else null
 
     if (breakpoint == null) {
-      val fieldBreakpoint = manager.addFieldBreakpoint(document, offset) ?: return
-      val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-      manager.editBreakpoint(fieldBreakpoint, editor)
+      manager.addFieldBreakpoint(document, offset)
     }
     else {
       manager.removeBreakpoint(breakpoint)

@@ -5,8 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
@@ -27,10 +25,10 @@ internal class FrontendXLightLineBreakpoint(
   override val type: XLineBreakpointTypeProxy,
   private val installationInfo: XLineBreakpointInstallationInfo,
   private val breakpointManager: FrontendXBreakpointManager,
-) : XLightLineBreakpointProxy {
+) : FrontendXLineBreakpointVisualizable {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, breakpointManager)
+  override val visualRepresentation = XBreakpointVisualRepresentation(cs, this)
 
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
@@ -79,10 +77,6 @@ internal class FrontendXLightLineBreakpoint(
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
     return FrontendXLightBreakpointGutterIconRenderer(this)
-  }
-
-  override fun doUpdateUI(callOnUpdate: () -> Unit) {
-    visualRepresentation.doUpdateUI(callOnUpdate)
   }
 
   private class FrontendXLightBreakpointGutterIconRenderer(
