@@ -445,13 +445,13 @@ public final class PlatformTestUtil {
   public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
     var startTimeMillis = System.currentTimeMillis();
-    while (busyCondition.get()) {
-      assertMaxWaitTimeSince(startTimeMillis);
-      TimeoutUtil.sleep(5);
-      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-        UIUtil.dispatchAllInvocationEvents();
-      });
-    }
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      while (busyCondition.get()) {
+        assertMaxWaitTimeSince(startTimeMillis);
+        TimeoutUtil.sleep(5);
+          UIUtil.dispatchAllInvocationEvents();
+      }
+    });
   }
 
   public static void waitForCallback(@NotNull ActionCallback callback) {
@@ -479,26 +479,31 @@ public final class PlatformTestUtil {
   private static @Nullable <T> T waitForPromise(Promise<T> promise, long timeoutMillis, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
     var start = System.currentTimeMillis();
-    while (true) {
-      if (promise.getState() == Promise.State.PENDING) {
-        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+    Ref<T> result = new Ref<>();
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      while (true) {
+        if (promise.getState() == Promise.State.PENDING) {
           UIUtil.dispatchAllInvocationEvents();
-        });
-      }
-      try {
-        return promise.blockingGet(20, TimeUnit.MILLISECONDS);
-      }
-      catch (TimeoutException ignore) { }
-      catch (Exception e) {
-        if (assertSucceeded) {
-          throw new AssertionError(e);
         }
-        else {
-          return null;
+        try {
+          result.set(promise.blockingGet(20, TimeUnit.MILLISECONDS));
+          return;
         }
+        catch (TimeoutException ignore) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        catch (Exception e) {
+          if (assertSucceeded) {
+            throw new AssertionError(e);
+          }
+          else {
+            return;
+          }
+        }
+        assertMaxWaitTimeSince(start, timeoutMillis);
       }
-      assertMaxWaitTimeSince(start, timeoutMillis);
-    }
+    });
+    return result.get();
   }
 
   public static <T> T waitForFuture(@NotNull Future<T> future) {

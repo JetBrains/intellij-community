@@ -515,14 +515,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       });
       try {
-        while (!future.isDone()) {
-          try {
-            future.get(10, TimeUnit.MILLISECONDS);
-          }
-          catch (TimeoutException ignored) {
-          }
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        }
+        PlatformTestUtil.waitForFuture(future);
         future.get();
       }
       catch (InterruptedException | ExecutionException e) {

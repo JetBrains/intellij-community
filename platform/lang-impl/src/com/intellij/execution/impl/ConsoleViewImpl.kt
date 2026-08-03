@@ -536,7 +536,9 @@ open class ConsoleViewImpl protected constructor(
     try {
       while (true) {
         try {
-          future[10, TimeUnit.MILLISECONDS]
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+            future[10, TimeUnit.MILLISECONDS]
+          }
           break
         }
         catch (_: TimeoutException) {
