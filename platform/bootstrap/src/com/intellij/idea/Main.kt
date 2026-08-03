@@ -8,7 +8,6 @@ import com.intellij.DynamicBundle
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
@@ -97,7 +96,7 @@ internal fun mainImpl(
     }
   }
   catch (e: Throwable) {
-    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
+    StartupErrorReporter.processException(e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }
