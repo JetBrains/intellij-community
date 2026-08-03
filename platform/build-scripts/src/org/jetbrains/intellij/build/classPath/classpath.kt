@@ -30,8 +30,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntr
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
-import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.readEntryFromZip
 import org.jetbrains.intellij.build.isWindows
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -289,23 +288,6 @@ internal suspend fun generatePluginClassPath(
   return byteOut.toByteArray()
 }
 
-private fun readPluginXml(file: Path): ByteArray? {
-  var result: ByteArray? = null
-  readZipFile(file) { name, dataProvider ->
-    if (name == PLUGIN_XML_RELATIVE_PATH) {
-      val byteBuffer = dataProvider()
-      val bytes = ByteArray(byteBuffer.remaining())
-      byteBuffer.get(bytes, 0, bytes.size)
-      result = bytes
-      ZipEntryProcessorResult.STOP
-    }
-    else {
-      ZipEntryProcessorResult.CONTINUE
-    }
-  }
-  return result
-}
-
 private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir: Path, pluginDescriptorContent: ByteArray) {
   // the plugin dir as the last item in the list
   out.writeShort(files.size)
@@ -340,7 +322,7 @@ internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<
 
 private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray {
   for ((index, file) in files.withIndex()) {
-    val pluginDescriptorContent = readPluginXml(file)
+    val pluginDescriptorContent = readEntryFromZip(file, PLUGIN_XML_RELATIVE_PATH)
     if (pluginDescriptorContent != null) {
       files.add(0, files.removeAt(index))
       return pluginDescriptorContent

@@ -36,6 +36,25 @@ fun readZipFile(file: Path, entryProcessor: EntryProcessor) {
   }
 }
 
+/**
+ * Returns the content of an entry with a path [entryPath] inside ZIP archive [zipPath] or `null` if no such entry exists.
+ */
+fun readEntryFromZip(zipPath: Path, entryPath: String): ByteArray? {
+  var result: ByteArray? = null
+  readZipFile(zipPath) { currentPath, content ->
+    if (currentPath == entryPath) {
+      val buffer = content()
+      result = ByteArray(buffer.remaining())
+      buffer.get(result)
+      ZipEntryProcessorResult.STOP
+    }
+    else {
+      ZipEntryProcessorResult.CONTINUE
+    }
+  }
+  return result
+}
+
 suspend fun suspendAwareReadZipFile(file: Path, entryProcessor: suspend (String, () -> ByteBuffer) -> Unit) {
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
