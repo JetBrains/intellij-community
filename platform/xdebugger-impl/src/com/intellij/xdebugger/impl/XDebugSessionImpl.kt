@@ -41,8 +41,10 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionPausedInfo
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabAbstractInfo
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.shared.UPDATE_EXECUTION_POSITION_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -933,6 +935,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @Deprecated("Update should go via front-end listeners")
   override fun updateExecutionPosition() {
+    UPDATE_EXECUTION_POSITION_REMOTE_TOPIC.sendToClient(myProject, id)
   }
 
   val isTopFrameSelected: Boolean

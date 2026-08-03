@@ -1,12 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.shared.UPDATE_EXECUTION_POSITION_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.platform.rpc.topics.ProjectRemoteTopic
+import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.xdebugger.impl.XSourceKind
@@ -57,6 +62,17 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
 
   override fun activeSessionChanged(previousSession: XDebugSessionProxy?, currentSession: XDebugSessionProxy?) {
     updateAfterActiveSessionChanged(currentSession, project)
+  }
+}
+
+internal class UpdateExecutionPositionRemoteTopicListener : ProjectRemoteTopicListener<XDebugSessionId> {
+  override val topic: ProjectRemoteTopic<XDebugSessionId> = UPDATE_EXECUTION_POSITION_REMOTE_TOPIC
+
+  override fun handleEvent(project: Project, event: XDebugSessionId) {
+    val session = XDebugManagerProxy.getInstance().findSessionProxy(project, event) ?: return
+    runInEdt {
+      updateExecutionPosition(session)
+    }
   }
 }
 
