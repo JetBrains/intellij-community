@@ -90,6 +90,7 @@ private val ignoredContributors = setOf(
   "com.intellij.lang.properties.references.PropertiesCompletionContributor",  // properties from */src/main/resources/*.properties file
   "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor", // interface, ifn, fun, etc.
   "org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor", // keywords in dumb mode
+  "com.android.tools.idea.gradle.completions.GradleDependencyCompletionContributor", // Android dependency coordinate suggestions
 )
 
 private fun getContributorClass(lookupElement: LookupElement): Class<CompletionContributor>? =
