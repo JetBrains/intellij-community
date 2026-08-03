@@ -31,12 +31,12 @@ import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrappe
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -91,13 +91,15 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
           ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
         val presentableText = legacyItem.presentation.presentableText
+        val isDirectory = PSIPresentationBgRendererWrapper.toPsi(legacyItem.item) is PsiDirectory
 
         // If the item main presentation text equals the query, we make it exact match as well
         val isExactMatch = isExactMatch(isExactMatch,
                                         presentableText = presentableText,
                                         inputQuery = inputQuery,
                                         isFile = isFile,
-                                        inputQueryHasNoExtension = hasNoExtension)
+                                        inputQueryHasNoExtension = hasNoExtension,
+                                        isDirectory = isDirectory)
 
         return collector.put(SeTargetItem(legacyItem,
                                           matchers,
@@ -176,16 +178,16 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   companion object {
-    @TestOnly
     fun isExactMatch(
       isExactMatchFromItem: Boolean,
       presentableText: String,
       inputQuery: String,
       isFile: Boolean,
       inputQueryHasNoExtension: Boolean,
+      isDirectory: Boolean,
     ): Boolean =
       isExactMatchFromItem || // IJPL-133399, IJPL-251596
-      (presentableText == inputQuery) || // IJPL-55665
-      (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery.")) // IJPL-55732, IJPL-156298
+      !isDirectory && ((presentableText == inputQuery) || // IJPL-55665
+                       (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery."))) // IJPL-55732, IJPL-156298
   }
 }

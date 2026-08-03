@@ -64,6 +64,15 @@ class SeTargetsProviderDelegateExactMatchTest {
     assertFalse(isExactMatch(presentableText = "", query = "Foo", isFile = true))
   }
 
+  @Test
+  fun directoryCantBeExactMatchOnlyByName() {
+    assertFalse(isExactMatch(presentableText = "Foo", query = "Foo", isFile = true, isDirectory = true))
+    assertFalse(isExactMatch(presentableText = "Foo.bar", query = "Foo", isFile = true, isDirectory = true))
+
+    assertTrue(isExactMatch(presentableText = "Foo", query = "Foo", fromItem = true, isDirectory = true))
+    assertTrue(isExactMatch(presentableText = "Unrelated", query = "Foo", fromItem = true, isDirectory = true))
+  }
+
   /**
    * [queryHasNoExtension] defaults to the same expression the production caller uses, so that the cases above exercise
    * realistic argument combinations unless they override it on purpose.
@@ -74,11 +83,13 @@ class SeTargetsProviderDelegateExactMatchTest {
     fromItem: Boolean = false,
     isFile: Boolean = false,
     queryHasNoExtension: Boolean = !query.contains('.'),
+    isDirectory: Boolean = false,
   ): Boolean = SeTargetsProviderDelegate.isExactMatch(
     isExactMatchFromItem = fromItem,
     presentableText = presentableText,
     inputQuery = query,
     isFile = isFile,
     inputQueryHasNoExtension = queryHasNoExtension,
+    isDirectory = isDirectory,
   )
 }
