@@ -93,6 +93,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -121,7 +122,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -130,6 +130,15 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineColors;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowBorder;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.caret.CaretAnimationConditions;
+import com.intellij.openapi.editor.impl.caret.CaretAnimationHost;
+import com.intellij.openapi.editor.impl.caret.CaretGeometry;
+import com.intellij.openapi.editor.impl.caret.CaretPresentation;
+import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
+import com.intellij.openapi.editor.impl.caret.EditorCaretMutatorFactory;
+import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings;
+import com.intellij.openapi.editor.impl.caret.model.CaretPlacement;
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -354,8 +363,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
 
-  private final @NotNull EditorCaretRepaintService caretRepaintService = EditorCaretRepaintService.getInstance();
-  private final @NotNull EditorCaretMoveProcessor caretMoveProcessor;
+  private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
   private static final Integer STICKY_PANEL_LAYER = 200;
@@ -557,6 +565,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myScrollingToCaret;
 
   private boolean myIsStickyLinePainting;
+
   private boolean myPaintingDumbBuffer;
   private BufferedImage myDumbBuffer;
 
@@ -645,7 +654,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretCursor = new CaretCursor();
-    caretMoveProcessor = EditorCaretMoveProcessorFactory.createProcessor(this);
+    caretMutator = EditorCaretMutatorFactory.createMutator(createCaretAnimationHost(), toString());
+    Disposer.register(myDisposable, caretMutator);
+    myDocument.addDocumentListener(new DocumentListener() {
+      @Override
+      public void bulkUpdateStarting(@NotNull Document document) {
+        caretMutator.bulkUpdateStarting();
+      }
+    }, myDisposable);
 
     myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
 
@@ -874,7 +890,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                             " virtualSpace=" + EditorCoreUtil.inVirtualSpace(this, myLastMousePressedLocation) +
                             " opposite=" + (e.getOppositeComponent() == null ? "null" : e.getOppositeComponent().getClass().getSimpleName()));
     }
-    myCaretCursor.activate();
+    myCaretCursor.setVisible(true);
     gainedFocus.set(true);
 
     for (Caret caret : myCaretModel.getAllCarets()) {
@@ -1454,9 +1470,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
-    caretRepaintService.setBlinking(mySettings.isBlinkCaret());
-    caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-    caretRepaintService.restart();
+    caretMutator.reinitSettings();
 
     myView.reinitSettings();
     myFoldingModel.refreshSettings();
@@ -1541,7 +1555,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(mySoftWrapModel);
       Disposer.dispose(myView);
       clearCaretThread();
-      caretMoveProcessor.clear();
 
       myFocusListeners.clear();
       myMouseListeners.clear();
@@ -1569,11 +1582,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void clearCaretThread() {
-    synchronized (caretRepaintService) {
-      if (caretRepaintService.getEditor() == this) {
-        caretRepaintService.setEditor(null);
-      }
-    }
+    caretMutator.setBlinking(false);
   }
 
   private void initComponent() {
@@ -2027,10 +2036,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @TestOnly
   public void setCaretActive() {
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.restart();
-    }
+    caretMutator.setBlinking(true);
   }
 
   // optimization: do not do column calculations here since we are interested in line number only
@@ -3533,21 +3539,88 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void restartCaretBlinking() {
-    synchronized (caretRepaintService) {
-      caretRepaintService.restart();
-    }
+    caretMutator.reinitSettings();
   }
 
   void updateCaretCursor() {
     myUpdateCursor = true;
-    if (myCaretCursor.myIsShown) {
-      myCaretCursor.myStartTime = System.currentTimeMillis();
+    if (myCaretCursor.isActive()) {
+      myCaretCursor.setStartTime(System.currentTimeMillis());
     }
     else {
-      myCaretCursor.myIsShown = true;
-      myCaretCursor.myBlinkOpacity = 1.0f;
+      myCaretCursor.setFullOpacity();
       myCaretCursor.repaint();
     }
+  }
+
+  private @NotNull CaretAnimationHost createCaretAnimationHost() {
+    return new CaretAnimationHost(
+      createCaretGeometry(),
+      createCaretPresentation(),
+      createCaretAnimationConditions()
+    );
+  }
+
+  private @NotNull CaretGeometry createCaretGeometry() {
+    return new CaretGeometry() {
+      @Override
+      public @NotNull List<CaretPlacement> placements() {
+        return EditorCaretAdapter.caretPlacements(EditorImpl.this);
+      }
+
+      @Override
+      public CaretRectangle @NotNull [] currentLocations() {
+        return myCaretCursor.locations();
+      }
+    };
+  }
+
+  private @NotNull CaretPresentation createCaretPresentation() {
+    return new CaretPresentation() {
+      @Override
+      public void showAt(CaretRectangle @NotNull [] locations) {
+        myCaretCursor.setPositions(locations);
+      }
+
+      @Override
+      public void fadeTo(float opacity) {
+        myCaretCursor.setBlinkOpacity(opacity);
+      }
+
+      @Override
+      public void repaint(CaretRectangle @NotNull [] locations) {
+        myCaretCursor.repaint(locations);
+      }
+
+      @Override
+      public void repaintCurrent() {
+        myCaretCursor.repaint();
+      }
+    };
+  }
+
+  private @NotNull CaretAnimationConditions createCaretAnimationConditions() {
+    return new CaretAnimationConditions() {
+      @Override
+      public boolean isCaretShown() {
+        return myCaretCursor.isCaretShown();
+      }
+
+      @Override
+      public boolean isFrozen() {
+        return isDisposed() || myDocument.isInBulkUpdate();
+      }
+
+      @Override
+      public long millisSinceActivity() {
+        return System.currentTimeMillis() - myCaretCursor.getStartTime();
+      }
+
+      @Override
+      public @NotNull CaretAnimationSettings settings() {
+        return EditorCaretAdapter.caretAnimationSettings(mySettings, shouldDisableAnimations());
+      }
+    };
   }
 
   boolean shouldDisableAnimations() {
@@ -3564,35 +3637,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setCursorPosition() {
-    caretMoveProcessor.invalidateStaleCarets();
     if (shouldSetCursorPositionImmediately()) {
-      caretMoveProcessor.setCursorPositionImmediately();
+      caretMutator.caretMovedImmediately();
     } else {
-      caretMoveProcessor.setCursorPosition();
+      caretMutator.caretMoved();
     }
   }
 
   @Override
   public boolean setCaretVisible(boolean b) {
-    return EditorThreading.compute(() -> {
-      boolean old = myCaretCursor.isActive();
-      if (b) {
-        myCaretCursor.activate();
-      }
-      else {
-        myCaretCursor.passivate();
-      }
-      return old;
-    });
+    return EditorThreading.compute(() -> myCaretCursor.setVisible(b));
   }
 
   @Override
   public boolean setCaretEnabled(boolean enabled) {
-    return EditorThreading.compute(() -> {
-      boolean old = myCaretCursor.isEnabled();
-      myCaretCursor.setEnabled(enabled);
-      return old;
-    });
+    return EditorThreading.compute(() -> myCaretCursor.setEnabled(enabled));
   }
 
   @Override
@@ -3665,6 +3724,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   final class CaretCursor {
+    private final Object myLock = new Object();
+
     private CaretRectangle @NotNull [] myLocations = {CaretRectangle.PLACEHOLDER};
     private boolean myEnabled = true;
 
@@ -3673,78 +3734,76 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long myStartTime;
 
     public boolean isEnabled() {
-      return myEnabled;
+      synchronized (myLock) {
+        return myEnabled;
+      }
     }
 
-    public void setEnabled(boolean enabled) {
-      myEnabled = enabled;
+    public boolean setEnabled(boolean enabled) {
+      synchronized (myLock) {
+        boolean old = myEnabled;
+        myEnabled = enabled;
+        return old;
+      }
     }
 
-    private void activate() {
-      boolean blink = mySettings.isBlinkCaret();
-      int blinkPeriod = mySettings.getCaretBlinkPeriod();
-      synchronized (caretRepaintService) {
-        caretRepaintService.setEditor(EditorImpl.this);
-        caretRepaintService.setBlinking(blink);
-        caretRepaintService.setBlinkPeriod(blinkPeriod);
-        myIsShown = true;
-        myBlinkOpacity = 1.0f;
-        caretRepaintService.restart();
+    private boolean setVisible(boolean visible) {
+      synchronized (myLock) {
+        boolean old = myIsShown;
+        myIsShown = visible;
+
+        if (visible) {
+          myBlinkOpacity = 1.0f;
+          myStartTime = System.currentTimeMillis();
+        }
+
+        caretMutator.setBlinking(visible);
+        return old;
       }
     }
 
     public boolean isActive() {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         return myIsShown;
       }
     }
 
-    void setActive(boolean isActive) {
-      synchronized (caretRepaintService) {
-        myIsShown = isActive;
-      }
-    }
-
     void setFullOpacity() {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         myIsShown = true;
         myBlinkOpacity = 1.0f;
       }
     }
 
-    private void passivate() {
-      synchronized (caretRepaintService) {
-        myIsShown = false;
-      }
-    }
-
     float getBlinkOpacity() {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         return myBlinkOpacity;
       }
     }
 
     void setBlinkOpacity(float opacity) {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         myBlinkOpacity = opacity;
       }
     }
 
     long getStartTime() {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         return myStartTime;
       }
     }
 
     void setStartTime(long startTime) {
-      synchronized (caretRepaintService) {
+      synchronized (myLock) {
         myStartTime = startTime;
       }
     }
 
     void setPositions(CaretRectangle @NotNull [] locations) {
-      myStartTime = System.currentTimeMillis();
-      myLocations = locations;
+      synchronized (myLock) {
+        myStartTime = System.currentTimeMillis();
+        myLocations = locations;
+      }
     }
 
     void repaint() {
@@ -3770,11 +3829,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
+    boolean isCaretShown() {
+      return isEnabled() && isActive() && !isRendererMode() && isEditorInputFocusOwner();
+    }
+
     CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
-      if (onlyIfShown && (!isEnabled() || !isActive() || isRendererMode() || !isEditorInputFocusOwner())) {
+      if (onlyIfShown && !isCaretShown()) {
         return null;
       }
-      return myLocations;
+      return locations();
+    }
+
+    CaretRectangle @NotNull [] locations() {
+      synchronized (myLock) {
+        return myLocations;
+      }
     }
   }
 

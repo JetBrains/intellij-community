@@ -237,10 +237,7 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   void repaintCarets() {
-    CaretRectangle[] locations = myView.getEditor().getCaretLocations(false);
-    if (locations == null) return;
-
-    repaintCarets(locations);
+    repaintCarets(myView.getEditor().getCaretLocations(false));
   }
 
   void repaintCarets(CaretRectangle @NotNull [] locations) {
