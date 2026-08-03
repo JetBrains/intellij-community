@@ -86,6 +86,7 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.SystemPropertyRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
@@ -130,6 +131,11 @@ class DynamicPluginsTest {
   @Rule
   @JvmField
   val runInEdt = EdtRule()
+
+  @Rule
+  @JvmField
+  // Synthetic plugins in this test do not contribute index extensions.
+  val skipIndexReload = SystemPropertyRule("intellij.indexes.skip.reload.on.plugin.load.unload", "true")
 
   private fun loadPluginWithText(
     pluginSpec: PluginSpec,
