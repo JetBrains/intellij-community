@@ -19,24 +19,22 @@ class DataSourcesAndDriversDialogUi(data: ComponentData) : DialogUiComponent(dat
 
   fun testConnection() = testConnectionButton.click()
 
-  fun isConnectionSuccessful(driverNameContains: String): Boolean =
-    x("//div[@class='GrayLabel'][contains(@visible_text, '$driverNameContains')]").present()
+  fun isConnectionSuccessful(): Boolean = hasSubtext("Succeeded")
 
-  fun downloadDriverFilesIfPrompted(): Boolean {
-    if (!downloadDriverFilesButton.present()) return false
+  fun waitForSuccessfulConnection(timeout: Duration = 3.minutes) {
+    waitFor("Test Connection succeeded", timeout) { isConnectionSuccessful() }
+  }
+
+  fun downloadDriverFilesIfPrompted(
+    promptTimeout: Duration = 30.seconds,
+    downloadTimeout: Duration = 3.minutes,
+  ): Boolean {
+    val prompted = runCatching {
+      waitFor("'Download Driver Files' prompt to appear", promptTimeout) { downloadDriverFilesButton.present() }
+    }.isSuccess
+    if (!prompted) return false
     downloadDriverFilesButton.click()
+    downloadDriverFilesButton.waitNotFound(downloadTimeout)
     return true
-  }
-
-  fun waitForConnectionResultOrDriverPrompt(driverNameContains: String, timeout: Duration = 30.seconds) {
-    waitFor("Test Connection result or driver download prompt", timeout) {
-      isConnectionSuccessful(driverNameContains) || downloadDriverFilesButton.present()
-    }
-  }
-
-  fun waitForSuccessfulConnection(driverNameContains: String, timeout: Duration = 2.minutes) {
-    waitFor("Connection test succeeded for $driverNameContains", timeout) {
-      isConnectionSuccessful(driverNameContains)
-    }
   }
 }
