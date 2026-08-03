@@ -12,10 +12,4 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
   </extensionPoints>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-
-    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
-    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
-  </extensions>
 </idea-plugin>
