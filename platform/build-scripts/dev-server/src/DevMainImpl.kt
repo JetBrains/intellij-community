@@ -4,22 +4,15 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
-import com.intellij.platform.buildData.productInfo.ProductInfoData
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
-import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.dev.readCustomCommand
+import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
-import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.pathString
 
 data class BuildDevInfo(
   @JvmField val mainClassName: String,
@@ -109,10 +102,8 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
                            VmProperties(mapOf(PathManager.PROPERTY_HOME_PATH to runDir.invariantSeparatorsPathString))
 
     if (System.getProperty("idea.dev.mode.custom.command", "false").toBoolean()) {
-      val infoData = loadProductInfo(runDir)
-      val launch = infoData.launch.single() // we do not generate multiarchitecture builds
       val firstArg = rawArgs.first()
-      val command = launch.customCommands.find { it.commands.contains(firstArg) } ?: error("No custom command found for $firstArg")
+      val command = readCustomCommand(runDir, firstArg) ?: error("No custom command found for $firstArg")
       val commandSystemProperties = getCommandSystemProperties(runDir, command)
 
       BuildDevInfo(
@@ -131,30 +122,14 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
   }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-@ApiStatus.Internal
-private fun loadProductInfo(runDir: Path): ProductInfoData {
-  val json = Json { ignoreUnknownKeys = true }
-
-  val productInfoPath = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
-  return productInfoPath.inputStream().buffered().use {
-    json.decodeFromStream(ProductInfoData.serializer(), it)
-  }
-}
-
 private fun getCommandSystemProperties(runDir: Path, command: CustomCommandLaunchData): VmProperties {
-  val macroName = when (OsFamily.currentOs) {
-    OsFamily.WINDOWS -> "%IDE_HOME%"
-    OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
-    OsFamily.LINUX -> $$"$IDE_HOME"
-  }
-  val result = command.additionalJvmArguments.asSequence()
+  val result = command.resolveAdditionalJvmArguments(runDir).asSequence()
     .filter { it.startsWith("-D") }
     .map { it.removePrefix("-D") }
     .associateBy(
       { it.substringBefore('=') },
       {
-        val result = it.substringAfter('=', "").replace(macroName, runDir.pathString)
+        val result = it.substringAfter('=', "")
         check('$' !in result) { "Unsubstituted macro in JVM argument: $it" }
         result
       })

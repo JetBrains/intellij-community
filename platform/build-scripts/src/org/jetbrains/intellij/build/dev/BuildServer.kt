@@ -3,9 +3,14 @@
 
 package org.jetbrains.intellij.build.dev
 
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
+import com.intellij.platform.buildData.productInfo.ProductInfoData
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
@@ -109,15 +114,44 @@ fun readVmOptions(runDir: Path): List<String> {
   result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
   val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
+  extractAdditionalJvmArguments(productInfoFile).mapTo(result) { resolveIdeHomeMacro(it, runDir) }
+
+  return result
+}
+
+/**
+ * Substitutes the OS-specific `IDE_HOME` macro used in product-info.json JVM arguments with [runDir].
+ */
+private fun resolveIdeHomeMacro(jvmArgument: String, runDir: Path): String {
   val macroName = when (OsFamily.currentOs) {
     OsFamily.WINDOWS -> "%IDE_HOME%"
     OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
     OsFamily.LINUX -> $$"$IDE_HOME"
   }
-  extractAdditionalJvmArguments(productInfoFile).mapTo(result) { it.replace(macroName, runDir.toString()) }
-
-  return result
+  return jvmArgument.replace(macroName, runDir.toString())
 }
+
+/**
+ * Returns the product-info.json `customCommands` entry which handles [command],
+ * or `null` if the build doesn't declare such a command.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@ApiStatus.Internal
+fun readCustomCommand(runDir: Path, command: String): CustomCommandLaunchData? {
+  val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
+  val productInfo = productInfoFile.inputStream().buffered().use {
+    Json { ignoreUnknownKeys = true }.decodeFromStream(ProductInfoData.serializer(), it)
+  }
+  // multi-architecture builds are not generated for dev builds
+  return productInfo.launch.single().customCommands.find { command in it.commands }
+}
+
+/**
+ * [CustomCommandLaunchData.additionalJvmArguments] with the `IDE_HOME` macro resolved against [runDir].
+ */
+@ApiStatus.Internal
+fun CustomCommandLaunchData.resolveAdditionalJvmArguments(runDir: Path): List<String> =
+  additionalJvmArguments.map { resolveIdeHomeMacro(it, runDir) }
 
 // returns IDE installation directory
 suspend fun buildProductInProcess(request: BuildRequest): Path {
