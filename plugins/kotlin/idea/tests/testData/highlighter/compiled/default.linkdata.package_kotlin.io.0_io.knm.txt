@@ -3,20 +3,38 @@
 
 package kotlin.io
 
-<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">print</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_print")
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">print</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
 
 <symbolName descr="null">public</symbolName> fun <symbolName descr="null">print</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.Any?): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">@kotlin.internal.UsedFromCompilerGeneratedCode</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_println")
+<symbolName descr="null">@kotlin.PublishedApi</symbolName>
+<symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName>
+<symbolName descr="null">@kotlin.internal.UsedFromCompilerGeneratedCode</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">printlnToStdErr</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_printlnToStdErr")
+<symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName>
+<symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">printlnToStdErr</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.String): kotlin.Unit { /* compiled code */ }
 
 <symbolName descr="null">public</symbolName> fun <symbolName descr="null">println</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.Any?): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(): kotlin.Unit { /* compiled code */ }
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_println0")
+<symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(): kotlin.Unit { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> fun <symbolName descr="null">readln</symbolName>(): kotlin.String { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.6")
+<symbolName descr="null">public</symbolName> fun <symbolName descr="null">readln</symbolName>(): kotlin.String { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readlnOrNull</symbolName>(): kotlin.String? { /* compiled code */ }
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName>(<symbolName descr="null">version =</symbolName> "1.6")
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_readlnOrNull")
+<symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName>
+<symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readlnOrNull</symbolName>(): kotlin.String? { /* compiled code */ }
 
-<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">@kotlin.Deprecated</symbolName> <symbolName descr="null">@kotlin.DeprecatedSinceKotlin</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readLine</symbolName>(): kotlin.String? { /* compiled code */ }
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName>(<symbolName descr="null">callee =</symbolName> "Kotlin_io_Console_readLine")
+<symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName>
+<symbolName descr="null">@kotlin.Deprecated</symbolName>(<symbolName descr="null">message =</symbolName> "Use `readln()` instead of `readLine()!!`, and `readlnOrNull()` instead of `readLine()`.")
+<symbolName descr="null">@kotlin.DeprecatedSinceKotlin</symbolName>(<symbolName descr="null">warningSince =</symbolName> "2.1")
+<symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readLine</symbolName>(): kotlin.String? { /* compiled code */ }

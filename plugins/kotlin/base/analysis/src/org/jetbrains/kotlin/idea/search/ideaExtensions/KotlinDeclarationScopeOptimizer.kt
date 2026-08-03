@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -29,7 +30,13 @@ class KotlinDeclarationScopeOptimizer : ScopeOptimizer {
                 element.safeAs<PsiModifierListOwner>()?.hasModifier(JvmModifier.PRIVATE) == true
 
         val privateClass = declaration.parentsOfType<KtClassOrObject>(withSelf = true).find(KtClassOrObject::isPrivate)
+        // If the containing class is not private and our declaration is also not private, we cannot restrict the scope
+        // to the current file because it can be accessed elsewhere.
         if (privateClass == null && !isPrivateDeclaration) return null
+
+        // Interfaces can be extended by non-private classes in the same file, even if the interface is private.
+        // This means declarations within such an interface might be accessible from other files.
+        if (declaration.containingClass()?.isInterface() == true) return null
 
         val containingFile = declaration.containingKtFile
         val fileScope = containingFile.fileScope()

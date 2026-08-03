@@ -53,6 +53,10 @@ class KotlinUseScopeTest : JavaCodeInsightFixtureTestCase() {
                 private var privateProperty = 42
                 fun publicFunction() = Unit
                 var publicProperty = 42
+                private interface PrivateInterfaceWithNonPrivateImpl {
+                  fun publicMemberFunctionFromPrivateInterface() = 42
+                }
+                class NonPrivateImplOfPrivateInterface : PrivateInterfaceWithNonPrivateImpl
             """.trimIndent()
         )
 
@@ -129,6 +133,10 @@ class KotlinUseScopeTest : JavaCodeInsightFixtureTestCase() {
         assertLightAndOriginalScope(findMethod("one.PrivateKKt", "publicFunction"), moduleAScope)
         assertLightAndOriginalScope(findMethod("one.PrivateKKt", "getPublicProperty"), moduleAScope)
         assertLightAndOriginalScope(findMethod("one.PrivateKKt", "setPublicProperty"), moduleAScope)
+        assertLightAndOriginalScope(
+            findMethod("one.PrivateInterfaceWithNonPrivateImpl", "publicMemberFunctionFromPrivateInterface"),
+            moduleAScope,
+        )
 
         val moduleBScope = """
             global:
