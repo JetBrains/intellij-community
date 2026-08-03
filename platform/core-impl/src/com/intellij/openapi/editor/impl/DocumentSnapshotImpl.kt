@@ -250,8 +250,7 @@ internal class DocumentSnapshotImpl private constructor(
     val diff = newFragmentLength - oldFragmentLength
     val oldText = text
     val oldTextLength = oldText.length
-    val canUseNewFragment = startOffset == 0 && endOffset == oldTextLength && newFragment is ImmutableCharSequence
-    val newText = if (canUseNewFragment) newFragment else text.replace(startOffset, endOffset, newFragment)
+    val newText = updateText(startOffset, endOffset, oldTextLength, newFragment)
     val newTextLength = newText.length
     assert((oldTextLength + diff) == newTextLength) {
       "prevTextLength = " + oldTextLength +
@@ -315,6 +314,19 @@ internal class DocumentSnapshotImpl private constructor(
     lineSet = LineSet.createLineSet(text)
     this.lineSet = lineSet
     return lineSet
+  }
+
+  private fun updateText(
+    startOffset: Int,
+    endOffset: Int,
+    oldTextLength: Int,
+    newFragment: CharSequence,
+  ): ImmutableCharSequence {
+    val canUseNewFragment = startOffset == 0 && endOffset == oldTextLength && newFragment is ImmutableCharSequence
+    if (canUseNewFragment) {
+      return newFragment
+    }
+    return text.replace(startOffset, endOffset, newFragment)
   }
 
   private fun updateModTree(

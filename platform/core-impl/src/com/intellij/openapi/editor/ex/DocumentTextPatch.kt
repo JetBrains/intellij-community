@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
  * ordinary changes.
  */
 @ApiStatus.Internal
-interface DocumentTextPatch {
+interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentTextPatch
   fun startOffset(): Int
   fun endOffset(): Int
   fun newFragment(): CharSequence

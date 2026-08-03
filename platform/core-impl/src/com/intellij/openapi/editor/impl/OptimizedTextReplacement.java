@@ -14,7 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  */
 @ApiStatus.Internal
 @VisibleForTesting
-public final class OptimizedTextReplacement {
+public final class OptimizedTextReplacement { // TODO: refactor me
   private final ImmutableCharSequence wholeText;
   private final int initialStartOffset;
   private final int initialEndOffset;
