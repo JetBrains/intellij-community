@@ -2,6 +2,8 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -54,6 +56,12 @@ class TerminalOutputScrollingModelImpl(
 ) : TerminalOutputScrollingModel {
   /** When true, the viewport sticks to the bottom and follows the cursor / last non-blank line as output arrives. */
   private var shouldScrollToCursor: Boolean = true
+    set(value) {
+      if (field != value) {
+        LOG.trace { "shouldScrollToCursor: $field -> $value" }
+      }
+      field = value
+    }
 
   /** The state of the output model already processed by this class, whether or not a scroll was performed for it. */
   private val appliedOutputModelState = MutableStateFlow(getCurrentOutputModelState())
@@ -72,6 +80,7 @@ class TerminalOutputScrollingModelImpl(
     outputModel.addListener(lifetimeDisposable, object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         if (shouldScrollToCursor) {
+          LOG.trace { "Updating scroll position because the output content changed" }
           updateScrollPosition(outputModel.cursorOffset)
         }
         else {
@@ -81,6 +90,7 @@ class TerminalOutputScrollingModelImpl(
 
       override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         if (shouldScrollToCursor) {
+          LOG.trace { "Updating scroll position because the cursor offset changed to ${event.newOffset}" }
           updateScrollPosition(event.newOffset)
         }
         else {
@@ -122,6 +132,7 @@ class TerminalOutputScrollingModelImpl(
       shouldScrollToCursor = true
     }
     if (shouldScrollToCursor) {
+      LOG.trace { "Updating scroll position because scrollToCursor(force=$force) was requested" }
       updateScrollPosition(outputModel.cursorOffset)
     }
   }
@@ -141,6 +152,10 @@ class TerminalOutputScrollingModelImpl(
       targetLine >= lastTopLine -> maxOffset
       targetLine <= 0 -> 0
       else -> editor.visualLineToY(targetLine)
+    }
+    LOG.trace {
+      "scrollByLines($lines): currentTopLine=$currentTopLine -> targetLine=$targetLine (lastTopLine=$lastTopLine), " +
+      "currentOffset=${editor.scrollingModel.verticalScrollOffset} -> targetOffset=$targetOffset (maxOffset=$maxOffset)"
     }
     updateFollowState(targetOffset)
     // Reuse the editor's own scrolling animation (governed by EditorSettings.isAnimatedScrolling). Sub-line/single-line
@@ -166,7 +181,10 @@ class TerminalOutputScrollingModelImpl(
    * The cursor is considered only if it is visible.
    */
   private fun updateScrollPosition(cursorOffset: TerminalOffset) {
-    val screenRows = editor.calculateTerminalSize()?.rows ?: return
+    val screenRows = editor.calculateTerminalSize()?.rows ?: run {
+      LOG.trace { "updateScrollPosition: skipped, terminal size is not available yet" }
+      return
+    }
 
     val screenBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
     val screenTopVisualLine = max(0, screenBottomVisualLine - screenRows + 1)
@@ -188,8 +206,10 @@ class TerminalOutputScrollingModelImpl(
 
     val screenTopY = editor.visualLineToY(screenTopVisualLine) - topInset
     val screenHeight = editor.scrollingModel.visibleArea.height
+    val currentOffset = editor.scrollingModel.verticalScrollOffset
 
-    val scrollY = if (isCursorVisible && cursorVisualLine == screenTopVisualLine) {
+    val isCursorAtTop = isCursorVisible && cursorVisualLine == screenTopVisualLine
+    val scrollY = if (isCursorAtTop) {
       // It is a special case: the cursor is at the top of the screen.
       // In this case we allow adjusting the position by scrolling up.
       // To support the case when the user executes "clear".
@@ -198,10 +218,20 @@ class TerminalOutputScrollingModelImpl(
     else {
       // In a regular case always try to scroll to the bottom and do not scroll up
       // to not cause blinking when lines are frequently added and removed from the bottom of the screen
-      maxOf(screenBottomY - screenHeight, screenTopY, editor.scrollingModel.verticalScrollOffset)
+      maxOf(screenBottomY - screenHeight, screenTopY, currentOffset)
     }
 
-    if (scrollY != editor.scrollingModel.verticalScrollOffset) {
+    LOG.trace {
+      "updateScrollPosition: currentOffset=$currentOffset -> scrollY=$scrollY " +
+      "(${if (scrollY != currentOffset) "scrolling" else "no change"}); " +
+      "cursor(visible=$isCursorVisible, line=$cursorVisualLine, atTop=$isCursorAtTop), " +
+      "screen(rows=$screenRows, topLine=$screenTopVisualLine, bottomLine=$screenBottomVisualLine, height=$screenHeight), " +
+      "insets(top=$topInset, bottom=$bottomInset), lastNotBlankLine=$lastNotBlankVisualLine, " +
+      "y(top=$screenTopY, bottom=$screenBottomY), " +
+      "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, current=$currentOffset)"
+    }
+
+    if (scrollY != currentOffset) {
       editor.doWithoutScrollingAnimation {
         editor.scrollingModel.scrollVertically(scrollY)
       }
@@ -325,5 +355,9 @@ class TerminalOutputScrollingModelImpl(
         (visibleRect.y - alignedY).coerceAtLeast(0)
       }
     }
+  }
+
+  companion object {
+    private val LOG = logger<TerminalOutputScrollingModelImpl>()
   }
 }
