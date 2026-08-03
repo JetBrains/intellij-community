@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.util.Disposer
@@ -81,6 +81,8 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
     assertSameElements(actual.map { it.name }, expected.map { it.name })
     assertSameElements(actual, expected)
   }
+
+  protected fun getIncludedSet(): Set<FilePath> = stateHolder.getIncludedSet()
 
   protected fun PartialLocalLineStatusTracker.assertExcluded(index: Int, expected: Boolean) {
     val range = this.getRanges()!![index]

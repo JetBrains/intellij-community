@@ -50,9 +50,9 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -65,12 +65,15 @@ import javax.swing.JComponent;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.AWTEvent;
@@ -86,7 +89,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -125,9 +130,31 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private final @NotNull ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
 
+  /**
+   * Caches {@link #getNodeStatus} results between inclusion/model changes: computing the status of a group node is
+   * O(subtree size), and the renderer is invoked per node not only for painting, but also for every accessibility query.
+   * A screen reader enumerating the tree re-renders group nodes once per child, which without the cache turns a large
+   * changelist into minutes of EDT freeze (IJPL-249904). EDT-confined, as all reads and invalidations happen on the EDT.
+   */
+  private final @NotNull Map<ChangesBrowserNode<?>, State> myNodeStatusCache = new IdentityHashMap<>();
+  private final @NotNull TreeModelListener myNodeStatusCacheInvalidator = new TreeModelListener() {
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) { myNodeStatusCache.clear(); }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) { myNodeStatusCache.clear(); }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) { myNodeStatusCache.clear(); }
+
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) { myNodeStatusCache.clear(); }
+  };
+
   private @NotNull InclusionModel myInclusionModel = new DefaultInclusionModel();
   private @NotNull Set<Object> myPreviousInclusion = Collections.emptySet();
   private final @NotNull InclusionListener myInclusionModelListener = () -> {
+    myNodeStatusCache.clear();
     notifyInclusionListener();
     repaint();
   };
@@ -169,6 +196,8 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     myShowConflictsNode = showConflictsNode;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
+    // the initial model was set from the JTree constructor, before myNodeStatusCacheInvalidator existed - see setModel
+    getModel().addTreeModelListener(myNodeStatusCacheInvalidator);
     myHandlers = new ChangesTreeHandlers(this);
 
     setRootVisible(false);
@@ -473,6 +502,19 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     }
   }
 
+  @Override
+  public void setModel(TreeModel newModel) {
+    // this is also called from the JTree constructor, before our fields are initialized
+    //noinspection ConstantValue
+    if (myNodeStatusCache != null) {
+      TreeModel oldModel = getModel();
+      if (oldModel != null) oldModel.removeTreeModelListener(myNodeStatusCacheInvalidator);
+      if (newModel != null) newModel.addTreeModelListener(myNodeStatusCacheInvalidator);
+      myNodeStatusCache.clear();
+    }
+    super.setModel(newModel);
+  }
+
   protected void updateTreeModel(@NotNull DefaultTreeModel model) {
     updateTreeModel(model, myTreeStateStrategy);
   }
@@ -583,6 +625,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     myInclusionModel.removeInclusionListener(myInclusionModelListener);
     myInclusionModel = inclusionModel != null ? inclusionModel : NullInclusionModel.INSTANCE;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
+    myNodeStatusCache.clear();
   }
 
   public void setInclusionListener(@Nullable Runnable runnable) {
@@ -724,12 +767,16 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   }
 
   protected @NotNull State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+    return myNodeStatusCache.computeIfAbsent(node, this::computeNodeStatus);
+  }
+
+  private @NotNull State computeNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     if (getInclusionModel().isInclusionEmpty()) return State.NOT_SELECTED;
 
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object item : allUnder(node).userObjects()) {
+    for (Object item : allUnder(node).iterateUserObjects()) {
       State state = getInclusionModel().getInclusionState(item);
 
       if (state == State.SELECTED) {

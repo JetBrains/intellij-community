@@ -499,6 +499,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - setInclusionListener(java.lang.Runnable):V
 - setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 - setKeepTreeState(Z):V
+- setModel(javax.swing.tree.TreeModel):V
 - setScrollToSelection(Z):V
 - setSelectedChanges(java.util.Collection):V
 - setSelectionMode(I):V
