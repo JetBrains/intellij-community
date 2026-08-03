@@ -16,7 +16,7 @@
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.pytools"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.uv.backend"/>
   </dependencies>
   <!-- endregion -->

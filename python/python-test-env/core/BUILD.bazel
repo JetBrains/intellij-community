@@ -89,8 +89,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.core` end

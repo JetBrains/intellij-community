@@ -91,8 +91,8 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.requirements.backend"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.uv.common"/>

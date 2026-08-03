@@ -16,8 +16,8 @@
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
   <!-- endregion -->
 

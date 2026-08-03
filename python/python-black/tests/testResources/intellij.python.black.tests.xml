@@ -25,7 +25,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.pytools.ui"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>
   <!-- endregion -->

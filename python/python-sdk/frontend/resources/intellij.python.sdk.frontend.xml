@@ -1,0 +1,28 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.sdk.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory id="EvoPySdkStatusBarWidget"
+                            implementation="com.intellij.python.sdk.frontend.evolution.PySdkStatusBarWidgetFactory"
+                            order="before Notifications, before git, after CodeStyleStatusBarWidget, after pythonInterpreterWidget"/>
+
+    <registryKey key="python.evolution.widget" defaultValue="false" restartRequired="true"
+                 description="Enables the 'Evo Module Python Interpreter' widget in the status bar (PoC)"/>
+  </extensions>
+</idea-plugin>

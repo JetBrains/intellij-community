@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

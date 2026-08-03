@@ -86,8 +86,8 @@
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
-    <orderEntry type="module" module-name="intellij.python.sdk.ui" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">

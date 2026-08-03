@@ -1889,9 +1889,10 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-requirements/common/intellij.python.requirements.common.iml" filepath="$PROJECT_DIR$/python/python-requirements/common/intellij.python.requirements.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-requirements/tests/intellij.python.requirements.tests.iml" filepath="$PROJECT_DIR$/python/python-requirements/tests/intellij.python.requirements.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ruff/intellij.python.ruff.iml" filepath="$PROJECT_DIR$/python/python-ruff/intellij.python.ruff.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" filepath="$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.tests.iml" filepath="$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-sdk-ui/intellij.python.sdk.ui.iml" filepath="$PROJECT_DIR$/python/python-sdk-ui/intellij.python.sdk.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/backend/intellij.python.sdk.backend.iml" filepath="$PROJECT_DIR$/python/python-sdk/backend/intellij.python.sdk.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/common/intellij.python.sdk.common.iml" filepath="$PROJECT_DIR$/python/python-sdk/common/intellij.python.sdk.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" filepath="$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-sdk/tests/intellij.python.sdk.tests.iml" filepath="$PROJECT_DIR$/python/python-sdk/tests/intellij.python.sdk.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk-configurator/backend/intellij.python.sdkConfigurator.backend.iml" filepath="$PROJECT_DIR$/python/python-sdk-configurator/backend/intellij.python.sdkConfigurator.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" filepath="$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" filepath="$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" />

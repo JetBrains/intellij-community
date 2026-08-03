@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.black" />

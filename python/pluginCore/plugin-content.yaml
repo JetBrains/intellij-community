@@ -194,12 +194,15 @@
 - name: lib/modules/intellij.python.ruff.jar
   contentModules:
   - name: intellij.python.ruff
-- name: lib/modules/intellij.python.sdk.jar
+- name: lib/modules/intellij.python.sdk.backend.jar
   contentModules:
-  - name: intellij.python.sdk
-- name: lib/modules/intellij.python.sdk.ui.jar
+  - name: intellij.python.sdk.backend
+- name: lib/modules/intellij.python.sdk.common.jar
   contentModules:
-  - name: intellij.python.sdk.ui
+  - name: intellij.python.sdk.common
+- name: lib/modules/intellij.python.sdk.frontend.jar
+  contentModules:
+  - name: intellij.python.sdk.frontend
 - name: lib/modules/intellij.python.sdkConfigurator.backend.jar
   contentModules:
   - name: intellij.python.sdkConfigurator.backend

@@ -1,7 +1,7 @@
 package com.jetbrains.python.conda.sdk.evolution
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
@@ -10,77 +10,65 @@ import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
-import com.intellij.python.sdk.ui.evolution.AddNewEnvAction
-import com.intellij.python.sdk.ui.evolution.SelectEnvAction
-import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
-import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
-import com.intellij.python.sdk.ui.evolution.sdk.EvoWarning
-import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
-import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.intellij.python.sdk.backend.evolution.EvoSdk
+import com.intellij.python.sdk.backend.evolution.EvoSelectSdkProvider
+import com.intellij.python.sdk.backend.evolution.evoWarning
+import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
+import com.intellij.python.sdk.backend.evolution.toSelectLeaf
+import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import java.nio.file.Path
+import javax.swing.Icon
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
-internal class CondaSelectSdkProvider() : EvoSelectSdkProvider {
-  override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("Conda", PythonCommunityImplCondaIcons.Anaconda) {
-    val condaExecutablePath = findCondaExecutablePath().getOr {
-      return@EvoTreeLazyNodeElement it
-    }
+internal class CondaSelectSdkProvider : EvoSelectSdkProvider {
+  override val id: String get() = "Conda"
+  override val label: String get() = "Conda"
+  override val icon: Icon get() = PythonCommunityImplCondaIcons.Anaconda
 
-    val condaPath = condaExecutablePath.toString()
-    val baseCondaPath = condaExecutablePath.parent.parent.toString()
-    val environments = findEnvironments(evoModuleSdk.module).getOr {
-      return@EvoTreeLazyNodeElement it
-    }
-    val byFolders = environments.groupBy { baseCondaPath.commonPrefixWith(it.pythonBinaryPath.toString()) }
-    print(byFolders)
-    val environmentActions = environments.map { evoSdk -> EvoTreeLeafElement(SelectEnvAction(evoSdk)) }
+  override suspend fun loadSections(module: Module): EvoLoadResultDto {
+    val condaExecutablePath = findCondaExecutablePath()
+                              ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))
+    val leaves = findEnvironments(condaExecutablePath).map { it.toSelectLeaf() }
     val sections = listOf(
-      EvoTreeSection(ListSeparator(condaPath), environmentActions),
-      EvoTreeSection(null, EvoTreeLeafElement(AddNewEnvAction())),
+      EvoSectionDto(label = condaExecutablePath.toString(), leaves = leaves),
+      EvoSectionDto(label = null, leaves = emptyList(), addNew = true),
     )
-    Result.success(sections)
-  }
-}
-
-
-private fun EelApi.getCondaCommand(): String = when (platform) {
-  is EelPlatform.Windows -> "conda.bat"
-  else -> "conda"
-}
-
-private suspend fun findCondaExecutablePath(eelApi: EelApi = localEel): Result<Path, PyError> {
-  val condaExecutablePath = eelApi.exec.where(eelApi.getCondaCommand())?.asNioPath()
-  return when {
-    condaExecutablePath?.exists() == true -> Result.success(condaExecutablePath)
-    else -> Result.failure(EvoWarning("conda not found"))
-  }
-}
-
-private suspend fun findEnvironments(module: Module): Result<List<EvoSdk>, PyError> {
-  val condaExecutablePath = findCondaExecutablePath().getOr { return it }
-  val stdout = ExecService().execGetStdout(condaExecutablePath, Args("env", "list")).getOr {
-    return it
+    return EvoLoadResultDto.Ok(sections)
   }
 
-  val environments = stdout.trim().lines()
-    .filter { !it.startsWith('#') }
-    .map { line ->
-      val (name, pathStr) = line.split("\\s+".toRegex())
-      val path = Path.of(pathStr)
-      val realName = name.takeIf { it.isNotBlank() } ?: path.name
-      realName to path
-    }
-
-  val evoSdks = environments.map { (name, path) ->
-    val sdkHomePath = path.resolvePythonExecutable()
-    EvoSdk(icon = PythonCommunityImplCondaIcons.Anaconda, name = name, pythonBinaryPath = sdkHomePath)
+  override suspend fun parseModuleSdk(module: Module, sdk: Sdk): EvoSdk? {
+    val binary = sdk.homePath?.let { Path.of(it) } ?: return null
+    val condaExecutablePath = findCondaExecutableRelativeToEnv(binary) ?: return null
+    val name = condaExecutablePath.resolve("../../envs").relativize(binary.resolve("")).toString()
+    return EvoSdk(icon = icon, name = name, pythonBinaryPath = binary)
   }
-  return Result.success(evoSdks)
+
+  private fun EelApi.getCondaCommand(): String = when (platform) {
+    is EelPlatform.Windows -> "conda.bat"
+    else -> "conda"
+  }
+
+  private suspend fun findCondaExecutablePath(eelApi: EelApi = localEel): Path? {
+    val condaExecutablePath = eelApi.exec.where(eelApi.getCondaCommand())?.asNioPath()
+    return condaExecutablePath?.takeIf { it.exists() }
+  }
+
+  private suspend fun findEnvironments(condaExecutablePath: Path): List<EvoSdk> {
+    val stdout = ExecService().execGetStdout(condaExecutablePath, Args("env", "list")).getOrNull() ?: return emptyList()
+    return stdout.trim().lines()
+      .filter { !it.startsWith('#') }
+      .mapNotNull { line ->
+        val parts = line.split("\\s+".toRegex())
+        val pathStr = parts.lastOrNull()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+        val path = Path.of(pathStr)
+        val realName = parts.first().takeIf { it.isNotBlank() } ?: path.name
+        EvoSdk(icon = icon, name = realName, pythonBinaryPath = path.resolvePythonExecutable())
+      }
+  }
 }
