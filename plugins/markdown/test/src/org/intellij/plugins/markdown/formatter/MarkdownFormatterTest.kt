@@ -59,11 +59,37 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test reflow no extra new lines`() = doTest(rightMargin = 80)
 
-  fun `test reflow no extra new lines keep line breaks margin 80`() = doTest(rightMargin = 80, keepLineBreaks = true)
+  fun `test reflow no extra new lines keep line breaks margin 60`() = doTest(rightMargin = 60)
 
-  fun `test reflow no extra new lines keep line breaks margin 60`() = doTest(rightMargin = 60, keepLineBreaks = true)
+  fun `test reflow no extra new lines keep line breaks margin 40`() = doTest(rightMargin = 40)
 
-  fun `test reflow no extra new lines keep line breaks margin 40`() = doTest(rightMargin = 40, keepLineBreaks = true)
+  fun `test keep line breaks inside text block`() = doTest(rightMargin = 120, keepLineBreaks = true)
+
+  // IJPL-241496: a single long line wrapped at 100 and then reformatted at 80 must reflow cleanly,
+  // not accumulate extra line breaks, when "keep line breaks inside text blocks" is disabled.
+  fun `test text block reflow after decreasing margin`() {
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.apply {
+        WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
+        getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
+          FORMAT_TABLES = false
+          WRAP_TEXT_IF_LONG = true
+          KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
+        }
+      }
+      val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
+      val after = getTestName(true) + "_after.md"
+      configureByFile(getTestName(true) + "_before.md")
+      common.RIGHT_MARGIN = 100
+      performReformatting(project, file)
+      common.RIGHT_MARGIN = 80
+      performReformatting(project, file)
+      checkResultByFile(after)
+      // reformatting again at 80 must stay stable
+      performReformatting(project, file)
+      checkResultByFile(after)
+    }
+  }
 
   fun `test emphasis`() = doTest()
 
