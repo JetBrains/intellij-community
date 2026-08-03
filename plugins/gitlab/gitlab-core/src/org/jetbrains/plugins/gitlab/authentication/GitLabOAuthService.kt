@@ -7,10 +7,15 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.DefaultFullHttpResponse
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -25,8 +30,11 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiUriQueryBuilder
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.withQuery
+import java.io.IOException
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpRequest
+import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
@@ -34,14 +42,29 @@ import kotlin.coroutines.cancellation.CancellationException
 private const val GITLAB_DOT_COM_OAUTH_CLIENT_ID = "0ec01bcbbfce083d0ad842f9e5896e8a38ab837b5630dfe2f41a1af50d1556a9"
 private const val CODE_CHALLENGE_METHOD = "S256"
 private const val TOKEN_SCOPE = "api read_user write_repository openid"
-private const val SUCCESS_HTML = "<p><strong>Authentication Successful!</strong></p>"
-private const val FAILURE_HTML = "<p><strong>Authentication Failed.</strong></p>"
 private const val SERVICE_NAME = "gitlab/oauth"
+
+private const val RESPONSE_PAGE_PATH = "html/oauth-response.html"
+private const val MESSAGE_PLACEHOLDER = "{{message}}"
+private const val STATUS_CLASS_PLACEHOLDER = "{{statusClass}}"
+private const val FALLBACK_RESPONSE_PAGE =
+  """<!DOCTYPE html>
+        <html lang="en">
+          <head><meta charset="utf-8"><title>JetBrains</title><style>
+          body {
+            margin: 0; padding: 24px; background: #fff; font-size: 1.5em;
+            font-family: system-ui;
+          }
+          .status.success { color: #2e7d32; }
+          .status.failure { color: #c7222d; }
+          </style></head>
+          <body><p class="status $STATUS_CLASS_PLACEHOLDER">$MESSAGE_PLACEHOLDER</p></body>
+        </html>"""
 
 @Service(Service.Level.APP)
 internal class GitLabOAuthService(private val cs: CoroutineScope) {
+  private val responsePageTemplate by lazy { loadResponsePageTemplate() }
   private val pendingLogins = ConcurrentHashMap<String, PendingLoginWithRequest>()
-
   private val redirectUri
     get() = "http://127.0.0.1:${BuiltInServerManager.getInstance().port}/${RestService.PREFIX}/$SERVICE_NAME"
 
@@ -116,31 +139,34 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     httpRequest: FullHttpRequest,
   ) {
     val (server, clientId, codeVerifier, request) = requestId?.let { pendingLogins[it] }
-                                          ?: return sendHTMLResponse(context, httpRequest, FAILURE_HTML)
+                                                    ?: return sendResultRedirect(context, httpRequest, AuthorizationResult.Failure())
     if (error != null) {
       val reason = errorDescription ?: error
-      request.completeExceptionally(GitLabOAuthFlowException("Authorization process failed - $reason"))
-      return sendHTMLResponse(context, httpRequest, FAILURE_HTML)
+      val errorMessage = "Authorization process failed - $reason"
+      request.completeExceptionally(GitLabOAuthFlowException(errorMessage))
+      return sendResultRedirect(context, httpRequest, AuthorizationResult.Failure(errorMessage))
     }
     if (code == null) {
-      request.completeExceptionally(GitLabOAuthFlowException("Authorization process failed - no code in response"))
-      return sendHTMLResponse(context, httpRequest, FAILURE_HTML)
+      val errorMessage = "Authorization process failed - no code in response"
+      request.completeExceptionally(GitLabOAuthFlowException(errorMessage))
+      return sendResultRedirect(context, httpRequest, AuthorizationResult.Failure(errorMessage))
     }
     cs.launch {
-      val html = try {
+      val result = try {
         val tokenResponse = exchangeCodeForToken(server, clientId, code, redirectUri, codeVerifier)
         request.complete(tokenResponse)
-        SUCCESS_HTML
+        AuthorizationResult.Success
       }
       catch (ce: CancellationException) {
         request.cancel(ce)
         throw ce
       }
       catch (e: Exception) {
-        request.completeExceptionally(GitLabOAuthFlowException("Token exchange failed", e))
-        FAILURE_HTML
+        val errorMessage = "Token exchange failed"
+        request.completeExceptionally(GitLabOAuthFlowException(errorMessage, e))
+        AuthorizationResult.Failure(errorMessage)
       }
-      sendHTMLResponse(context, httpRequest, html)
+      sendResultRedirect(context, httpRequest, result)
     }
   }
 
@@ -171,15 +197,33 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     }
   }
 
-  private fun sendHTMLResponse(
-    context: ChannelHandlerContext,
-    request: FullHttpRequest,
-    html: String,
-  ) {
-    val resp = response("text/html", Unpooled.wrappedBuffer(html.toByteArray())).apply {
-      headers().set("Referrer-Policy", "no-referrer")
+  /**
+   * Answers the callback with a redirect to a code-free result URL, so that navigating back to it or reloading re-renders
+   * the same outcome instead of re-entering the callback handler with a code that has already been used.
+   */
+  private fun sendResultRedirect(context: ChannelHandlerContext, request: FullHttpRequest, result: AuthorizationResult) {
+    val location = buildString {
+      append("/${RestService.PREFIX}/$SERVICE_NAME?result=${result.value}")
+      if (result is AuthorizationResult.Failure && result.reason != null) {
+        append("&message=").append(URLEncoder.encode(result.message, StandardCharsets.UTF_8))
+      }
     }
-    sendResponse(request, context, resp)
+    val response =
+      DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND, Unpooled.EMPTY_BUFFER).apply {
+        headers().set(HttpHeaderNames.LOCATION, location)
+        headers().set("Referrer-Policy", "no-referrer")
+      }
+    sendResponse(request, context, response)
+  }
+
+  private fun loadResponsePageTemplate(): String {
+    val stream = GitLabOAuthService::class.java.classLoader.getResourceAsStream(RESPONSE_PAGE_PATH)
+    return try {
+      stream?.use { it.readAllBytes().decodeToString() } ?: FALLBACK_RESPONSE_PAGE
+    }
+    catch (_: IOException) {
+      FALLBACK_RESPONSE_PAGE
+    }
   }
 
   class GitLabOAuthCallbackHandler : RestService() {
@@ -191,6 +235,14 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
       context: ChannelHandlerContext,
     ): String? {
       val parameters = urlDecoder.parameters()
+      val result = AuthorizationResult.of(parameters["result"]?.firstOrNull(), parameters["message"]?.firstOrNull())
+      if (result != null) {
+        // Landing page of the redirect sent by sendResultRedirect: rendered from these parameters, so reloading
+        // it or navigating back to it keeps reporting the same outcome
+        val html = buildResponsePage(result)
+        sendHTMLResponse(context, request, html)
+        return null
+      }
       val requestId = parameters["state"]?.firstOrNull()
       val code = parameters["code"]?.firstOrNull()
       val error = parameters["error"]?.firstOrNull()
@@ -198,11 +250,53 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
       instance.onCallback(requestId, code, error, errorDescription, context, request)
       return null
     }
+
+
+    private fun sendHTMLResponse(
+      context: ChannelHandlerContext,
+      request: FullHttpRequest,
+      html: String,
+    ) {
+      val resp = response("text/html", Unpooled.wrappedBuffer(html.toByteArray())).apply {
+        headers().set("Referrer-Policy", "no-referrer")
+      }
+      sendResponse(request, context, resp)
+    }
+
+    private fun buildResponsePage(result: AuthorizationResult): String = instance.responsePageTemplate
+      .replace(STATUS_CLASS_PLACEHOLDER, result.value)
+      .replace(MESSAGE_PLACEHOLDER, StringUtil.escapeXmlEntities(result.message))
   }
 
   companion object {
     val instance: GitLabOAuthService
       get() = service()
+  }
+}
+
+private sealed class AuthorizationResult(val value: String) {
+  abstract val message: String
+
+  data object Success : AuthorizationResult(SUCCESS) {
+    override val message: String = SUCCESS_RESPONSE_TEXT
+  }
+
+  data class Failure(val reason: String? = null) : AuthorizationResult(FAILURE) {
+    override val message: String
+      get() = reason ?: FAILURE_RESPONSE_TEXT
+  }
+
+  companion object {
+    private const val SUCCESS = "success"
+    private const val FAILURE = "failure"
+    private const val SUCCESS_RESPONSE_TEXT = "You have been successfully authorized in GitLab. You can close the page."
+    private const val FAILURE_RESPONSE_TEXT = "Authorization failed."
+
+    fun of(value: String?, message: String?): AuthorizationResult? = when (value) {
+      SUCCESS -> Success
+      FAILURE -> Failure(message)
+      else -> null
+    }
   }
 }
 
