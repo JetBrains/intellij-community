@@ -225,9 +225,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
           return result;
         }
         TypeNullability origNullability = classType.getNullability();
-        return origNullability.equals(TypeNullability.UNKNOWN)
-                   ? result
-                   : result.withNullability(origNullability.instantiatedWith(instantiationNullability(result)));
+
+        return result.withNullability(origNullability.instantiatedWith(instantiationNullability(result)));
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
       return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),

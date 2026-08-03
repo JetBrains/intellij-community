@@ -91,7 +91,7 @@ public final class JavaTypeNullabilityUtil {
     TypeNullability declared = type.getNullability();
     if (!(type instanceof PsiClassType)) return declared;
     PsiClassType classType = (PsiClassType)type;
-    if (declared.nullability() != Nullability.UNKNOWN || declared.source() == NullabilitySource.Standard.NONE) {
+    if (!isUnspecified(declared)) {
       return declared;
     }
     if (!(classType.resolve() instanceof PsiTypeParameter)) return declared;
@@ -139,19 +139,19 @@ public final class JavaTypeNullabilityUtil {
       List<TypeNullability> nullabilities =
         ContainerUtil.map(typeParameter.getSuperTypes(), t -> getTypeNullability(t, nextVisited, checkContainer, lookThroughUnspecified));
       TypeNullability fromSuper = TypeNullability.intersect(nullabilities).inherited();
-      if (fromSuper != TypeNullability.UNKNOWN) return keepUnspecified(fromSuper, transparent ? fromAnnotations : null);
+      if (fromSuper != TypeNullability.UNKNOWN) return keepUnspecified(fromSuper, lookThroughUnspecified ? fromAnnotations : null);
       //but this Object cannot hold nullability container, because doesn't have a reference
       if (extendTypes.length == 0 && checkContainer) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(typeParameter.getProject());
         if (manager != null) {
           NullabilityAnnotationInfo effective = manager.findOwnNullabilityInfo(typeParameter);
           if (effective != null) {
-            return keepUnspecified(effective.toTypeNullability().inherited(), transparent ? fromAnnotations : null);
+            return keepUnspecified(effective.toTypeNullability().inherited(), lookThroughUnspecified ? fromAnnotations : null);
           }
           // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
           NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(typeParameter);
           if (typeUseNullability != null) {
-            return keepUnspecified(typeUseNullability.toTypeNullability().inherited(), transparent ? fromAnnotations : null);
+            return keepUnspecified(typeUseNullability.toTypeNullability().inherited(), lookThroughUnspecified ? fromAnnotations : null);
           }
         }
       }
@@ -160,9 +160,13 @@ public final class JavaTypeNullabilityUtil {
   }
 
   private static @NotNull TypeNullability keepUnspecified(@NotNull TypeNullability fromBound,
-                                                          @Nullable TypeNullability unspecified) {
-    if (unspecified == null || !isUnspecifiedNullness(unspecified)) return fromBound;
-    return fromBound.nullability() != Nullability.NULLABLE ? unspecified : fromBound;
+                                                          @Nullable TypeNullability atUsage) {
+    if (atUsage == null || !isUnspecified(atUsage)) return fromBound;
+    return fromBound.nullability() != Nullability.NULLABLE ? atUsage : fromBound;
+  }
+
+  public static boolean isUnspecified(@NotNull TypeNullability nullability) {
+    return nullability.nullability() == Nullability.UNKNOWN;
   }
 
   /**
@@ -170,6 +174,9 @@ public final class JavaTypeNullabilityUtil {
    * {@link #getValueNullability} may go through. Which unknown-nullability annotations those are is decided by the annotation
    * support of the respective framework, see {@link NullableNotNullManager#shouldGoThroughUnspecifiedNullnessAnnotation};
    * currently only JSpecify's {@code @NullnessUnspecified} qualifies.
+   * <p>
+   * This is a syntactic question -- "is such an annotation written here" -- and not the same as {@link #isUnspecified}, which
+   * asks whether the nullness of the type is unspecified. Use this one only where the presence of the annotation itself matters.
    *
    * @param nullability nullability to check
    * @return true if the nullability comes from an explicit annotation the bound walk may go through

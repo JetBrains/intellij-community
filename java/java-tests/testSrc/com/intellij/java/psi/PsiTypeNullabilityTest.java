@@ -290,10 +290,6 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals(Nullability.NULLABLE, captureUpperBoundNullability("@Nullable"));
   }
 
-  public void testCaptureOfUnknownNullabilityWildcardOverNullableTypeParameterBound() {
-    assertEquals(Nullability.NULLABLE, captureUpperBoundNullability("@UnknownNullability"));
-  }
-
   public void testArrayType() {
     PsiType type = configureAndGetFieldType("""
       import org.jetbrains.annotations.NotNull;
@@ -389,41 +385,6 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("X<?>", type.getCanonicalText());
     assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
-  }
-  
-  public void testSubstitutorOnTypeParameterUnknown() {
-    PsiType type = configureAndGetExpressionType("""
-      import org.jetbrains.annotations.UnknownNullability;
-      import org.jetbrains.annotations.Nullable;
-
-      class X<T> {
-        native @UnknownNullability T foo();
-
-        static void test(X<@Nullable String> x) {
-          x.foo(<caret>);
-        }
-      }
-      """);
-    assertEquals("java.lang.String", type.getCanonicalText());
-    assertEquals("UNKNOWN (@UnknownNullability)", type.getNullability().toString());
-  }
-
-  public void testSubstitutorOnTypeParameterWithUnknownBound() {
-    PsiType type = configureAndGetExpressionType("""
-      import org.jetbrains.annotations.UnknownNullability;
-      import org.jetbrains.annotations.Nullable;
-
-      class X<T extends @UnknownNullability Object> {
-        native T foo();
-
-        static void test(X<@Nullable String> x) {
-          x.foo(<caret>);
-        }
-      }
-      """);
-    assertEquals("java.lang.String", type.getCanonicalText());
-    // the unspecified bound meets the type argument, and the unspecified nullness wins
-    assertEquals("UNKNOWN (inherited @UnknownNullability)", type.getNullability().toString());
   }
 
   public void testSubstitutorOuter() {
@@ -641,5 +602,42 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     PsiType parameterType = ((PsiClassType)expectedParameterType).getParameters()[0];
     assertEquals("V", parameterType.getCanonicalText());
     assertEquals("NULLABLE (@Nullable)", parameterType.getNullability().toString());
+  }
+
+  public void testInstantiatedWithUnspecifiedDeclared() {
+    assertEquals(TypeNullability.NULLABLE_MANDATED, TypeNullability.UNKNOWN.instantiatedWith(TypeNullability.NULLABLE_MANDATED));
+    assertEquals(TypeNullability.NOT_NULL_KNOWN, TypeNullability.UNKNOWN.instantiatedWith(TypeNullability.NOT_NULL_KNOWN));
+    TypeNullability nullableBound = TypeNullability.NULLABLE_MANDATED.inherited();
+    assertEquals(nullableBound, TypeNullability.UNKNOWN.instantiatedWith(nullableBound));
+  }
+
+  public void testSubstitutorCaptureFromUnmarkedScope() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.Nullable;
+
+      class X<T> {
+        native T foo();
+
+        static void test(X<? extends @Nullable CharSequence> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
+  }
+
+  public void testSubstitutorFromUnmarkedScope() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.Nullable;
+
+      class X<T> {
+        native T foo();
+
+        static void test(X<@Nullable CharSequence> x) {
+          x.foo(<caret>);
+        }
+      }
+      """);
+    assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
   }
 }

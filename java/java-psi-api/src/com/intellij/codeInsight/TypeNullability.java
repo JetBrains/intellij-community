@@ -86,8 +86,9 @@ public final class TypeNullability {
    */
   public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
     if (this.nullability() == nullability.nullability()) {
-      //if we instantiate, let's try to get rid of ExtendsBound
-      if (this.source() instanceof NullabilitySource.ExtendsBound) {
+      //if we instantiate, let's try to get rid of ExtendsBound, and of an empty source: a usage written outside a null-marked
+      //scope has an unspecified nullness that is not backed by anything, so the instantiation keeps its own source
+      if (this.source() instanceof NullabilitySource.ExtendsBound || this.source() == NullabilitySource.Standard.NONE) {
         return nullability;
       }
       else {
@@ -110,7 +111,7 @@ public final class TypeNullability {
     //
     // createCache() returns Cache<@NullnessUnspecified Object> for a CacheFactory<Object>, but Cache<@Nullable Object>
     // for a CacheFactory<@Nullable Object>.
-    if (JavaTypeNullabilityUtil.isUnspecifiedNullness(this) &&
+    if (JavaTypeNullabilityUtil.isUnspecified(this) &&
         nullability.nullability() == Nullability.NULLABLE &&
         !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
       return nullability;
@@ -150,7 +151,7 @@ public final class TypeNullability {
     // captured type parameter. For `Super<T extends @Nullable Object>` the upper bound of the capture of
     // `? extends @NullnessUnspecified Object` stays UNKNOWN
     TypeNullability unspecified = this.nullability() == Nullability.UNKNOWN ? this : other;
-    if (JavaTypeNullabilityUtil.isUnspecifiedNullness(unspecified)) {
+    if (JavaTypeNullabilityUtil.isUnspecified(unspecified)) {
       return unspecified;
     }
     return this.nullability() == Nullability.NULLABLE ? this : other;
