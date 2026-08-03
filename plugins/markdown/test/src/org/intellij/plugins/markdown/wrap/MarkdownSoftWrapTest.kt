@@ -8,8 +8,8 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
   /**
    * The wrap candidate falls inside the link, where wrapping is forbidden, so the strategy has to move
    * the soft wrap before the link start. The link is placed after several blank-line-separated paragraphs to check
-   * that [org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy] resolves tokens correctly when
-   * the lexed context does not start at the beginning of the document.
+   * that [com.intellij.markdown.frontend.editor.MarkdownLineWrapPositionStrategy] resolves offsets correctly when
+   * the line under test does not start at the beginning of the document.
    */
   fun `test soft wrap does not break a link located after the first block`() {
     val filler = "Introductory paragraph that occupies space before the block under test.\n\n".repeat(3)

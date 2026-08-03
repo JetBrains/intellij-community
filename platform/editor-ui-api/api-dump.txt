@@ -1720,7 +1720,9 @@ com.intellij.openapi.editor.LineNumberConverter$Increasing
 - getMaxLineNumber(com.intellij.openapi.editor.Editor):java.lang.Integer
 com.intellij.openapi.editor.LineWrapPositionStrategy
 - a:calculateWrapPosition(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,I,I,I,Z,Z):I
+- calculateWrapPosition(com.intellij.openapi.editor.Editor,I,I,I,Z,Z):I
 - canWrapLineAtOffset(java.lang.CharSequence,I):Z
+- getWrapDocument(com.intellij.openapi.editor.Editor,Z):com.intellij.openapi.editor.Document
 c:com.intellij.openapi.editor.LogicalPosition
 - java.lang.Comparable
 - f:column:I
