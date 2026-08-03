@@ -206,7 +206,6 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.StartupUiUtil;
@@ -329,7 +328,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Boolean> DISABLE_REMOVE_ON_DROP = Key.create("editor.disable.remove.on.drop");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
-  private static final Key<BufferedImage> BUFFER = Key.create("buffer");
   // A cache for CodeStyle.getSettings(myProject, myVirtualFile) and similar file-specific calls.
   // Valid for this.myProject and this.myVirtualFile only.
   // E.g., it is not a valid replacement for CodeStyle.getSettings(myProject).
@@ -558,6 +556,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myScrollingToCaret;
 
   private boolean myIsStickyLinePainting;
+  private boolean myPaintingDumbBuffer;
+  private BufferedImage myDumbBuffer;
 
   private int myAdditionalSizeForMeasure;
 
@@ -2529,7 +2529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void stopDumb() {
-    putUserData(BUFFER, null);
+    myDumbBuffer = null;
     myEditorComponent.repaint();
   }
 
@@ -2538,25 +2538,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   public void startDumb() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || !myEditorComponent.isShowing()) return;
-    putUserData(BUFFER, null);
+    myDumbBuffer = null;
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     if (rect.isEmpty()) return;
     if (myStickyLinesManager != null) {
       myStickyLinesManager.startDumb();
     }
     // The LCD text loop is enabled only for opaque images
-    BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-    Graphics imageGraphics = image.createGraphics();
-    imageGraphics.translate(-rect.x, -rect.y);
-    Graphics2D graphics = JBSwingUtilities.runGlobalCGTransform(myEditorComponent, imageGraphics);
-    graphics.setClip(rect.x, rect.y, rect.width, rect.height);
-    myEditorComponent.paintComponent(graphics);
-    graphics.dispose();
-    putUserData(BUFFER, image);
+    BufferedImage image = EditorImageUtil.createEditorImage(this, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D graphics = EditorImageUtil.createImageGraphics(this, image, rect);
+    myPaintingDumbBuffer = true;
+    try {
+      myEditorComponent.paintComponent(graphics);
+    }
+    finally {
+      myPaintingDumbBuffer = false;
+      graphics.dispose();
+    }
+    myDumbBuffer = image;
   }
 
   public boolean isDumb() {
-    return getUserData(BUFFER) != null;
+    return myDumbBuffer != null;
   }
 
   @ApiStatus.Internal
@@ -2589,7 +2592,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    BufferedImage buffer = getUserData(BUFFER);
+    BufferedImage buffer = myDumbBuffer;
     if (buffer != null) {
       Rectangle rect = getContentComponent().getVisibleRect();
       StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
@@ -5961,6 +5964,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void setStickyLinePainting(boolean stickyLinePainting) {
     myIsStickyLinePainting = stickyLinePainting;
+  }
+
+  boolean isPaintingDumbBuffer() {
+    return myPaintingDumbBuffer;
   }
 
   @ApiStatus.Internal
