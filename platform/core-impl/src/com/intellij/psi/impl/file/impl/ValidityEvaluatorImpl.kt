@@ -19,11 +19,14 @@ internal class ValidityEvaluatorImpl(
   private val newFileViewProviderFactory: NewFileViewProviderFactory,
 ) : ValidityEvaluator {
 
-  override fun isRecreatedViewProviderIdentical(
+  override fun getRecreationFailureReason(
     virtualFile: VirtualFile,
     provider: AbstractFileViewProvider,
     context: CodeInsightContext,
-  ): Boolean {
+  ): String? {
+    if (!virtualFile.isValid) {
+      return "View provider resurrection failed: virtual file is invalid: $virtualFile"
+    }
     if (tempProviders.contains(virtualFile)) {
       LOG.error(StackOverflowPreventedException("isValid leads to endless recursion in ${provider.javaClass}: ${provider.languages.toList()}"))
     }
@@ -34,8 +37,15 @@ internal class ValidityEvaluatorImpl(
       val recreated = newFileViewProviderFactory.createNewFileViewProviderForValidityCheck(virtualFile, context)
       tempProviders.put(virtualFile, recreated)
 
-      return FileManagerImpl.areViewProvidersEquivalent(provider, recreated) &&
-             provider.cachedPsiFiles.all { isValidOriginal(it) }
+      val diff = FileManagerImpl.areViewProvidersEquivalent(provider, recreated)
+      if (diff != null) {
+        return "View provider resurrection failed: $diff"
+      }
+
+      val invalidPsiFile = provider.cachedPsiFiles.firstOrNull { !isValidOriginal(it) }
+      return invalidPsiFile?.let {
+        "View provider resurrection failed: cached PSI file has an invalid original: $it, original=${it.originalFile}"
+      }
     }
     finally {
       val temp = tempProviders.remove(virtualFile)
@@ -82,7 +92,7 @@ internal class ValidityEvaluatorImpl(
 
     val vFile = viewProvider.virtualFile
     val context = defaultContext()
-    return vFile.isValid && isRecreatedViewProviderIdentical(vFile, viewProvider, context)
+    return getRecreationFailureReason(vFile, viewProvider, context) == null
   }
 
   private fun isCached(viewProvider: AbstractFileViewProvider): Boolean {

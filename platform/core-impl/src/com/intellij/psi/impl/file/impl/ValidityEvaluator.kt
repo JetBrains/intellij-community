@@ -10,11 +10,16 @@ import org.jetbrains.annotations.Contract
 internal interface ValidityEvaluator {
 
   @Contract(pure = true)
-  fun isRecreatedViewProviderIdentical(
+  /**
+   * Recreates a [FileViewProvider] for [virtualFile] and [context] and compares it with [provider].
+   *
+   * Returns `null` when the provider can be resurrected; otherwise returns the reason it cannot.
+   */
+  fun getRecreationFailureReason(
     virtualFile: VirtualFile,
     provider: AbstractFileViewProvider,
     context: CodeInsightContext,
-  ): Boolean
+  ): String?
 
   @Contract(pure = false)
   fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean

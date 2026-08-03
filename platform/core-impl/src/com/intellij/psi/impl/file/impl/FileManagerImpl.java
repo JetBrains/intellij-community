@@ -69,6 +69,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -145,13 +146,13 @@ public final class FileManagerImpl implements FileManagerEx {
         return;
       }
       AbstractFileViewProvider abstractProvider = (AbstractFileViewProvider)viewProvider;
-      boolean isStillValid;
+      String recreationFailureReason;
       if (abstractProvider.getVirtualFile() instanceof LightVirtualFile) {
-        isStillValid = myLightViewProviderCache.canViewProviderBeResurrected(abstractProvider);
+        recreationFailureReason = myLightViewProviderCache.getRecreationFailureReason(abstractProvider);
       } else {
-        isStillValid = myVFileToViewProviderMap.canViewProviderBeResurrected(abstractProvider);
+        recreationFailureReason = myVFileToViewProviderMap.getRecreationFailureReason(abstractProvider);
       }
-      if (isStillValid) {
+      if (recreationFailureReason == null) {
         return;
       }
 
@@ -164,7 +165,8 @@ public final class FileManagerImpl implements FileManagerEx {
         viewProviderRepresentation = "[class: " + viewProvider.getClass().getName() + "languages: " + viewProvider.getLanguages() + "]";
       }
       LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProviderRepresentation + " got invalid as part of dumb mode!\n" +
-                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode"), attachment));
+                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode") + "\n" +
+                                                    recreationFailureReason, attachment));
     });
   }
 
@@ -695,17 +697,75 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  public static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
-    if (view1.getClass() != view2.getClass() || view1.getFileType() != view2.getFileType()) return false;
+  public static final class ViewProviderDiff {
+    private final @NotNull String myReason;
+    private final @NotNull ViewProviderCharacterization myOriginalCharacterization;
+    private final @NotNull ViewProviderCharacterization myRecreatedCharacterization;
+
+    private ViewProviderDiff(@NotNull String reason, @NotNull FileViewProvider original, @NotNull FileViewProvider recreated) {
+      myReason = reason;
+      myOriginalCharacterization = new ViewProviderCharacterization(original);
+      myRecreatedCharacterization = new ViewProviderCharacterization(recreated);
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "View providers are not equivalent: " + myReason + "\n" +
+             "original: " + myOriginalCharacterization + "\n" +
+             "recreated: " + myRecreatedCharacterization;
+    }
+  }
+
+  private static class ViewProviderCharacterization {
+    private final @NotNull Class<?> clazz;
+    private final @NotNull FileType fileType;
+    private final @NotNull Language baseLanguage;
+    private final @NotNull Set<Language> auxiliaryLanguages;
+    private final @Nullable Class<?> classOfPsiFile;
+
+    private ViewProviderCharacterization(@NotNull FileViewProvider viewProvider) {
+      this.clazz = viewProvider.getClass();
+      this.fileType = viewProvider.getFileType();
+      this.baseLanguage = viewProvider.getBaseLanguage();
+      this.auxiliaryLanguages = viewProvider.getLanguages();
+      PsiFile file = viewProvider.getPsi(baseLanguage);
+      this.classOfPsiFile = file == null ? null : file.getClass();
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "ViewProviderCharacterization{" +
+             "class=" + clazz.getName() +
+             ", fileType=" + fileType +
+             ", baseLanguage=" + baseLanguage +
+             ", auxiliaryLanguages=" + auxiliaryLanguages +
+             ", classOfPsiFile=" + (classOfPsiFile == null ? null : classOfPsiFile.getName()) +
+             '}';
+    }
+  }
+
+  public static @Nullable ViewProviderDiff areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
+    if (view1.getClass() != view2.getClass()) {
+      return new ViewProviderDiff("different view provider classes", view1, view2);
+    }
+    if (view1.getFileType() != view2.getFileType()) {
+      return new ViewProviderDiff("different file types", view1, view2);
+    }
 
     Language baseLanguage = view1.getBaseLanguage();
-    if (baseLanguage != view2.getBaseLanguage()) return false;
+    if (baseLanguage != view2.getBaseLanguage()) {
+      return new ViewProviderDiff("different base languages", view1, view2);
+    }
 
-    if (!view1.getLanguages().equals(view2.getLanguages())) return false;
+    if (!view1.getLanguages().equals(view2.getLanguages())) {
+      return new ViewProviderDiff("different languages", view1, view2);
+    }
     PsiFile psi1 = view1.getPsi(baseLanguage);
     PsiFile psi2 = view2.getPsi(baseLanguage);
-    if (psi1 == null || psi2 == null) return psi1 == psi2;
-    return psi1.getClass() == psi2.getClass();
+    if (psi1 == null || psi2 == null) {
+      return psi1 == psi2 ? null : new ViewProviderDiff("different base PSI files", view1, view2);
+    }
+    return psi1.getClass() == psi2.getClass() ? null : new ViewProviderDiff("different base PSI file classes", view1, view2);
   }
 
   @RequiresWriteLock
@@ -726,7 +786,7 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
     if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile) ||
-        !areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
+        areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false)) != null) {
       forceReload(vFile);
       return;
     }
