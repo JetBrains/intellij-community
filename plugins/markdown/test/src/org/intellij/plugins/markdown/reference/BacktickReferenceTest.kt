@@ -43,6 +43,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test short class reference is not resolved`() {
+    createJavaClass("SS")
+    assertNull(configureAndGetReferenceAtCaret("There is an `S<caret>S` backtick")?.resolve())
+  }
+
+  @Test
   fun `test reference with extension resolves to original element`() {
     val file = createFile("JavaClass.java", "class JavaClass {}")
     val reference = configureAndGetReferenceAtCaret("There is an `JavaClass.ja<caret>va` backtick")
@@ -425,8 +431,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     assertNull(reference?.resolve())
   }
 
-  private fun createJavaClass(): PsiClass {
-    val file = createFile("JavaClass.java", "class JavaClass {}")
+  private fun createJavaClass(name: String = "JavaClass"): PsiClass {
+    val file = createFile("$name.java", "class $name {}")
     return file.children.single { it is PsiClass } as PsiClass
   }
 
