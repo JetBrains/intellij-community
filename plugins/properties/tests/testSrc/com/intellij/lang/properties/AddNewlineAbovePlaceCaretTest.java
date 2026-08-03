@@ -1,11 +1,10 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AddNewlineAbovePlaceCaretTest extends LightQuickFixParameterizedTestCase {
+public class AddNewlineAbovePlaceCaretTest extends PropertiesLightQuickFixParameterizedTestCase {
 
   @Override
   protected @NonNls String getBasePath() {

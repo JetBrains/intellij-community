@@ -2,13 +2,13 @@
 package com.intellij.lang.properties;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.properties.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 
-public class AlphaUnsortedPropertiesFileInspectionTest extends LightQuickFixParameterizedTestCase {
+public class AlphaUnsortedPropertiesFileInspectionTest extends PropertiesLightQuickFixParameterizedTestCase {
+
   @Override
   protected @NonNls String getBasePath() {
     return "/properties/alphaunsorted";

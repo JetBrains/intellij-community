@@ -1,11 +1,11 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertyEnterHandlerTest extends LightQuickFixParameterizedTestCase {
+public class PropertyEnterHandlerTest extends PropertiesLightQuickFixParameterizedTestCase {
+
   @Override
   protected @NonNls String getBasePath() {
     return "/properties/enterhandler";

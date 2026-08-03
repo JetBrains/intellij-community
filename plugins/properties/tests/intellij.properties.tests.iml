@@ -46,5 +46,18 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.i18n" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.properties" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
   </component>
 </module>

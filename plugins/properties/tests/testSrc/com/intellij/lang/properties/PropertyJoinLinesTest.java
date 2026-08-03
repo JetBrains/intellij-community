@@ -1,11 +1,11 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertyJoinLinesTest extends LightQuickFixParameterizedTestCase {
+public class PropertyJoinLinesTest extends PropertiesLightQuickFixParameterizedTestCase {
+
   @Override
   protected @NonNls String getBasePath() {
     return "/properties/joinlines";
