@@ -37,8 +37,9 @@ class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: Strin
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
     // The rename refactoring resolves the <module> references via ReferencesSearch, which MavenModuleReferenceSearcher
     // answers by walking ModuleManager.getModules() and the MavenProjectsManager model. Make sure the import has fully
-    // settled (workspace model committed, smart mode) before renaming, otherwise the reference is intermittently not
-    // found and the <module> path is left unchanged (flaky).
+    // settled (Maven model AND workspace model committed, smart mode) before renaming, otherwise the reference is
+    // intermittently not found and the <module> path is left unchanged (flaky).
+    maven.awaitConfiguration()
     IndexingTestUtil.suspendUntilIndexesAreReady(maven.project)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
@@ -292,6 +293,7 @@ class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: Strin
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """.trimIndent())
     maven.importProjectAsync()
