@@ -33,6 +33,11 @@ interface DbSource {
     override fun updateThreadContext(context: CoroutineContext): DbContext<*>? {
       // resuming
       val oldState = DbContext.threadBoundOrNull
+      // An explicitly pinned view wins over this coroutine's ambient source: the thread has fixed
+      // what it reads for a bounded region, and rebinding to `latest` here would silently take the
+      // resumed work out of that view. Symmetric with restoreThreadContext below, which for the
+      // same reason only re-bumps a displaced context that HAS a DbSource.
+      if (oldState?.pinned == true) return oldState
       runCatching { dbSource.latest }
         .onSuccess { latest ->
           val ctx = DbContext<DB>(latest, dbSource)

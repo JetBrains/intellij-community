@@ -17,6 +17,15 @@ class DbContext<out QQ : Q>(
   @PublishedApi
   internal var privateValue: Any,
   val dbSource: Any?,
+  /**
+   * This context pins what the calling thread reads, and an ambient [fleet.kernel.DbSource.ContextElement]
+   * must not replace it when a coroutine resumes on this thread.
+   *
+   * Set by an explicit read scope that owns the thread's view for a bounded region — a Compose
+   * frame's read scope, for instance, where rebinding to the source's latest would silently take
+   * the resumed work out of the frame it was sequenced with.
+   */
+  val pinned: Boolean = false,
   //var stack: Throwable? = getStack()
 ) {
   val impl: QQ
