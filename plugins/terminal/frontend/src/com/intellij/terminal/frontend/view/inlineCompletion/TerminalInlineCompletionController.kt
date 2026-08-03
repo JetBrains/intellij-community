@@ -46,7 +46,6 @@ internal class TerminalInlineCompletionController(
 
   private var inputSession: TerminalTypeAheadSession? = null
   private val pendingEvents = ArrayDeque<PendingInputEvent>()
-  private var lastOutputEvent: TerminalContentUpdatedEvent = createCurrentLineContentEvent()
 
   fun install() {
     InlineCompletion.install(editor, coroutineScope)
@@ -81,8 +80,6 @@ internal class TerminalInlineCompletionController(
     val prediction = TerminalTypingPrediction(session.cursorPosition, event.char.toString(), isTentative = true)
     addPendingEvent(PendingInputEvent.Typing(event, prediction.position))
     session.applyPrediction(prediction)
-    val confirmation = confirmPredictions(lastOutputEvent)
-    if (confirmation is Confirmation.Confirmed) dispatchConfirmedEvents(confirmation)
     LOG.trace { "Inline completion input deferred: typing '${event.char}'" }
   }
 
@@ -95,9 +92,6 @@ internal class TerminalInlineCompletionController(
     val prediction = TerminalBackspacePrediction(session.cursorPosition, isTentative = true)
     addPendingEvent(PendingInputEvent.Backspace())
     session.applyPrediction(prediction)
-
-    val confirmation = confirmPredictions(lastOutputEvent)
-    if (confirmation is Confirmation.Confirmed) dispatchConfirmedEvents(confirmation)
     LOG.trace("Inline completion input deferred: backspace")
   }
 
@@ -107,13 +101,16 @@ internal class TerminalInlineCompletionController(
 
   private fun handleOutputModelUpdate() {
     val outputEvent = createCurrentLineContentEvent()
-    lastOutputEvent = outputEvent
     LOG.trace {
       "Inline completion output received: position=${outputEvent.cursorLogicalLineIndex}:${outputEvent.cursorColumnIndex}, " +
       "session=${inputSession != null}"
     }
     if (inputSession != null) {
       dispatchConfirmedEvents(confirmPredictions(outputEvent))
+    }
+    else {
+      LOG.trace { "Inline completion cancelled by an unexpected output model update" }
+      cancelCompletionAndClearSession()
     }
   }
 

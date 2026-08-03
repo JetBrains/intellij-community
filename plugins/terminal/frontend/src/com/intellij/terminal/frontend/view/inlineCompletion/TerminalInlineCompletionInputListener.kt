@@ -1,10 +1,10 @@
 package com.intellij.terminal.frontend.view.inlineCompletion
 
-import com.intellij.openapi.application.EDT
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -13,14 +13,15 @@ internal class TerminalInlineCompletionInputListener(
   private val controller: TerminalInlineCompletionController,
 ) {
   fun install(terminalView: TerminalView, coroutineScope: CoroutineScope) {
-    coroutineScope.launch(Dispatchers.EDT) {
-      terminalView.keyEventsFlow.collect { event ->
+    terminalView.addKeyEventsListener(coroutineScope.asDisposable(), object : TerminalKeyEventsListener {
+      override fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
         when (event.awtEvent.id) {
           KeyEvent.KEY_TYPED -> handleKeyTyped(event.awtEvent, event.cursorOffset)
           KeyEvent.KEY_PRESSED -> handleKeyPressed(event.awtEvent, event.cursorOffset)
         }
+        return false
       }
-    }
+    })
   }
 
   private fun handleKeyTyped(event: KeyEvent, cursorOffset: TerminalOffset) {
