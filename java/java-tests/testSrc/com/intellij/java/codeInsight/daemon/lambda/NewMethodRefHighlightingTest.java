@@ -189,6 +189,7 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testReferencesToPolymorphicMethod() { doTest(); }
   @Test void testTypeArgumentsOnFirstSearchAccessibleMethod() { doTest(); }
   @Test void testIDEA250434() { doTest(); }
+  @Test void testCaptureConversionOfWildcardQualifier() { doTest(); }
 
   private void doTest() {
     doTest(false);

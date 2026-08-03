@@ -1651,6 +1651,9 @@ public class InferenceSession {
         initBounds(containingClass.getTypeParameters());
         psiSubstitutor = PsiSubstitutor.EMPTY;
       }
+      else {
+        psiSubstitutor = PsiMethodReferenceUtil.getTypeToSearchSubstitutor(containingClass, psiSubstitutor, reference);
+      }
 
       if (methodContainingClass != null) {
         psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);
@@ -1708,6 +1711,10 @@ public class InferenceSession {
 
       addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), 
                                                     PsiUtil.captureToplevelWildcards(pType, reference)));
+
+      //the receiver constraint above is checked against the ReferenceType itself, while the remaining parameters
+      //are those of the method found in the type to search, i.e. in the capture converted ReferenceType
+      psiSubstitutor = PsiMethodReferenceUtil.getTypeToSearchSubstitutor(containingClass, psiSubstitutor, reference);
 
       if (methodContainingClass != null) {
         psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);

@@ -264,6 +264,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           psiSubstitutor = PsiSubstitutor.EMPTY;
         }
       }
+      else {
+        // otherwise, the type to search is the result of capture conversion applied to the ReferenceType
+        psiSubstitutor = PsiMethodReferenceUtil.getTypeToSearchSubstitutor(qualifierResolveResult, methodReferenceExpression);
+      }
 
       if (qContainingClass.isInheritor(containingClass, true)) {
         psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, psiSubstitutor);
