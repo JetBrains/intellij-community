@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jsonDump
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KVisibility
@@ -40,4 +41,8 @@ fun ValueTypeMetadata.ParameterizedType.genericParameterForList(): ValueTypeMeta
 @ApiStatus.Internal
 fun entityChildReferenceJsonName(entityChildClassName: String, multiple: Boolean = false): String {
   return if (multiple) "Children_$entityChildClassName" else "Child_$entityChildClassName"
+}
+
+internal fun FinalClassMetadata.isSymbolicId(): Boolean {
+  return supertypes.contains("com.intellij.platform.workspace.storage.SymbolicEntityId")
 }

@@ -10,6 +10,9 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -154,10 +157,17 @@ class WorkspaceModelJsonDumpTest {
       val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
       project.workspaceModel.update {
         val vfu = vfuManager.getOrCreateFromUrl("file:///tmp")
-        val moduleDependency = ModuleDependency(ModuleId("no module"), false, DependencyScope.COMPILE, true)
+        val moduleDependency = ModuleDependency(ModuleId("some_module"), false, DependencyScope.COMPILE, true)
+        val libraryEntity = it.addEntity(LibraryEntity(
+          "some_library",
+          LibraryTableId.ProjectLibraryTableId,
+          emptyList(),
+          NonPersistentEntitySource
+        ))
+        val libraryDependency = LibraryDependency(libraryEntity.symbolicId, true, DependencyScope.PROVIDED)
         it.addEntity(ModuleEntity(
           mockModuleName,
-          listOf(InheritedSdkDependency, ModuleSourceDependency, moduleDependency),
+          listOf(InheritedSdkDependency, ModuleSourceDependency, moduleDependency, libraryDependency),
           NonPersistentEntitySource
         ) {
           this.contentRoots = listOf(ContentRootEntity(
@@ -229,8 +239,7 @@ class WorkspaceModelJsonDumpTest {
 private const val complexEntityExpected = """{
   "fqn": "com.intellij.devkit.workspaceModel.jsonDump.BaseTestEntity",
   "entitySource": {
-    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-    "virtualFileUrl": null
+    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
   },
   "name": "base",
   "listOfAbstract_Count": 3,
@@ -270,8 +279,7 @@ private const val complexEntityExpected = """{
     {
       "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ChildEntity",
       "entitySource": {
-        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-        "virtualFileUrl": null
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
       },
       "childName": "child name"
     }
@@ -279,8 +287,7 @@ private const val complexEntityExpected = """{
   "Child_SingleChild": {
     "fqn": "com.intellij.devkit.workspaceModel.jsonDump.SingleChild",
     "entitySource": {
-      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-      "virtualFileUrl": null
+      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
     },
     "someData": "some data"
   },
@@ -289,8 +296,7 @@ private const val complexEntityExpected = """{
     {
       "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity",
       "entitySource": {
-        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-        "virtualFileUrl": null
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
       },
       "extensionChildName": "extension child name",
       "listOfUrls_Count": 3,
@@ -309,8 +315,7 @@ private const val complexEntityExpected = """{
     {
       "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity",
       "entitySource": {
-        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-        "virtualFileUrl": null
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
       },
       "extensionChildName": "another extension child name",
       "listOfUrls_Count": 2,
@@ -329,38 +334,23 @@ private const val complexEntityExpected = """{
 private const val mockModuleExpected = """{
   "fqn": "com.intellij.platform.workspace.jps.entities.ModuleEntity",
   "entitySource": {
-    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-    "virtualFileUrl": null
+    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
   },
   "name": "mock module entity",
   "type": "null",
-  "dependencies_Count": 3,
+  "dependencies_Count": 4,
   "dependencies": [
-    {
-      "fqn": "com.intellij.platform.workspace.jps.entities.InheritedSdkDependency"
-    },
-    {
-      "fqn": "com.intellij.platform.workspace.jps.entities.ModuleSourceDependency"
-    },
-    {
-      "fqn": "com.intellij.platform.workspace.jps.entities.ModuleDependency",
-      "exported": "false",
-      "module": {
-        "Unknown \"FinalClassMetadata.KnownClass\"": "com.intellij.platform.workspace.jps.entities.ModuleId"
-      },
-      "productionOnTest": "true",
-      "scope": {
-        "Unknown \"FinalClassMetadata.KnownClass\"": "com.intellij.platform.workspace.jps.entities.DependencyScope"
-      }
-    }
+    "InheritedSdkDependency",
+    "ModuleSourceDependency",
+    "Module(some_module, false, COMPILE, true)",
+    "Library(some_library, true, PROVIDED)"
   ],
   "Children_ContentRootEntity_Count": 1,
   "Children_ContentRootEntity": [
     {
       "fqn": "com.intellij.platform.workspace.jps.entities.ContentRootEntity",
       "entitySource": {
-        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-        "virtualFileUrl": null
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
       },
       "url": {
         "url": "file:///tmp"
@@ -376,8 +366,7 @@ private const val mockModuleExpected = """{
   "Child_JavaModuleSettingsEntity": {
     "fqn": "com.intellij.java.workspace.entities.JavaModuleSettingsEntity",
     "entitySource": {
-      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-      "virtualFileUrl": null
+      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource"
     },
     "inheritedCompilerOutput": "true",
     "excludeOutput": "true",
