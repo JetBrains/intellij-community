@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -96,7 +97,7 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
   private fun previousPositionRectangles(infos: List<CaretInfo>) = infos.mapNotNull {
     val (position, _) = lastPosMap[it.caret] ?: return@mapNotNull null
 
-    EditorImpl.CaretRectangle(position.pos, it.width, it.caret, it.isRtl)
+    CaretRectangle.at(position.pos, it.width, it.caret, it.isRtl)
   }.toTypedArray()
 
   private suspend fun processRequest() {
@@ -160,7 +161,7 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
             CaretPosition(interpolated, state.final.logicalPosition.takeUnless { isInAnimation }),
             info
           )
-          EditorImpl.CaretRectangle(interpolated, info.width, info.caret, info.isRtl)
+          CaretRectangle.at(interpolated, info.width, info.caret, info.isRtl)
         }.toTypedArray()
         cursor.setPositions(interpolatedRects)
         cursor.repaint(oldRects)
@@ -209,7 +210,7 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
       lastPosMap[info.caret] = position to info
     }
     cursor.setPositions(finalStates.map { (position, info) ->
-      EditorImpl.CaretRectangle(position.pos, info.width, info.caret, info.isRtl)
+      CaretRectangle.at(position.pos, info.width, info.caret, info.isRtl)
     }.toTypedArray())
     cursor.repaint(oldRects)
   }
@@ -220,7 +221,7 @@ internal class EditorCaretMoveProcessor(private val coroutineScope: CoroutineSco
     val staleCaretRectangles = buildList {
       for ((caret, data) in staleCarets) {
         val (position, info) = data
-        add(EditorImpl.CaretRectangle(position.pos, info.width, caret, info.isRtl))
+        add(CaretRectangle.at(position.pos, info.width, caret, info.isRtl))
 
         lastPosMap.remove(caret)
       }

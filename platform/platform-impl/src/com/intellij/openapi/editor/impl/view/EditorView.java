@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
@@ -262,7 +263,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @ApiStatus.Internal
   @RequiresEdt
-  public void repaintCarets(EditorImpl.CaretRectangle @NotNull [] locations) {
+  public void repaintCarets(CaretRectangle @NotNull [] locations) {
     myPainter.repaintCarets(locations);
   }
 

@@ -121,6 +121,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -3663,27 +3664,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, oldValue, event.getNewValue());
   }
 
-  @ApiStatus.Internal
-  public static final class CaretRectangle {
-    public final @NotNull Point2D myPoint;
-    public final float myWidth;
-    public final @Nullable Caret myCaret;
-    public final boolean myIsRtl;
-
-    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
-      myPoint = point;
-      myWidth = Math.max(width, 2);
-      myCaret = caret;
-      myIsRtl = isRtl;
-    }
-
-    Point2D getPoint() {
-      return myPoint;
-    }
-  }
-
   final class CaretCursor {
-    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false)};
+    private CaretRectangle @NotNull [] myLocations = {CaretRectangle.PLACEHOLDER};
     private boolean myEnabled = true;
 
     private boolean myIsShown;
