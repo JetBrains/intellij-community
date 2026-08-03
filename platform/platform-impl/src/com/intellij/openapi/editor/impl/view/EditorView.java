@@ -61,7 +61,10 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.text.Bidi;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -291,6 +294,20 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     if (!myEditor.isCurrentlyBuildingCache() && myPaintCallback != null) {
       myPaintCallback.run();
     }
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void cacheAreasForRepaint(@NotNull Object key, @NotNull Supplier<List<Rectangle2D>> rectangles) {
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.cacheAreasForRepaint(key, rectangles);
+    }
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public Rectangle @NotNull [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
+    return myPainter.caretRectanglesForLocations(locations, grow);
   }
 
   @ApiStatus.Internal

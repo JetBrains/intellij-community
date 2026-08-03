@@ -16,6 +16,8 @@ internal class CaretTrajectory private constructor(
 
   fun rectangle(): CaretRectangle = target.rectangleAt(position)
 
+  fun rectangleAt(ease: Double): CaretRectangle = target.rectangleAt(positionAt(ease))
+
   fun eased(ease: Double): CaretTrajectory {
     val eased = positionAt(ease)
     return CaretTrajectory(target, eased, startPos, Velocity.between(position, eased))

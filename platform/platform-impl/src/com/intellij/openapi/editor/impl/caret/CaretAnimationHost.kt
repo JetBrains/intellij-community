@@ -31,8 +31,13 @@ internal interface CaretAnimationConditions {
   fun settings(): CaretAnimationSettings
 }
 
+internal fun interface CaretFramePrefetch {
+  fun prefetch(key: Any, locations: List<CaretRectangle>)
+}
+
 internal data class CaretAnimationHost(
   val geometry: CaretGeometry,
   val presentation: CaretPresentation,
   val conditions: CaretAnimationConditions,
+  val cache: CaretFramePrefetch,
 )

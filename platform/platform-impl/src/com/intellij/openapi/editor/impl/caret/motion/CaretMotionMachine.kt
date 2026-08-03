@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.caret.motion
 
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretClock
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
@@ -18,6 +19,7 @@ internal class CaretMotionMachine {
   private var stale: List<CaretRectangle> = emptyList()
   private var urgency = 1.0
   private var dirty = false
+  private var currentEasingFrames: List<CaretRectangle>? = null
 
   val isSettled: Boolean get() = phase.settling.isComplete
 
@@ -39,6 +41,7 @@ internal class CaretMotionMachine {
   fun settle(tick: CaretTick) {
     urgency = 1.0
     phase = restingPhase(phase.trajectories.values.map { it.target }, tick)
+    currentEasingFrames = null
     dirty = true
   }
 
@@ -52,6 +55,7 @@ internal class CaretMotionMachine {
     val frame = CaretMotionFrame(
       locations = if (dirty || wasMoving) advancedPhase.trajectories.values.map { it.rectangle() } else null,
       stale = drained,
+      prefetch = currentEasingFrames.takeIf { prefetching },
       nextDelay = if (moving) CaretClock.TICK else Duration.INFINITE,
     )
 
@@ -59,6 +63,7 @@ internal class CaretMotionMachine {
     stale = emptyList()
     dirty = false
     urgency = if (moving) urgency else 1.0
+    currentEasingFrames = currentEasingFrames.takeIf { moving }
 
     return frame
   }
@@ -80,6 +85,7 @@ internal class CaretMotionMachine {
         settling = phase.settling,
       )
     }
+    currentEasingFrames = phase.easingFrames(tick.settings)
     dirty = true
   }
 
@@ -110,4 +116,9 @@ internal class CaretMotionMachine {
 
   private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean =
     phase.trajectories.size == placements.size && placements.all { phase.trajectories[it.caret]?.target?.matches(it) == true }
+}
+
+private fun CaretMotionPhase.easingFrames(settings: CaretAnimationSettings): List<CaretRectangle>? = when {
+  trajectories.isNotEmpty() && isEasing && !settling.isComplete -> framesTo(settings)
+  else -> null
 }

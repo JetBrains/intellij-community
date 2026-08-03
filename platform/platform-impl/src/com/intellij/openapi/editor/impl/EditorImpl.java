@@ -3575,7 +3575,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new CaretAnimationHost(
       createCaretGeometry(),
       createCaretPresentation(),
-      createCaretAnimationConditions()
+      createCaretAnimationConditions(),
+      (key, locations) -> EditorCaretAdapter.prefetchCaretFrames(this, key, locations)
     );
   }
 

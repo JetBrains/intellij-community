@@ -7,9 +7,10 @@ import kotlin.time.Duration
 internal data class CaretMotionFrame(
   val locations: List<CaretRectangle>?,
   val stale: List<CaretRectangle>,
+  val prefetch: List<CaretRectangle>?,
   val nextDelay: Duration,
 ) {
   companion object {
-    val IDLE: CaretMotionFrame = CaretMotionFrame(null, emptyList(), Duration.INFINITE)
+    val IDLE: CaretMotionFrame = CaretMotionFrame(null, emptyList(), null, Duration.INFINITE)
   }
 }

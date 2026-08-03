@@ -6,9 +6,12 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretEasing
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
+import com.intellij.openapi.editor.impl.view.animation.coerceAtLeastEmpty
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlin.math.abs
@@ -49,6 +52,13 @@ internal fun caretAnimationSettings(settings: EditorSettings, animationsDisabled
   },
   moveDurationMs = Registry.intValue("editor.smooth.caret.duration").coerceAtLeast(1).toDouble(),
 )
+@RequiresEdt
+internal fun prefetchCaretFrames(editor: EditorImpl, key: Any, locations: List<CaretRectangle>) {
+  editor.view.cacheAreasForRepaint(key) {
+    editor.view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN)
+      .map { it.coerceAtLeastEmpty() }
+  }
+}
 
 private val Caret.visualColumnAdjustment: Int get() {
   val anchor = editor.logicalToVisualPosition(logicalPosition)

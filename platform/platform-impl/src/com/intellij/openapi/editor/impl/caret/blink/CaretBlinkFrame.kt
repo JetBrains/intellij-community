@@ -5,9 +5,10 @@ import kotlin.time.Duration
 
 internal data class CaretBlinkFrame(
   val opacity: Float?,
+  val wantsPrefetch: Boolean,
   val nextDelay: Duration,
 ) {
   companion object {
-    val DORMANT: CaretBlinkFrame = CaretBlinkFrame(null, Duration.INFINITE)
+    val DORMANT: CaretBlinkFrame = CaretBlinkFrame(null, false, Duration.INFINITE)
   }
 }

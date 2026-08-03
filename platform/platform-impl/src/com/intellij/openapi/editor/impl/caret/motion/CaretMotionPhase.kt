@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.caret.motion
 
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import java.awt.geom.Point2D
 
@@ -45,6 +46,8 @@ internal sealed interface CaretMotionPhase {
 
   fun advance(tick: CaretTick, timeConstantMs: Double): CaretMotionPhase
 
+  fun framesTo(settings: CaretAnimationSettings): List<CaretRectangle>
+
   override fun toString(): String
 
   /**
@@ -72,6 +75,14 @@ internal sealed interface CaretMotionPhase {
 
       return Easing(eased.rested(settled), startTime, settled)
     }
+
+    override fun framesTo(settings: CaretAnimationSettings): List<CaretRectangle> {
+      val frameCount = settings.easingFrameCount
+      return (0..frameCount).flatMap { frame ->
+        val ease = settings.easing.apply(frame.toDouble() / frameCount)
+        trajectories.values.map { it.rectangleAt(ease) }
+      }
+    }
   }
 
   /**
@@ -97,6 +108,8 @@ internal sealed interface CaretMotionPhase {
 
       return Pursuit(pursued.rested(settled), settled)
     }
+
+    override fun framesTo(settings: CaretAnimationSettings): List<CaretRectangle> = emptyList()
   }
 
   companion object {

@@ -29,6 +29,7 @@ internal sealed interface CaretBlinkPhase {
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = 1.0f,
+      wantsPrefetch = false,
       nextDelay = if (tick.settings.isBlinking) tick.remainingQuietMs.milliseconds else Duration.INFINITE,
     )
   }
@@ -41,7 +42,7 @@ internal sealed interface CaretBlinkPhase {
     }
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame =
-      CaretBlinkFrame(opacity = opacityAt(tick).toFloat(), nextDelay = CaretClock.TICK)
+      CaretBlinkFrame(opacity = opacityAt(tick).toFloat(), wantsPrefetch = prefetching, nextDelay = CaretClock.TICK)
 
     private fun opacityAt(tick: CaretTick): Double {
       val t = (tick.elapsedSince(startedAt) / tick.settings.fadeDurationMs).coerceIn(0.0, 1.0)
@@ -59,6 +60,7 @@ internal sealed interface CaretBlinkPhase {
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = level.toFloat(),
+      wantsPrefetch = prefetching,
       nextDelay = remainingMs(tick).milliseconds,
     )
 
@@ -75,6 +77,7 @@ internal sealed interface CaretBlinkPhase {
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = if (visible) 1.0f else 0.0f,
+      wantsPrefetch = false,
       nextDelay = remainingMs(tick).milliseconds,
     )
 
